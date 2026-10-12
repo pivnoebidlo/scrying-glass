@@ -36,7 +36,8 @@ export function createControlWindow() {
     minHeight: 560,
     title: 'Scrying Glass',
     backgroundColor: '#1e1e1e',
-    webPreferences,
+    // Здесь играет музыка: окно не должно притормаживать, даже если его свернули.
+    webPreferences: { ...webPreferences, backgroundThrottling: false },
   });
   loadPage(controlWindow, 'control');
   controlWindow.on('closed', () => {

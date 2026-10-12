@@ -1,8 +1,7 @@
 // Ядро: единое состояние, хранилище, сохранение, загрузка модулей, IPC.
-import { app, BrowserWindow, ipcMain, dialog, protocol, net } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, protocol } from 'electron';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { pathToFileURL } from 'node:url';
 import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
@@ -11,6 +10,7 @@ import type { PortraitsState } from '../modules/portraits/types';
 import { isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { migrateOldCampaign } from './migrate';
+import { serveFile } from './assets';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
 } from './windows';
@@ -236,12 +236,11 @@ app.whenReady().then(async () => {
   loadSettings();
   stateById['vault'] = vaultState();
 
-  // Картинки хранилища: sg-asset://v/<путь внутри хранилища>
+  // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>
   protocol.handle('sg-asset', (request) => {
     const url = new URL(request.url);
     const file = url.host === 'v' ? resolveInVault(decodeURIComponent(url.pathname.slice(1))) : null;
-    if (file && fs.existsSync(file)) return net.fetch(pathToFileURL(file).toString());
-    return new Response('Not found', { status: 404 });
+    return file ? serveFile(file, request) : new Response('Not found', { status: 404 });
   });
 
   createControlWindow();

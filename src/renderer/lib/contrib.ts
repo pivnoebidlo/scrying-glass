@@ -26,17 +26,20 @@ export interface ControlContribution<K extends ModuleId> {
   screen?: ModuleComponent<K>;
   // Раздел в окне настроек.
   settings?: ModuleComponent<K>;
-  // Что модуль умеет делать с картинкой из хранилища (кнопки на карточке картинки).
-  imageActions?: ImageAction[];
+  // Что модуль умеет делать с файлами хранилища (кнопки на карточке картинки, в строке трека).
+  imageActions?: FileAction[];
+  audioActions?: FileAction[];
+  // Невидимый компонент, который живёт всё время, пока открыто хранилище (например, проигрыватель).
+  background?: ModuleComponent<K>;
 }
 
-// Действие с картинкой хранилища, например «показать портретом» или «на весь экран».
-// Работает как переключатель: повторное действие убирает картинку с экрана.
-export interface ImageAction {
+// Действие с файлом хранилища, например «показать портретом» или «играть».
+// Работает как переключатель: повторное действие выключает его.
+export interface FileAction {
   id: string;
   // Подсказка на кнопке: «Показать портретом».
   title: string;
-  // Метка на карточке, когда действие включено: «портрет».
+  // Метка, когда действие включено: «портрет».
   badge: string;
   icon: Component;
   active(app: AppState, path: string): boolean;

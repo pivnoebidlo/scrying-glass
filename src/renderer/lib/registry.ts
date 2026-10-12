@@ -1,6 +1,6 @@
 // Вклады всех модулей подхватываются автоматически: modules/<имя>/control.ts и display.ts
 import type { ModuleId } from '../../shared/types';
-import type { ControlContribution, DisplayContribution, ImageAction } from './contrib';
+import type { ControlContribution, DisplayContribution, FileAction } from './contrib';
 
 export const controlContributions = Object.values(
   import.meta.glob<ControlContribution<ModuleId>>('../../modules/*/control.ts', { eager: true, import: 'default' })
@@ -10,5 +10,6 @@ export const displayContributions = Object.values(
   import.meta.glob<DisplayContribution<ModuleId>>('../../modules/*/display.ts', { eager: true, import: 'default' })
 ).sort((a, b) => a.order - b.order);
 
-// Действия с картинками от всех модулей, в порядке модулей.
-export const imageActions: ImageAction[] = controlContributions.flatMap((c) => c.imageActions ?? []);
+// Действия с файлами от всех модулей, в порядке модулей.
+export const imageActions: FileAction[] = controlContributions.flatMap((c) => c.imageActions ?? []);
+export const audioActions: FileAction[] = controlContributions.flatMap((c) => c.audioActions ?? []);

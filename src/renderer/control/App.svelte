@@ -7,6 +7,9 @@
   import Settings from './Settings.svelte';
   import Welcome from './Welcome.svelte';
   import { store } from '../lib/store.svelte';
+  import { controlContributions } from '../lib/registry';
+
+  const backgrounds = controlContributions.filter((c) => c.background);
   import { workspace } from './workspace.svelte';
 
   function onkeydown(e: KeyboardEvent) {
@@ -31,6 +34,11 @@
     <Tabs />
     <ScreenPanel />
   </div>
+
+  <!-- Невидимые части модулей, например проигрыватель музыки. -->
+  {#each backgrounds as c (c.id)}
+    {#if c.background}<c.background ms={store.state[c.id]} app={store.state} />{/if}
+  {/each}
 
   {#if workspace.settingsOpen}
     <Settings />

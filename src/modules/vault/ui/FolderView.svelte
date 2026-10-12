@@ -5,6 +5,9 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { findFolder, folderRole } from '../../../shared/vault';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
+  import { audioActions } from '../../../renderer/lib/registry';
+  import { store } from '../../../renderer/lib/store.svelte';
+  import { trackName } from '../../../shared/vault';
   import { folderIcon, ui } from './ui.svelte';
 
   let { ms }: ModuleProps<'vault'> = $props();
@@ -77,10 +80,19 @@
 
     {#if audio.length}
       <h3>Музыка <span class="faint">{audio.length}</span></h3>
-      <p class="faint hint">Проигрывание появится вместе с модулем музыки.</p>
       <ul class="audio">
         {#each audio as f (f.path)}
-          <li><Music size={14} /> {f.name}</li>
+          {@const on = audioActions.filter((a) => a.active(store.state, f.path))}
+          <li class:on={on.length > 0}>
+            <Music size={14} />
+            <span class="track" title={f.name}>{trackName(f.path)}</span>
+            {#each on as a (a.id)}<span class="badge">{a.badge}</span>{/each}
+            {#each audioActions as a (a.id)}
+              <button class="icon-btn" class:active={a.active(store.state, f.path)} title={a.title} onclick={() => a.toggle(store.state, f.path)}>
+                <a.icon size={14} />
+              </button>
+            {/each}
+          </li>
         {/each}
       </ul>
     {/if}
@@ -189,8 +201,29 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 4px 0;
+    padding: 2px 4px 2px 8px;
+    border-radius: var(--radius-s);
     color: var(--text-muted);
+  }
+  .audio li:hover {
+    background: var(--bg-hover);
+  }
+  .audio li.on {
+    color: var(--accent);
+  }
+  .track {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .badge {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 11px;
   }
   .empty {
     padding: 40px 0;

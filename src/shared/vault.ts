@@ -95,5 +95,18 @@ export function prettyName(path: string): string {
     .join(' ');
 }
 
+// Название трека: «01_дорога_в_баровию.mp3» -> «Дорога в баровию». Номер в начале нужен только для порядка.
+export function trackName(path: string): string {
+  const file = basename(path);
+  const i = file.lastIndexOf('.');
+  const name = (i > 0 ? file.slice(0, i) : file)
+    .normalize('NFC')
+    .replace(/_+/g, ' ')
+    .replace(/^\d+\s*[-.)]?\s+/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return name ? name[0]!.toUpperCase() + name.slice(1) : file;
+}
+
 // Картинка из хранилища: sg-asset://v/<путь>
 export const vaultUrl = (path: string) => 'sg-asset://v/' + encodeURIComponent(path);
