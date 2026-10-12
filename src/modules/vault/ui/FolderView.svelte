@@ -21,8 +21,10 @@
   });
   const images = $derived(folder?.files.filter((f) => f.kind === 'image') ?? []);
   const audio = $derived(folder?.files.filter((f) => f.kind === 'audio') ?? []);
-  // В папках персонажей клик по картинке показывает портрет, в остальных — картинку на весь экран.
-  const isCharacters = $derived(!!folder && folderRole(folder.name) === 'characters');
+  // Что делает клик по картинке: в папках персонажей — портрет, в папках карт — карта, в остальных — на весь экран.
+  const role = $derived(folder ? folderRole(folder.name) : null);
+  const primary = $derived(role === 'characters' ? 'portrait' : role === 'maps' ? 'map' : 'background');
+  const PRIMARY_HINT: Record<string, string> = { portrait: 'портретом', map: 'картой', background: 'на весь экран' };
 
   function go(path: string) {
     ui.folder = path;
@@ -66,12 +68,12 @@
     {#if images.length}
       <h3>Картинки <span class="faint">{images.length}</span></h3>
       <p class="faint hint">
-        Нажмите на картинку, чтобы показать её игрокам {isCharacters ? 'портретом' : 'на весь экран'}. Другие варианты — в
+        Нажмите на картинку, чтобы показать её игрокам {PRIMARY_HINT[primary]}. Другие варианты — в
         кнопках при наведении.
       </p>
       <div class="grid">
         {#each images as f (f.path)}
-          <ImageCard path={f.path} primary={isCharacters ? 'portrait' : 'background'} aspect={isCharacters ? '3 / 4' : '4 / 3'}>
+          <ImageCard path={f.path} {primary} aspect={role === 'characters' ? '3 / 4' : '4 / 3'}>
             <div class="file-name" title={f.name}>{f.name}</div>
           </ImageCard>
         {/each}

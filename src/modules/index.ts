@@ -5,5 +5,6 @@ import vault from './vault/main';
 import portraits from './portraits/main';
 import scene from './scene/main';
 import music from './music/main';
+import maps from './maps/main';
 
-export const moduleList = [core, vault, scene, portraits, music] as const;
+export const moduleList = [core, vault, scene, maps, portraits, music] as const;

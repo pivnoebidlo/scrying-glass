@@ -74,10 +74,12 @@ export function openDisplay(displayId: number) {
   const fullscreen = !(controlDisplay && controlDisplay.id === target.id);
 
   const b = target.bounds;
+  // Экран игроков рисует всегда, даже если окно чем-то перекрыто: переходы и анимации не должны тормозить.
+  const displayPrefs = { ...webPreferences, backgroundThrottling: false };
   const win = new BrowserWindow(
     fullscreen
-      ? { x: b.x, y: b.y, width: b.width, height: b.height, frame: false, show: false, backgroundColor: '#000000', webPreferences }
-      : { x: b.x + 100, y: b.y + 100, width: 960, height: 540, title: 'Scrying Glass — экран игроков (превью)', show: false, backgroundColor: '#000000', webPreferences }
+      ? { x: b.x, y: b.y, width: b.width, height: b.height, frame: false, show: false, backgroundColor: '#000000', webPreferences: displayPrefs }
+      : { x: b.x + 100, y: b.y + 100, width: 960, height: 540, title: 'Scrying Glass — экран игроков (превью)', show: false, backgroundColor: '#000000', webPreferences: displayPrefs }
   );
   displayWindow = win;
 
