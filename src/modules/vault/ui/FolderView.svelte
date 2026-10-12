@@ -1,6 +1,6 @@
 <!-- Вкладка «Файлы»: содержимое выбранной папки хранилища. -->
 <script lang="ts">
-  import { ChevronRight, FilePlus, FolderOpen, Map, Music } from '@lucide/svelte';
+  import { ChevronRight, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { findFolder, folderRole } from '../../../shared/vault';
@@ -115,6 +115,9 @@
                 <a.icon size={14} />
               </button>
             {/each}
+            <button class="icon-btn trash" title="Переместить в Корзину" onclick={() => dispatch('vault', 'trash', { paths: [f.path] })}>
+              <Trash2 size={14} />
+            </button>
           </li>
         {/each}
       </ul>
@@ -127,6 +130,9 @@
 {/if}
 
 <style>
+  .trash:hover {
+    color: var(--danger);
+  }
   .view {
     padding: 0 20px 20px;
   }

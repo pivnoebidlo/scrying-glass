@@ -24,8 +24,11 @@ export interface Api {
   saveCard(scope: CardScope, card: Card, folder?: string): Promise<CardRef>;
   // Удалить карточку: спрашивает подтверждение и про её картинки. true — удалили.
   deleteCard(ref: CardRef): Promise<boolean>;
+  // Портреты встроенной карточки (хранятся в библиотеке, общие для всех её переводов).
+  setSrdPortraits(ref: CardRef, portraits: string[]): Promise<void>;
   // Убрать картинки, скопированные для несохранённого черновика (если ими никто не пользуется).
-  discardCardImages(scope: CardScope, paths: string[]): Promise<void>;
+  // ownedOnly — не трогать картинки из папок персонажей (там обычно файлы пользователя).
+  discardCardImages(scope: CardScope, paths: string[], ownedOnly?: boolean): Promise<void>;
   // Черновик копии для другого места (картинки копируются туда же). Сохраняется через saveCard.
   // copied — картинки, скопированные для черновика (убрать через discardCardImages, если не сохранят).
   copyCardDraft(ref: CardRef, to: CardScope, folder?: string): Promise<{ card: Card; copied: string[] } | null>;

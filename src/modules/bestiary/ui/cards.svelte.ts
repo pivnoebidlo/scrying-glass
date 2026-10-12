@@ -2,7 +2,7 @@
 // Фильтры запоминаются между запусками (в окне, не в хранилище).
 import type { Card, CardRef, CardScope, CardSummary } from '../../../shared/cards';
 import { untrack } from 'svelte';
-import { langName, sameRef } from '../../../shared/cards';
+import { imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
 import { visibleIn } from '../../../shared/adventures';
@@ -273,6 +273,35 @@ class Bestiary {
     if (d?.copied.length) window.api.discardCardImages(d.scope, $state.snapshot(d.copied));
     this.draft = null;
     return true;
+  }
+
+  // ---------- Портреты прямо на странице карточки ----------
+
+  private async writePortraits(ref: CardRef, portraits: string[]) {
+    if (ref.scope === 'srd') return window.api.setSrdPortraits(ref, portraits);
+    const c = await window.api.getCard(ref);
+    if (c) await window.api.saveCard(ref.scope, { ...c, portraits });
+  }
+
+  // Добавить портрет из хранилища (vaultPath) или с диска. Для встроенных карточек картинка копируется в библиотеку.
+  async addPortrait(ref: CardRef, vaultPath?: string) {
+    const summary = this.all.find((c) => sameRef(c.ref, ref));
+    const res = await window.api.addCardImage(imageScope(ref.scope), vaultPath, placeOf(summary)?.folder);
+    const c = res && (await window.api.getCard(ref));
+    if (c && !c.portraits.includes(res.path)) await this.writePortraits(ref, [...c.portraits, res.path]);
+  }
+
+  // Убрать портрет. Файл удаляется, только если его копировало приложение и он больше никому не нужен.
+  async removePortrait(ref: CardRef, p: string) {
+    const c = await window.api.getCard(ref);
+    if (!c) return;
+    await this.writePortraits(ref, c.portraits.filter((x) => x !== p));
+    await window.api.discardCardImages(imageScope(ref.scope), [p], true);
+  }
+
+  async makeMainPortrait(ref: CardRef, p: string) {
+    const c = await window.api.getCard(ref);
+    if (c) await this.writePortraits(ref, [p, ...c.portraits.filter((x) => x !== p)]);
   }
 
   // Удаление спрашивает ядро: заодно предлагает удалить картинки, которые есть только у этой карточки.

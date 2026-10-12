@@ -1,6 +1,6 @@
 <!-- Вкладка «Музыка»: треки выбранного плейлиста и атмосфера. -->
 <script lang="ts">
-  import { Pause, Play, Shuffle, Volume2, Wind, X } from '@lucide/svelte';
+  import { Pause, Play, Shuffle, Trash2, Volume2, Wind, X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -68,6 +68,9 @@
           >
             <Wind size={14} />
           </button>
+          <button class="icon-btn trash" title="Переместить в Корзину" onclick={() => dispatch('vault', 'trash', { paths: [t.path] })}>
+            <Trash2 size={14} />
+          </button>
         </li>
       {/each}
     </ol>
@@ -107,6 +110,9 @@
 </div>
 
 <style>
+  .trash:hover {
+    color: var(--danger);
+  }
   .view {
     max-width: 760px;
     padding: 16px 20px 20px;

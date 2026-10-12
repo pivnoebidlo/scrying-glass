@@ -30,7 +30,9 @@ let vaultRoot: string | null = null;
 let vaultTree: VaultFolder | null = null;
 
 // Корень места хранения: от него считаются пути картинок.
-export const scopeRoot = (scope: CardScope) => (scope === 'library' ? libraryRoot : scope === 'vault' ? vaultRoot : null);
+// Портреты встроенных карточек хранятся в библиотеке (см. «Портреты встроенных карточек»), поэтому у SRD
+// тот же корень, что у библиотеки.
+export const scopeRoot = (scope: CardScope) => (scope === 'vault' ? vaultRoot : libraryRoot);
 
 // Путь внутри корня (через «/») -> абсолютный. null — выходит за пределы корня.
 function inside(root: string | null, rel: string): string | null {
@@ -53,11 +55,51 @@ function loadBuiltin() {
   for (const f of list) {
     try {
       const data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) as Card[];
-      for (const c of data) cards.set(refKey({ scope: 'srd', id: c.id }), c);
+      for (const c of data) builtin.set(c.id, c);
     } catch (e) {
       console.error('Не прочитался встроенный бестиарий', f, e);
     }
   }
+}
+
+// ---------- Портреты встроенных карточек ----------
+// Встроенные карточки только для чтения, но портрет к ним добавить можно: портреты хранятся в библиотеке
+// (<библиотека>/srd.json, картинки — в images/) и подмешиваются при чтении. Ключ — оригинал карточки, так что
+// портрет общий для всех её переводов.
+const builtin = new Map<string, Card>();
+let srdPortraits: Record<string, string[]> = {};
+
+const srdFile = () => libraryRoot && path.join(libraryRoot, 'srd.json');
+const srdKey = (c: Card) => (c.origin?.relation === 'translation' ? c.origin.id : c.id);
+
+function applySrd() {
+  for (const [id, c] of builtin) {
+    const portraits = srdPortraits[srdKey(c)];
+    cards.set(refKey({ scope: 'srd', id }), portraits?.length ? { ...c, portraits } : c);
+  }
+}
+
+function loadSrdPortraits() {
+  srdPortraits = {};
+  const file = srdFile();
+  try {
+    if (file && fs.existsSync(file)) srdPortraits = (JSON.parse(fs.readFileSync(file, 'utf8')) as { portraits?: Record<string, string[]> }).portraits ?? {};
+  } catch (e) {
+    console.error('Не прочитаны портреты встроенных карточек', file, e);
+  }
+  applySrd();
+}
+
+export function setSrdPortraits(ref: CardRef, portraits: string[]) {
+  const c = builtin.get(ref.id);
+  const file = srdFile();
+  if (ref.scope !== 'srd' || !c || !file) return;
+  const key = srdKey(c);
+  if (portraits.length) srdPortraits[key] = portraits;
+  else delete srdPortraits[key];
+  writeJsonAtomic(file, { portraits: srdPortraits });
+  applySrd();
+  changed();
 }
 
 // Все *.json в папке и вложенных (скрытые пропускаются).
@@ -144,6 +186,7 @@ export function initCards(library: string) {
 export function setLibrary(root: string) {
   libraryRoot = root;
   loadLibrary();
+  loadSrdPortraits();
   changed();
 }
 
@@ -289,11 +332,14 @@ export function deleteCard(ref: CardRef, images: string[] = []) {
 // портреты в characters — обычно файлы пользователя, вместе с карточкой они не удаляются).
 function disposable(scope: CardScope, rel: string, except?: CardRef, anyCardFolder = false): boolean {
   const folders = anyCardFolder ? cardFolders() : bestiaryFolders();
-  const inPlace = scope === 'library' ? rel.startsWith('images/') : scope === 'vault' && folders.some((f) => rel.startsWith(f + '/'));
+  const inLibrary = scope !== 'vault';
+  const inPlace = inLibrary ? rel.startsWith('images/') : folders.some((f) => rel.startsWith(f + '/'));
   if (!inPlace) return false;
+  // Картинками библиотеки пользуются и её карточки, и встроенные (их портреты).
   const skip = except && refKey(except);
+  const same = (key: string) => (inLibrary ? key.startsWith('library:') || key.startsWith('srd:') : key.startsWith('vault:'));
   for (const [key, c] of cards) {
-    if (key !== skip && key.startsWith(scope + ':') && c.portraits.includes(rel)) return false;
+    if (key !== skip && same(key) && c.portraits.includes(rel)) return false;
   }
   return true;
 }
@@ -309,8 +355,9 @@ export const ownImages = (ref: CardRef): string[] =>
 
 // Убирает картинки, скопированные для черновика, который не сохранили (или из которого их убрали),
 // если ими никто не пользуется.
-export function discardImages(scope: CardScope, rels: string[]) {
-  for (const rel of rels) if (disposable(scope, rel, undefined, true)) removeImage(scope, rel);
+// ownedOnly — только из библиотеки и папок бестиария (картинка могла быть файлом пользователя в characters).
+export function discardImages(scope: CardScope, rels: string[], ownedOnly = false) {
+  for (const rel of rels) if (disposable(scope, rel, undefined, !ownedOnly)) removeImage(scope, rel);
 }
 
 // Папка, куда класть картинки карточки: в библиотеке — images/, в хранилище — папка карточки.
@@ -355,7 +402,7 @@ export function copyDraft(ref: CardRef, to: CardScope, folder?: string): { card:
   if (!c || to === 'srd') return null;
   const copied: string[] = [];
   const portraits =
-    ref.scope === to
+    scopeRoot(ref.scope) === scopeRoot(to)
       ? [...c.portraits]
       : c.portraits
           .map((p) => {

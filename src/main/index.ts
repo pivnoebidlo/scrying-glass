@@ -13,7 +13,7 @@ import { scanVault } from './scan';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import {
-  cardsOf, copyDraft, deleteCard, discardImages, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import {
@@ -265,7 +265,10 @@ ipcMain.handle('cards:delete', async (_event, ref: CardRef) => {
   deleteCard(ref, res.checkboxChecked ? images : []);
   return true;
 });
-ipcMain.handle('cards:discardImages', (_event, { scope, paths }: { scope: CardScope; paths: string[] }) => discardImages(scope, paths));
+ipcMain.handle('cards:setSrdPortraits', (_event, { ref, portraits }: { ref: CardRef; portraits: string[] }) => setSrdPortraits(ref, portraits));
+ipcMain.handle('cards:discardImages', (_event, { scope, paths, ownedOnly }: { scope: CardScope; paths: string[]; ownedOnly?: boolean }) =>
+  discardImages(scope, paths, ownedOnly)
+);
 ipcMain.handle('cards:copyDraft', (_event, { ref, to, folder }) => copyDraft(ref, to, folder));
 ipcMain.handle('cards:move', (_event, { ref, to, folder }) => moveCard(ref, to, folder));
 

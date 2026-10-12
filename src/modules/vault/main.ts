@@ -59,6 +59,26 @@ export default defineModule({
       return ctx.vault.rescan();
     },
 
+    // Переместить файлы хранилища в Корзину (с подтверждением). Это единственное место, где приложение удаляет
+    // файлы пользователя, — только по его команде и так, чтобы их можно было вернуть.
+    async trash(s, { paths }: { paths: string[] }, ctx) {
+      const files = paths.map((p) => ({ rel: p, abs: ctx.vault.resolve(p) })).filter((f): f is { rel: string; abs: string } => !!f.abs && fs.existsSync(f.abs));
+      if (!files.length) return s;
+      const names = files.map((f) => path.basename(f.abs));
+      const opts = {
+        type: 'warning' as const,
+        message: files.length === 1 ? `Переместить «${names[0]}» в Корзину?` : `Переместить в Корзину файлов: ${files.length}?`,
+        detail: (files.length > 1 ? names.join('\n') + '\n\n' : '') + 'Файл можно будет вернуть из Корзины.',
+        buttons: ['В Корзину', 'Отмена'],
+        defaultId: 0,
+        cancelId: 1,
+      };
+      const res = ctx.controlWindow ? await ctx.dialog.showMessageBox(ctx.controlWindow, opts) : await ctx.dialog.showMessageBox(opts);
+      if (res.response !== 0) return s;
+      for (const f of files) await shell.trashItem(f.abs);
+      return ctx.vault.rescan();
+    },
+
     // Показать папку в Finder / Проводнике.
     async reveal(s, { folder }: { folder: string }, ctx) {
       const dir = ctx.vault.resolve(folder);

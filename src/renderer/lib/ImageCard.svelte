@@ -4,7 +4,8 @@
   import type { Snippet } from 'svelte';
   import { vaultUrl } from '../../shared/vault';
   import { imageActions } from './registry';
-  import { store } from './store.svelte';
+  import { dispatch, store } from './store.svelte';
+  import { Trash2 } from '@lucide/svelte';
 
   let {
     path,
@@ -40,6 +41,9 @@
         <a.icon size={13} />
       </button>
     {/each}
+    <button class="action trash" title="Переместить в Корзину" onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
+      <Trash2 size={13} />
+    </button>
   </div>
 
   {@render children?.()}
@@ -108,6 +112,12 @@
     background: rgba(0, 0, 0, 0.65);
     color: #fff;
     cursor: pointer;
+  }
+  .action.trash {
+    margin-left: 6px;
+  }
+  .action.trash:hover {
+    color: var(--danger);
   }
   .action:hover {
     background: rgba(0, 0, 0, 0.85);

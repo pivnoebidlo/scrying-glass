@@ -1,7 +1,8 @@
 <!-- Вкладка бестиария: выбранная карточка, её версии на других языках и добавление в бой. -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ArrowRightLeft, Copy, Pencil, Swords, Trash2, Upload } from '@lucide/svelte';
+  import { ArrowRightLeft, Copy, FolderOpen, HardDrive, ImagePlus, Pencil, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import ImagePicker from './ImagePicker.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
@@ -38,6 +39,9 @@
   // Языки, на которые ещё нет перевода.
   const missingLangs = $derived(Object.keys(LANGUAGES).filter((l) => !bestiary.versions.some((v) => v.lang === l)));
 
+  let portraitMenu = $state(false);
+  let picking = $state(false);
+
   let count = $state(1);
   let rollHp = $state(false);
 
@@ -71,21 +75,38 @@
     {@const ref = summary.ref}
     <header>
       <div class="title">
-        {#if card.portraits.length}
-          <div class="portraits">
-            {#each card.portraits as p, i (p)}
-              {@const asset = cardAsset(ref.scope, p)}
-              {@const onScreen = app.portraits.onScreen.includes(asset)}
+        <div class="portraits">
+          {#each card.portraits as p, i (p)}
+            {@const asset = cardAsset(ref.scope, p)}
+            {@const onScreen = app.portraits.onScreen.includes(asset)}
+            <div class="portrait" class:main={i === 0} class:on={onScreen}>
               <button
-                class="portrait"
-                class:main={i === 0}
-                class:on={onScreen}
+                class="pic"
                 title={onScreen ? 'Убрать с экрана игроков' : 'Показать игрокам'}
                 onclick={() => togglePortrait(asset, card.name)}
               ><img src={cardImageUrl(ref.scope, p)} alt="" /></button>
-            {/each}
+              <div class="p-actions">
+                {#if i > 0}<button class="icon-btn" title="Сделать основным" onclick={() => bestiary.makeMainPortrait(ref, p)}><Star size={12} /></button>{/if}
+                <button class="icon-btn" title="Убрать портрет" onclick={() => bestiary.removePortrait(ref, p)}><X size={12} /></button>
+              </div>
+            </div>
+          {/each}
+          <div class="add-portrait" class:main={!card.portraits.length}>
+            <button
+              class="add-btn"
+              title={ref.scope === 'srd' ? 'Портрет встроенной карточки хранится в библиотеке, он общий для всех её языков' : 'Добавить портрет'}
+              onclick={() => (portraitMenu = !portraitMenu)}><ImagePlus size={16} /></button
+            >
+            {#if portraitMenu}
+              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+              <div class="menu-backdrop" onclick={() => (portraitMenu = false)}></div>
+              <div class="menu">
+                <button disabled={!app.vault.tree} onclick={() => ((portraitMenu = false), (picking = true))}><FolderOpen size={13} /> Из хранилища</button>
+                <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(ref))}><HardDrive size={13} /> С диска…</button>
+              </div>
+            {/if}
           </div>
-        {/if}
+        </div>
         <div class="names">
           <h1>{card.name}</h1>
           <div class="info faint">{info}</div>
@@ -173,6 +194,10 @@
     <p class="faint placeholder">Выберите существо в списке слева или создайте своё кнопкой «+».</p>
   {/if}
 </div>
+{#if picking && app.vault.tree && summary}
+  {@const ref = summary.ref}
+  <ImagePicker tree={app.vault.tree} onpick={(p) => ((picking = false), bestiary.addPortrait(ref, p))} onclose={() => (picking = false)} />
+{/if}
 {/if}
 
 <style>
@@ -190,19 +215,11 @@
     gap: 6px;
   }
   .portrait {
-    display: block;
+    position: relative;
     width: 52px;
-    padding: 0;
     border: 2px solid transparent;
     border-radius: var(--radius-m);
-    background: none;
     overflow: hidden;
-  }
-  button.portrait {
-    cursor: pointer;
-  }
-  button.portrait:hover {
-    border-color: var(--accent-hover);
   }
   .portrait.main {
     width: 104px;
@@ -210,11 +227,93 @@
   .portrait.on {
     border-color: var(--accent);
   }
-  .portrait img {
+  .portrait:hover {
+    border-color: var(--accent-hover);
+  }
+  .pic {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .pic img {
     display: block;
     width: 100%;
     aspect-ratio: 3 / 4;
     object-fit: cover;
+  }
+  .p-actions {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: none;
+    gap: 2px;
+  }
+  .portrait:hover .p-actions {
+    display: flex;
+  }
+  .p-actions .icon-btn {
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+  }
+  .add-portrait {
+    position: relative;
+  }
+  .add-btn {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    aspect-ratio: 3 / 4;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-m);
+    background: none;
+    color: var(--text-faint);
+    cursor: pointer;
+  }
+  .add-portrait.main .add-btn {
+    width: 104px;
+  }
+  .add-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-normal);
+  }
+  .menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9;
+  }
+  .menu {
+    position: absolute;
+    top: 0;
+    left: calc(100% + 4px);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    background: var(--bg-secondary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+  .menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: var(--radius-s);
+    background: none;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .menu button:hover {
+    background: var(--bg-hover);
   }
   .names {
     flex: 1;

@@ -92,6 +92,10 @@ export const refKey = (r: CardRef) => `${r.scope}:${r.id}`;
 export const sameRef = (a: CardRef | null | undefined, b: CardRef | null | undefined) =>
   !!a && !!b && a.scope === b.scope && a.id === b.id;
 
-// Картинка карточки как путь для портретов и инициативы: путь хранилища или «library:…».
-export const cardAsset = (scope: CardScope, p: string) => (scope === 'library' ? libraryAsset(p) : p);
+// Картинка карточки как путь для портретов и инициативы: путь хранилища или «library:…». Портреты
+// встроенных карточек тоже лежат в библиотеке.
+export const cardAsset = (scope: CardScope, p: string) => (scope === 'vault' ? p : libraryAsset(p));
+
+// Куда копировать картинку для карточки: для встроенных — в библиотеку.
+export const imageScope = (scope: CardScope): CardScope => (scope === 'srd' ? 'library' : scope);
 export const cardImageUrl = (scope: CardScope, p: string) => assetUrl(cardAsset(scope, p));
