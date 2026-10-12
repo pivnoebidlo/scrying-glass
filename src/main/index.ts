@@ -8,7 +8,7 @@ import type { AppState } from '../shared/types';
 import type { VaultFolder, VaultState } from '../shared/vault';
 import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
-import { isDir, readJson, writeJsonAtomic } from './files';
+import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
@@ -273,7 +273,17 @@ ipcMain.handle('cards:copyDraft', (_event, { ref, to, folder }) => copyDraft(ref
 ipcMain.handle('cards:move', (_event, { ref, to, folder }) => moveCard(ref, to, folder));
 
 // Картинка для карточки: из хранилища (vaultPath) или файл с диска (диалог). null — отменили.
-ipcMain.handle('cards:addImage', async (_event, { scope, vaultPath, folder }: { scope: CardScope; vaultPath?: string; folder?: string }) => {
+// fromClipboard — картинка из буфера обмена (если её там нет, приложение скажет об этом).
+ipcMain.handle('cards:addImage', async (_event, { scope, vaultPath, folder, fromClipboard }: { scope: CardScope; vaultPath?: string; folder?: string; fromClipboard?: boolean }) => {
+  if (fromClipboard) {
+    const data = await clipboardImage();
+    if (!data) {
+      noImageInClipboard();
+      return null;
+    }
+    const p = importCardImage(scope, { data }, folder);
+    return p && { path: p, copied: true };
+  }
   if (vaultPath) {
     const p = importCardImage(scope, { vaultPath }, folder);
     return p && { path: p, copied: p !== vaultPath };
@@ -323,6 +333,17 @@ ipcMain.handle('cards:pickImport', async () => {
 ipcMain.handle('cards:import', (_event, { files, scope, folder }: { files: string[]; scope: CardScope; folder?: string }) =>
   importCards(files, scope, folder)
 );
+
+function noImageInClipboard() {
+  const win = getControlWindow();
+  const opts = {
+    type: 'info' as const,
+    message: 'В буфере обмена нет картинки',
+    detail: 'Скопируйте картинку (в браузере — «Копировать изображение») или файл картинки в Finder и попробуйте снова.',
+  };
+  if (win) dialog.showMessageBox(win, opts);
+  else dialog.showMessageBox(opts);
+}
 
 const defaultLibrary = () => path.join(app.getPath('userData'), 'library');
 ipcMain.handle('cards:library', () => ({ path: libraryPath(), isDefault: !settings.library }));

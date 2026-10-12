@@ -35,7 +35,7 @@ export interface Api {
   moveCard(ref: CardRef, to: CardScope, folder?: string): Promise<CardRef | null>;
   // Добавить картинку: из хранилища (vaultPath) или с диска через диалог. Путь для card.portraits и был ли
   // файл скопирован; null — отменили.
-  addCardImage(scope: CardScope, vaultPath?: string, folder?: string): Promise<{ path: string; copied: boolean } | null>;
+  addCardImage(scope: CardScope, vaultPath?: string, folder?: string, fromClipboard?: boolean): Promise<{ path: string; copied: boolean } | null>;
   // Экспорт выбранных карточек или всего места хранения в файл (диалог). Число карточек или null — отменили.
   exportCards(what: { refs?: CardRef[]; scope?: CardScope; folder?: string; name: string }): Promise<number | null>;
   // Импорт: выбрать файлы (диалог), затем импортировать их в выбранное место.

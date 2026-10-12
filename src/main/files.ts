@@ -1,7 +1,9 @@
 // Чтение и запись JSON-файлов приложения.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { dialog } from 'electron';
+import { clipboard, dialog } from 'electron';
+import { fileURLToPath } from 'node:url';
+import { IMAGE_EXT } from '../shared/vault';
 
 // Запись через временный файл: при сбое посреди записи на диске остаётся прежняя версия.
 export function writeJsonAtomic(file: string, data: unknown) {
@@ -60,4 +62,42 @@ export function freeName(dir: string, file: string): string {
   let name = file;
   for (let i = 2; fs.existsSync(path.join(dir, name)); i++) name = `${base} (${i})${ext}`;
   return name;
+}
+
+// Картинка из буфера обмена: скопированный в Finder файл или само изображение (скриншот, картинка из
+// браузера). null — в буфере нет картинки. В Electron 44 буфер читается асинхронно, как в браузере.
+const IMAGE_MIME: Record<string, string> = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/webp': '.webp' };
+
+export async function clipboardImage(): Promise<{ name: string; data: Buffer } | null> {
+  let items: Electron.ClipboardItem[] = [];
+  try {
+    items = await clipboard.read();
+  } catch {
+    return null;
+  }
+  for (const item of items) {
+    // Файл, скопированный в Finder (⌘C): в буфере его адрес file://…
+    for (const type of item.types.filter((t) => t === 'text/uri-list' || t.includes('file-url'))) {
+      try {
+        const text = await ((await item.getType(type)) as Blob).text();
+        const url = text.split(/\r?\n/).find((l) => l.startsWith('file://'));
+        const file = url && fileURLToPath(url.trim());
+        if (file && IMAGE_EXT.includes(path.extname(file).toLowerCase()) && fs.statSync(file).isFile()) {
+          return { name: path.basename(file), data: fs.readFileSync(file) };
+        }
+      } catch {
+        /* не файл — попробуем как изображение */
+      }
+    }
+    const mime = item.types.find((t) => IMAGE_MIME[t]);
+    if (mime) {
+      const blob = (await item.getType(mime)) as Blob;
+      // Местное время: «Картинка 2026-10-13 01-54.png».
+      const d = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}-${pad(d.getMinutes())}`;
+      return { name: `Картинка ${stamp}${IMAGE_MIME[mime]}`, data: Buffer.from(await blob.arrayBuffer()) };
+    }
+  }
+  return null;
 }

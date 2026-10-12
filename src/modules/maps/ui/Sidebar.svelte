@@ -1,6 +1,6 @@
 <!-- Боковая панель: карты, сгруппированные по месту в хранилище. -->
 <script lang="ts">
-  import { Eye, Map } from '@lucide/svelte';
+  import { Eye, Map, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -33,6 +33,9 @@
         >
           <Eye size={13} />
         </button>
+        <button class="icon-btn trash" title="Переместить в Корзину" onclick={() => dispatch('vault', 'trash', { paths: [p] })}>
+          <Trash2 size={13} />
+        </button>
       </div>
     {/each}
   {:else}
@@ -43,6 +46,15 @@
 </div>
 
 <style>
+  .trash {
+    display: none;
+  }
+  .item:hover .trash {
+    display: inline-flex;
+  }
+  .trash:hover {
+    color: var(--danger);
+  }
   .list {
     padding: 0 6px 10px;
   }

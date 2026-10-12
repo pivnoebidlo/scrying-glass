@@ -1,7 +1,7 @@
 <!-- Вкладка бестиария: выбранная карточка, её версии на других языках и добавление в бой. -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ArrowRightLeft, Copy, FolderOpen, HardDrive, ImagePlus, Pencil, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Pencil, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
   import ImagePicker from './ImagePicker.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -102,6 +102,7 @@
               <div class="menu-backdrop" onclick={() => (portraitMenu = false)}></div>
               <div class="menu">
                 <button disabled={!app.vault.tree} onclick={() => ((portraitMenu = false), (picking = true))}><FolderOpen size={13} /> Из хранилища</button>
+                <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(ref, undefined, true))}><ClipboardPaste size={13} /> Из буфера</button>
                 <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(ref))}><HardDrive size={13} /> С диска…</button>
               </div>
             {/if}

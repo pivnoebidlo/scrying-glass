@@ -5,7 +5,7 @@ import * as path from 'node:path';
 import { shell, type OpenDialogOptions } from 'electron';
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { AUDIO_EXT, IMAGE_EXT, type VaultState } from '../../shared/vault';
-import { freeName } from '../../main/files';
+import { clipboardImage, freeName } from '../../main/files';
 
 const openDialog = (ctx: ModuleContext, opts: OpenDialogOptions) =>
   ctx.controlWindow ? ctx.dialog.showOpenDialog(ctx.controlWindow, opts) : ctx.dialog.showOpenDialog(opts);
@@ -56,6 +56,25 @@ export default defineModule({
       for (const src of res.filePaths) {
         await fs.promises.copyFile(src, path.join(dir, freeName(dir, path.basename(src))), fs.constants.COPYFILE_EXCL);
       }
+      return ctx.vault.rescan();
+    },
+
+    // Вставить картинку из буфера обмена в папку хранилища (скриншот, картинка из браузера, файл из Finder).
+    async pasteImage(s, { folder }: { folder: string }, ctx) {
+      const dir = ctx.vault.resolve(folder);
+      if (!dir) return s;
+      const img = await clipboardImage();
+      if (!img) {
+        const opts = {
+          type: 'info' as const,
+          message: 'В буфере обмена нет картинки',
+          detail: 'Скопируйте картинку (в браузере — «Копировать изображение») или файл картинки в Finder и попробуйте снова.',
+        };
+        if (ctx.controlWindow) await ctx.dialog.showMessageBox(ctx.controlWindow, opts);
+        else await ctx.dialog.showMessageBox(opts);
+        return s;
+      }
+      fs.writeFileSync(path.join(dir, freeName(dir, img.name)), img.data, { flag: 'wx' });
       return ctx.vault.rescan();
     },
 

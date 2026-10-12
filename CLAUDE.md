@@ -88,6 +88,11 @@ Electron-приложение для мастера D&D: окно управле
   для сочетаний использовать `key code` (G = 5, V = 9), путь вставлять через буфер (`pbcopy`, ⌘⇧G, ⌘V).
 - `$effect`, который читает `app.…` в компоненте модуля, перезапускается после каждого действия (проп `app`
   каждый раз новый): нужное значение сначала взять в `$derived`.
+- В Electron 44 буфер обмена асинхронный, как в браузере: `clipboard.read()` → `ClipboardItem` с `types` и
+  `getType()`; `readImage` и `read(формат)` больше нет. Картинка — `image/png`, файл из Finder — `text/uri-list`
+  (`clipboardImage` в `main/files.ts`). Проверять: картинку в буфер — `osascript -e 'set the clipboard to (read
+  (POSIX file "…") as «class PNGf»)'`, файл как из Finder — JXA с `NSPasteboard.writeObjects([NSURL…])`;
+  главный процесс смотреть через `--inspect=9229` и `process.mainModule.require('electron')`.
 - canvas с картинками из `sg-asset://` «заражён» (другой источник): пиксели читать нельзя, и это нормально.
 
 ## Как проверять изменения

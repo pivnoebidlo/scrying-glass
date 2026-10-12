@@ -283,10 +283,11 @@ class Bestiary {
     if (c) await window.api.saveCard(ref.scope, { ...c, portraits });
   }
 
-  // Добавить портрет из хранилища (vaultPath) или с диска. Для встроенных карточек картинка копируется в библиотеку.
-  async addPortrait(ref: CardRef, vaultPath?: string) {
+  // Добавить портрет из хранилища (vaultPath), из буфера обмена или с диска. Для встроенных карточек картинка
+  // копируется в библиотеку.
+  async addPortrait(ref: CardRef, vaultPath?: string, fromClipboard = false) {
     const summary = this.all.find((c) => sameRef(c.ref, ref));
-    const res = await window.api.addCardImage(imageScope(ref.scope), vaultPath, placeOf(summary)?.folder);
+    const res = await window.api.addCardImage(imageScope(ref.scope), vaultPath, placeOf(summary)?.folder, fromClipboard);
     const c = res && (await window.api.getCard(ref));
     if (c && !c.portraits.includes(res.path)) await this.writePortraits(ref, [...c.portraits, res.path]);
   }

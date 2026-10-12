@@ -1,7 +1,7 @@
 <!-- Визуальный редактор карточки: общая часть (название, вид, система, язык, портреты, заметки)
      и характеристики от системы. Справа — как карточка будет выглядеть. -->
 <script lang="ts">
-  import { FolderOpen, HardDrive, Save, Star, X } from '@lucide/svelte';
+  import { ClipboardPaste, FolderOpen, HardDrive, Save, Star, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
   import { LANGUAGES, cardImageUrl, defaultSide, langName, type CardKind, type CardSide } from '../../../shared/cards';
   import { folderLabel } from './places';
@@ -35,9 +35,9 @@
     card.system = id;
   }
 
-  async function addImage(vaultPath?: string) {
+  async function addImage(vaultPath?: string, fromClipboard = false) {
     picking = false;
-    const res = await window.api.addCardImage(draft.scope, vaultPath, draft.folder);
+    const res = await window.api.addCardImage(draft.scope, vaultPath, draft.folder, fromClipboard);
     if (!res) return;
     if (res.copied) draft.copied.push(res.path);
     if (!card.portraits.includes(res.path)) card.portraits.push(res.path);
@@ -178,6 +178,7 @@
           {/each}
           <div class="p-add">
             <button type="button" class="btn" disabled={!app.vault.tree} onclick={() => (picking = true)}><FolderOpen size={14} /> Из хранилища</button>
+            <button type="button" class="btn" onclick={() => addImage(undefined, true)}><ClipboardPaste size={14} /> Из буфера</button>
             <button type="button" class="btn" onclick={() => addImage()}><HardDrive size={14} /> С диска…</button>
             <span class="faint hint">
               {draft.scope === 'library'

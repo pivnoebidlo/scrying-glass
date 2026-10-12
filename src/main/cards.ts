@@ -369,11 +369,23 @@ function imagesDir(scope: CardScope, folder?: string): { abs: string; rel: strin
 
 // Добавляет картинку к карточке: копирует файл в папку картинок. Возвращает путь от корня места хранения.
 // Картинка хранилища для карточки хранилища не копируется — достаточно её пути.
-export function importCardImage(scope: CardScope, src: { file?: string; vaultPath?: string }, folder?: string): string | null {
+// data — картинка из буфера обмена (имя и содержимое).
+export function importCardImage(
+  scope: CardScope,
+  src: { file?: string; vaultPath?: string; data?: { name: string; data: Buffer } },
+  folder?: string
+): string | null {
   if (scope === 'vault' && src.vaultPath) return src.vaultPath;
-  const from = src.file ?? (src.vaultPath ? inside(vaultRoot, src.vaultPath) : null);
   const dir = imagesDir(scope, folder);
-  if (!from || !dir || !fs.existsSync(from)) return null;
+  if (!dir) return null;
+  if (src.data) {
+    fs.mkdirSync(dir.abs, { recursive: true });
+    const name = freeName(dir.abs, src.data.name);
+    fs.writeFileSync(path.join(dir.abs, name), src.data.data, { flag: 'wx' });
+    return dir.rel ? `${dir.rel}/${name}` : name;
+  }
+  const from = src.file ?? (src.vaultPath ? inside(vaultRoot, src.vaultPath) : null);
+  if (!from || !fs.existsSync(from)) return null;
   fs.mkdirSync(dir.abs, { recursive: true });
   const name = freeName(dir.abs, path.basename(from));
   fs.copyFileSync(from, path.join(dir.abs, name), fs.constants.COPYFILE_EXCL);

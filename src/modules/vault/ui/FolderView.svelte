@@ -1,6 +1,6 @@
 <!-- Вкладка «Файлы»: содержимое выбранной папки хранилища. -->
 <script lang="ts">
-  import { ChevronRight, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
+  import { ChevronRight, ClipboardPaste, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { findFolder, folderRole } from '../../../shared/vault';
@@ -30,6 +30,15 @@
   const primary = $derived(role === 'characters' ? 'portrait' : role === 'maps' ? 'map' : 'background');
   const PRIMARY_HINT: Record<string, string> = { portrait: 'портретом', map: 'картой', background: 'на весь экран' };
 
+  // ⌘V во вкладке «Файлы» — вставить картинку из буфера в открытую папку (если фокус не в поле ввода).
+  function onkeydown(e: KeyboardEvent) {
+    const t = e.target as HTMLElement | null;
+    if (!(e.metaKey || e.ctrlKey) || e.code !== 'KeyV' || !folder) return;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    e.preventDefault();
+    dispatch('vault', 'pasteImage', { folder: folder.path });
+  }
+
   function go(path: string) {
     ui.folder = path;
     // Раскрываем ветку в дереве, чтобы было видно, где мы.
@@ -37,6 +46,8 @@
     for (let i = 1; i < parts.length; i++) ui.expanded[parts.slice(0, i).join('/')] = true;
   }
 </script>
+
+<svelte:window {onkeydown} />
 
 {#if folder}
   <div class="view">
@@ -66,6 +77,9 @@
           onclick={() => dispatch('adventures', 'mark', { path: folder.path })}><Map size={14} /> Сделать приключением</button
         >
       {/if}
+      <button class="btn" title="Вставить картинку из буфера обмена (⌘V)" onclick={() => dispatch('vault', 'pasteImage', { folder: folder.path })}>
+        <ClipboardPaste size={14} /> Вставить
+      </button>
       <button class="btn" onclick={() => dispatch('vault', 'importFiles', { folder: folder.path })}>
         <FilePlus size={14} /> Добавить файлы…
       </button>
