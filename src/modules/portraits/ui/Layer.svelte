@@ -3,9 +3,14 @@
   import { fade, scale } from 'svelte/transition';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { assetUrl } from '../../../shared/vault';
+  import { onMount } from 'svelte';
   import { caption } from '../library';
+  import { connectCardNames } from './cardNames.svelte';
 
   let { ms }: ModuleProps<'portraits'> = $props();
+
+  // Подписи берут названия карточек: окну игроков тоже нужен их список.
+  onMount(connectCardNames);
 
   const n = $derived(ms.onScreen.length);
   // Раскладка: до 4 портретов в один ряд, дальше в два ряда.

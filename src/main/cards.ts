@@ -15,7 +15,7 @@ import * as path from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
 import { app, BrowserWindow } from 'electron';
 import type { Card, CardRef, CardScope, CardSummary } from '../shared/cards';
-import { defaultSide, refKey } from '../shared/cards';
+import { cardAsset, defaultSide, refKey } from '../shared/cards';
 import { folderRole, roleFolders, type VaultFolder } from '../shared/vault';
 import { systemOf } from '../systems';
 import { freeName, writeJsonAtomic } from './files';
@@ -225,6 +225,7 @@ function summarize(ref: CardRef, c: Card): CardSummary {
     side: c.side ?? defaultSide(c.kind),
     tags: c.tags,
     portrait: c.portraits[0] ?? null,
+    images: c.portraits.map((p) => cardAsset(ref.scope, p)),
     subtitle,
     rank,
     combat,

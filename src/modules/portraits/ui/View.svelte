@@ -9,11 +9,13 @@
   import CardBar from './CardBar.svelte';
   import { onMount } from 'svelte';
   import { connectCards } from '../../bestiary/ui/cards.svelte';
+  import { connectCardNames } from './cardNames.svelte';
   import { ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'portraits'> = $props();
 
   onMount(connectCards);
+  onMount(connectCardNames);
 
   const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []);
   const visible = $derived.by(() => {

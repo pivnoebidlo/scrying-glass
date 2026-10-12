@@ -4,9 +4,11 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { assetUrl } from '../../../shared/vault';
-  import { caption } from '../library';
+  import { onMount } from 'svelte';
+  import { autoCaption, connectCardNames } from './cardNames.svelte';
 
   let { ms }: ModuleProps<'portraits'> = $props();
+  onMount(connectCardNames);
 </script>
 
 {#if ms.onScreen.length === 0}
@@ -16,7 +18,15 @@
     {#each ms.onScreen as path (path)}
       <li>
         <img src={assetUrl(path)} alt="" />
-        <span class="name">{caption(ms, path) || 'Без подписи'}</span>
+        <input
+          class="name"
+          type="text"
+          title="Подпись на экране игроков. Оставьте пустым — будет название карточки или имя файла"
+          placeholder={autoCaption(path)}
+          value={ms.names[path] ?? ''}
+          onchange={(e) => dispatch('portraits', 'rename', { path, name: e.currentTarget.value })}
+          onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+        />
         <button class="icon-btn" title="Убрать с экрана" onclick={() => dispatch('portraits', 'toggle', { path })}>
           <X size={14} />
         </button>
@@ -47,9 +57,19 @@
   .name {
     flex: 1;
     min-width: 0;
-    overflow: hidden;
+    padding: 3px 6px;
+    border: 1px solid transparent;
+    background: transparent;
     text-overflow: ellipsis;
-    white-space: nowrap;
+  }
+  .name::placeholder {
+    color: var(--text-normal);
+  }
+  .name:hover {
+    border-color: var(--border);
+  }
+  .name:focus::placeholder {
+    color: var(--text-faint);
   }
   .btn {
     justify-content: center;

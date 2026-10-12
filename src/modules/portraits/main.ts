@@ -38,8 +38,12 @@ export default defineModule({
       return { ...s, onScreen: [] };
     },
 
+    // Подпись вручную. Пустая — убрать: подпись снова возьмётся из карточки или имени файла.
     rename(s, { path, name }: { path: string; name: string }) {
-      return { ...s, names: { ...s.names, [path]: name } };
+      const names = { ...s.names };
+      if (name.trim()) names[path] = name.trim();
+      else delete names[path];
+      return { ...s, names };
     },
 
     setShowNames(s, { value }: { value: boolean }) {

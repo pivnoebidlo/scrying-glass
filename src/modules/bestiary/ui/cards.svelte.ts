@@ -215,9 +215,10 @@ class Bestiary {
     openTab('bestiary');
   }
 
-  // Карточка хранилища, у которой эта картинка — основной портрет.
+  // Своя карточка, у которой эта картинка — один из портретов (основной — в первую очередь).
   cardFor(portrait: string): CardSummary | undefined {
-    return this.all.find((c) => c.ref.scope === 'vault' && c.portrait === portrait);
+    const own = this.all.filter((c) => c.ref.scope !== 'srd' && c.images.includes(portrait));
+    return own.find((c) => c.images[0] === portrait) ?? own[0];
   }
 
   async edit(ref: CardRef) {

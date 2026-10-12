@@ -45,13 +45,9 @@
   let count = $state(1);
   let rollHp = $state(false);
 
-  // Портрет на экран игроков и обратно. Подпись — название карточки, если у картинки нет своей.
-  async function togglePortrait(asset: string, name: string) {
-    if (!app.portraits.onScreen.includes(asset) && !app.portraits.names[asset]) {
-      await dispatch('portraits', 'rename', { path: asset, name });
-    }
-    await dispatch('portraits', 'toggle', { path: asset });
-  }
+  // Портрет на экран игроков и обратно. Подпись — название карточки (если у картинки нет своей), её
+  // подставляют сами портреты.
+  const togglePortrait = (asset: string) => dispatch('portraits', 'toggle', { path: asset });
 
   // Сторона в бою: из карточки, но перед добавлением её можно поменять.
   let side = $state<CardSide | null>(null);
@@ -83,7 +79,7 @@
               <button
                 class="pic"
                 title={onScreen ? 'Убрать с экрана игроков' : 'Показать игрокам'}
-                onclick={() => togglePortrait(asset, card.name)}
+                onclick={() => togglePortrait(asset)}
               ><img src={cardImageUrl(ref.scope, p)} alt="" /></button>
               <div class="p-actions">
                 {#if i > 0}<button class="icon-btn" title="Сделать основным" onclick={() => bestiary.makeMainPortrait(ref, p)}><Star size={12} /></button>{/if}

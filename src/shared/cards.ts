@@ -63,6 +63,8 @@ export interface CardSummary {
   side: CardSide;
   tags: string[];
   portrait: string | null;
+  // Все портреты карточки как пути для экрана игроков (путь хранилища или «library:…»).
+  images: string[];
   // Строка под названием: «Маленькая фея (гоблиноид) · ПО 1/4».
   subtitle: string;
   // Числа для сортировки и фильтров (у D&D — показатель опасности).

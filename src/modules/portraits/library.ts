@@ -1,7 +1,6 @@
 // Библиотека портретов: все папки characters/персонажи хранилища, на любой глубине.
-import { allFiles, dirname, prettyName, roleFolders, type FolderRole, type VaultFile, type VaultFolder } from '../../shared/vault';
+import { allFiles, dirname, roleFolders, type FolderRole, type VaultFile, type VaultFolder } from '../../shared/vault';
 import { NO_ADVENTURE, placeOrder, placeTitle, visibleIn, type AdventuresState } from '../../shared/adventures';
-import type { PortraitsState } from './types';
 
 const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
 
@@ -28,4 +27,5 @@ export function imageGroups(tree: VaultFolder, vaultName: string, role: FolderRo
 export const characterGroups = (tree: VaultFolder, vaultName: string, adv?: AdventuresState) =>
   imageGroups(tree, vaultName, 'characters', adv);
 
-export const caption = (ms: PortraitsState, path: string) => ms.names[path] ?? prettyName(path);
+// Подпись портрета — в ui/cardNames.svelte.ts: она учитывает названия карточек.
+export { caption } from './ui/cardNames.svelte';
