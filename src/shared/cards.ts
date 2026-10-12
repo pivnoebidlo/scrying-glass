@@ -6,7 +6,7 @@ import { assetUrl, libraryAsset } from './vault';
 export type CardKind = 'monster' | 'npc' | 'character';
 
 // Где лежит карточка: встроенный SRD (только чтение), библиотека пользователя (общая для всех кампаний)
-// или текущее хранилище (карточки кампании).
+// или текущее хранилище (папки бестиария приключений).
 export type CardScope = 'srd' | 'library' | 'vault';
 
 export interface CardRef {
@@ -52,6 +52,8 @@ export interface CardSummary {
   lang: string;
   name: string;
   origin?: Card['origin'];
+  // Для карточек хранилища: папка бестиария, где лежит файл (путь внутри хранилища).
+  folder?: string;
   tags: string[];
   portrait: string | null;
   // Строка под названием: «Маленькая фея (гоблиноид) · ПО 1/4».

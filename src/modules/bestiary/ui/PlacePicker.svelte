@@ -1,0 +1,184 @@
+<!-- Окно «Где хранить?»: библиотека (для всех кампаний) или папка бестиария приключения в хранилище.
+     Если подходящей папки ещё нет, её можно создать в любой папке хранилища. -->
+<script lang="ts">
+  import { FolderPlus, Library, Skull, X } from '@lucide/svelte';
+  import type { AppState } from '../../../shared/types';
+  import { roleFolders, walk } from '../../../shared/vault';
+  import { samePlace, type Place, type PlaceRequest } from './cards.svelte';
+
+  let { app, request }: { app: AppState; request: PlaceRequest } = $props();
+
+  const NEW_FOLDER = 'monsters';
+
+  const folders = $derived(app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name) : []);
+  // Где можно создать новую папку бестиария: любая папка хранилища, кроме уже бестиарных.
+  const parents = $derived.by(() => {
+    const out: { path: string; title: string }[] = [];
+    if (app.vault.tree) {
+      walk(app.vault.tree, (f) => {
+        if (!folders.some((b) => f.path === b.folder.path || f.path.startsWith(b.folder.path + '/'))) {
+          out.push({ path: f.path, title: f.path ? f.path.split('/').join(' / ') : `${app.vault.name} (корень)` });
+        }
+      });
+    }
+    return out;
+  });
+  let parent = $state('');
+
+  const pick = (p: Place) => request.resolve(p);
+  const disabled = (p: Place) => samePlace(p, request.exclude);
+</script>
+
+<svelte:window onkeydown={(e) => e.key === 'Escape' && request.resolve(null)} />
+
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+<div class="backdrop" onclick={(e) => e.target === e.currentTarget && request.resolve(null)}>
+  <div class="modal" role="dialog" aria-modal="true" aria-label={request.title}>
+    <header>
+      <h3>{request.title}</h3>
+      <button class="icon-btn" title="Отмена (Esc)" onclick={() => request.resolve(null)}><X size={16} /></button>
+    </header>
+
+    <div class="body">
+      {#if request.library}
+        <button class="place" disabled={disabled({ scope: 'library' })} onclick={() => pick({ scope: 'library' })}>
+          <Library size={16} />
+          <span class="text">
+            <span class="name">Библиотека</span>
+            <span class="desc">Доступна во всех кампаниях</span>
+          </span>
+        </button>
+      {/if}
+
+      <div class="section">Хранилище «{app.vault.name}»</div>
+      {#each folders as f (f.folder.path)}
+        {@const p = { scope: 'vault', folder: f.folder.path } as Place}
+        <button class="place" disabled={disabled(p)} onclick={() => pick(p)}>
+          <Skull size={16} />
+          <span class="text">
+            <span class="name">{f.title}</span>
+            <span class="desc">{f.folder.path}{disabled(p) ? ' — карточка уже здесь' : ''}</span>
+          </span>
+        </button>
+      {:else}
+        <p class="faint hint">
+          В хранилище пока нет папок для карточек. Их узнают по названию: <code>monsters</code>, <code>монстры</code>,
+          <code>bestiary</code>, <code>бестиарий</code>, <code>creatures</code>, <code>существа</code>.
+        </p>
+      {/each}
+
+      <div class="new">
+        <FolderPlus size={16} />
+        <span>Новая папка <code>{NEW_FOLDER}</code> в</span>
+        <select bind:value={parent}>
+          {#each parents as p (p.path)}<option value={p.path}>{p.title}</option>{/each}
+        </select>
+        <button class="btn" onclick={() => pick({ scope: 'vault', folder: parent ? `${parent}/${NEW_FOLDER}` : NEW_FOLDER })}>
+          {request.action}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.55);
+  }
+  .modal {
+    display: flex;
+    flex-direction: column;
+    width: min(560px, calc(100vw - 80px));
+    max-height: calc(100vh - 80px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    background: var(--bg-primary);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+  header {
+    display: flex;
+    align-items: center;
+    padding: 12px 12px 8px 16px;
+  }
+  h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 15px;
+  }
+  .body {
+    padding: 0 12px 14px;
+    overflow: auto;
+  }
+  .section {
+    margin: 10px 4px 4px;
+    color: var(--text-faint);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .place {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: var(--radius-m);
+    background: none;
+    color: var(--text-muted);
+    text-align: left;
+    cursor: pointer;
+  }
+  .place:hover:not(:disabled) {
+    background: var(--bg-hover);
+    color: var(--text-normal);
+  }
+  .place:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+  .text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .name {
+    color: var(--text-normal);
+  }
+  .desc {
+    overflow: hidden;
+    color: var(--text-faint);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .hint {
+    margin: 4px 10px;
+    font-size: 12px;
+  }
+  .new {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .new select {
+    flex: 1;
+    min-width: 160px;
+  }
+  code {
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--bg-active);
+  }
+</style>

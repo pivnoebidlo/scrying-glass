@@ -5,11 +5,14 @@
   import { langName, sameRef } from '../../../shared/cards';
   import { systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { store } from '../../../renderer/lib/store.svelte';
-  import { openTab } from '../../../renderer/lib/nav';
+  import { roleFolders } from '../../../shared/vault';
   import { bestiary, connectCards } from './cards.svelte';
 
-  let {}: ModuleProps<'bestiary'> = $props();
+  let { app }: ModuleProps<'bestiary'> = $props();
+
+  // Папки бестиария хранилища: для фильтра и подписей.
+  const folders = $derived(app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name) : []);
+  const folderTitle = (path: string) => folders.find((f) => f.folder.path === path)?.title ?? path;
 
   onMount(connectCards);
 
@@ -30,22 +33,20 @@
 
   async function importCards() {
     menu = false;
-    const n = await window.api.importCards();
-    if (n !== null) say(`Импортировано карточек: ${n}`);
+    const text = await bestiary.importFiles();
+    if (text) say(text);
   }
 
-  async function exportScope(scope: 'vault' | 'library', name: string) {
+  async function exportCards() {
     menu = false;
-    const n = await window.api.exportCards({ scope, name });
-    if (n === null && !bestiary.all.some((c) => c.ref.scope === scope)) say('Здесь пока нет карточек');
-    else if (n !== null) say(`Экспортировано карточек: ${n}`);
+    const text = await bestiary.exportPlace(app.vault.name, folderTitle);
+    if (text) say(text);
   }
 
-  function create(scope: 'vault' | 'library') {
+  function create() {
     menu = false;
     if (bestiary.draft && !bestiary.cancel()) return;
-    bestiary.create(scope);
-    openTab('bestiary');
+    bestiary.create();
   }
   $effect(() => {
     void bestiary.visible;
@@ -65,12 +66,10 @@
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <div class="menu-backdrop" onclick={() => (menu = false)}></div>
         <div class="menu">
-          <button onclick={() => create('vault')}><FilePlus size={14} /> Новая карточка в кампании</button>
-          <button onclick={() => create('library')}><FilePlus size={14} /> Новая карточка в библиотеке</button>
+          <button onclick={create}><FilePlus size={14} /> Новая карточка…</button>
           <div class="sep"></div>
           <button onclick={importCards}><Download size={14} /> Импорт из файла…</button>
-          <button onclick={() => exportScope('vault', `Карточки — ${store.state.vault.name}`)}><Upload size={14} /> Экспорт карточек кампании…</button>
-          <button onclick={() => exportScope('library', 'Библиотека карточек')}><Upload size={14} /> Экспорт библиотеки…</button>
+          <button onclick={exportCards}><Upload size={14} /> Экспорт в файл…</button>
         </div>
       {/if}
     </div>
@@ -89,7 +88,8 @@
       <option value="all">Везде</option>
       <option value="srd">SRD</option>
       <option value="library">Библиотека</option>
-      <option value="vault">Кампания</option>
+      <option value="vault">Хранилище</option>
+      {#each folders as fl (fl.folder.path)}<option value="vault:{fl.folder.path}">· {fl.title}</option>{/each}
     </select>
   </div>
 </div>
@@ -105,7 +105,7 @@
             class="tag">{c.lang}</span
           >{/if}</span
       >
-      <span class="sub">{c.subtitle}</span>
+      <span class="sub">{c.subtitle}{#if c.folder !== undefined && !f.scope.startsWith('vault:')} · {folderTitle(c.folder)}{/if}</span>
     </button>
   {:else}
     <p class="faint empty">Ничего не нашлось.</p>

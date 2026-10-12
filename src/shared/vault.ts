@@ -29,12 +29,16 @@ export interface VaultState {
 }
 
 // Назначение папки угадывается по названию. Это подсказка, а не требование.
-export type FolderRole = 'characters' | 'maps' | 'music';
+// Все варианты названий — здесь (потом их можно будет менять в настройках).
+export type FolderRole = 'characters' | 'maps' | 'music' | 'backgrounds' | 'bestiary';
 
-const ROLES: Record<FolderRole, string[]> = {
+export const ROLES: Record<FolderRole, string[]> = {
   characters: ['characters', 'персонажи', 'npc', 'нпс'],
   maps: ['maps', 'карты'],
   music: ['music', 'музыка', 'audio', 'звуки'],
+  backgrounds: ['backgrounds', 'фоны', 'locations', 'локации'],
+  // Карточки монстров и NPC (файлы .json), портреты к ним можно класть рядом.
+  bestiary: ['bestiary', 'бестиарий', 'monsters', 'монстры', 'creatures', 'существа'],
 };
 
 export function folderRole(name: string): FolderRole | null {
@@ -58,6 +62,28 @@ export const dirname = (p: string) => (p.includes('/') ? p.slice(0, p.lastIndexO
 function extname(name: string) {
   const i = name.lastIndexOf('.');
   return i > 0 ? name.slice(i).toLowerCase() : '';
+}
+
+// Папки с данной ролью на любой глубине и где они лежат: «Проклятие Страда / Глава 1» (корень — название
+// хранилища). Вложенные папки внутри такой папки входят в неё же. Порядок — по пути.
+export interface RoleFolder {
+  folder: VaultFolder;
+  title: string;
+}
+
+export function roleFolders(tree: VaultFolder, role: FolderRole, vaultName: string): RoleFolder[] {
+  const out: RoleFolder[] = [];
+  const visit = (f: VaultFolder) => {
+    if (f.path && folderRole(f.name) === role) {
+      const where = dirname(f.path);
+      out.push({ folder: f, title: where ? where.split('/').join(' / ') : vaultName });
+      return;
+    }
+    f.folders.forEach(visit);
+  };
+  visit(tree);
+  const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
+  return out.sort((a, b) => collator.compare(a.title, b.title));
 }
 
 // Обходит папку и все вложенные.

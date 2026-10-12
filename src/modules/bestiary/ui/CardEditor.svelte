@@ -3,7 +3,8 @@
 <script lang="ts">
   import { FolderOpen, HardDrive, Save, Star, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
-  import { LANGUAGES, cardImageUrl, langName, type CardKind, type CardScope } from '../../../shared/cards';
+  import { LANGUAGES, cardImageUrl, langName, type CardKind } from '../../../shared/cards';
+  import { roleFolders } from '../../../shared/vault';
   import { systemOf, systems } from '../../../systems';
   import { statsEditor, statsView } from '../../../systems/ui';
   import { bestiary, type Draft } from './cards.svelte';
@@ -12,7 +13,12 @@
 
   let { app, draft }: { app: AppState; draft: Draft } = $props();
 
-  const SCOPES: Record<CardScope, string> = { srd: 'SRD', library: 'в библиотеке', vault: 'в кампании' };
+  // «в библиотеке», «в Тыквенный фестиваль / monsters»
+  const placeText = $derived.by(() => {
+    if (draft.scope === 'library') return 'в библиотеке';
+    const f = app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name).find((x) => x.folder.path === draft.folder) : null;
+    return `в папке ${f ? `${f.title} / ${f.folder.name}` : draft.folder}`;
+  });
   const KINDS: Record<CardKind, string> = { monster: 'Монстр', npc: 'NPC', character: 'Персонаж' };
 
   const card = $derived(draft.card);
@@ -35,7 +41,7 @@
 
   async function addImage(vaultPath?: string) {
     picking = false;
-    const p = await window.api.addCardImage(draft.scope, vaultPath);
+    const p = await window.api.addCardImage(draft.scope, vaultPath, draft.folder);
     if (p && !card.portraits.includes(p)) card.portraits.push(p);
   }
 
@@ -79,7 +85,7 @@
           ? `Перевод на ${langName(card.lang)}`
           : card.origin
             ? 'Копия карточки'
-            : 'Новая карточка'} <span class="faint">{SCOPES[draft.scope]}</span>
+            : 'Новая карточка'} <span class="faint">{placeText}</span>
     </div>
     {#if error}<span class="error">{error}</span>{/if}
     <div class="spacer"></div>
@@ -171,7 +177,7 @@
             <span class="faint hint">
               {draft.scope === 'library'
                 ? 'Картинки копируются в папку библиотеки, чтобы карточка работала в любой кампании.'
-                : 'Картинки с диска копируются в служебную папку хранилища.'}
+                : 'Картинки с диска копируются в папку карточки.'}
             </span>
           </div>
         </div>

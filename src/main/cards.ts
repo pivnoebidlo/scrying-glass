@@ -1,83 +1,128 @@
-// Карточки: встроенный SRD (только чтение), библиотека пользователя и карточки текущего хранилища.
+// Карточки: встроенный SRD (только чтение), библиотека пользователя и карточки хранилища.
 // В общее состояние приложения они не входят: его рассылают во все окна после каждого действия,
 // а карточек — сотни. Окна получают краткий список и запрашивают полную карточку по ссылке.
 //
-// На диске: <библиотека>/cards/<id>.json и <хранилище>/.scrying-glass/cards/<id>.json.
-// Картинки карточек: в библиотеке — <библиотека>/images/, в хранилище — любые картинки хранилища,
-// а добавленные с диска копируются в <хранилище>/.scrying-glass/images/. Пути — от корня библиотеки
-// или хранилища, через «/».
+// На диске:
+// - библиотека: <библиотека>/cards/*.json, картинки — <библиотека>/images/;
+// - хранилище: файлы *.json в папках бестиария (monsters / монстры / bestiary / …) на любой глубине —
+//   у каждого приключения свои. Картинки — любые картинки хранилища, а добавленные с диска копируются
+//   в папку карточки.
+// Пути картинок — от корня библиотеки или хранилища, через «/».
+// id карточки хранится в её файле; если его нет или он повторяется (файл скопировали руками), берётся
+// производный от пути — и записывается в файл при следующем сохранении.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { app, BrowserWindow } from 'electron';
 import type { Card, CardRef, CardScope, CardSummary } from '../shared/cards';
 import { refKey } from '../shared/cards';
+import { folderRole, roleFolders, type VaultFolder } from '../shared/vault';
 import { systemOf } from '../systems';
 import { freeName, writeJsonAtomic } from './files';
 
 const cards = new Map<string, Card>();
+// Файл каждой своей карточки (ключ — refKey).
+const files = new Map<string, string>();
 let summaries: CardSummary[] | null = null;
 
 let libraryRoot: string | null = null;
 let vaultRoot: string | null = null;
-let vaultData = '';
+let vaultTree: VaultFolder | null = null;
 
 // Корень места хранения: от него считаются пути картинок.
 export const scopeRoot = (scope: CardScope) => (scope === 'library' ? libraryRoot : scope === 'vault' ? vaultRoot : null);
 
-function cardsDir(scope: CardScope): string | null {
-  if (scope === 'library') return libraryRoot && path.join(libraryRoot, 'cards');
-  if (scope === 'vault') return vaultRoot && path.join(vaultRoot, vaultData, 'cards');
-  return null;
+// Путь внутри корня (через «/») -> абсолютный. null — выходит за пределы корня.
+function inside(root: string | null, rel: string): string | null {
+  if (!root) return null;
+  const abs = path.resolve(root, ...rel.split('/'));
+  return abs === root || abs.startsWith(root + path.sep) ? abs : null;
 }
 
-function imagesDir(scope: CardScope): { abs: string; rel: string } | null {
-  if (scope === 'library' && libraryRoot) return { abs: path.join(libraryRoot, 'images'), rel: 'images' };
-  if (scope === 'vault' && vaultRoot) return { abs: path.join(vaultRoot, vaultData, 'images'), rel: `${vaultData}/images` };
-  return null;
-}
+const toRel = (root: string, abs: string) => path.relative(root, abs).split(path.sep).join('/');
 
 // Встроенный бестиарий лежит рядом с приложением: resources/srd/<система>.json
 function loadBuiltin() {
   const dir = path.join(app.getAppPath(), 'resources', 'srd');
-  let files: string[] = [];
+  let list: string[] = [];
   try {
-    files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
+    list = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
   } catch {
     console.error('Встроенный бестиарий не найден:', dir);
   }
-  for (const f of files) {
+  for (const f of list) {
     try {
-      const list = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) as Card[];
-      for (const c of list) cards.set(refKey({ scope: 'srd', id: c.id }), c);
+      const data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) as Card[];
+      for (const c of data) cards.set(refKey({ scope: 'srd', id: c.id }), c);
     } catch (e) {
       console.error('Не прочитался встроенный бестиарий', f, e);
     }
   }
 }
 
-// Папка с карточками: один файл — одна карточка. Битые файлы пропускаются, но не трогаются.
-// id карточки — имя файла: так копия файла под другим именем не столкнётся с оригиналом.
-function loadScope(scope: CardScope) {
-  for (const key of [...cards.keys()]) if (key.startsWith(scope + ':')) cards.delete(key);
-  const dir = cardsDir(scope);
-  if (!dir) return;
-  let files: string[] = [];
+// Все *.json в папке и вложенных (скрытые пропускаются).
+function jsonFiles(dir: string, depth = 0): string[] {
+  let entries: fs.Dirent[] = [];
   try {
-    files = fs.readdirSync(dir).filter((f) => f.endsWith('.json') && !f.startsWith('.'));
+    entries = fs.readdirSync(dir, { withFileTypes: true });
   } catch {
-    return; // папки ещё нет — карточек тоже
+    return [];
   }
-  for (const f of files) {
-    try {
-      const c = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) as Card;
-      if (!c || typeof c !== 'object' || c.stats === undefined) continue;
-      const id = f.slice(0, -'.json'.length);
-      cards.set(refKey({ scope, id }), { ...c, id, portraits: c.portraits ?? [], tags: c.tags ?? [], notes: c.notes ?? '' });
-    } catch (e) {
-      console.error('Не прочитана карточка', path.join(dir, f), e);
+  const out: string[] = [];
+  for (const e of entries) {
+    if (e.name.startsWith('.')) continue;
+    const abs = path.join(dir, e.name);
+    if (e.isDirectory() && depth < 6) out.push(...jsonFiles(abs, depth + 1));
+    else if (e.isFile() && e.name.toLowerCase().endsWith('.json')) out.push(abs);
+  }
+  return out;
+}
+
+const validId = (id: unknown): id is string => typeof id === 'string' && /^[\w.-]{1,80}$/.test(id);
+const pathId = (root: string, abs: string) =>
+  `${slug(path.basename(abs, '.json')) || 'card'}-${createHash('sha1').update(toRel(root, abs)).digest('hex').slice(0, 6)}`;
+
+// Читает карточки из файлов. Не карточки (другие JSON) и битые файлы пропускаются, но не трогаются.
+function loadFiles(scope: CardScope, root: string, list: string[]) {
+  for (const key of [...cards.keys()]) {
+    if (key.startsWith(scope + ':')) {
+      cards.delete(key);
+      files.delete(key);
     }
   }
+  for (const abs of list) {
+    try {
+      const c = JSON.parse(fs.readFileSync(abs, 'utf8')) as Card;
+      if (!c || typeof c !== 'object' || typeof c.name !== 'string' || c.stats === undefined) continue;
+      let id = validId(c.id) ? c.id : pathId(root, abs);
+      if (cards.has(refKey({ scope, id }))) id = pathId(root, abs);
+      const key = refKey({ scope, id });
+      cards.set(key, { ...c, id, portraits: c.portraits ?? [], tags: c.tags ?? [], notes: c.notes ?? '' });
+      files.set(key, abs);
+    } catch (e) {
+      console.error('Не прочитана карточка', abs, e);
+    }
+  }
+}
+
+function loadLibrary() {
+  if (libraryRoot) loadFiles('library', libraryRoot, jsonFiles(path.join(libraryRoot, 'cards')));
+}
+
+// Папки, куда приложение только что записало карточки: в дереве хранилища они появятся только после
+// пересканирования (новая папка «monsters»), а карточки должны быть видны сразу.
+const written = new Set<string>();
+
+// Папки бестиария хранилища (пути внутри хранилища).
+function bestiaryFolders(): string[] {
+  const known = vaultTree ? roleFolders(vaultTree, 'bestiary', '').map((r) => r.folder.path) : [];
+  const extra = [...written].filter((p) => !known.some((k) => p === k || p.startsWith(k + '/')));
+  return [...known, ...extra];
+}
+
+function loadVault() {
+  const list = vaultRoot ? bestiaryFolders().flatMap((p) => jsonFiles(inside(vaultRoot, p)!)) : [];
+  loadFiles('vault', vaultRoot ?? '', list);
 }
 
 function changed() {
@@ -92,17 +137,18 @@ export function initCards(library: string) {
 
 export function setLibrary(root: string) {
   libraryRoot = root;
-  loadScope('library');
+  loadLibrary();
   changed();
 }
 
 export const libraryPath = () => libraryRoot;
 
-// Открыто другое хранилище (null — закрыто).
-export function setCardsVault(root: string | null, dataDir: string) {
+// Открыто другое хранилище (null — закрыто) или в нём изменились файлы.
+export function setCardsVault(root: string | null, tree: VaultFolder | null) {
+  if (root !== vaultRoot) written.clear();
   vaultRoot = root;
-  vaultData = dataDir;
-  loadScope('vault');
+  vaultTree = tree;
+  loadVault();
   changed();
 }
 
@@ -118,6 +164,7 @@ function summarize(ref: CardRef, c: Card): CardSummary {
   } catch {
     /* карточка заполнена не до конца — покажем без подробностей */
   }
+  const file = files.get(refKey(ref));
   return {
     ref,
     kind: c.kind,
@@ -125,12 +172,19 @@ function summarize(ref: CardRef, c: Card): CardSummary {
     lang: c.lang,
     name: c.name,
     ...(c.origin ? { origin: c.origin } : {}),
+    ...(ref.scope === 'vault' && file && vaultRoot ? { folder: cardFolder(file) } : {}),
     tags: c.tags,
     portrait: c.portraits[0] ?? null,
     subtitle,
     rank,
     combat,
   };
+}
+
+// Папка бестиария, в которой лежит файл карточки хранилища (путь внутри хранилища).
+function cardFolder(file: string): string {
+  const rel = toRel(vaultRoot!, file);
+  return bestiaryFolders().find((p) => rel.startsWith(p + '/')) ?? toRel(vaultRoot!, path.dirname(file));
 }
 
 export function listCards(): CardSummary[] {
@@ -154,71 +208,110 @@ const TRANSLIT: Record<string, string> = {
   ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
 };
 
-// «Вождь огров» -> «vozhd-ogrov-3f9a»: читаемое имя файла и случайный хвост, чтобы не столкнуться.
-function newId(scope: CardScope, name: string): string {
-  const slug = [...name.toLowerCase()]
+function slug(name: string): string {
+  return [...name.toLowerCase()]
     .map((ch) => TRANSLIT[ch] ?? ch)
     .join('')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 40);
+}
+
+// «Вождь огров» -> «vozhd-ogrov-3f9a»: читаемо и со случайным хвостом, чтобы не столкнуться.
+function newId(scope: CardScope, name: string): string {
   for (;;) {
-    const id = `${slug || 'card'}-${randomBytes(2).toString('hex')}`;
+    const id = `${slug(name) || 'card'}-${randomBytes(2).toString('hex')}`;
     if (!cards.has(refKey({ scope, id }))) return id;
   }
 }
 
-// Сохраняет карточку в библиотеку или хранилище. Пустой id — новая карточка. Возвращает ссылку на неё.
-export function saveCard(scope: CardScope, card: Card): CardRef {
-  const dir = cardsDir(scope);
-  if (scope === 'srd' || !dir) throw new Error('Сюда сохранять нельзя');
-  const id = card.id && /^[\w.-]+$/.test(card.id) ? card.id : newId(scope, card.name);
-  writeJsonAtomic(path.join(dir, `${id}.json`), { ...card, id, format: 1 });
-  loadScope(scope);
+// Имя файла новой карточки — её название: «Тыквенный ужас.json».
+const fileName = (dir: string, name: string) =>
+  freeName(dir, `${name.replace(/[/\\:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Карточка'}.json`);
+
+// Папка для новой карточки: в библиотеке — cards/, в хранилище — выбранная папка бестиария.
+function targetDir(scope: CardScope, folder?: string): string | null {
+  if (scope === 'library') return libraryRoot && path.join(libraryRoot, 'cards');
+  if (scope === 'vault') return folder !== undefined ? inside(vaultRoot, folder) : null;
+  return null;
+}
+
+// Запомнить папку записанного файла хранилища (см. written).
+function remember(scope: CardScope, file: string) {
+  if (scope === 'vault' && vaultRoot) written.add(toRel(vaultRoot, path.dirname(file)));
+}
+
+function reload(scope: CardScope) {
+  if (scope === 'library') loadLibrary();
+  else if (scope === 'vault') loadVault();
+}
+
+// Сохраняет карточку. Уже существующая (id есть в этом месте) пишется в свой файл, новая — в папку folder
+// (для хранилища; папка создаётся, если её нет). Возвращает ссылку на карточку.
+export function saveCard(scope: CardScope, card: Card, folder?: string): CardRef {
+  if (scope === 'srd') throw new Error('Встроенные карточки только для чтения');
+  const existing = card.id ? files.get(refKey({ scope, id: card.id })) : undefined;
+  const id = existing ? card.id : newId(scope, card.name);
+  let file = existing;
+  if (!file) {
+    const dir = targetDir(scope, folder);
+    if (!dir) throw new Error('Не выбрана папка для карточки');
+    fs.mkdirSync(dir, { recursive: true });
+    file = path.join(dir, fileName(dir, card.name));
+  }
+  writeJsonAtomic(file, { ...card, id, format: 1 });
+  remember(scope, file);
+  reload(scope);
   changed();
   return { scope, id };
 }
 
-// Удаляет карточку (только файл карточки: картинки остаются на месте).
+// Удаляет файл карточки (картинки остаются на месте).
 export function deleteCard(ref: CardRef) {
-  const dir = cardsDir(ref.scope);
-  if (ref.scope === 'srd' || !dir || !/^[\w.-]+$/.test(ref.id)) return;
-  fs.rmSync(path.join(dir, `${ref.id}.json`), { force: true });
-  loadScope(ref.scope);
+  const file = files.get(refKey(ref));
+  if (!file) return;
+  fs.rmSync(file, { force: true });
+  reload(ref.scope);
   changed();
 }
 
-// Добавляет картинку к карточке: копирует файл в папку картинок места хранения. Возвращает путь от его корня.
+// Папка, куда класть картинки карточки: в библиотеке — images/, в хранилище — папка карточки.
+function imagesDir(scope: CardScope, folder?: string): { abs: string; rel: string } | null {
+  if (scope === 'library' && libraryRoot) return { abs: path.join(libraryRoot, 'images'), rel: 'images' };
+  const abs = scope === 'vault' && folder !== undefined ? inside(vaultRoot, folder) : null;
+  return abs ? { abs, rel: folder! } : null;
+}
+
+// Добавляет картинку к карточке: копирует файл в папку картинок. Возвращает путь от корня места хранения.
 // Картинка хранилища для карточки хранилища не копируется — достаточно её пути.
-export function importCardImage(scope: CardScope, src: { file?: string; vaultPath?: string }): string | null {
+export function importCardImage(scope: CardScope, src: { file?: string; vaultPath?: string }, folder?: string): string | null {
   if (scope === 'vault' && src.vaultPath) return src.vaultPath;
-  const from = src.file ?? (src.vaultPath && vaultRoot ? path.join(vaultRoot, ...src.vaultPath.split('/')) : null);
-  const dir = imagesDir(scope);
+  const from = src.file ?? (src.vaultPath ? inside(vaultRoot, src.vaultPath) : null);
+  const dir = imagesDir(scope, folder);
   if (!from || !dir || !fs.existsSync(from)) return null;
   fs.mkdirSync(dir.abs, { recursive: true });
   const name = freeName(dir.abs, path.basename(from));
   fs.copyFileSync(from, path.join(dir.abs, name), fs.constants.COPYFILE_EXCL);
-  return `${dir.rel}/${name}`;
+  return dir.rel ? `${dir.rel}/${name}` : name;
 }
 
 // Файл библиотеки по пути от её корня (для протокола sg-asset://l/…). null — вне библиотеки.
-export function resolveInLibrary(rel: string): string | null {
-  if (!libraryRoot) return null;
-  const abs = path.resolve(libraryRoot, ...rel.split('/'));
-  return abs.startsWith(libraryRoot + path.sep) ? abs : null;
-}
+export const resolveInLibrary = (rel: string) => {
+  const abs = inside(libraryRoot, rel);
+  return abs === libraryRoot ? null : abs;
+};
 
-// Абсолютный путь картинки карточки.
-function imageFile(scope: CardScope, rel: string): string | null {
-  const root = scopeRoot(scope);
-  if (!root) return null;
-  const abs = path.resolve(root, ...rel.split('/'));
-  return abs.startsWith(root + path.sep) ? abs : null;
-}
+const imageFile = (scope: CardScope, rel: string) => inside(scopeRoot(scope), rel);
 
-// Черновик копии карточки для другого места хранения (не сохраняется, пока его не сохранят в редакторе).
+// Папка карточки хранилища (для картинок с диска при правке существующей карточки).
+export const folderOf = (ref: CardRef): string | undefined => {
+  const file = files.get(refKey(ref));
+  return ref.scope === 'vault' && file && vaultRoot ? toRel(vaultRoot, path.dirname(file)) : undefined;
+};
+
+// Черновик копии карточки для другого места (не сохраняется, пока его не сохранят в редакторе).
 // Картинки, которых там не будет видно, копируются. Источник (авторство SRD) сохраняется: его требует лицензия.
-export function copyDraft(ref: CardRef, to: CardScope): Card | null {
+export function copyDraft(ref: CardRef, to: CardScope, folder?: string): Card | null {
   const c = getCard(ref);
   if (!c || to === 'srd') return null;
   const portraits =
@@ -227,27 +320,75 @@ export function copyDraft(ref: CardRef, to: CardScope): Card | null {
       : c.portraits
           .map((p) => {
             const file = imageFile(ref.scope, p);
-            return file ? importCardImage(to, ref.scope === 'vault' ? { vaultPath: p } : { file }) : null;
+            return file ? importCardImage(to, ref.scope === 'vault' ? { vaultPath: p } : { file }, folder) : null;
           })
           .filter((p): p is string => !!p);
   return { ...structuredClone(c), id: '', origin: { id: c.id, relation: 'variant' }, portraits };
 }
 
-// Перенести карточку в другое место хранения (например, из кампании в библиотеку).
-export function moveCard(ref: CardRef, to: CardScope): CardRef | null {
-  const draft = copyDraft(ref, to);
-  if (!draft) return null;
-  const c = getCard(ref)!;
-  const saved = saveCard(to, { ...draft, origin: c.origin, id: newId(to, c.name) });
+// Перенести карточку в другое место (из хранилища в библиотеку, между приключениями). id сохраняется,
+// чтобы не терялись ссылки переводов и трекера инициативы.
+export function moveCard(ref: CardRef, to: CardScope, folder?: string): CardRef | null {
+  const c = getCard(ref);
+  const draft = copyDraft(ref, to, folder);
+  const dir = targetDir(to, folder);
+  if (!c || !draft || !dir) return null;
   deleteCard(ref);
-  return saved;
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, fileName(dir, c.name));
+  writeJsonAtomic(file, { ...draft, origin: c.origin, id: c.id, format: 1 });
+  remember(to, file);
+  reload(to);
+  changed();
+  return { scope: to, id: c.id };
+}
+
+// ---------- Перенос карточек версии 0.9 ----------
+// В 0.9 карточки хранилища лежали в скрытой .scrying-glass/cards/, картинки с диска — в .scrying-glass/images/.
+// Теперь они переезжают в видимую папку бестиария в корне хранилища (существующую или новую «monsters»):
+// к какому приключению они относятся, приложение не знает, разложить их можно переносом.
+// Возвращает true, если что-то перенесено (дерево хранилища надо перечитать).
+export function migrateHiddenCards(root: string, dataDir: string, tree: VaultFolder | null): boolean {
+  const oldDir = path.join(root, dataDir, 'cards');
+  const list = jsonFiles(oldDir);
+  if (!list.length) return false;
+  const folder = tree?.folders.find((f) => folderRole(f.name) === 'bestiary')?.path ?? 'monsters';
+  const dir = inside(root, folder)!;
+  fs.mkdirSync(dir, { recursive: true });
+  const oldImages = `${dataDir}/images/`;
+  for (const file of list) {
+    try {
+      const c = JSON.parse(fs.readFileSync(file, 'utf8')) as Card;
+      const portraits = (c.portraits ?? []).map((p) => {
+        if (!p.startsWith(oldImages)) return p;
+        const src = inside(root, p);
+        if (!src || !fs.existsSync(src)) return p;
+        const name = freeName(dir, path.basename(src));
+        fs.renameSync(src, path.join(dir, name));
+        return `${folder}/${name}`;
+      });
+      const id = validId(c.id) ? c.id : path.basename(file, '.json');
+      writeJsonAtomic(path.join(dir, fileName(dir, c.name || id)), { ...c, id, portraits });
+      fs.rmSync(file);
+    } catch (e) {
+      console.error('Не перенесена карточка', file, e);
+    }
+  }
+  for (const d of [oldDir, path.join(root, dataDir, 'images')]) {
+    try {
+      fs.rmdirSync(d); // только если опустела
+    } catch {
+      /* остались чужие файлы — пусть лежат */
+    }
+  }
+  return true;
 }
 
 // ---------- Импорт и экспорт ----------
 //
 // Файл обмена — один JSON: карточки вместе с картинками, чтобы его можно было переслать одним вложением.
 //   { "scryingGlass": "cards", "version": 1, "cards": [ … ], "images": { "<имя>": "data:image/png;base64,…" } }
-// Портреты карточек в файле — имена из images. Импортировать можно и одиночный файл карточки (из папки cards).
+// Портреты карточек в файле — имена из images. Импортировать можно и одиночный файл карточки.
 
 const MIME: Record<string, string> = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif',
@@ -295,15 +436,15 @@ function readImport(file: string): Bundle {
   throw new Error('Это не файл карточек Scrying Glass');
 }
 
-// Импортирует файлы в библиотеку или хранилище. Карточки всегда добавляются как новые (существующие
-// не перезаписываются); связи «перевод — оригинал» внутри импорта сохраняются.
-export function importCards(files: string[], to: CardScope): { count: number; errors: string[] } {
-  const dir = cardsDir(to);
-  const imgDir = imagesDir(to);
+// Импортирует файлы в библиотеку или папку бестиария хранилища. Карточки всегда добавляются как новые
+// (существующие не перезаписываются); связи «перевод — оригинал» внутри импорта сохраняются.
+export function importCards(list: string[], to: CardScope, folder?: string): { count: number; errors: string[] } {
+  const dir = targetDir(to, folder);
+  const imgDir = imagesDir(to, folder);
   if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: ['Некуда импортировать'] };
   let count = 0;
   const errors: string[] = [];
-  for (const file of files) {
+  for (const file of list) {
     let bundle: Bundle;
     try {
       bundle = readImport(file);
@@ -320,9 +461,9 @@ export function importCards(files: string[], to: CardScope): { count: number; er
       if (!m || !ext) return null;
       fs.mkdirSync(imgDir.abs, { recursive: true });
       const base = path.basename(name, path.extname(name)).replace(/[/\\:]/g, '_') || 'image';
-      const fileName = freeName(imgDir.abs, base + ext);
-      fs.writeFileSync(path.join(imgDir.abs, fileName), Buffer.from(m[2]!, 'base64'));
-      const rel = `${imgDir.rel}/${fileName}`;
+      const name2 = freeName(imgDir.abs, base + ext);
+      fs.writeFileSync(path.join(imgDir.abs, name2), Buffer.from(m[2]!, 'base64'));
+      const rel = imgDir.rel ? `${imgDir.rel}/${name2}` : name2;
       saved.set(name, rel);
       return rel;
     };
@@ -330,9 +471,11 @@ export function importCards(files: string[], to: CardScope): { count: number; er
     const ids = new Map<string, string>();
     for (const c of bundle.cards) {
       if (typeof c?.name !== 'string' || c.stats === undefined) continue;
-      ids.set(c.id, newId(to, c.name));
-      cards.set(refKey({ scope: to, id: ids.get(c.id)! }), c); // занять id до записи, чтобы newId не повторился
+      const id = newId(to, c.name);
+      ids.set(c.id, id);
+      cards.set(refKey({ scope: to, id }), c); // занять id до записи, чтобы newId не повторился
     }
+    fs.mkdirSync(dir, { recursive: true });
     for (const c of bundle.cards) {
       const id = ids.get(c.id);
       if (!id) continue;
@@ -346,14 +489,19 @@ export function importCards(files: string[], to: CardScope): { count: number; er
         tags: c.tags ?? [],
         notes: c.notes ?? '',
       };
-      writeJsonAtomic(path.join(dir, `${id}.json`), card);
+      const out = path.join(dir, fileName(dir, c.name));
+      writeJsonAtomic(out, card);
+      remember(to, out);
       count++;
     }
   }
-  loadScope(to);
+  reload(to);
   changed();
   return { count, errors };
 }
 
-// Карточки места хранения целиком (для экспорта библиотеки или всех карточек кампании).
-export const cardsOf = (scope: CardScope): CardRef[] => listCards().filter((c) => c.ref.scope === scope).map((c) => c.ref);
+// Карточки места хранения целиком (для экспорта библиотеки или карточек хранилища; folder — одной папки).
+export const cardsOf = (scope: CardScope, folder?: string): CardRef[] =>
+  listCards()
+    .filter((c) => c.ref.scope === scope && (folder === undefined || c.folder === folder))
+    .map((c) => c.ref);

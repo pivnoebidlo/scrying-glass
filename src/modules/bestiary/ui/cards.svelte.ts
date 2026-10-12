@@ -15,7 +15,8 @@ interface Filters {
   // Язык, который показывать в первую очередь: у переведённых карточек видна только одна версия.
   // 'all' — все версии подряд.
   lang: string;
-  scope: CardScope | 'all';
+  // 'all', 'srd', 'library', 'vault' (всё хранилище) или 'vault:<папка бестиария>'.
+  scope: string;
 }
 
 function load(): Partial<Filters> {
@@ -26,11 +27,37 @@ function load(): Partial<Filters> {
   }
 }
 
-// Открытая в редакторе карточка. original — что правим (null — новая или копия).
+// Место для своей карточки: библиотека или папка бестиария в хранилище (путь внутри хранилища).
+export type Place = { scope: 'library'; folder?: undefined } | { scope: 'vault'; folder: string };
+
+export const placeOf = (c: CardSummary | undefined): Place | null =>
+  c?.ref.scope === 'library'
+    ? { scope: 'library' }
+    : c?.ref.scope === 'vault' && c.folder !== undefined
+      ? { scope: 'vault', folder: c.folder }
+      : null;
+
+export const samePlace = (a: Place | null | undefined, b: Place | null | undefined) =>
+  !!a && !!b && a.scope === b.scope && a.folder === b.folder;
+
+// Открытая в редакторе карточка. original — что правим (null — новая или копия). folder — папка бестиария
+// для карточки хранилища (туда же ложатся картинки с диска).
 export interface Draft {
   scope: CardScope;
+  folder?: string;
   card: Card;
   original: CardRef | null;
+}
+
+// Запрос «где хранить?» — окно выбора места (PlacePicker) показывается, пока он есть.
+export interface PlaceRequest {
+  title: string;
+  action: string;
+  // Можно ли выбрать библиотеку.
+  library: boolean;
+  // Текущее место карточки (при переносе его выбрать нельзя).
+  exclude?: Place | null;
+  resolve(p: Place | null): void;
 }
 
 // Карточку без значений превращаем в аккуратный файл: пустые необязательные поля не сохраняем.
@@ -67,6 +94,7 @@ class Bestiary {
   // Меняется при каждом обновлении карточек в ядре: выбранную надо перечитать.
   rev = $state(0);
   draft = $state<Draft | null>(null);
+  placeRequest = $state.raw<PlaceRequest | null>(null);
   // Снимок черновика при открытии: есть ли несохранённые изменения.
   draftStart = '';
 
@@ -88,9 +116,9 @@ class Bestiary {
     const q = fold(f.search.trim());
     const out: CardSummary[] = [];
     for (const group of this.groups.values()) {
-      const members = group.filter(
-        (c) => (f.system === 'all' || c.system === f.system) && (f.scope === 'all' || c.ref.scope === f.scope)
-      );
+      const inScope = (c: CardSummary) =>
+        f.scope === 'all' || c.ref.scope === f.scope || (f.scope.startsWith('vault:') && c.ref.scope === 'vault' && c.folder === f.scope.slice(6));
+      const members = group.filter((c) => (f.system === 'all' || c.system === f.system) && inScope(c));
       if (!members.length) continue;
       // Ищем по всем версиям: «goblin» найдёт и «Гоблина».
       if (q && !group.some((c) => fold(c.name).includes(q))) continue;
@@ -129,43 +157,72 @@ class Bestiary {
     return !!this.draft && JSON.stringify(this.draft.card) !== this.draftStart;
   }
 
+  // Спросить, где хранить карточку. null — передумали.
+  choosePlace(opts: Omit<PlaceRequest, 'resolve'>): Promise<Place | null> {
+    return new Promise((resolve) => {
+      this.placeRequest = {
+        ...opts,
+        resolve: (p) => {
+          this.placeRequest = null;
+          resolve(p);
+        },
+      };
+    });
+  }
+
   // Новая карточка: система и язык — из фильтров, если они выбраны.
-  create(scope: CardScope) {
+  async create() {
+    const place = await this.choosePlace({ title: 'Где хранить новую карточку?', action: 'Создать', library: true });
+    if (!place) return;
     const system = this.filters.system !== 'all' ? this.filters.system : 'dnd5e-2024';
     const lang = this.filters.lang !== 'all' ? this.filters.lang : 'ru';
     this.open({
-      scope,
+      ...place,
       original: null,
       card: { format: 1, id: '', kind: 'monster', system, lang, name: '', portraits: [], tags: [], notes: '', stats: systemOf(system).blank() },
     });
+    openTab('bestiary');
   }
 
   async edit(ref: CardRef) {
     const c = await window.api.getCard(ref);
-    if (c && ref.scope !== 'srd') this.open({ scope: ref.scope, original: ref, card: structuredClone(c) });
+    const place = placeOf(this.all.find((x) => sameRef(x.ref, ref)));
+    if (c && place) this.open({ ...place, original: ref, card: structuredClone(c) });
   }
 
-  // Копия в библиотеку или кампанию: открывается в редакторе, файл появится при сохранении.
-  async copy(ref: CardRef, to: CardScope) {
-    const c = await window.api.copyCardDraft(ref, to);
-    if (c) this.open({ scope: to, original: null, card: c });
+  // Копия: открывается в редакторе, файл появится при сохранении.
+  async copy(ref: CardRef) {
+    const place = await this.choosePlace({ title: 'Куда положить копию?', action: 'Сделать копию', library: true });
+    if (!place) return;
+    const c = await window.api.copyCardDraft(ref, place.scope, place.folder);
+    if (c) this.open({ ...place, original: null, card: c });
+  }
+
+  // Перенести карточку в другое место — без копии, ссылки на неё сохраняются.
+  async move(ref: CardRef) {
+    const exclude = placeOf(this.all.find((x) => sameRef(x.ref, ref)));
+    const place = await this.choosePlace({ title: 'Куда перенести карточку?', action: 'Перенести', library: true, exclude });
+    if (!place) return;
+    const saved = await window.api.moveCard(ref, place.scope, place.folder);
+    if (saved) this.select(saved);
   }
 
   // Перевод на другой язык: копия текущей версии, связанная с оригиналом группы. Перевод встроенной
   // карточки ложится в библиотеку, своей — туда же, где оригинал.
   async translate(ref: CardRef, lang: string) {
     const cur = this.all.find((c) => sameRef(c.ref, ref));
-    const to: CardScope = ref.scope === 'srd' ? 'library' : ref.scope;
-    const c = cur && (await window.api.copyCardDraft(ref, to));
+    if (!cur) return;
+    const place: Place = placeOf(cur) ?? { scope: 'library' };
+    const c = await window.api.copyCardDraft(ref, place.scope, place.folder);
     if (!c) return;
-    this.open({ scope: to, original: null, card: { ...c, lang, origin: { id: groupId(cur), relation: 'translation' } } });
+    this.open({ ...place, original: null, card: { ...c, lang, origin: { id: groupId(cur), relation: 'translation' } } });
   }
 
   async save(): Promise<boolean> {
     const d = this.draft;
     if (!d || !d.card.name.trim()) return false;
     const card = clean($state.snapshot(d.card)) as Card;
-    const ref = await window.api.saveCard(d.scope, card);
+    const ref = await window.api.saveCard(d.scope, card, d.folder);
     this.draft = null;
     this.select(ref);
     return true;
@@ -183,9 +240,23 @@ class Bestiary {
     if (sameRef(ref, this.selected)) this.select(null);
   }
 
-  async move(ref: CardRef, to: CardScope) {
-    const saved = await window.api.moveCard(ref, to);
-    if (saved) this.select(saved);
+  // Импорт файлов карточек в выбранное место. Возвращает сообщение для пользователя или null.
+  async importFiles(): Promise<string | null> {
+    const files = await window.api.pickImportFiles();
+    if (!files.length) return null;
+    const place = await this.choosePlace({ title: 'Куда импортировать карточки?', action: 'Импортировать', library: true });
+    if (!place) return null;
+    const { count, errors } = await window.api.importCards(files, place.scope, place.folder);
+    return [`Импортировано карточек: ${count}`, ...errors].join('\n');
+  }
+
+  // Экспорт всех карточек библиотеки или папки бестиария.
+  async exportPlace(vaultName: string, title: (folder: string) => string): Promise<string | null> {
+    const place = await this.choosePlace({ title: 'Какие карточки экспортировать?', action: 'Экспортировать', library: true });
+    if (!place) return null;
+    const name = place.scope === 'library' ? 'Библиотека карточек' : `Карточки — ${title(place.folder) || vaultName}`;
+    const n = await window.api.exportCards({ scope: place.scope, folder: place.folder, name });
+    return n === null ? null : `Экспортировано карточек: ${n}`;
   }
 }
 

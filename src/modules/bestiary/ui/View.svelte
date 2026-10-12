@@ -5,7 +5,8 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
-  import { LANGUAGES, cardAsset, cardImageUrl, langName, sameRef, type CardScope } from '../../../shared/cards';
+  import { LANGUAGES, cardAsset, cardImageUrl, langName, sameRef, type CardScope, type CardSummary } from '../../../shared/cards';
+  import { roleFolders } from '../../../shared/vault';
   import { systemOf } from '../../../systems';
   import { statsView } from '../../../systems/ui';
   import { markdown } from '../../../renderer/lib/markdown';
@@ -24,11 +25,17 @@
   const info = $derived.by(() => {
     if (!card || !summary) return '';
     const src = card.source && card.source.title + (card.source.attribution ? ` (${card.source.attribution})` : '');
-    return [systemOf(card.system).title, SCOPES[summary.ref.scope], src].filter(Boolean).join(' · ');
+    return [systemOf(card.system).title, where(summary), src].filter(Boolean).join(' · ');
   });
 
-  const SCOPES: Record<CardScope, string> = { srd: 'Встроенный SRD', library: 'Моя библиотека', vault: 'Эта кампания' };
-  const SCOPE_SHORT: Record<CardScope, string> = { srd: 'SRD', library: 'библиотека', vault: 'кампания' };
+  // Где лежит карточка: «Встроенный SRD», «Библиотека», «Тыквенный фестиваль / monsters».
+  const folders = $derived(app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name) : []);
+  function where(c: CardSummary): string {
+    if (c.ref.scope === 'srd') return 'Встроенный SRD';
+    if (c.ref.scope === 'library') return 'Библиотека';
+    const f = folders.find((x) => x.folder.path === c.folder);
+    return f ? `${f.title} / ${f.folder.name}` : (c.folder ?? 'Хранилище');
+  }
   // Языки, на которые ещё нет перевода.
   const missingLangs = $derived(Object.keys(LANGUAGES).filter((l) => !bestiary.versions.some((v) => v.lang === l)));
 
@@ -97,16 +104,19 @@
           <div class="info faint">{info}</div>
           <div class="manage">
             {#if ref.scope === 'srd'}
-              <button class="btn" title="Копию можно править, переводить и дополнять портретами" onclick={() => bestiary.copy(ref, 'library')}><Copy size={13} /> Копия в библиотеку</button>
-              <button class="btn" onclick={() => bestiary.copy(ref, 'vault')}><Copy size={13} /> Копия в кампанию</button>
+              <button
+                class="btn"
+                title="Встроенные карточки только для чтения. Копию можно править, переводить и дополнять портретами"
+                onclick={() => bestiary.copy(ref)}><Copy size={13} /> Сделать копию…</button
+              >
             {:else}
               <button class="btn" onclick={() => bestiary.edit(ref)}><Pencil size={13} /> Править</button>
-              <button class="btn" onclick={() => bestiary.copy(ref, ref.scope)}><Copy size={13} /> Копия</button>
-              {#if ref.scope === 'vault'}
-                <button class="btn" title="Карточка станет доступна во всех кампаниях" onclick={() => bestiary.move(ref, 'library')}><ArrowRightLeft size={13} /> В библиотеку</button>
-              {:else}
-                <button class="btn" title="Скопировать в эту кампанию" onclick={() => bestiary.copy(ref, 'vault')}><Copy size={13} /> Копия в кампанию</button>
-              {/if}
+              <button class="btn" title="Новая карточка на основе этой — в библиотеке или папке приключения" onclick={() => bestiary.copy(ref)}
+                ><Copy size={13} /> Сделать копию…</button
+              >
+              <button class="btn" title="Переложить карточку в библиотеку или в папку другого приключения, без копии" onclick={() => bestiary.move(ref)}
+                ><ArrowRightLeft size={13} /> Перенести…</button
+              >
               <button class="icon-btn" title="Удалить карточку" onclick={() => bestiary.remove(ref, card.name)}><Trash2 size={14} /></button>
             {/if}
             <button
@@ -121,11 +131,11 @@
                 <button
                   class="chip"
                   class:active={sameRef(v.ref, summary.ref)}
-                  title="{v.name} · {SCOPE_SHORT[v.ref.scope]}"
+                  title="{v.name} · {where(v)}"
                   onclick={() => bestiary.select(v.ref)}
                 >
                   {langName(v.lang)}{#if bestiary.versions.filter((x) => x.lang === v.lang).length > 1}<span class="where">
-                      · {SCOPE_SHORT[v.ref.scope]}</span
+                      · {where(v)}</span
                     >{/if}
                 </button>
               {/each}

@@ -1,8 +1,6 @@
 // Библиотека портретов: все папки characters/персонажи хранилища, на любой глубине.
-import { allFiles, dirname, folderRole, prettyName, type VaultFile, type VaultFolder } from '../../shared/vault';
+import { allFiles, prettyName, roleFolders, type FolderRole, type VaultFile, type VaultFolder } from '../../shared/vault';
 import type { PortraitsState } from './types';
-
-const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
 
 export interface Group {
   // Путь папки персонажей внутри хранилища.
@@ -12,20 +10,11 @@ export interface Group {
   items: VaultFile[];
 }
 
-export function characterGroups(tree: VaultFolder, vaultName: string): Group[] {
-  const out: Group[] = [];
-  const visit = (f: VaultFolder) => {
-    if (f.path && folderRole(f.name) === 'characters') {
-      // Вложенные папки (characters/NPC/…) входят в эту же группу.
-      const where = dirname(f.path);
-      out.push({ key: f.path, title: where ? where.split('/').join(' / ') : vaultName, items: allFiles(f, 'image') });
-      return;
-    }
-    f.folders.forEach(visit);
-  };
-  visit(tree);
-  // По пути: персонажи кампании идут перед персонажами её глав.
-  return out.sort((a, b) => collator.compare(a.title, b.title));
+// Картинки из папок с данной ролью (персонажи, фоны), сгруппированные по месту в хранилище.
+export function imageGroups(tree: VaultFolder, vaultName: string, role: FolderRole = 'characters'): Group[] {
+  return roleFolders(tree, role, vaultName).map((r) => ({ key: r.folder.path, title: r.title, items: allFiles(r.folder, 'image') }));
 }
+
+export const characterGroups = (tree: VaultFolder, vaultName: string) => imageGroups(tree, vaultName, 'characters');
 
 export const caption = (ms: PortraitsState, path: string) => ms.names[path] ?? prettyName(path);

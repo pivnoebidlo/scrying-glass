@@ -19,18 +19,20 @@ export interface Api {
   listCards(): Promise<CardSummary[]>;
   getCard(ref: CardRef): Promise<Card | null>;
   onCardsChanged(cb: () => void): void;
-  // Сохранить в библиотеку или хранилище (пустой id — новая карточка). Возвращает ссылку на сохранённую.
-  saveCard(scope: CardScope, card: Card): Promise<CardRef>;
+  // Сохранить карточку. Существующая (id есть в этом месте) пишется в свой файл, новая — в библиотеку
+  // или в папку бестиария хранилища folder (путь внутри хранилища). Возвращает ссылку на сохранённую.
+  saveCard(scope: CardScope, card: Card, folder?: string): Promise<CardRef>;
   deleteCard(ref: CardRef): Promise<void>;
-  // Черновик копии для другого места хранения (картинки копируются туда же). Сохраняется через saveCard.
-  copyCardDraft(ref: CardRef, to: CardScope): Promise<Card | null>;
-  moveCard(ref: CardRef, to: CardScope): Promise<CardRef | null>;
+  // Черновик копии для другого места (картинки копируются туда же). Сохраняется через saveCard.
+  copyCardDraft(ref: CardRef, to: CardScope, folder?: string): Promise<Card | null>;
+  moveCard(ref: CardRef, to: CardScope, folder?: string): Promise<CardRef | null>;
   // Добавить картинку: из хранилища (vaultPath) или с диска через диалог. Путь для card.portraits или null.
-  addCardImage(scope: CardScope, vaultPath?: string): Promise<string | null>;
+  addCardImage(scope: CardScope, vaultPath?: string, folder?: string): Promise<string | null>;
   // Экспорт выбранных карточек или всего места хранения в файл (диалог). Число карточек или null — отменили.
-  exportCards(what: { refs?: CardRef[]; scope?: CardScope; name: string }): Promise<number | null>;
-  // Импорт файлов карточек (диалоги выбора файлов и места). Число карточек или null — отменили.
-  importCards(): Promise<number | null>;
+  exportCards(what: { refs?: CardRef[]; scope?: CardScope; folder?: string; name: string }): Promise<number | null>;
+  // Импорт: выбрать файлы (диалог), затем импортировать их в выбранное место.
+  pickImportFiles(): Promise<string[]>;
+  importCards(files: string[], scope: CardScope, folder?: string): Promise<{ count: number; errors: string[] }>;
   library(): Promise<{ path: string | null; isDefault: boolean }>;
   chooseLibrary(reset?: boolean): Promise<void>;
   revealLibrary(): Promise<void>;

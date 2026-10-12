@@ -13,7 +13,7 @@ import { scanVault } from './scan';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import {
-  cardsOf, copyDraft, deleteCard, exportCards, getCard, importCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, copyDraft, deleteCard, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import {
@@ -110,7 +110,9 @@ async function openVault(root: string | null): Promise<VaultState> {
   watcher = null;
   vaultRoot = root;
   vaultTree = root ? scanVault(root) : null;
-  setCardsVault(root, DATA_DIR);
+  // Карточки версии 0.9 лежали в скрытой папке — переносим их в видимую папку бестиария.
+  if (root && migrateHiddenCards(root, DATA_DIR, vaultTree)) vaultTree = scanVault(root);
+  setCardsVault(root, vaultTree);
 
   for (const mod of Object.values(modules)) {
     if (mod.id === 'vault') continue;
@@ -146,6 +148,7 @@ function rescanVault(): VaultState {
   if (!vaultRoot) return vaultState();
   vaultTree = scanVault(vaultRoot);
   stateById['vault'] = vaultState();
+  setCardsVault(vaultRoot, vaultTree);
   let changed = false;
   for (const mod of Object.values(modules)) {
     if (!mod.onTreeChange) continue;
@@ -237,14 +240,15 @@ ipcMain.handle('action', (_event, { module: id, name, payload }: { module: strin
 // Карточки (бестиарий): краткий список и полная карточка по ссылке, сохранение, картинки, папка библиотеки.
 ipcMain.handle('cards:list', () => listCards());
 ipcMain.handle('cards:get', (_event, ref) => getCard(ref));
-ipcMain.handle('cards:save', (_event, { scope, card }) => saveCard(scope, card));
+// folder — папка бестиария хранилища (путь внутри хранилища) для новых карточек и их картинок.
+ipcMain.handle('cards:save', (_event, { scope, card, folder }) => saveCard(scope, card, folder));
 ipcMain.handle('cards:delete', (_event, ref) => deleteCard(ref));
-ipcMain.handle('cards:copyDraft', (_event, { ref, to }) => copyDraft(ref, to));
-ipcMain.handle('cards:move', (_event, { ref, to }) => moveCard(ref, to));
+ipcMain.handle('cards:copyDraft', (_event, { ref, to, folder }) => copyDraft(ref, to, folder));
+ipcMain.handle('cards:move', (_event, { ref, to, folder }) => moveCard(ref, to, folder));
 
 // Картинка для карточки: из хранилища (vaultPath) или файл с диска (диалог). null — отменили.
-ipcMain.handle('cards:addImage', async (_event, { scope, vaultPath }: { scope: CardScope; vaultPath?: string }) => {
-  if (vaultPath) return importCardImage(scope, { vaultPath });
+ipcMain.handle('cards:addImage', async (_event, { scope, vaultPath, folder }: { scope: CardScope; vaultPath?: string; folder?: string }) => {
+  if (vaultPath) return importCardImage(scope, { vaultPath }, folder);
   const win = getControlWindow();
   const opts = {
     title: 'Картинка для карточки',
@@ -252,12 +256,12 @@ ipcMain.handle('cards:addImage', async (_event, { scope, vaultPath }: { scope: C
     filters: [{ name: 'Картинки', extensions: IMAGE_EXT.map((e) => e.slice(1)) }],
   };
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
-  return res.canceled || !res.filePaths[0] ? null : importCardImage(scope, { file: res.filePaths[0] });
+  return res.canceled || !res.filePaths[0] ? null : importCardImage(scope, { file: res.filePaths[0] }, folder);
 });
 
-// Экспорт: выбранные карточки (refs) или всё место хранения (scope) в один файл с картинками.
-ipcMain.handle('cards:export', async (_event, { refs, scope, name }: { refs?: CardRef[]; scope?: CardScope; name: string }) => {
-  const list = refs ?? (scope ? cardsOf(scope) : []);
+// Экспорт: выбранные карточки (refs) или всё место хранения (scope, folder) в один файл с картинками.
+ipcMain.handle('cards:export', async (_event, { refs, scope, folder, name }: { refs?: CardRef[]; scope?: CardScope; folder?: string; name: string }) => {
+  const list = refs ?? (scope ? cardsOf(scope, folder) : []);
   if (!list.length) return null;
   const win = getControlWindow();
   const opts = {
@@ -275,34 +279,20 @@ ipcMain.handle('cards:export', async (_event, { refs, scope, name }: { refs?: Ca
   }
 });
 
-// Импорт: выбрать файлы, потом — куда (кампания или библиотека). Возвращает число карточек или null.
-ipcMain.handle('cards:import', async () => {
+// Импорт: сначала окно выбирает файлы (диалог здесь), потом место (в окне) и вызывает cards:import.
+ipcMain.handle('cards:pickImport', async () => {
   const win = getControlWindow();
-  const openOpts = {
+  const opts = {
     title: 'Импорт карточек',
     properties: ['openFile' as const, 'multiSelections' as const],
     filters: [{ name: 'Карточки Scrying Glass', extensions: ['json'] }],
   };
-  const res = win ? await dialog.showOpenDialog(win, openOpts) : await dialog.showOpenDialog(openOpts);
-  if (res.canceled || !res.filePaths.length) return null;
-  const askOpts = {
-    type: 'question' as const,
-    message: 'Куда импортировать карточки?',
-    detail: 'В кампанию — только для этого хранилища. В библиотеку — для всех кампаний.',
-    buttons: ['В кампанию', 'В библиотеку', 'Отмена'],
-    defaultId: 0,
-    cancelId: 2,
-  };
-  const ask = win ? await dialog.showMessageBox(win, askOpts) : await dialog.showMessageBox(askOpts);
-  if (ask.response === 2) return null;
-  const { count, errors } = importCards(res.filePaths, ask.response === 0 ? 'vault' : 'library');
-  if (errors.length) {
-    const errOpts = { type: 'warning' as const, message: `Импортировано карточек: ${count}`, detail: errors.join('\n') };
-    if (win) await dialog.showMessageBox(win, errOpts);
-    else await dialog.showMessageBox(errOpts);
-  }
-  return count;
+  const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+  return res.canceled ? [] : res.filePaths;
 });
+ipcMain.handle('cards:import', (_event, { files, scope, folder }: { files: string[]; scope: CardScope; folder?: string }) =>
+  importCards(files, scope, folder)
+);
 
 const defaultLibrary = () => path.join(app.getPath('userData'), 'library');
 ipcMain.handle('cards:library', () => ({ path: libraryPath(), isDefault: !settings.library }));
