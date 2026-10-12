@@ -5,7 +5,8 @@ import type { AppState, ModuleId } from '../../shared/types';
 // Свойства, которые получает каждый компонент модуля.
 export interface ModuleProps<K extends ModuleId> {
   ms: AppState[K];
-  state: AppState;
+  // Всё состояние приложения (не называется state, чтобы не путать с рунами $state).
+  app: AppState;
 }
 
 type ModuleComponent<K extends ModuleId> = Component<ModuleProps<K>>;

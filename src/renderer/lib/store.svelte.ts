@@ -13,8 +13,6 @@ export const store = new Store();
 
 export const dispatch = window.api.dispatch;
 
-// Картинка запрашивается по id элемента: sg-asset://p/<id>
-export const assetUrl = (item: { id: string }) => 'sg-asset://p/' + encodeURIComponent(item.id);
 
 // Загружает начальное состояние и подписывается на изменения. Вызывается до монтирования интерфейса.
 export async function connect(opts: { displays?: boolean } = {}) {

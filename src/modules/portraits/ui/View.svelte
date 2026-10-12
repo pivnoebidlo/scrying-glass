@@ -1,21 +1,21 @@
-<!-- Вкладка «Портреты»: библиотека карточек. -->
+<!-- Вкладка «Портреты»: все персонажи хранилища, сгруппированные по папкам. -->
 <script lang="ts">
-  import { ImagePlus, Search } from '@lucide/svelte';
+  import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { dispatch } from '../../../renderer/lib/store.svelte';
+  import { caption, characterGroups } from '../library';
   import Card from './Card.svelte';
-  import { sections, ui } from './ui.svelte';
+  import { ui } from './ui.svelte';
 
-  let { ms }: ModuleProps<'portraits'> = $props();
+  let { ms, app }: ModuleProps<'portraits'> = $props();
 
+  const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name) : []);
   const visible = $derived.by(() => {
     const q = ui.search.trim().toLowerCase();
-    return sections(ms)
-      .filter((s) => ui.group === 'all' || s.key === ui.group)
-      .map((s) => ({ ...s, items: q ? s.items.filter((p) => p.name.toLowerCase().includes(q)) : s.items }))
-      .filter((s) => s.items.length || !q);
+    return groups
+      .filter((g) => ui.group === 'all' || g.key === ui.group)
+      .map((g) => ({ ...g, items: q ? g.items.filter((f) => caption(ms, f.path).toLowerCase().includes(q)) : g.items }))
+      .filter((g) => g.items.length || !q);
   });
-  const onScreen = $derived(new Set(ms.onScreen));
   const collapsed = $state<Record<string, boolean>>({});
 </script>
 
@@ -25,27 +25,29 @@
       <Search size={14} />
       <input type="text" placeholder="Поиск по имени" bind:value={ui.search} />
     </label>
-    <div class="spacer"></div>
-    <button class="btn" onclick={() => dispatch('portraits', 'add')}><ImagePlus size={14} /> Добавить картинки…</button>
   </header>
 
-  {#if ms.library.length === 0 && ms.groups.length === 0}
-    <div class="empty faint">
-      Пока пусто. Подключите папку приключения на панели слева или добавьте картинки.
+  {#if groups.length === 0}
+    <div class="empty">
+      <p>В хранилище пока нет папок с персонажами.</p>
+      <p class="faint">
+        Создайте папку <code>characters</code> или <code>персонажи</code> в приключении или главе, и картинки из неё
+        появятся здесь. Картинку из любой другой папки можно показать игрокам через «Файлы».
+      </p>
     </div>
   {:else if visible.length === 0}
     <div class="empty faint">Ничего не найдено.</div>
   {/if}
 
-  {#each visible as s (s.key)}
+  {#each visible as g (g.key)}
     <section>
-      <button class="group-title" title={s.hint} onclick={() => (collapsed[s.key] = !collapsed[s.key])}>
-        {collapsed[s.key] ? '▸' : '▾'} {s.title} <span class="faint">{s.items.length}</span>
+      <button class="group-title" title={g.key} onclick={() => (collapsed[g.key] = !collapsed[g.key])}>
+        {collapsed[g.key] ? '▸' : '▾'} {g.title} <span class="faint">{g.items.length}</span>
       </button>
-      {#if !collapsed[s.key]}
+      {#if !collapsed[g.key]}
         <div class="grid">
-          {#each s.items as p (p.id)}
-            <Card {p} on={onScreen.has(p.id)} />
+          {#each g.items as f (f.path)}
+            <Card path={f.path} />
           {/each}
         </div>
       {/if}
@@ -66,9 +68,6 @@
     gap: 8px;
     padding: 12px 0;
     background: var(--bg-primary);
-  }
-  .spacer {
-    flex: 1;
   }
   .search {
     display: flex;
@@ -102,7 +101,13 @@
     gap: 12px;
   }
   .empty {
-    padding: 40px 0;
+    max-width: 460px;
+    margin: 40px auto;
     text-align: center;
+  }
+  code {
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: var(--bg-active);
   }
 </style>

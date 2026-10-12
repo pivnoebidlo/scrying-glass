@@ -2,12 +2,12 @@
 <script lang="ts">
   import { fade, scale } from 'svelte/transition';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { assetUrl } from '../../../renderer/lib/store.svelte';
+  import { vaultUrl } from '../../../shared/vault';
+  import { caption } from '../library';
 
   let { ms }: ModuleProps<'portraits'> = $props();
 
-  const shown = $derived(ms.onScreen.map((id) => ms.library.find((p) => p.id === id)).filter((p) => !!p));
-  const n = $derived(shown.length);
+  const n = $derived(ms.onScreen.length);
   // Раскладка: до 4 портретов в один ряд, дальше в два ряда.
   const rows = $derived(n <= 4 ? 1 : 2);
   const cols = $derived(Math.max(1, rows === 1 ? n : Math.ceil(n / 2)));
@@ -16,11 +16,12 @@
 </script>
 
 <div class="portraits" style:--cols={cols} style:--rows={rows} style:--cap="{cap}cqmin">
-  {#each shown as p (p.id)}
+  {#each ms.onScreen as path (path)}
+    {@const name = caption(ms, path)}
     <div class="portrait" in:scale={{ start: 0.96, duration: 400 }} out:fade={{ duration: 250 }}>
-      <div class="frame"><img src={assetUrl(p)} alt="" /></div>
-      {#if ms.showNames && p.name}
-        <div class="caption">{p.name}</div>
+      <div class="frame"><img src={vaultUrl(path)} alt="" /></div>
+      {#if ms.showNames && name}
+        <div class="caption">{name}</div>
       {/if}
     </div>
   {/each}

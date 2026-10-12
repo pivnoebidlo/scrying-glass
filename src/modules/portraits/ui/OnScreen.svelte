@@ -2,22 +2,22 @@
 <script lang="ts">
   import { X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { assetUrl, dispatch } from '../../../renderer/lib/store.svelte';
+  import { dispatch } from '../../../renderer/lib/store.svelte';
+  import { vaultUrl } from '../../../shared/vault';
+  import { caption } from '../library';
 
   let { ms }: ModuleProps<'portraits'> = $props();
-
-  const shown = $derived(ms.onScreen.map((id) => ms.library.find((p) => p.id === id)).filter((p) => !!p));
 </script>
 
-{#if shown.length === 0}
+{#if ms.onScreen.length === 0}
   <div class="faint">Никого нет. Нажмите на портрет, чтобы показать его игрокам.</div>
 {:else}
   <ul>
-    {#each shown as p (p.id)}
+    {#each ms.onScreen as path (path)}
       <li>
-        <img src={assetUrl(p)} alt="" />
-        <span class="name">{p.name || 'Без подписи'}</span>
-        <button class="icon-btn" title="Убрать с экрана" onclick={() => dispatch('portraits', 'toggle', { id: p.id })}>
+        <img src={vaultUrl(path)} alt="" />
+        <span class="name">{caption(ms, path) || 'Без подписи'}</span>
+        <button class="icon-btn" title="Убрать с экрана" onclick={() => dispatch('portraits', 'toggle', { path })}>
           <X size={14} />
         </button>
       </li>

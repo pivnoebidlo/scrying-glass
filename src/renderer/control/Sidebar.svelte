@@ -12,7 +12,7 @@
     <div class="pane-title">{c.title}</div>
     <div class="body">
       {#if c.sidebar}
-        <c.sidebar ms={store.state[c.id]} state={store.state} />
+        <c.sidebar ms={store.state[c.id]} app={store.state} />
       {:else}
         <p class="faint empty">У этого модуля нет боковой панели.</p>
       {/if}

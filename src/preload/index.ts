@@ -14,8 +14,6 @@ const api: Api = {
   closeDisplay: () => ipcRenderer.invoke('display:close'),
   getDisplayStatus: () => ipcRenderer.invoke('display:status'),
   onDisplayStatus: (cb) => { ipcRenderer.on('display:status', (_e, open) => cb(open)); },
-
-  revealCampaign: () => ipcRenderer.invoke('campaign:reveal'),
 };
 
 contextBridge.exposeInMainWorld('api', api);

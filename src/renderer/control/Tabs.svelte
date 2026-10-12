@@ -30,7 +30,7 @@
   <div class="content">
     {#if active?.view}
       {#key active.id}
-        <active.view ms={store.state[active.id]} state={store.state} />
+        <active.view ms={store.state[active.id]} app={store.state} />
       {/key}
     {:else}
       <div class="placeholder faint">Выберите модуль на панели слева</div>

@@ -22,7 +22,7 @@
   <div class="section">
     <div class="preview" style:aspect-ratio={ratio} class:closed={!store.displayOpen}>
       <div class="stage-box" inert>
-        <Stage state={store.state} />
+        <Stage app={store.state} />
       </div>
       {#if !store.displayOpen}
         <div class="closed-label">экран закрыт</div>
@@ -62,7 +62,7 @@
     {#if c.screen}
       <div class="pane-title">{c.title}</div>
       <div class="section">
-        <c.screen ms={store.state[c.id]} state={store.state} />
+        <c.screen ms={store.state[c.id]} app={store.state} />
       </div>
     {/if}
   {/each}

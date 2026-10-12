@@ -3,16 +3,16 @@
   import type { AppState } from '../../shared/types';
   import { displayContributions } from './registry';
 
-  let { state }: { state: AppState } = $props();
+  let { app }: { app: AppState } = $props();
 </script>
 
 <div class="stage">
   {#each displayContributions as c (c.id)}
     <div class="layer">
-      <c.layer ms={state[c.id]} {state} />
+      <c.layer ms={app[c.id]} {app} />
     </div>
   {/each}
-  <div class="blackout" class:on={state.core.blackout}></div>
+  <div class="blackout" class:on={app.core.blackout}></div>
 </div>
 
 <style>

@@ -3,4 +3,4 @@
   import { store } from '../lib/store.svelte';
 </script>
 
-<Stage state={store.state} />
+<Stage app={store.state} />

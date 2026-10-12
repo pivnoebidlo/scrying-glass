@@ -6,7 +6,8 @@
   import { workspace } from './workspace.svelte';
 
   const moduleSections = controlContributions.filter((c) => c.settings);
-  const current = $derived(moduleSections.find((c) => c.id === workspace.settingsSection));
+  // Если раздел не задан или пропал, показываем первый.
+  const current = $derived(moduleSections.find((c) => c.id === workspace.settingsSection) ?? moduleSections[0]);
 
   const close = () => (workspace.settingsOpen = false);
 
@@ -22,18 +23,12 @@
   <div class="modal" role="dialog" aria-modal="true" aria-label="Настройки">
     <nav class="nav">
       <div class="pane-title">Настройки</div>
-      <button class="nav-item" class:active={workspace.settingsSection === 'general'} onclick={() => (workspace.settingsSection = 'general')}>
-        Общие
-      </button>
-      {#if moduleSections.length}
-        <div class="pane-title">Модули</div>
-        {#each moduleSections as c (c.id)}
-          <button class="nav-item" class:active={workspace.settingsSection === c.id} onclick={() => (workspace.settingsSection = c.id)}>
-            <c.icon size={14} />
-            {c.title}
-          </button>
-        {/each}
-      {/if}
+      {#each moduleSections as c (c.id)}
+        <button class="nav-item" class:active={current?.id === c.id} onclick={() => (workspace.settingsSection = c.id)}>
+          <c.icon size={14} />
+          {c.title}
+        </button>
+      {/each}
     </nav>
 
     <section class="content">
@@ -41,16 +36,7 @@
 
       {#if current?.settings}
         <h2>{current.title}</h2>
-        <current.settings ms={store.state[current.id]} state={store.state} />
-      {:else}
-        <h2>Общие</h2>
-        <div class="setting">
-          <div class="info">
-            <div class="name">Папка с данными кампании</div>
-            <div class="desc">Здесь хранятся настройки и картинки, добавленные вручную.</div>
-          </div>
-          <button class="btn" onclick={() => window.api.revealCampaign()}>Открыть папку</button>
-        </div>
+        <current.settings ms={store.state[current.id]} app={store.state} />
       {/if}
     </section>
   </div>

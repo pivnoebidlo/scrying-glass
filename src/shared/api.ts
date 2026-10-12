@@ -21,8 +21,6 @@ export interface Api {
   closeDisplay(): Promise<void>;
   getDisplayStatus(): Promise<boolean>;
   onDisplayStatus(cb: (open: boolean) => void): void;
-
-  revealCampaign(): Promise<void>;
 }
 
 declare global {

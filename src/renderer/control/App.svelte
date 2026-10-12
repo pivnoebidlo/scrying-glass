@@ -5,11 +5,13 @@
   import Tabs from './Tabs.svelte';
   import ScreenPanel from './ScreenPanel.svelte';
   import Settings from './Settings.svelte';
+  import Welcome from './Welcome.svelte';
+  import { store } from '../lib/store.svelte';
   import { workspace } from './workspace.svelte';
 
   function onkeydown(e: KeyboardEvent) {
     // Cmd/Ctrl + , — настройки, как в Obsidian.
-    if ((e.metaKey || e.ctrlKey) && e.key === ',') {
+    if ((e.metaKey || e.ctrlKey) && e.key === ',' && store.state.vault.root) {
       e.preventDefault();
       workspace.openSettings();
     }
@@ -18,17 +20,21 @@
 
 <svelte:window {onkeydown} />
 
-<div class="app">
-  <Ribbon />
-  {#if workspace.sidebarOpen && workspace.sidebar}
-    <Sidebar />
-  {/if}
-  <Tabs />
-  <ScreenPanel />
-</div>
+{#if !store.state.vault.root}
+  <Welcome />
+{:else}
+  <div class="app">
+    <Ribbon />
+    {#if workspace.sidebarOpen && workspace.sidebar}
+      <Sidebar />
+    {/if}
+    <Tabs />
+    <ScreenPanel />
+  </div>
 
-{#if workspace.settingsOpen}
-  <Settings />
+  {#if workspace.settingsOpen}
+    <Settings />
+  {/if}
 {/if}
 
 <style>

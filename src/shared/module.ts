@@ -1,12 +1,26 @@
 // Описание модуля со стороны ядра: состояние, действия, хуки.
 import type { BrowserWindow, Dialog } from 'electron';
+import type { VaultFolder, VaultState } from './vault';
 
-// Контекст, который получают действия модулей.
+// Хранилище, как его видят модули.
+export interface VaultAccess {
+  readonly root: string | null;
+  readonly tree: VaultFolder | null;
+  // Абсолютный путь к файлу хранилища. null, если хранилище не открыто или путь выходит за его пределы.
+  resolve(rel: string): string | null;
+  // Открывает другое хранилище (null — закрыть). Возвращает новое состояние модуля vault.
+  open(root: string | null): Promise<VaultState>;
+  // Перечитать хранилище, не дожидаясь наблюдателя (например, сразу после копирования файлов).
+  rescan(): VaultState;
+  // Забыть хранилище в списке недавних.
+  forget(root: string): VaultState;
+}
+
+// Контекст, который получают действия и хуки модулей.
 export interface ModuleContext {
   dialog: Dialog;
-  appRoot: string;
-  readonly assetsDir: string;
   readonly controlWindow: BrowserWindow | null;
+  vault: VaultAccess;
 }
 
 // Действие: (состояние, данные, контекст) -> новое состояние.
@@ -14,13 +28,13 @@ export type Action<S, P = any> = (state: S, payload: P, ctx: ModuleContext) => S
 
 export interface ModuleDef<Id extends string, S, A extends Record<string, Action<S>>> {
   id: Id;
-  // Сохранять ли состояние модуля в campaign.json.
+  // Сохранять ли состояние модуля в хранилище (.scrying-glass/state.json).
   persist: boolean;
   initialState: S;
-  // Необязательный хук: подготовить состояние при запуске.
+  // Необязательный хук: подготовить состояние после открытия хранилища.
   init?(state: S, ctx: ModuleContext): S;
-  // Где лежит файл картинки с этим id (для протокола sg-asset).
-  resolveAsset?(state: S, id: string, ctx: ModuleContext): string | null;
+  // Необязательный хук: файлы в хранилище изменились (дерево уже перечитано, ctx.vault.tree новое).
+  onTreeChange?(state: S, ctx: ModuleContext): S;
   actions: A;
 }
 

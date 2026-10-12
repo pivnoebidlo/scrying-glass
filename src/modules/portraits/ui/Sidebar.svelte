@@ -1,33 +1,28 @@
-<!-- Боковая панель: папки приключений. -->
+<!-- Боковая панель: папки персонажей из хранилища. -->
 <script lang="ts">
-  import { FolderPlus, Images, Folder, Upload } from '@lucide/svelte';
+  import { Images, Users } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { sections, ui } from './ui.svelte';
+  import { characterGroups } from '../library';
+  import { ui } from './ui.svelte';
 
-  let { ms }: ModuleProps<'portraits'> = $props();
-  const list = $derived(sections(ms));
+  let { app }: ModuleProps<'portraits'> = $props();
+  const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name) : []);
+  const total = $derived(groups.reduce((n, g) => n + g.items.length, 0));
 </script>
 
 <div class="list">
   <button class="item" class:active={ui.group === 'all'} onclick={() => (ui.group = 'all')}>
     <Images size={14} />
     <span class="name">Все портреты</span>
-    <span class="count">{ms.library.length}</span>
+    <span class="count">{total}</span>
   </button>
-  {#each list as s (s.key)}
-    <button class="item" class:active={ui.group === s.key} title={s.hint} onclick={() => (ui.group = s.key)}>
-      {#if s.key === 'manual'}<Upload size={14} />{:else}<Folder size={14} />{/if}
-      <span class="name">{s.title}</span>
-      <span class="count">{s.items.length}</span>
+  {#each groups as g (g.key)}
+    <button class="item" class:active={ui.group === g.key} title={g.key} onclick={() => (ui.group = g.key)}>
+      <Users size={14} />
+      <span class="name">{g.title}</span>
+      <span class="count">{g.items.length}</span>
     </button>
   {/each}
-</div>
-
-<div class="actions">
-  <button class="btn" onclick={() => dispatch('portraits', 'addFolder')}>
-    <FolderPlus size={14} /> Подключить папку…
-  </button>
 </div>
 
 <style>
@@ -65,12 +60,5 @@
   .count {
     color: var(--text-faint);
     font-size: 12px;
-  }
-  .actions {
-    padding: 10px 12px;
-  }
-  .actions .btn {
-    width: 100%;
-    justify-content: center;
   }
 </style>

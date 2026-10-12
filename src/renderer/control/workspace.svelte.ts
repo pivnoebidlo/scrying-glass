@@ -3,6 +3,7 @@
 import type { ModuleId } from '../../shared/types';
 import { controlContributions } from '../lib/registry';
 import { store } from '../lib/store.svelte';
+import { provideNav } from '../lib/nav';
 
 const KEY = 'sg.workspace';
 
@@ -30,7 +31,7 @@ class Workspace {
   sidebar = $state<ModuleId | null>(null);
   sidebarOpen = $state(true);
   settingsOpen = $state(false);
-  settingsSection = $state<string>('general');
+  settingsSection = $state<string>('');
   // Экран, выбранный для игроков (null — подобрать автоматически).
   displayId = $state<number | null>(null);
 
@@ -78,7 +79,7 @@ class Workspace {
     if (this.active === id) this.active = this.tabs[Math.min(i, this.tabs.length - 1)] ?? null;
   }
 
-  openSettings(section = 'general') {
+  openSettings(section = '') {
     this.settingsSection = section;
     this.settingsOpen = true;
   }
@@ -100,6 +101,7 @@ class Workspace {
 }
 
 export const workspace = new Workspace();
+provideNav((id) => workspace.openTab(id));
 
 $effect.root(() => {
   $effect(() => workspace.save());

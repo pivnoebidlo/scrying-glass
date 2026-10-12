@@ -1,32 +1,8 @@
-// Портрет из подключённой папки: файл читается с диска на месте.
-export interface FolderPortrait {
-  id: string;
-  name: string;
-  groupId: string;
-  path: string;
-}
-
-// Портрет, добавленный вручную: копия лежит в папке кампании (assets/<file>).
-export interface ManualPortrait {
-  id: string;
-  name: string;
-  file: string;
-}
-
-export type Portrait = FolderPortrait | ManualPortrait;
-
-// Подключённая папка приключения.
-export interface PortraitGroup {
-  id: string;
-  name: string;
-  path: string;
-}
-
+// Портреты — картинки хранилища. Портрет определяется путём к файлу внутри хранилища.
 export interface PortraitsState {
-  library: Portrait[];
-  groups: PortraitGroup[];
+  // Пути картинок, которые сейчас на экране игроков, в порядке появления.
   onScreen: string[];
+  // Подписи, изменённые вручную. Если подписи нет, она берётся из имени файла.
+  names: Record<string, string>;
   showNames: boolean;
 }
-
-export const isFromFolder = (p: Portrait): p is FolderPortrait => 'path' in p;
