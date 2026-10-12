@@ -28,6 +28,11 @@ export default defineModule({
       return { ...s, onScreen: on ? s.onScreen.filter((x) => x !== path) : [...s.onScreen, path] };
     },
 
+    // Задать, кто на экране, целиком (например, при включении сцены).
+    setOnScreen(s, { paths }: { paths: string[] }) {
+      return { ...s, onScreen: [...new Set(paths)] };
+    },
+
     clearScreen(s) {
       return { ...s, onScreen: [] };
     },

@@ -25,6 +25,11 @@ export default defineModule({
       return { ...s, background: path };
     },
 
+    // Фон вместе с размещением (например, при включении сцены).
+    set(s, { path, fit }: { path: string | null; fit: Fit }) {
+      return { ...s, background: path, fit };
+    },
+
     clear(s) {
       return { ...s, background: null };
     },

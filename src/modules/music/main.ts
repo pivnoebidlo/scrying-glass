@@ -1,7 +1,7 @@
 // Музыка (очередь из папки) и атмосфера (зацикленные звуки поверх музыки).
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { allFiles, findFolder } from '../../shared/vault';
-import type { MusicState, Repeat } from './types';
+import type { AmbientLoop, MusicState, Repeat } from './types';
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
@@ -43,6 +43,22 @@ function prune(s: MusicState, ctx: ModuleContext): MusicState {
   // Текущий трек удалили: играем то, что встало на его место.
   if (!queue.length) return { ...next, index: 0, playing: false, playlist: null };
   return { ...next, index: Math.min(s.index, queue.length - 1), seq: s.seq + 1 };
+}
+
+// Перемешать очередь (текущий трек остаётся первым) или вернуть порядок папки.
+function setShuffle(s: MusicState, shuffle: boolean, ctx: ModuleContext): MusicState {
+  if (shuffle === s.shuffle) return s;
+  const current = s.queue[s.index];
+  let queue = s.queue;
+  if (shuffle) {
+    queue = shuffled(s.queue.filter((p) => p !== current));
+    if (current) queue = [current, ...queue];
+  } else {
+    const f = s.playlist !== null && ctx.vault.tree ? findFolder(ctx.vault.tree, s.playlist) : null;
+    if (f) queue = allFiles(f, 'audio').map((x) => x.path).filter((p) => s.queue.includes(p));
+  }
+  const index = current ? Math.max(0, queue.indexOf(current)) : 0;
+  return { ...s, shuffle, queue, index };
 }
 
 const initialState: MusicState = {
@@ -122,18 +138,16 @@ export default defineModule({
 
     // Перемешать очередь (текущий трек остаётся играть) или вернуть порядок папки.
     toggleShuffle(s, _: void, ctx) {
-      const shuffle = !s.shuffle;
-      const current = s.queue[s.index];
-      let queue = s.queue;
-      if (shuffle) {
-        queue = shuffled(s.queue.filter((p) => p !== current));
-        if (current) queue = [current, ...queue];
-      } else {
-        const f = s.playlist !== null && ctx.vault.tree ? findFolder(ctx.vault.tree, s.playlist) : null;
-        if (f) queue = allFiles(f, 'audio').map((x) => x.path).filter((p) => s.queue.includes(p));
-      }
-      const index = current ? Math.max(0, queue.indexOf(current)) : 0;
-      return { ...s, shuffle, queue, index };
+      return setShuffle(s, !s.shuffle, ctx);
+    },
+
+    setShuffle(s, { value }: { value: boolean }, ctx) {
+      return setShuffle(s, value, ctx);
+    },
+
+    // Задать атмосферу целиком (например, при включении сцены). Пустой список — тишина.
+    setAmbience(s, { loops }: { loops: AmbientLoop[] }) {
+      return { ...s, ambience: loops, ambiencePlaying: loops.length > 0 };
     },
 
     setCrossfade(s, { seconds }: { seconds: number }) {
