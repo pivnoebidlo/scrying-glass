@@ -52,6 +52,7 @@ export default defineModule({
         ac: c.ac ?? null,
         side: c.side ?? 'enemy',
         portrait: c.portrait ?? null,
+        image: c.image ?? null,
         hidden: c.hidden ?? false,
         conditions: [],
         card: c.card ?? null,

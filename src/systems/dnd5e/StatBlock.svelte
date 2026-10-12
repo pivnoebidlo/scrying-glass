@@ -2,13 +2,13 @@
 <script lang="ts">
   import type { Card } from '../../shared/cards';
   import { escape, markdown } from '../../renderer/lib/markdown';
-  import { crText, dict, initiativeOf, mod, signed, sizeText, type Ability, type Block, type Dnd5eStats, type SpeedKind } from './stats';
+  import { ABILITIES, crText, dict, initiativeOf, mod, signed, sizeText, type Block, type Dnd5eStats, type SpeedKind } from './stats';
 
   let { card }: { card: Card<Dnd5eStats> } = $props();
 
   const s = $derived(card.stats);
   const t = $derived(dict(card.lang));
-  const ABILITIES: Ability[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+
 
   // Значение из справочника по ключу; неизвестное — как есть.
   const term = (table: Record<string, string>, key: string) => table[key] ?? key;
@@ -152,10 +152,13 @@
     border-collapse: collapse;
     text-align: center;
   }
+  .abilities {
+    width: 100%;
+    max-width: 460px;
+  }
   .abilities th,
   .abilities td {
-    min-width: 58px;
-    padding: 2px 6px;
+    padding: 2px 4px;
   }
   .abilities thead th {
     font-size: 11px;

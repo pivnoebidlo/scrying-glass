@@ -194,3 +194,48 @@ const ru: Labels = {
 };
 
 export const dict = (lang: string): Labels => (lang === 'ru' ? ru : en);
+
+// ---------- Для редактора ----------
+
+export const SIZES: Size[] = ['tiny', 'small', 'medium', 'large', 'huge', 'gargantuan'];
+export const ABILITIES: Ability[] = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+export const SPEEDS: SpeedKind[] = ['walk', 'fly', 'swim', 'climb', 'burrow'];
+export const SENSES: SenseKind[] = ['darkvision', 'blindsight', 'tremorsense', 'truesight'];
+
+// Опыт за показатель опасности.
+const XP: Record<number, number> = {
+  0: 10, 0.125: 25, 0.25: 50, 0.5: 100, 1: 200, 2: 450, 3: 700, 4: 1100, 5: 1800, 6: 2300, 7: 2900, 8: 3900,
+  9: 5000, 10: 5900, 11: 7200, 12: 8400, 13: 10000, 14: 11500, 15: 13000, 16: 15000, 17: 18000, 18: 20000,
+  19: 22000, 20: 25000, 21: 33000, 22: 41000, 23: 50000, 24: 62000, 25: 75000, 26: 90000, 27: 105000,
+  28: 120000, 29: 135000, 30: 155000,
+};
+export const CRS = Object.keys(XP).map(Number).sort((a, b) => a - b);
+export const xpFor = (cr: number) => XP[cr] ?? 0;
+// Бонус мастерства: +2 до ПО 4, дальше +1 за каждые 4 ступени.
+export const pbFor = (cr: number) => (cr < 5 ? 2 : Math.min(9, 2 + Math.ceil((cr - 4) / 4)));
+
+// Средние хиты по формуле: «3d6» -> 10, «19d12+133» -> 256. null — формула не разобрана.
+export function averageHp(formula: string): number | null {
+  const m = /^(\d+)[dк](\d+)(?:([+\-−])(\d+))?$/i.exec(formula.replace(/\s+/g, ''));
+  if (!m) return null;
+  const avg = Math.floor((Number(m[1]) * (Number(m[2]) + 1)) / 2);
+  const k = m[4] ? Number(m[4]) : 0;
+  return Math.max(1, m[3] === '+' ? avg + k : avg - k);
+}
+
+export function blankStats(): Dnd5eStats {
+  return {
+    size: ['medium'], type: '', alignment: '', ac: 10, hp: 10, hpFormula: '', speed: { walk: 30 },
+    abilities: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+    saves: {}, skills: [], vulnerabilities: [], resistances: [], immunities: [], conditionImmunities: [],
+    senses: { passivePerception: 10 }, languages: '', cr: 0, xp: 10, pb: 2,
+    traits: [], actions: [], bonusActions: [], reactions: [],
+  };
+}
+
+// Какой характеристикой проверяется навык (для бонуса по умолчанию).
+export const SKILL_ABILITY: Record<string, Ability> = {
+  acrobatics: 'dex', 'animal-handling': 'wis', arcana: 'int', athletics: 'str', deception: 'cha', history: 'int',
+  insight: 'wis', intimidation: 'cha', investigation: 'int', medicine: 'wis', nature: 'int', perception: 'wis',
+  performance: 'cha', persuasion: 'cha', religion: 'int', 'sleight-of-hand': 'dex', stealth: 'dex', survival: 'wis',
+};

@@ -1,10 +1,11 @@
 <!-- Боковая панель бестиария: поиск, фильтры и список карточек. -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Search } from '@lucide/svelte';
+  import { Plus, Search } from '@lucide/svelte';
   import { sameRef } from '../../../shared/cards';
   import { systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
+  import { openTab } from '../../../renderer/lib/nav';
   import { bestiary, connectCards } from './cards.svelte';
 
   let {}: ModuleProps<'bestiary'> = $props();
@@ -15,6 +16,14 @@
   // Длинный список рисуем частями: сотни строк сразу заметно тормозят при наборе в поиске.
   const PAGE = 200;
   let limit = $state(PAGE);
+  let menu = $state(false);
+
+  function create(scope: 'vault' | 'library') {
+    menu = false;
+    if (bestiary.draft && !bestiary.cancel()) return;
+    bestiary.create(scope);
+    openTab('bestiary');
+  }
   $effect(() => {
     void bestiary.visible;
     limit = PAGE;
@@ -22,10 +31,21 @@
 </script>
 
 <div class="filters">
-  <label class="search">
-    <Search size={13} />
-    <input type="text" placeholder="Поиск" bind:value={f.search} />
-  </label>
+  <div class="top">
+    <label class="search">
+      <Search size={13} />
+      <input type="text" placeholder="Поиск" bind:value={f.search} />
+    </label>
+    <div class="new">
+      <button class="icon-btn" title="Новая карточка" onclick={() => (menu = !menu)}><Plus size={16} /></button>
+      {#if menu}
+        <div class="menu">
+          <button onclick={() => create('vault')}>Новая карточка в кампании</button>
+          <button onclick={() => create('library')}>Новая карточка в библиотеке</button>
+        </div>
+      {/if}
+    </div>
+  </div>
   <select bind:value={f.system} title="Система">
     <option value="all">Все системы</option>
     {#each systems as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
@@ -72,7 +92,44 @@
     gap: 6px;
     padding: 0 8px 8px;
   }
+  .top {
+    display: flex;
+    gap: 4px;
+  }
+  .new {
+    position: relative;
+  }
+  .new .icon-btn {
+    width: 30px;
+    height: 30px;
+  }
+  .menu {
+    position: absolute;
+    top: 32px;
+    right: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    min-width: 230px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    background: var(--bg-secondary);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+  .menu button {
+    padding: 6px 10px;
+    border: 0;
+    border-radius: var(--radius-s);
+    background: none;
+    text-align: left;
+    cursor: pointer;
+  }
+  .menu button:hover {
+    background: var(--bg-hover);
+  }
   .search {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: 6px;

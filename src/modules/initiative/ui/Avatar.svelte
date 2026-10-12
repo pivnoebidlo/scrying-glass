@@ -7,7 +7,7 @@
 </script>
 
 <span class="avatar {c.side}" style:--size={size}>
-  {#if c.portrait}<img src={vaultUrl(c.portrait)} alt="" />{:else}{c.name.slice(0, 1).toUpperCase()}{/if}
+  {#if c.portrait || c.image}<img src={c.portrait ? vaultUrl(c.portrait) : c.image} alt="" />{:else}{c.name.slice(0, 1).toUpperCase()}{/if}
 </span>
 
 <style>

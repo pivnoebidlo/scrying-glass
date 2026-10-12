@@ -69,3 +69,10 @@ export interface CombatStats {
 export const refKey = (r: CardRef) => `${r.scope}:${r.id}`;
 export const sameRef = (a: CardRef | null | undefined, b: CardRef | null | undefined) =>
   !!a && !!b && a.scope === b.scope && a.id === b.id;
+
+// Картинка карточки: путь от корня хранилища или библиотеки — смотря где лежит карточка.
+export function cardImageUrl(scope: CardScope, p: string): string | null {
+  if (scope === 'vault') return 'sg-asset://v/' + encodeURIComponent(p);
+  if (scope === 'library') return 'sg-asset://l/' + encodeURIComponent(p);
+  return null;
+}

@@ -1,17 +1,21 @@
 // Ядро: единое состояние, хранилище, сохранение, загрузка модулей, IPC.
-import { app, BrowserWindow, ipcMain, dialog, protocol } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, protocol, shell } from 'electron';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
 import type { VaultFolder, VaultState } from '../shared/vault';
+import type { CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
-import { getCard, initCards, listCards, setCardsVault } from './cards';
+import {
+  copyDraft, deleteCard, getCard, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+} from './cards';
+import { IMAGE_EXT } from '../shared/vault';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
 } from './windows';
@@ -35,6 +39,8 @@ const stateById = state as Record<string, unknown>;
 interface AppSettings {
   vault: string | null;
   recent: string[];
+  // Папка библиотеки карточек (null — в папке данных приложения).
+  library?: string | null;
 }
 const RECENT_MAX = 10;
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -43,7 +49,7 @@ let settings: AppSettings = { vault: null, recent: [] };
 function loadSettings() {
   try {
     const saved = readJson(settingsFile()) as Partial<AppSettings> | undefined;
-    settings = { vault: saved?.vault ?? null, recent: saved?.recent ?? [] };
+    settings = { vault: saved?.vault ?? null, recent: saved?.recent ?? [], library: saved?.library ?? null };
   } catch {
     /* не прочитались — начнём с выбора хранилища */
   }
@@ -113,6 +119,7 @@ async function openVault(root: string | null): Promise<VaultState> {
   }
 
   settings = {
+    ...settings,
     vault: root,
     recent: root ? [root, ...settings.recent.filter((r) => r !== root)].slice(0, RECENT_MAX) : settings.recent,
   };
@@ -227,9 +234,50 @@ ipcMain.handle('action', (_event, { module: id, name, payload }: { module: strin
   });
 });
 
-// Карточки (бестиарий): краткий список и полная карточка по ссылке.
+// Карточки (бестиарий): краткий список и полная карточка по ссылке, сохранение, картинки, папка библиотеки.
 ipcMain.handle('cards:list', () => listCards());
 ipcMain.handle('cards:get', (_event, ref) => getCard(ref));
+ipcMain.handle('cards:save', (_event, { scope, card }) => saveCard(scope, card));
+ipcMain.handle('cards:delete', (_event, ref) => deleteCard(ref));
+ipcMain.handle('cards:copyDraft', (_event, { ref, to }) => copyDraft(ref, to));
+ipcMain.handle('cards:move', (_event, { ref, to }) => moveCard(ref, to));
+
+// Картинка для карточки: из хранилища (vaultPath) или файл с диска (диалог). null — отменили.
+ipcMain.handle('cards:addImage', async (_event, { scope, vaultPath }: { scope: CardScope; vaultPath?: string }) => {
+  if (vaultPath) return importCardImage(scope, { vaultPath });
+  const win = getControlWindow();
+  const opts = {
+    title: 'Картинка для карточки',
+    properties: ['openFile' as const],
+    filters: [{ name: 'Картинки', extensions: IMAGE_EXT.map((e) => e.slice(1)) }],
+  };
+  const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+  return res.canceled || !res.filePaths[0] ? null : importCardImage(scope, { file: res.filePaths[0] });
+});
+
+const defaultLibrary = () => path.join(app.getPath('userData'), 'library');
+ipcMain.handle('cards:library', () => ({ path: libraryPath(), isDefault: !settings.library }));
+ipcMain.handle('cards:revealLibrary', async () => {
+  const dir = libraryPath();
+  if (dir) {
+    fs.mkdirSync(dir, { recursive: true });
+    await shell.openPath(dir);
+  }
+});
+// Выбрать папку библиотеки (reset — вернуть папку по умолчанию). Карточки в старой папке остаются на месте.
+ipcMain.handle('cards:chooseLibrary', async (_event, { reset }: { reset?: boolean } = {}) => {
+  let dir: string | null = null;
+  if (!reset) {
+    const win = getControlWindow();
+    const opts = { title: 'Папка библиотеки карточек', buttonLabel: 'Выбрать', properties: ['openDirectory' as const, 'createDirectory' as const] };
+    const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+    if (res.canceled || !res.filePaths[0]) return;
+    dir = res.filePaths[0];
+  }
+  settings = { ...settings, library: dir };
+  writeJsonAtomic(settingsFile(), settings);
+  setLibrary(dir ?? defaultLibrary());
+});
 
 ipcMain.handle('displays:list', () => listDisplays());
 ipcMain.handle('display:open', (_event, id: number) => openDisplay(id));
@@ -241,12 +289,14 @@ app.whenReady().then(async () => {
   for (const mod of Object.values(modules)) stateById[mod.id] = mod.initialState;
   loadSettings();
   stateById['vault'] = vaultState();
-  initCards(path.join(app.getPath('userData'), 'library'));
+  initCards(settings.library ?? defaultLibrary());
 
-  // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>
+  // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>,
+  // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>
   protocol.handle('sg-asset', (request) => {
     const url = new URL(request.url);
-    const file = url.host === 'v' ? resolveInVault(decodeURIComponent(url.pathname.slice(1))) : null;
+    const rel = decodeURIComponent(url.pathname.slice(1));
+    const file = url.host === 'v' ? resolveInVault(rel) : url.host === 'l' ? resolveInLibrary(rel) : null;
     return file ? serveFile(file, request) : new Response('Not found', { status: 404 });
   });
 

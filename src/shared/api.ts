@@ -1,5 +1,5 @@
 // API, который preload открывает окнам как window.api.
-import type { Card, CardRef, CardSummary } from './cards';
+import type { Card, CardRef, CardScope, CardSummary } from './cards';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 
 export interface DisplayInfo {
@@ -19,6 +19,17 @@ export interface Api {
   listCards(): Promise<CardSummary[]>;
   getCard(ref: CardRef): Promise<Card | null>;
   onCardsChanged(cb: () => void): void;
+  // Сохранить в библиотеку или хранилище (пустой id — новая карточка). Возвращает ссылку на сохранённую.
+  saveCard(scope: CardScope, card: Card): Promise<CardRef>;
+  deleteCard(ref: CardRef): Promise<void>;
+  // Черновик копии для другого места хранения (картинки копируются туда же). Сохраняется через saveCard.
+  copyCardDraft(ref: CardRef, to: CardScope): Promise<Card | null>;
+  moveCard(ref: CardRef, to: CardScope): Promise<CardRef | null>;
+  // Добавить картинку: из хранилища (vaultPath) или с диска через диалог. Путь для card.portraits или null.
+  addCardImage(scope: CardScope, vaultPath?: string): Promise<string | null>;
+  library(): Promise<{ path: string | null; isDefault: boolean }>;
+  chooseLibrary(reset?: boolean): Promise<void>;
+  revealLibrary(): Promise<void>;
 
   listDisplays(): Promise<DisplayInfo[]>;
   onDisplaysChanged(cb: () => void): void;

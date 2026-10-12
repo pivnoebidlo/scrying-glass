@@ -31,7 +31,7 @@ body {
 }
 [hidden] { display: none !important; }
 
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 
 /* Кнопки */
 .btn {
@@ -56,11 +56,13 @@ button, input, select { font: inherit; color: inherit; }
 .icon-btn.active { color: var(--accent); }
 
 /* Поля */
-input[type=text], select {
+input[type=text], input[type=number], select, textarea {
   padding: 5px 8px; border-radius: var(--radius-s);
   border: 1px solid var(--border); background: var(--bg-primary);
 }
-input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); }
+input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+textarea { line-height: 1.45; user-select: text; }
+input[type=number]::-webkit-inner-spin-button { opacity: .4; }
 input[type=checkbox] { accent-color: var(--accent); }
 
 .muted { color: var(--text-muted); }

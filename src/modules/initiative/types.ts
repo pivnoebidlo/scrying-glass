@@ -15,6 +15,8 @@ export interface Combatant {
   side: Side;
   // Картинка из хранилища.
   portrait: string | null;
+  // Готовый адрес картинки не из хранилища (портрет карточки из библиотеки). Используется, если нет portrait.
+  image?: string | null;
   // Спрятан от игроков (засада, невидимка).
   hidden: boolean;
   conditions: string[];
