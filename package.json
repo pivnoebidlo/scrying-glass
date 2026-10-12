@@ -1,0 +1,11 @@
+{
+  "name": "scrying-glass",
+  "productName": "Scrying Glass",
+  "version": "0.3.0",
+  "description": "Экран мастера для сессий D&D: портреты, карты и инициатива на втором мониторе",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron ."
+  }
+}
