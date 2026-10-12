@@ -1,10 +1,11 @@
 <!-- Боковая панель бестиария: поиск, фильтры и список карточек. -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Plus, Search } from '@lucide/svelte';
+  import { Download, FilePlus, Plus, Search, Upload } from '@lucide/svelte';
   import { langName, sameRef } from '../../../shared/cards';
   import { systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
+  import { store } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { bestiary, connectCards } from './cards.svelte';
 
@@ -17,6 +18,28 @@
   const PAGE = 200;
   let limit = $state(PAGE);
   let menu = $state(false);
+
+  // Короткое сообщение под поиском: «Импортировано: 3».
+  let status = $state('');
+  let statusTimer: ReturnType<typeof setTimeout> | undefined;
+  function say(text: string) {
+    status = text;
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(() => (status = ''), 4000);
+  }
+
+  async function importCards() {
+    menu = false;
+    const n = await window.api.importCards();
+    if (n !== null) say(`Импортировано карточек: ${n}`);
+  }
+
+  async function exportScope(scope: 'vault' | 'library', name: string) {
+    menu = false;
+    const n = await window.api.exportCards({ scope, name });
+    if (n === null && !bestiary.all.some((c) => c.ref.scope === scope)) say('Здесь пока нет карточек');
+    else if (n !== null) say(`Экспортировано карточек: ${n}`);
+  }
 
   function create(scope: 'vault' | 'library') {
     menu = false;
@@ -37,11 +60,17 @@
       <input type="text" placeholder="Поиск" bind:value={f.search} />
     </label>
     <div class="new">
-      <button class="icon-btn" title="Новая карточка" onclick={() => (menu = !menu)}><Plus size={16} /></button>
+      <button class="icon-btn" title="Новая карточка, импорт и экспорт" onclick={() => (menu = !menu)}><Plus size={16} /></button>
       {#if menu}
+        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+        <div class="menu-backdrop" onclick={() => (menu = false)}></div>
         <div class="menu">
-          <button onclick={() => create('vault')}>Новая карточка в кампании</button>
-          <button onclick={() => create('library')}>Новая карточка в библиотеке</button>
+          <button onclick={() => create('vault')}><FilePlus size={14} /> Новая карточка в кампании</button>
+          <button onclick={() => create('library')}><FilePlus size={14} /> Новая карточка в библиотеке</button>
+          <div class="sep"></div>
+          <button onclick={importCards}><Download size={14} /> Импорт из файла…</button>
+          <button onclick={() => exportScope('vault', `Карточки — ${store.state.vault.name}`)}><Upload size={14} /> Экспорт карточек кампании…</button>
+          <button onclick={() => exportScope('library', 'Библиотека карточек')}><Upload size={14} /> Экспорт библиотеки…</button>
         </div>
       {/if}
     </div>
@@ -65,6 +94,7 @@
   </div>
 </div>
 
+{#if status}<div class="status">{status}</div>{/if}
 <div class="count faint">{bestiary.visible.length} {bestiary.visible.length === bestiary.all.length ? '' : `из ${bestiary.all.length}`}</div>
 
 <div class="list">
@@ -117,7 +147,27 @@
     background: var(--bg-secondary);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
+  .menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9;
+  }
+  .sep {
+    height: 1px;
+    margin: 4px 0;
+    background: var(--border);
+  }
+  .status {
+    margin: 0 8px 6px;
+    padding: 4px 8px;
+    border-radius: var(--radius-s);
+    background: var(--accent-soft);
+    font-size: 12px;
+  }
   .menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     padding: 6px 10px;
     border: 0;
     border-radius: var(--radius-s);

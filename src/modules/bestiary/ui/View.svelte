@@ -1,7 +1,7 @@
 <!-- Вкладка бестиария: выбранная карточка, её версии на других языках и добавление в бой. -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ArrowRightLeft, Copy, Pencil, Swords, Trash2 } from '@lucide/svelte';
+  import { ArrowRightLeft, Copy, Pencil, Swords, Trash2, Upload } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
@@ -109,6 +109,11 @@
               {/if}
               <button class="icon-btn" title="Удалить карточку" onclick={() => bestiary.remove(ref, card.name)}><Trash2 size={14} /></button>
             {/if}
+            <button
+              class="icon-btn"
+              title="Экспорт в файл (все языки, с портретами) — чтобы поделиться"
+              onclick={() => window.api.exportCards({ refs: bestiary.versions.map((v) => v.ref), name: card.name })}
+            ><Upload size={14} /></button>
           </div>
           <div class="actions">
             <div class="langs">
@@ -119,7 +124,9 @@
                   title="{v.name} · {SCOPE_SHORT[v.ref.scope]}"
                   onclick={() => bestiary.select(v.ref)}
                 >
-                  {langName(v.lang)}
+                  {langName(v.lang)}{#if bestiary.versions.filter((x) => x.lang === v.lang).length > 1}<span class="where">
+                      · {SCOPE_SHORT[v.ref.scope]}</span
+                    >{/if}
                 </button>
               {/each}
               <select
@@ -244,6 +251,10 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 4px;
+  }
+  .where {
+    color: var(--text-faint);
+    font-size: 11px;
   }
   .add-lang {
     padding: 2px 6px;

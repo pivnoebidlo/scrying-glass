@@ -242,3 +242,118 @@ export function moveCard(ref: CardRef, to: CardScope): CardRef | null {
   deleteCard(ref);
   return saved;
 }
+
+// ---------- Импорт и экспорт ----------
+//
+// Файл обмена — один JSON: карточки вместе с картинками, чтобы его можно было переслать одним вложением.
+//   { "scryingGlass": "cards", "version": 1, "cards": [ … ], "images": { "<имя>": "data:image/png;base64,…" } }
+// Портреты карточек в файле — имена из images. Импортировать можно и одиночный файл карточки (из папки cards).
+
+const MIME: Record<string, string> = {
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif',
+};
+const EXT = Object.fromEntries(Object.entries(MIME).map(([ext, mime]) => [mime, ext]));
+
+interface Bundle {
+  scryingGlass: 'cards';
+  version: 1;
+  cards: Card[];
+  images: Record<string, string>;
+}
+
+export function exportCards(refs: CardRef[], file: string): number {
+  const bundle: Bundle = { scryingGlass: 'cards', version: 1, cards: [], images: {} };
+  const used = new Set<string>();
+  for (const ref of refs) {
+    const c = getCard(ref);
+    if (!c) continue;
+    const portraits: string[] = [];
+    for (const p of c.portraits) {
+      const abs = imageFile(ref.scope, p);
+      const mime = abs && MIME[path.extname(abs).toLowerCase()];
+      if (!abs || !mime || !fs.existsSync(abs)) continue;
+      // Имя картинки в файле: исходное, при совпадении — с номером.
+      let name = path.basename(abs);
+      for (let i = 2; used.has(name); i++) name = `${path.basename(abs, path.extname(abs))} (${i})${path.extname(abs)}`;
+      used.add(name);
+      bundle.images[name] = `data:${mime};base64,${fs.readFileSync(abs).toString('base64')}`;
+      portraits.push(name);
+    }
+    bundle.cards.push({ ...c, portraits });
+  }
+  writeJsonAtomic(file, bundle);
+  return bundle.cards.length;
+}
+
+function readImport(file: string): Bundle {
+  const data = JSON.parse(fs.readFileSync(file, 'utf8')) as Partial<Bundle> & Partial<Card>;
+  if (data.scryingGlass === 'cards' && Array.isArray(data.cards)) return { ...data, images: data.images ?? {} } as Bundle;
+  // Одиночная карточка: картинок при ней нет.
+  if (typeof data.name === 'string' && data.stats !== undefined) {
+    return { scryingGlass: 'cards', version: 1, cards: [{ ...(data as Card), portraits: [] }], images: {} };
+  }
+  throw new Error('Это не файл карточек Scrying Glass');
+}
+
+// Импортирует файлы в библиотеку или хранилище. Карточки всегда добавляются как новые (существующие
+// не перезаписываются); связи «перевод — оригинал» внутри импорта сохраняются.
+export function importCards(files: string[], to: CardScope): { count: number; errors: string[] } {
+  const dir = cardsDir(to);
+  const imgDir = imagesDir(to);
+  if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: ['Некуда импортировать'] };
+  let count = 0;
+  const errors: string[] = [];
+  for (const file of files) {
+    let bundle: Bundle;
+    try {
+      bundle = readImport(file);
+    } catch (e) {
+      errors.push(`${path.basename(file)}: ${e instanceof Error ? e.message : String(e)}`);
+      continue;
+    }
+    // Картинки: каждая пишется один раз, даже если она у нескольких карточек.
+    const saved = new Map<string, string>();
+    const image = (name: string): string | null => {
+      if (saved.has(name)) return saved.get(name)!;
+      const m = /^data:([\w/+.-]+);base64,(.*)$/s.exec(bundle.images[name] ?? '');
+      const ext = m && EXT[m[1]!];
+      if (!m || !ext) return null;
+      fs.mkdirSync(imgDir.abs, { recursive: true });
+      const base = path.basename(name, path.extname(name)).replace(/[/\\:]/g, '_') || 'image';
+      const fileName = freeName(imgDir.abs, base + ext);
+      fs.writeFileSync(path.join(imgDir.abs, fileName), Buffer.from(m[2]!, 'base64'));
+      const rel = `${imgDir.rel}/${fileName}`;
+      saved.set(name, rel);
+      return rel;
+    };
+    // Новые id: старые могли совпасть с уже существующими карточками.
+    const ids = new Map<string, string>();
+    for (const c of bundle.cards) {
+      if (typeof c?.name !== 'string' || c.stats === undefined) continue;
+      ids.set(c.id, newId(to, c.name));
+      cards.set(refKey({ scope: to, id: ids.get(c.id)! }), c); // занять id до записи, чтобы newId не повторился
+    }
+    for (const c of bundle.cards) {
+      const id = ids.get(c.id);
+      if (!id) continue;
+      const origin = c.origin && { ...c.origin, id: ids.get(c.origin.id) ?? c.origin.id };
+      const card: Card = {
+        ...c,
+        format: 1,
+        id,
+        ...(origin ? { origin } : {}),
+        portraits: (c.portraits ?? []).map(image).filter((p): p is string => !!p),
+        tags: c.tags ?? [],
+        notes: c.notes ?? '',
+      };
+      writeJsonAtomic(path.join(dir, `${id}.json`), card);
+      count++;
+    }
+  }
+  loadScope(to);
+  changed();
+  return { count, errors };
+}
+
+// Карточки места хранения целиком (для экспорта библиотеки или всех карточек кампании).
+export const cardsOf = (scope: CardScope): CardRef[] => listCards().filter((c) => c.ref.scope === scope).map((c) => c.ref);

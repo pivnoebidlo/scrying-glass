@@ -6,14 +6,14 @@ import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
 import type { VaultFolder, VaultState } from '../shared/vault';
-import type { CardScope } from '../shared/cards';
+import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import {
-  copyDraft, deleteCard, getCard, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, copyDraft, deleteCard, exportCards, getCard, importCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import {
@@ -253,6 +253,55 @@ ipcMain.handle('cards:addImage', async (_event, { scope, vaultPath }: { scope: C
   };
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
   return res.canceled || !res.filePaths[0] ? null : importCardImage(scope, { file: res.filePaths[0] });
+});
+
+// Экспорт: выбранные карточки (refs) или всё место хранения (scope) в один файл с картинками.
+ipcMain.handle('cards:export', async (_event, { refs, scope, name }: { refs?: CardRef[]; scope?: CardScope; name: string }) => {
+  const list = refs ?? (scope ? cardsOf(scope) : []);
+  if (!list.length) return null;
+  const win = getControlWindow();
+  const opts = {
+    title: 'Экспорт карточек',
+    defaultPath: path.join(app.getPath('documents'), `${name.replace(/[/\\:*?"<>|]/g, '_')}.json`),
+    filters: [{ name: 'Карточки Scrying Glass', extensions: ['json'] }],
+  };
+  const res = win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts);
+  if (res.canceled || !res.filePath) return null;
+  try {
+    return exportCards(list, res.filePath);
+  } catch (e) {
+    dialog.showErrorBox('Не удалось сохранить файл', `${res.filePath}\n\n${String(e)}`);
+    return null;
+  }
+});
+
+// Импорт: выбрать файлы, потом — куда (кампания или библиотека). Возвращает число карточек или null.
+ipcMain.handle('cards:import', async () => {
+  const win = getControlWindow();
+  const openOpts = {
+    title: 'Импорт карточек',
+    properties: ['openFile' as const, 'multiSelections' as const],
+    filters: [{ name: 'Карточки Scrying Glass', extensions: ['json'] }],
+  };
+  const res = win ? await dialog.showOpenDialog(win, openOpts) : await dialog.showOpenDialog(openOpts);
+  if (res.canceled || !res.filePaths.length) return null;
+  const askOpts = {
+    type: 'question' as const,
+    message: 'Куда импортировать карточки?',
+    detail: 'В кампанию — только для этого хранилища. В библиотеку — для всех кампаний.',
+    buttons: ['В кампанию', 'В библиотеку', 'Отмена'],
+    defaultId: 0,
+    cancelId: 2,
+  };
+  const ask = win ? await dialog.showMessageBox(win, askOpts) : await dialog.showMessageBox(askOpts);
+  if (ask.response === 2) return null;
+  const { count, errors } = importCards(res.filePaths, ask.response === 0 ? 'vault' : 'library');
+  if (errors.length) {
+    const errOpts = { type: 'warning' as const, message: `Импортировано карточек: ${count}`, detail: errors.join('\n') };
+    if (win) await dialog.showMessageBox(win, errOpts);
+    else await dialog.showMessageBox(errOpts);
+  }
+  return count;
 });
 
 const defaultLibrary = () => path.join(app.getPath('userData'), 'library');
