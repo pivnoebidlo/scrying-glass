@@ -11,6 +11,7 @@ import { isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
+import { getCard, initCards, listCards, setCardsVault } from './cards';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
 } from './windows';
@@ -103,6 +104,7 @@ async function openVault(root: string | null): Promise<VaultState> {
   watcher = null;
   vaultRoot = root;
   vaultTree = root ? scanVault(root) : null;
+  setCardsVault(root, DATA_DIR);
 
   for (const mod of Object.values(modules)) {
     if (mod.id === 'vault') continue;
@@ -225,6 +227,10 @@ ipcMain.handle('action', (_event, { module: id, name, payload }: { module: strin
   });
 });
 
+// Карточки (бестиарий): краткий список и полная карточка по ссылке.
+ipcMain.handle('cards:list', () => listCards());
+ipcMain.handle('cards:get', (_event, ref) => getCard(ref));
+
 ipcMain.handle('displays:list', () => listDisplays());
 ipcMain.handle('display:open', (_event, id: number) => openDisplay(id));
 ipcMain.handle('display:close', () => closeDisplay());
@@ -235,6 +241,7 @@ app.whenReady().then(async () => {
   for (const mod of Object.values(modules)) stateById[mod.id] = mod.initialState;
   loadSettings();
   stateById['vault'] = vaultState();
+  initCards(path.join(app.getPath('userData'), 'library'));
 
   // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>
   protocol.handle('sg-asset', (request) => {

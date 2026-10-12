@@ -1,3 +1,5 @@
+import type { CardRef } from '../../shared/cards';
+
 export type Side = 'party' | 'ally' | 'enemy';
 
 export interface Combatant {
@@ -16,6 +18,8 @@ export interface Combatant {
   // Спрятан от игроков (засада, невидимка).
   hidden: boolean;
   conditions: string[];
+  // Карточка из бестиария, если участник добавлен оттуда (открыть статблок).
+  card?: CardRef | null;
 }
 
 export interface InitiativeState {

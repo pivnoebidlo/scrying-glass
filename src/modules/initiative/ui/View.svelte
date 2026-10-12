@@ -1,6 +1,7 @@
 <!-- Вкладка «Инициатива»: таблица участников боя для мастера. -->
 <script lang="ts">
-  import { ChevronLeft, ChevronRight, Dices, Eye, EyeOff, Plus, Square, Swords, Trash2, X } from '@lucide/svelte';
+  import { ChevronLeft, ChevronRight, Dices, Eye, EyeOff, Plus, ScrollText, Square, Swords, Trash2, X } from '@lucide/svelte';
+  import { bestiary } from '../../bestiary/ui/cards.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { defeated, ordered } from '../order';
@@ -143,6 +144,10 @@
               </select>
             </td>
             <td class="c-act">
+              {#if c.card}
+                {@const ref = c.card}
+                <button class="icon-btn" title="Статблок" onclick={() => bestiary.show(ref)}><ScrollText size={14} /></button>
+              {/if}
               <button class="icon-btn" title={c.hidden ? 'Спрятан от игроков — показать' : 'Спрятать от игроков'} onclick={() => update(c, { hidden: !c.hidden })}>
                 {#if c.hidden}<EyeOff size={14} />{:else}<Eye size={14} />{/if}
               </button>
@@ -154,7 +159,7 @@
     </table>
   {:else}
     <p class="faint empty">
-      Участников пока нет. Добавьте их формой ниже или кнопкой «В инициативу» на карточке портрета.
+      Участников пока нет. Добавьте их формой ниже, кнопкой «В инициативу» на карточке портрета или из бестиария.
     </p>
   {/if}
 
@@ -299,7 +304,8 @@
     font-size: 12px;
   }
   .c-act {
-    width: 64px;
+    width: 92px;
+    text-align: right;
     white-space: nowrap;
   }
   .empty {

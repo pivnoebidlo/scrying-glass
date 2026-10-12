@@ -8,5 +8,6 @@ import music from './music/main';
 import maps from './maps/main';
 import scenes from './scenes/main';
 import initiative from './initiative/main';
+import bestiary from './bestiary/main';
 
-export const moduleList = [core, vault, scene, maps, portraits, music, scenes, initiative] as const;
+export const moduleList = [core, vault, scene, maps, portraits, music, scenes, initiative, bestiary] as const;

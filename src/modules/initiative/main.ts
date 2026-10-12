@@ -54,6 +54,7 @@ export default defineModule({
         portrait: c.portrait ?? null,
         hidden: c.hidden ?? false,
         conditions: [],
+        card: c.card ?? null,
       };
       return { ...s, combatants: [...s.combatants, full] };
     },
