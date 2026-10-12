@@ -315,10 +315,11 @@ class Bestiary {
   }
 
   // Импорт файлов карточек в выбранное место. Возвращает сообщение для пользователя или null.
-  async importFiles(): Promise<string | null> {
+  // place — куда класть (иначе спросим), например папка партии текущего приключения.
+  async importFiles(place?: Place | null): Promise<string | null> {
     const files = await window.api.pickImportFiles();
     if (!files.length) return null;
-    const place = await this.choosePlace({ title: 'Куда импортировать карточки?', action: 'Импортировать', library: true });
+    place ??= await this.choosePlace({ title: 'Куда импортировать карточки?', action: 'Импортировать', library: true });
     if (!place) return null;
     const { count, errors, updated } = await window.api.importCards(files, place.scope, place.folder);
     return [

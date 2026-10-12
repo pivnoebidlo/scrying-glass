@@ -10,13 +10,28 @@
   import ThumbSize from '../../../renderer/lib/ThumbSize.svelte';
   import { thumbs } from '../../../renderer/lib/thumbs.svelte';
   import { onMount } from 'svelte';
-  import { connectCards } from '../../bestiary/ui/cards.svelte';
+  import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
+  import { folderRole } from '../../../shared/vault';
+  import { Download } from '@lucide/svelte';
   import { connectCardNames } from './cardNames.svelte';
   import { ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'portraits'> = $props();
 
   onMount(connectCards);
+
+  // Импорт персонажа сразу в папку партии текущего приключения (её создаёт проверка папок при запуске);
+  // без текущего приключения — спросить, куда.
+  let status = $state('');
+  async function importCharacter() {
+    const a = app.adventures.current;
+    const party = a && app.vault.tree?.folders.find((f) => f.path === a)?.folders.find((f) => folderRole(f.name) === 'party');
+    const text = await bestiary.importFiles(party ? { scope: 'vault', folder: party.path } : null);
+    if (text) {
+      status = text.replace(/\n/g, ' · ');
+      setTimeout(() => (status = ''), 5000);
+    }
+  }
   onMount(connectCardNames);
 
   const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []);
@@ -36,6 +51,12 @@
       <Search size={14} />
       <input type="text" placeholder="Поиск по имени" bind:value={ui.search} />
     </label>
+    <button
+      class="btn"
+      title="Персонаж игрока из Long Story Short (экспорт листа в JSON) или файл карточек Scrying Glass. Повторный импорт того же персонажа обновляет его лист"
+      onclick={importCharacter}><Download size={14} /> Импорт персонажа…</button
+    >
+    {#if status}<span class="status">{status}</span>{/if}
     <div class="spacer"></div>
     <ThumbSize grid="portraits" />
   </header>
@@ -87,6 +108,12 @@
   }
   .spacer {
     flex: 1;
+  }
+  .status {
+    padding: 4px 8px;
+    border-radius: var(--radius-s);
+    background: var(--accent-soft);
+    font-size: 12px;
   }
   .search {
     display: flex;
