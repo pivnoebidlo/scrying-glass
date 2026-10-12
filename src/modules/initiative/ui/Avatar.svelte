@@ -1,13 +1,13 @@
 <!-- Портрет участника боя или первая буква имени. -->
 <script lang="ts">
-  import { vaultUrl } from '../../../shared/vault';
+  import { assetUrl } from '../../../shared/vault';
   import type { Combatant } from '../types';
 
   let { c, size = '28px' }: { c: Combatant; size?: string } = $props();
 </script>
 
 <span class="avatar {c.side}" style:--size={size}>
-  {#if c.portrait || c.image}<img src={c.portrait ? vaultUrl(c.portrait) : c.image} alt="" />{:else}{c.name.slice(0, 1).toUpperCase()}{/if}
+  {#if c.portrait}<img src={assetUrl(c.portrait)} alt="" />{:else}{c.name.slice(0, 1).toUpperCase()}{/if}
 </span>
 
 <style>

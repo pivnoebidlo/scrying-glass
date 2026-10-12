@@ -2,7 +2,7 @@
 <script lang="ts">
   import { fade, scale } from 'svelte/transition';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { vaultUrl } from '../../../shared/vault';
+  import { assetUrl } from '../../../shared/vault';
   import { caption } from '../library';
 
   let { ms }: ModuleProps<'portraits'> = $props();
@@ -19,7 +19,7 @@
   {#each ms.onScreen as path (path)}
     {@const name = caption(ms, path)}
     <div class="portrait" in:scale={{ start: 0.96, duration: 400 }} out:fade={{ duration: 250 }}>
-      <div class="frame"><img src={vaultUrl(path)} alt="" /></div>
+      <div class="frame"><img src={assetUrl(path)} alt="" /></div>
       {#if ms.showNames && name}
         <div class="caption">{name}</div>
       {/if}

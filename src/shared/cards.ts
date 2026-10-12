@@ -1,5 +1,7 @@
 // Карточки: монстры, NPC, персонажи. Общая обёртка одинакова для любой ролевой системы,
 // блок stats описывает система (src/systems/<система>/). Только типы и чистые функции.
+import { assetUrl, libraryAsset } from './vault';
+
 
 export type CardKind = 'monster' | 'npc' | 'character';
 
@@ -35,6 +37,8 @@ export interface Card<S = unknown> {
   // Картинки (пути внутри библиотеки или хранилища — смотря где лежит карточка). Первая — основная.
   portraits: string[];
   tags: string[];
+  // Описание: внешность, повадки, история. Разметка как в текстах действий.
+  description?: string;
   // Заметки мастера, игроки их не видят.
   notes: string;
   stats: S;
@@ -66,13 +70,19 @@ export interface CombatStats {
   hpFormula?: string;
 }
 
+// Языки карточек: код -> название на самом языке. Список можно расширять; карточка на языке не из списка
+// всё равно откроется и подпишется кодом.
+export const LANGUAGES: Record<string, string> = {
+  ru: 'Русский', en: 'English', uk: 'Українська', be: 'Беларуская', de: 'Deutsch', fr: 'Français',
+  es: 'Español', it: 'Italiano', pt: 'Português', pl: 'Polski', cs: 'Čeština', tr: 'Türkçe',
+  ja: '日本語', zh: '中文', ko: '한국어',
+};
+export const langName = (code: string) => LANGUAGES[code] ?? code;
+
 export const refKey = (r: CardRef) => `${r.scope}:${r.id}`;
 export const sameRef = (a: CardRef | null | undefined, b: CardRef | null | undefined) =>
   !!a && !!b && a.scope === b.scope && a.id === b.id;
 
-// Картинка карточки: путь от корня хранилища или библиотеки — смотря где лежит карточка.
-export function cardImageUrl(scope: CardScope, p: string): string | null {
-  if (scope === 'vault') return 'sg-asset://v/' + encodeURIComponent(p);
-  if (scope === 'library') return 'sg-asset://l/' + encodeURIComponent(p);
-  return null;
-}
+// Картинка карточки как путь для портретов и инициативы: путь хранилища или «library:…».
+export const cardAsset = (scope: CardScope, p: string) => (scope === 'library' ? libraryAsset(p) : p);
+export const cardImageUrl = (scope: CardScope, p: string) => assetUrl(cardAsset(scope, p));

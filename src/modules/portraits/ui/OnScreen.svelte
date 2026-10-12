@@ -3,7 +3,7 @@
   import { X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { vaultUrl } from '../../../shared/vault';
+  import { assetUrl } from '../../../shared/vault';
   import { caption } from '../library';
 
   let { ms }: ModuleProps<'portraits'> = $props();
@@ -15,7 +15,7 @@
   <ul>
     {#each ms.onScreen as path (path)}
       <li>
-        <img src={vaultUrl(path)} alt="" />
+        <img src={assetUrl(path)} alt="" />
         <span class="name">{caption(ms, path) || 'Без подписи'}</span>
         <button class="icon-btn" title="Убрать с экрана" onclick={() => dispatch('portraits', 'toggle', { path })}>
           <X size={14} />

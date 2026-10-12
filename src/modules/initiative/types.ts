@@ -13,10 +13,8 @@ export interface Combatant {
   maxHp: number | null;
   ac: number | null;
   side: Side;
-  // Картинка из хранилища.
+  // Картинка из хранилища или библиотеки карточек («library:…»).
   portrait: string | null;
-  // Готовый адрес картинки не из хранилища (портрет карточки из библиотеки). Используется, если нет portrait.
-  image?: string | null;
   // Спрятан от игроков (засада, невидимка).
   hidden: boolean;
   conditions: string[];

@@ -110,3 +110,11 @@ export function trackName(path: string): string {
 
 // Картинка из хранилища: sg-asset://v/<путь>
 export const vaultUrl = (path: string) => 'sg-asset://v/' + encodeURIComponent(path);
+
+// Картинка может лежать и в библиотеке карточек (общей для всех кампаний). Такие пути пишутся с приставкой:
+// «library:images/вождь.png». Так их можно показывать игрокам и ставить в инициативу наравне с картинками хранилища.
+export const LIBRARY = 'library:';
+export const isLibraryAsset = (path: string) => path.startsWith(LIBRARY);
+export const libraryAsset = (rel: string) => LIBRARY + rel;
+export const assetUrl = (path: string) =>
+  isLibraryAsset(path) ? 'sg-asset://l/' + encodeURIComponent(path.slice(LIBRARY.length)) : vaultUrl(path);

@@ -2,7 +2,7 @@
 // Фильтры запоминаются между запусками (в окне, не в хранилище).
 import type { Card, CardRef, CardScope, CardSummary } from '../../../shared/cards';
 import { untrack } from 'svelte';
-import { sameRef } from '../../../shared/cards';
+import { langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { systemOf } from '../../../systems';
 
@@ -50,7 +50,9 @@ function clean(v: unknown): unknown {
 const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
 const fold = (s: string) => s.normalize('NFC').toLowerCase().replace(/ё/g, 'е');
 
-// Оригинал и его переводы — одна группа.
+// Оригинал и его переводы — одна группа, даже если перевод лежит в другом месте (перевод SRD-монстра
+// в библиотеке). id карточек разных мест не пересекаются: у встроенных приставка srd51-/srd52-,
+// у своих — случайный хвост.
 export const groupId = (c: CardSummary) => (c.origin?.relation === 'translation' ? c.origin.id : c.ref.id);
 
 class Bestiary {
@@ -68,28 +70,32 @@ class Bestiary {
   // Снимок черновика при открытии: есть ли несохранённые изменения.
   draftStart = '';
 
-  // Все версии одной карточки (оригинал и переводы) в том же месте хранения.
+  // Все версии одной карточки: оригинал и переводы.
   groups = $derived.by(() => {
     const m = new Map<string, CardSummary[]>();
     for (const c of this.all) {
-      const k = `${c.ref.scope}:${groupId(c)}`;
+      const k = groupId(c);
       m.set(k, [...(m.get(k) ?? []), c]);
     }
     return m;
   });
+
+  // Языки, на которых есть карточки (для фильтра).
+  langs = $derived([...new Set(this.all.map((c) => c.lang))].sort((a, b) => (a === 'ru' ? -1 : b === 'ru' ? 1 : a.localeCompare(b))));
 
   visible = $derived.by(() => {
     const f = this.filters;
     const q = fold(f.search.trim());
     const out: CardSummary[] = [];
     for (const group of this.groups.values()) {
-      const first = group[0]!;
-      if (f.system !== 'all' && first.system !== f.system) continue;
-      if (f.scope !== 'all' && first.ref.scope !== f.scope) continue;
+      const members = group.filter(
+        (c) => (f.system === 'all' || c.system === f.system) && (f.scope === 'all' || c.ref.scope === f.scope)
+      );
+      if (!members.length) continue;
       // Ищем по всем версиям: «goblin» найдёт и «Гоблина».
       if (q && !group.some((c) => fold(c.name).includes(q))) continue;
-      if (f.lang === 'all') out.push(...group);
-      else out.push(group.find((c) => c.lang === f.lang) ?? group.find((c) => !c.origin) ?? first);
+      if (f.lang === 'all') out.push(...members);
+      else out.push(members.find((c) => c.lang === f.lang) ?? members.find((c) => !c.origin) ?? members[0]!);
     }
     return out.sort((a, b) => collator.compare(a.name, b.name));
   });
@@ -97,7 +103,9 @@ class Bestiary {
   // Другие версии выбранной карточки (для переключателя языка).
   versions = $derived.by(() => {
     const cur = this.all.find((c) => sameRef(c.ref, this.selected));
-    return cur ? (this.groups.get(`${cur.ref.scope}:${groupId(cur)}`) ?? [cur]) : [];
+    // Оригинал первым, переводы — по названию языка.
+    const list = cur ? (this.groups.get(groupId(cur)) ?? [cur]) : [];
+    return [...list].sort((a, b) => Number(!!a.origin) - Number(!!b.origin) || langName(a.lang).localeCompare(langName(b.lang)));
   });
 
   select(ref: CardRef | null) {
@@ -141,6 +149,16 @@ class Bestiary {
   async copy(ref: CardRef, to: CardScope) {
     const c = await window.api.copyCardDraft(ref, to);
     if (c) this.open({ scope: to, original: null, card: c });
+  }
+
+  // Перевод на другой язык: копия текущей версии, связанная с оригиналом группы. Перевод встроенной
+  // карточки ложится в библиотеку, своей — туда же, где оригинал.
+  async translate(ref: CardRef, lang: string) {
+    const cur = this.all.find((c) => sameRef(c.ref, ref));
+    const to: CardScope = ref.scope === 'srd' ? 'library' : ref.scope;
+    const c = cur && (await window.api.copyCardDraft(ref, to));
+    if (!c) return;
+    this.open({ scope: to, original: null, card: { ...c, lang, origin: { id: groupId(cur), relation: 'translation' } } });
   }
 
   async save(): Promise<boolean> {

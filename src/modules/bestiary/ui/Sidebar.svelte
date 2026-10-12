@@ -2,7 +2,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Plus, Search } from '@lucide/svelte';
-  import { sameRef } from '../../../shared/cards';
+  import { langName, sameRef } from '../../../shared/cards';
   import { systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
@@ -52,8 +52,8 @@
   </select>
   <div class="row">
     <select bind:value={f.lang} title="Какую версию показывать, если карточка переведена">
-      <option value="ru">Русский</option>
-      <option value="en">English</option>
+      {#each bestiary.langs as l (l)}<option value={l}>{langName(l)}</option>{/each}
+      {#if !bestiary.langs.includes(f.lang) && f.lang !== 'all'}<option value={f.lang}>{langName(f.lang)}</option>{/if}
       <option value="all">Все версии</option>
     </select>
     <select bind:value={f.scope} title="Где лежат карточки">

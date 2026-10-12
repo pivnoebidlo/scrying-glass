@@ -1,14 +1,15 @@
 // Портреты на экране игроков. Сами картинки лежат в хранилище, здесь только то, что на экране, и подписи.
 import { defineModule, type ModuleContext } from '../../shared/module';
-import { allFiles } from '../../shared/vault';
+import { allFiles, isLibraryAsset } from '../../shared/vault';
 import type { PortraitsState } from './types';
 
-// Убирает с экрана картинки, которых больше нет в хранилище.
+// Убирает с экрана картинки, которых больше нет в хранилище. Картинки библиотеки не проверяются: она не
+// часть хранилища, а пропавший файл просто не покажется.
 function prune(s: PortraitsState, ctx: ModuleContext): PortraitsState {
   const tree = ctx.vault.tree;
   if (!tree) return s;
   const exists = new Set(allFiles(tree, 'image').map((f) => f.path));
-  const onScreen = s.onScreen.filter((p) => exists.has(p));
+  const onScreen = s.onScreen.filter((p) => exists.has(p) || isLibraryAsset(p));
   return onScreen.length === s.onScreen.length ? s : { ...s, onScreen };
 }
 

@@ -66,6 +66,7 @@ interface DbBlock {
 
 interface DbMonster {
   index: string;
+  desc?: string;
   name: string;
   size: string;
   type: string;
@@ -295,6 +296,21 @@ function parseRu(md: string, report: string[]): Map<string, RuMonster> {
 
 const SIZE_WORD = /^(?:(?:крошечн|маленьк|средн|больш|огромн|громадн)\S*\s+(?:или\s+)?)+/i;
 
+// В переводе описание NPC стоит абзацем после последнего действия и при разборе прилипает к нему.
+// Если у оригинала есть описание, столько же последних абзацев переносим в описание. Если нет — узнаём
+// описание по оформлению: абзац начинается с жирного слова («**Гигантские совы** часто…»).
+function takeDescription(r: RuMonster, enDesc: string | undefined): string | undefined {
+  const sections = ['legendary', 'reactions', 'bonusActions', 'actions', 'traits'];
+  const last = sections.map((k) => r.sections[k]?.blocks.at(-1)).find((b) => b);
+  if (!last) return undefined;
+  const paras = last.text.split('\n\n');
+  const count = enDesc ? enDesc.trim().split(/\n\s*\n/).length : /^\*\*[^_*]/.test(paras.at(-1) ?? '') ? 1 : 0;
+  if (!count || paras.length <= count) return undefined;
+  const desc = paras.splice(paras.length - count).join('\n\n');
+  last.text = paras.join('\n\n');
+  return desc;
+}
+
 function ruStats(enS: Dnd5eStats, r: RuMonster, report: string[], label: string): Dnd5eStats {
   const s: Dnd5eStats = structuredClone(enS);
   const f = r.fields;
@@ -369,18 +385,20 @@ async function main() {
       const stats = enStats(m, ed.system);
       const id = `${ed.prefix}-${m.index}`;
       const r = ru.get(ALIASES[m.name] ?? m.name.replace(/’/g, "'"));
+      const ruDesc = r ? takeDescription(r, m.desc) : undefined;
+      if (r && m.desc && !ruDesc) report.push(`  ${ed.system} ${m.name}: описание в переводе не найдено`);
       const ruCard: Card<Dnd5eStats> | null = r
         ? {
             format: 1, id: `${id}.ru`, kind: 'monster', system: ed.system, lang: 'ru', name: r.name,
             origin: { id, relation: 'translation' }, source: RU_SOURCE(ed.source),
-            portraits: [], tags: [], notes: '',
+            portraits: [], tags: [], ...(ruDesc ? { description: ruDesc } : {}), notes: '',
             stats: ruStats(stats, r, report, `${ed.system} ${m.name}`),
           }
         : null;
       if (!r) untranslated.push(m.name);
       cards.push({
         format: 1, id, kind: 'monster', system: ed.system, lang: 'en', name: m.name, source: ed.source,
-        portraits: [], tags: [], notes: '', stats,
+        portraits: [], tags: [], ...(m.desc ? { description: m.desc.trim() } : {}), notes: '', stats,
       });
       if (ruCard) cards.push(ruCard);
     }

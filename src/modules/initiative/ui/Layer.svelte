@@ -4,7 +4,7 @@
   import { fade, fly } from 'svelte/transition';
   import { flip } from 'svelte/animate';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { vaultUrl } from '../../../shared/vault';
+  import { assetUrl } from '../../../shared/vault';
   import { defeated, ordered } from '../order';
 
   let { ms }: ModuleProps<'initiative'> = $props();
@@ -20,7 +20,7 @@
       {#each visible as c (c.id)}
         <div class="c {c.side}" class:turn={c.id === ms.turn} animate:flip={{ duration: 300 }} in:fly|global={{ y: -10, duration: 250 }}>
           <div class="avatar">
-            {#if c.portrait || c.image}<img src={c.portrait ? vaultUrl(c.portrait) : c.image} alt="" />{:else}{c.name.slice(0, 1).toUpperCase()}{/if}
+            {#if c.portrait}<img src={assetUrl(c.portrait)} alt="" />{:else}{c.name.slice(0, 1).toUpperCase()}{/if}
           </div>
           <div class="name">{c.name}</div>
           {#if c.conditions.length}<div class="cond">{c.conditions.join(', ')}</div>{/if}

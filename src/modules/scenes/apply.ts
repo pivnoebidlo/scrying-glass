@@ -1,7 +1,7 @@
 // Снимок экрана в сцену и включение сцены. Работает в окне управления через обычные действия модулей.
 import { dispatch } from '../../renderer/lib/store.svelte';
 import type { AppState } from '../../shared/types';
-import { allFiles, prettyName, trackName } from '../../shared/vault';
+import { allFiles, isLibraryAsset, prettyName, trackName } from '../../shared/vault';
 import { playlistTitle } from '../music/ui/playlists';
 import type { Part, Scene, SceneContent } from './types';
 
@@ -35,7 +35,7 @@ export function missing(app: AppState, sc: Scene): string[] {
     ...(sc.include.portraits ? sc.portraits.paths : []),
     ...(sc.include.ambience ? sc.ambience.loops.map((l) => l.path) : []),
   ].filter((p): p is string => !!p);
-  return used.filter((p) => !files.has(p));
+  return used.filter((p) => !files.has(p) && !isLibraryAsset(p));
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -59,7 +59,7 @@ export async function activate(app: AppState, sc: Scene) {
     const p = ok(sc.map.path);
     jobs.push(p ? dispatch('maps', 'show', { path: p }) : dispatch('maps', 'clear'));
   }
-  if (on('portraits')) jobs.push(dispatch('portraits', 'setOnScreen', { paths: sc.portraits.paths.filter((p) => exists.has(p)) }));
+  if (on('portraits')) jobs.push(dispatch('portraits', 'setOnScreen', { paths: sc.portraits.paths.filter((p) => exists.has(p) || isLibraryAsset(p)) }));
   if (on('ambience')) jobs.push(dispatch('music', 'setAmbience', { loops: sc.ambience.loops.filter((l) => exists.has(l.path)) }));
   if (on('music')) jobs.push(applyMusic(app, sc.music));
   await Promise.all(jobs);

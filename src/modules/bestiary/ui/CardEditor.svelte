@@ -3,17 +3,17 @@
 <script lang="ts">
   import { FolderOpen, HardDrive, Save, Star, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
-  import { cardImageUrl, type CardKind, type CardScope } from '../../../shared/cards';
+  import { LANGUAGES, cardImageUrl, langName, type CardKind, type CardScope } from '../../../shared/cards';
   import { systemOf, systems } from '../../../systems';
   import { statsEditor, statsView } from '../../../systems/ui';
   import { bestiary, type Draft } from './cards.svelte';
   import ImagePicker from './ImagePicker.svelte';
+  import { markdown } from '../../../renderer/lib/markdown';
 
   let { app, draft }: { app: AppState; draft: Draft } = $props();
 
   const SCOPES: Record<CardScope, string> = { srd: 'SRD', library: 'в библиотеке', vault: 'в кампании' };
   const KINDS: Record<CardKind, string> = { monster: 'Монстр', npc: 'NPC', character: 'Персонаж' };
-  const LANGS: Record<string, string> = { ru: 'Русский', en: 'English' };
 
   const card = $derived(draft.card);
   const Editor = $derived(statsEditor(card.system));
@@ -73,7 +73,13 @@
 <div class="editor">
   <header class="bar">
     <div class="title">
-      {draft.original ? 'Правка карточки' : card.origin ? 'Копия карточки' : 'Новая карточка'} <span class="faint">{SCOPES[draft.scope]}</span>
+      {draft.original
+        ? 'Правка карточки'
+        : card.origin?.relation === 'translation'
+          ? `Перевод на ${langName(card.lang)}`
+          : card.origin
+            ? 'Копия карточки'
+            : 'Новая карточка'} <span class="faint">{SCOPES[draft.scope]}</span>
     </div>
     {#if error}<span class="error">{error}</span>{/if}
     <div class="spacer"></div>
@@ -108,8 +114,8 @@
           <label class="field">
             <span>Язык</span>
             <select bind:value={card.lang}>
-              {#each Object.entries(LANGS) as [k, l] (k)}<option value={k}>{l}</option>{/each}
-              {#if !LANGS[card.lang]}<option value={card.lang}>{card.lang}</option>{/if}
+              {#each Object.entries(LANGUAGES) as [k, l] (k)}<option value={k}>{l}</option>{/each}
+              {#if !LANGUAGES[card.lang]}<option value={card.lang}>{card.lang}</option>{/if}
             </select>
           </label>
           <label class="field wide">
@@ -122,6 +128,13 @@
             />
           </label>
         </div>
+        {#if card.origin?.relation === 'translation'}
+          <div class="origin faint">
+            Это перевод: переведите название, описание и тексты действий. Числа скопированы из оригинала.
+          </div>
+        {:else}
+          <div class="origin faint">Перевести карточку на другой язык можно после сохранения — кнопкой «+ язык».</div>
+        {/if}
         {#if card.origin}
           <div class="origin faint">
             На основе карточки <code>{card.origin.id}</code> —
@@ -164,6 +177,15 @@
         </div>
       </section>
 
+      <section>
+        <h4>Описание</h4>
+        <textarea
+          rows="4"
+          placeholder="Как выглядит, чем живёт, что о нём рассказывают. *Курсив*, **жирный**, строки «- …» — список."
+          bind:value={card.description}
+        ></textarea>
+      </section>
+
       <Editor bind:stats={card.stats} system={card.system} />
 
       <section>
@@ -177,6 +199,7 @@
         {#if card.portraits[0]}<img class="pv-portrait" src={cardImageUrl(draft.scope, card.portraits[0])} alt="" />{/if}
         <h2>{card.name || 'Без названия'}</h2>
       </div>
+      {#if card.description?.trim()}<div class="pv-desc">{@html markdown(card.description)}</div>{/if}
       {#key card.system}
         <Preview card={preview} />
       {/key}
@@ -356,5 +379,13 @@
   h2 {
     margin: 0;
     font-size: 22px;
+  }
+  .pv-desc {
+    margin-bottom: 10px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .pv-desc :global(p) {
+    margin: 0 0 6px;
   }
 </style>

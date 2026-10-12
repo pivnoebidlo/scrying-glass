@@ -5,7 +5,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
-  import { cardImageUrl, sameRef, type CardScope } from '../../../shared/cards';
+  import { LANGUAGES, cardAsset, cardImageUrl, langName, sameRef, type CardScope } from '../../../shared/cards';
   import { systemOf } from '../../../systems';
   import { statsView } from '../../../systems/ui';
   import { markdown } from '../../../renderer/lib/markdown';
@@ -28,7 +28,9 @@
   });
 
   const SCOPES: Record<CardScope, string> = { srd: 'Встроенный SRD', library: 'Моя библиотека', vault: 'Эта кампания' };
-  const LANGS: Record<string, string> = { ru: 'Русский', en: 'English' };
+  const SCOPE_SHORT: Record<CardScope, string> = { srd: 'SRD', library: 'библиотека', vault: 'кампания' };
+  // Языки, на которые ещё нет перевода.
+  const missingLangs = $derived(Object.keys(LANGUAGES).filter((l) => !bestiary.versions.some((v) => v.lang === l)));
 
   let count = $state(1);
   let rollHp = $state(false);
@@ -45,10 +47,12 @@
     return Array.from({ length: n }, (_, i) => `${base} ${max + i + 1}`);
   }
 
-  // Портрет для трекера: картинка хранилища — путём (её можно показать игрокам), библиотеки — адресом.
-  function portraitFor(scope: CardScope, p: string | undefined) {
-    if (!p) return {};
-    return scope === 'vault' ? { portrait: p } : { image: cardImageUrl(scope, p) };
+  // Портрет на экран игроков и обратно. Подпись — название карточки, если у картинки нет своей.
+  async function togglePortrait(asset: string, name: string) {
+    if (!app.portraits.onScreen.includes(asset) && !app.portraits.names[asset]) {
+      await dispatch('portraits', 'rename', { path: asset, name });
+    }
+    await dispatch('portraits', 'toggle', { path: asset });
   }
 
   async function toInitiative() {
@@ -58,7 +62,7 @@
     for (const name of names(card.name, n)) {
       const maxHp = rollHp && hpFormula ? (rollFormula(hpFormula) ?? hp) : hp;
       await dispatch('initiative', 'add', {
-        c: { name, maxHp, ac, bonus: initiative, side: 'enemy', card: summary.ref, ...portraitFor(summary.ref.scope, card.portraits[0]) },
+        c: { name, maxHp, ac, bonus: initiative, side: 'enemy', card: summary.ref, portrait: card.portraits[0] ? cardAsset(summary.ref.scope, card.portraits[0]) : null },
       });
     }
     openTab('initiative');
@@ -76,18 +80,15 @@
         {#if card.portraits.length}
           <div class="portraits">
             {#each card.portraits as p, i (p)}
-              {@const onScreen = ref.scope === 'vault' && app.portraits.onScreen.includes(p)}
-              {#if ref.scope === 'vault'}
-                <button
-                  class="portrait"
-                  class:main={i === 0}
-                  class:on={onScreen}
-                  title={onScreen ? 'Убрать с экрана игроков' : 'Показать игрокам'}
-                  onclick={() => dispatch('portraits', 'toggle', { path: p })}
-                ><img src={cardImageUrl(ref.scope, p)} alt="" /></button>
-              {:else}
-                <span class="portrait" class:main={i === 0}><img src={cardImageUrl(ref.scope, p)} alt="" /></span>
-              {/if}
+              {@const asset = cardAsset(ref.scope, p)}
+              {@const onScreen = app.portraits.onScreen.includes(asset)}
+              <button
+                class="portrait"
+                class:main={i === 0}
+                class:on={onScreen}
+                title={onScreen ? 'Убрать с экрана игроков' : 'Показать игрокам'}
+                onclick={() => togglePortrait(asset, card.name)}
+              ><img src={cardImageUrl(ref.scope, p)} alt="" /></button>
             {/each}
           </div>
         {/if}
@@ -110,15 +111,31 @@
             {/if}
           </div>
           <div class="actions">
-            {#if bestiary.versions.length > 1}
-              <div class="langs">
-                {#each bestiary.versions as v (v.ref.id)}
-                  <button class="chip" class:active={sameRef(v.ref, summary.ref)} onclick={() => bestiary.select(v.ref)}>
-                    {LANGS[v.lang] ?? v.lang}
-                  </button>
-                {/each}
-              </div>
-            {/if}
+            <div class="langs">
+              {#each bestiary.versions as v (v.ref.scope + v.ref.id)}
+                <button
+                  class="chip"
+                  class:active={sameRef(v.ref, summary.ref)}
+                  title="{v.name} · {SCOPE_SHORT[v.ref.scope]}"
+                  onclick={() => bestiary.select(v.ref)}
+                >
+                  {langName(v.lang)}
+                </button>
+              {/each}
+              <select
+                class="add-lang"
+                value=""
+                title={ref.scope === 'srd' ? 'Перевод встроенной карточки сохранится в библиотеку' : 'Перевести на другой язык'}
+                onchange={(e) => {
+                  const l = e.currentTarget.value;
+                  e.currentTarget.value = '';
+                  if (l) bestiary.translate(ref, l);
+                }}
+              >
+                <option value="">+ язык</option>
+                {#each missingLangs as l (l)}<option value={l}>{langName(l)}</option>{/each}
+              </select>
+            </div>
             <div class="spacer"></div>
             <label class="hp" title={summary.combat.hpFormula ? `Бросить ${summary.combat.hpFormula} для каждого` : 'Нет формулы хитов'}>
               <input type="checkbox" bind:checked={rollHp} disabled={!summary.combat.hpFormula} /> случайные хиты
@@ -129,6 +146,10 @@
         </div>
       </div>
     </header>
+
+    {#if card.description?.trim()}
+      <div class="description">{@html markdown(card.description)}</div>
+    {/if}
 
     <Stats {card} />
 
@@ -171,6 +192,9 @@
   }
   button.portrait {
     cursor: pointer;
+  }
+  button.portrait:hover {
+    border-color: var(--accent-hover);
   }
   .portrait.main {
     width: 104px;
@@ -217,7 +241,17 @@
   }
   .langs {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 4px;
+  }
+  .add-lang {
+    padding: 2px 6px;
+    border-style: dashed;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
   }
   .chip {
     padding: 2px 10px;
@@ -253,6 +287,16 @@
   }
   .notes {
     user-select: text;
+  }
+  .description {
+    max-width: 720px;
+    margin-bottom: 14px;
+    color: var(--text-muted);
+    line-height: 1.55;
+    user-select: text;
+  }
+  .description :global(p) {
+    margin: 0 0 8px;
   }
   .placeholder {
     padding-top: 40px;
