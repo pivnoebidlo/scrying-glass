@@ -56,6 +56,11 @@ class Workspace {
 
   // Клик по модулю в полосе слева: показать его панель и вкладку. Повторный клик сворачивает панель.
   select(id: ModuleId) {
+    // У модуля нет боковой панели: просто открываем его вкладку, панель оставляем как есть.
+    if (!controlContributions.find((c) => c.id === id)?.sidebar) {
+      this.openTab(id);
+      return;
+    }
     if (this.sidebar === id && this.sidebarOpen && this.active === id) {
       this.sidebarOpen = false;
       return;
