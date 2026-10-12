@@ -1,0 +1,77 @@
+/* Тёмная тема в духе Obsidian. Цвета задаются только здесь. */
+:root {
+  color-scheme: dark;
+  --bg-primary: #1e1e1e;      /* рабочая область */
+  --bg-secondary: #262626;    /* боковые панели, полоса модулей */
+  --bg-hover: #303030;
+  --bg-active: #363636;
+  --border: #363636;
+  --text-normal: #dadada;
+  --text-muted: #a3a3a3;
+  --text-faint: #6e6e6e;
+  --accent: #8a5cf5;
+  --accent-hover: #9d76f7;
+  --accent-soft: rgba(138, 92, 245, 0.18);
+  --danger: #e5534b;
+  --radius-s: 4px;
+  --radius-m: 8px;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
+  --font-size: 13px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: var(--font-ui);
+  font-size: var(--font-size);
+  background: var(--bg-primary);
+  color: var(--text-normal);
+  overflow: hidden;
+  user-select: none;
+}
+[hidden] { display: none !important; }
+
+button, input, select { font: inherit; color: inherit; }
+
+/* Кнопки */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: var(--radius-s);
+  border: 1px solid var(--border); background: var(--bg-hover);
+  cursor: pointer; white-space: nowrap;
+}
+.btn:hover { background: var(--bg-active); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-hover); }
+.btn.danger { color: var(--danger); }
+.btn:disabled { opacity: .5; cursor: default; }
+
+/* Кнопка-иконка */
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; padding: 0; border: 0; border-radius: var(--radius-s);
+  background: transparent; color: var(--text-muted); cursor: pointer;
+}
+.icon-btn:hover { background: var(--bg-hover); color: var(--text-normal); }
+.icon-btn.active { color: var(--accent); }
+
+/* Поля */
+input[type=text], select {
+  padding: 5px 8px; border-radius: var(--radius-s);
+  border: 1px solid var(--border); background: var(--bg-primary);
+}
+input[type=text]:focus, select:focus { outline: none; border-color: var(--accent); }
+input[type=checkbox] { accent-color: var(--accent); }
+
+.muted { color: var(--text-muted); }
+.faint { color: var(--text-faint); }
+
+/* Заголовок раздела в боковой панели */
+.pane-title {
+  padding: 10px 12px 6px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--bg-active); border-radius: 5px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-track { background: transparent; }

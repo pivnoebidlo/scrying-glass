@@ -9,14 +9,18 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json",
     "postinstall": "node node_modules/electron/install.js"
   },
   "devDependencies": {
+    "@lucide/svelte": "^1.55.0",
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@types/node": "^26.6.5",
     "electron": "^44.7.0",
     "electron-vite": "^5.0.0",
-    "typescript": "^7.0.2",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.6",
+    "typescript": "^6.0.3",
     "vite": "^7.3.7"
   }
 }

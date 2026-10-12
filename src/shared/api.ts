@@ -5,6 +5,8 @@ export interface DisplayInfo {
   id: number;
   primary: boolean;
   label: string;
+  width: number;
+  height: number;
 }
 
 export interface Api {

@@ -3,8 +3,16 @@
     "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "types": ["node", "vite/client"],
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "node",
+      "vite/client",
+      "svelte"
+    ],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -13,5 +21,8 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "electron.vite.config.ts"]
+  "include": [
+    "src",
+    "electron.vite.config.ts"
+  ]
 }

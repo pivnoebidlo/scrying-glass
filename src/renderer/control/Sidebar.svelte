@@ -1,0 +1,39 @@
+<!-- Левая боковая панель выбранного модуля. -->
+<script lang="ts">
+  import { controlContributions } from '../lib/registry';
+  import { store } from '../lib/store.svelte';
+  import { workspace } from './workspace.svelte';
+
+  const c = $derived(controlContributions.find((x) => x.id === workspace.sidebar));
+</script>
+
+<aside class="sidebar">
+  {#if c}
+    <div class="pane-title">{c.title}</div>
+    <div class="body">
+      {#if c.sidebar}
+        <c.sidebar ms={store.state[c.id]} state={store.state} />
+      {:else}
+        <p class="faint empty">У этого модуля нет боковой панели.</p>
+      {/if}
+    </div>
+  {/if}
+</aside>
+
+<style>
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    flex: none;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+  }
+  .body {
+    flex: 1;
+    overflow: auto;
+  }
+  .empty {
+    padding: 0 12px;
+  }
+</style>

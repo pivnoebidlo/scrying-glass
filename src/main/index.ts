@@ -120,10 +120,12 @@ function notifyDisplayStatus() {
 // ---------- Окна ----------
 function createControlWindow() {
   controlWindow = new BrowserWindow({
-    width: 1000,
-    height: 720,
+    width: 1280,
+    height: 800,
+    minWidth: 900,
+    minHeight: 560,
     title: 'Scrying Glass — управление',
-    backgroundColor: '#1b1a24',
+    backgroundColor: '#1e1e1e',
     webPreferences,
   });
   loadPage(controlWindow, 'control');
@@ -138,6 +140,8 @@ function listDisplays(): DisplayInfo[] {
   return screen.getAllDisplays().map((d, i) => ({
     id: d.id,
     primary: d.id === primaryId,
+    width: d.size.width,
+    height: d.size.height,
     label: `Экран ${i + 1} (${d.size.width}×${d.size.height})${d.id === primaryId ? ' — основной' : ''}`,
   }));
 }
