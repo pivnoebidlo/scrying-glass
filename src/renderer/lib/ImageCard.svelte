@@ -73,12 +73,16 @@
     width: 100%;
     object-fit: cover;
   }
+  /* Кнопки — столбиком вдоль левого края, метки («портрет», «в бою») — справа напротив них:
+     так они не перекрывают друг друга. */
   .badges {
     position: absolute;
-    left: 6px;
+    right: 6px;
     top: 6px;
+    left: 40px;
     display: flex;
     flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 4px;
     pointer-events: none;
   }
@@ -91,9 +95,10 @@
   }
   .actions {
     position: absolute;
-    right: 6px;
+    left: 6px;
     top: 6px;
     display: flex;
+    flex-direction: column;
     gap: 4px;
     opacity: 0;
     transition: opacity 0.12s ease;
@@ -114,7 +119,7 @@
     cursor: pointer;
   }
   .action.trash {
-    margin-left: 6px;
+    margin-top: 6px;
   }
   .action.trash:hover {
     color: var(--danger);

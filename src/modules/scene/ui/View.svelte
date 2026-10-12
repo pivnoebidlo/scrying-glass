@@ -7,6 +7,8 @@
   import { prettyName } from '../../../shared/vault';
   import { imageGroups } from '../../portraits/library';
   import { ui } from './ui.svelte';
+  import ThumbSize from '../../../renderer/lib/ThumbSize.svelte';
+  import { thumbs } from '../../../renderer/lib/thumbs.svelte';
 
   let { app }: ModuleProps<'scene'> = $props();
 
@@ -27,6 +29,8 @@
       <Search size={14} />
       <input type="text" placeholder="Поиск по названию" bind:value={ui.search} />
     </label>
+    <div class="spacer"></div>
+    <ThumbSize grid="backgrounds" />
   </header>
 
   {#if groups.length === 0}
@@ -47,7 +51,7 @@
         {collapsed[g.key] ? '▸' : '▾'} {g.title} <span class="faint">{g.items.length}</span>
       </button>
       {#if !collapsed[g.key]}
-        <div class="grid">
+        <div class="grid" style:--thumb="{thumbs.backgrounds}px">
           {#each g.items as f (f.path)}
             <ImageCard path={f.path} primary="background" aspect="16 / 9">
               <div class="caption" title={f.path}>{prettyName(f.path)}</div>
@@ -72,6 +76,9 @@
     gap: 8px;
     padding: 12px 0;
     background: var(--bg-primary);
+  }
+  .spacer {
+    flex: 1;
   }
   .search {
     display: flex;
@@ -101,7 +108,7 @@
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--thumb), 1fr));
     gap: 12px;
   }
   .caption {

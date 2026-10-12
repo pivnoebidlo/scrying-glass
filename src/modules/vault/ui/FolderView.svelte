@@ -9,6 +9,8 @@
   import { store } from '../../../renderer/lib/store.svelte';
   import { trackName } from '../../../shared/vault';
   import { folderIcon, ui } from './ui.svelte';
+  import ThumbSize from '../../../renderer/lib/ThumbSize.svelte';
+  import { thumbs } from '../../../renderer/lib/thumbs.svelte';
 
   let { ms, app }: ModuleProps<'vault'> = $props();
 
@@ -101,12 +103,15 @@
     {/if}
 
     {#if images.length}
-      <h3>Картинки <span class="faint">{images.length}</span></h3>
+      <div class="images-head">
+        <h3>Картинки <span class="faint">{images.length}</span></h3>
+        <ThumbSize grid="files" />
+      </div>
       <p class="faint hint">
         Нажмите на картинку, чтобы показать её игрокам {PRIMARY_HINT[primary]}. Другие варианты — в
         кнопках при наведении.
       </p>
-      <div class="grid">
+      <div class="grid" style:--thumb="{thumbs.files}px">
         {#each images as f (f.path)}
           <ImageCard path={f.path} {primary} aspect={role === 'characters' ? '3 / 4' : '4 / 3'}>
             <div class="file-name" title={f.name}>{f.name}</div>
@@ -223,6 +228,16 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .images-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .images-head h3 {
+    margin-top: 0;
+  }
   h3 {
     margin: 20px 0 2px;
     font-size: 14px;
@@ -233,7 +248,7 @@
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--thumb), 1fr));
     gap: 12px;
   }
   .file-name {

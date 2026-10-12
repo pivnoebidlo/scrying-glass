@@ -102,6 +102,8 @@ Electron-приложение для мастера D&D: окно управле
   `npx electron-vite dev --remoteDebuggingPort 9333`. Дальше через Chrome DevTools Protocol
   (`http://127.0.0.1:9333/json/list`, `Runtime.evaluate`, `Page.captureScreenshot`) — проверять DOM, состояние
   (`window.api.getState()`), вызывать действия и снимать скриншоты окон. Скриншоты экрана macOS недоступны.
+- Кнопки, видные только при наведении, проверять через `Input.dispatchMouseEvent` (`mouseMoved` на координаты элемента)
+  и потом `Page.captureScreenshot`.
 - Тестовую музыку можно сделать так: `say -o x.aiff "…"` и `afconvert -f m4af -d aac x.aiff x.m4a`.
 - Системные диалоги (sheet) нажимаются через AppleScript: `click button "…" of sheet 1 of window 1`.
 
