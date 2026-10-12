@@ -12,6 +12,9 @@ import type { DisplayInfo } from '../shared/api';
 type AnyModule = ModuleDef<string, any, Record<string, Action<any>>>;
 const modules: Record<string, AnyModule> = Object.fromEntries(moduleList.map((m) => [m.id, m as AnyModule]));
 
+// Другая папка данных, например для тестовой кампании: SG_USER_DATA=/путь npm run dev
+if (process.env['SG_USER_DATA']) app.setPath('userData', process.env['SG_USER_DATA']);
+
 // ---- Схема для картинок кампании: sg-asset://p/<id> ----
 protocol.registerSchemesAsPrivileged([
   { scheme: 'sg-asset', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
@@ -43,11 +46,7 @@ function initCampaign() {
   campaignFile = path.join(campaignDir, 'campaign.json');
   fs.mkdirSync(assetsDir, { recursive: true });
 
-  let saved: Record<string, unknown> = {};
-  try {
-    saved = JSON.parse(fs.readFileSync(campaignFile, 'utf8')).modules || {};
-  } catch { /* первый запуск */ }
-
+  const saved = loadSaved();
   for (const mod of Object.values(modules)) {
     stateById[mod.id] = { ...mod.initialState, ...(mod.persist ? (saved[mod.id] as object) : {}) };
   }
@@ -57,12 +56,52 @@ function initCampaign() {
   }
 }
 
+// Сохранённые данные модулей. Повреждённый файл не перезаписывается: он откладывается в сторону.
+function loadSaved(): Record<string, unknown> {
+  let text: string;
+  try {
+    text = fs.readFileSync(campaignFile, 'utf8');
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return {}; // первый запуск
+    // Файл есть, но прочитать его нельзя. Работать дальше опасно: первое же сохранение его затрёт.
+    dialog.showErrorBox('Не удалось открыть кампанию', `${campaignFile}\n\n${String(e)}`);
+    app.exit(1);
+    throw e;
+  }
+
+  try {
+    const modules = JSON.parse(text).modules;
+    if (modules && typeof modules === 'object') return modules;
+    throw new Error('нет раздела modules');
+  } catch (e) {
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backup = path.join(campaignDir, `campaign.broken-${stamp}.json`);
+    fs.renameSync(campaignFile, backup);
+    dialog.showMessageBoxSync({
+      type: 'warning',
+      message: 'Файл кампании повреждён, начинаем с чистого листа',
+      detail: `Старый файл сохранён как ${backup}\n\n${String(e)}`,
+      buttons: ['OK'],
+    });
+    return {};
+  }
+}
+
+// Запись через временный файл: при сбое посреди записи на диске остаётся прежняя версия.
 function saveCampaign() {
   const out = { version: 1, modules: {} as Record<string, unknown> };
   for (const mod of Object.values(modules)) {
     if (mod.persist) out.modules[mod.id] = stateById[mod.id];
   }
-  fs.writeFileSync(campaignFile, JSON.stringify(out, null, 2));
+  const tmp = campaignFile + '.tmp';
+  const fd = fs.openSync(tmp, 'w');
+  try {
+    fs.writeSync(fd, JSON.stringify(out, null, 2));
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+  fs.renameSync(tmp, campaignFile);
 }
 
 // ---------- Рассылка состояния ----------
@@ -154,14 +193,25 @@ const ctx: ModuleContext = {
 ipcMain.handle('state:get', () => state);
 
 // Любое изменение состояния идёт через действие модуля: dispatch(модуль, действие, данные).
-ipcMain.handle('action', async (_event, { module: id, name, payload }: { module: string; name: string; payload: unknown }) => {
+// Действия одного модуля выполняются строго по очереди. Иначе асинхронное действие (диалог, копирование
+// файлов) вернуло бы результат, посчитанный от устаревшего состояния, и затёрло бы то, что изменилось за это время.
+const queues = new Map<string, Promise<unknown>>();
+function enqueue<T>(id: string, job: () => Promise<T>): Promise<T> {
+  const run = (queues.get(id) ?? Promise.resolve()).catch(() => {}).then(job);
+  queues.set(id, run);
+  return run;
+}
+
+ipcMain.handle('action', (_event, { module: id, name, payload }: { module: string; name: string; payload: unknown }) => {
   const mod = modules[id];
   const fn = mod?.actions[name];
   if (!mod || !fn) return state;
-  stateById[id] = await fn(stateById[id], payload || {}, ctx);
-  if (mod.persist) saveCampaign();
-  broadcastState();
-  return state;
+  return enqueue(id, async () => {
+    stateById[id] = await fn(stateById[id], payload || {}, ctx);
+    if (mod.persist) saveCampaign();
+    broadcastState();
+    return state;
+  });
 });
 
 ipcMain.handle('displays:list', () => listDisplays());
