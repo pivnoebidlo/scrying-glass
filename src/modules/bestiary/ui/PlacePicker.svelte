@@ -1,7 +1,7 @@
 <!-- Окно «Где хранить?»: библиотека (для всех кампаний) или папка бестиария приключения в хранилище.
      Если подходящей папки ещё нет, её можно создать в любой папке хранилища. -->
 <script lang="ts">
-  import { FolderPlus, Library, Skull, X } from '@lucide/svelte';
+  import { FolderPlus, Library, Skull, Users, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
   import { dirname, roleFolders, walk } from '../../../shared/vault';
   import { placeOrder, placeTitle, visibleIn } from '../../../shared/adventures';
@@ -13,14 +13,21 @@
 
   // Папки бестиария текущего приключения (первыми) и общие; чужих приключений здесь нет.
   const adv = $derived(app.adventures);
+  // Монстров кладут в папки бестиария, NPC — в папки персонажей, рядом с портретами.
   const folders = $derived(
-    (app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name) : [])
+    (app.vault.tree
+      ? [
+          ...roleFolders(app.vault.tree, 'bestiary', app.vault.name).map((f) => ({ ...f, npc: false })),
+          ...roleFolders(app.vault.tree, 'characters', app.vault.name).map((f) => ({ ...f, npc: true })),
+        ]
+      : []
+    )
       .filter((f) => visibleIn(adv, f.folder.path))
       .map((f) => {
         const dir = dirname(f.folder.path);
         return { ...f, title: placeTitle(adv, dir, app.vault.name), order: placeOrder(adv, dir) };
       })
-      .sort((a, b) => a.order - b.order)
+      .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, 'ru') || Number(a.npc) - Number(b.npc))
   );
   // Где можно создать новую папку бестиария: любая папка хранилища, кроме уже бестиарных.
   const parents = $derived.by(() => {
@@ -69,9 +76,9 @@
       {#each folders as f (f.folder.path)}
         {@const p = { scope: 'vault', folder: f.folder.path } as Place}
         <button class="place" disabled={disabled(p)} onclick={() => pick(p)}>
-          <Skull size={16} />
+          {#if f.npc}<Users size={16} />{:else}<Skull size={16} />{/if}
           <span class="text">
-            <span class="name">{f.title}</span>
+            <span class="name">{f.title} · {f.npc ? 'персонажи' : 'монстры'}</span>
             <span class="desc">{f.folder.path}{disabled(p) ? ' — карточка уже здесь' : ''}</span>
           </span>
         </button>

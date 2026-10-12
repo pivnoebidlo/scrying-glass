@@ -1,5 +1,5 @@
-// Портреты в окне управления.
-import { Image, User } from '@lucide/svelte';
+// Персонажи (портреты) в окне управления.
+import { User, Users } from '@lucide/svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import { dispatch } from '../../renderer/lib/store.svelte';
 import View from './ui/View.svelte';
@@ -9,8 +9,8 @@ import Settings from './ui/Settings.svelte';
 
 export default defineControl({
   id: 'portraits',
-  title: 'Портреты',
-  icon: Image,
+  title: 'Персонажи',
+  icon: Users,
   order: 10,
   view: View,
   sidebar: Sidebar,

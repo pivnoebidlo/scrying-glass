@@ -1,0 +1,36 @@
+// Добавление существа из карточки в трекер инициативы: из бестиария, вкладки персонажей и кнопки на портрете.
+import { dispatch, store } from '../../../renderer/lib/store.svelte';
+import { cardAsset, type CardSide, type CardSummary } from '../../../shared/cards';
+import { rollFormula } from './dice';
+
+// «Гоблин», «Гоблин 2», …: нумерация продолжает тех, кто уже в бою.
+function names(base: string, n: number): string[] {
+  const re = new RegExp(`^${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?: (\\d+))?$`);
+  let max = 0;
+  for (const c of store.state.initiative.combatants) {
+    const m = re.exec(c.name);
+    if (m) max = Math.max(max, m[1] ? Number(m[1]) : 1);
+  }
+  if (n === 1 && max === 0) return [base];
+  return Array.from({ length: n }, (_, i) => `${base} ${max + i + 1}`);
+}
+
+export interface AddOptions {
+  count?: number;
+  // Сторона: по умолчанию — из карточки.
+  side?: CardSide;
+  // Бросить хиты по формуле для каждого.
+  rollHp?: boolean;
+}
+
+export async function addToInitiative(c: CardSummary, opts: AddOptions = {}) {
+  const n = Math.max(1, Math.min(20, Math.round(opts.count ?? 1) || 1));
+  const { hp, ac, initiative, hpFormula } = c.combat;
+  const portrait = c.portrait ? cardAsset(c.ref.scope, c.portrait) : null;
+  for (const name of names(c.name, n)) {
+    const maxHp = opts.rollHp && hpFormula ? (rollFormula(hpFormula) ?? hp) : hp;
+    await dispatch('initiative', 'add', {
+      c: { name, maxHp, ac, bonus: initiative, side: opts.side ?? c.side, card: c.ref, portrait },
+    });
+  }
+}

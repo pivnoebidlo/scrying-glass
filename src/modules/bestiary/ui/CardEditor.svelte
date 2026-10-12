@@ -3,8 +3,8 @@
 <script lang="ts">
   import { FolderOpen, HardDrive, Save, Star, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
-  import { LANGUAGES, cardImageUrl, langName, type CardKind } from '../../../shared/cards';
-  import { roleFolders } from '../../../shared/vault';
+  import { LANGUAGES, cardImageUrl, defaultSide, langName, type CardKind, type CardSide } from '../../../shared/cards';
+  import { folderLabel } from './places';
   import { systemOf, systems } from '../../../systems';
   import { statsEditor, statsView } from '../../../systems/ui';
   import { bestiary, type Draft } from './cards.svelte';
@@ -14,11 +14,7 @@
   let { app, draft }: { app: AppState; draft: Draft } = $props();
 
   // «в библиотеке», «в Тыквенный фестиваль / monsters»
-  const placeText = $derived.by(() => {
-    if (draft.scope === 'library') return 'в библиотеке';
-    const f = app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name).find((x) => x.folder.path === draft.folder) : null;
-    return `в папке ${f ? `${f.title} / ${f.folder.name}` : draft.folder}`;
-  });
+  const placeText = $derived(draft.scope === 'library' ? 'в библиотеке' : `в папке ${folderLabel(app, draft.folder)}`);
   const KINDS: Record<CardKind, string> = { monster: 'Монстр', npc: 'NPC', character: 'Персонаж' };
 
   const card = $derived(draft.card);
@@ -108,6 +104,13 @@
             <span>Вид</span>
             <select bind:value={card.kind}>
               {#each Object.entries(KINDS) as [k, l] (k)}<option value={k}>{l}</option>{/each}
+            </select>
+          </label>
+          <label class="field" title="Кем существо попадает в трекер инициативы. В бою сторону можно поменять">
+            <span>Сторона в бою</span>
+            <select value={card.side ?? defaultSide(card.kind)} onchange={(e) => (card.side = e.currentTarget.value as CardSide)}>
+              <option value="ally">Союзник</option>
+              <option value="enemy">Противник</option>
             </select>
           </label>
         </div>

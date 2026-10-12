@@ -103,7 +103,12 @@
             <td><Avatar {c} /></td>
             <td class="c-name">
               <input class="name" type="text" value={c.name} onchange={(e) => update(c, { name: e.currentTarget.value.trim() || c.name })} />
-              <span class="side faint">{SIDES[c.side]}{c.bonus ? ` · бонус ${c.bonus > 0 ? '+' : ''}${c.bonus}` : ''}</span>
+              <span class="side faint">
+                <!-- Сторону можно поменять прямо в бою: союзник, на которого напали, становится противником. -->
+                <select class="side-select" value={c.side} title="Сторона" onchange={(e) => update(c, { side: e.currentTarget.value as Side })}>
+                  {#each Object.entries(SIDES) as [v, t] (v)}<option value={v}>{t}</option>{/each}
+                </select>{c.bonus ? ` · бонус ${c.bonus > 0 ? '+' : ''}${c.bonus}` : ''}
+              </span>
             </td>
             <td class="c-hp">
               {#if c.maxHp !== null}
@@ -259,6 +264,18 @@
     display: block;
     padding-left: 6px;
     font-size: 11px;
+  }
+  .side-select {
+    padding: 0 2px;
+    border-color: transparent;
+    background: none;
+    color: var(--text-faint);
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .side-select:hover {
+    border-color: var(--border);
+    color: var(--text-normal);
   }
   .c-hp {
     width: 110px;

@@ -13,7 +13,7 @@
 <div class="list">
   <button class="item" class:active={ui.group === 'all'} onclick={() => (ui.group = 'all')}>
     <Images size={14} />
-    <span class="name">Все портреты</span>
+    <span class="name">Все персонажи</span>
     <span class="count">{total}</span>
   </button>
   {#each groups as g (g.key)}

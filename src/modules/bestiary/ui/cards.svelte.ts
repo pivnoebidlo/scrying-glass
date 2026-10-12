@@ -6,6 +6,7 @@ import { langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
 import { visibleIn } from '../../../shared/adventures';
+import { dirname } from '../../../shared/vault';
 import { systemOf } from '../../../systems';
 
 const KEY = 'sg.bestiary';
@@ -19,6 +20,8 @@ interface Filters {
   lang: string;
   // 'all', 'srd', 'library', 'vault' (всё хранилище) или 'vault:<папка бестиария>'.
   scope: string;
+  // 'all', 'monster' или 'npc'.
+  kind: string;
 }
 
 function load(): Partial<Filters> {
@@ -97,7 +100,7 @@ class Bestiary {
   card = $state.raw<Card | null>(null);
   // Для какой ссылки загружена card (card = null при cardRef — карточки нет: удалили или перенесли).
   cardRef = $state.raw<CardRef | null>(null);
-  filters = $state<Filters>({ search: '', system: 'all', lang: 'ru', scope: 'all', ...load() });
+  filters = $state<Filters>({ search: '', system: 'all', lang: 'ru', scope: 'all', kind: 'all', ...load() });
   // Меняется при каждом обновлении карточек в ядре: выбранную надо перечитать.
   rev = $state(0);
   draft = $state<Draft | null>(null);
@@ -128,7 +131,9 @@ class Bestiary {
       // Карточки хранилища — только текущего приключения и общие.
       const adv = store.state.adventures;
       const inAdventure = (c: CardSummary) => c.ref.scope !== 'vault' || c.folder === undefined || visibleIn(adv, c.folder);
-      const members = group.filter((c) => (f.system === 'all' || c.system === f.system) && inScope(c) && inAdventure(c));
+      const members = group.filter(
+        (c) => (f.system === 'all' || c.system === f.system) && (f.kind === 'all' || c.kind === f.kind) && inScope(c) && inAdventure(c)
+      );
       if (!members.length) continue;
       // Ищем по всем версиям: «goblin» найдёт и «Гоблина».
       if (q && !group.some((c) => fold(c.name).includes(q))) continue;
@@ -192,6 +197,27 @@ class Bestiary {
       card: { format: 1, id: '', kind: 'monster', system, lang, name: '', portraits: [], tags: [], notes: '', stats: systemOf(system).blank() },
     });
     openTab('bestiary');
+  }
+
+  // Карточка NPC для портрета из папки персонажей: ложится рядом с картинкой, картинка — её портрет.
+  createFor(portrait: string, name: string) {
+    const system = this.filters.system !== 'all' ? this.filters.system : 'dnd5e-2024';
+    const lang = this.filters.lang !== 'all' ? this.filters.lang : 'ru';
+    this.open({
+      scope: 'vault',
+      folder: dirname(portrait),
+      original: null,
+      card: {
+        format: 1, id: '', kind: 'npc', system, lang, name, side: 'ally', portraits: [portrait], tags: [], notes: '',
+        stats: systemOf(system).blank(),
+      },
+    });
+    openTab('bestiary');
+  }
+
+  // Карточка хранилища, у которой эта картинка — основной портрет.
+  cardFor(portrait: string): CardSummary | undefined {
+    return this.all.find((c) => c.ref.scope === 'vault' && c.portrait === portrait);
   }
 
   async edit(ref: CardRef) {
@@ -282,12 +308,13 @@ async function refresh() {
 }
 
 // Список грузится при первом показе бестиария, а не при запуске: этот файл попадает и в окно игроков.
-let connected = false;
-export function connectCards() {
-  if (connected) return;
-  connected = true;
-  window.api.onCardsChanged(refresh);
-  refresh();
+let loaded: Promise<void> | null = null;
+export function connectCards(): Promise<void> {
+  if (!loaded) {
+    window.api.onCardsChanged(refresh);
+    loaded = refresh();
+  }
+  return loaded;
 }
 
 $effect.root(() => {

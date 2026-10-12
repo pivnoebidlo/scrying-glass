@@ -15,7 +15,7 @@ import * as path from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
 import { app, BrowserWindow } from 'electron';
 import type { Card, CardRef, CardScope, CardSummary } from '../shared/cards';
-import { refKey } from '../shared/cards';
+import { defaultSide, refKey } from '../shared/cards';
 import { folderRole, roleFolders, type VaultFolder } from '../shared/vault';
 import { systemOf } from '../systems';
 import { freeName, writeJsonAtomic } from './files';
@@ -113,15 +113,21 @@ function loadLibrary() {
 // пересканирования (новая папка «monsters»), а карточки должны быть видны сразу.
 const written = new Set<string>();
 
-// Папки бестиария хранилища (пути внутри хранилища).
-function bestiaryFolders(): string[] {
-  const known = vaultTree ? roleFolders(vaultTree, 'bestiary', '').map((r) => r.folder.path) : [];
+// Папки хранилища, где живут карточки (пути внутри хранилища): бестиарий — монстры, characters — NPC рядом
+// со своими портретами.
+const roleFolderPaths = (role: 'bestiary' | 'characters') =>
+  vaultTree ? roleFolders(vaultTree, role, '').map((r) => r.folder.path) : [];
+
+function cardFolders(): string[] {
+  const known = [...roleFolderPaths('bestiary'), ...roleFolderPaths('characters')];
   const extra = [...written].filter((p) => !known.some((k) => p === k || p.startsWith(k + '/')));
   return [...known, ...extra];
 }
 
+const bestiaryFolders = () => roleFolderPaths('bestiary');
+
 function loadVault() {
-  const list = vaultRoot ? bestiaryFolders().flatMap((p) => jsonFiles(inside(vaultRoot, p)!)) : [];
+  const list = vaultRoot ? cardFolders().flatMap((p) => jsonFiles(inside(vaultRoot, p)!)) : [];
   loadFiles('vault', vaultRoot ?? '', list);
 }
 
@@ -173,6 +179,7 @@ function summarize(ref: CardRef, c: Card): CardSummary {
     name: c.name,
     ...(c.origin ? { origin: c.origin } : {}),
     ...(ref.scope === 'vault' && file && vaultRoot ? { folder: cardFolder(file) } : {}),
+    side: c.side ?? defaultSide(c.kind),
     tags: c.tags,
     portrait: c.portraits[0] ?? null,
     subtitle,
@@ -184,7 +191,7 @@ function summarize(ref: CardRef, c: Card): CardSummary {
 // Папка бестиария, в которой лежит файл карточки хранилища (путь внутри хранилища).
 function cardFolder(file: string): string {
   const rel = toRel(vaultRoot!, file);
-  return bestiaryFolders().find((p) => rel.startsWith(p + '/')) ?? toRel(vaultRoot!, path.dirname(file));
+  return cardFolders().find((p) => rel.startsWith(p + '/')) ?? toRel(vaultRoot!, path.dirname(file));
 }
 
 export function listCards(): CardSummary[] {
@@ -278,9 +285,11 @@ export function deleteCard(ref: CardRef, images: string[] = []) {
 
 // Картинка «принадлежит карточкам»: лежит в images/ библиотеки или в папке бестиария хранилища,
 // и ею не пользуется ни одна карточка, кроме except. Только такие приложение удаляет само.
-function disposable(scope: CardScope, rel: string, except?: CardRef): boolean {
-  const inPlace =
-    scope === 'library' ? rel.startsWith('images/') : scope === 'vault' && bestiaryFolders().some((f) => rel.startsWith(f + '/'));
+// anyCardFolder — годится и папка персонажей (для картинок, которые приложение только что туда скопировало;
+// портреты в characters — обычно файлы пользователя, вместе с карточкой они не удаляются).
+function disposable(scope: CardScope, rel: string, except?: CardRef, anyCardFolder = false): boolean {
+  const folders = anyCardFolder ? cardFolders() : bestiaryFolders();
+  const inPlace = scope === 'library' ? rel.startsWith('images/') : scope === 'vault' && folders.some((f) => rel.startsWith(f + '/'));
   if (!inPlace) return false;
   const skip = except && refKey(except);
   for (const [key, c] of cards) {
@@ -301,7 +310,7 @@ export const ownImages = (ref: CardRef): string[] =>
 // Убирает картинки, скопированные для черновика, который не сохранили (или из которого их убрали),
 // если ими никто не пользуется.
 export function discardImages(scope: CardScope, rels: string[]) {
-  for (const rel of rels) if (disposable(scope, rel)) removeImage(scope, rel);
+  for (const rel of rels) if (disposable(scope, rel, undefined, true)) removeImage(scope, rel);
 }
 
 // Папка, куда класть картинки карточки: в библиотеке — images/, в хранилище — папка карточки.

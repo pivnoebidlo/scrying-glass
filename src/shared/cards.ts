@@ -5,6 +5,11 @@ import { assetUrl, libraryAsset } from './vault';
 
 export type CardKind = 'monster' | 'npc' | 'character';
 
+// На чьей стороне существо в бою (для трекера инициативы). Её можно поменять при добавлении и в самом бою.
+export type CardSide = 'ally' | 'enemy';
+// Если в карточке не указано: NPC — союзники, монстры — противники.
+export const defaultSide = (kind: CardKind): CardSide => (kind === 'monster' ? 'enemy' : 'ally');
+
 // Где лежит карточка: встроенный SRD (только чтение), библиотека пользователя (общая для всех кампаний)
 // или текущее хранилище (папки бестиария приключений).
 export type CardScope = 'srd' | 'library' | 'vault';
@@ -39,6 +44,7 @@ export interface Card<S = unknown> {
   tags: string[];
   // Описание: внешность, повадки, история. Разметка как в текстах действий.
   description?: string;
+  side?: CardSide;
   // Заметки мастера, игроки их не видят.
   notes: string;
   stats: S;
@@ -52,8 +58,9 @@ export interface CardSummary {
   lang: string;
   name: string;
   origin?: Card['origin'];
-  // Для карточек хранилища: папка бестиария, где лежит файл (путь внутри хранилища).
+  // Для карточек хранилища: папка бестиария или персонажей, где лежит файл (путь внутри хранилища).
   folder?: string;
+  side: CardSide;
   tags: string[];
   portrait: string | null;
   // Строка под названием: «Маленькая фея (гоблиноид) · ПО 1/4».

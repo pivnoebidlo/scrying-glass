@@ -1,13 +1,19 @@
-<!-- Вкладка «Портреты»: все персонажи хранилища, сгруппированные по папкам. -->
+<!-- Вкладка «Персонажи»: портреты из папок characters, сгруппированные по папкам. У портрета может быть
+     карточка NPC (лежит рядом в той же папке): статблок и кнопка «в инициативу». -->
 <script lang="ts">
   import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { caption, characterGroups } from '../library';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
   import Caption from './Caption.svelte';
+  import CardBar from './CardBar.svelte';
+  import { onMount } from 'svelte';
+  import { connectCards } from '../../bestiary/ui/cards.svelte';
   import { ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'portraits'> = $props();
+
+  onMount(connectCards);
 
   const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []);
   const visible = $derived.by(() => {
@@ -50,6 +56,7 @@
           {#each g.items as f (f.path)}
             <ImageCard path={f.path} primary="portrait">
               <Caption path={f.path} />
+              <CardBar path={f.path} name={caption(ms, f.path)} />
             </ImageCard>
           {/each}
         </div>

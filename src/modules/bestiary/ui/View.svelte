@@ -5,13 +5,13 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
-  import { LANGUAGES, cardAsset, cardImageUrl, langName, sameRef, type CardScope, type CardSummary } from '../../../shared/cards';
-  import { roleFolders } from '../../../shared/vault';
+  import { LANGUAGES, cardAsset, cardImageUrl, langName, sameRef, type CardScope, type CardSide, type CardSummary } from '../../../shared/cards';
   import { systemOf } from '../../../systems';
   import { statsView } from '../../../systems/ui';
   import { markdown } from '../../../renderer/lib/markdown';
   import { bestiary, connectCards } from './cards.svelte';
-  import { rollFormula } from './dice';
+  import { addToInitiative } from './combat';
+  import { folderLabel } from './places';
   import CardEditor from './CardEditor.svelte';
 
   let { app }: ModuleProps<'bestiary'> = $props();
@@ -29,30 +29,17 @@
   });
 
   // Где лежит карточка: «Встроенный SRD», «Библиотека», «Тыквенный фестиваль / monsters».
-  const folders = $derived(app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name) : []);
   function where(c: CardSummary): string {
     if (c.ref.scope === 'srd') return 'Встроенный SRD';
     if (c.ref.scope === 'library') return 'Библиотека';
-    const f = folders.find((x) => x.folder.path === c.folder);
-    return f ? `${f.title} / ${f.folder.name}` : (c.folder ?? 'Хранилище');
+    return folderLabel(app, c.folder);
   }
+
   // Языки, на которые ещё нет перевода.
   const missingLangs = $derived(Object.keys(LANGUAGES).filter((l) => !bestiary.versions.some((v) => v.lang === l)));
 
   let count = $state(1);
   let rollHp = $state(false);
-
-  // «Гоблин», «Гоблин 2», …: нумерация продолжает тех, кто уже в бою.
-  function names(base: string, n: number): string[] {
-    const re = new RegExp(`^${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?: (\\d+))?$`);
-    let max = 0;
-    for (const c of app.initiative.combatants) {
-      const m = re.exec(c.name);
-      if (m) max = Math.max(max, m[1] ? Number(m[1]) : 1);
-    }
-    if (n === 1 && max === 0) return [base];
-    return Array.from({ length: n }, (_, i) => `${base} ${max + i + 1}`);
-  }
 
   // Портрет на экран игроков и обратно. Подпись — название карточки, если у картинки нет своей.
   async function togglePortrait(asset: string, name: string) {
@@ -62,16 +49,16 @@
     await dispatch('portraits', 'toggle', { path: asset });
   }
 
+  // Сторона в бою: из карточки, но перед добавлением её можно поменять.
+  let side = $state<CardSide | null>(null);
+  $effect(() => {
+    void bestiary.selected;
+    side = null;
+  });
+
   async function toInitiative() {
-    if (!card || !summary) return;
-    const n = Math.max(1, Math.min(20, Math.round(count) || 1));
-    const { hp, ac, initiative, hpFormula } = summary.combat;
-    for (const name of names(card.name, n)) {
-      const maxHp = rollHp && hpFormula ? (rollFormula(hpFormula) ?? hp) : hp;
-      await dispatch('initiative', 'add', {
-        c: { name, maxHp, ac, bonus: initiative, side: 'enemy', card: summary.ref, portrait: card.portraits[0] ? cardAsset(summary.ref.scope, card.portraits[0]) : null },
-      });
-    }
+    if (!summary) return;
+    await addToInitiative(summary, { count, rollHp, side: side ?? summary.side });
     openTab('initiative');
   }
 </script>
@@ -158,6 +145,10 @@
               <input type="checkbox" bind:checked={rollHp} disabled={!summary.combat.hpFormula} /> случайные хиты
             </label>
             <input class="count" type="number" min="1" max="20" bind:value={count} title="Сколько добавить" />
+            <select class="side" value={side ?? summary.side} onchange={(e) => (side = e.currentTarget.value as CardSide)} title="На чьей стороне в бою">
+              <option value="enemy">противник</option>
+              <option value="ally">союзник</option>
+            </select>
             <button class="btn primary" onclick={toInitiative}><Swords size={14} /> В инициативу</button>
           </div>
         </div>
@@ -294,6 +285,9 @@
     align-items: center;
     gap: 6px;
     color: var(--text-muted);
+  }
+  .side {
+    padding: 5px 6px;
   }
   .count {
     width: 52px;

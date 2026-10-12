@@ -12,10 +12,11 @@
   let { app }: ModuleProps<'bestiary'> = $props();
 
   // Папки бестиария хранилища: для фильтра и подписей.
+  // Папки, где лежат карточки хранилища: бестиарий и персонажи.
   const folders = $derived(
-    (app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name) : [])
+    (app.vault.tree ? [...roleFolders(app.vault.tree, 'bestiary', app.vault.name), ...roleFolders(app.vault.tree, 'characters', app.vault.name)] : [])
       .filter((f) => visibleIn(app.adventures, f.folder.path))
-      .map((f) => ({ ...f, title: placeTitle(app.adventures, dirname(f.folder.path), app.vault.name) }))
+      .map((f) => ({ ...f, title: `${placeTitle(app.adventures, dirname(f.folder.path), app.vault.name)} / ${f.folder.name}` }))
   );
   const folderTitle = (path: string) => folders.find((f) => f.folder.path === path)?.title ?? path;
 
@@ -79,10 +80,17 @@
       {/if}
     </div>
   </div>
-  <select bind:value={f.system} title="Система">
-    <option value="all">Все системы</option>
-    {#each systems as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
-  </select>
+  <div class="row">
+    <select bind:value={f.system} title="Система">
+      <option value="all">Все системы</option>
+      {#each systems as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
+    </select>
+    <select bind:value={f.kind} title="Монстры или NPC">
+      <option value="all">Все</option>
+      <option value="monster">Монстры</option>
+      <option value="npc">NPC</option>
+    </select>
+  </div>
   <div class="row">
     <select bind:value={f.lang} title="Какую версию показывать, если карточка переведена">
       {#each bestiary.langs as l (l)}<option value={l}>{langName(l)}</option>{/each}

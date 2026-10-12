@@ -3,6 +3,8 @@ import { Swords, UserPlus } from '@lucide/svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import { dispatch } from '../../renderer/lib/store.svelte';
 import { prettyName } from '../../shared/vault';
+import { bestiary, connectCards } from '../bestiary/ui/cards.svelte';
+import { addToInitiative } from '../bestiary/ui/combat';
 import View from './ui/View.svelte';
 import OnScreen from './ui/OnScreen.svelte';
 
@@ -20,9 +22,13 @@ export default defineControl({
       badge: 'в бою',
       icon: UserPlus,
       active: (app, path) => app.initiative.combatants.some((c) => c.portrait === path),
-      toggle: (app, path) => {
+      toggle: async (app, path) => {
         const c = app.initiative.combatants.find((x) => x.portrait === path);
         if (c) return dispatch('initiative', 'remove', { id: c.id });
+        // У портрета есть карточка NPC — берём хиты, КД, инициативу и сторону из неё.
+        await connectCards();
+        const card = bestiary.cardFor(path);
+        if (card) return addToInitiative(card);
         // Персонажи из папок партии (party / партия / игроки) — сторона «партия», остальные — противники.
         const party = path.split('/').some((p) => ['party', 'партия', 'игроки', 'pc'].includes(p.toLowerCase()));
         return dispatch('initiative', 'add', {
