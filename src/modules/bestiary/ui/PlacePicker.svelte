@@ -23,7 +23,8 @@
     }
     return out;
   });
-  let parent = $state('');
+  // Папку для новой «monsters» выбирают явно: раньше по умолчанию стоял корень, и карточки уходили не туда.
+  let parent = $state<string | null>(null);
 
   const pick = (p: Place) => request.resolve(p);
   const disabled = (p: Place) => samePlace(p, request.exclude);
@@ -71,9 +72,14 @@
         <FolderPlus size={16} />
         <span>Новая папка <code>{NEW_FOLDER}</code> в</span>
         <select bind:value={parent}>
+          <option value={null} disabled>выберите папку…</option>
           {#each parents as p (p.path)}<option value={p.path}>{p.title}</option>{/each}
         </select>
-        <button class="btn" onclick={() => pick({ scope: 'vault', folder: parent ? `${parent}/${NEW_FOLDER}` : NEW_FOLDER })}>
+        <button
+          class="btn"
+          disabled={parent === null}
+          onclick={() => parent !== null && pick({ scope: 'vault', folder: parent ? `${parent}/${NEW_FOLDER}` : NEW_FOLDER })}
+        >
           {request.action}
         </button>
       </div>

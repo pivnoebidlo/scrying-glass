@@ -47,6 +47,8 @@ export interface Draft {
   folder?: string;
   card: Card;
   original: CardRef | null;
+  // Картинки, которые приложение скопировало для этого черновика: если их не сохранят, они удаляются.
+  copied: string[];
 }
 
 // Запрос «где хранить?» — окно выбора места (PlacePicker) показывается, пока он есть.
@@ -148,8 +150,8 @@ class Bestiary {
 
   // ---------- Редактор ----------
 
-  private open(d: Draft) {
-    this.draft = d;
+  private open(d: Omit<Draft, 'copied'> & { copied?: string[] }) {
+    this.draft = { ...d, copied: d.copied ?? [] };
     this.draftStart = JSON.stringify(d.card);
   }
 
@@ -195,7 +197,7 @@ class Bestiary {
     const place = await this.choosePlace({ title: 'Куда положить копию?', action: 'Сделать копию', library: true });
     if (!place) return;
     const c = await window.api.copyCardDraft(ref, place.scope, place.folder);
-    if (c) this.open({ ...place, original: null, card: c });
+    if (c) this.open({ ...place, original: null, card: c.card, copied: c.copied });
   }
 
   // Перенести карточку в другое место — без копии, ссылки на неё сохраняются.
@@ -215,7 +217,7 @@ class Bestiary {
     const place: Place = placeOf(cur) ?? { scope: 'library' };
     const c = await window.api.copyCardDraft(ref, place.scope, place.folder);
     if (!c) return;
-    this.open({ ...place, original: null, card: { ...c, lang, origin: { id: groupId(cur), relation: 'translation' } } });
+    this.open({ ...place, original: null, card: { ...c.card, lang, origin: { id: groupId(cur), relation: 'translation' } }, copied: c.copied });
   }
 
   async save(): Promise<boolean> {
@@ -223,6 +225,9 @@ class Bestiary {
     if (!d || !d.card.name.trim()) return false;
     const card = clean($state.snapshot(d.card)) as Card;
     const ref = await window.api.saveCard(d.scope, card, d.folder);
+    // Картинки, которые добавили и тут же убрали, не нужны.
+    const unused = d.copied.filter((p) => !card.portraits.includes(p));
+    if (unused.length) await window.api.discardCardImages(d.scope, unused);
     this.draft = null;
     this.select(ref);
     return true;
@@ -230,14 +235,15 @@ class Bestiary {
 
   cancel(): boolean {
     if (this.dirty && !confirm('Закрыть редактор без сохранения?')) return false;
+    const d = this.draft;
+    if (d?.copied.length) window.api.discardCardImages(d.scope, $state.snapshot(d.copied));
     this.draft = null;
     return true;
   }
 
-  async remove(ref: CardRef, name: string) {
-    if (!confirm(`Удалить карточку «${name}»? Картинки останутся на месте.`)) return;
-    await window.api.deleteCard(ref);
-    if (sameRef(ref, this.selected)) this.select(null);
+  // Удаление спрашивает ядро: заодно предлагает удалить картинки, которые есть только у этой карточки.
+  async remove(ref: CardRef) {
+    if ((await window.api.deleteCard(ref)) && sameRef(ref, this.selected)) this.select(null);
   }
 
   // Импорт файлов карточек в выбранное место. Возвращает сообщение для пользователя или null.

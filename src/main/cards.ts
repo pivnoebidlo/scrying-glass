@@ -266,13 +266,42 @@ export function saveCard(scope: CardScope, card: Card, folder?: string): CardRef
   return { scope, id };
 }
 
-// Удаляет файл карточки (картинки остаются на месте).
-export function deleteCard(ref: CardRef) {
+// Удаляет файл карточки. images — её картинки, которые удалить вместе с ней (см. ownImages).
+export function deleteCard(ref: CardRef, images: string[] = []) {
   const file = files.get(refKey(ref));
   if (!file) return;
   fs.rmSync(file, { force: true });
+  for (const rel of images) removeImage(ref.scope, rel);
   reload(ref.scope);
   changed();
+}
+
+// Картинка «принадлежит карточкам»: лежит в images/ библиотеки или в папке бестиария хранилища,
+// и ею не пользуется ни одна карточка, кроме except. Только такие приложение удаляет само.
+function disposable(scope: CardScope, rel: string, except?: CardRef): boolean {
+  const inPlace =
+    scope === 'library' ? rel.startsWith('images/') : scope === 'vault' && bestiaryFolders().some((f) => rel.startsWith(f + '/'));
+  if (!inPlace) return false;
+  const skip = except && refKey(except);
+  for (const [key, c] of cards) {
+    if (key !== skip && key.startsWith(scope + ':') && c.portraits.includes(rel)) return false;
+  }
+  return true;
+}
+
+function removeImage(scope: CardScope, rel: string) {
+  const abs = imageFile(scope, rel);
+  if (abs && fs.existsSync(abs)) fs.rmSync(abs);
+}
+
+// Картинки карточки, которые можно удалить вместе с ней.
+export const ownImages = (ref: CardRef): string[] =>
+  (getCard(ref)?.portraits ?? []).filter((p) => disposable(ref.scope, p, ref));
+
+// Убирает картинки, скопированные для черновика, который не сохранили (или из которого их убрали),
+// если ими никто не пользуется.
+export function discardImages(scope: CardScope, rels: string[]) {
+  for (const rel of rels) if (disposable(scope, rel)) removeImage(scope, rel);
 }
 
 // Папка, куда класть картинки карточки: в библиотеке — images/, в хранилище — папка карточки.
@@ -311,29 +340,35 @@ export const folderOf = (ref: CardRef): string | undefined => {
 
 // Черновик копии карточки для другого места (не сохраняется, пока его не сохранят в редакторе).
 // Картинки, которых там не будет видно, копируются. Источник (авторство SRD) сохраняется: его требует лицензия.
-export function copyDraft(ref: CardRef, to: CardScope, folder?: string): Card | null {
+// copied — картинки, скопированные для черновика: если его не сохранят, их надо убрать (discardImages).
+export function copyDraft(ref: CardRef, to: CardScope, folder?: string): { card: Card; copied: string[] } | null {
   const c = getCard(ref);
   if (!c || to === 'srd') return null;
+  const copied: string[] = [];
   const portraits =
     ref.scope === to
       ? [...c.portraits]
       : c.portraits
           .map((p) => {
             const file = imageFile(ref.scope, p);
-            return file ? importCardImage(to, ref.scope === 'vault' ? { vaultPath: p } : { file }, folder) : null;
+            const out = file ? importCardImage(to, ref.scope === 'vault' ? { vaultPath: p } : { file }, folder) : null;
+            if (out && out !== p) copied.push(out);
+            return out;
           })
           .filter((p): p is string => !!p);
-  return { ...structuredClone(c), id: '', origin: { id: c.id, relation: 'variant' }, portraits };
+  return { card: { ...structuredClone(c), id: '', origin: { id: c.id, relation: 'variant' }, portraits }, copied };
 }
 
 // Перенести карточку в другое место (из хранилища в библиотеку, между приключениями). id сохраняется,
 // чтобы не терялись ссылки переводов и трекера инициативы.
 export function moveCard(ref: CardRef, to: CardScope, folder?: string): CardRef | null {
   const c = getCard(ref);
-  const draft = copyDraft(ref, to, folder);
+  const copy = copyDraft(ref, to, folder);
   const dir = targetDir(to, folder);
-  if (!c || !draft || !dir) return null;
-  deleteCard(ref);
+  if (!c || !copy || !dir) return null;
+  const draft = copy.card;
+  // Скопированные картинки остались на старом месте — убираем их вместе со старым файлом.
+  deleteCard(ref, ref.scope === to ? [] : ownImages(ref));
   fs.mkdirSync(dir, { recursive: true });
   const file = path.join(dir, fileName(dir, c.name));
   writeJsonAtomic(file, { ...draft, origin: c.origin, id: c.id, format: 1 });

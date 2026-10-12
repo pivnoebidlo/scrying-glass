@@ -13,7 +13,7 @@ import { scanVault } from './scan';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import {
-  cardsOf, copyDraft, deleteCard, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, copyDraft, deleteCard, discardImages, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import {
@@ -242,13 +242,39 @@ ipcMain.handle('cards:list', () => listCards());
 ipcMain.handle('cards:get', (_event, ref) => getCard(ref));
 // folder — папка бестиария хранилища (путь внутри хранилища) для новых карточек и их картинок.
 ipcMain.handle('cards:save', (_event, { scope, card, folder }) => saveCard(scope, card, folder));
-ipcMain.handle('cards:delete', (_event, ref) => deleteCard(ref));
+// Удалить карточку (с подтверждением). Картинки, которые есть только у неё и лежат в папке карточек,
+// удаляются, если оставить галочку. true — удалили.
+ipcMain.handle('cards:delete', async (_event, ref: CardRef) => {
+  const card = getCard(ref);
+  if (!card) return false;
+  const images = ownImages(ref);
+  const win = getControlWindow();
+  const opts = {
+    type: 'warning' as const,
+    message: `Удалить карточку «${card.name}»?`,
+    detail: 'Файл карточки будет удалён с диска.',
+    buttons: ['Удалить', 'Отмена'],
+    defaultId: 0,
+    cancelId: 1,
+    ...(images.length
+      ? { checkboxLabel: `Удалить и картинки этой карточки (${images.length}): ${images.map((p) => p.split('/').pop()).join(', ')}`, checkboxChecked: true }
+      : {}),
+  };
+  const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
+  if (res.response !== 0) return false;
+  deleteCard(ref, res.checkboxChecked ? images : []);
+  return true;
+});
+ipcMain.handle('cards:discardImages', (_event, { scope, paths }: { scope: CardScope; paths: string[] }) => discardImages(scope, paths));
 ipcMain.handle('cards:copyDraft', (_event, { ref, to, folder }) => copyDraft(ref, to, folder));
 ipcMain.handle('cards:move', (_event, { ref, to, folder }) => moveCard(ref, to, folder));
 
 // Картинка для карточки: из хранилища (vaultPath) или файл с диска (диалог). null — отменили.
 ipcMain.handle('cards:addImage', async (_event, { scope, vaultPath, folder }: { scope: CardScope; vaultPath?: string; folder?: string }) => {
-  if (vaultPath) return importCardImage(scope, { vaultPath }, folder);
+  if (vaultPath) {
+    const p = importCardImage(scope, { vaultPath }, folder);
+    return p && { path: p, copied: p !== vaultPath };
+  }
   const win = getControlWindow();
   const opts = {
     title: 'Картинка для карточки',
@@ -256,7 +282,8 @@ ipcMain.handle('cards:addImage', async (_event, { scope, vaultPath, folder }: { 
     filters: [{ name: 'Картинки', extensions: IMAGE_EXT.map((e) => e.slice(1)) }],
   };
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
-  return res.canceled || !res.filePaths[0] ? null : importCardImage(scope, { file: res.filePaths[0] }, folder);
+  const p = res.canceled || !res.filePaths[0] ? null : importCardImage(scope, { file: res.filePaths[0] }, folder);
+  return p && { path: p, copied: true };
 });
 
 // Экспорт: выбранные карточки (refs) или всё место хранения (scope, folder) в один файл с картинками.

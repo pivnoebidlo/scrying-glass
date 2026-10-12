@@ -117,7 +117,7 @@
               <button class="btn" title="Переложить карточку в библиотеку или в папку другого приключения, без копии" onclick={() => bestiary.move(ref)}
                 ><ArrowRightLeft size={13} /> Перенести…</button
               >
-              <button class="icon-btn" title="Удалить карточку" onclick={() => bestiary.remove(ref, card.name)}><Trash2 size={14} /></button>
+              <button class="icon-btn" title="Удалить карточку" onclick={() => bestiary.remove(ref)}><Trash2 size={14} /></button>
             {/if}
             <button
               class="icon-btn"

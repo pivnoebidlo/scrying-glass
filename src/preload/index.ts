@@ -12,6 +12,7 @@ const api: Api = {
   onCardsChanged: (cb) => { ipcRenderer.on('cards:changed', () => cb()); },
   saveCard: (scope, card, folder) => ipcRenderer.invoke('cards:save', { scope, card, folder }),
   deleteCard: (ref) => ipcRenderer.invoke('cards:delete', ref),
+  discardCardImages: (scope, paths) => ipcRenderer.invoke('cards:discardImages', { scope, paths }),
   copyCardDraft: (ref, to, folder) => ipcRenderer.invoke('cards:copyDraft', { ref, to, folder }),
   moveCard: (ref, to, folder) => ipcRenderer.invoke('cards:move', { ref, to, folder }),
   addCardImage: (scope, vaultPath, folder) => ipcRenderer.invoke('cards:addImage', { scope, vaultPath, folder }),

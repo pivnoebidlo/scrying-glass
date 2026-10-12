@@ -41,8 +41,10 @@
 
   async function addImage(vaultPath?: string) {
     picking = false;
-    const p = await window.api.addCardImage(draft.scope, vaultPath, draft.folder);
-    if (p && !card.portraits.includes(p)) card.portraits.push(p);
+    const res = await window.api.addCardImage(draft.scope, vaultPath, draft.folder);
+    if (!res) return;
+    if (res.copied) draft.copied.push(res.path);
+    if (!card.portraits.includes(res.path)) card.portraits.push(res.path);
   }
 
   function makeMain(i: number) {

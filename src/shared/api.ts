@@ -22,12 +22,17 @@ export interface Api {
   // Сохранить карточку. Существующая (id есть в этом месте) пишется в свой файл, новая — в библиотеку
   // или в папку бестиария хранилища folder (путь внутри хранилища). Возвращает ссылку на сохранённую.
   saveCard(scope: CardScope, card: Card, folder?: string): Promise<CardRef>;
-  deleteCard(ref: CardRef): Promise<void>;
+  // Удалить карточку: спрашивает подтверждение и про её картинки. true — удалили.
+  deleteCard(ref: CardRef): Promise<boolean>;
+  // Убрать картинки, скопированные для несохранённого черновика (если ими никто не пользуется).
+  discardCardImages(scope: CardScope, paths: string[]): Promise<void>;
   // Черновик копии для другого места (картинки копируются туда же). Сохраняется через saveCard.
-  copyCardDraft(ref: CardRef, to: CardScope, folder?: string): Promise<Card | null>;
+  // copied — картинки, скопированные для черновика (убрать через discardCardImages, если не сохранят).
+  copyCardDraft(ref: CardRef, to: CardScope, folder?: string): Promise<{ card: Card; copied: string[] } | null>;
   moveCard(ref: CardRef, to: CardScope, folder?: string): Promise<CardRef | null>;
-  // Добавить картинку: из хранилища (vaultPath) или с диска через диалог. Путь для card.portraits или null.
-  addCardImage(scope: CardScope, vaultPath?: string, folder?: string): Promise<string | null>;
+  // Добавить картинку: из хранилища (vaultPath) или с диска через диалог. Путь для card.portraits и был ли
+  // файл скопирован; null — отменили.
+  addCardImage(scope: CardScope, vaultPath?: string, folder?: string): Promise<{ path: string; copied: boolean } | null>;
   // Экспорт выбранных карточек или всего места хранения в файл (диалог). Число карточек или null — отменили.
   exportCards(what: { refs?: CardRef[]; scope?: CardScope; folder?: string; name: string }): Promise<number | null>;
   // Импорт: выбрать файлы (диалог), затем импортировать их в выбранное место.
