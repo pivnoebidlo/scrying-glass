@@ -13,12 +13,13 @@
 
   // Папки бестиария текущего приключения (первыми) и общие; чужих приключений здесь нет.
   const adv = $derived(app.adventures);
-  // Монстров кладут в папки бестиария, NPC — в папки персонажей, рядом с портретами.
+  // Монстров кладут в папки бестиария, NPC — в папки персонажей рядом с портретами, персонажей игроков — в party.
   const folders = $derived(
     (app.vault.tree
       ? [
           ...roleFolders(app.vault.tree, 'bestiary', app.vault.name).map((f) => ({ ...f, npc: false })),
           ...roleFolders(app.vault.tree, 'characters', app.vault.name).map((f) => ({ ...f, npc: true })),
+          ...roleFolders(app.vault.tree, 'party', app.vault.name).map((f) => ({ ...f, npc: true, party: true })),
         ]
       : []
     )
@@ -78,7 +79,7 @@
         <button class="place" disabled={disabled(p)} onclick={() => pick(p)}>
           {#if f.npc}<Users size={16} />{:else}<Skull size={16} />{/if}
           <span class="text">
-            <span class="name">{f.title} · {f.npc ? 'персонажи' : 'монстры'}</span>
+            <span class="name">{f.title} · {'party' in f ? 'партия' : f.npc ? 'персонажи' : 'монстры'}</span>
             <span class="desc">{f.folder.path}{disabled(p) ? ' — карточка уже здесь' : ''}</span>
           </span>
         </button>

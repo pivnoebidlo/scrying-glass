@@ -40,7 +40,8 @@ export interface Api {
   exportCards(what: { refs?: CardRef[]; scope?: CardScope; folder?: string; name: string }): Promise<number | null>;
   // Импорт: выбрать файлы (диалог), затем импортировать их в выбранное место.
   pickImportFiles(): Promise<string[]>;
-  importCards(files: string[], scope: CardScope, folder?: string): Promise<{ count: number; errors: string[] }>;
+  // updated — персонажи из LSS, которые уже были и обновились.
+  importCards(files: string[], scope: CardScope, folder?: string): Promise<{ count: number; errors: string[]; updated: string[] }>;
   library(): Promise<{ path: string | null; isDefault: boolean }>;
   chooseLibrary(reset?: boolean): Promise<void>;
   revealLibrary(): Promise<void>;

@@ -15,11 +15,11 @@
 
   // «в библиотеке», «в Тыквенный фестиваль / monsters»
   const placeText = $derived(draft.scope === 'library' ? 'в библиотеке' : `в папке ${folderLabel(app, draft.folder)}`);
-  const KINDS: Record<CardKind, string> = { monster: 'Монстр', npc: 'NPC', character: 'Персонаж' };
+  const KINDS: Record<CardKind, string> = { monster: 'Монстр', npc: 'NPC', character: 'Персонаж игрока' };
 
   const card = $derived(draft.card);
-  const Editor = $derived(statsEditor(card.system));
-  const Preview = $derived(statsView(card.system));
+  const Editor = $derived(statsEditor(card.system, card.stats));
+  const Preview = $derived(statsView(card.system, card.stats));
   // Предпросмотр получает снимок: компонент статблока не должен держать живой прокси черновика.
   const preview = $derived($state.snapshot(card));
 
@@ -31,7 +31,7 @@
   function changeSystem(id: string) {
     const sameFamily = id.startsWith('dnd5e-') && card.system.startsWith('dnd5e-');
     if (!sameFamily && !confirm('У другой системы другие характеристики. Начать их заново?')) return;
-    if (!sameFamily) card.stats = systemOf(id).blank();
+    if (!sameFamily) card.stats = systemOf(id).blank(card.kind);
     card.system = id;
   }
 
@@ -109,6 +109,7 @@
           <label class="field" title="Кем существо попадает в трекер инициативы. В бою сторону можно поменять">
             <span>Сторона в бою</span>
             <select value={card.side ?? defaultSide(card.kind)} onchange={(e) => (card.side = e.currentTarget.value as CardSide)}>
+              <option value="party">Партия</option>
               <option value="ally">Союзник</option>
               <option value="enemy">Противник</option>
             </select>

@@ -57,6 +57,11 @@ Electron-приложение для мастера D&D: окно управле
   Редактор: `modules/bestiary/ui/CardEditor.svelte` (общая часть) + редактор системы из `systems/ui.ts`.
 - Картинки вне хранилища (библиотека карточек) в портретах и инициативе — строки «library:<путь>», адрес даёт
   `assetUrl` из `shared/vault.ts`. Переводы карточек группируются по `origin.id` между местами хранения.
+- Персонажи игроков: карточка `kind: 'character'`, в `stats` — лист (`systems/dnd5e/character.ts`, вид
+  `CharacterSheet.svelte`); система различает лист и статблок по форме (`isCharacter`). Лежат в папках роли
+  `party`, сторона «партия». Импорт из Long Story Short — `systems/dnd5e/lss.ts` (тексты LSS — документы
+  TipTap/ProseMirror), повторный импорт обновляет карточку по `links.lss`. Редактор листа — следующий шаг
+  (пользователь просил: LSS только для D&D, и не все игроки им пользуются).
 - Обмен карточками: один JSON `{ scryingGlass: 'cards', version: 1, cards, images }` с картинками в base64
   (`exportCards` / `importCards` в `main/cards.ts`); при импорте id новые, `origin` внутри файла переписывается.
 - Хранилище — папка пользователя с деревом любой глубины. Назначение папок по названию (все варианты — `ROLES`

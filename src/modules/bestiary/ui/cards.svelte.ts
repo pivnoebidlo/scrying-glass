@@ -6,7 +6,7 @@ import { imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
 import { visibleIn } from '../../../shared/adventures';
-import { dirname } from '../../../shared/vault';
+import { dirname, folderRole } from '../../../shared/vault';
 import { systemOf } from '../../../systems';
 
 const KEY = 'sg.bestiary';
@@ -199,17 +199,20 @@ class Bestiary {
     openTab('bestiary');
   }
 
-  // Карточка NPC для портрета из папки персонажей: ложится рядом с картинкой, картинка — её портрет.
+  // Карточка для портрета: ложится рядом с картинкой, картинка — её портрет. В папке партии — лист персонажа
+  // игрока, в остальных — карточка NPC.
   createFor(portrait: string, name: string) {
     const system = this.filters.system !== 'all' ? this.filters.system : 'dnd5e-2024';
     const lang = this.filters.lang !== 'all' ? this.filters.lang : 'ru';
+    const party = portrait.split('/').some((p) => folderRole(p) === 'party');
+    const kind = party ? 'character' : 'npc';
     this.open({
       scope: 'vault',
       folder: dirname(portrait),
       original: null,
       card: {
-        format: 1, id: '', kind: 'npc', system, lang, name, side: 'ally', portraits: [portrait], tags: [], notes: '',
-        stats: systemOf(system).blank(),
+        format: 1, id: '', kind, system, lang, name, side: party ? 'party' : 'ally', portraits: [portrait], tags: [], notes: '',
+        stats: systemOf(system).blank(kind),
       },
     });
     openTab('bestiary');
@@ -317,8 +320,14 @@ class Bestiary {
     if (!files.length) return null;
     const place = await this.choosePlace({ title: 'Куда импортировать карточки?', action: 'Импортировать', library: true });
     if (!place) return null;
-    const { count, errors } = await window.api.importCards(files, place.scope, place.folder);
-    return [`Импортировано карточек: ${count}`, ...errors].join('\n');
+    const { count, errors, updated } = await window.api.importCards(files, place.scope, place.folder);
+    return [
+      count || !updated.length ? `Импортировано карточек: ${count}` : '',
+      updated.length ? `Обновлены: ${updated.join(', ')}` : '',
+      ...errors,
+    ]
+      .filter(Boolean)
+      .join('\n');
   }
 
   // Экспорт всех карточек библиотеки или папки бестиария.

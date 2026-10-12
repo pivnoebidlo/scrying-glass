@@ -14,7 +14,10 @@
   // Папки бестиария хранилища: для фильтра и подписей.
   // Папки, где лежат карточки хранилища: бестиарий и персонажи.
   const folders = $derived(
-    (app.vault.tree ? [...roleFolders(app.vault.tree, 'bestiary', app.vault.name), ...roleFolders(app.vault.tree, 'characters', app.vault.name)] : [])
+    (app.vault.tree
+      ? (['bestiary', 'characters', 'party'] as const).flatMap((role) => roleFolders(app.vault.tree!, role, app.vault.name))
+      : []
+    )
       .filter((f) => visibleIn(app.adventures, f.folder.path))
       .map((f) => ({ ...f, title: `${placeTitle(app.adventures, dirname(f.folder.path), app.vault.name)} / ${f.folder.name}` }))
   );
@@ -85,10 +88,11 @@
       <option value="all">Все системы</option>
       {#each systems as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
     </select>
-    <select bind:value={f.kind} title="Монстры или NPC">
+    <select bind:value={f.kind} title="Монстры, NPC или персонажи игроков">
       <option value="all">Все</option>
       <option value="monster">Монстры</option>
       <option value="npc">NPC</option>
+      <option value="character">Партия</option>
     </select>
   </div>
   <div class="row">

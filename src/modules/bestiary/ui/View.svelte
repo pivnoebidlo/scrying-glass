@@ -21,7 +21,7 @@
 
   const card = $derived(bestiary.card);
   const summary = $derived(bestiary.all.find((c) => sameRef(c.ref, bestiary.selected)));
-  const Stats = $derived(card ? statsView(card.system) : null);
+  const Stats = $derived(card ? statsView(card.system, card.stats) : null);
   // «D&D 5e (2024) · Встроенный SRD · SRD 5.2.1 (Wizards of the Coast)»
   const info = $derived.by(() => {
     if (!card || !summary) return '';
@@ -58,7 +58,8 @@
 
   async function toInitiative() {
     if (!summary) return;
-    await addToInitiative(summary, { count, rollHp, side: side ?? summary.side });
+    const single = summary.kind === 'character';
+    await addToInitiative(summary, { count: single ? 1 : count, rollHp: !single && rollHp, side: side ?? summary.side });
     openTab('initiative');
   }
 </script>
@@ -159,13 +160,17 @@
               </select>
             </div>
             <div class="spacer"></div>
-            <label class="hp" title={summary.combat.hpFormula ? `Бросить ${summary.combat.hpFormula} для каждого` : 'Нет формулы хитов'}>
-              <input type="checkbox" bind:checked={rollHp} disabled={!summary.combat.hpFormula} /> случайные хиты
-            </label>
-            <input class="count" type="number" min="1" max="20" bind:value={count} title="Сколько добавить" />
+            <!-- Персонаж игрока в бою один и с хитами по листу. -->
+            {#if summary.kind !== 'character'}
+              <label class="hp" title={summary.combat.hpFormula ? `Бросить ${summary.combat.hpFormula} для каждого` : 'Нет формулы хитов'}>
+                <input type="checkbox" bind:checked={rollHp} disabled={!summary.combat.hpFormula} /> случайные хиты
+              </label>
+              <input class="count" type="number" min="1" max="20" bind:value={count} title="Сколько добавить" />
+            {/if}
             <select class="side" value={side ?? summary.side} onchange={(e) => (side = e.currentTarget.value as CardSide)} title="На чьей стороне в бою">
               <option value="enemy">противник</option>
               <option value="ally">союзник</option>
+              <option value="party">партия</option>
             </select>
             <button class="btn primary" onclick={toInitiative}><Swords size={14} /> В инициативу</button>
           </div>

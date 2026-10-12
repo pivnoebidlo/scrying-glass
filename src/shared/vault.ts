@@ -30,10 +30,12 @@ export interface VaultState {
 
 // Назначение папки угадывается по названию. Это подсказка, а не требование.
 // Все варианты названий — здесь (потом их можно будет менять в настройках).
-export type FolderRole = 'characters' | 'maps' | 'music' | 'backgrounds' | 'bestiary';
+export type FolderRole = 'characters' | 'party' | 'maps' | 'music' | 'backgrounds' | 'bestiary';
 
 export const ROLES: Record<FolderRole, string[]> = {
   characters: ['characters', 'персонажи', 'npc', 'нпс'],
+  // Персонажи игроков: листы и портреты, в бою — сторона «партия».
+  party: ['party', 'партия', 'игроки', 'players', 'pc'],
   maps: ['maps', 'карты'],
   music: ['music', 'музыка', 'audio', 'звуки'],
   backgrounds: ['backgrounds', 'фоны', 'locations', 'локации'],

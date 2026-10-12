@@ -18,6 +18,7 @@ export const NO_ADVENTURE: AdventuresState = { list: [], current: null, initiali
 // Стандартные папки приключения и как их называть при создании (варианты названий — ROLES в vault.ts).
 export const STANDARD_FOLDERS: [FolderRole, string][] = [
   ['characters', 'characters'],
+  ['party', 'party'],
   ['bestiary', 'monsters'],
   ['backgrounds', 'backgrounds'],
   ['maps', 'maps'],

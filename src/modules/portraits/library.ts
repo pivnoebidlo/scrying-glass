@@ -9,6 +9,7 @@ export interface Group {
   key: string;
   // Где она лежит: «Проклятие Страда / Глава 1».
   title: string;
+  order: number;
   items: VaultFile[];
 }
 
@@ -24,8 +25,12 @@ export function imageGroups(tree: VaultFolder, vaultName: string, role: FolderRo
     .sort((a, b) => a.order - b.order || collator.compare(a.title, b.title));
 }
 
-export const characterGroups = (tree: VaultFolder, vaultName: string, adv?: AdventuresState) =>
-  imageGroups(tree, vaultName, 'characters', adv);
+// Вкладка «Персонажи»: портреты NPC (characters) и партии (party). Папки партии подписаны «· партия».
+export function characterGroups(tree: VaultFolder, vaultName: string, adv?: AdventuresState): Group[] {
+  const party = imageGroups(tree, vaultName, 'party', adv).map((g) => ({ ...g, title: `${g.title} · партия` }));
+  const npc = imageGroups(tree, vaultName, 'characters', adv);
+  return [...party, ...npc].sort((a, b) => a.order - b.order || collator.compare(a.title, b.title));
+}
 
 // Подпись портрета — в ui/cardNames.svelte.ts: она учитывает названия карточек.
 export { caption } from './ui/cardNames.svelte';

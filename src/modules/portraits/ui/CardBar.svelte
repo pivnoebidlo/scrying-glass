@@ -23,7 +23,7 @@
       <ScrollText size={12} />
       <span class="sub">{card.subtitle}</span>
     </button>
-    <button class="icon-btn" title="В инициативу ({card.side === 'ally' ? 'союзник' : 'противник'})" onclick={fight}><Swords size={13} /></button>
+    <button class="icon-btn" title="В инициативу ({card.side === 'party' ? 'партия' : card.side === 'ally' ? 'союзник' : 'противник'})" onclick={fight}><Swords size={13} /></button>
   {:else}
     <button class="create" title="Статблок, описание и заметки для этого персонажа" onclick={() => bestiary.createFor(path, name)}>
       <FilePlus size={12} /> Создать карточку

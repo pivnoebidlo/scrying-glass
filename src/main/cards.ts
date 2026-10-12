@@ -18,6 +18,7 @@ import type { Card, CardRef, CardScope, CardSummary } from '../shared/cards';
 import { cardAsset, defaultSide, refKey } from '../shared/cards';
 import { folderRole, roleFolders, type VaultFolder } from '../shared/vault';
 import { systemOf } from '../systems';
+import { fromLss, isLssExport } from '../systems/dnd5e/lss';
 import { freeName, writeJsonAtomic } from './files';
 
 const cards = new Map<string, Card>();
@@ -156,12 +157,12 @@ function loadLibrary() {
 const written = new Set<string>();
 
 // Папки хранилища, где живут карточки (пути внутри хранилища): бестиарий — монстры, characters — NPC рядом
-// со своими портретами.
-const roleFolderPaths = (role: 'bestiary' | 'characters') =>
+// со своими портретами, party — персонажи игроков.
+const roleFolderPaths = (role: 'bestiary' | 'characters' | 'party') =>
   vaultTree ? roleFolders(vaultTree, role, '').map((r) => r.folder.path) : [];
 
 function cardFolders(): string[] {
-  const known = [...roleFolderPaths('bestiary'), ...roleFolderPaths('characters')];
+  const known = [...roleFolderPaths('bestiary'), ...roleFolderPaths('characters'), ...roleFolderPaths('party')];
   const extra = [...written].filter((p) => !known.some((k) => p === k || p.startsWith(k + '/')));
   return [...known, ...extra];
 }
@@ -540,17 +541,64 @@ function readImport(file: string): Bundle {
   throw new Error('Это не файл карточек Scrying Glass');
 }
 
-// Импортирует файлы в библиотеку или папку бестиария хранилища. Карточки всегда добавляются как новые
-// (существующие не перезаписываются); связи «перевод — оригинал» внутри импорта сохраняются.
-export function importCards(list: string[], to: CardScope, folder?: string): { count: number; errors: string[] } {
+// Персонаж из Long Story Short. Если он уже импортирован в это место (тот же id в LSS), карточка обновляется:
+// лист заменяется, а портреты, заметки и теги остаются. Аватар из LSS становится портретом новой карточки.
+async function importLss(j: { data: string; edition?: string }, to: CardScope, dir: string, imgDir: { abs: string; rel: string }): Promise<'new' | 'updated'> {
+  const r = fromLss(j);
+  const existing = r.lssId ? [...cards].find(([k, c]) => k.startsWith(to + ':') && c.links?.lss === r.lssId) : undefined;
+  if (existing) {
+    const [key, c] = existing;
+    const file = files.get(key)!;
+    writeJsonAtomic(file, { ...c, name: r.name, system: r.system, stats: r.stats, format: 1 });
+    return 'updated';
+  }
+  const portraits: string[] = [];
+  if (r.avatarUrl) {
+    try {
+      const res = await fetch(r.avatarUrl);
+      if (res.ok) {
+        fs.mkdirSync(imgDir.abs, { recursive: true });
+        const name = freeName(imgDir.abs, `${r.name.replace(/[/\\:*?"<>|]+/g, ' ').trim() || 'Портрет'}.jpg`);
+        fs.writeFileSync(path.join(imgDir.abs, name), Buffer.from(await res.arrayBuffer()));
+        portraits.push(imgDir.rel ? `${imgDir.rel}/${name}` : name);
+      }
+    } catch {
+      /* без интернета — без портрета */
+    }
+  }
+  const id = newId(to, r.name);
+  const card: Card = {
+    format: 1, id, kind: 'character', system: r.system, lang: 'ru', name: r.name, side: 'party', portraits, tags: [], notes: '',
+    stats: r.stats,
+    ...(r.lssId ? { links: { lss: r.lssId }, source: { title: 'Long Story Short', url: `https://longstoryshort.app/characters/digital/${r.lssId}/` } } : {}),
+  };
+  fs.mkdirSync(dir, { recursive: true });
+  const out = path.join(dir, fileName(dir, r.name));
+  writeJsonAtomic(out, card);
+  remember(to, out);
+  cards.set(refKey({ scope: to, id }), card);
+  return 'new';
+}
+
+// Импортирует файлы в библиотеку или папку хранилища: файлы обмена Scrying Glass, одиночные карточки и экспорт
+// персонажей из Long Story Short. Карточки добавляются как новые (существующие не перезаписываются), кроме
+// повторного импорта персонажа из LSS — он обновляет свою карточку. Связи «перевод — оригинал» сохраняются.
+export async function importCards(list: string[], to: CardScope, folder?: string): Promise<{ count: number; errors: string[]; updated: string[] }> {
   const dir = targetDir(to, folder);
   const imgDir = imagesDir(to, folder);
-  if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: ['Некуда импортировать'] };
+  const updated: string[] = [];
+  if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: ['Некуда импортировать'], updated };
   let count = 0;
   const errors: string[] = [];
   for (const file of list) {
     let bundle: Bundle;
     try {
+      const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (isLssExport(raw)) {
+        if ((await importLss(raw, to, dir, imgDir)) === 'updated') updated.push(fromLss(raw).name);
+        else count++;
+        continue;
+      }
       bundle = readImport(file);
     } catch (e) {
       errors.push(`${path.basename(file)}: ${e instanceof Error ? e.message : String(e)}`);
@@ -601,7 +649,7 @@ export function importCards(list: string[], to: CardScope, folder?: string): { c
   }
   reload(to);
   changed();
-  return { count, errors };
+  return { count, errors, updated };
 }
 
 // Карточки места хранения целиком (для экспорта библиотеки или карточек хранилища; folder — одной папки).

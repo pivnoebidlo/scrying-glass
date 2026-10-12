@@ -6,9 +6,9 @@ import { assetUrl, libraryAsset } from './vault';
 export type CardKind = 'monster' | 'npc' | 'character';
 
 // На чьей стороне существо в бою (для трекера инициативы). Её можно поменять при добавлении и в самом бою.
-export type CardSide = 'ally' | 'enemy';
-// Если в карточке не указано: NPC — союзники, монстры — противники.
-export const defaultSide = (kind: CardKind): CardSide => (kind === 'monster' ? 'enemy' : 'ally');
+export type CardSide = 'party' | 'ally' | 'enemy';
+// Если в карточке не указано: персонажи игроков — партия, NPC — союзники, монстры — противники.
+export const defaultSide = (kind: CardKind): CardSide => (kind === 'monster' ? 'enemy' : kind === 'character' ? 'party' : 'ally');
 
 // Где лежит карточка: встроенный SRD (только чтение), библиотека пользователя (общая для всех кампаний)
 // или текущее хранилище (папки бестиария приключений).
@@ -48,6 +48,8 @@ export interface Card<S = unknown> {
   // Заметки мастера, игроки их не видят.
   notes: string;
   stats: S;
+  // Откуда карточка импортирована: по id повторный импорт обновляет её, а не создаёт новую.
+  links?: { lss?: string };
 }
 
 // Краткое описание карточки для списков и поиска. Считает ядро, чтобы не гонять в окна полные карточки.

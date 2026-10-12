@@ -3,6 +3,8 @@ import type { Component } from 'svelte';
 import type { Card } from '../shared/cards';
 import Dnd5eStatBlock from './dnd5e/StatBlock.svelte';
 import Dnd5eEditor from './dnd5e/Editor.svelte';
+import CharacterSheet from './dnd5e/CharacterSheet.svelte';
+import { isCharacter } from './dnd5e/character';
 import GenericStats from './GenericStats.svelte';
 import GenericEditor from './GenericEditor.svelte';
 
@@ -19,5 +21,9 @@ const editors: Record<string, StatsEditor> = {
   'dnd5e-2024': Dnd5eEditor,
 };
 
-export const statsView = (system: string): StatsView => views[system] ?? GenericStats;
-export const statsEditor = (system: string): StatsEditor => editors[system] ?? GenericEditor;
+// stats нужен, чтобы отличить лист персонажа игрока от статблока.
+export const statsView = (system: string, stats?: unknown): StatsView =>
+  system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterSheet : (views[system] ?? GenericStats);
+// Редактор листа персонажа ещё не сделан — пока правка как JSON.
+export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
+  isCharacter(stats) ? GenericEditor : (editors[system] ?? GenericEditor);
