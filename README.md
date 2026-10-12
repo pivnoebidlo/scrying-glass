@@ -2,8 +2,11 @@
 
 Запуск:
 
-    npm install --save-dev electron
-    npm start
+    npm install
+    npm run dev        # разработка: окна перезагружаются при сохранении
+    npm run build      # сборка в out/
+    npm start          # запуск собранной версии
+    npm run typecheck  # проверка типов
 
 ## Папки приключений
 
@@ -23,7 +26,13 @@
 и по кнопке «Обновить».
 
 ## Структура проекта
-- main.js: ядро (окна, состояние, сохранение, загрузка модулей)
-- preload.js: мост между окнами и ядром
-- control/ и display/: каркас окон управления и экрана игроков
-- modules/<имя>/: функции приложения (main.js, control.js, display.js)
+TypeScript + Electron, сборка через electron-vite.
+
+- src/main/: ядро (окна, состояние, сохранение, загрузка модулей)
+- src/preload/: мост между окнами и ядром (window.api)
+- src/renderer/: каркас окон управления (control/) и экрана игроков (display/)
+- src/shared/: общие типы; состояние и действия выводятся из списка модулей
+- src/modules/<имя>/: функции приложения
+  - main.ts: состояние и действия (defineModule)
+  - control.ts и display.ts: панели окон (definePanel), подхватываются автоматически
+- src/modules/index.ts: список модулей ядра, новый модуль вписывается сюда

@@ -1,31 +1,40 @@
 // Ядро: окна, единое состояние, сохранение кампании, загрузка модулей.
-const { app, BrowserWindow, ipcMain, screen, dialog, shell, protocol, net } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const { pathToFileURL } = require('url');
+import { app, BrowserWindow, ipcMain, screen, dialog, shell, protocol, net, type WebPreferences } from 'electron';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
+import { moduleList } from '../modules';
+import type { Action, ModuleContext, ModuleDef } from '../shared/module';
+import type { AppState } from '../shared/types';
+import type { DisplayInfo } from '../shared/api';
 
-// ---- Модули. Чтобы добавить новый, положите его в modules/ и впишите сюда. ----
-const modules = {};
-for (const name of ['core', 'portraits']) {
-  const mod = require(`./modules/${name}/main.js`);
-  modules[mod.id] = mod;
-}
+// Внутри ядра модули обрабатываются одинаково, без привязки к конкретным типам.
+type AnyModule = ModuleDef<string, any, Record<string, Action<any>>>;
+const modules: Record<string, AnyModule> = Object.fromEntries(moduleList.map((m) => [m.id, m as AnyModule]));
 
-// ---- Схема для картинок кампании: sg-asset://assets/<файл> ----
+// ---- Схема для картинок кампании: sg-asset://p/<id> ----
 protocol.registerSchemesAsPrivileged([
   { scheme: 'sg-asset', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
 ]);
 
-let campaignDir, assetsDir, campaignFile;
-let state = {};
-let controlWindow = null;
-let displayWindow = null;
+let campaignDir: string, assetsDir: string, campaignFile: string;
+const state = {} as AppState;
+const stateById = state as Record<string, unknown>;
+let controlWindow: BrowserWindow | null = null;
+let displayWindow: BrowserWindow | null = null;
 
-const webPreferences = {
-  preload: path.join(__dirname, 'preload.js'),
+const webPreferences: WebPreferences = {
+  preload: path.join(__dirname, '../preload/index.js'),
   contextIsolation: true,
   nodeIntegration: false,
 };
+
+// В разработке страницы отдаёт dev-сервер Vite, в собранном приложении они лежат рядом.
+function loadPage(win: BrowserWindow, page: 'control' | 'display') {
+  const devUrl = process.env['ELECTRON_RENDERER_URL'];
+  if (!app.isPackaged && devUrl) win.loadURL(`${devUrl}/${page}/index.html`);
+  else win.loadFile(path.join(__dirname, `../renderer/${page}/index.html`));
+}
 
 // ---------- Кампания: загрузка и сохранение ----------
 function initCampaign() {
@@ -34,24 +43,24 @@ function initCampaign() {
   campaignFile = path.join(campaignDir, 'campaign.json');
   fs.mkdirSync(assetsDir, { recursive: true });
 
-  let saved = {};
+  let saved: Record<string, unknown> = {};
   try {
     saved = JSON.parse(fs.readFileSync(campaignFile, 'utf8')).modules || {};
-  } catch (_) { /* первый запуск */ }
+  } catch { /* первый запуск */ }
 
   for (const mod of Object.values(modules)) {
-    state[mod.id] = { ...mod.initialState, ...(mod.persist ? saved[mod.id] : {}) };
+    stateById[mod.id] = { ...mod.initialState, ...(mod.persist ? (saved[mod.id] as object) : {}) };
   }
   // Необязательный хук: модуль может подготовить своё состояние при запуске.
   for (const mod of Object.values(modules)) {
-    if (mod.init) state[mod.id] = mod.init(state[mod.id], ctx);
+    if (mod.init) stateById[mod.id] = mod.init(stateById[mod.id], ctx);
   }
 }
 
 function saveCampaign() {
-  const out = { version: 1, modules: {} };
+  const out = { version: 1, modules: {} as Record<string, unknown> };
   for (const mod of Object.values(modules)) {
-    if (mod.persist) out.modules[mod.id] = state[mod.id];
+    if (mod.persist) out.modules[mod.id] = stateById[mod.id];
   }
   fs.writeFileSync(campaignFile, JSON.stringify(out, null, 2));
 }
@@ -78,14 +87,14 @@ function createControlWindow() {
     backgroundColor: '#1b1a24',
     webPreferences,
   });
-  controlWindow.loadFile(path.join(__dirname, 'control', 'index.html'));
+  loadPage(controlWindow, 'control');
   controlWindow.on('closed', () => {
     controlWindow = null;
     closeDisplay();
   });
 }
 
-function listDisplays() {
+function listDisplays(): DisplayInfo[] {
   const primaryId = screen.getPrimaryDisplay().id;
   return screen.getAllDisplays().map((d, i) => ({
     id: d.id,
@@ -100,11 +109,11 @@ function closeDisplay() {
   notifyDisplayStatus();
 }
 
-function openDisplay(displayId) {
+function openDisplay(displayId: number) {
   closeDisplay();
 
   const displays = screen.getAllDisplays();
-  const target = displays.find((d) => d.id === displayId) || displays[0];
+  const target = displays.find((d) => d.id === displayId) || displays[0]!;
 
   // Если выбран тот же экран, где окно управления, открываем обычное окно-превью.
   const controlDisplay = controlWindow ? screen.getDisplayMatching(controlWindow.getBounds()) : null;
@@ -118,7 +127,7 @@ function openDisplay(displayId) {
   );
   displayWindow = win;
 
-  win.loadFile(path.join(__dirname, 'display', 'index.html'));
+  loadPage(win, 'display');
   win.once('ready-to-show', () => {
     win.show();
     if (fullscreen) {
@@ -135,9 +144,9 @@ function openDisplay(displayId) {
 
 // ---------- IPC ----------
 // Контекст, который получают действия модулей.
-const ctx = {
+const ctx: ModuleContext = {
   dialog,
-  appRoot: __dirname,
+  appRoot: app.getAppPath(),
   get assetsDir() { return assetsDir; },
   get controlWindow() { return controlWindow; },
 };
@@ -145,18 +154,18 @@ const ctx = {
 ipcMain.handle('state:get', () => state);
 
 // Любое изменение состояния идёт через действие модуля: dispatch(модуль, действие, данные).
-ipcMain.handle('action', async (_event, { module: id, name, payload }) => {
+ipcMain.handle('action', async (_event, { module: id, name, payload }: { module: string; name: string; payload: unknown }) => {
   const mod = modules[id];
-  const fn = mod && mod.actions && mod.actions[name];
-  if (!fn) return state;
-  state[id] = await fn(state[id], payload || {}, ctx);
+  const fn = mod?.actions[name];
+  if (!mod || !fn) return state;
+  stateById[id] = await fn(stateById[id], payload || {}, ctx);
   if (mod.persist) saveCampaign();
   broadcastState();
   return state;
 });
 
 ipcMain.handle('displays:list', () => listDisplays());
-ipcMain.handle('display:open', (_event, id) => openDisplay(id));
+ipcMain.handle('display:open', (_event, id: number) => openDisplay(id));
 ipcMain.handle('display:close', () => closeDisplay());
 ipcMain.handle('display:status', () => !!displayWindow);
 ipcMain.handle('campaign:reveal', () => shell.openPath(campaignDir));
@@ -169,7 +178,7 @@ app.whenReady().then(() => {
   protocol.handle('sg-asset', (request) => {
     const id = decodeURIComponent(new URL(request.url).pathname.replace(/^\//, ''));
     for (const mod of Object.values(modules)) {
-      const file = mod.resolveAsset && mod.resolveAsset(state[mod.id], id, ctx);
+      const file = mod.resolveAsset?.(stateById[mod.id], id, ctx);
       if (file && fs.existsSync(file)) return net.fetch(pathToFileURL(file).toString());
     }
     return new Response('Not found', { status: 404 });

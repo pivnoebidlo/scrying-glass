@@ -1,22 +1,22 @@
 // Поиск приключений и картинок в папках. Файлы пользователя только читаются, не изменяются.
-const fs = require('fs');
-const path = require('path');
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
-const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
+export const IMAGE_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif']);
 const CHARACTER_DIRS = ['characters', 'персонажи'];
 
-function isDir(p) {
-  try { return fs.statSync(p).isDirectory(); } catch (_) { return false; }
+function isDir(p: string): boolean {
+  try { return fs.statSync(p).isDirectory(); } catch { return false; }
 }
 
-function listNames(dir) {
-  try { return fs.readdirSync(dir).filter((n) => !n.startsWith('.')); } catch (_) { return []; }
+function listNames(dir: string): string[] {
+  try { return fs.readdirSync(dir).filter((n) => !n.startsWith('.')); } catch { return []; }
 }
 
 const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
 
 // <приключение>/characters
-function findCharactersDir(adventureDir) {
+export function findCharactersDir(adventureDir: string): string | null {
   const hit = listNames(adventureDir).find(
     (n) => CHARACTER_DIRS.includes(n.normalize('NFC').toLowerCase()) && isDir(path.join(adventureDir, n))
   );
@@ -25,7 +25,7 @@ function findCharactersDir(adventureDir) {
 
 // Если выбрана папка приключения, вернёт её. Если выбрана папка, внутри которой лежат приключения,
 // вернёт каждое приключение.
-function findAdventures(dir) {
+export function findAdventures(dir: string): string[] {
   if (findCharactersDir(dir)) return [dir];
   return listNames(dir)
     .map((n) => path.join(dir, n))
@@ -34,8 +34,8 @@ function findAdventures(dir) {
 }
 
 // Все картинки внутри папки (включая вложенные папки, до 3 уровней).
-function listImages(dir, depth = 3) {
-  const out = [];
+export function listImages(dir: string, depth = 3): string[] {
+  const out: string[] = [];
   for (const n of listNames(dir)) {
     const p = path.join(dir, n);
     if (isDir(p)) {
@@ -48,15 +48,13 @@ function listImages(dir, depth = 3) {
 }
 
 // староста_гилберт.jpg -> Староста Гилберт
-function prettyName(file) {
+export function prettyName(file: string): string {
   const base = path.basename(file, path.extname(file)).normalize('NFC');
   return base
     .replace(/[_]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .split(' ')
-    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .map((w) => (w ? w[0]!.toUpperCase() + w.slice(1) : w))
     .join(' ');
 }
-
-module.exports = { IMAGE_EXT, findCharactersDir, findAdventures, listImages, prettyName };
