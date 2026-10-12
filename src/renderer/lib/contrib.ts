@@ -22,6 +22,8 @@ export interface ControlContribution<K extends ModuleId> {
   view?: ModuleComponent<K>;
   // Левая боковая панель, когда модуль выбран.
   sidebar?: ModuleComponent<K>;
+  // Полоса над боковой панелью любого модуля (переключатель приключений).
+  header?: ModuleComponent<K>;
   // Блок в правой панели «Экран игроков».
   screen?: ModuleComponent<K>;
   // Раздел в окне настроек.

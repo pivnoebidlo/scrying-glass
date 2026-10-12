@@ -4,20 +4,22 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { activate } from '../apply';
   import { saveCurrent } from './ui.svelte';
+  import { scenesFor } from '../types';
 
   let { ms, app }: ModuleProps<'scenes'> = $props();
+  const list = $derived(scenesFor(ms, app.adventures.current));
   const mod = navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl+';
 </script>
 
 <div class="scenes">
-  {#each ms.scenes as sc, i (sc.id)}
+  {#each list as sc, i (sc.id)}
     <button class="scene" class:live={ms.active === sc.id} title={i < 9 ? `${sc.name} (${mod}${i + 1})` : sc.name} onclick={() => activate(app, sc)}>
       {#if i < 9}<span class="key">{i + 1}</span>{/if}
       <span class="name">{sc.name}</span>
     </button>
   {/each}
   <button class="scene add" title="Сохранить то, что сейчас на экране, новой сценой" onclick={saveCurrent}>
-    <Plus size={13} />{#if !ms.scenes.length}<span class="name">Сохранить текущее</span>{/if}
+    <Plus size={13} />{#if !list.length}<span class="name">Сохранить текущее</span>{/if}
   </button>
 </div>
 

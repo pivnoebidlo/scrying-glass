@@ -11,7 +11,7 @@
 
   let { ms, app }: ModuleProps<'music'> = $props();
 
-  const lists = $derived(app.vault.tree ? playlists(app.vault.tree, app.vault.name) : []);
+  const lists = $derived(app.vault.tree ? playlists(app.vault.tree, app.vault.name, app.adventures) : []);
   // Открыт выбранный плейлист, иначе тот, что играет, иначе первый.
   const current = $derived(
     lists.find((p) => p.path === ui.selected) ?? lists.find((p) => p.path === ms.playlist) ?? lists[0]

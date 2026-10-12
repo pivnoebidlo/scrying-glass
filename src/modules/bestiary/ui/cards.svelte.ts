@@ -4,6 +4,8 @@ import type { Card, CardRef, CardScope, CardSummary } from '../../../shared/card
 import { untrack } from 'svelte';
 import { langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
+import { store } from '../../../renderer/lib/store.svelte';
+import { visibleIn } from '../../../shared/adventures';
 import { systemOf } from '../../../systems';
 
 const KEY = 'sg.bestiary';
@@ -62,13 +64,16 @@ export interface PlaceRequest {
   resolve(p: Place | null): void;
 }
 
-// Карточку без значений превращаем в аккуратный файл: пустые необязательные поля не сохраняем.
+// Карточку превращаем в аккуратный файл: пустые необязательные поля не сохраняем. Обязательные строки
+// (тип, мировоззрение, языки, тексты) остаются даже пустыми.
+const OPTIONAL = new Set(['acNote', 'hpFormula', 'gear', 'uses', 'description']);
+
 function clean(v: unknown): unknown {
   if (Array.isArray(v)) return v.map(clean);
   if (v && typeof v === 'object') {
     const out: Record<string, unknown> = {};
     for (const [k, x] of Object.entries(v)) {
-      if (x === undefined || x === null || (x === '' && k !== 'text' && k !== 'notes' && k !== 'name')) continue;
+      if (x === undefined || x === null || (x === '' && OPTIONAL.has(k))) continue;
       out[k] = clean(x);
     }
     return out;
@@ -120,7 +125,10 @@ class Bestiary {
     for (const group of this.groups.values()) {
       const inScope = (c: CardSummary) =>
         f.scope === 'all' || c.ref.scope === f.scope || (f.scope.startsWith('vault:') && c.ref.scope === 'vault' && c.folder === f.scope.slice(6));
-      const members = group.filter((c) => (f.system === 'all' || c.system === f.system) && inScope(c));
+      // Карточки хранилища — только текущего приключения и общие.
+      const adv = store.state.adventures;
+      const inAdventure = (c: CardSummary) => c.ref.scope !== 'vault' || c.folder === undefined || visibleIn(adv, c.folder);
+      const members = group.filter((c) => (f.system === 'all' || c.system === f.system) && inScope(c) && inAdventure(c));
       if (!members.length) continue;
       // Ищем по всем версиям: «goblin» найдёт и «Гоблина».
       if (q && !group.some((c) => fold(c.name).includes(q))) continue;

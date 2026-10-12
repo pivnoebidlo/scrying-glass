@@ -56,7 +56,7 @@
 </script>
 
 <article class="statblock">
-  <p class="meta">{sizeText(s, card.lang)} · {s.type}, {s.alignment}</p>
+  <p class="meta">{[sizeText(s, card.lang), [s.type, s.alignment].filter(Boolean).join(', ')].filter(Boolean).join(' · ')}</p>
 
   <div class="rule"></div>
   <dl class="top">

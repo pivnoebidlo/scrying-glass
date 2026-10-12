@@ -8,7 +8,7 @@
   import { ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'music'> = $props();
-  const list = $derived(app.vault.tree ? playlists(app.vault.tree, app.vault.name) : []);
+  const list = $derived(app.vault.tree ? playlists(app.vault.tree, app.vault.name, app.adventures) : []);
 </script>
 
 <div class="list">

@@ -14,8 +14,8 @@ export default defineModule({
   initialState,
 
   actions: {
-    create(s, { name, content }: { name: string; content: SceneContent }) {
-      const scene: Scene = { id: randomUUID(), name, include: { ...ALL }, ...content };
+    create(s, { name, content, adventure }: { name: string; content: SceneContent; adventure?: string | null }) {
+      const scene: Scene = { id: randomUUID(), name, adventure: adventure ?? null, include: { ...ALL }, ...content };
       return { ...s, scenes: [...s.scenes, scene], active: scene.id };
     },
 
@@ -36,14 +36,20 @@ export default defineModule({
       return { ...s, scenes: s.scenes.filter((x) => x.id !== id), active: s.active === id ? null : s.active };
     },
 
-    // Переставить сцену на место index (порядок — как пойдут сцены на игре).
-    move(s, { id, index }: { id: string; index: number }) {
+    // Переставить сцену перед сценой before (null — в конец). Порядок — как пойдут сцены на игре.
+    // Через соседа, а не номер: список в окне отфильтрован по приключению, номера там другие.
+    move(s, { id, before }: { id: string; before: string | null }) {
       const from = s.scenes.findIndex((x) => x.id === id);
-      if (from < 0) return s;
+      if (from < 0 || id === before) return s;
       const scenes = [...s.scenes];
       const [scene] = scenes.splice(from, 1);
-      scenes.splice(Math.max(0, Math.min(index, scenes.length)), 0, scene!);
+      const to = before === null ? scenes.length : scenes.findIndex((x) => x.id === before);
+      scenes.splice(to < 0 ? scenes.length : to, 0, scene!);
       return { ...s, scenes };
+    },
+
+    setAdventure(s, { id, adventure }: { id: string; adventure: string | null }) {
+      return { ...s, scenes: s.scenes.map((x) => (x.id === id ? { ...x, adventure } : x)) };
     },
 
     markActive(s, { id }: { id: string | null }) {

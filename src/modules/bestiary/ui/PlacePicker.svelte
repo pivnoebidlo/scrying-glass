@@ -3,19 +3,31 @@
 <script lang="ts">
   import { FolderPlus, Library, Skull, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
-  import { roleFolders, walk } from '../../../shared/vault';
+  import { dirname, roleFolders, walk } from '../../../shared/vault';
+  import { placeOrder, placeTitle, visibleIn } from '../../../shared/adventures';
   import { samePlace, type Place, type PlaceRequest } from './cards.svelte';
 
   let { app, request }: { app: AppState; request: PlaceRequest } = $props();
 
   const NEW_FOLDER = 'monsters';
 
-  const folders = $derived(app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name) : []);
+  // Папки бестиария текущего приключения (первыми) и общие; чужих приключений здесь нет.
+  const adv = $derived(app.adventures);
+  const folders = $derived(
+    (app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name) : [])
+      .filter((f) => visibleIn(adv, f.folder.path))
+      .map((f) => {
+        const dir = dirname(f.folder.path);
+        return { ...f, title: placeTitle(adv, dir, app.vault.name), order: placeOrder(adv, dir) };
+      })
+      .sort((a, b) => a.order - b.order)
+  );
   // Где можно создать новую папку бестиария: любая папка хранилища, кроме уже бестиарных.
   const parents = $derived.by(() => {
     const out: { path: string; title: string }[] = [];
     if (app.vault.tree) {
       walk(app.vault.tree, (f) => {
+        if (!visibleIn(adv, f.path)) return;
         if (!folders.some((b) => f.path === b.folder.path || f.path.startsWith(b.folder.path + '/'))) {
           out.push({ path: f.path, title: f.path ? f.path.split('/').join(' / ') : `${app.vault.name} (корень)` });
         }
@@ -24,6 +36,8 @@
     return out;
   });
   // Папку для новой «monsters» выбирают явно: раньше по умолчанию стоял корень, и карточки уходили не туда.
+  // В приключении папка monsters есть всегда (её создаёт проверка при запуске), так что этот выбор нужен
+  // для глав и общих папок.
   let parent = $state<string | null>(null);
 
   const pick = (p: Place) => request.resolve(p);

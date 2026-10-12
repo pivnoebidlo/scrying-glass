@@ -1,6 +1,6 @@
 <!-- Вкладка «Файлы»: содержимое выбранной папки хранилища. -->
 <script lang="ts">
-  import { ChevronRight, FilePlus, FolderOpen, Music } from '@lucide/svelte';
+  import { ChevronRight, FilePlus, FolderOpen, Map, Music } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { findFolder, folderRole } from '../../../shared/vault';
@@ -10,10 +10,14 @@
   import { trackName } from '../../../shared/vault';
   import { folderIcon, ui } from './ui.svelte';
 
-  let { ms }: ModuleProps<'vault'> = $props();
+  let { ms, app }: ModuleProps<'vault'> = $props();
 
   // Если выбранную папку удалили, показываем корень.
   const folder = $derived(ms.tree ? (findFolder(ms.tree, ui.folder) ?? ms.tree) : null);
+
+  // Папка первого уровня может быть приключением: отсюда его отмечают и открывают.
+  const topLevel = $derived(!!folder?.path && !folder.path.includes('/') && !folderRole(folder.name));
+  const isAdventure = $derived(!!folder && app.adventures.list.includes(folder.path));
   const crumbs = $derived.by(() => {
     if (!folder?.path) return [];
     const parts = folder.path.split('/');
@@ -45,6 +49,23 @@
         {/each}
       </nav>
       <div class="spacer"></div>
+      {#if topLevel && isAdventure}
+        <span class="badge-adv"><Map size={12} /> приключение</span>
+        {#if app.adventures.current !== folder.path}
+          <button class="btn primary" onclick={() => dispatch('adventures', 'select', { path: folder.path })}>Открыть приключение</button>
+        {/if}
+        <button
+          class="btn"
+          title="Папка останется как есть, её содержимое станет общим для всех приключений"
+          onclick={() => dispatch('adventures', 'unmark', { path: folder.path })}>Больше не приключение</button
+        >
+      {:else if topLevel}
+        <button
+          class="btn"
+          title="Вкладки будут показывать содержимое этой папки отдельно; недостающие папки characters, monsters, backgrounds, maps, music появятся сами"
+          onclick={() => dispatch('adventures', 'mark', { path: folder.path })}><Map size={14} /> Сделать приключением</button
+        >
+      {/if}
       <button class="btn" onclick={() => dispatch('vault', 'importFiles', { folder: folder.path })}>
         <FilePlus size={14} /> Добавить файлы…
       </button>
@@ -108,6 +129,16 @@
 <style>
   .view {
     padding: 0 20px 20px;
+  }
+  .badge-adv {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent-hover);
+    font-size: 12px;
   }
   .toolbar {
     position: sticky;

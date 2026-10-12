@@ -4,12 +4,14 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { activate, capture, describe, missing, PART_TITLES } from '../apply';
-  import { PARTS, type Part } from '../types';
+  import { PARTS, scenesFor, type Part } from '../types';
   import { saveCurrent, ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'scenes'> = $props();
 
-  const sc = $derived(ms.scenes.find((x) => x.id === ui.selected) ?? ms.scenes.find((x) => x.id === ms.active) ?? ms.scenes[0]);
+  // Сцены текущего приключения и общие.
+  const list = $derived(scenesFor(ms, app.adventures.current));
+  const sc = $derived(list.find((x) => x.id === ui.selected) ?? list.find((x) => x.id === ms.active) ?? list[0]);
   const lost = $derived(sc ? missing(app, sc) : []);
 
   function takeCurrent(part?: Part) {
@@ -38,6 +40,19 @@
       </button>
       <button class="icon-btn" title="Удалить сцену" onclick={remove}><Trash2 size={15} /></button>
     </header>
+
+    {#if app.adventures.list.length}
+      <label class="adventure">
+        <span class="faint">Приключение</span>
+        <select
+          value={sc.adventure ?? ''}
+          onchange={(e) => dispatch('scenes', 'setAdventure', { id: sc.id, adventure: e.currentTarget.value || null })}
+        >
+          <option value="">Общая — видна во всех приключениях</option>
+          {#each app.adventures.list as a (a)}<option value={a}>{a}</option>{/each}
+        </select>
+      </label>
+    {/if}
 
     <p class="faint hint">
       Отмеченные части меняются при включении сцены, остальные остаются как есть. Например, сцена «Бой!» может включать
@@ -82,6 +97,12 @@
 </div>
 
 <style>
+  .adventure {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
   .view {
     max-width: 760px;
     padding: 16px 20px;

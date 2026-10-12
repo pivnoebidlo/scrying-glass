@@ -8,7 +8,7 @@
   import { ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'maps'> = $props();
-  const groups = $derived(app.vault.tree ? mapGroups(app.vault.tree, app.vault.name, ms) : []);
+  const groups = $derived(app.vault.tree ? mapGroups(app.vault.tree, app.vault.name, ms, app.adventures) : []);
 
   function select(path: string) {
     ui.selected = path;

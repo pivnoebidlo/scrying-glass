@@ -2,8 +2,11 @@
 <script lang="ts">
   import { Search, X } from '@lucide/svelte';
   import { allFiles, folderRole, vaultUrl, type VaultFolder } from '../../../shared/vault';
+  import { visibleIn } from '../../../shared/adventures';
+  import { store } from '../../../renderer/lib/store.svelte';
 
   let { tree, onpick, onclose }: { tree: VaultFolder; onpick: (path: string) => void; onclose: () => void } = $props();
+  const adv = $derived(store.state.adventures);
 
   let search = $state('');
   const fold = (s: string) => s.normalize('NFC').toLowerCase().replace(/ё/g, 'е');
@@ -11,6 +14,7 @@
   // Картинки из папок персонажей — первыми: портреты чаще всего лежат там.
   const images = $derived(
     allFiles(tree, 'image')
+      .filter((f) => visibleIn(adv, f.path))
       .map((f) => ({ ...f, portrait: f.path.split('/').some((p) => folderRole(p) === 'characters') }))
       .sort((a, b) => Number(b.portrait) - Number(a.portrait))
   );

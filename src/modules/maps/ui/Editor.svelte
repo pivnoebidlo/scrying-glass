@@ -19,7 +19,7 @@
 
   let { ms, app }: ModuleProps<'maps'> = $props();
 
-  const groups = $derived(app.vault.tree ? mapGroups(app.vault.tree, app.vault.name, ms) : []);
+  const groups = $derived(app.vault.tree ? mapGroups(app.vault.tree, app.vault.name, ms, app.adventures) : []);
   const known = $derived(new Set(groups.flatMap((g) => g.items)));
   // Открыта выбранная карта, иначе та, что у игроков, иначе первая.
   const path = $derived(

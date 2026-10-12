@@ -5,13 +5,18 @@
   import { langName, sameRef } from '../../../shared/cards';
   import { systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { roleFolders } from '../../../shared/vault';
+  import { dirname, roleFolders } from '../../../shared/vault';
+  import { placeTitle, visibleIn } from '../../../shared/adventures';
   import { bestiary, connectCards } from './cards.svelte';
 
   let { app }: ModuleProps<'bestiary'> = $props();
 
   // Папки бестиария хранилища: для фильтра и подписей.
-  const folders = $derived(app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name) : []);
+  const folders = $derived(
+    (app.vault.tree ? roleFolders(app.vault.tree, 'bestiary', app.vault.name) : [])
+      .filter((f) => visibleIn(app.adventures, f.folder.path))
+      .map((f) => ({ ...f, title: placeTitle(app.adventures, dirname(f.folder.path), app.vault.name) }))
+  );
   const folderTitle = (path: string) => folders.find((f) => f.folder.path === path)?.title ?? path;
 
   onMount(connectCards);

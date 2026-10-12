@@ -6,7 +6,7 @@
   import { ui } from './ui.svelte';
 
   let { app }: ModuleProps<'portraits'> = $props();
-  const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name) : []);
+  const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []);
   const total = $derived(groups.reduce((n, g) => n + g.items.length, 0));
 </script>
 

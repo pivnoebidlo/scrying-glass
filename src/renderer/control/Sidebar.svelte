@@ -5,9 +5,13 @@
   import { workspace } from './workspace.svelte';
 
   const c = $derived(controlContributions.find((x) => x.id === workspace.sidebar));
+  const headers = controlContributions.filter((x) => x.header);
 </script>
 
 <aside class="sidebar">
+  {#each headers as h (h.id)}
+    {#if h.header}<h.header ms={store.state[h.id]} app={store.state} />{/if}
+  {/each}
   {#if c}
     <div class="pane-title">{c.title}</div>
     <div class="body">

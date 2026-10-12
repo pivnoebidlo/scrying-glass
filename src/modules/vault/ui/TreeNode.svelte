@@ -1,6 +1,7 @@
 <!-- Ветка дерева: папка и, если раскрыта, вложенные папки. -->
 <script lang="ts">
-  import { ChevronRight } from '@lucide/svelte';
+  import { ChevronRight, Map } from '@lucide/svelte';
+  import { store } from '../../../renderer/lib/store.svelte';
   import type { VaultFolder } from '../../../shared/vault';
   import Self from './TreeNode.svelte';
   import { folderIcon, ui } from './ui.svelte';
@@ -8,7 +9,10 @@
   let { folder, depth, select }: { folder: VaultFolder; depth: number; select: (path: string) => void } = $props();
 
   const open = $derived(!!ui.expanded[folder.path]);
-  const Icon = $derived(folderIcon(folder.name));
+  // Приключения — со своей иконкой, текущее выделено.
+  const adventure = $derived(depth === 0 && store.state.adventures.list.includes(folder.path));
+  const current = $derived(adventure && store.state.adventures.current === folder.path);
+  const Icon = $derived(adventure ? Map : folderIcon(folder.name));
 
   function toggle(e: MouseEvent) {
     e.stopPropagation();
@@ -30,8 +34,8 @@
   <span class="chevron" class:open class:hidden={!folder.folders.length} onclick={toggle}>
     <ChevronRight size={12} />
   </span>
-  <Icon size={14} />
-  <span class="name">{folder.name}</span>
+  <span class="icon" class:current><Icon size={14} /></span>
+  <span class="name" class:current>{folder.name}</span>
 </button>
 
 {#if open}
@@ -41,6 +45,12 @@
 {/if}
 
 <style>
+  .icon {
+    display: inline-flex;
+  }
+  .current {
+    color: var(--accent-hover);
+  }
   .chevron {
     display: inline-flex;
     width: 12px;

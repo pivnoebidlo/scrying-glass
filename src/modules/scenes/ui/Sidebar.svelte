@@ -6,25 +6,26 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { activate } from '../apply';
   import { saveCurrent, ui } from './ui.svelte';
+  import { scenesFor } from '../types';
 
   let { ms, app }: ModuleProps<'scenes'> = $props();
+
+  // Сцены текущего приключения и общие.
+  const list = $derived(scenesFor(ms, app.adventures.current));
 
   let dragged = $state<string | null>(null);
   let over = $state<number | null>(null);
 
-  // Бросили перед сценой с номером index. Если сцену тянули сверху, после её изъятия место сдвигается на одно.
+  // Бросили перед сценой с номером index в показанном списке.
   function drop(index: number) {
-    if (dragged) {
-      const from = ms.scenes.findIndex((x) => x.id === dragged);
-      dispatch('scenes', 'move', { id: dragged, index: from < index ? index - 1 : index });
-    }
+    if (dragged) dispatch('scenes', 'move', { id: dragged, before: list[index]?.id ?? null });
     dragged = null;
     over = null;
   }
 </script>
 
 <div class="list">
-  {#each ms.scenes as sc, i (sc.id)}
+  {#each list as sc, i (sc.id)}
     <div
       class="item"
       class:active={ui.selected === sc.id}
@@ -45,14 +46,14 @@
       <button class="icon-btn play" title="Включить сцену" onclick={() => activate(app, sc)}><Play size={13} /></button>
     </div>
   {/each}
-  {#if ms.scenes.length}
+  {#if list.length}
     <!-- Место в конце списка, чтобы можно было перетащить сцену последней. -->
     <div
       class="tail"
-      class:over-top={over === ms.scenes.length}
+      class:over-top={over === list.length}
       role="listitem"
-      ondragover={(e) => { e.preventDefault(); over = ms.scenes.length; }}
-      ondrop={() => drop(ms.scenes.length)}
+      ondragover={(e) => { e.preventDefault(); over = list.length; }}
+      ondrop={() => drop(list.length)}
     ></div>
   {:else}
     <p class="faint hint">

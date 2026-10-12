@@ -9,5 +9,6 @@ import maps from './maps/main';
 import scenes from './scenes/main';
 import initiative from './initiative/main';
 import bestiary from './bestiary/main';
+import adventures from './adventures/main';
 
-export const moduleList = [core, vault, scene, maps, portraits, music, scenes, initiative, bestiary] as const;
+export const moduleList = [core, vault, adventures, scene, maps, portraits, music, scenes, initiative, bestiary] as const;

@@ -8,6 +8,10 @@ export const ui = $state({ selected: null as string | null });
 export async function saveCurrent() {
   const app = store.state;
   const content = capture(app);
-  const s = await dispatch('scenes', 'create', { name: suggestName(content, app.scenes.scenes.length), content });
+  const s = await dispatch('scenes', 'create', {
+    name: suggestName(content, app.scenes.scenes.length),
+    content,
+    adventure: app.adventures.current,
+  });
   ui.selected = s.scenes.scenes.at(-1)?.id ?? null;
 }

@@ -10,7 +10,7 @@
 
   let { app }: ModuleProps<'scene'> = $props();
 
-  const groups = $derived(app.vault.tree ? imageGroups(app.vault.tree, app.vault.name, 'backgrounds') : []);
+  const groups = $derived(app.vault.tree ? imageGroups(app.vault.tree, app.vault.name, 'backgrounds', app.adventures) : []);
   const visible = $derived.by(() => {
     const q = ui.search.trim().toLowerCase();
     return groups

@@ -9,7 +9,7 @@
 
   let { ms, app }: ModuleProps<'portraits'> = $props();
 
-  const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name) : []);
+  const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []);
   const visible = $derived.by(() => {
     const q = ui.search.trim().toLowerCase();
     return groups

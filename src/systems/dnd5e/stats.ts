@@ -81,7 +81,8 @@ export const sizeText = (s: Dnd5eStats, lang: string) => {
 };
 
 // «Фея (гоблиноид) · ПО 1/4»
-export const subtitle = (s: Dnd5eStats, lang: string) => `${s.type} · ${dict(lang).crShort} ${crText(s.cr)}`;
+export const subtitle = (s: Dnd5eStats, lang: string) =>
+  [s.type, `${dict(lang).crShort} ${crText(s.cr ?? 0)}`].filter(Boolean).join(' · ');
 
 // ---------- Подписи ----------
 
