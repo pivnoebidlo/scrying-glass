@@ -3,10 +3,13 @@
   import { Settings } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
   import { workspace } from './workspace.svelte';
+
+  // В полосе только модули, у которых есть вкладка или боковая панель.
+  const items = controlContributions.filter((c) => c.view || c.sidebar);
 </script>
 
 <nav class="ribbon">
-  {#each controlContributions as c (c.id)}
+  {#each items as c (c.id)}
     <button
       class="icon-btn"
       class:active={workspace.sidebar === c.id && workspace.sidebarOpen}

@@ -26,6 +26,21 @@ export interface ControlContribution<K extends ModuleId> {
   screen?: ModuleComponent<K>;
   // Раздел в окне настроек.
   settings?: ModuleComponent<K>;
+  // Что модуль умеет делать с картинкой из хранилища (кнопки на карточке картинки).
+  imageActions?: ImageAction[];
+}
+
+// Действие с картинкой хранилища, например «показать портретом» или «на весь экран».
+// Работает как переключатель: повторное действие убирает картинку с экрана.
+export interface ImageAction {
+  id: string;
+  // Подсказка на кнопке: «Показать портретом».
+  title: string;
+  // Метка на карточке, когда действие включено: «портрет».
+  badge: string;
+  icon: Component;
+  active(app: AppState, path: string): boolean;
+  toggle(app: AppState, path: string): void;
 }
 
 // Экран игроков: слой сцены. Слои с большим order лежат выше.

@@ -1,6 +1,7 @@
 // Портреты в окне управления.
-import { Image } from '@lucide/svelte';
+import { Image, User } from '@lucide/svelte';
 import { defineControl } from '../../renderer/lib/contrib';
+import { dispatch } from '../../renderer/lib/store.svelte';
 import View from './ui/View.svelte';
 import Sidebar from './ui/Sidebar.svelte';
 import OnScreen from './ui/OnScreen.svelte';
@@ -15,4 +16,14 @@ export default defineControl({
   sidebar: Sidebar,
   screen: OnScreen,
   settings: Settings,
+  imageActions: [
+    {
+      id: 'portrait',
+      title: 'Показать портретом',
+      badge: 'портрет',
+      icon: User,
+      active: (app, path) => app.portraits.onScreen.includes(path),
+      toggle: (_app, path) => dispatch('portraits', 'toggle', { path }),
+    },
+  ],
 });

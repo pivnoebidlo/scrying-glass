@@ -3,8 +3,8 @@
   import { ChevronRight, FilePlus, FolderOpen, Music } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { findFolder } from '../../../shared/vault';
-  import Card from '../../portraits/ui/Card.svelte';
+  import { findFolder, folderRole } from '../../../shared/vault';
+  import ImageCard from '../../../renderer/lib/ImageCard.svelte';
   import { folderIcon, ui } from './ui.svelte';
 
   let { ms }: ModuleProps<'vault'> = $props();
@@ -18,6 +18,8 @@
   });
   const images = $derived(folder?.files.filter((f) => f.kind === 'image') ?? []);
   const audio = $derived(folder?.files.filter((f) => f.kind === 'audio') ?? []);
+  // В папках персонажей клик по картинке показывает портрет, в остальных — картинку на весь экран.
+  const isCharacters = $derived(!!folder && folderRole(folder.name) === 'characters');
 
   function go(path: string) {
     ui.folder = path;
@@ -60,10 +62,15 @@
 
     {#if images.length}
       <h3>Картинки <span class="faint">{images.length}</span></h3>
-      <p class="faint hint">Нажмите на картинку, чтобы показать её игрокам.</p>
+      <p class="faint hint">
+        Нажмите на картинку, чтобы показать её игрокам {isCharacters ? 'портретом' : 'на весь экран'}. Другие варианты — в
+        кнопках при наведении.
+      </p>
       <div class="grid">
         {#each images as f (f.path)}
-          <Card path={f.path} />
+          <ImageCard path={f.path} primary={isCharacters ? 'portrait' : 'background'} aspect={isCharacters ? '3 / 4' : '4 / 3'}>
+            <div class="file-name" title={f.name}>{f.name}</div>
+          </ImageCard>
         {/each}
       </div>
     {/if}
@@ -163,6 +170,15 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 12px;
+  }
+  .file-name {
+    padding: 6px 8px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .audio {
     margin: 0;

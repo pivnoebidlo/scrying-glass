@@ -3,5 +3,6 @@
 import core from './core/main';
 import vault from './vault/main';
 import portraits from './portraits/main';
+import scene from './scene/main';
 
-export const moduleList = [core, vault, portraits] as const;
+export const moduleList = [core, vault, scene, portraits] as const;

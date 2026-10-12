@@ -3,7 +3,8 @@
   import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { caption, characterGroups } from '../library';
-  import Card from './Card.svelte';
+  import ImageCard from '../../../renderer/lib/ImageCard.svelte';
+  import Caption from './Caption.svelte';
   import { ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'portraits'> = $props();
@@ -47,7 +48,9 @@
       {#if !collapsed[g.key]}
         <div class="grid">
           {#each g.items as f (f.path)}
-            <Card path={f.path} />
+            <ImageCard path={f.path} primary="portrait">
+              <Caption path={f.path} />
+            </ImageCard>
           {/each}
         </div>
       {/if}
