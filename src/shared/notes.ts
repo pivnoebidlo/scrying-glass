@@ -51,6 +51,11 @@ export const NOTE_INKS = {
   red: { title: 'Красные', color: '#7a1a12' },
   blue: { title: 'Синие', color: '#1d2b55' },
   gold: { title: 'Золотые', color: '#c9a24a' },
+  blood: { title: 'Кровь', color: '#6a0505' },
+  green: { title: 'Зелёные', color: '#1f4a2a' },
+  violet: { title: 'Фиолетовые', color: '#3e1f5c' },
+  faded: { title: 'Выцветшие', color: '#7a6850' },
+  white: { title: 'Белые', color: '#efe6d2' },
 } as const;
 export type NoteInk = keyof typeof NOTE_INKS;
 
