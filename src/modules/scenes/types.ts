@@ -2,9 +2,9 @@ import type { AmbientLoop } from '../music/types';
 import type { Fit } from '../scene/types';
 
 // Части экрана, которые сцена может задавать. Выключенная часть при включении сцены не меняется.
-export type Part = 'background' | 'map' | 'portraits' | 'music' | 'ambience';
+export type Part = 'background' | 'map' | 'portraits' | 'handout' | 'music' | 'ambience';
 
-export const PARTS: Part[] = ['background', 'map', 'portraits', 'music', 'ambience'];
+export const PARTS: Part[] = ['background', 'map', 'portraits', 'handout', 'music', 'ambience'];
 
 export interface Scene {
   id: string;
@@ -16,6 +16,7 @@ export interface Scene {
   background: { path: string | null; fit: Fit };
   map: { path: string | null };
   portraits: { paths: string[] };
+  handout: { path: string | null };
   music: { playlist: string | null; shuffle: boolean };
   ambience: { loops: AmbientLoop[] };
 }

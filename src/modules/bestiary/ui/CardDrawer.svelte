@@ -26,8 +26,8 @@
 
 <aside class="drawer" transition:fly={{ x: 40, duration: 180 }} aria-label="Карточка">
   <header>
-    <button class="btn" title="Открыть во вкладке «Бестиарий»" onclick={() => bestiary.openInBestiary(target)}>
-      <BookOpen size={14} /> В бестиарии
+    <button class="btn" title="Открыть во вкладке «Карточки»" onclick={() => bestiary.openInBestiary(target)}>
+      <BookOpen size={14} /> Во вкладке
     </button>
     <div class="spacer"></div>
     <button class="icon-btn" title="Закрыть (Esc)" onclick={close}><X size={16} /></button>

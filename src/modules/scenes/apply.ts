@@ -11,6 +11,7 @@ export function capture(app: AppState): SceneContent {
     background: { path: app.scene.background, fit: app.scene.fit },
     map: { path: app.maps.current },
     portraits: { paths: [...app.portraits.onScreen] },
+    handout: { path: app.handouts.current },
     music: { playlist: app.music.playing ? app.music.playlist : null, shuffle: app.music.shuffle },
     ambience: { loops: app.music.ambiencePlaying ? app.music.ambience.map((a) => ({ ...a })) : [] },
   };
@@ -33,6 +34,7 @@ export function missing(app: AppState, sc: Scene): string[] {
     sc.include.background && sc.background.path,
     sc.include.map && sc.map.path,
     ...(sc.include.portraits ? sc.portraits.paths : []),
+    sc.include.handout && sc.handout.path,
     ...(sc.include.ambience ? sc.ambience.loops.map((l) => l.path) : []),
   ].filter((p): p is string => !!p);
   return used.filter((p) => !files.has(p) && !isLibraryAsset(p));
@@ -60,6 +62,7 @@ export async function activate(app: AppState, sc: Scene) {
     jobs.push(p ? dispatch('maps', 'show', { path: p }) : dispatch('maps', 'clear'));
   }
   if (on('portraits')) jobs.push(dispatch('portraits', 'setOnScreen', { paths: sc.portraits.paths.filter((p) => exists.has(p) || isLibraryAsset(p)) }));
+  if (on('handout')) jobs.push(dispatch('handouts', 'set', { path: ok(sc.handout.path) }));
   if (on('ambience')) jobs.push(dispatch('music', 'setAmbience', { loops: sc.ambience.loops.filter((l) => exists.has(l.path)) }));
   if (on('music')) jobs.push(applyMusic(app, sc.music));
   await Promise.all(jobs);
@@ -90,6 +93,8 @@ export function describe(app: AppState, sc: Scene, part: Part): string {
       return sc.portraits.paths.length
         ? sc.portraits.paths.map((p) => app.portraits.names[p] ?? prettyName(p)).join(', ')
         : 'никого';
+    case 'handout':
+      return sc.handout.path ? prettyName(sc.handout.path) : 'без раздатки';
     case 'music':
       return sc.music.playlist !== null
         ? `${playlistTitle(app.vault.tree, app.vault.name, sc.music.playlist)}${sc.music.shuffle ? ' · вперемешку' : ''}`
@@ -103,6 +108,7 @@ export const PART_TITLES: Record<Part, string> = {
   background: 'Фон',
   map: 'Карта',
   portraits: 'Портреты',
+  handout: 'Раздатка',
   music: 'Музыка',
   ambience: 'Атмосфера',
 };

@@ -83,32 +83,31 @@
       {/if}
     </div>
   </div>
+  <!-- Система и место — на всю ширину (длинные подписи: «D&D 5e (2014)», «· Глава 1 / monsters»), вид и язык — парой. -->
+  <select bind:value={f.system} title="Система">
+    <option value="all">Все системы</option>
+    {#each systems as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
+  </select>
   <div class="row">
-    <select bind:value={f.system} title="Система">
-      <option value="all">Все системы</option>
-      {#each systems as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
-    </select>
     <select bind:value={f.kind} title="Монстры, NPC или персонажи игроков">
-      <option value="all">Все</option>
+      <option value="all">Все виды</option>
       <option value="monster">Монстры</option>
       <option value="npc">NPC</option>
       <option value="character">Партия</option>
     </select>
-  </div>
-  <div class="row">
     <select bind:value={f.lang} title="Какую версию показывать, если карточка переведена">
       {#each bestiary.langs as l (l)}<option value={l}>{langName(l)}</option>{/each}
       {#if !bestiary.langs.includes(f.lang) && f.lang !== 'all'}<option value={f.lang}>{langName(f.lang)}</option>{/if}
       <option value="all">Все версии</option>
     </select>
-    <select bind:value={f.scope} title="Где лежат карточки">
-      <option value="all">Везде</option>
-      <option value="srd">SRD</option>
-      <option value="library">Библиотека</option>
-      <option value="vault">Хранилище</option>
-      {#each folders as fl (fl.folder.path)}<option value="vault:{fl.folder.path}">· {fl.title}</option>{/each}
-    </select>
   </div>
+  <select bind:value={f.scope} title="Где лежат карточки">
+    <option value="all">Везде</option>
+    <option value="srd">SRD</option>
+    <option value="library">Библиотека</option>
+    <option value="vault">Хранилище</option>
+    {#each folders as fl (fl.folder.path)}<option value="vault:{fl.folder.path}">· {fl.title}</option>{/each}
+  </select>
 </div>
 
 {#if status}<div class="status">{status}</div>{/if}
@@ -226,6 +225,9 @@
   .row select {
     flex: 1;
     min-width: 0;
+  }
+  .filters > select {
+    width: 100%;
   }
   .count {
     padding: 0 16px 4px;

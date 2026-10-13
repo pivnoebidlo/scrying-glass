@@ -162,7 +162,7 @@ class Bestiary {
     this.peeked = { scope: ref.scope, id: ref.id };
   }
 
-  // Открыть карточку во вкладке бестиария (из выдвижной панели — «в бестиарии»).
+  // Открыть карточку во вкладке бестиария (из выдвижной панели — «Во вкладке»).
   openInBestiary(ref: CardRef) {
     this.select(ref);
     this.peeked = null;

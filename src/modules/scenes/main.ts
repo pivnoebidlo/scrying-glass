@@ -6,12 +6,23 @@ import type { Part, Scene, SceneContent, ScenesState } from './types';
 
 const initialState: ScenesState = { scenes: [], active: null, throughBlack: false };
 
-const ALL: Record<Part, boolean> = { background: true, map: true, portraits: true, music: true, ambience: true };
+const ALL: Record<Part, boolean> = { background: true, map: true, portraits: true, handout: true, music: true, ambience: true };
+
+// Сцены до появления раздатки: часть «Раздатка» включена и пуста — при смене сцены записка с экрана уходит.
+function upgrade(s: ScenesState): ScenesState {
+  if (s.scenes.every((x) => x.handout && x.include.handout !== undefined)) return s;
+  return {
+    ...s,
+    scenes: s.scenes.map((x) => ({ ...x, handout: x.handout ?? { path: null }, include: { ...ALL, ...x.include } })),
+  };
+}
 
 export default defineModule({
   id: 'scenes',
   persist: true,
   initialState,
+
+  init: upgrade,
 
   actions: {
     create(s, { name, content, adventure }: { name: string; content: SceneContent; adventure?: string | null }) {

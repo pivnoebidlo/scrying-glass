@@ -1,4 +1,4 @@
-<!-- Раздел настроек «Бестиарий»: где лежит библиотека карточек. -->
+<!-- Раздел настроек «Карточки»: где лежит библиотека карточек. -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';

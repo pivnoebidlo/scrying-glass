@@ -26,6 +26,11 @@ export default defineModule({
       return { ...s, current: s.current === path ? null : path };
     },
 
+    // Показать именно эту раздатку (null — убрать): так включаются сцены.
+    set(s, { path }: { path: string | null }) {
+      return { ...s, current: path };
+    },
+
     clear(s) {
       return { ...s, current: null };
     },
