@@ -2,9 +2,15 @@
 <script lang="ts">
   import type { Card } from '../../shared/cards';
   import { escape, markdown } from '../../renderer/lib/markdown';
+  import { Dices } from '@lucide/svelte';
+  import { modeOf, rolls, ROLL_HINT } from '../../renderer/lib/rolls.svelte';
   import { ABILITIES, crText, dict, initiativeOf, mod, signed, sizeText, type Block, type Dnd5eStats, type SpeedKind } from './stats';
 
   let { card }: { card: Card<Dnd5eStats> } = $props();
+
+  // Броски кнопками: подписи в журнале — по-русски, как весь интерфейс.
+  const ru = dict('ru');
+  const check = (e: MouseEvent, what: string, bonus: number) => rolls.check(card.name, what, bonus, modeOf(e));
 
   const s = $derived(card.stats);
   const t = $derived(dict(card.lang));
@@ -64,7 +70,10 @@
     <div><dt>{t.hp}</dt><dd>{s.hp}{s.hpFormula ? ` (${s.hpFormula})` : ''}</dd></div>
     <div><dt>{t.speedLabel}</dt><dd>{speed}</dd></div>
     {#if card.system === 'dnd5e-2024' || s.initiative !== undefined}
-      <div><dt>{t.initiative}</dt><dd>{signed(initiativeOf(s))} ({10 + initiativeOf(s)})</dd></div>
+      <div><dt>{t.initiative}</dt><dd>
+        <button class="roll" title="Бросить инициативу. {ROLL_HINT}" onclick={(e) => check(e, 'Инициатива', initiativeOf(s))}>{signed(initiativeOf(s))}</button>
+        ({10 + initiativeOf(s)})
+      </dd></div>
     {/if}
   </dl>
 
@@ -75,10 +84,22 @@
     </thead>
     <tbody>
       <tr><th></th>{#each ABILITIES as a (a)}<td class="score">{s.abilities[a]}</td>{/each}</tr>
-      <tr><th>{t.mod}</th>{#each ABILITIES as a (a)}<td>{signed(mod(s.abilities[a]))}</td>{/each}</tr>
+      <tr>
+        <th>{t.mod}</th>
+        {#each ABILITIES as a (a)}
+          {@const what = `Проверка ${ru.abilities[a]}`}
+          <td><button class="roll" title="{what}. {ROLL_HINT}" onclick={(e) => check(e, what, mod(s.abilities[a]))}>{signed(mod(s.abilities[a]))}</button></td>
+        {/each}
+      </tr>
       <tr>
         <th>{t.save}</th>
-        {#each ABILITIES as a (a)}<td class:prof={s.saves[a] !== undefined}>{signed(s.saves[a] ?? mod(s.abilities[a]))}</td>{/each}
+        {#each ABILITIES as a (a)}
+          {@const what = `Спасбросок ${ru.abilities[a]}`}
+          {@const bonus = s.saves[a] ?? mod(s.abilities[a])}
+          <td class:prof={s.saves[a] !== undefined}>
+            <button class="roll" title="{what}. {ROLL_HINT}" onclick={(e) => check(e, what, bonus)}>{signed(bonus)}</button>
+          </td>
+        {/each}
       </tr>
     </tbody>
   </table>
@@ -86,7 +107,11 @@
   <div class="rule"></div>
   <dl class="props">
     {#if s.skills.length}
-      <div><dt>{t.skillsLabel}</dt><dd>{s.skills.map((x) => `${term(t.skills, x.skill)} ${signed(x.bonus)}`).join(', ')}</dd></div>
+      <div><dt>{t.skillsLabel}</dt><dd>
+          {#each s.skills as x, i (i)}{#if i > 0},{' '}{/if}{term(t.skills, x.skill)}
+            <button class="roll" title="{term(ru.skills, x.skill)}. {ROLL_HINT}" onclick={(e) => check(e, term(ru.skills, x.skill), x.bonus)}>{signed(x.bonus)}</button
+            >{/each}
+        </dd></div>
     {/if}
     {#if s.vulnerabilities.length}
       <div><dt>{t.vulnerabilities}</dt><dd>{s.vulnerabilities.map((x) => term(t.damage, x)).join(', ')}</dd></div>
@@ -109,7 +134,20 @@
     <h3>{sec.title}</h3>
     {#if sec.intro}<div class="text">{@html markdown(sec.intro)}</div>{/if}
     {#each sec.blocks as b, i (i)}
-      <div class="text block">{@html blockHtml(b)}</div>
+      <div class="text block">
+        {@html blockHtml(b)}
+        {#if b.attack}
+          {@const atk = b.attack}
+          <div class="rolls">
+            <button class="roll-btn" title="Атака и урон. {ROLL_HINT}" onclick={(e) => rolls.attack(card.name, b.name, atk.bonus, atk.damage, modeOf(e))}>
+              <Dices size={13} /> Атака {signed(atk.bonus)}
+            </button>
+            {#each atk.damage as d, j (j)}
+              <button class="roll-btn" title="Только урон. Shift — критический (кубы ×2)" onclick={(e) => rolls.damage(card.name, b.name, d, e.shiftKey)}>{d}</button>
+            {/each}
+          </div>
+        {/if}
+      </div>
     {/each}
   {/each}
 </article>
@@ -196,5 +234,42 @@
   }
   .block {
     margin-bottom: 4px;
+  }
+  /* Число, по которому можно бросить: выглядит как текст, подсвечивается при наведении. */
+  .roll {
+    padding: 0 2px;
+    border: 0;
+    border-radius: 3px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  .roll:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+  .rolls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: -2px 0 8px;
+  }
+  .roll-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+  }
+  .roll-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-normal);
   }
 </style>

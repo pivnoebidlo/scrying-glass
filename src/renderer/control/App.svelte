@@ -6,6 +6,7 @@
   import ScreenPanel from './ScreenPanel.svelte';
   import Settings from './Settings.svelte';
   import Welcome from './Welcome.svelte';
+  import RollLog from '../lib/RollLog.svelte';
   import { store } from '../lib/store.svelte';
   import { controlContributions } from '../lib/registry';
 
@@ -39,6 +40,8 @@
   {#each backgrounds as c (c.id)}
     {#if c.background}<c.background ms={store.state[c.id]} app={store.state} />{/if}
   {/each}
+
+  <RollLog />
 
   {#if workspace.settingsOpen}
     <Settings />

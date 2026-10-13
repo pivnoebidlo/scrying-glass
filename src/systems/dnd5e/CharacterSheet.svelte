@@ -2,6 +2,8 @@
 <script lang="ts">
   import type { Card } from '../../shared/cards';
   import { markdown } from '../../renderer/lib/markdown';
+  import { modeOf, rolls, ROLL_HINT } from '../../renderer/lib/rolls.svelte';
+  import { parseBonus, parseDice } from '../../shared/dice';
   import { ABILITIES, dict, mod, signed, sizeText, SKILL_ABILITY } from './stats';
   import {
     characterInitiative, characterPb, saveBonus, skillBonus, totalLevel, type CharacterText, type Dnd5eCharacter,
@@ -12,6 +14,8 @@
   const c = $derived(card.stats);
   const t = dict('ru');
   const pb = $derived(characterPb(c));
+
+  const check = (e: MouseEvent, what: string, bonus: number) => rolls.check(card.name, what, bonus, modeOf(e));
 
   type Tab = 'stats' | 'combat' | 'spells' | 'features' | 'equipment' | 'person' | 'notes';
   let tab = $state<Tab>('stats');
@@ -65,7 +69,7 @@
   <div class="vitals">
     <div class="vital"><span class="v">{c.ac}</span><span class="l">КД</span></div>
     <div class="vital"><span class="v">{c.hpMax}</span><span class="l">хиты{c.hitDie ? ` · ${totalLevel(c)}×${c.hitDie.replace(/^\d+/, '')}` : ''}</span></div>
-    <div class="vital"><span class="v">{signed(characterInitiative(c))}</span><span class="l">инициатива</span></div>
+    <div class="vital"><button class="v roll" title="Бросить инициативу. {ROLL_HINT}" onclick={(e) => check(e, 'Инициатива', characterInitiative(c))}>{signed(characterInitiative(c))}</button><span class="l">инициатива</span></div>
     <div class="vital"><span class="v">{c.speed}</span><span class="l">скорость, фт.</span></div>
     <div class="vital"><span class="v">{signed(pb)}</span><span class="l">мастерство</span></div>
     {#if c.inspiration}<div class="vital insp"><span class="v">★</span><span class="l">вдохновение</span></div>{/if}
@@ -75,9 +79,9 @@
     {#each ABILITIES as a (a)}
       <div class="ability">
         <span class="abbr">{t.abilities[a]}</span>
-        <span class="mod">{signed(mod(c.abilities[a]))}</span>
+        <button class="mod roll" title="Проверка {t.abilities[a]}. {ROLL_HINT}" onclick={(e) => check(e, `Проверка ${t.abilities[a]}`, mod(c.abilities[a]))}>{signed(mod(c.abilities[a]))}</button>
         <span class="score faint">{c.abilities[a]}</span>
-        <span class="save" class:prof={c.saves.includes(a)} title="Спасбросок">спас {signed(saveBonus(c, a))}</span>
+        <button class="save roll" class:prof={c.saves.includes(a)} title="Спасбросок {t.abilities[a]}. {ROLL_HINT}" onclick={(e) => check(e, `Спасбросок ${t.abilities[a]}`, saveBonus(c, a))}>спас {signed(saveBonus(c, a))}</button>
       </div>
     {/each}
   </div>
@@ -96,7 +100,7 @@
             <span class="dot" class:expert={s.level === 2} title={s.level === 2 ? 'Компетентность' : s.level ? 'Владение' : ''}></span>
             <span class="sname">{s.name}</span>
             <span class="faint ab">{t.abilities[s.ability]}</span>
-            <span class="sb">{signed(s.bonus)}</span>
+            <button class="sb roll" title="{s.name}. {ROLL_HINT}" onclick={(e) => check(e, s.name, s.bonus)}>{signed(s.bonus)}</button>
           </li>
         {/each}
       </ul>
@@ -118,7 +122,21 @@
         <thead><tr><th>Атака</th><th>Бонус</th><th>Урон</th></tr></thead>
         <tbody>
           {#each c.attacks as a, i (i)}
-            <tr><td>{a.name}{#if a.notes}<div class="faint small">{a.notes}</div>{/if}</td><td>{a.bonus}</td><td>{a.damage}</td></tr>
+            {@const bonus = parseBonus(a.bonus)}
+            {@const dmg = parseDice(a.damage)}
+            <tr>
+              <td>{a.name}{#if a.notes}<div class="faint small">{a.notes}</div>{/if}</td>
+              <td>
+                {#if bonus !== null}
+                  <button class="roll" title="Атака и урон. {ROLL_HINT}" onclick={(e) => rolls.attack(card.name, a.name, bonus, dmg ? [a.damage] : [], modeOf(e))}>{a.bonus}</button>
+                {:else}{a.bonus}{/if}
+              </td>
+              <td>
+                {#if dmg}
+                  <button class="roll" title="Только урон. Shift — критический (кубы ×2)" onclick={(e) => rolls.damage(card.name, a.name, a.damage, e.shiftKey)}>{a.damage}</button>
+                {:else}{a.damage}{/if}
+              </td>
+            </tr>
           {/each}
         </tbody>
       </table>
@@ -128,7 +146,7 @@
     <div class="vitals small-vitals">
       <div class="vital"><span class="v">{t.abilities[c.spellcasting.ability]}</span><span class="l">характеристика</span></div>
       <div class="vital"><span class="v">{spellDc}</span><span class="l">СЛ спасброска</span></div>
-      <div class="vital"><span class="v">{signed(spellAttack)}</span><span class="l">бонус атаки</span></div>
+      <div class="vital"><button class="v roll" title="Атака заклинанием. {ROLL_HINT}" onclick={(e) => check(e, 'Атака заклинанием', spellAttack)}>{signed(spellAttack)}</button><span class="l">бонус атаки</span></div>
     </div>
     {#each spellLevels as lvl (lvl)}
       <section class="spell-level">
@@ -166,6 +184,20 @@
 </article>
 
 <style>
+  /* Число, по которому можно бросить: выглядит как текст, подсвечивается при наведении. */
+  .roll {
+    padding: 0 2px;
+    border: 0;
+    border-radius: 3px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  .roll:hover {
+    background: var(--accent);
+    color: #fff;
+  }
   .sheet {
     max-width: 820px;
     line-height: 1.5;
