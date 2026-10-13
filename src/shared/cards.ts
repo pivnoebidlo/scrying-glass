@@ -62,6 +62,8 @@ export interface CardSummary {
   origin?: Card['origin'];
   // Для карточек хранилища: папка бестиария или персонажей, где лежит файл (путь внутри хранилища).
   folder?: string;
+  // Для карточек хранилища: сам файл карточки (путь внутри хранилища) — чтобы показывать их во «Файлах».
+  file?: string;
   side: CardSide;
   tags: string[];
   portrait: string | null;

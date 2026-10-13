@@ -6,6 +6,7 @@ import { shell, type OpenDialogOptions } from 'electron';
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { AUDIO_EXT, IMAGE_EXT, type VaultState } from '../../shared/vault';
 import { clipboardImage, freeName } from '../../main/files';
+import { listCards } from '../../main/cards';
 
 const openDialog = (ctx: ModuleContext, opts: OpenDialogOptions) =>
   ctx.controlWindow ? ctx.dialog.showOpenDialog(ctx.controlWindow, opts) : ctx.dialog.showOpenDialog(opts);
@@ -84,10 +85,15 @@ export default defineModule({
       const files = paths.map((p) => ({ rel: p, abs: ctx.vault.resolve(p) })).filter((f): f is { rel: string; abs: string } => !!f.abs && fs.existsSync(f.abs));
       if (!files.length) return s;
       const names = files.map((f) => path.basename(f.abs));
+      // Картинка может быть портретом карточки: сама карточка при этом останется (её удаляют из карточки).
+      const owners = [...new Set(listCards().filter((c) => c.ref.scope === 'vault' && files.some((f) => c.images.includes(f.rel))).map((c) => c.name))];
+      const ownersNote = owners.length
+        ? `Это портрет карточки ${owners.map((n) => `«${n}»`).join(', ')}: карточка останется, но без этой картинки. Чтобы удалить саму карточку, удалите её в разделе «Карточки».\n\n`
+        : '';
       const opts = {
         type: 'warning' as const,
         message: files.length === 1 ? `Переместить «${names[0]}» в Корзину?` : `Переместить в Корзину файлов: ${files.length}?`,
-        detail: (files.length > 1 ? names.join('\n') + '\n\n' : '') + 'Файл можно будет вернуть из Корзины.',
+        detail: (files.length > 1 ? names.join('\n') + '\n\n' : '') + ownersNote + 'Файл можно будет вернуть из Корзины.',
         buttons: ['В Корзину', 'Отмена'],
         defaultId: 0,
         cancelId: 1,

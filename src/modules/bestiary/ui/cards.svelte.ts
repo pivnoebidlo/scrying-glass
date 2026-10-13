@@ -186,8 +186,9 @@ class Bestiary {
   }
 
   // Новая карточка: система и язык — из фильтров, если они выбраны.
-  async create() {
-    const place = await this.choosePlace({ title: 'Где хранить новую карточку?', action: 'Создать', library: true });
+  // place — куда (например, открытая во «Файлах» папка); без него спросим.
+  async create(at?: Place) {
+    const place = at ?? (await this.choosePlace({ title: 'Где хранить новую карточку?', action: 'Создать', library: true }));
     if (!place) return;
     const system = this.filters.system !== 'all' ? this.filters.system : 'dnd5e-2024';
     const lang = this.filters.lang !== 'all' ? this.filters.lang : 'ru';

@@ -1,6 +1,6 @@
 <!-- Вкладка «Файлы»: содержимое выбранной папки хранилища. -->
 <script lang="ts">
-  import { ChevronRight, ClipboardPaste, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
+  import { ChevronRight, ClipboardPaste, Download, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { findFolder, folderRole } from '../../../shared/vault';
@@ -9,6 +9,10 @@
   import { store } from '../../../renderer/lib/store.svelte';
   import { trackName } from '../../../shared/vault';
   import { folderIcon, ui } from './ui.svelte';
+  import CardRow from './CardRow.svelte';
+  import { onMount } from 'svelte';
+  import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
+  import { dirname } from '../../../shared/vault';
   import ThumbSize from '../../../renderer/lib/ThumbSize.svelte';
   import { thumbs } from '../../../renderer/lib/thumbs.svelte';
 
@@ -26,6 +30,16 @@
     return parts.map((name, i) => ({ name, path: parts.slice(0, i + 1).join('/') }));
   });
   const images = $derived(folder?.files.filter((f) => f.kind === 'image') ?? []);
+
+  // Карточки (*.json) этой папки — их знает бестиарий, дерево хранилища показывает только картинки и музыку.
+  onMount(connectCards);
+  const cards = $derived(
+    folder ? bestiary.all.filter((c) => c.ref.scope === 'vault' && c.file && dirname(c.file) === folder.path).sort((a, b) => a.name.localeCompare(b.name, 'ru')) : []
+  );
+  // Папка карточек — монстры, персонажи или партия (или вложенная в такую): сюда можно создавать и импортировать.
+  const cardFolder = $derived(
+    !!folder?.path && folder.path.split('/').some((p) => ['bestiary', 'characters', 'party'].includes(folderRole(p) ?? ''))
+  );
   const audio = $derived(folder?.files.filter((f) => f.kind === 'audio') ?? []);
   // Что делает клик по картинке: в папках персонажей — портрет, в папках карт — карта, в остальных — на весь экран.
   const role = $derived(folder ? folderRole(folder.name) : null);
@@ -64,6 +78,18 @@
         {/each}
       </nav>
       <div class="spacer"></div>
+      {#if cardFolder}
+        <button class="btn" title="Новая карточка в этой папке" onclick={() => bestiary.create({ scope: 'vault', folder: folder.path })}>
+          <FilePlus size={14} /> Новая карточка
+        </button>
+        <button
+          class="btn"
+          title="Карточки Scrying Glass или персонаж из Long Story Short (экспорт листа в JSON) — в эту папку"
+          onclick={() => bestiary.importFiles({ scope: 'vault', folder: folder.path })}
+        >
+          <Download size={14} /> Импорт карточек…
+        </button>
+      {/if}
       {#if topLevel && isAdventure}
         <span class="badge-adv"><Map size={12} /> приключение</span>
         {#if app.adventures.current !== folder.path}
@@ -102,6 +128,13 @@
           </button>
         {/each}
       </div>
+    {/if}
+
+    {#if cards.length}
+      <h3>Карточки <span class="faint">{cards.length}</span></h3>
+      <ul class="cards">
+        {#each cards as c (c.ref.id)}<CardRow card={c} />{/each}
+      </ul>
     {/if}
 
     {#if images.length}
@@ -144,7 +177,7 @@
       </ul>
     {/if}
 
-    {#if !folder.folders.length && !folder.files.length}
+    {#if !folder.folders.length && !folder.files.length && !cards.length}
       <div class="empty faint">Папка пуста. Добавьте файлы кнопкой выше или через Finder.</div>
     {/if}
   </div>
@@ -167,11 +200,13 @@
     color: var(--accent-hover);
     font-size: 12px;
   }
+  /* Кнопок бывает много (папка карточек, приключение): они переносятся на вторую строку, а путь не сжимается. */
   .toolbar {
     position: sticky;
     top: 0;
     z-index: 1;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     padding: 12px 0;
@@ -188,6 +223,7 @@
     min-width: 0;
   }
   .crumb {
+    white-space: nowrap;
     padding: 3px 6px;
     border: 0;
     border-radius: var(--radius-s);
@@ -229,6 +265,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .cards {
+    margin: 4px 0 8px;
+    padding: 0;
+    list-style: none;
   }
   .images-head {
     display: flex;

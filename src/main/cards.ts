@@ -222,7 +222,7 @@ function summarize(ref: CardRef, c: Card): CardSummary {
     lang: c.lang,
     name: c.name,
     ...(c.origin ? { origin: c.origin } : {}),
-    ...(ref.scope === 'vault' && file && vaultRoot ? { folder: cardFolder(file) } : {}),
+    ...(ref.scope === 'vault' && file && vaultRoot ? { folder: cardFolder(file), file: toRel(vaultRoot, file) } : {}),
     side: c.side ?? defaultSide(c.kind),
     tags: c.tags,
     portrait: c.portraits[0] ?? null,
