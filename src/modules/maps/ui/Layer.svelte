@@ -11,7 +11,7 @@
 {#key ms.current}
   {#if ms.current}
     <div class="map" transition:fade|global={{ duration: 500 }}>
-      <PlayerMap path={ms.current} data={dataOf(ms, ms.current)} />
+      <PlayerMap path={ms.current} data={dataOf(ms, ms.current)} pinSize={ms.pinSize} />
     </div>
   {/if}
 {/key}

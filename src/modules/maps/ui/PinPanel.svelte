@@ -1,0 +1,238 @@
+<!-- Панель меток поверх редактора карты: выбранная метка (название, цвет, видят ли игроки, заметка) или список
+     всех меток карты. Заметку видит только мастер. -->
+<script lang="ts">
+  import { ChevronLeft, Eye, EyeOff, Trash2, X } from '@lucide/svelte';
+  import { dispatch } from '../../../renderer/lib/store.svelte';
+  import { PIN_COLORS, type MapPin, type PinColor } from '../types';
+  import { ui } from './ui.svelte';
+
+  let {
+    path,
+    pins,
+    pin,
+    focusTitle = $bindable(),
+    onpick,
+    onremove,
+  }: {
+    path: string;
+    pins: MapPin[];
+    pin: MapPin | null;
+    focusTitle: boolean;
+    onpick: (p: MapPin) => void;
+    onremove: (p: MapPin) => void;
+  } = $props();
+
+  const update = (p: MapPin, changes: Partial<Omit<MapPin, 'id'>>) => dispatch('maps', 'updatePin', { path, id: p.id, changes });
+
+  // Только что поставленная метка: сразу печатать название.
+  function autofocus(el: HTMLInputElement) {
+    if (!focusTitle) return;
+    focusTitle = false;
+    el.focus();
+  }
+
+  function setColor(p: MapPin, color: PinColor) {
+    ui.pinColor = color;
+    update(p, { color });
+  }
+
+  function close() {
+    ui.pin = null;
+    ui.pinList = false;
+  }
+
+  const sorted = $derived([...pins].sort((a, b) => (a.title || '￿').localeCompare(b.title || '￿', 'ru')));
+</script>
+
+<!-- Щелчки по панели не должны доходить до карты. -->
+<div class="panel" role="presentation" onpointerdown={(e) => e.stopPropagation()}>
+  {#if pin}
+    {#key pin.id}
+      <header>
+        {#if ui.pinList}
+          <button class="icon-btn" title="К списку меток" onclick={() => (ui.pin = null)}><ChevronLeft size={15} /></button>
+        {/if}
+        <input
+          class="title"
+          type="text"
+          value={pin.title}
+          placeholder="Название"
+          use:autofocus
+          onchange={(e) => update(pin, { title: e.currentTarget.value.trim() })}
+          onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+        />
+        <button class="icon-btn" title="Закрыть (Esc)" onclick={close}><X size={15} /></button>
+      </header>
+
+      <div class="row">
+        <div class="colors">
+          {#each Object.entries(PIN_COLORS) as [c, v] (c)}
+            <button class="color" class:active={pin.color === c} style:--c={v} title="Цвет" aria-label="Цвет" onclick={() => setColor(pin, c as PinColor)}></button>
+          {/each}
+        </div>
+      </div>
+
+      <button class="btn shown" class:primary={!pin.shown} onclick={() => update(pin, { shown: !pin.shown })}>
+        {#if pin.shown}<EyeOff size={14} /> Скрыть от игроков{:else}<Eye size={14} /> Показать игрокам{/if}
+      </button>
+      <div class="hint faint">
+        {pin.shown ? 'Игроки видят метку и название, даже под туманом.' : 'Метку видите только вы.'}
+      </div>
+
+      <textarea
+        rows="5"
+        value={pin.note}
+        placeholder="Заметка для себя: игроки её не видят"
+        onchange={(e) => update(pin, { note: e.currentTarget.value })}
+      ></textarea>
+
+      <footer>
+        <span class="faint">Перетащите метку инструментом меток</span>
+        <button class="icon-btn" title="Удалить метку (Delete)" onclick={() => onremove(pin)}><Trash2 size={15} /></button>
+      </footer>
+    {/key}
+  {:else}
+    <header>
+      <div class="head">Метки</div>
+      <button class="icon-btn" title="Закрыть" onclick={close}><X size={15} /></button>
+    </header>
+    {#if sorted.length}
+      <ul>
+        {#each sorted as p (p.id)}
+          <li>
+            <button class="item" onclick={() => onpick(p)}>
+              <span class="dot" style:--c={PIN_COLORS[p.color]}></span>
+              <span class="name" class:faint={!p.title}>{p.title || 'Без названия'}</span>
+              {#if p.note}<span class="note faint" title={p.note}>{p.note}</span>{/if}
+            </button>
+            <button class="icon-btn" title={p.shown ? 'Видят игроки — скрыть' : 'Только у вас — показать игрокам'} onclick={() => update(p, { shown: !p.shown })}>
+              {#if p.shown}<Eye size={14} />{:else}<EyeOff size={14} />{/if}
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {:else}
+      <p class="faint empty">Меток нет. Выберите инструмент меток и щёлкните по карте.</p>
+    {/if}
+  {/if}
+</div>
+
+<style>
+  .panel {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 270px;
+    max-height: calc(100% - 20px);
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m, 8px);
+    background: var(--bg-primary);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+    overflow: auto;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .head {
+    flex: 1;
+    font-weight: 600;
+  }
+  .title {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+  }
+  .colors {
+    display: flex;
+    gap: 6px;
+  }
+  .color {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    background: var(--c);
+    cursor: pointer;
+  }
+  .color.active {
+    border-color: var(--text-normal);
+  }
+  .shown {
+    justify-content: center;
+  }
+  .hint {
+    margin-top: -4px;
+    font-size: 12px;
+  }
+  textarea {
+    width: 100%;
+    resize: vertical;
+    font: inherit;
+  }
+  footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  li {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    padding: 5px 6px;
+    border: 0;
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--text-normal);
+    text-align: left;
+    cursor: pointer;
+  }
+  .item:hover {
+    background: var(--bg-hover, var(--bg-active));
+  }
+  .dot {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--c);
+  }
+  .name {
+    flex: none;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .note {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+  .empty {
+    margin: 4px 0;
+    font-size: 13px;
+  }
+</style>

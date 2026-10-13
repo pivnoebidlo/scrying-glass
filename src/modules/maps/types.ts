@@ -28,10 +28,34 @@ export interface Grid {
   cells: number;
 }
 
+// Метка мастера на карте: что где находится. Игроки видят только отмеченные «игрокам» — название, без заметки
+// (и поверх тумана: раз мастер показал, место им известно).
+export interface MapPin {
+  id: string;
+  x: number;
+  y: number;
+  title: string;
+  // Заметка только для мастера.
+  note: string;
+  color: PinColor;
+  shown: boolean;
+}
+
+export const PIN_COLORS = {
+  red: '#e04545',
+  gold: '#e8b94a',
+  green: '#4caf6a',
+  blue: '#4f8de8',
+  violet: '#9a6cf0',
+  white: '#e8e8e8',
+} as const;
+export type PinColor = keyof typeof PIN_COLORS;
+
 export interface MapData {
   fog: Fog;
   view: MapView;
   grid: Grid;
+  pins: MapPin[];
 }
 
 export interface MapsState {
@@ -41,6 +65,8 @@ export interface MapsState {
   maps: Record<string, MapData>;
   // Туман новой карты: скрыть всё (игроки видят только открытое) или ничего не скрывать.
   defaultFog: 'hidden' | 'revealed';
+  // Размер меток на экране игроков (1 — обычный).
+  pinSize: number;
 }
 
 export const FULL_VIEW: MapView = { x: 0, y: 0, w: 1, h: 1 };

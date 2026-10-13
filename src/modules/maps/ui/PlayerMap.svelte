@@ -2,10 +2,10 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { vaultUrl } from '../../../shared/vault';
-  import { buildFog, drawMap, fitCanvas, fitView, fogCanvas, loadImage, type LoadedImage } from '../render';
+  import { buildFog, drawMap, drawPins, fitCanvas, fitView, fogCanvas, loadImage, type LoadedImage } from '../render';
   import type { MapData, MapView } from '../types';
 
-  let { path, data }: { path: string; data: MapData } = $props();
+  let { path, data, pinSize = 1 }: { path: string; data: MapData; pinSize?: number } = $props();
 
   let canvas: HTMLCanvasElement;
   let img = $state.raw<LoadedImage | null>(null);
@@ -26,11 +26,15 @@
     if (!img || !fog || !shown || !canvas) return;
     fitCanvas(canvas);
     const ctx = canvas.getContext('2d')!;
-    drawMap(ctx, img, fog, fitView(shown, img, canvas.width, canvas.height), {
+    const xf = fitView(shown, img, canvas.width, canvas.height);
+    drawMap(ctx, img, fog, xf, {
       fogAlpha: 1,
       fogBlur: Math.max(canvas.width, canvas.height) * 0.006,
       grid: data.grid,
     });
+    // Метки, которые мастер показал, — поверх тумана: место игрокам уже известно.
+    const r = Math.min(canvas.width, canvas.height) * 0.016 * pinSize;
+    drawPins(ctx, data.pins.filter((p) => p.shown), img, xf, { r, font: `${r * 1.5}px Georgia, serif` });
   }
 
   // Туман перестраивается, когда меняются его операции.
@@ -45,9 +49,11 @@
     });
   });
 
-  // Сетка перерисовывается сразу.
+  // Сетка и метки перерисовываются сразу.
   $effect(() => {
     void data.grid;
+    void data.pins;
+    void pinSize;
     untrack(draw);
   });
 

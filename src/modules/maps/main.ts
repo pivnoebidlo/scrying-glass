@@ -2,7 +2,7 @@
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { allFiles } from '../../shared/vault';
 import { dataOf } from './data';
-import type { FogOp, Grid, MapData, MapsState, MapView } from './types';
+import type { FogOp, Grid, MapData, MapPin, MapsState, MapView } from './types';
 
 // Туман хранится операциями, но не бесконечно: самые старые сворачивать нечем, поэтому просто ограничиваем.
 const MAX_OPS = 2000;
@@ -30,14 +30,20 @@ function prune(s: MapsState, ctx: ModuleContext): MapsState {
   return { ...s, maps, current: s.current && exists.has(s.current) ? s.current : null };
 }
 
-const initialState: MapsState = { current: null, maps: {}, defaultFog: 'hidden' };
+// Карты из сохранений до меток.
+const withPins = (s: MapsState): MapsState =>
+  Object.values(s.maps).every((d) => d.pins)
+    ? s
+    : { ...s, maps: Object.fromEntries(Object.entries(s.maps).map(([p, d]) => [p, { ...d, pins: d.pins ?? [] }])) };
+
+const initialState: MapsState = { current: null, maps: {}, defaultFog: 'hidden', pinSize: 1 };
 
 export default defineModule({
   id: 'maps',
   persist: true,
   initialState,
 
-  init: prune,
+  init: (s, ctx) => prune(withPins(s), ctx),
   onTreeChange: prune,
 
   actions: {
@@ -78,8 +84,24 @@ export default defineModule({
       }));
     },
 
+    addPin(s, { path, pin }: { path: string; pin: MapPin }) {
+      return withMap(s, path, (d) => ({ ...d, pins: [...d.pins, pin] }));
+    },
+
+    updatePin(s, { path, id, changes }: { path: string; id: string; changes: Partial<Omit<MapPin, 'id'>> }) {
+      return withMap(s, path, (d) => ({ ...d, pins: d.pins.map((p) => (p.id === id ? { ...p, ...changes } : p)) }));
+    },
+
+    removePin(s, { path, id }: { path: string; id: string }) {
+      return withMap(s, path, (d) => ({ ...d, pins: d.pins.filter((p) => p.id !== id) }));
+    },
+
     setDefaultFog(s, { value }: { value: 'hidden' | 'revealed' }) {
       return { ...s, defaultFog: value };
+    },
+
+    setPinSize(s, { value }: { value: number }) {
+      return { ...s, pinSize: Math.min(3, Math.max(0.5, value)) };
     },
   },
 });

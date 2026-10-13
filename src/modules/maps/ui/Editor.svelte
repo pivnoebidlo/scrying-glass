@@ -3,7 +3,7 @@
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
   import {
-    Brush, Eraser, Eye, EyeOff, Grid3x3, Hand, Maximize, Move, ScanEye, SquareDashed, SquareDashedMousePointer, Undo2,
+    Brush, Eraser, Eye, EyeOff, Grid3x3, Hand, MapPin, MapPinPlus, Maximize, Move, ScanEye, SquareDashed, SquareDashedMousePointer, Undo2,
   } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { playerDisplay } from '../../../renderer/lib/nav';
@@ -13,9 +13,10 @@
   import { dataOf } from '../data';
   import { mapGroups, mapName } from '../library';
   import {
-    applyFogOp, buildFog, drawMap, fitCanvas, fogCanvas, loadImage, visibleArea, type LoadedImage, type Xf,
+    applyFogOp, buildFog, drawMap, drawPins, fitCanvas, fogCanvas, loadImage, pinHead, visibleArea, type LoadedImage, type Xf,
   } from '../render';
-  import { FULL_VIEW, type FogOp, type MapView } from '../types';
+  import { FULL_VIEW, type FogOp, type MapPin as Pin, type MapView } from '../types';
+  import PinPanel from './PinPanel.svelte';
   import { ui, type Tool } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'maps'> = $props();
@@ -36,7 +37,12 @@
     { id: 'revealRect', title: 'Открыть прямоугольник', icon: SquareDashedMousePointer },
     { id: 'hideRect', title: 'Скрыть прямоугольник', icon: SquareDashed },
     { id: 'view', title: 'Двигать область, которую видят игроки', icon: Move },
+    { id: 'pin', title: 'Метки: щелчок — поставить, метку можно перетащить', icon: MapPinPlus },
   ];
+
+  // Метки этой карты; выбранная — та, что открыта в панели.
+  const pins = $derived(data?.pins ?? []);
+  const pin = $derived(pins.find((p) => p.id === ui.pin) ?? null);
 
   let canvas = $state<HTMLCanvasElement>();
   let img = $state.raw<LoadedImage | null>(null);
@@ -52,8 +58,13 @@
     | { kind: 'pan'; sx: number; sy: number; ox: number; oy: number }
     | { kind: 'brush'; op: Extract<FogOp, { kind: 'brush' }>; lx: number; ly: number }
     | { kind: 'rect'; mode: 'reveal' | 'hide'; x0: number; y0: number; x1: number; y1: number }
-    | { kind: 'view'; sx: number; sy: number; view0: MapView };
+    | { kind: 'view'; sx: number; sy: number; view0: MapView }
+    | { kind: 'pin'; id: string; sx: number; sy: number; x0: number; y0: number; moved: boolean };
   let drag = $state.raw<Drag | null>(null);
+  // Метка, которую сейчас тащат: её новое место до отпускания мыши.
+  let pinPreview: { id: string; x: number; y: number } | null = null;
+  let overPin = $state(false);
+  const PIN_R = 9;
 
   const dpr = () => window.devicePixelRatio || 1;
 
@@ -83,7 +94,15 @@
   $effect(() => {
     void data?.view;
     void data?.grid;
+    void data?.pins;
+    void ui.pin;
     untrack(draw);
+  });
+
+  // Другая карта — метка с прошлой не выбрана.
+  $effect(() => {
+    void path;
+    untrack(() => (ui.pin = null));
   });
 
   // ---- Рисование ----
@@ -103,6 +122,12 @@
     }
     const ctx = c.getContext('2d')!;
     drawMap(ctx, img, fog, xf, { fogAlpha: 0.6, fogBlur: 0, grid: data.grid });
+    const pv = pinPreview;
+    drawPins(ctx, pv ? pins.map((p) => (p.id === pv.id ? { ...p, x: pv.x, y: pv.y } : p)) : pins, img, xf, {
+      r: PIN_R * dpr(),
+      font: `600 ${12 * dpr()}px -apple-system, system-ui, sans-serif`,
+      master: { selected: ui.pin },
+    });
 
     // Что видят игроки: обзор, вписанный в экран с его пропорциями.
     const d = playerDisplay();
@@ -151,15 +176,40 @@
     y: (p.y - xf.oy) / xf.s / img!.h,
   });
 
+  // Метка под точкой canvas (сверху — последняя поставленная).
+  function pinAt(p: { x: number; y: number }): Pin | null {
+    if (!img) return null;
+    const r = PIN_R * dpr();
+    for (let i = pins.length - 1; i >= 0; i--) {
+      const h = pinHead(pins[i]!, img, xf, r);
+      const tip = h.y + r * 1.9;
+      if (Math.hypot(p.x - h.x, p.y - h.y) <= r * 1.4 || (Math.abs(p.x - h.x) < r * 0.6 && p.y > h.y && p.y <= tip)) return pins[i]!;
+    }
+    return null;
+  }
+
   function down(e: PointerEvent) {
     if (!img || !fog || !path || !data || !canvas) return;
+    // Недописанное название или заметка сохраняются до того, как выбор метки сменится.
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     try {
       canvas.setPointerCapture(e.pointerId); // чтобы мазок не обрывался, если мышь ушла за край
     } catch {
       /* бывает у необычных устройств ввода; рисовать можно и без захвата */
     }
     const p = at(e);
-    if (e.button === 1 || spaceDown || ui.tool === 'pan') {
+    const hit = e.button === 0 && !spaceDown && (ui.tool === 'pin' || ui.tool === 'pan') ? pinAt(p) : null;
+    if (hit) {
+      ui.pin = hit.id;
+      drag = { kind: 'pin', id: hit.id, sx: p.x, sy: p.y, x0: hit.x, y0: hit.y, moved: false };
+    } else if (e.button === 0 && !spaceDown && ui.tool === 'pin') {
+      const m = toMap(p);
+      if (m.x < 0 || m.y < 0 || m.x > 1 || m.y > 1) return;
+      const id = crypto.randomUUID();
+      dispatch('maps', 'addPin', { path, pin: { id, x: m.x, y: m.y, title: '', note: '', color: ui.pinColor, shown: ui.pinShown } });
+      ui.pin = id;
+      focusTitle = true;
+    } else if (e.button === 1 || spaceDown || ui.tool === 'pan') {
       drag = { kind: 'pan', sx: p.x, sy: p.y, ox: xf.ox, oy: xf.oy };
     } else if (ui.tool === 'reveal' || ui.tool === 'hide') {
       const m = toMap(p);
@@ -182,6 +232,7 @@
   function move(e: PointerEvent) {
     const p = at(e);
     pointer = p;
+    if (!drag) overPin = (ui.tool === 'pin' || ui.tool === 'pan') && !spaceDown && !!pinAt(p);
     if (!drag || !img || !fog) return draw();
     if (drag.kind === 'pan') {
       xf = { ...xf, ox: drag.ox + p.x - drag.sx, oy: drag.oy + p.y - drag.sy };
@@ -195,6 +246,18 @@
       drag = { ...drag, lx: p.x, ly: p.y };
     } else if (drag.kind === 'rect') {
       drag = { ...drag, x1: p.x, y1: p.y };
+    } else if (drag.kind === 'pin') {
+      // Сдвиг меньше 3 точек — это был щелчок, метка остаётся на месте.
+      if (!drag.moved && Math.hypot(p.x - drag.sx, p.y - drag.sy) < 3 * dpr()) return;
+      // Рука двигает карту, метки тащит только их инструмент.
+      if (ui.tool !== 'pin') return;
+      drag = { ...drag, moved: true };
+      const clamp = (v: number) => Math.min(1, Math.max(0, v));
+      pinPreview = {
+        id: drag.id,
+        x: clamp(drag.x0 + (p.x - drag.sx) / xf.s / img.w),
+        y: clamp(drag.y0 + (p.y - drag.sy) / xf.s / img.h),
+      };
     } else if (drag.kind === 'view') {
       const dx = (p.x - drag.sx) / xf.s / img.w;
       const dy = (p.y - drag.sy) / xf.s / img.h;
@@ -215,6 +278,10 @@
       if (b.x - a.x > 0.002 && b.y - a.y > 0.002) {
         await dispatch('maps', 'addFog', { path, op: { mode: d.mode, kind: 'rect', x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y } });
       }
+    } else if (d.kind === 'pin' && pinPreview) {
+      const pv = pinPreview;
+      await dispatch('maps', 'updatePin', { path, id: pv.id, changes: { x: pv.x, y: pv.y } });
+      pinPreview = null;
     } else if (d.kind === 'view' && viewPreview) {
       await dispatch('maps', 'setView', { path, view: viewPreview });
       viewPreview = null;
@@ -243,7 +310,12 @@
 
   function keydown(e: KeyboardEvent) {
     if (typing(e)) return;
-    if (e.code === 'Space') {
+    if (e.key === 'Escape' && ui.pin) {
+      ui.pin = null;
+    } else if ((e.key === 'Delete' || e.key === 'Backspace') && pin && path) {
+      e.preventDefault();
+      removePin(pin);
+    } else if (e.code === 'Space') {
       e.preventDefault();
       spaceDown = true;
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && path) {
@@ -265,6 +337,24 @@
     return () => ro.disconnect();
   });
 
+  // ---- Метки ----
+  let focusTitle = $state(false);
+
+  function removePin(p: Pin) {
+    if (!path) return;
+    if ((p.title || p.note) && !confirm(`Удалить метку${p.title ? ` «${p.title}»` : ''}?`)) return;
+    if (ui.pin === p.id) ui.pin = null;
+    dispatch('maps', 'removePin', { path, id: p.id });
+  }
+
+  // Показать метку в середине окна (из списка меток).
+  function centerOn(p: Pin) {
+    if (!img || !canvas) return;
+    ui.pin = p.id;
+    xf = { ...xf, ox: canvas.width / 2 - p.x * img.w * xf.s, oy: canvas.height / 2 - p.y * img.h * xf.s };
+    draw();
+  }
+
   // ---- Кнопки ----
   function showMineToPlayers() {
     if (!img || !path || !canvas) return;
@@ -284,7 +374,11 @@
   }
 
   const cursor = $derived(
-    spaceDown || ui.tool === 'pan'
+    drag?.kind === 'pin'
+      ? ui.tool === 'pin' ? 'grabbing' : 'pointer'
+      : overPin
+        ? ui.tool === 'pin' ? 'grab' : 'pointer'
+        : spaceDown || ui.tool === 'pan'
       ? drag?.kind === 'pan'
         ? 'grabbing'
         : 'grab'
@@ -315,6 +409,15 @@
       {#if ui.tool === 'reveal' || ui.tool === 'hide'}
         <div class="brush" title="Размер кисти"><Slider value={ui.brush} min={8} max={160} step={1} oninput={(v) => (ui.brush = v)} /></div>
       {/if}
+      {#if ui.tool === 'pin'}
+        <button
+          class="btn"
+          title={ui.pinShown ? 'Новые метки игроки видят сразу' : 'Новые метки видны только вам, показать игрокам — в метке'}
+          onclick={() => (ui.pinShown = !ui.pinShown)}
+        >
+          {#if ui.pinShown}<Eye size={14} /> Новые — игрокам{:else}<EyeOff size={14} /> Новые — только мне{/if}
+        </button>
+      {/if}
       <button class="icon-btn" title="Отменить (⌘Z)" disabled={!data.fog.ops.length} onclick={() => dispatch('maps', 'undoFog', { path })}>
         <Undo2 size={15} />
       </button>
@@ -344,6 +447,11 @@
           <span class="faint">{data.grid.cells}</span>
         </div>
       {/if}
+
+      <div class="sep"></div>
+      <button class="btn" class:on={ui.pinList} title="Список меток на этой карте" onclick={() => (ui.pinList = !ui.pinList)}>
+        <MapPin size={14} /> Метки{#if pins.length}<span class="faint">&nbsp;{pins.length}</span>{/if}
+      </button>
     </header>
 
     <div class="stage">
@@ -358,6 +466,9 @@
         onwheel={wheel}
       ></canvas>
       {#if !img}<div class="loading faint">Загрузка карты…</div>{/if}
+      {#if pin || ui.pinList}
+        <PinPanel {path} {pins} {pin} bind:focusTitle onpick={centerOn} onremove={removePin} />
+      {/if}
     </div>
   {:else}
     <div class="empty faint">
@@ -431,6 +542,10 @@
     gap: 6px;
     width: 140px;
     font-size: 12px;
+  }
+  .btn.on {
+    border-color: var(--accent);
+    color: var(--accent);
   }
   .icon-btn:disabled {
     opacity: 0.4;
