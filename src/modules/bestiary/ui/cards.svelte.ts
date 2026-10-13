@@ -1,7 +1,6 @@
 // Бестиарий в окне управления: краткий список карточек из ядра, фильтры и выбранная карточка.
 // Фильтры запоминаются между запусками (в окне, не в хранилище).
 import type { Card, CardRef, CardScope, CardSummary } from '../../../shared/cards';
-import { untrack } from 'svelte';
 import { defaultSide, imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
@@ -96,10 +95,8 @@ class Bestiary {
   all = $state.raw<CardSummary[]>([]);
   // raw: ссылка уходит в ядро через IPC, а реактивный прокси туда не передать.
   selected = $state.raw<CardRef | null>(null);
-  // Полная выбранная карточка (null — не выбрана или ещё грузится).
-  card = $state.raw<Card | null>(null);
-  // Для какой ссылки загружена card (card = null при cardRef — карточки нет: удалили или перенесли).
-  cardRef = $state.raw<CardRef | null>(null);
+  // Карточка в выдвижной панели (CardDrawer): открывается откуда угодно, не уводя со своей вкладки.
+  peeked = $state.raw<CardRef | null>(null);
   filters = $state<Filters>({ search: '', system: 'all', lang: 'ru', scope: 'all', kind: 'all', ...load() });
   // Меняется при каждом обновлении карточек в ядре: выбранную надо перечитать.
   rev = $state(0);
@@ -143,29 +140,37 @@ class Bestiary {
     return out.sort((a, b) => collator.compare(a.name, b.name));
   });
 
-  // Другие версии выбранной карточки (для переключателя языка).
-  versions = $derived.by(() => {
-    const cur = this.all.find((c) => sameRef(c.ref, this.selected));
-    // Оригинал первым, переводы — по названию языка.
+  // Все версии карточки (оригинал и переводы) — для переключателя языка. Оригинал первым, переводы — по языку.
+  versionsOf(ref: CardRef): CardSummary[] {
+    const cur = this.all.find((c) => sameRef(c.ref, ref));
     const list = cur ? (this.groups.get(groupId(cur)) ?? [cur]) : [];
     return [...list].sort((a, b) => Number(!!a.origin) - Number(!!b.origin) || langName(a.lang).localeCompare(langName(b.lang)));
-  });
+  }
 
   select(ref: CardRef | null) {
     this.selected = ref && { scope: ref.scope, id: ref.id };
   }
 
-  // Открыть карточку во вкладке бестиария (например, из трекера инициативы).
+  // Показать карточку в выдвижной панели — из «Персонажей», «Файлов», трекера инициативы.
   show(ref: CardRef) {
+    this.peeked = { scope: ref.scope, id: ref.id };
+  }
+
+  // Открыть карточку во вкладке бестиария (из выдвижной панели — «в бестиарии»).
+  openInBestiary(ref: CardRef) {
     this.select(ref);
+    this.peeked = null;
     openTab('bestiary');
   }
 
   // ---------- Редактор ----------
 
+  // Редактор живёт во вкладке бестиария: открываем её, выдвижную панель закрываем.
   private open(d: Omit<Draft, 'copied'> & { copied?: string[] }) {
     this.draft = { ...d, copied: d.copied ?? [] };
     this.draftStart = JSON.stringify(d.card);
+    this.peeked = null;
+    openTab('bestiary');
   }
 
   get dirty() {
@@ -248,7 +253,8 @@ class Bestiary {
     const place = await this.choosePlace({ title: 'Куда перенести карточку?', action: 'Перенести', library: true, exclude });
     if (!place) return;
     const saved = await window.api.moveCard(ref, place.scope, place.folder);
-    if (saved) this.select(saved);
+    if (saved && sameRef(ref, this.peeked)) this.peeked = saved;
+    else if (saved) this.select(saved);
   }
 
   // Перевод на другой язык: копия текущей версии, связанная с оригиналом группы. Перевод встроенной
@@ -315,7 +321,9 @@ class Bestiary {
 
   // Удаление спрашивает ядро: заодно предлагает удалить картинки, которые есть только у этой карточки.
   async remove(ref: CardRef) {
-    if ((await window.api.deleteCard(ref)) && sameRef(ref, this.selected)) this.select(null);
+    if (!(await window.api.deleteCard(ref))) return;
+    if (sameRef(ref, this.selected)) this.select(null);
+    if (sameRef(ref, this.peeked)) this.peeked = null;
   }
 
   // Импорт файлов карточек в выбранное место. Возвращает сообщение для пользователя или null.
@@ -370,24 +378,5 @@ $effect.root(() => {
     } catch {
       /* не страшно */
     }
-  });
-
-  // Подгружаем полную карточку при выборе и перечитываем после изменений в ядре. Пока грузится другая
-  // карточка, старая не показывается; та же самая (после сохранения) остаётся на экране до обновления.
-  $effect(() => {
-    const ref = bestiary.selected;
-    void bestiary.rev;
-    if (!ref || !sameRef(ref, untrack(() => bestiary.cardRef))) {
-      bestiary.card = null;
-      bestiary.cardRef = null;
-    }
-    if (!ref) return;
-    let stale = false;
-    window.api.getCard(ref).then((c) => {
-      if (stale) return;
-      bestiary.card = c;
-      bestiary.cardRef = ref;
-    });
-    return () => (stale = true);
   });
 });
