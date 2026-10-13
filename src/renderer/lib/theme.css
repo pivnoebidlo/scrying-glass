@@ -87,3 +87,6 @@ input[type=checkbox] { accent-color: var(--accent); }
 }
 .sort-before::after { left: -6px; }
 .sort-after::after { right: -6px; }
+.sort-vertical::after { top: auto; bottom: auto; left: 0; right: 0; width: auto; height: 3px; }
+.sort-vertical.sort-before::after { top: -2px; }
+.sort-vertical.sort-after::after { bottom: -2px; }

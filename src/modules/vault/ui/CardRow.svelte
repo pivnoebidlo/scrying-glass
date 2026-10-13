@@ -4,14 +4,15 @@
   import { ArrowRightLeft, ScrollText, Skull, Trash2, User, Users } from '@lucide/svelte';
   import { cardImageUrl, type CardSummary } from '../../../shared/cards';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
+  import { sortable, type SortableOpts } from '../../../renderer/lib/sortable';
 
-  let { card }: { card: CardSummary } = $props();
+  let { card, sort }: { card: CardSummary; sort?: SortableOpts } = $props();
 
   const KIND: Record<string, string> = { monster: 'монстр', npc: 'NPC', character: 'персонаж игрока' };
   const Icon = $derived(card.kind === 'monster' ? Skull : card.kind === 'character' ? Users : User);
 </script>
 
-<li class="card">
+<li class="card" use:sortable={sort}>
   <button class="main" title="Открыть карточку" onclick={() => bestiary.show(card.ref)}>
     {#if card.portrait}
       <img src={cardImageUrl(card.ref.scope, card.portrait)} alt="" loading="lazy" />

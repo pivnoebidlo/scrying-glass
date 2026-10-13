@@ -15,6 +15,8 @@
   import { dirname } from '../../../shared/vault';
   import ThumbSize from '../../../renderer/lib/ThumbSize.svelte';
   import { thumbs } from '../../../renderer/lib/thumbs.svelte';
+  import { sortable } from '../../../renderer/lib/sortable';
+  import { applyOrder } from '../../../shared/order';
 
   let { ms, app }: ModuleProps<'vault'> = $props();
 
@@ -29,12 +31,23 @@
     const parts = folder.path.split('/');
     return parts.map((name, i) => ({ name, path: parts.slice(0, i + 1).join('/') }));
   });
-  const images = $derived(folder?.files.filter((f) => f.kind === 'image') ?? []);
+  // Порядок плиток — общий с вкладками («Персонажи», «Фоны», «Раздатка»): группа — путь папки.
+  const images = $derived(
+    folder ? applyOrder(folder.files.filter((f) => f.kind === 'image'), (f) => f.path, app.order.groups[folder.path]) : []
+  );
 
   // Карточки (*.json) этой папки — их знает бестиарий, дерево хранилища показывает только картинки и музыку.
   onMount(connectCards);
+  // Порядок карточек — общий с монстрами во вкладке «Персонажи» (группа «monsters:<папка>»).
+  const cardsGroup = $derived(folder ? 'monsters:' + folder.path : '');
   const cards = $derived(
-    folder ? bestiary.all.filter((c) => c.ref.scope === 'vault' && c.file && dirname(c.file) === folder.path).sort((a, b) => a.name.localeCompare(b.name, 'ru')) : []
+    folder
+      ? applyOrder(
+          bestiary.all.filter((c) => c.ref.scope === 'vault' && c.file && dirname(c.file) === folder.path).sort((a, b) => a.name.localeCompare(b.name, 'ru')),
+          (c) => c.ref.id,
+          app.order.groups[cardsGroup]
+        )
+      : []
   );
   // Папка карточек — монстры, персонажи или партия (или вложенная в такую): сюда можно создавать и импортировать.
   const cardFolder = $derived(
@@ -133,7 +146,9 @@
     {#if cards.length}
       <h3>Карточки <span class="faint">{cards.length}</span></h3>
       <ul class="cards">
-        {#each cards as c (c.ref.id)}<CardRow card={c} />{/each}
+        {#each cards as c (c.ref.id)}
+          <CardRow card={c} sort={{ group: cardsGroup, id: c.ref.id, ids: cards.map((x) => x.ref.id), vertical: true }} />
+        {/each}
       </ul>
     {/if}
 
@@ -144,13 +159,15 @@
       </div>
       <p class="faint hint">
         Нажмите на картинку, чтобы показать её игрокам {PRIMARY_HINT[primary]}. Другие варианты — в
-        кнопках при наведении.
+        кнопках при наведении. Порядок можно менять перетаскиванием.
       </p>
       <div class="grid" style:--thumb="{thumbs.files}px">
         {#each images as f (f.path)}
-          <ImageCard path={f.path} {primary} aspect={role === 'characters' || role === 'party' || role === 'handouts' ? '3 / 4' : '4 / 3'}>
-            <div class="file-name" title={f.name}>{f.name}</div>
-          </ImageCard>
+          <div use:sortable={{ group: folder.path, id: f.path, ids: images.map((x) => x.path) }}>
+            <ImageCard path={f.path} {primary} aspect={role === 'characters' || role === 'party' || role === 'handouts' ? '3 / 4' : '4 / 3'}>
+              <div class="file-name" title={f.name}>{f.name}</div>
+            </ImageCard>
+          </div>
         {/each}
       </div>
     {/if}

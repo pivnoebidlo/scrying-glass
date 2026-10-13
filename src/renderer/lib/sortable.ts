@@ -2,7 +2,7 @@
 // Переносить можно только внутри своей группы (папки): плитка — файл в этой папке, сами файлы не двигаются.
 import type { Action } from 'svelte/action';
 import { moveId } from '../../shared/order';
-import { dispatch } from './store.svelte';
+import { dispatch, store } from './store.svelte';
 
 export interface SortableOpts {
   group: string;
@@ -11,6 +11,8 @@ export interface SortableOpts {
   ids: string[];
   // Например, пока идёт поиск: видна только часть группы.
   disabled?: boolean;
+  // Список строк, а не сетка: «до/после» — по вертикали.
+  vertical?: boolean;
 }
 
 // Что тащим сейчас (одно на окно).
@@ -18,14 +20,16 @@ let dragging: { group: string; id: string } | null = null;
 
 const MIME = 'application/x-sg-tile';
 
-export const sortable: Action<HTMLElement, SortableOpts> = (node, initial) => {
-  let o = initial;
+// Без настроек (undefined) — ничего не делает: так компонент может принимать сортировку необязательным пропом.
+export const sortable: Action<HTMLElement, SortableOpts | undefined> = (node, initial) => {
+  const off: SortableOpts = { group: '', id: '', ids: [], disabled: true };
+  let o = initial ?? off;
 
   const sideAfter = (e: DragEvent) => {
     const r = node.getBoundingClientRect();
-    return e.clientX > r.left + r.width / 2;
+    return o.vertical ? e.clientY > r.top + r.height / 2 : e.clientX > r.left + r.width / 2;
   };
-  const clear = () => node.classList.remove('sort-before', 'sort-after');
+  const clear = () => node.classList.remove('sort-before', 'sort-after', 'sort-vertical');
   const accepts = () => !o.disabled && dragging !== null && dragging.group === o.group && dragging.id !== o.id;
 
   // В полях ввода (подпись портрета) мышь выделяет текст, а не тащит плитку.
@@ -50,6 +54,7 @@ export const sortable: Action<HTMLElement, SortableOpts> = (node, initial) => {
     const after = sideAfter(e);
     node.classList.toggle('sort-after', after);
     node.classList.toggle('sort-before', !after);
+    node.classList.toggle('sort-vertical', !!o.vertical);
   };
   const ondrop = (e: DragEvent) => {
     clear();
@@ -57,7 +62,10 @@ export const sortable: Action<HTMLElement, SortableOpts> = (node, initial) => {
     e.preventDefault();
     const next = moveId(o.ids, dragging!.id, o.id, sideAfter(e));
     dragging = null;
-    dispatch('order', 'set', { group: o.group, ids: next });
+    // Здесь может быть видна только часть группы («Файлы» показывают папку без вложенных, а вкладка — с ними):
+    // места остальных сохранённых плиток не теряем, они идут следом.
+    const saved = store.state.order.groups[o.group] ?? [];
+    dispatch('order', 'set', { group: o.group, ids: [...next, ...saved.filter((x) => !next.includes(x))] });
   };
 
   node.addEventListener('pointerdown', onpointerdown);
@@ -70,7 +78,7 @@ export const sortable: Action<HTMLElement, SortableOpts> = (node, initial) => {
 
   return {
     update(next) {
-      o = next;
+      o = next ?? off;
       node.draggable = !o.disabled;
     },
     destroy() {
