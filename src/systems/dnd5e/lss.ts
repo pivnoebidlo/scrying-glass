@@ -148,7 +148,8 @@ export function fromLss(j: { data: string; edition?: string }): LssImport {
     abilities,
     saves,
     skills,
-    ...(typeof d.proficiency === 'number' ? { pb: d.proficiency } : {}),
+    // Бонус мастерства — только если он не такой, как по уровню (иначе пусть растёт с уровнем сам).
+    ...(typeof d.proficiency === 'number' && d.proficiency !== 2 + Math.floor(((num(info.level) ?? 1) - 1) / 4) ? { pb: d.proficiency } : {}),
     ...(d.inspiration ? { inspiration: true } : {}),
     ac: num(vit.ac) ?? 10,
     hpMax: num(vit['hp-max']) ?? 1,

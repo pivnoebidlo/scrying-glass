@@ -7,6 +7,7 @@
   import { folderLabel } from './places';
   import { systemOf, systems } from '../../../systems';
   import { statsEditor, statsView } from '../../../systems/ui';
+  import { isCharacter } from '../../../systems/dnd5e/character';
   import { bestiary, type Draft } from './cards.svelte';
   import ImagePicker from './ImagePicker.svelte';
   import { markdown } from '../../../renderer/lib/markdown';
@@ -33,6 +34,21 @@
     if (!sameFamily && !confirm('У другой системы другие характеристики. Начать их заново?')) return;
     if (!sameFamily) card.stats = systemOf(id).blank(card.kind);
     card.system = id;
+  }
+
+  // У персонажа игрока — лист, у монстра и NPC — статблок: при смене вида между ними характеристики начинаются
+  // заново (с подтверждением). Сторона в бою — по новому виду, если её не меняли.
+  function changeKind(select: HTMLSelectElement, kind: CardKind) {
+    const sheet = kind === 'character';
+    if (sheet !== isCharacter(card.stats)) {
+      if (!confirm(sheet ? 'У персонажа игрока вместо статблока — лист. Начать его заново?' : 'У монстра и NPC вместо листа — статблок. Начать его заново?')) {
+        select.value = card.kind;
+        return;
+      }
+      card.stats = systemOf(card.system).blank(kind);
+    }
+    if (!card.side || card.side === defaultSide(card.kind)) card.side = defaultSide(kind);
+    card.kind = kind;
   }
 
   async function addImage(vaultPath?: string, fromClipboard = false) {
@@ -102,7 +118,7 @@
           </label>
           <label class="field">
             <span>Вид</span>
-            <select bind:value={card.kind}>
+            <select value={card.kind} onchange={(e) => changeKind(e.currentTarget, e.currentTarget.value as CardKind)}>
               {#each Object.entries(KINDS) as [k, l] (k)}<option value={k}>{l}</option>{/each}
             </select>
           </label>
