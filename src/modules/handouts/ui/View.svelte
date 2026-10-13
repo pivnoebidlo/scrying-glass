@@ -8,13 +8,20 @@
   import PasteButton from '../../../renderer/lib/PasteButton.svelte';
   import { prettyName } from '../../../shared/vault';
   import { imageGroups } from '../../portraits/library';
+  import { sortable } from '../../../renderer/lib/sortable';
+  import { applyOrder } from '../../../shared/order';
   import { ui } from './ui.svelte';
   import ThumbSize from '../../../renderer/lib/ThumbSize.svelte';
   import { thumbs } from '../../../renderer/lib/thumbs.svelte';
 
   let { app }: ModuleProps<'handouts'> = $props();
 
-  const groups = $derived(app.vault.tree ? imageGroups(app.vault.tree, app.vault.name, 'handouts', app.adventures) : []);
+  const groups = $derived(
+    (app.vault.tree ? imageGroups(app.vault.tree, app.vault.name, 'handouts', app.adventures) : []).map((g) => ({
+      ...g,
+      items: applyOrder(g.items, (f) => f.path, app.order.groups[g.key]),
+    }))
+  );
   const visible = $derived.by(() => {
     const q = ui.search.trim().toLowerCase();
     return groups
@@ -56,9 +63,11 @@
       {#if !collapsed[g.key]}
         <div class="grid" style:--thumb="{thumbs.handouts}px">
           {#each g.items as f (f.path)}
-            <ImageCard path={f.path} primary="handout" aspect="3 / 4">
-              <div class="caption" title={f.path}>{prettyName(f.path)}</div>
-            </ImageCard>
+            <div use:sortable={{ group: g.key, id: f.path, ids: g.items.map((x) => x.path), disabled: !!ui.search.trim() }}>
+              <ImageCard path={f.path} primary="handout" aspect="3 / 4">
+                <div class="caption" title={f.path}>{prettyName(f.path)}</div>
+              </ImageCard>
+            </div>
           {/each}
         </div>
       {/if}

@@ -77,3 +77,13 @@ input[type=checkbox] { accent-color: var(--accent); }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--bg-active); border-radius: 5px; border: 2px solid transparent; background-clip: padding-box; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* Перетаскивание плиток (renderer/lib/sortable.ts): куда встанет плитка — полоса слева или справа. */
+.sort-dragging { opacity: .4; }
+.sort-before, .sort-after { position: relative; }
+.sort-before::after, .sort-after::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 3px; border-radius: 2px;
+  background: var(--accent); pointer-events: none; z-index: 5;
+}
+.sort-before::after { left: -6px; }
+.sort-after::after { right: -6px; }

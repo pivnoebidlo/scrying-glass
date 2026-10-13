@@ -20,6 +20,8 @@
   import { ui } from './ui.svelte';
   import MonsterTile from './MonsterTile.svelte';
   import { monsterGroups } from './monsters';
+  import { sortable } from '../../../renderer/lib/sortable';
+  import { applyOrder } from '../../../shared/order';
 
   let { ms, app }: ModuleProps<'portraits'> = $props();
 
@@ -39,7 +41,12 @@
   }
   onMount(connectCardNames);
 
-  const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []);
+  const groups = $derived(
+    (app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []).map((g) => ({
+      ...g,
+      items: applyOrder(g.items, (f) => f.path, app.order.groups[g.key]),
+    }))
+  );
   const visible = $derived.by(() => {
     const q = ui.search.trim().toLowerCase();
     return groups
@@ -49,7 +56,12 @@
   });
   const collapsed = $state<Record<string, boolean>>({});
 
-  const monsters = $derived(monsterGroups(bestiary.all, app.adventures, app.vault.name, bestiary.filters.lang === 'all' ? 'ru' : bestiary.filters.lang));
+  const monsters = $derived(
+    monsterGroups(bestiary.all, app.adventures, app.vault.name, bestiary.filters.lang === 'all' ? 'ru' : bestiary.filters.lang).map((g) => ({
+      ...g,
+      items: applyOrder(g.items, (c) => c.ref.id, app.order.groups[g.key]),
+    }))
+  );
   const visibleMonsters = $derived.by(() => {
     const q = ui.search.trim().toLowerCase();
     return monsters
@@ -96,10 +108,12 @@
       {#if !collapsed[g.key]}
         <div class="grid" style:--thumb="{thumbs.portraits}px">
           {#each g.items as f (f.path)}
-            <ImageCard path={f.path} primary="portrait">
-              <Caption path={f.path} />
-              <CardBar path={f.path} name={caption(ms, f.path)} />
-            </ImageCard>
+            <div use:sortable={{ group: g.key, id: f.path, ids: g.items.map((x) => x.path), disabled: !!ui.search.trim() }}>
+              <ImageCard path={f.path} primary="portrait">
+                <Caption path={f.path} />
+                <CardBar path={f.path} name={caption(ms, f.path)} />
+              </ImageCard>
+            </div>
           {/each}
         </div>
       {/if}
@@ -113,7 +127,11 @@
       </button>
       {#if !collapsed[g.key]}
         <div class="grid" style:--thumb="{thumbs.portraits}px">
-          {#each g.items as c (c.ref.id)}<MonsterTile card={c} />{/each}
+          {#each g.items as c (c.ref.id)}
+            <div use:sortable={{ group: g.key, id: c.ref.id, ids: g.items.map((x) => x.ref.id), disabled: !!ui.search.trim() }}>
+              <MonsterTile card={c} />
+            </div>
+          {/each}
         </div>
       {/if}
     </section>
