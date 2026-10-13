@@ -15,8 +15,18 @@ Electron-приложение для мастера D&D: окно управле
     npm start          # запуск собранной версии
     npm run typecheck  # svelte-check: проверка типов .ts и .svelte
     npm run import-srd # пересобрать встроенный бестиарий resources/srd/ из SRD (нужен интернет)
+    npm run dist       # установщик для своей системы в dist/ (настройки — electron-builder.yml)
+    npm run icon       # build/icon.png из build/icon.svg (рисует Electron: ImageMagick не умеет градиенты SVG)
 
 Перед коммитом: `npm run typecheck` и `npm run build` без ошибок.
+
+## Выпуск
+- GitHub, публичный репозиторий, лицензия GPL-3.0-or-later. Сборки только 64-битные: macOS arm64 и x64 (dmg),
+  Windows x64 (nsis), Linux x64 (deb, rpm, AppImage). Тег `v<версия>` (равна version в package.json) запускает
+  `.github/workflows/release.yml` → черновик релиза. `check.yml` — типы и сборка на каждый push в main.
+- Не подписываем (пользователь решил пока так): macOS — ad-hoc подпись (`identity: '-'`), без нотаризации.
+- В package.json `overrides` для caniuse-lite: browserslist объявляет диапазон `^1.0.4.001813`, который npm 11
+  не разбирает (EINVALIDTAGNAME) при установке новых пакетов.
 
 ## Стек и версии (не обновлять вслепую)
 - Electron 44, electron-vite 5 (требует Vite ≤ 7), Svelte 5 + @sveltejs/vite-plugin-svelte 6, Lucide (@lucide/svelte).
@@ -127,4 +137,4 @@ Electron-приложение для мастера D&D: окно управле
 снаружи, синхронизация чисел перевода с оригиналом, подписи статблока на других языках (сейчас ru/en, остальные —
 английские), вторая ролевая система.
 Отложено: замечания к музыке (выбор устройства вывода, горячие клавиши), сдвиг сетки карты,
-кэш миниатюр, тесты ядра, установщик (.dmg/.exe — пользователь просил пока не делать).
+кэш миниатюр, тесты ядра, подпись сборок (Apple Developer, сертификат Windows).

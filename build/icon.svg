@@ -1,0 +1,44 @@
+<!-- Временная иконка Scrying Glass: хрустальный шар на подставке. PNG для сборки — npm run icon. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2340"/>
+      <stop offset="1" stop-color="#14111f"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="0.42" cy="0.36" r="0.7">
+      <stop offset="0" stop-color="#d9ccff"/>
+      <stop offset="0.25" stop-color="#9b7bff"/>
+      <stop offset="0.65" stop-color="#5a3fd1"/>
+      <stop offset="1" stop-color="#241a5c"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8b6cff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#8b6cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="stand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9a15a"/>
+      <stop offset="1" stop-color="#7a5a26"/>
+    </linearGradient>
+    <radialGradient id="mist" cx="0.5" cy="0.6" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <circle cx="512" cy="450" r="330" fill="url(#glow)"/>
+  <!-- подставка -->
+  <path d="M352 700 Q512 650 672 700 L700 770 Q512 820 324 770 Z" fill="url(#stand)"/>
+  <ellipse cx="512" cy="775" rx="190" ry="34" fill="#5c431c"/>
+  <!-- шар -->
+  <circle cx="512" cy="460" r="235" fill="url(#orb)"/>
+  <ellipse cx="512" cy="540" rx="150" ry="70" fill="url(#mist)"/>
+  <!-- глаз-видение -->
+  <path d="M422 470 Q512 405 602 470 Q512 535 422 470 Z" fill="#f3eeff" fill-opacity="0.85"/>
+  <circle cx="512" cy="470" r="30" fill="#3b2a99"/>
+  <circle cx="521" cy="461" r="9" fill="#ffffff"/>
+  <!-- блик -->
+  <ellipse cx="430" cy="345" rx="70" ry="38" transform="rotate(-35 430 345)" fill="#ffffff" fill-opacity="0.55"/>
+  <!-- искры -->
+  <path d="M650 300 l10 26 26 10 -26 10 -10 26 -10 -26 -26 -10 26 -10 Z" fill="#fff" fill-opacity="0.9"/>
+  <path d="M370 590 l6 15 15 6 -15 6 -6 15 -6 -15 -15 -6 15 -6 Z" fill="#fff" fill-opacity="0.7"/>
+</svg>

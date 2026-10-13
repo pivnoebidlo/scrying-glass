@@ -3,6 +3,8 @@
   "productName": "Scrying Glass",
   "version": "0.9.0",
   "description": "Экран мастера для сессий D&D: портреты, карты, бестиарий и инициатива на втором мониторе",
+  "license": "GPL-3.0-or-later",
+  "author": "pivnoebidlo <dima@niktokro.me>",
   "main": "./out/main/index.js",
   "private": true,
   "scripts": {
@@ -11,17 +13,23 @@
     "start": "electron-vite preview",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json",
     "import-srd": "node --no-warnings scripts/import-srd.ts",
-    "postinstall": "node node_modules/electron/install.js"
+    "postinstall": "node node_modules/electron/install.js",
+    "icon": "electron scripts/render-icon.cjs",
+    "dist": "electron-vite build && electron-builder"
   },
   "devDependencies": {
     "@lucide/svelte": "^1.55.0",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@types/node": "^26.6.5",
     "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",
     "svelte": "^5.57.2",
     "svelte-check": "^4.7.6",
     "typescript": "^6.0.3",
     "vite": "^7.3.7"
+  },
+  "overrides": {
+    "caniuse-lite": "1.0.4.001815"
   }
 }

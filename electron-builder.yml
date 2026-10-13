@@ -1,0 +1,54 @@
+# Упаковка приложения: npm run dist (на своей машине — для своей системы) или GitHub Actions по тегу v*
+# (.github/workflows/release.yml собирает всё). Только 64-битные сборки. Приложения не подписаны.
+appId: app.scryingglass
+productName: Scrying Glass
+copyright: Copyright © 2026 pivnoebidlo
+directories:
+  output: dist
+  buildResources: build
+# Всё нужное собрано electron-vite в out/; встроенный бестиарий читается из resources/srd (app.getAppPath()).
+files:
+  - out/**
+  - resources/**
+  - package.json
+artifactName: ${name}-${version}-${os}-${arch}.${ext}
+# Публикацию делает workflow (gh release), сам electron-builder ничего не выкладывает.
+publish: null
+
+mac:
+  category: public.app-category.role-playing-games
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  # Без сертификата Apple: подпись «ad-hoc» (иначе на Apple Silicon приложение не запустится вовсе).
+  identity: '-'
+  hardenedRuntime: false
+dmg:
+  artifactName: ${name}-${version}-mac-${arch}.${ext}
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${name}-${version}-windows-setup.${ext}
+
+linux:
+  category: Game
+  maintainer: pivnoebidlo <dima@niktokro.me>
+  synopsis: Экран мастера для сессий D&D
+  target:
+    - target: deb
+      arch: [x64]
+    - target: rpm
+      arch: [x64]
+    - target: AppImage
+      arch: [x64]
+deb:
+  artifactName: ${name}_${version}_amd64.${ext}
+rpm:
+  artifactName: ${name}-${version}.x86_64.${ext}
+appImage:
+  artifactName: ${name}-${version}-linux-x86_64.${ext}

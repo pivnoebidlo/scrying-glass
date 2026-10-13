@@ -1,6 +1,24 @@
 # Scrying Glass
 
-Запуск:
+Экран мастера для сессий D&D: у мастера окно управления, у игроков на втором мониторе — портреты, фон, карты
+с туманом войны, раздатка, трекер инициативы; плюс музыка и атмосфера, сцены и бестиарий с листами персонажей.
+
+## Установка
+
+Готовые сборки — на странице Releases репозитория (только 64-битные системы):
+
+- macOS (Apple Silicon): `scrying-glass-<версия>-mac-arm64.dmg`, macOS (Intel): `…-mac-x64.dmg`
+- Windows: `scrying-glass-<версия>-windows-setup.exe`
+- Linux: `.deb` (Debian, Ubuntu), `.rpm` (Fedora, openSUSE) или `.AppImage` (любой дистрибутив)
+
+Приложение не подписано сертификатами Apple и Microsoft, поэтому при первом запуске система предупредит:
+
+- **macOS**: «Не удаётся проверить разработчика» или «Приложение повреждено». Перетащите приложение в «Программы»
+  и выполните в Терминале `xattr -cr "/Applications/Scrying Glass.app"` — или откройте «Системные настройки →
+  Конфиденциальность и безопасность» и нажмите «Всё равно открыть».
+- **Windows**: SmartScreen — «Подробнее» → «Выполнить в любом случае».
+
+## Разработка
 
     npm install
     npm run dev        # разработка: окна перезагружаются при сохранении
@@ -8,6 +26,12 @@
     npm start          # запуск собранной версии
     npm run typecheck  # проверка типов
     npm run import-srd # пересобрать встроенный бестиарий из SRD (нужен интернет)
+    npm run dist       # установщик для своей системы в dist/ (electron-builder.yml)
+    npm run icon       # иконка build/icon.png из build/icon.svg
+
+Выпуск версии: поднять `version` в package.json, закоммитить, `git tag v<версия>` и `git push origin v<версия>`.
+GitHub Actions (`.github/workflows/release.yml`) соберёт macOS arm64 и x64, Windows x64, Linux x64 (deb, rpm,
+AppImage) и создаст черновик релиза — его остаётся проверить и опубликовать.
 
 ## Хранилище
 
@@ -160,3 +184,8 @@ TypeScript + Svelte 5 + Electron, сборка через electron-vite. Инт�
   control.ts и display.ts окна подхватывают сами
 
 Для тестов можно запустить приложение с отдельной папкой данных: `SG_USER_DATA=/путь npm run dev`.
+
+## Лицензия
+
+GNU GPL версии 3 или новее (`LICENSE`). Встроенный бестиарий — материалы SRD 5.1 / 5.2 под CC BY 4.0,
+авторство — в `resources/srd/README.md`.
