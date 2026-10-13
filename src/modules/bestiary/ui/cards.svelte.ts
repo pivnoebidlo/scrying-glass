@@ -2,7 +2,7 @@
 // Фильтры запоминаются между запусками (в окне, не в хранилище).
 import type { Card, CardRef, CardScope, CardSummary } from '../../../shared/cards';
 import { untrack } from 'svelte';
-import { imageScope, langName, sameRef } from '../../../shared/cards';
+import { defaultSide, imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
 import { visibleIn } from '../../../shared/adventures';
@@ -191,10 +191,13 @@ class Bestiary {
     if (!place) return;
     const system = this.filters.system !== 'all' ? this.filters.system : 'dnd5e-2024';
     const lang = this.filters.lang !== 'all' ? this.filters.lang : 'ru';
+    // Вид — по папке: в папке персонажей — NPC, в папке партии — персонаж игрока, иначе монстр.
+    const role = place.folder !== undefined ? place.folder.split('/').map(folderRole).filter(Boolean).at(-1) : null;
+    const kind = role === 'characters' ? 'npc' : role === 'party' ? 'character' : 'monster';
     this.open({
       ...place,
       original: null,
-      card: { format: 1, id: '', kind: 'monster', system, lang, name: '', portraits: [], tags: [], notes: '', stats: systemOf(system).blank() },
+      card: { format: 1, id: '', kind, system, lang, name: '', side: defaultSide(kind), portraits: [], tags: [], notes: '', stats: systemOf(system).blank(kind) },
     });
     openTab('bestiary');
   }
