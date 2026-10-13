@@ -198,6 +198,7 @@
             <select class="side" value={side ?? summary.side} onchange={(e) => (side = e.currentTarget.value as CardSide)} title="На чьей стороне в бою">
               <option value="enemy">противник</option>
               <option value="ally">союзник</option>
+              <option value="neutral">нейтрал</option>
               <option value="party">партия</option>
             </select>
             <button class="btn primary" onclick={toInitiative}><Swords size={14} /> В инициативу</button>

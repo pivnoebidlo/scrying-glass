@@ -1,28 +1,36 @@
-<!-- Экран игроков: полоса очерёдности сверху. Хиты и КД противников не показываются,
-     спрятанные и побеждённые противники не видны. -->
+<!-- Экран игроков: полоса очерёдности сверху. Хиты и КД не показываются; обводка — сторона (партия золотая,
+     союзник синий, нейтрал серый, противник красный), портрет краснеет по мере ранений (настройка), побеждённые
+     остаются серыми. Спрятанных (засада) не видно. Размер и подписи — в настройках «Инициативы». -->
 <script lang="ts">
   import { fade, fly } from 'svelte/transition';
   import { flip } from 'svelte/animate';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { assetUrl } from '../../../shared/vault';
-  import { defeated, ordered } from '../order';
+  import { ordered } from '../order';
+  import type { Combatant } from '../types';
 
   let { ms }: ModuleProps<'initiative'> = $props();
 
-  const visible = $derived(ordered(ms.combatants).filter((c) => !c.hidden && !defeated(c)));
+  const d = $derived(ms.display);
+  const visible = $derived(ordered(ms.combatants).filter((c) => !c.hidden));
   const shown = $derived(ms.showToPlayers && ms.turn !== null && visible.length > 0);
+
+  const down = (c: Combatant) => c.hp !== null && c.hp <= 0;
+  // Доля потерянных хитов: 0 — цел, 1 — при смерти.
+  const wound = (c: Combatant) => (d.wounds && c.maxHp && c.hp !== null && c.hp > 0 ? Math.min(1, Math.max(0, 1 - c.hp / c.maxHp)) : 0);
 </script>
 
 {#if shown}
-  <div class="bar" transition:fade|global={{ duration: 300 }}>
+  <div class="bar" style:--s={d.size} transition:fade|global={{ duration: 300 }}>
     <div class="round">Раунд {ms.round}</div>
     <div class="list">
       {#each visible as c (c.id)}
-        <div class="c {c.side}" class:turn={c.id === ms.turn} animate:flip={{ duration: 300 }} in:fly|global={{ y: -10, duration: 250 }}>
+        <div class="c {c.side}" class:turn={c.id === ms.turn} class:down={down(c)} animate:flip={{ duration: 300 }} in:fly|global={{ y: -10, duration: 250 }}>
           <div class="avatar">
-            {#if c.portrait}<img src={assetUrl(c.portrait)} alt="" />{:else}{c.name.slice(0, 1).toUpperCase()}{/if}
+            {#if c.portrait}<img src={assetUrl(c.portrait)} alt="" />{:else}<span class="letter">{c.name.slice(0, 1).toUpperCase()}</span>{/if}
+            <div class="wound" style:--w={wound(c)}></div>
           </div>
-          <div class="name">{c.name}</div>
+          {#if d.names}<div class="name">{c.name}</div>{/if}
           {#if c.conditions.length}<div class="cond">{c.conditions.join(', ')}</div>{/if}
         </div>
       {/each}
@@ -32,14 +40,15 @@
 
 <style>
   .bar {
+    --u: calc(1cqmin * var(--s, 1));
     position: absolute;
     left: 0;
     right: 0;
     top: 0;
     display: flex;
     align-items: flex-start;
-    gap: 2cqmin;
-    padding: 1.5cqmin 2cqmin 3cqmin;
+    gap: calc(var(--u) * 2);
+    padding: calc(var(--u) * 1.5) 2cqmin calc(var(--u) * 3);
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
     font-family: Georgia, serif;
     color: #fff;
@@ -47,73 +56,100 @@
   }
   .round {
     flex: none;
-    padding-top: 2.6cqmin;
-    font-size: 2.2cqmin;
+    padding-top: calc(var(--u) * 2.6);
+    font-size: calc(var(--u) * 2.2);
     opacity: 0.8;
     white-space: nowrap;
   }
   .list {
     display: flex;
     flex-wrap: wrap;
-    gap: 1.2cqmin;
+    gap: calc(var(--u) * 1.4);
     min-width: 0;
   }
   .c {
+    --ring: #e04545;
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 9cqmin;
-    opacity: 0.75;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    width: calc(var(--u) * 11);
+    opacity: 0.85;
+    transition: opacity 0.3s ease, transform 0.3s ease, filter 0.4s ease;
+  }
+  .party {
+    --ring: #e8b94a;
+  }
+  .ally {
+    --ring: #4f8de8;
+  }
+  .neutral {
+    --ring: #9aa0a8;
   }
   .c.turn {
     opacity: 1;
     transform: scale(1.15);
   }
+  /* Побеждённый: серый и полупрозрачный, но на месте — вдруг оживят. */
+  .c.down {
+    opacity: 0.55;
+    filter: grayscale(1) brightness(0.7);
+  }
   .avatar {
+    position: relative;
     display: grid;
     place-items: center;
-    width: 7cqmin;
-    height: 7cqmin;
-    border: 0.35cqmin solid rgba(255, 255, 255, 0.5);
+    width: calc(var(--u) * 7);
+    height: calc(var(--u) * 7);
+    border: calc(var(--u) * 0.45) solid var(--ring);
     border-radius: 50%;
     overflow: hidden;
-    font-size: 3cqmin;
+    background: color-mix(in srgb, var(--ring) 45%, #000);
+    font-size: calc(var(--u) * 3);
     font-weight: 600;
-  }
-  .party .avatar {
-    background: #2f6f4f;
-  }
-  .ally .avatar {
-    background: #2f5a8f;
-  }
-  .enemy .avatar {
-    background: #8f2f2f;
+    box-shadow: 0 0 calc(var(--u) * 0.8) rgba(0, 0, 0, 0.8);
   }
   .c.turn .avatar {
-    border-color: #f0c45a;
-    box-shadow: 0 0 2cqmin rgba(240, 196, 90, 0.7);
+    box-shadow:
+      0 0 0 calc(var(--u) * 0.3) #fff,
+      0 0 calc(var(--u) * 2.2) calc(var(--u) * 0.4) rgba(255, 255, 255, 0.7);
   }
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
+  /* Ранения: портрет окрашивается в красный (оттенок, яркость картинки сохраняется) и по краям наливается
+     кровью — тем сильнее, чем меньше хитов осталось. */
+  .wound {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #d00000;
+    mix-blend-mode: color;
+    opacity: calc(var(--w, 0) * 0.9);
+    box-shadow: inset 0 0 calc(var(--u) * 2.2 * var(--w, 0)) calc(var(--u) * 0.8 * var(--w, 0)) rgba(255, 0, 0, 0.9);
+    transition: opacity 0.6s ease, box-shadow 0.6s ease;
+  }
   .name {
     max-width: 100%;
-    margin-top: 0.6cqmin;
+    margin-top: calc(var(--u) * 0.6);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 1.6cqmin;
-    text-shadow: 0 0 0.6cqmin #000;
+    overflow-wrap: anywhere;
+    text-align: center;
+    line-height: 1.15;
+    font-size: calc(var(--u) * 1.6);
+    text-shadow: 0 0 calc(var(--u) * 0.6) #000;
   }
   .cond {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 1.2cqmin;
+    font-size: calc(var(--u) * 1.2);
     color: #f0c45a;
   }
 </style>

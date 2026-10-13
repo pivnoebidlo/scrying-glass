@@ -4,14 +4,13 @@
   import { Eye, EyeOff, ScrollText, Swords, Trash2, X } from '@lucide/svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
-  import type { Combatant, Encounter, Side } from '../types';
+  import { SIDES, type Combatant, type Encounter, type Side } from '../types';
   import AvatarPick from './AvatarPick.svelte';
   import QuickAdd from './QuickAdd.svelte';
   import { ui } from './ui.svelte';
 
   let { e }: { e: Encounter } = $props();
 
-  const SIDES: Record<Side, string> = { party: 'Партия', ally: 'Союзник', enemy: 'Противник' };
   const num = (v: string) => (v.trim() === '' || isNaN(Number(v)) ? null : Number(v));
   const update = (c: Combatant, changes: Partial<Omit<Combatant, 'id'>>) => dispatch('initiative', 'update', { id: c.id, changes, encounter: e.id });
 

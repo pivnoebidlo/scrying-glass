@@ -8,14 +8,13 @@
   import { cardImageUrl, type CardSummary } from '../../../shared/cards';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { addToInitiative } from '../../bestiary/ui/combat';
-  import type { Side } from '../types';
+  import { SIDES, type Side } from '../types';
   import { addParty, suggest } from './quick';
 
   let { encounter }: { encounter?: string } = $props();
 
   onMount(connectCards);
 
-  const SIDES: Record<Side, string> = { party: 'Партия', ally: 'Союзник', enemy: 'Противник' };
   const num = (v: string) => (v.trim() === '' || isNaN(Number(v)) ? null : Number(v));
 
   let form = $state({ name: '', side: 'enemy' as Side, init: '', bonus: '', hp: '', ac: '', count: '1' });

@@ -6,7 +6,9 @@ import { assetUrl, libraryAsset } from './vault';
 export type CardKind = 'monster' | 'npc' | 'character';
 
 // На чьей стороне существо в бою (для трекера инициативы). Её можно поменять при добавлении и в самом бою.
-export type CardSide = 'party' | 'ally' | 'enemy';
+export type CardSide = 'party' | 'ally' | 'neutral' | 'enemy';
+// Подписи сторон (обводка на экране игроков: партия — золотая, союзник — синяя, нейтрал — серая, противник — красная).
+export const SIDE_TITLES: Record<CardSide, string> = { party: 'Партия', ally: 'Союзник', neutral: 'Нейтрал', enemy: 'Противник' };
 // Если в карточке не указано: персонажи игроков — партия, NPC — союзники, монстры — противники.
 export const defaultSide = (kind: CardKind): CardSide => (kind === 'monster' ? 'enemy' : kind === 'character' ? 'party' : 'ally');
 

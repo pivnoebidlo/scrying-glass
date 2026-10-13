@@ -2,9 +2,16 @@
 import { randomUUID } from 'node:crypto';
 import { defineModule } from '../../shared/module';
 import { defeated, ordered } from './order';
-import type { Combatant, Encounter, InitiativeState } from './types';
+import type { Combatant, Encounter, InitiativeState, StripSettings } from './types';
 
-const initialState: InitiativeState = { combatants: [], encounters: [], turn: null, round: 0, showToPlayers: true };
+const initialState: InitiativeState = {
+  combatants: [],
+  encounters: [],
+  turn: null,
+  round: 0,
+  showToPlayers: true,
+  display: { size: 1.5, names: true, wounds: true },
+};
 
 const d20 = () => 1 + Math.floor(Math.random() * 20);
 
@@ -168,6 +175,10 @@ export default defineModule({
     startEncounter(s, { id }: { id: string }) {
       const e = s.encounters.find((x) => x.id === id);
       return e ? { ...s, combatants: [...s.combatants, ...e.combatants.map(fresh)] } : s;
+    },
+
+    setDisplay(s, changes: Partial<StripSettings>) {
+      return { ...s, display: { ...s.display, ...changes } };
     },
 
     setShowToPlayers(s, { value }: { value: boolean }) {

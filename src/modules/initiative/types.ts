@@ -1,6 +1,7 @@
-import type { CardRef } from '../../shared/cards';
+import type { CardRef, CardSide } from '../../shared/cards';
 
-export type Side = 'party' | 'ally' | 'enemy';
+export type Side = CardSide;
+export { SIDE_TITLES as SIDES } from '../../shared/cards';
 
 export interface Combatant {
   id: string;
@@ -39,6 +40,16 @@ export interface InitiativeState {
   round: number;
   // Показывать полосу очерёдности на экране игроков.
   showToPlayers: boolean;
+  // Вид полосы на экране игроков.
+  display: StripSettings;
+}
+
+export interface StripSettings {
+  // Масштаб портретов и подписей (1 — исходный размер).
+  size: number;
+  names: boolean;
+  // Краснеть портрету по мере ранений (игроки видят, насколько ранен противник).
+  wounds: boolean;
 }
 
 // Состояния из правил D&D 5e.

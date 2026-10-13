@@ -29,6 +29,9 @@
   .ally {
     background: #2f5a8f;
   }
+  .neutral {
+    background: #5b5f66;
+  }
   .enemy {
     background: #8f2f2f;
   }

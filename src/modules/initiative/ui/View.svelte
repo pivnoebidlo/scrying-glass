@@ -5,7 +5,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { defeated, ordered } from '../order';
-  import { CONDITIONS, type Combatant, type Side } from '../types';
+  import { SIDES, CONDITIONS, type Combatant, type Side } from '../types';
   import AvatarPick from './AvatarPick.svelte';
   import QuickAdd from './QuickAdd.svelte';
   import EncounterView from './EncounterView.svelte';
@@ -26,7 +26,6 @@
   const list = $derived(ordered(ms.combatants));
   const running = $derived(ms.turn !== null);
 
-  const SIDES: Record<Side, string> = { party: 'Партия', ally: 'Союзник', enemy: 'Противник' };
 
   // Число из поля или null, если поле пустое.
   const num = (v: string) => (v.trim() === '' || isNaN(Number(v)) ? null : Number(v));

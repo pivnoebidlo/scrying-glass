@@ -127,6 +127,7 @@
             <select value={card.side ?? defaultSide(card.kind)} onchange={(e) => (card.side = e.currentTarget.value as CardSide)}>
               <option value="party">Партия</option>
               <option value="ally">Союзник</option>
+              <option value="neutral">Нейтрал</option>
               <option value="enemy">Противник</option>
             </select>
           </label>

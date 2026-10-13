@@ -9,6 +9,7 @@ import { addToInitiative } from '../bestiary/ui/combat';
 import View from './ui/View.svelte';
 import OnScreen from './ui/OnScreen.svelte';
 import Sidebar from './ui/Sidebar.svelte';
+import Settings from './ui/Settings.svelte';
 
 export default defineControl({
   id: 'initiative',
@@ -17,6 +18,7 @@ export default defineControl({
   order: 25,
   view: View,
   sidebar: Sidebar,
+  settings: Settings,
   screen: OnScreen,
   screenEmpty: (app) =>
     app.initiative.combatants.some((c) => c.id === app.initiative.turn)

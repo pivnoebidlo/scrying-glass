@@ -4,6 +4,7 @@
   import { FilePlus, ScrollText, Swords } from '@lucide/svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
+  import { SIDE_TITLES } from '../../../shared/cards';
   import { addToInitiative } from '../../bestiary/ui/combat';
 
   let { path, name }: { path: string; name: string } = $props();
@@ -23,7 +24,7 @@
       <ScrollText size={12} />
       <span class="sub">{card.subtitle}</span>
     </button>
-    <button class="icon-btn" title="В инициативу ({card.side === 'party' ? 'партия' : card.side === 'ally' ? 'союзник' : 'противник'})" onclick={fight}><Swords size={13} /></button>
+    <button class="icon-btn" title="В инициативу ({SIDE_TITLES[card.side].toLowerCase()})" onclick={fight}><Swords size={13} /></button>
   {:else}
     <button class="create" title="Статблок, описание и заметки для этого персонажа" onclick={() => bestiary.createFor(path, name)}>
       <FilePlus size={12} /> Создать карточку

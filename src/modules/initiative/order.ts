@@ -4,7 +4,7 @@ import type { Combatant } from './types';
 // По убыванию инициативы, при равенстве — по бонусу, затем партия раньше противников, затем по порядку добавления.
 // Без брошенной инициативы — в конце.
 export function ordered(list: Combatant[]): Combatant[] {
-  const side = { party: 0, ally: 1, enemy: 2 };
+  const side = { party: 0, ally: 1, neutral: 2, enemy: 3 };
   return list
     .map((c, i) => ({ c, i }))
     .sort(
@@ -17,5 +17,5 @@ export function ordered(list: Combatant[]): Combatant[] {
     .map((x) => x.c);
 }
 
-// Побеждённый противник (0 хитов) пропускает ход и не показывается игрокам.
+// Побеждённый противник (0 хитов) пропускает ход; игроки видят его серым (вдруг оживят).
 export const defeated = (c: Combatant) => c.side !== 'party' && c.hp !== null && c.hp <= 0;
