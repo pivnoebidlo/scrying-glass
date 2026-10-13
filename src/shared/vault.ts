@@ -169,3 +169,10 @@ export const isLibraryAsset = (path: string) => path.startsWith(LIBRARY);
 export const libraryAsset = (rel: string) => LIBRARY + rel;
 export const assetUrl = (path: string) =>
   isLibraryAsset(path) ? 'sg-asset://l/' + encodeURIComponent(path.slice(LIBRARY.length)) : vaultUrl(path);
+
+// Миниатюра картинки для плиток и списков (ширина в точках; ядро делает копии 128, 256, 512 и 1024 и кэширует).
+// На экране игроков — только полные картинки.
+export const thumb = (url: string, width: number) => {
+  const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
+  return `${url}?w=${Math.round(width * dpr)}`;
+};

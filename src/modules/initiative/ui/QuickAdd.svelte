@@ -2,6 +2,7 @@
      (монстры, NPC, партия), библиотеки и SRD: выбор подсказки добавляет существо с его хитами, КД и картинками.
      Без подсказки — участник «вручную» с числами из полей. -->
 <script lang="ts">
+  import { thumb } from '../../../shared/vault';
   import { Plus, Shield, Skull, User, Users } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -96,7 +97,7 @@
           {@const Icon = KIND_ICON[c.kind as keyof typeof KIND_ICON] ?? Skull}
           <li>
             <button type="button" class="hint" class:active={i === active} onmousedown={(e) => e.preventDefault()} onclick={() => pick(c)} onmouseenter={() => (active = i)}>
-              {#if c.portrait}<img src={cardImageUrl(c.ref.scope, c.portrait)} alt="" />{:else}<span class="noimg"><Icon size={14} /></span>{/if}
+              {#if c.portrait}<img src={thumb(cardImageUrl(c.ref.scope, c.portrait), 40)} alt="" />{:else}<span class="noimg"><Icon size={14} /></span>{/if}
               <span class="t">
                 <span class="n">{c.name}</span>
                 <span class="s">{c.subtitle}</span>

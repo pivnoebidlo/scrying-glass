@@ -1,6 +1,7 @@
 <!-- Карточка (монстр, NPC, персонаж игрока) в списке «Файлов»: портрет, название, вид и тип; открыть, перенести,
      удалить вместе с её картинками. -->
 <script lang="ts">
+  import { thumb } from '../../../shared/vault';
   import { ArrowRightLeft, ScrollText, Skull, Trash2, User, Users } from '@lucide/svelte';
   import { cardImageUrl, type CardSummary } from '../../../shared/cards';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
@@ -15,7 +16,7 @@
 <li class="card" use:sortable={sort}>
   <button class="main" title="Открыть карточку" onclick={() => bestiary.show(card.ref)}>
     {#if card.portrait}
-      <img src={cardImageUrl(card.ref.scope, card.portrait)} alt="" loading="lazy" />
+      <img src={thumb(cardImageUrl(card.ref.scope, card.portrait), 160)} alt="" loading="lazy" />
     {:else}
       <span class="noimg"><Icon size={16} /></span>
     {/if}

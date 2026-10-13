@@ -1,6 +1,7 @@
 <!-- Визуальный редактор карточки: общая часть (название, вид, система, язык, портреты, заметки)
      и характеристики от системы. Справа — как карточка будет выглядеть. -->
 <script lang="ts">
+  import { thumb } from '../../../shared/vault';
   import { ClipboardPaste, FolderOpen, HardDrive, Save, Star, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
   import { LANGUAGES, cardImageUrl, defaultSide, langName, type CardKind, type CardSide } from '../../../shared/cards';
@@ -200,7 +201,7 @@
         <div class="portraits">
           {#each card.portraits as p, i (p)}
             <div class="portrait" class:main={i === 0}>
-              <img src={cardImageUrl(draft.scope, p)} alt="" />
+              <img src={thumb(cardImageUrl(draft.scope, p), 160)} alt="" />
               <div class="p-actions">
                 {#if i > 0}<button type="button" class="icon-btn" title="Сделать основным" onclick={() => makeMain(i)}><Star size={13} /></button>{/if}
                 <button type="button" class="icon-btn" title="Убрать (файл останется)" onclick={() => card.portraits.splice(i, 1)}><X size={13} /></button>

@@ -4,7 +4,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { vaultUrl } from '../../../shared/vault';
+  import { vaultUrl, thumb } from '../../../shared/vault';
   import { mapName } from '../library';
   import { FULL_VIEW } from '../types';
   import { ui } from './ui.svelte';
@@ -15,7 +15,7 @@
 {#if ms.current}
   {@const path = ms.current}
   <div class="row">
-    <img src={vaultUrl(path)} alt="" />
+    <img src={thumb(vaultUrl(path), 80)} alt="" />
     <span class="name" title={path}>{mapName(path)}</span>
     <button class="icon-btn" title="Открыть в редакторе" onclick={() => { ui.selected = path; openTab('maps'); }}><Pencil size={14} /></button>
     <button class="icon-btn" title="Игроки видят всю карту" onclick={() => dispatch('maps', 'setView', { path, view: FULL_VIEW })}><Maximize size={14} /></button>

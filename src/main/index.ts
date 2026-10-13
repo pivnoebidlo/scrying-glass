@@ -12,6 +12,7 @@ import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
+import { canThumb, pruneThumbs, thumbnail } from './thumbs';
 import {
   cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
@@ -394,13 +395,20 @@ app.whenReady().then(async () => {
   initCards(settings.library ?? defaultLibrary());
 
   // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>,
-  // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>
-  protocol.handle('sg-asset', (request) => {
+  // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>. ?w=<ширина> — миниатюра.
+  protocol.handle('sg-asset', async (request) => {
     const url = new URL(request.url);
     const rel = decodeURIComponent(url.pathname.slice(1));
     const file = url.host === 'v' ? resolveInVault(rel) : url.host === 'l' ? resolveInLibrary(rel) : null;
-    return file ? serveFile(file, request) : new Response('Not found', { status: 404 });
+    if (!file) return new Response('Not found', { status: 404 });
+    const w = Number(url.searchParams.get('w'));
+    if (w > 0 && canThumb(file)) {
+      const thumb = await thumbnail(file, w).catch(() => null);
+      if (thumb) return serveFile(thumb, request);
+    }
+    return serveFile(file, request);
   });
+  pruneThumbs();
 
   createControlWindow();
   watchDisplays();

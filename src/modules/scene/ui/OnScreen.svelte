@@ -3,14 +3,14 @@
   import { X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { prettyName, vaultUrl } from '../../../shared/vault';
+  import { prettyName, vaultUrl, thumb } from '../../../shared/vault';
 
   let { ms }: ModuleProps<'scene'> = $props();
 </script>
 
 {#if ms.background}
   <div class="row">
-    <img src={vaultUrl(ms.background)} alt="" />
+    <img src={thumb(vaultUrl(ms.background), 80)} alt="" />
     <span class="name" title={ms.background}>{prettyName(ms.background)}</span>
     <button class="icon-btn" title="Убрать фон" onclick={() => dispatch('scene', 'clear')}><X size={14} /></button>
   </div>

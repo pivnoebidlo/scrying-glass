@@ -1,6 +1,7 @@
 <!-- Карточки, привязанные к метке: кто здесь живёт или кого тут встретят. Щелчок открывает карточку сбоку,
      поле ниже ищет карточки по имени (сначала своего приключения). -->
 <script lang="ts">
+  import { thumb } from '../../../shared/vault';
   import { Link, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -47,7 +48,7 @@
   {#each linked as l (refKey(l.ref))}
     <div class="chip">
       <button class="open" title="Открыть карточку" disabled={!l.card} onclick={() => bestiary.show(l.ref)}>
-        {#if l.card?.portrait}<img src={cardImageUrl(l.card.ref.scope, l.card.portrait)} alt="" />{:else}<Link size={12} />{/if}
+        {#if l.card?.portrait}<img src={thumb(cardImageUrl(l.card.ref.scope, l.card.portrait), 32)} alt="" />{:else}<Link size={12} />{/if}
         <span class:faint={!l.card}>{l.card?.name ?? 'карточки больше нет'}</span>
       </button>
       <button class="icon-btn" title="Отвязать" onclick={() => set((pin.cards ?? []).filter((r) => !sameRef(r, l.ref)))}><X size={12} /></button>
@@ -69,7 +70,7 @@
         {#each hints as c, i (refKey(c.ref))}
           <li>
             <button type="button" class="hint" class:active={i === active} onmousedown={(e) => e.preventDefault()} onclick={() => pick(c)} onmouseenter={() => (active = i)}>
-              {#if c.portrait}<img src={cardImageUrl(c.ref.scope, c.portrait)} alt="" />{:else}<span class="noimg"></span>{/if}
+              {#if c.portrait}<img src={thumb(cardImageUrl(c.ref.scope, c.portrait), 32)} alt="" />{:else}<span class="noimg"></span>{/if}
               <span class="n">{c.name}</span>
               {#if c.ref.scope === 'srd'}<span class="faint w">SRD</span>{/if}
             </button>

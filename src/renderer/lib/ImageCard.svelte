@@ -2,7 +2,7 @@
      (trash={false} — без неё), клик по картинке выполняет основное действие. Нижняя часть карточки — на усмотрение того, кто её показывает. -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { vaultUrl } from '../../shared/vault';
+  import { vaultUrl, thumb } from '../../shared/vault';
   import { imageActions } from './registry';
   import { dispatch, store } from './store.svelte';
   import { Trash2 } from '@lucide/svelte';
@@ -28,7 +28,7 @@
       title={main.active(app, path) ? 'Убрать с экрана' : main.title}
       onclick={() => main.toggle(app, path)}
     >
-      <img src={vaultUrl(path)} alt="" loading="lazy" style:aspect-ratio={aspect} />
+      <img src={thumb(vaultUrl(path), 480)} alt="" loading="lazy" style:aspect-ratio={aspect} />
     </button>
   {/if}
 

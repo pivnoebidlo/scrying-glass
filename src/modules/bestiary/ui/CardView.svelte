@@ -1,6 +1,7 @@
 <!-- Карточка целиком: портреты, языки, управление, «в бой», статблок или лист, заметки. Показывается во вкладке
      бестиария и в выдвижной панели (CardDrawer). Сама загружает карточку по ссылке и перечитывает после изменений. -->
 <script lang="ts">
+  import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
   import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Pencil, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
   import ImagePicker from './ImagePicker.svelte';
@@ -109,7 +110,7 @@
                 class="pic"
                 title={onScreen ? 'Убрать с экрана игроков' : 'Показать игрокам'}
                 onclick={() => togglePortrait(asset)}
-              ><img src={cardImageUrl(cref.scope, p)} alt="" /></button>
+              ><img src={thumb(cardImageUrl(cref.scope, p), 240)} alt="" /></button>
               <div class="p-actions">
                 {#if i > 0}<button class="icon-btn" title="Сделать основным" onclick={() => bestiary.makeMainPortrait(cref, p)}><Star size={12} /></button>{/if}
                 <button class="icon-btn" title="Убрать портрет" onclick={() => bestiary.removePortrait(cref, p)}><X size={12} /></button>

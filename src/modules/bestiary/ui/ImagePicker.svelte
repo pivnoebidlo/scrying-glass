@@ -1,7 +1,7 @@
 <!-- Выбор картинки из хранилища: сначала папки персонажей, поиск по имени и пути. -->
 <script lang="ts">
   import { Search, X } from '@lucide/svelte';
-  import { allFiles, folderRole, vaultUrl, type VaultFolder } from '../../../shared/vault';
+  import { allFiles, folderRole, vaultUrl, type VaultFolder, thumb } from '../../../shared/vault';
   import { visibleIn } from '../../../shared/adventures';
   import { store } from '../../../renderer/lib/store.svelte';
 
@@ -37,7 +37,7 @@
     <div class="grid">
       {#each visible as f (f.path)}
         <button class="item" title={f.path} onclick={() => onpick(f.path)}>
-          <img src={vaultUrl(f.path)} alt="" loading="lazy" />
+          <img src={thumb(vaultUrl(f.path), 200)} alt="" loading="lazy" />
           <span>{f.name}</span>
         </button>
       {:else}

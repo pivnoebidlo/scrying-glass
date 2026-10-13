@@ -3,7 +3,7 @@
   import { X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { assetUrl } from '../../../shared/vault';
+  import { assetUrl, thumb } from '../../../shared/vault';
   import { onMount } from 'svelte';
   import { autoCaption, connectCardNames } from './cardNames.svelte';
 
@@ -17,7 +17,7 @@
   <ul>
     {#each ms.onScreen as path (path)}
       <li>
-        <img src={assetUrl(path)} alt="" />
+        <img src={thumb(assetUrl(path), 64)} alt="" />
         <input
           class="name"
           type="text"

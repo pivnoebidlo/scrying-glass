@@ -3,7 +3,7 @@
 <script lang="ts">
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { sameRef } from '../../../shared/cards';
-  import { assetUrl } from '../../../shared/vault';
+  import { assetUrl, thumb } from '../../../shared/vault';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { onMount } from 'svelte';
   import type { Combatant } from '../types';
@@ -42,7 +42,7 @@
     {#if open}
       <div class="menu">
         {#each images as p (p)}
-          <button class="opt" class:on={p === c.portrait} onclick={() => pick(p)}><img src={assetUrl(p)} alt="" /></button>
+          <button class="opt" class:on={p === c.portrait} onclick={() => pick(p)}><img src={thumb(assetUrl(p), 64)} alt="" /></button>
         {/each}
       </div>
     {/if}

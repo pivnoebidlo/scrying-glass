@@ -3,7 +3,7 @@
 <script lang="ts">
   import { Eye, EyeOff, Swords, Trash2, X } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { assetUrl } from '../../../shared/vault';
+  import { assetUrl, thumb } from '../../../shared/vault';
   import type { Combatant } from '../../initiative/types';
   import { RING, type TokenView } from '../tokens';
   import type { MapData } from '../types';
@@ -53,7 +53,7 @@
         <li class:sel={ui.token === t.id} class:down={t.down}>
           <button class="item" onclick={() => (ui.token = ui.token === t.id ? null : t.id)}>
             <span class="av" style:--ring={RING[t.side]}>
-              {#if t.portrait}<img src={assetUrl(t.portrait)} alt="" />{:else}{t.name.slice(0, 1).toUpperCase()}{/if}
+              {#if t.portrait}<img src={thumb(assetUrl(t.portrait), 32)} alt="" />{:else}{t.name.slice(0, 1).toUpperCase()}{/if}
             </span>
             <span class="name" class:faint={t.hidden}>{t.name}</span>
           </button>
