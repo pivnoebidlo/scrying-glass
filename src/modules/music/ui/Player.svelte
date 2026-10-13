@@ -6,6 +6,7 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { vaultUrl } from '../../../shared/vault';
   import { fade, isFading, live, playback, provideSeek } from './playback.svelte';
+  import { output, route, watchDevices } from './output.svelte';
 
   let { ms }: ModuleProps<'music'> = $props();
 
@@ -147,6 +148,7 @@
           a = new Audio(vaultUrl(item.path));
           a.loop = true;
           a.volume = 0;
+          route(a, output.sink);
           loops.set(item.path, a);
         }
         const target = item.volume * master;
@@ -157,9 +159,41 @@
     });
   });
 
+  // ---- Устройство вывода ----
+  watchDevices();
+  $effect(() => {
+    const sink = output.sink;
+    untrack(() => {
+      for (const d of decks) route(d, sink);
+      for (const a of loops.values()) route(a, sink);
+    });
+  });
+
+  // ---- Горячие клавиши (не во время ввода текста) ----
+  // ⌘P — пауза/продолжить, ⌘→ / ⌘← — следующий/предыдущий трек, ⌘↑ / ⌘↓ — громкость, ⌘⇧A — атмосфера.
+  const typing = (e: KeyboardEvent) =>
+    e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement || (e.target as HTMLElement)?.isContentEditable;
+
+  function onkeydown(e: KeyboardEvent) {
+    if (!(e.metaKey || e.ctrlKey) || e.altKey || typing(e)) return;
+    const vol = (d: number) => dispatch('music', 'setVolume', { value: Math.round(Math.min(1, Math.max(0, ms.volume + d)) * 100) / 100 });
+    if (!e.shiftKey && e.code === 'KeyP') {
+      if (ms.queue.length) dispatch('music', 'playPause');
+    } else if (!e.shiftKey && e.key === 'ArrowRight') dispatch('music', 'next');
+    else if (!e.shiftKey && e.key === 'ArrowLeft') dispatch('music', 'prev');
+    else if (!e.shiftKey && e.key === 'ArrowUp') vol(0.1);
+    else if (!e.shiftKey && e.key === 'ArrowDown') vol(-0.1);
+    else if (e.shiftKey && e.code === 'KeyA') {
+      if (ms.ambience.length) dispatch('music', 'toggleAmbience');
+    } else return;
+    e.preventDefault();
+  }
+
   // Хранилище закрыли: всё замолкает.
   $effect(() => () => {
     for (const d of decks) d.pause();
     for (const a of loops.values()) a.pause();
   });
 </script>
+
+<svelte:window {onkeydown} />

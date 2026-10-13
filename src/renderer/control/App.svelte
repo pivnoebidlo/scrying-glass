@@ -7,7 +7,7 @@
   import Settings from './Settings.svelte';
   import Welcome from './Welcome.svelte';
   import RollLog from '../lib/RollLog.svelte';
-  import { store } from '../lib/store.svelte';
+  import { dispatch, store } from '../lib/store.svelte';
   import { controlContributions } from '../lib/registry';
 
   const backgrounds = controlContributions.filter((c) => c.background);
@@ -18,6 +18,13 @@
     if ((e.metaKey || e.ctrlKey) && e.key === ',' && store.state.vault.root) {
       e.preventDefault();
       workspace.openSettings();
+    }
+    // Cmd/Ctrl + B — погасить экран игроков и вернуть (не во время ввода текста).
+    const t = e.target as HTMLElement | null;
+    const typing = t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || !!t?.isContentEditable;
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.code === 'KeyB' && store.state.vault.root && !typing) {
+      e.preventDefault();
+      dispatch('core', 'toggleBlackout');
     }
   }
 </script>
