@@ -21,6 +21,7 @@ export const STANDARD_FOLDERS: [FolderRole, string][] = [
   ['party', 'party'],
   ['bestiary', 'monsters'],
   ['backgrounds', 'backgrounds'],
+  ['handouts', 'handouts'],
   ['maps', 'maps'],
   ['music', 'music'],
 ];

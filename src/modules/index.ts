@@ -10,5 +10,6 @@ import scenes from './scenes/main';
 import initiative from './initiative/main';
 import bestiary from './bestiary/main';
 import adventures from './adventures/main';
+import handouts from './handouts/main';
 
-export const moduleList = [core, vault, adventures, scene, maps, portraits, music, scenes, initiative, bestiary] as const;
+export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary] as const;

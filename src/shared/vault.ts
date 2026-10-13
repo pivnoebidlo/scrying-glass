@@ -30,7 +30,7 @@ export interface VaultState {
 
 // Назначение папки угадывается по названию. Это подсказка, а не требование.
 // Все варианты названий — здесь (потом их можно будет менять в настройках).
-export type FolderRole = 'characters' | 'party' | 'maps' | 'music' | 'backgrounds' | 'bestiary';
+export type FolderRole = 'characters' | 'party' | 'maps' | 'music' | 'backgrounds' | 'handouts' | 'bestiary';
 
 export const ROLES: Record<FolderRole, string[]> = {
   characters: ['characters', 'персонажи', 'npc', 'нпс'],
@@ -39,6 +39,8 @@ export const ROLES: Record<FolderRole, string[]> = {
   maps: ['maps', 'карты'],
   music: ['music', 'музыка', 'audio', 'звуки'],
   backgrounds: ['backgrounds', 'фоны', 'locations', 'локации'],
+  // Раздаточные материалы: записки, улики, письма — показываются игрокам поверх всего.
+  handouts: ['handouts', 'раздатка', 'раздатки', 'улики', 'записки', 'clues'],
   // Карточки монстров и NPC (файлы .json), портреты к ним можно класть рядом.
   bestiary: ['bestiary', 'бестиарий', 'monsters', 'монстры', 'creatures', 'существа'],
 };

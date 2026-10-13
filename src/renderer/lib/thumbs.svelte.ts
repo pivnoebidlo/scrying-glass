@@ -1,12 +1,13 @@
 // Размер миниатюр в сетках картинок (ширина плитки в пикселях). У каждой вкладки свой, запоминается в окне.
 const KEY = 'sg.thumbs';
 
-export type ThumbGrid = 'portraits' | 'backgrounds' | 'files';
+export type ThumbGrid = 'portraits' | 'backgrounds' | 'handouts' | 'files';
 
 // По умолчанию и пределы ползунка: портреты вытянуты вверх, фоны — широкие.
 export const THUMB_LIMITS: Record<ThumbGrid, { def: number; min: number; max: number }> = {
   portraits: { def: 180, min: 110, max: 360 },
   backgrounds: { def: 280, min: 160, max: 560 },
+  handouts: { def: 200, min: 110, max: 420 },
   files: { def: 170, min: 110, max: 360 },
 };
 
@@ -22,6 +23,7 @@ const saved = load();
 export const thumbs = $state<Record<ThumbGrid, number>>({
   portraits: saved.portraits ?? THUMB_LIMITS.portraits.def,
   backgrounds: saved.backgrounds ?? THUMB_LIMITS.backgrounds.def,
+  handouts: saved.handouts ?? THUMB_LIMITS.handouts.def,
   files: saved.files ?? THUMB_LIMITS.files.def,
 });
 

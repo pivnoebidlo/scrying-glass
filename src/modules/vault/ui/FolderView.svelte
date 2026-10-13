@@ -29,8 +29,10 @@
   const audio = $derived(folder?.files.filter((f) => f.kind === 'audio') ?? []);
   // Что делает клик по картинке: в папках персонажей — портрет, в папках карт — карта, в остальных — на весь экран.
   const role = $derived(folder ? folderRole(folder.name) : null);
-  const primary = $derived(role === 'characters' ? 'portrait' : role === 'maps' ? 'map' : 'background');
-  const PRIMARY_HINT: Record<string, string> = { portrait: 'портретом', map: 'картой', background: 'на весь экран' };
+  const primary = $derived(
+    role === 'characters' || role === 'party' ? 'portrait' : role === 'maps' ? 'map' : role === 'handouts' ? 'handout' : 'background'
+  );
+  const PRIMARY_HINT: Record<string, string> = { portrait: 'портретом', map: 'картой', background: 'на весь экран', handout: 'раздаткой' };
 
   // ⌘V во вкладке «Файлы» — вставить картинку из буфера в открытую папку (если фокус не в поле ввода).
   function onkeydown(e: KeyboardEvent) {
@@ -113,7 +115,7 @@
       </p>
       <div class="grid" style:--thumb="{thumbs.files}px">
         {#each images as f (f.path)}
-          <ImageCard path={f.path} {primary} aspect={role === 'characters' ? '3 / 4' : '4 / 3'}>
+          <ImageCard path={f.path} {primary} aspect={role === 'characters' || role === 'party' || role === 'handouts' ? '3 / 4' : '4 / 3'}>
             <div class="file-name" title={f.name}>{f.name}</div>
           </ImageCard>
         {/each}

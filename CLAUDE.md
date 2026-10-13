@@ -34,7 +34,7 @@ Electron-приложение для мастера D&D: окно управле
   - `main.ts` — `defineModule`: состояние, действия, хуки `init` / `onTreeChange`, `persist`.
   - `control.ts` — `defineControl`: иконка, `view`, `sidebar`, `screen` (блок в правой панели), `settings`,
     `imageActions` / `audioActions`, `background` (невидимый компонент: проигрыватель, горячие клавиши).
-  - `display.ts` — `defineDisplay`: слой экрана игроков с `order` (фон 10, карта 15, портреты 20, инициатива 30).
+  - `display.ts` — `defineDisplay`: слой экрана игроков с `order` (фон 10, карта 15, портреты 20, раздатка 25, инициатива 30).
   - `ui/` — Svelte-компоненты.
 - Новый модуль: папка + одна строка в `src/modules/index.ts`; `control.ts` / `display.ts` подхватываются сами.
 - Карточки (монстры, NPC, позже персонажи): формат в `src/shared/cards.ts` — общая обёртка (`system`, `lang`,
@@ -65,7 +65,8 @@ Electron-приложение для мастера D&D: окно управле
 - Обмен карточками: один JSON `{ scryingGlass: 'cards', version: 1, cards, images }` с картинками в base64
   (`exportCards` / `importCards` в `main/cards.ts`); при импорте id новые, `origin` внутри файла переписывается.
 - Хранилище — папка пользователя с деревом любой глубины. Назначение папок по названию (все варианты — `ROLES`
-  в `shared/vault.ts`, пользователь хочет потом вынести их в настройки): characters, backgrounds, maps, music, bestiary.
+  в `shared/vault.ts`, пользователь хочет потом вынести их в настройки): characters, party, backgrounds, handouts, maps,
+  music, bestiary.
   Данные приложения — `<хранилище>/.scrying-glass/state.json`, пути относительные. Файлы пользователя приложение
   само не меняет и не удаляет. Исключения: файлы карточек (их создаёт и правит редактор) и удаление по явной
   команде пользователя — только в Корзину, с подтверждением (действие `vault/trash`).

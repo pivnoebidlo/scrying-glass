@@ -22,7 +22,8 @@
     <div class="desc">
       Это обычная папка, внутри — любое дерево: приключения, главы кампании, вложенные папки. Приложение подсказывает
       назначение папок по названию: <code>characters</code> / <code>персонажи</code> — портреты, <code>фоны</code> /
-      <code>backgrounds</code> / <code>локации</code> — фоны, <code>maps</code> / <code>карты</code> — карты,
+      <code>backgrounds</code> / <code>локации</code> — фоны, <code>handouts</code> / <code>раздатка</code> /
+      <code>улики</code> — раздаточные материалы, <code>maps</code> / <code>карты</code> — карты,
       <code>music</code> / <code>музыка</code> — музыка, <code>monsters</code> / <code>монстры</code> /
       <code>бестиарий</code> — карточки бестиария. Свои данные (подписи, что на экране) приложение хранит в скрытой
       папке <code>.scrying-glass</code> внутри хранилища. Файлы пользователя оно не меняет; исключение — карточки
