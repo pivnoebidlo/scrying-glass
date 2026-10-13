@@ -25,8 +25,9 @@ Electron-приложение для мастера D&D: окно управле
   Windows x64 (nsis), Linux x64 (deb, rpm, AppImage). Тег `v<версия>` (равна version в package.json) запускает
   `.github/workflows/release.yml` → черновик релиза. `check.yml` — типы и сборка на каждый push в main.
 - Не подписываем (пользователь решил пока так): macOS — ad-hoc подпись (`identity: '-'`), без нотаризации.
-- В package.json `overrides` для caniuse-lite: browserslist объявляет диапазон `^1.0.4.001813`, который npm 11
-  не разбирает (EINVALIDTAGNAME) при установке новых пакетов.
+- В package-lock.json однажды оказалась испорченная версия caniuse-lite (`1.0.4.001815` вместо `1.0.30001815`):
+  локально всё ставилось из кэша, а `npm ci` на GitHub упал с 404. Если npm пишет EINVALIDTAGNAME или 404 на
+  странную версию — чинить запись в lock-файле, а не обходить через `overrides`.
 
 ## Стек и версии (не обновлять вслепую)
 - Electron 44, electron-vite 5 (требует Vite ≤ 7), Svelte 5 + @sveltejs/vite-plugin-svelte 6, Lucide (@lucide/svelte).
