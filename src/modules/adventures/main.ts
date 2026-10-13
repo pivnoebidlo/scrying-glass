@@ -1,0 +1,82 @@
+// Приключения: какие папки первого уровня — приключения и какое из них сейчас открыто.
+// Остальные модули фильтруют по нему то, что показывают (см. shared/adventures.ts).
+import * as fs from 'node:fs';
+import { defineModule, type ModuleContext } from '../../shared/module';
+import { looksLikeAdventure, missingFolders, type AdventuresState } from '../../shared/adventures';
+
+const initialState: AdventuresState = { list: [], current: null, initialized: false };
+
+// Убирает из списка папки, которых больше нет; при первом открытии хранилища угадывает приключения.
+function sync(s: AdventuresState, ctx: ModuleContext): AdventuresState {
+  const tree = ctx.vault.tree;
+  if (!tree) return s;
+  const top = tree.folders.map((f) => f.path);
+  let list = s.list.filter((p) => top.includes(p));
+  if (!s.initialized) list = tree.folders.filter(looksLikeAdventure).map((f) => f.path);
+  const current = s.current !== null && list.includes(s.current) ? s.current : (list[0] ?? null);
+  const same = list.length === s.list.length && list.every((p, i) => p === s.list[i]) && current === s.current;
+  return same && s.initialized ? s : { list, current, initialized: true };
+}
+
+// Создаёт недостающие стандартные папки во всех приключениях. true — что-то создано.
+function ensure(s: AdventuresState, ctx: ModuleContext): boolean {
+  let created = false;
+  for (const a of s.list) {
+    const folder = ctx.vault.tree?.folders.find((f) => f.path === a);
+    const dir = ctx.vault.resolve(a);
+    if (!folder || !dir) continue;
+    for (const name of missingFolders(folder)) {
+      fs.mkdirSync(`${dir}/${name}`, { recursive: true });
+      created = true;
+    }
+  }
+  return created;
+}
+
+export default defineModule({
+  id: 'adventures',
+  persist: true,
+  initialState,
+
+  init: sync,
+  onTreeChange: sync,
+
+  actions: {
+    select(s, { path }: { path: string | null }) {
+      return path === null || s.list.includes(path) ? { ...s, current: path } : s;
+    },
+
+    // Отметить папку первого уровня как приключение (и создать в ней стандартные папки).
+    mark(s, { path }: { path: string }, ctx) {
+      if (s.list.includes(path) || path.includes('/')) return s;
+      const next = { ...s, list: [...s.list, path].sort((a, b) => a.localeCompare(b, 'ru')), current: path };
+      if (ensure(next, ctx)) ctx.vault.rescan();
+      return next;
+    },
+
+    // Больше не приключение: папка остаётся как есть, просто её содержимое станет «общим».
+    unmark(s, { path }: { path: string }) {
+      const list = s.list.filter((p) => p !== path);
+      return { ...s, list, current: s.current === path ? (list[0] ?? null) : s.current };
+    },
+
+    // Новое приключение: папка со стандартными подпапками. Название с «/» и подобным не годится.
+    create(s, { name }: { name: string }, ctx) {
+      const clean = name.replace(/[/\\:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+      const dir = clean && !clean.startsWith('.') ? ctx.vault.resolve(clean) : null;
+      if (!dir) return s;
+      fs.mkdirSync(dir, { recursive: true });
+      ctx.vault.rescan();
+      const next = { ...s, list: [...new Set([...s.list, clean])].sort((a, b) => a.localeCompare(b, 'ru')), current: clean };
+      ensure(next, ctx);
+      ctx.vault.rescan();
+      return next;
+    },
+
+    // Проверка при открытии хранилища: в каждом приключении есть все стандартные папки.
+    ensureFolders(s, _: void, ctx) {
+      if (ensure(s, ctx)) ctx.vault.rescan();
+      return s;
+    },
+  },
+});

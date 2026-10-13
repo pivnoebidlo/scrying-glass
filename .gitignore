@@ -1,5 +1,5 @@
 node_modules/
 dist/
 out/
-adventures/
+/adventures/
 .DS_Store
