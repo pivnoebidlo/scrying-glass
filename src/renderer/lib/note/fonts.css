@@ -1,0 +1,15 @@
+/* Шрифты записок (лицензия SIL OFL 1.1, тексты лицензий — рядом с файлами). Все с кириллицей. */
+@font-face { font-family: 'Marck Script'; src: url('./fonts/marckscript/MarckScript-Regular.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'Bad Script'; src: url('./fonts/badscript/BadScript-Regular.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'Caveat'; src: url('./fonts/caveat/Caveat[wght].ttf') format('truetype'); font-weight: 400 700; font-display: block; }
+@font-face { font-family: 'Great Vibes'; src: url('./fonts/greatvibes/GreatVibes-Regular.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'Amatic SC'; src: url('./fonts/amaticsc/AmaticSC-Regular.ttf') format('truetype'); font-weight: 400; font-display: block; }
+@font-face { font-family: 'Amatic SC'; src: url('./fonts/amaticsc/AmaticSC-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'Cormorant Garamond'; src: url('./fonts/cormorantgaramond/CormorantGaramond[wght].ttf') format('truetype'); font-weight: 300 700; font-display: block; }
+@font-face { font-family: 'Cormorant Garamond'; src: url('./fonts/cormorantgaramond/CormorantGaramond-Italic[wght].ttf') format('truetype'); font-weight: 300 700; font-style: italic; font-display: block; }
+@font-face { font-family: 'Old Standard TT'; src: url('./fonts/oldstandardtt/OldStandard-Regular.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'Old Standard TT'; src: url('./fonts/oldstandardtt/OldStandard-Italic.ttf') format('truetype'); font-style: italic; font-display: block; }
+@font-face { font-family: 'Old Standard TT'; src: url('./fonts/oldstandardtt/OldStandard-Bold.ttf') format('truetype'); font-weight: 700; font-display: block; }
+@font-face { font-family: 'Ruslan Display'; src: url('./fonts/ruslandisplay/RuslanDisplay-Regular.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'Ponomar'; src: url('./fonts/ponomar/Ponomar-Regular.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'Underdog'; src: url('./fonts/underdog/Underdog-Regular.ttf') format('truetype'); font-display: block; }

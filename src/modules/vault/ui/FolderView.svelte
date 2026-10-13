@@ -10,6 +10,7 @@
   import { trackName } from '../../../shared/vault';
   import { folderIcon, ui } from './ui.svelte';
   import CardRow from './CardRow.svelte';
+  import NoteCard from '../../tools/ui/NoteCard.svelte';
   import { onMount } from 'svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { dirname } from '../../../shared/vault';
@@ -31,9 +32,10 @@
     const parts = folder.path.split('/');
     return parts.map((name, i) => ({ name, path: parts.slice(0, i + 1).join('/') }));
   });
-  // Порядок плиток — общий с вкладками («Персонажи», «Фоны», «Раздатка»): группа — путь папки.
+  // Порядок плиток — общий с вкладками («Персонажи», «Фоны», «Раздатка»): группа — путь папки. Записки
+  // (раздатка из «Инструментов») — плитками вместе с картинками.
   const images = $derived(
-    folder ? applyOrder(folder.files.filter((f) => f.kind === 'image'), (f) => f.path, app.order.groups[folder.path]) : []
+    folder ? applyOrder(folder.files.filter((f) => f.kind === 'image' || f.kind === 'note'), (f) => f.path, app.order.groups[folder.path]) : []
   );
 
   // Карточки (*.json) этой папки — их знает бестиарий, дерево хранилища показывает только картинки и музыку.
@@ -154,7 +156,7 @@
 
     {#if images.length}
       <div class="images-head">
-        <h3>Картинки <span class="faint">{images.length}</span></h3>
+        <h3>{images.some((f) => f.kind === 'note') ? 'Картинки и записки' : 'Картинки'} <span class="faint">{images.length}</span></h3>
         <ThumbSize grid="files" />
       </div>
       <p class="faint hint">
@@ -164,9 +166,13 @@
       <div class="grid" style:--thumb="{thumbs.files}px">
         {#each images as f (f.path)}
           <div use:sortable={{ group: folder.path, id: f.path, ids: images.map((x) => x.path) }}>
-            <ImageCard path={f.path} {primary} aspect={role === 'characters' || role === 'party' || role === 'handouts' ? '3 / 4' : '4 / 3'}>
-              <div class="file-name" title={f.name}>{f.name}</div>
-            </ImageCard>
+            {#if f.kind === 'note'}
+              <NoteCard path={f.path} />
+            {:else}
+              <ImageCard path={f.path} {primary} aspect={role === 'characters' || role === 'party' || role === 'handouts' ? '3 / 4' : '4 / 3'}>
+                <div class="file-name" title={f.name}>{f.name}</div>
+              </ImageCard>
+            {/if}
           </div>
         {/each}
       </div>

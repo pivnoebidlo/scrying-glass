@@ -1,8 +1,14 @@
 <!-- Вкладка «Раздатка»: записки, улики и письма из папок handouts / раздатка / улики, сгруппированные по приключениям.
-     Клик по картинке показывает её игрокам поверх всего, повторный — убирает. -->
+     Клик по картинке или записке показывает её игрокам поверх всего, повторный — убирает. Записки (сделанные
+     в «Инструментах») лежат в тех же папках и стоят в том же порядке, что и картинки. -->
 <script lang="ts">
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
-  import { Search } from '@lucide/svelte';
+  import { FilePlus2, Search } from '@lucide/svelte';
+  import { allFiles, findFolder } from '../../../shared/vault';
+  import { createNote } from '../../../renderer/lib/note/notes.svelte';
+  import NoteCard from '../../tools/ui/NoteCard.svelte';
+  import { editNote } from '../../tools/ui/ui.svelte';
+  import { noteTitle } from '../../../shared/notes';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
   import PasteButton from '../../../renderer/lib/PasteButton.svelte';
@@ -17,16 +23,23 @@
   let { app }: ModuleProps<'handouts'> = $props();
 
   const groups = $derived(
-    (app.vault.tree ? imageGroups(app.vault.tree, app.vault.name, 'handouts', app.adventures) : []).map((g) => ({
-      ...g,
-      items: applyOrder(g.items, (f) => f.path, app.order.groups[g.key]),
-    }))
+    (app.vault.tree ? imageGroups(app.vault.tree, app.vault.name, 'handouts', app.adventures) : []).map((g) => {
+      const folder = findFolder(app.vault.tree!, g.key);
+      const notes = folder ? allFiles(folder, 'note') : [];
+      return { ...g, items: applyOrder([...notes, ...g.items], (f) => f.path, app.order.groups[g.key]) };
+    })
   );
+  const label = (path: string, kind: string) => (kind === 'note' ? noteTitle(path) : prettyName(path));
+
+  async function newNote() {
+    const path = await createNote(app.vault.tree, app.adventures);
+    if (path) editNote(path);
+  }
   const visible = $derived.by(() => {
     const q = ui.search.trim().toLowerCase();
     return groups
       .filter((g) => ui.group === 'all' || g.key === ui.group)
-      .map((g) => ({ ...g, items: q ? g.items.filter((f) => prettyName(f.path).toLowerCase().includes(q)) : g.items }))
+      .map((g) => ({ ...g, items: q ? g.items.filter((f) => label(f.path, f.kind).toLowerCase().includes(q)) : g.items }))
       .filter((g) => g.items.length || !q);
   });
   const collapsed = $state<Record<string, boolean>>({});
@@ -39,6 +52,7 @@
       <input type="text" placeholder="Поиск по названию" bind:value={ui.search} />
     </label>
     <PasteButton {app} role="handouts" />
+    <button class="btn" title="Письмо, приказ, объявление — текст на пергаменте (редактор в «Инструментах»)" onclick={newNote}><FilePlus2 size={14} /> Новая записка</button>
     <div class="spacer"></div>
     <ThumbSize grid="handouts" />
   </header>
@@ -64,9 +78,13 @@
         <div class="grid" style:--thumb="{thumbs.handouts}px">
           {#each g.items as f (f.path)}
             <div use:sortable={{ group: g.key, id: f.path, ids: g.items.map((x) => x.path), disabled: !!ui.search.trim() }}>
-              <ImageCard path={f.path} primary="handout" aspect="3 / 4">
-                <div class="caption" title={f.path}>{prettyName(f.path)}</div>
-              </ImageCard>
+              {#if f.kind === 'note'}
+                <NoteCard path={f.path} />
+              {:else}
+                <ImageCard path={f.path} primary="handout" aspect="3 / 4">
+                  <div class="caption" title={f.path}>{prettyName(f.path)}</div>
+                </ImageCard>
+              {/if}
             </div>
           {/each}
         </div>

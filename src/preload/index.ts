@@ -24,6 +24,12 @@ const api: Api = {
   chooseLibrary: (reset) => ipcRenderer.invoke('cards:chooseLibrary', { reset }),
   revealLibrary: () => ipcRenderer.invoke('cards:revealLibrary'),
 
+  onVaultRescan: (cb) => { ipcRenderer.on('vault:rescanned', () => cb()); },
+  readNote: (path) => ipcRenderer.invoke('notes:read', path),
+  writeNote: (path, note) => ipcRenderer.invoke('notes:write', { path, note }),
+  createNote: (folder, title, note) => ipcRenderer.invoke('notes:create', { folder, title, note }),
+  renameNote: (path, title) => ipcRenderer.invoke('notes:rename', { path, title }),
+
   listDisplays: () => ipcRenderer.invoke('displays:list'),
   onDisplaysChanged: (cb) => { ipcRenderer.on('displays:changed', () => cb()); },
 

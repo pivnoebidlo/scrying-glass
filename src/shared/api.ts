@@ -1,5 +1,6 @@
 // API, который preload открывает окнам как window.api.
 import type { Card, CardRef, CardScope, CardSummary } from './cards';
+import type { Note } from './notes';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 
 export interface DisplayInfo {
@@ -45,6 +46,16 @@ export interface Api {
   library(): Promise<{ path: string | null; isDefault: boolean }>;
   chooseLibrary(reset?: boolean): Promise<void>;
   revealLibrary(): Promise<void>;
+
+  // Хранилище перечитано (файлы изменились — в приложении или снаружи).
+  onVaultRescan(cb: () => void): void;
+  // Записки (shared/notes.ts): пути — внутри хранилища, только «….note.json».
+  readNote(path: string): Promise<Note | null>;
+  writeNote(path: string, note: Note): Promise<boolean>;
+  // Новая записка в папке (создаётся, если её нет). Путь к файлу или null.
+  createNote(folder: string, title: string, note: Note): Promise<string | null>;
+  // Новое название = новое имя файла. Новый путь или null.
+  renameNote(path: string, title: string): Promise<string | null>;
 
   listDisplays(): Promise<DisplayInfo[]>;
   onDisplaysChanged(cb: () => void): void;

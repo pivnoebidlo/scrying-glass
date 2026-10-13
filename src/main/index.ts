@@ -13,6 +13,8 @@ import { scanVault } from './scan';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
+import { createNote, readNote, renameNote, writeNote } from './notes';
+import type { Note } from '../shared/notes';
 import {
   cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
@@ -164,6 +166,8 @@ function rescanVault(): VaultState {
   }
   if (changed) saveVault();
   broadcastState();
+  // Файлы могли измениться без изменения дерева (правка записки): окна перечитывают то, что показывают.
+  for (const win of BrowserWindow.getAllWindows()) win.webContents.send('vault:rescanned');
   return vaultState();
 }
 
@@ -238,16 +242,44 @@ function enqueue<T>(id: string, job: () => Promise<T>): Promise<T> {
   return run;
 }
 
-ipcMain.handle('action', (_event, { module: id, name, payload }: { module: string; name: string; payload: unknown }) => {
+function runAction(id: string, name: string, payload: unknown): Promise<AppState> {
   const mod = modules[id];
   const fn = mod?.actions[name];
-  if (!mod || !fn) return state;
+  if (!mod || !fn) return Promise.resolve(state);
   return enqueue(id, async () => {
     stateById[id] = await fn(stateById[id], payload || {}, ctx);
     if (mod.persist) saveVault();
     broadcastState();
     return state;
   });
+}
+
+ipcMain.handle('action', (_event, { module: id, name, payload }: { module: string; name: string; payload: unknown }) => runAction(id, name, payload));
+
+// Записки (раздатка, сделанная в приложении): файлы «….note.json» в хранилище. После записи хранилище
+// перечитывается сразу (не дожидаясь наблюдателя), и раздатка у игроков обновляется.
+const afterNoteWrite = () => enqueue('vault', async () => rescanVault());
+ipcMain.handle('notes:read', (_event, rel: string) => readNote(resolveInVault, rel));
+ipcMain.handle('notes:write', async (_event, { path: rel, note }: { path: string; note: Note }) => {
+  const ok = writeNote(resolveInVault, rel, note);
+  if (ok) await afterNoteWrite();
+  return ok;
+});
+ipcMain.handle('notes:create', async (_event, { folder, title, note }: { folder: string; title: string; note: Note }) => {
+  const rel = createNote(resolveInVault, folder, title, note);
+  if (rel) await afterNoteWrite();
+  return rel;
+});
+// Переименование меняет путь: раздатка у игроков и сцены, где была эта записка, переходят на новый.
+ipcMain.handle('notes:rename', async (_event, { path: rel, title }: { path: string; title: string }) => {
+  const next = renameNote(resolveInVault, rel, title);
+  if (!next || next === rel) return next;
+  if (state.handouts.current === rel) await runAction('handouts', 'set', { path: next });
+  for (const sc of state.scenes.scenes) {
+    if (sc.handout.path === rel) await runAction('scenes', 'setContent', { id: sc.id, content: { handout: { path: next } } });
+  }
+  await afterNoteWrite();
+  return next;
 });
 
 // Карточки (бестиарий): краткий список и полная карточка по ссылке, сохранение, картинки, папка библиотеки.

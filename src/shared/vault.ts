@@ -4,7 +4,8 @@
 export const IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
 export const AUDIO_EXT = ['.mp3', '.ogg', '.wav', '.flac', '.m4a'];
 
-export type FileKind = 'image' | 'audio';
+// note — записка, сделанная в приложении («….note.json», см. shared/notes.ts).
+export type FileKind = 'image' | 'audio' | 'note';
 
 // Пути внутри хранилища — относительные, через «/», корень — пустая строка.
 export interface VaultFile {
@@ -75,6 +76,7 @@ export function folderRole(name: string): FolderRole | null {
 }
 
 export function fileKind(name: string): FileKind | null {
+  if (name.toLowerCase().endsWith('.note.json')) return 'note';
   const ext = extname(name);
   if (IMAGE_EXT.includes(ext)) return 'image';
   if (AUDIO_EXT.includes(ext)) return 'audio';

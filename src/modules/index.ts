@@ -12,5 +12,6 @@ import bestiary from './bestiary/main';
 import adventures from './adventures/main';
 import handouts from './handouts/main';
 import order from './order/main';
+import tools from './tools/main';
 
-export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary, order] as const;
+export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary, order, tools] as const;

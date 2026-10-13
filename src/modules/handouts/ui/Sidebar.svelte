@@ -3,10 +3,19 @@
   import { Images, Scroll } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { imageGroups } from '../../portraits/library';
+  import { allFiles, findFolder } from '../../../shared/vault';
   import { ui } from './ui.svelte';
 
   let { app }: ModuleProps<'handouts'> = $props();
-  const groups = $derived(app.vault.tree ? imageGroups(app.vault.tree, app.vault.name, 'handouts', app.adventures) : []);
+  // Картинки и записки в каждой папке раздатки.
+  const groups = $derived(
+    app.vault.tree
+      ? imageGroups(app.vault.tree, app.vault.name, 'handouts', app.adventures).map((g) => {
+          const f = findFolder(app.vault.tree!, g.key);
+          return { ...g, items: [...g.items, ...(f ? allFiles(f, 'note') : [])] };
+        })
+      : []
+  );
   const total = $derived(groups.reduce((n, g) => n + g.items.length, 0));
 </script>
 
