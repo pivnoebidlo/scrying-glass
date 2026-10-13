@@ -3,7 +3,7 @@
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
   import {
-    Brush, Eraser, Eye, EyeOff, Grid3x3, Hand, MapPin, MapPinPlus, Maximize, Move, ScanEye, SquareDashed, SquareDashedMousePointer, Undo2,
+    Brush, Eraser, Eye, EyeOff, Grid3x3, Hand, Move3d, MapPin, MapPinPlus, Maximize, Move, ScanEye, SquareDashed, SquareDashedMousePointer, Undo2,
   } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { playerDisplay } from '../../../renderer/lib/nav';
@@ -59,12 +59,15 @@
     | { kind: 'brush'; op: Extract<FogOp, { kind: 'brush' }>; lx: number; ly: number }
     | { kind: 'rect'; mode: 'reveal' | 'hide'; x0: number; y0: number; x1: number; y1: number }
     | { kind: 'view'; sx: number; sy: number; view0: MapView }
-    | { kind: 'pin'; id: string; sx: number; sy: number; x0: number; y0: number; moved: boolean };
+    | { kind: 'pin'; id: string; sx: number; sy: number; x0: number; y0: number; moved: boolean }
+    | { kind: 'grid'; sx: number; sy: number; ox: number; oy: number };
   let drag = $state.raw<Drag | null>(null);
   // Метка, которую сейчас тащат: её новое место до отпускания мыши.
   let pinPreview: { id: string; x: number; y: number } | null = null;
+  // Сдвиг сетки, пока его тащат.
+  let gridPreview: { ox: number; oy: number } | null = null;
   let overPin = $state(false);
-  const PIN_R = 9;
+  const PIN_R = 11;
 
   const dpr = () => window.devicePixelRatio || 1;
 
@@ -121,7 +124,7 @@
       fitted = true;
     }
     const ctx = c.getContext('2d')!;
-    drawMap(ctx, img, fog, xf, { fogAlpha: 0.6, fogBlur: 0, grid: data.grid });
+    drawMap(ctx, img, fog, xf, { fogAlpha: 0.6, fogBlur: 0, grid: gridPreview ? { ...data.grid, ...gridPreview } : data.grid });
     const pv = pinPreview;
     drawPins(ctx, pv ? pins.map((p) => (p.id === pv.id ? { ...p, x: pv.x, y: pv.y } : p)) : pins, img, xf, {
       r: PIN_R * dpr(),
@@ -206,7 +209,7 @@
       const m = toMap(p);
       if (m.x < 0 || m.y < 0 || m.x > 1 || m.y > 1) return;
       const id = crypto.randomUUID();
-      dispatch('maps', 'addPin', { path, pin: { id, x: m.x, y: m.y, title: '', note: '', color: ui.pinColor, shown: ui.pinShown } });
+      dispatch('maps', 'addPin', { path, pin: { id, x: m.x, y: m.y, title: '', note: '', color: ui.pinColor, icon: ui.pinIcon, shown: ui.pinShown } });
       ui.pin = id;
       focusTitle = true;
     } else if (e.button === 1 || spaceDown || ui.tool === 'pan') {
@@ -225,6 +228,8 @@
       drag = { kind: 'rect', mode: ui.tool === 'revealRect' ? 'reveal' : 'hide', x0: p.x, y0: p.y, x1: p.x, y1: p.y };
     } else if (ui.tool === 'view') {
       drag = { kind: 'view', sx: p.x, sy: p.y, view0: data.view };
+    } else if (ui.tool === 'grid') {
+      drag = { kind: 'grid', sx: p.x, sy: p.y, ox: data.grid.ox ?? 0, oy: data.grid.oy ?? 0 };
     }
     draw();
   }
@@ -258,6 +263,10 @@
         x: clamp(drag.x0 + (p.x - drag.sx) / xf.s / img.w),
         y: clamp(drag.y0 + (p.y - drag.sy) / xf.s / img.h),
       };
+    } else if (drag.kind === 'grid' && data) {
+      const step = (img.w / data.grid.cells) * xf.s;
+      const frac = (v: number) => ((v % 1) + 1) % 1;
+      gridPreview = { ox: frac(drag.ox + (p.x - drag.sx) / step), oy: frac(drag.oy + (p.y - drag.sy) / step) };
     } else if (drag.kind === 'view') {
       const dx = (p.x - drag.sx) / xf.s / img.w;
       const dy = (p.y - drag.sy) / xf.s / img.h;
@@ -282,6 +291,9 @@
       const pv = pinPreview;
       await dispatch('maps', 'updatePin', { path, id: pv.id, changes: { x: pv.x, y: pv.y } });
       pinPreview = null;
+    } else if (d.kind === 'grid' && gridPreview) {
+      await dispatch('maps', 'setGrid', { path, grid: gridPreview });
+      gridPreview = null;
     } else if (d.kind === 'view' && viewPreview) {
       await dispatch('maps', 'setView', { path, view: viewPreview });
       viewPreview = null;
@@ -384,7 +396,7 @@
         : 'grab'
       : ui.tool === 'reveal' || ui.tool === 'hide'
         ? 'none'
-        : ui.tool === 'view'
+        : ui.tool === 'view' || ui.tool === 'grid'
           ? 'move'
           : 'crosshair'
   );
@@ -437,15 +449,36 @@
         class="icon-btn"
         class:active={data.grid.on}
         title="Сетка"
-        onclick={() => dispatch('maps', 'setGrid', { path, grid: { on: !data.grid.on } })}
+        onclick={() => {
+          if (data.grid.on && ui.tool === 'grid') ui.tool = 'pan';
+          dispatch('maps', 'setGrid', { path, grid: { on: !data.grid.on } });
+        }}
       >
         <Grid3x3 size={15} />
       </button>
       {#if data.grid.on}
         <div class="cells" title="Клеток по ширине карты">
           <Slider value={data.grid.cells} min={5} max={100} step={0.5} onchange={(v) => dispatch('maps', 'setGrid', { path, grid: { cells: v } })} />
-          <span class="faint">{data.grid.cells}</span>
+          <input
+            type="number"
+            min="2"
+            max="200"
+            step="0.1"
+            value={data.grid.cells}
+            onchange={(e) => {
+              const v = Number(e.currentTarget.value);
+              if (v > 0) dispatch('maps', 'setGrid', { path, grid: { cells: v } });
+            }}
+          />
         </div>
+        <button
+          class="icon-btn"
+          class:active={ui.tool === 'grid'}
+          title="Сдвинуть сетку: тащите карту, пока линии не совпадут с нарисованными"
+          onclick={() => (ui.tool = ui.tool === 'grid' ? 'pan' : 'grid')}
+        >
+          <Move3d size={15} />
+        </button>
       {/if}
 
       <div class="sep"></div>
@@ -540,8 +573,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    width: 140px;
+    width: 170px;
     font-size: 12px;
+  }
+  .cells input {
+    width: 56px;
+    padding: 2px 4px;
   }
   .btn.on {
     border-color: var(--accent);

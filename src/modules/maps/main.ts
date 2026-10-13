@@ -18,6 +18,9 @@ const clampView = (v: MapView): MapView => {
   return { x: v.x, y: v.y, w, h };
 };
 
+// Дробная часть: сдвиг сетки на целую клетку ничего не меняет.
+const frac = (v: number) => Math.round((((v % 1) + 1) % 1) * 1000) / 1000;
+
 // Убирает карты, файлов которых больше нет в хранилище.
 function prune(s: MapsState, ctx: ModuleContext): MapsState {
   const tree = ctx.vault.tree;
@@ -80,7 +83,13 @@ export default defineModule({
     setGrid(s, { path, grid }: { path: string; grid: Partial<Grid> }) {
       return withMap(s, path, (d) => ({
         ...d,
-        grid: { ...d.grid, ...grid, cells: Math.min(200, Math.max(2, grid.cells ?? d.grid.cells)) },
+        grid: {
+          ...d.grid,
+          ...grid,
+          cells: Math.min(200, Math.max(2, grid.cells ?? d.grid.cells)),
+          ox: frac(grid.ox ?? d.grid.ox ?? 0),
+          oy: frac(grid.oy ?? d.grid.oy ?? 0),
+        },
       }));
     },
 

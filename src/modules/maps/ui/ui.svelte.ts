@@ -1,7 +1,8 @@
 // Состояние редактора карт в окне управления: выбранная карта и инструмент.
+import type { PinIcon } from '../icons';
 import type { PinColor } from '../types';
 
-export type Tool = 'pan' | 'reveal' | 'hide' | 'revealRect' | 'hideRect' | 'view' | 'pin';
+export type Tool = 'pan' | 'reveal' | 'hide' | 'revealRect' | 'hideRect' | 'view' | 'pin' | 'grid';
 
 export const ui = $state({
   selected: null as string | null,
@@ -13,5 +14,6 @@ export const ui = $state({
   pinList: false,
   // С чем ставятся новые метки: последний выбранный цвет и видят ли их игроки сразу.
   pinColor: 'red' as PinColor,
+  pinIcon: 'pin' as PinIcon,
   pinShown: false,
 });

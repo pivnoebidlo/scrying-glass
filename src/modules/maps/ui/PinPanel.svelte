@@ -3,7 +3,9 @@
 <script lang="ts">
   import { ChevronLeft, Eye, EyeOff, Trash2, X } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
+  import { PIN_ICONS, type PinIcon } from '../icons';
   import { PIN_COLORS, type MapPin, type PinColor } from '../types';
+  import PinIconSvg from './PinIconSvg.svelte';
   import { ui } from './ui.svelte';
 
   let {
@@ -34,6 +36,11 @@
   function setColor(p: MapPin, color: PinColor) {
     ui.pinColor = color;
     update(p, { color });
+  }
+
+  function setIcon(p: MapPin, icon: PinIcon) {
+    ui.pinIcon = icon;
+    update(p, { icon });
   }
 
   function close() {
@@ -72,6 +79,14 @@
         </div>
       </div>
 
+      <div class="icons">
+        {#each Object.entries(PIN_ICONS) as [id, ic] (id)}
+          <button class="ic" class:active={(pin.icon ?? 'pin') === id} title={ic.title} aria-label={ic.title} onclick={() => setIcon(pin, id as PinIcon)}>
+            <PinIconSvg icon={id as PinIcon} size={16} />
+          </button>
+        {/each}
+      </div>
+
       <button class="btn shown" class:primary={!pin.shown} onclick={() => update(pin, { shown: !pin.shown })}>
         {#if pin.shown}<EyeOff size={14} /> Скрыть от игроков{:else}<Eye size={14} /> Показать игрокам{/if}
       </button>
@@ -101,7 +116,7 @@
         {#each sorted as p (p.id)}
           <li>
             <button class="item" onclick={() => onpick(p)}>
-              <span class="dot" style:--c={PIN_COLORS[p.color]}></span>
+              <span class="mark"><PinIconSvg icon={p.icon} size={14} color={PIN_COLORS[p.color]} /></span>
               <span class="name" class:faint={!p.title}>{p.title || 'Без названия'}</span>
               {#if p.note}<span class="note faint" title={p.note}>{p.note}</span>{/if}
             </button>
@@ -209,12 +224,33 @@
   .item:hover {
     background: var(--bg-hover, var(--bg-active));
   }
-  .dot {
-    flex: none;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: var(--c);
+  .mark {
+    align-self: center;
+    display: flex;
+  }
+  .icons {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 2px;
+  }
+  .ic {
+    display: grid;
+    place-items: center;
+    height: 26px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .ic:hover {
+    background: var(--bg-hover);
+    color: var(--text-normal);
+  }
+  .ic.active {
+    border-color: var(--accent);
+    color: var(--text-normal);
   }
   .name {
     flex: none;

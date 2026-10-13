@@ -1,4 +1,5 @@
 // Рисование карты на canvas: картинка, сетка, туман. Общее для редактора мастера и экрана игроков.
+import { PIN_ICONS, type PinIcon } from './icons';
 import { PIN_COLORS, type Fog, type FogOp, type Grid, type MapPin, type MapView } from './types';
 
 export interface LoadedImage {
@@ -117,12 +118,15 @@ export function drawMap(ctx: CanvasRenderingContext2D, img: LoadedImage, fog: HT
 
   if (o.grid.on) {
     const step = img.w / o.grid.cells;
+    // Первая линия — на сдвиге (у самого края не рисуем).
+    const x0 = (o.grid.ox ?? 0) * step || step;
+    const y0 = (o.grid.oy ?? 0) * step || step;
     ctx.beginPath();
-    for (let x = step; x < img.w; x += step) {
+    for (let x = x0; x < img.w; x += step) {
       ctx.moveTo(x, 0);
       ctx.lineTo(x, img.h);
     }
-    for (let y = step; y < img.h; y += step) {
+    for (let y = y0; y < img.h; y += step) {
       ctx.moveTo(0, y);
       ctx.lineTo(img.w, y);
     }
@@ -145,6 +149,14 @@ export interface PinStyle {
   // У мастера: скрытые от игроков метки — бледные с пунктиром, выбранная — с ореолом.
   master?: { selected: string | null };
 }
+
+// Контуры значков для canvas, по одному разу на значок.
+const iconPaths = new Map<PinIcon, Path2D[]>();
+const pathsOf = (icon: PinIcon) => {
+  let p = iconPaths.get(icon);
+  if (!p) iconPaths.set(icon, (p = (PIN_ICONS[icon]?.paths ?? []).map((d) => new Path2D(d))));
+  return p;
+};
 
 // Где на canvas головка булавки (для попадания мышью).
 export function pinHead(p: MapPin, img: { w: number; h: number }, xf: Xf, r: number) {
@@ -187,10 +199,25 @@ export function drawPins(ctx: CanvasRenderingContext2D, pins: MapPin[], img: { w
     if (hidden) ctx.setLineDash([r * 0.35, r * 0.25]);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.arc(x, hy, r * 0.38, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
-    ctx.fill();
+    const icon = p.icon && p.icon !== 'pin' ? pathsOf(p.icon) : null;
+    if (icon?.length) {
+      // Значок Lucide (24×24) белым внутри головки.
+      const k = (r * 1.25) / 24;
+      ctx.save();
+      ctx.translate(x - 12 * k, hy - 12 * k);
+      ctx.scale(k, k);
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = p.color === 'white' ? '#333' : '#fff';
+      for (const d of icon) ctx.stroke(d);
+      ctx.restore();
+    } else {
+      ctx.beginPath();
+      ctx.arc(x, hy, r * 0.38, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fill();
+    }
 
     if (p.title) {
       ctx.font = st.font;
