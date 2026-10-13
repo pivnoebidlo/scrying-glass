@@ -5,7 +5,7 @@ import * as fs from 'node:fs';
 import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
-import type { VaultFolder, VaultState } from '../shared/vault';
+import { setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
 import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
@@ -41,6 +41,8 @@ interface AppSettings {
   recent: string[];
   // Папка библиотеки карточек (null — в папке данных приложения).
   library?: string | null;
+  // Свои названия папок ролей (только изменённые роли; остальные — по умолчанию).
+  roles?: Partial<RoleNames> | null;
 }
 const RECENT_MAX = 10;
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -49,7 +51,7 @@ let settings: AppSettings = { vault: null, recent: [] };
 function loadSettings() {
   try {
     const saved = readJson(settingsFile()) as Partial<AppSettings> | undefined;
-    settings = { vault: saved?.vault ?? null, recent: saved?.recent ?? [], library: saved?.library ?? null };
+    settings = { vault: saved?.vault ?? null, recent: saved?.recent ?? [], library: saved?.library ?? null, roles: saved?.roles ?? null };
   } catch {
     /* не прочитались — начнём с выбора хранилища */
   }
@@ -69,6 +71,7 @@ function vaultState(): VaultState {
     name: vaultRoot ? path.basename(vaultRoot) : '',
     tree: vaultTree,
     recent: settings.recent,
+    roles: setRoleNames(settings.roles),
   };
 }
 
@@ -189,6 +192,14 @@ function forgetVault(root: string): VaultState {
   return vaultState();
 }
 
+// Новые названия папок ролей (null — по умолчанию): назначение папок меняется, поэтому хранилище перечитывается.
+function setRoles(roles: Partial<RoleNames> | null): VaultState {
+  settings = { ...settings, roles };
+  writeJsonAtomic(settingsFile(), settings);
+  setRoleNames(roles);
+  return vaultRoot ? rescanVault() : vaultState();
+}
+
 // ---------- Рассылка состояния ----------
 function broadcastState() {
   for (const win of BrowserWindow.getAllWindows()) {
@@ -204,6 +215,7 @@ const vault: VaultAccess = {
   open: openVault,
   rescan: rescanVault,
   forget: forgetVault,
+  setRoles,
 };
 
 const ctx: ModuleContext = {

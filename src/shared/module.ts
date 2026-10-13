@@ -1,6 +1,6 @@
 // Описание модуля со стороны ядра: состояние, действия, хуки.
 import type { BrowserWindow, Dialog } from 'electron';
-import type { VaultFolder, VaultState } from './vault';
+import type { RoleNames, VaultFolder, VaultState } from './vault';
 
 // Хранилище, как его видят модули.
 export interface VaultAccess {
@@ -14,6 +14,8 @@ export interface VaultAccess {
   rescan(): VaultState;
   // Забыть хранилище в списке недавних.
   forget(root: string): VaultState;
+  // Свои названия папок ролей (null — названия по умолчанию). Сохраняются в настройках приложения.
+  setRoles(roles: Partial<RoleNames> | null): VaultState;
 }
 
 // Контекст, который получают действия и хуки модулей.

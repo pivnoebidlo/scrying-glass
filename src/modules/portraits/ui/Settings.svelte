@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Портреты». -->
 <script lang="ts">
+  import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
 
@@ -22,7 +23,7 @@
   <div class="info">
     <div class="name">Откуда берутся портреты</div>
     <div class="desc">
-      Из всех папок <code>characters</code>, <code>персонажи</code> или <code>npc</code> в хранилище, на любой глубине:
+      Из всех папок <RoleFolderNames role="characters" /> в хранилище, на любой глубине:
       в приключении, в главе кампании, во вложенных папках. Подпись по умолчанию — имя файла
       (<code>староста_гилберт.jpg</code> → «Староста Гилберт»), её можно изменить на карточке. Файлы при этом не
       переименовываются.

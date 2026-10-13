@@ -9,7 +9,8 @@
 
   let { app, request }: { app: AppState; request: PlaceRequest } = $props();
 
-  const NEW_FOLDER = 'monsters';
+  // Новая папка бестиария — с первым из названий роли (настройки «Файлы»).
+  const NEW_FOLDER = $derived(app.vault.roles.bestiary[0]!);
 
   // Папки бестиария текущего приключения (первыми) и общие; чужих приключений здесь нет.
   const adv = $derived(app.adventures);

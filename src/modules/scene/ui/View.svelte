@@ -1,6 +1,7 @@
 <!-- Вкладка «Фоны»: картинки из папок backgrounds / фоны / локации, сгруппированные по приключениям.
      Клик по картинке показывает её игрокам на весь экран. -->
 <script lang="ts">
+  import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
@@ -39,7 +40,7 @@
     <div class="empty">
       <p>В хранилище пока нет папок с фонами.</p>
       <p class="faint">
-        Создайте папку <code>backgrounds</code>, <code>фоны</code> или <code>локации</code> в приключении или главе, и
+        Создайте папку <RoleFolderNames role="backgrounds" /> в приключении или главе, и
         картинки из неё появятся здесь. Картинку из любой другой папки можно показать фоном через «Файлы».
       </p>
     </div>
@@ -131,10 +132,5 @@
     max-width: 460px;
     margin: 40px auto;
     text-align: center;
-  }
-  code {
-    padding: 1px 4px;
-    border-radius: 3px;
-    background: var(--bg-active);
   }
 </style>

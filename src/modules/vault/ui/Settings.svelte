@@ -2,6 +2,7 @@
 <script lang="ts">
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
+  import RoleNames from './RoleNames.svelte';
 
   let { ms }: ModuleProps<'vault'> = $props();
   const others = $derived(ms.recent.filter((r) => r !== ms.root));
@@ -20,14 +21,10 @@
   <div class="info">
     <div class="name">Как устроено хранилище</div>
     <div class="desc">
-      Это обычная папка, внутри — любое дерево: приключения, главы кампании, вложенные папки. Приложение подсказывает
-      назначение папок по названию: <code>characters</code> / <code>персонажи</code> — портреты, <code>фоны</code> /
-      <code>backgrounds</code> / <code>локации</code> — фоны, <code>handouts</code> / <code>раздатка</code> /
-      <code>улики</code> — раздаточные материалы, <code>maps</code> / <code>карты</code> — карты,
-      <code>music</code> / <code>музыка</code> — музыка, <code>monsters</code> / <code>монстры</code> /
-      <code>бестиарий</code> — карточки бестиария. Свои данные (подписи, что на экране) приложение хранит в скрытой
-      папке <code>.scrying-glass</code> внутри хранилища. Файлы пользователя оно не меняет; исключение — карточки
-      в папках бестиария, которые вы создаёте и правите в приложении.
+      Это обычная папка, внутри — любое дерево: приключения, главы кампании, вложенные папки. Назначение папок
+      приложение угадывает по названию (список — ниже, в «Назначении папок»). Свои данные (подписи, что на экране)
+      приложение хранит в скрытой папке <code>.scrying-glass</code> внутри хранилища. Файлы пользователя оно не
+      меняет; исключение — карточки, которые вы создаёте и правите в приложении.
     </div>
   </div>
 </div>
@@ -42,6 +39,8 @@
     </div>
   {/each}
 {/if}
+
+<RoleNames {ms} />
 
 <style>
   .path {

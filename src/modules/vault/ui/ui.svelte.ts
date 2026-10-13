@@ -26,7 +26,7 @@ $effect.root(() => {
   });
 });
 
-const ROLE_ICONS: Record<FolderRole, Component> = {
+export const ROLE_ICONS: Record<FolderRole, Component> = {
   characters: Users, party: Shield, maps: Map, music: Music, backgrounds: Wallpaper, handouts: Scroll, bestiary: Skull,
 };
 

@@ -1,6 +1,7 @@
 <!-- Вкладка «Раздатка»: записки, улики и письма из папок handouts / раздатка / улики, сгруппированные по приключениям.
      Клик по картинке показывает её игрокам поверх всего, повторный — убирает. -->
 <script lang="ts">
+  import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
@@ -39,7 +40,7 @@
     <div class="empty">
       <p>В хранилище пока нет папок с раздаточными материалами.</p>
       <p class="faint">
-        Создайте папку <code>handouts</code>, <code>раздатка</code> или <code>улики</code> в приключении или главе, и
+        Создайте папку <RoleFolderNames role="handouts" /> в приключении или главе, и
         картинки из неё появятся здесь. Любую другую картинку можно показать раздаткой через «Файлы».
       </p>
     </div>
@@ -131,10 +132,5 @@
     max-width: 460px;
     margin: 40px auto;
     text-align: center;
-  }
-  code {
-    padding: 1px 4px;
-    border-radius: 3px;
-    background: var(--bg-active);
   }
 </style>

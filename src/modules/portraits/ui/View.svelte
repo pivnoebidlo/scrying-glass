@@ -2,6 +2,7 @@
      карточка NPC или лист персонажа (лежит рядом в той же папке): статблок и кнопка «в инициативу». Ниже — монстры
      приключения (карточки из его папок бестиария), чтобы накидывать их в бой отсюда же. -->
 <script lang="ts">
+  import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { caption, characterGroups } from '../library';
@@ -79,7 +80,7 @@
     <div class="empty">
       <p>В хранилище пока нет папок с персонажами.</p>
       <p class="faint">
-        Создайте папку <code>characters</code> или <code>персонажи</code> в приключении или главе, и картинки из неё
+        Создайте папку <RoleFolderNames role="characters" /> в приключении или главе, и картинки из неё
         появятся здесь. Картинку из любой другой папки можно показать игрокам через «Файлы».
       </p>
     </div>
@@ -183,10 +184,5 @@
     max-width: 460px;
     margin: 40px auto;
     text-align: center;
-  }
-  code {
-    padding: 1px 4px;
-    border-radius: 3px;
-    background: var(--bg-active);
   }
 </style>

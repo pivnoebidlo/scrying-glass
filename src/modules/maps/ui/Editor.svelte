@@ -1,5 +1,6 @@
 <!-- Вкладка «Карты»: редактор мастера. Туман полупрозрачный, рамкой — то, что видят игроки. -->
 <script lang="ts">
+  import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
   import {
     Brush, Eraser, Eye, EyeOff, Grid3x3, Hand, Maximize, Move, ScanEye, SquareDashed, SquareDashedMousePointer, Undo2,
@@ -362,7 +363,7 @@
     <div class="empty faint">
       <p>Карт пока нет.</p>
       <p>
-        Положите картинки в папку <code>maps</code> или <code>карты</code> — в приключении или главе. Любую другую картинку
+        Положите картинки в папку <RoleFolderNames role="maps" /> — в приключении или главе. Любую другую картинку
         можно открыть как карту кнопкой на её карточке.
       </p>
     </div>
@@ -459,10 +460,5 @@
     max-width: 460px;
     margin: 60px auto;
     text-align: center;
-  }
-  code {
-    padding: 1px 4px;
-    border-radius: 3px;
-    background: var(--bg-active);
   }
 </style>

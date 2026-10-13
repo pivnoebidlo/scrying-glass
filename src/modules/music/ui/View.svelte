@@ -1,5 +1,6 @@
 <!-- Вкладка «Музыка»: треки выбранного плейлиста и атмосфера. -->
 <script lang="ts">
+  import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Pause, Play, Shuffle, Trash2, Volume2, Wind, X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
@@ -77,7 +78,7 @@
   {:else}
     <div class="empty faint">
       <p>В хранилище пока нет музыки.</p>
-      <p>Положите аудиофайлы в папку <code>music</code> или <code>музыка</code> — в приключении или главе.</p>
+      <p>Положите аудиофайлы в папку <RoleFolderNames role="music" /> — в приключении или главе.</p>
     </div>
   {/if}
 
@@ -198,10 +199,5 @@
   .empty {
     padding: 40px 0;
     text-align: center;
-  }
-  code {
-    padding: 1px 4px;
-    border-radius: 3px;
-    background: var(--bg-active);
   }
 </style>

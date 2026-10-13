@@ -4,14 +4,14 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { shell, type OpenDialogOptions } from 'electron';
 import { defineModule, type ModuleContext } from '../../shared/module';
-import { AUDIO_EXT, IMAGE_EXT, type VaultState } from '../../shared/vault';
+import { AUDIO_EXT, DEFAULT_ROLES, IMAGE_EXT, type RoleNames, type VaultState } from '../../shared/vault';
 import { clipboardImage, freeName } from '../../main/files';
 import { listCards } from '../../main/cards';
 
 const openDialog = (ctx: ModuleContext, opts: OpenDialogOptions) =>
   ctx.controlWindow ? ctx.dialog.showOpenDialog(ctx.controlWindow, opts) : ctx.dialog.showOpenDialog(opts);
 
-const initialState: VaultState = { root: null, name: '', tree: null, recent: [] };
+const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES };
 
 export default defineModule({
   id: 'vault',
@@ -40,6 +40,11 @@ export default defineModule({
 
     forget(_s, { root }: { root: string }, ctx) {
       return ctx.vault.forget(root);
+    },
+
+    // Названия папок ролей (настройки приложения). null — вернуть названия по умолчанию.
+    setRoles(_s, { roles }: { roles: Partial<RoleNames> | null }, ctx) {
+      return ctx.vault.setRoles(roles);
     },
 
     // Скопировать файлы в папку хранилища. Существующие файлы не перезаписываются.

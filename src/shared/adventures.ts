@@ -1,7 +1,7 @@
 // Приключения: папки первого уровня хранилища, которые пользователь отметил (или создал кнопкой).
 // Вкладки показывают текущее приключение и «общее» — всё, что лежит вне приключений. Вкладка «Файлы»
 // по-прежнему показывает хранилище целиком. Только типы и чистые функции: используются ядром и окнами.
-import { basename, folderRole, type FolderRole, type VaultFolder } from './vault';
+import { basename, folderRole, roleNames, type FolderRole, type VaultFolder } from './vault';
 
 export interface AdventuresState {
   // Пути папок приключений (первый уровень хранилища, то есть просто имена).
@@ -15,21 +15,13 @@ export interface AdventuresState {
 // Без приключений: видно всё, подписи — путь целиком.
 export const NO_ADVENTURE: AdventuresState = { list: [], current: null, initialized: true };
 
-// Стандартные папки приключения и как их называть при создании (варианты названий — ROLES в vault.ts).
-export const STANDARD_FOLDERS: [FolderRole, string][] = [
-  ['characters', 'characters'],
-  ['party', 'party'],
-  ['bestiary', 'monsters'],
-  ['backgrounds', 'backgrounds'],
-  ['handouts', 'handouts'],
-  ['maps', 'maps'],
-  ['music', 'music'],
-];
+// Стандартные папки приключения; создаются с первым из названий роли (настройки, roleNames в vault.ts).
+const STANDARD_ROLES: FolderRole[] = ['characters', 'party', 'bestiary', 'backgrounds', 'handouts', 'maps', 'music'];
 
 // Каких стандартных папок нет прямо в папке приключения (папка с той же ролью под другим именем — есть).
 export function missingFolders(folder: VaultFolder): string[] {
   const roles = new Set(folder.folders.map((f) => folderRole(f.name)));
-  return STANDARD_FOLDERS.filter(([role]) => !roles.has(role)).map(([, name]) => name);
+  return STANDARD_ROLES.filter((role) => !roles.has(role)).map((role) => roleNames()[role][0]!);
 }
 
 // Папка похожа на приключение: в ней есть хотя бы одна папка с ролью (и сама она не «maps» и т. п.).

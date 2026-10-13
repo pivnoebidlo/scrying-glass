@@ -1,5 +1,6 @@
 <!-- Боковая панель: плейлисты (папки с музыкой). -->
 <script lang="ts">
+  import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { ListMusic, Play } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
@@ -25,7 +26,7 @@
     </div>
   {:else}
     <p class="faint hint">
-      Музыки пока нет. Положите аудиофайлы (mp3, ogg, m4a, wav, flac) в папку <code>music</code> или <code>музыка</code> —
+      Музыки пока нет. Положите аудиофайлы (mp3, ogg, m4a, wav, flac) в папку <RoleFolderNames role="music" /> —
       она появится здесь.
     </p>
   {/each}
@@ -89,10 +90,5 @@
     padding: 0 8px;
     font-size: 12px;
     line-height: 1.5;
-  }
-  code {
-    padding: 0 3px;
-    border-radius: 3px;
-    background: var(--bg-active);
   }
 </style>

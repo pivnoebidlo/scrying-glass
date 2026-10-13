@@ -1,5 +1,6 @@
 <!-- Боковая панель: карты, сгруппированные по месту в хранилище. -->
 <script lang="ts">
+  import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Eye, Map, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
@@ -43,7 +44,7 @@
     {/each}
   {:else}
     <p class="faint hint">
-      Карт пока нет. Положите картинки в папку <code>maps</code> или <code>карты</code> — они появятся здесь.
+      Карт пока нет. Положите картинки в папку <RoleFolderNames role="maps" /> — они появятся здесь.
     </p>
   {/each}
 </div>
@@ -123,10 +124,5 @@
     padding: 0 8px;
     font-size: 12px;
     line-height: 1.5;
-  }
-  code {
-    padding: 0 3px;
-    border-radius: 3px;
-    background: var(--bg-active);
   }
 </style>

@@ -26,13 +26,16 @@ export interface VaultState {
   tree: VaultFolder | null;
   // Недавно открытые хранилища, самое свежее первым.
   recent: string[];
+  // Названия папок ролей (настройки приложения, с учётом названий по умолчанию).
+  roles: RoleNames;
 }
 
 // Назначение папки угадывается по названию. Это подсказка, а не требование.
-// Все варианты названий — здесь (потом их можно будет менять в настройках).
 export type FolderRole = 'characters' | 'party' | 'maps' | 'music' | 'backgrounds' | 'handouts' | 'bestiary';
+export type RoleNames = Record<FolderRole, string[]>;
 
-export const ROLES: Record<FolderRole, string[]> = {
+// Названия по умолчанию. Первое — то, с которым приложение создаёт папку (стандартные папки приключения).
+export const DEFAULT_ROLES: RoleNames = {
   characters: ['characters', 'персонажи', 'npc', 'нпс'],
   // Персонажи игроков: листы и портреты, в бою — сторона «партия».
   party: ['party', 'партия', 'игроки', 'players', 'pc'],
@@ -42,12 +45,30 @@ export const ROLES: Record<FolderRole, string[]> = {
   // Раздаточные материалы: записки, улики, письма — показываются игрокам поверх всего.
   handouts: ['handouts', 'раздатка', 'раздатки', 'улики', 'записки', 'clues'],
   // Карточки монстров и NPC (файлы .json), портреты к ним можно класть рядом.
-  bestiary: ['bestiary', 'бестиарий', 'monsters', 'монстры', 'creatures', 'существа'],
+  bestiary: ['monsters', 'bestiary', 'бестиарий', 'монстры', 'creatures', 'существа'],
 };
 
+export const roleName = (name: string) => name.normalize('NFC').trim().toLowerCase();
+
+// Названия, которые задал пользователь (настройки приложения). Ядро ставит их при запуске и после изменения,
+// окна — из состояния vault.roles при каждом обновлении. Пустой или пропущенный список — названия по умолчанию.
+let current: RoleNames = DEFAULT_ROLES;
+
+export function setRoleNames(custom: Partial<RoleNames> | null | undefined): RoleNames {
+  const out = { ...DEFAULT_ROLES };
+  for (const role of Object.keys(DEFAULT_ROLES) as FolderRole[]) {
+    const names = [...new Set((custom?.[role] ?? []).map(roleName).filter(Boolean))];
+    if (names.length) out[role] = names;
+  }
+  current = out;
+  return out;
+}
+
+export const roleNames = (): RoleNames => current;
+
 export function folderRole(name: string): FolderRole | null {
-  const n = name.normalize('NFC').toLowerCase();
-  for (const [role, names] of Object.entries(ROLES) as [FolderRole, string[]][]) {
+  const n = roleName(name);
+  for (const [role, names] of Object.entries(current) as [FolderRole, string[]][]) {
     if (names.includes(n)) return role;
   }
   return null;

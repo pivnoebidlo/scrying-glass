@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Карты». -->
 <script lang="ts">
+  import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
 
@@ -36,16 +37,8 @@
   <div class="info">
     <div class="name">Где брать карты</div>
     <div class="desc">
-      Из папок <code>maps</code> и <code>карты</code> на любой глубине хранилища. Любую другую картинку можно показать
+      Из папок <RoleFolderNames role="maps" /> на любой глубине хранилища. Любую другую картинку можно показать
       как карту кнопкой на её карточке. Туман и обзор каждой карты сохраняются: карту можно подготовить заранее.
     </div>
   </div>
 </div>
-
-<style>
-  code {
-    padding: 1px 4px;
-    border-radius: 3px;
-    background: var(--bg-active);
-  }
-</style>

@@ -16,7 +16,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { app, BrowserWindow } from 'electron';
 import type { Card, CardRef, CardScope, CardSummary } from '../shared/cards';
 import { cardAsset, defaultSide, refKey } from '../shared/cards';
-import { folderRole, roleFolders, type VaultFolder } from '../shared/vault';
+import { folderRole, roleFolders, roleNames, type VaultFolder } from '../shared/vault';
 import { systemOf } from '../systems';
 import { fromLss, isLssExport } from '../systems/dnd5e/lss';
 import { freeName, writeJsonAtomic } from './files';
@@ -457,7 +457,7 @@ export function migrateHiddenCards(root: string, dataDir: string, tree: VaultFol
   const oldDir = path.join(root, dataDir, 'cards');
   const list = jsonFiles(oldDir);
   if (!list.length) return false;
-  const folder = tree?.folders.find((f) => folderRole(f.name) === 'bestiary')?.path ?? 'monsters';
+  const folder = tree?.folders.find((f) => folderRole(f.name) === 'bestiary')?.path ?? roleNames().bestiary[0]!;
   const dir = inside(root, folder)!;
   fs.mkdirSync(dir, { recursive: true });
   const oldImages = `${dataDir}/images/`;

@@ -1,6 +1,7 @@
 // Состояние окна: копия состояния ядра, которая обновляется при каждом изменении.
 import type { DisplayInfo } from '../../shared/api';
 import type { AppState } from '../../shared/types';
+import { setRoleNames } from '../../shared/vault';
 
 class Store {
   // Снимок состояния ядра. Целиком заменяется при каждом изменении, поэтому без глубокой реактивности.
@@ -16,8 +17,13 @@ export const dispatch = window.api.dispatch;
 
 // Загружает начальное состояние и подписывается на изменения. Вызывается до монтирования интерфейса.
 export async function connect(opts: { displays?: boolean } = {}) {
-  window.api.onState((s) => (store.state = s));
-  store.state = await window.api.getState();
+  // Названия папок ролей нужны folderRole() и прочим функциям shared/vault.ts — ставим их до нового состояния.
+  const apply = (s: AppState) => {
+    setRoleNames(s.vault.roles);
+    store.state = s;
+  };
+  window.api.onState(apply);
+  apply(await window.api.getState());
 
   if (opts.displays) {
     const refresh = async () => (store.displays = await window.api.listDisplays());
