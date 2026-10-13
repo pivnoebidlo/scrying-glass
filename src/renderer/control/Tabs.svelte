@@ -1,4 +1,5 @@
-<!-- Рабочая область: вкладки модулей. -->
+<!-- Рабочая область: вкладки модулей. Когда вкладки не помещаются, они сжимаются (название обрезается, до одной
+     иконки); если и так тесно — полоса прокручивается колёсиком без полосы прокрутки, активная вкладка всегда видна. -->
 <script lang="ts">
   import { X } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
@@ -7,17 +8,35 @@
 
   const find = (id: string) => controlContributions.find((x) => x.id === id);
   const active = $derived(workspace.active ? find(workspace.active) : undefined);
+
+  let bar: HTMLDivElement;
+  // Активную вкладку — в видимую часть полосы.
+  $effect(() => {
+    const id = workspace.active;
+    bar?.querySelector<HTMLElement>(`[data-tab="${id}"]`)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  });
+  // Колесо мыши прокручивает полосу вбок.
+  function onwheel(e: WheelEvent) {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) bar.scrollLeft += e.deltaY;
+  }
 </script>
 
 <main class="workspace">
-  <div class="tab-bar">
+  <div class="tab-bar" bind:this={bar} {onwheel}>
     {#each workspace.tabs as id (id)}
       {@const c = find(id)}
       {#if c}
-        <div class="tab" class:active={workspace.active === id}>
-          <button class="tab-label" onclick={() => (workspace.active = id)}>
+        <!-- Средняя кнопка мыши закрывает вкладку, как в браузере. -->
+        <div
+          class="tab"
+          class:active={workspace.active === id}
+          data-tab={id}
+          role="presentation"
+          onauxclick={(e) => e.button === 1 && workspace.closeTab(id)}
+        >
+          <button class="tab-label" title={c.title} onclick={() => (workspace.active = id)}>
             <c.icon size={14} />
-            {c.title}
+            <span class="tab-title">{c.title}</span>
           </button>
           <button class="tab-close icon-btn" title="Закрыть" onclick={() => workspace.closeTab(id)}>
             <X size={13} />
@@ -54,10 +73,16 @@
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
     overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar {
+    display: none;
   }
   .tab {
     display: flex;
+    flex: 0 1 auto;
     align-items: center;
+    min-width: 58px;
     max-width: 220px;
     padding: 0 4px 0 10px;
     border-radius: var(--radius-m) var(--radius-m) 0 0;
@@ -66,7 +91,9 @@
   .tab:hover {
     background: var(--bg-hover);
   }
+  /* Активная вкладка не сжимается: название текущей видно всегда. */
   .tab.active {
+    flex-shrink: 0;
     background: var(--bg-primary);
     color: var(--text-normal);
   }
@@ -79,13 +106,33 @@
     border: 0;
     background: none;
     cursor: pointer;
-    white-space: nowrap;
+  }
+  .tab-label :global(svg) {
+    flex: none;
+  }
+  .tab-title {
     overflow: hidden;
+    white-space: nowrap;
     text-overflow: ellipsis;
   }
   .tab-close {
+    flex: none;
     width: 20px;
     height: 20px;
+  }
+  /* У неактивной вкладки крестик места не занимает: появляется при наведении поверх конца названия. */
+  .tab:not(.active) {
+    position: relative;
+    min-width: 36px;
+    padding-right: 4px;
+  }
+  .tab:not(.active) .tab-close {
+    position: absolute;
+    right: 4px;
+    background: var(--bg-hover);
+  }
+  .tab:not(.active):not(:hover) .tab-close {
+    display: none;
   }
   .content {
     flex: 1;
