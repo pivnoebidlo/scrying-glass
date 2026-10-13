@@ -5,6 +5,7 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { PIN_ICONS, type PinIcon } from '../icons';
   import { PIN_COLORS, type MapPin, type PinColor } from '../types';
+  import PinCards from './PinCards.svelte';
   import PinIconSvg from './PinIconSvg.svelte';
   import { ui } from './ui.svelte';
 
@@ -101,6 +102,8 @@
         onchange={(e) => update(pin, { note: e.currentTarget.value })}
       ></textarea>
 
+      <PinCards {path} {pin} />
+
       <footer>
         <span class="faint">Перетащите метку инструментом меток</span>
         <button class="icon-btn" title="Удалить метку (Delete)" onclick={() => onremove(pin)}><Trash2 size={15} /></button>
@@ -141,13 +144,11 @@
     flex-direction: column;
     gap: 8px;
     width: 270px;
-    max-height: calc(100% - 20px);
     padding: 10px;
     border: 1px solid var(--border);
     border-radius: var(--radius-m, 8px);
     background: var(--bg-primary);
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
-    overflow: auto;
   }
   header {
     display: flex;
@@ -198,6 +199,8 @@
     font-size: 12px;
   }
   ul {
+    max-height: 60vh;
+    overflow: auto;
     margin: 0;
     padding: 0;
     list-style: none;

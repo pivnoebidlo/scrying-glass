@@ -1,3 +1,4 @@
+import type { CardRef } from '../../shared/cards';
 import type { PinIcon } from './icons';
 
 // Карты. Все координаты — доли размера карты (0..1): x — от ширины, y — от высоты.
@@ -45,6 +46,8 @@ export interface MapPin {
   color: PinColor;
   // Значок в головке булавки (нет — просто булавка).
   icon?: PinIcon;
+  // Связанные карточки (трактирщик таверны, жрец храма): открываются из метки. Игроки их не видят.
+  cards?: CardRef[];
   shown: boolean;
 }
 
