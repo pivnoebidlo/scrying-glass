@@ -2,9 +2,9 @@
 import { randomUUID } from 'node:crypto';
 import { defineModule } from '../../shared/module';
 import { defeated, ordered } from './order';
-import type { Combatant, InitiativeState } from './types';
+import type { Combatant, Encounter, InitiativeState } from './types';
 
-const initialState: InitiativeState = { combatants: [], turn: null, round: 0, showToPlayers: true };
+const initialState: InitiativeState = { combatants: [], encounters: [], turn: null, round: 0, showToPlayers: true };
 
 const d20 = () => 1 + Math.floor(Math.random() * 20);
 
@@ -30,10 +30,22 @@ function advance(s: InitiativeState, step: 1 | -1): InitiativeState {
   return { ...s, turn: list[i]!.id, round };
 }
 
-const patch = (s: InitiativeState, id: string, fn: (c: Combatant) => Combatant): InitiativeState => ({
+// Список участников: текущего боя или заготовки (encounter — её id).
+function withList(s: InitiativeState, encounter: string | undefined, fn: (list: Combatant[]) => Combatant[]): InitiativeState {
+  if (!encounter) return { ...s, combatants: fn(s.combatants) };
+  return { ...s, encounters: s.encounters.map((e) => (e.id === encounter ? { ...e, combatants: fn(e.combatants) } : e)) };
+}
+
+const patch = (s: InitiativeState, id: string, fn: (c: Combatant) => Combatant, encounter?: string): InitiativeState =>
+  withList(s, encounter, (list) => list.map((c) => (c.id === id ? fn(c) : c)));
+
+const patchEncounter = (s: InitiativeState, id: string, fn: (e: Encounter) => Encounter): InitiativeState => ({
   ...s,
-  combatants: s.combatants.map((c) => (c.id === id ? fn(c) : c)),
+  encounters: s.encounters.map((e) => (e.id === id ? fn(e) : e)),
 });
+
+// Копия участника для боя: новый id, полные хиты, без инициативы и состояний.
+const fresh = (c: Combatant): Combatant => ({ ...c, id: randomUUID(), init: null, hp: c.maxHp, conditions: [] });
 
 export default defineModule({
   id: 'initiative',
@@ -41,7 +53,8 @@ export default defineModule({
   initialState,
 
   actions: {
-    add(s, { c }: { c: Partial<Omit<Combatant, 'id'>> }) {
+    // encounter — добавить в заготовку, а не в текущий бой.
+    add(s, { c, encounter }: { c: Partial<Omit<Combatant, 'id'>>; encounter?: string }) {
       const full: Combatant = {
         id: randomUUID(),
         name: c.name?.trim() || 'Без имени',
@@ -56,11 +69,11 @@ export default defineModule({
         conditions: [],
         card: c.card ?? null,
       };
-      return { ...s, combatants: [...s.combatants, full] };
+      return withList(s, encounter, (list) => [...list, full]);
     },
 
-    update(s, { id, changes }: { id: string; changes: Partial<Omit<Combatant, 'id'>> }) {
-      return patch(s, id, (c) => ({ ...c, ...changes }));
+    update(s, { id, changes, encounter }: { id: string; changes: Partial<Omit<Combatant, 'id'>>; encounter?: string }) {
+      return patch(s, id, (c) => ({ ...c, ...changes, ...(encounter && 'maxHp' in changes ? { hp: changes.maxHp ?? null } : {}) }), encounter);
     },
 
     // Урон (amount < 0) или лечение (amount > 0). Хиты не выходят за 0 и максимум.
@@ -81,7 +94,8 @@ export default defineModule({
       }));
     },
 
-    remove(s, { id }: { id: string }) {
+    remove(s, { id, encounter }: { id: string; encounter?: string }) {
+      if (encounter) return withList(s, encounter, (list) => list.filter((c) => c.id !== id));
       // Если удаляют того, чей ход, ход переходит к следующему.
       const next = s.turn === id ? advance(s, 1) : s;
       const combatants = next.combatants.filter((c) => c.id !== id);
@@ -126,6 +140,34 @@ export default defineModule({
           .filter((c) => c.side === 'party')
           .map((c) => ({ ...c, init: null, conditions: [] })),
       };
+    },
+
+    // ---- Заготовки боёв ----
+
+    // Новая заготовка (id даёт окно, чтобы сразу её открыть); fromFight — сразу с участниками текущего боя (кроме партии): «сохранить бой как заготовку».
+    createEncounter(s, { id, name, adventure, fromFight }: { id: string; name: string; adventure: string | null; fromFight?: boolean }) {
+      const combatants = fromFight ? s.combatants.filter((c) => c.side !== 'party').map(fresh) : [];
+      const e: Encounter = { id, name: name.trim() || 'Новый бой', adventure, combatants };
+      return { ...s, encounters: [...s.encounters, e] };
+    },
+
+    renameEncounter(s, { id, name }: { id: string; name: string }) {
+      return name.trim() ? patchEncounter(s, id, (e) => ({ ...e, name: name.trim() })) : s;
+    },
+
+    setEncounterAdventure(s, { id, adventure }: { id: string; adventure: string | null }) {
+      return patchEncounter(s, id, (e) => ({ ...e, adventure }));
+    },
+
+    deleteEncounter(s, { id }: { id: string }) {
+      return { ...s, encounters: s.encounters.filter((e) => e.id !== id) };
+    },
+
+    // В бой: участники заготовки добавляются к текущему бою (партия и кто уже есть — остаются).
+    // Сама заготовка остаётся: бой можно повторить.
+    startEncounter(s, { id }: { id: string }) {
+      const e = s.encounters.find((x) => x.id === id);
+      return e ? { ...s, combatants: [...s.combatants, ...e.combatants.map(fresh)] } : s;
     },
 
     setShowToPlayers(s, { value }: { value: boolean }) {

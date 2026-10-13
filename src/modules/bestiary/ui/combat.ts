@@ -2,12 +2,17 @@
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import { sameRef, type CardSide, type CardSummary } from '../../../shared/cards';
 import { rollFormula } from './dice';
+import type { Combatant } from '../../initiative/types';
 
-// «Гоблин», «Гоблин 2», …: нумерация продолжает тех, кто уже в бою.
-function names(base: string, n: number): string[] {
+// Участники текущего боя или заготовки.
+const listOf = (encounter?: string): Combatant[] =>
+  encounter ? (store.state.initiative.encounters.find((e) => e.id === encounter)?.combatants ?? []) : store.state.initiative.combatants;
+
+// «Гоблин», «Гоблин 2», …: нумерация продолжает тех, кто уже в бою (или в заготовке).
+function names(base: string, n: number, list: Combatant[]): string[] {
   const re = new RegExp(`^${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?: (\\d+))?$`);
   let max = 0;
-  for (const c of store.state.initiative.combatants) {
+  for (const c of list) {
     const m = re.exec(c.name);
     if (m) max = Math.max(max, m[1] ? Number(m[1]) : 1);
   }
@@ -21,6 +26,8 @@ export interface AddOptions {
   side?: CardSide;
   // Бросить хиты по формуле для каждого.
   rollHp?: boolean;
+  // Добавить в заготовку боя, а не в текущий бой.
+  encounter?: string;
 }
 
 export async function addToInitiative(c: CardSummary, opts: AddOptions = {}) {
@@ -29,7 +36,8 @@ export async function addToInitiative(c: CardSummary, opts: AddOptions = {}) {
   // Портреты раздаются по очереди: четыре разбойника и четыре картинки — у каждого своя. Начинаем с той, что
   // ещё меньше всех занята в бою (добавлять можно и по одному).
   const used = new Map(c.images.map((p) => [p, 0]));
-  for (const x of store.state.initiative.combatants) {
+  const list = listOf(opts.encounter);
+  for (const x of list) {
     if (sameRef(x.card, c.ref) && x.portrait && used.has(x.portrait)) used.set(x.portrait, used.get(x.portrait)! + 1);
   }
   const nextPortrait = () => {
@@ -38,11 +46,12 @@ export async function addToInitiative(c: CardSummary, opts: AddOptions = {}) {
     used.set(p, used.get(p)! + 1);
     return p;
   };
-  for (const name of names(c.name, n)) {
+  for (const name of names(c.name, n, list)) {
     const portrait = nextPortrait();
     const maxHp = opts.rollHp && hpFormula ? (rollFormula(hpFormula) ?? hp) : hp;
     await dispatch('initiative', 'add', {
       c: { name, maxHp, ac, bonus: initiative, side: opts.side ?? c.side, card: c.ref, portrait },
+      encounter: opts.encounter,
     });
   }
 }

@@ -9,7 +9,8 @@
   import type { Combatant } from '../types';
   import Avatar from './Avatar.svelte';
 
-  let { c }: { c: Combatant } = $props();
+  // encounter — участник заготовки боя.
+  let { c, encounter }: { c: Combatant; encounter?: string } = $props();
 
   onMount(connectCards);
   const images = $derived(c.card ? (bestiary.all.find((x) => sameRef(x.ref, c.card))?.images ?? []) : []);
@@ -17,7 +18,7 @@
   let root = $state<HTMLElement>();
 
   function pick(p: string) {
-    dispatch('initiative', 'update', { id: c.id, changes: { portrait: p } });
+    dispatch('initiative', 'update', { id: c.id, changes: { portrait: p }, encounter });
     open = false;
   }
 

@@ -8,6 +8,7 @@ import { bestiary, connectCards } from '../bestiary/ui/cards.svelte';
 import { addToInitiative } from '../bestiary/ui/combat';
 import View from './ui/View.svelte';
 import OnScreen from './ui/OnScreen.svelte';
+import Sidebar from './ui/Sidebar.svelte';
 
 export default defineControl({
   id: 'initiative',
@@ -15,6 +16,7 @@ export default defineControl({
   icon: Swords,
   order: 25,
   view: View,
+  sidebar: Sidebar,
   screen: OnScreen,
   screenEmpty: (app) =>
     app.initiative.combatants.some((c) => c.id === app.initiative.turn)

@@ -22,8 +22,18 @@ export interface Combatant {
   card?: CardRef | null;
 }
 
+// Заготовка боя: участники, подготовленные заранее («Крысы в башне»). «В бой» добавляет их к текущему бою.
+export interface Encounter {
+  id: string;
+  name: string;
+  // Приключение, к которому относится (null — общая).
+  adventure: string | null;
+  combatants: Combatant[];
+}
+
 export interface InitiativeState {
   combatants: Combatant[];
+  encounters: Encounter[];
   // Чей ход (id). null — бой не начат.
   turn: string | null;
   round: number;

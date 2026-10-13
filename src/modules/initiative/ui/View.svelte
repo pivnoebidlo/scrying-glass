@@ -1,14 +1,27 @@
 <!-- Вкладка «Инициатива»: таблица участников боя для мастера. -->
 <script lang="ts">
-  import { ChevronLeft, ChevronRight, Dices, Eye, EyeOff, Plus, ScrollText, Square, Swords, Trash2, X } from '@lucide/svelte';
+  import { ChevronLeft, ChevronRight, Dices, Save, Eye, EyeOff, ScrollText, Square, Swords, Trash2, X } from '@lucide/svelte';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { defeated, ordered } from '../order';
   import { CONDITIONS, type Combatant, type Side } from '../types';
   import AvatarPick from './AvatarPick.svelte';
+  import QuickAdd from './QuickAdd.svelte';
+  import EncounterView from './EncounterView.svelte';
+  import { newEncounterName, ui } from './ui.svelte';
 
-  let { ms }: ModuleProps<'initiative'> = $props();
+  let { ms, app }: ModuleProps<'initiative'> = $props();
+
+  // Открыта заготовка боя (выбрана в боковой панели) — показываем её редактор.
+  const encounter = $derived(ui.encounter ? ms.encounters.find((e) => e.id === ui.encounter) : undefined);
+
+  // Сохранить противников и союзников текущего боя как заготовку (партия не входит).
+  function saveAsEncounter() {
+    const id = crypto.randomUUID();
+    dispatch('initiative', 'createEncounter', { id, name: newEncounterName(ms), adventure: app.adventures.current, fromFight: true });
+    ui.encounter = id;
+  }
 
   const list = $derived(ordered(ms.combatants));
   const running = $derived(ms.turn !== null);
@@ -29,27 +42,6 @@
     input.value = '';
   }
 
-  // Форма добавления.
-  let form = $state({ name: '', side: 'enemy' as Side, init: '', bonus: '', hp: '', ac: '', count: '1' });
-
-  async function add() {
-    if (!form.name.trim()) return;
-    const n = Math.max(1, Math.min(20, num(form.count) ?? 1));
-    for (let i = 1; i <= n; i++) {
-      await dispatch('initiative', 'add', {
-        c: {
-          name: n > 1 ? `${form.name.trim()} ${i}` : form.name,
-          side: form.side,
-          init: num(form.init),
-          bonus: num(form.bonus) ?? 0,
-          maxHp: num(form.hp),
-          ac: num(form.ac),
-        },
-      });
-    }
-    form = { ...form, name: '', init: '', hp: '', ac: '', count: '1' };
-  }
-
   function clearEnemies() {
     if (confirm('Убрать всех противников и союзников? Партия останется, её инициатива и состояния сбросятся.')) {
       dispatch('initiative', 'clearEnemies');
@@ -57,6 +49,9 @@
   }
 </script>
 
+{#if encounter}
+  <EncounterView e={encounter} />
+{:else}
 <div class="view">
   <header class="head">
     <div class="round">
@@ -77,6 +72,9 @@
       <input type="checkbox" checked={ms.showToPlayers} onchange={(e) => dispatch('initiative', 'setShowToPlayers', { value: e.currentTarget.checked })} />
       игрокам
     </label>
+    <button class="icon-btn" title="Сохранить противников и союзников как заготовку боя" disabled={!ms.combatants.some((c) => c.side !== 'party')} onclick={saveAsEncounter}
+      ><Save size={15} /></button
+    >
     <button class="icon-btn" title="Убрать противников и союзников" onclick={clearEnemies}><Trash2 size={15} /></button>
   </header>
 
@@ -164,23 +162,13 @@
     </table>
   {:else}
     <p class="faint empty">
-      Участников пока нет. Добавьте их формой ниже, кнопкой «В инициативу» на карточке портрета или из вкладки «Карточки».
+      Участников пока нет. Начните вводить имя ниже — появятся подходящие карточки; «Партия» добавит героев приключения. Заранее подготовленный бой — в боковой панели.
     </p>
   {/if}
 
-  <form class="add" onsubmit={(e) => { e.preventDefault(); add(); }}>
-    <input class="f-name" type="text" placeholder="Имя (например, Гоблин)" bind:value={form.name} />
-    <select bind:value={form.side}>
-      {#each Object.entries(SIDES) as [v, t] (v)}<option value={v}>{t}</option>{/each}
-    </select>
-    <input class="f-num" type="text" inputmode="numeric" placeholder="Иниц." title="Инициатива (можно бросить потом)" bind:value={form.init} />
-    <input class="f-num" type="text" inputmode="numeric" placeholder="Бонус" title="Бонус инициативы" bind:value={form.bonus} />
-    <input class="f-num" type="text" inputmode="numeric" placeholder="Хиты" bind:value={form.hp} />
-    <input class="f-num" type="text" inputmode="numeric" placeholder="КД" bind:value={form.ac} />
-    <input class="f-num" type="text" inputmode="numeric" placeholder="×1" title="Сколько таких добавить (Гоблин 1, Гоблин 2, …)" bind:value={form.count} />
-    <button class="btn" type="submit" disabled={!form.name.trim()}><Plus size={14} /> Добавить</button>
-  </form>
+  <QuickAdd />
 </div>
+{/if}
 
 <style>
   .view {
@@ -327,20 +315,5 @@
   }
   .empty {
     padding: 24px 0;
-  }
-  .add {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 16px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-  }
-  .f-name {
-    flex: 1;
-    min-width: 180px;
-  }
-  .f-num {
-    width: 64px;
   }
 </style>
