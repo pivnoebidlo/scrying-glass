@@ -6,7 +6,7 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { defeated, ordered } from '../order';
   import { CONDITIONS, type Combatant, type Side } from '../types';
-  import Avatar from './Avatar.svelte';
+  import AvatarPick from './AvatarPick.svelte';
 
   let { ms }: ModuleProps<'initiative'> = $props();
 
@@ -100,7 +100,7 @@
             <td class="c-init">
               <input type="text" inputmode="numeric" value={c.init ?? ''} placeholder="—" onchange={(e) => update(c, { init: num(e.currentTarget.value) })} />
             </td>
-            <td><Avatar {c} /></td>
+            <td><AvatarPick {c} /></td>
             <td class="c-name">
               <input class="name" type="text" value={c.name} onchange={(e) => update(c, { name: e.currentTarget.value.trim() || c.name })} />
               <span class="side faint">
