@@ -118,6 +118,10 @@ export default defineModule({
       return withMap(s, path, (d) => ({ ...d, tokens: id ? d.tokens.filter((t) => t.id !== id) : [] }));
     },
 
+    setTokenScale(s, { path, value }: { path: string; value: number }) {
+      return withMap(s, path, (d) => ({ ...d, tokenScale: Math.min(4, Math.max(0.25, value)) }));
+    },
+
     setDefaultFog(s, { value }: { value: 'hidden' | 'revealed' }) {
       return { ...s, defaultFog: value };
     },

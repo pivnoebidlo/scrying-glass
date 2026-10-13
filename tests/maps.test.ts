@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import maps from '../src/modules/maps/main';
 import { dataOf } from '../src/modules/maps/data';
-import { snap, tokenViews } from '../src/modules/maps/tokens';
+import { snap, tokenCell, tokenViews } from '../src/modules/maps/tokens';
 import type { MapPin, MapsState, MapToken } from '../src/modules/maps/types';
 import initiative from '../src/modules/initiative/main';
 import { ctx, run, tree } from './helpers';
@@ -71,6 +71,19 @@ describe('карты: жетоны', () => {
   it('участника больше нет — жетон остаётся со своими полями', () => {
     const [v] = tokenViews([token('t', { combatant: 'нет такого' })], initiative.initialState);
     expect(v).toMatchObject({ name: 'Гоблин', turn: false, wound: 0 });
+  });
+
+  it('портрет участника без картинки не затирает портрет жетона', () => {
+    const ini = run(initiative, initiative.initialState, 'add', { c: { name: 'Амадеус', side: 'party' } });
+    const [v] = tokenViews([token('t', { combatant: ini.combatants[0]!.id, portrait: 'party/амадеус.jpg' })], ini);
+    expect(v!.portrait).toBe('party/амадеус.jpg');
+  });
+
+  it('масштаб жетонов карты: в пределах и умножает клетку', () => {
+    let s = act(S0, 'setTokenScale', { path: P, value: 10 });
+    expect(dataOf(s, P).tokenScale).toBe(4);
+    s = act(s, 'setTokenScale', { path: P, value: 0.5 });
+    expect(tokenCell(dataOf(s, P), 900)).toBe(15); // 900 / 30 клеток × 0,5
   });
 
   it('убрать один или все', () => {

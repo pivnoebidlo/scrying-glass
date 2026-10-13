@@ -110,6 +110,8 @@ Electron-приложение для мастера D&D: окно управле
   карточки (`PinCards.svelte`, поиск — `suggest` из инициативы). Жетоны `tokens` (`maps/tokens.ts`): копия
   участника боя + `combatant`, живые имя/портрет/ход/ранения берёт `tokenViews` из `app.initiative`; рисуются в
   `drawMap` через `underFog` (у игроков туман их прячет), привязка к сетке — `snap`, панель — `TokenPanel.svelte`.
+  Масштаб жетонов карты — `tokenScale` (`tokenCell`); жетоны не из боя — по карточке (`CardSearch.svelte`, общий
+  с метками) и «Партия»; место — `placeTokens` в редакторе (свободные клетки вокруг середины обзора).
 - Инициатива: текущий бой (`combatants`) и заготовки боёв (`encounters`, у каждой `adventure`). Действия `add` /
   `update` / `remove` принимают `encounter` — тогда меняют заготовку; `startEncounter` копирует участников в бой.
   Какая заготовка открыта — `initiative/ui/ui.svelte.ts` (не в состоянии). Быстрое добавление и «Партия» —

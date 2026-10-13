@@ -83,6 +83,8 @@ export interface MapData {
   grid: Grid;
   pins: MapPin[];
   tokens: MapToken[];
+  // Масштаб жетонов на этой карте: 1 — жетон 1×1 размером с клетку сетки.
+  tokenScale?: number;
 }
 
 export interface MapsState {

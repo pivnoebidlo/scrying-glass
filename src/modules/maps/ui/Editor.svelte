@@ -15,8 +15,13 @@
   import {
     applyFogOp, buildFog, drawMap, drawPins, fitCanvas, fogCanvas, loadImage, pinHead, visibleArea, type LoadedImage, type Xf,
   } from '../render';
-  import { FULL_VIEW, type FogOp, type MapPin as Pin, type MapView } from '../types';
-  import { cellOf, drawTokens, snap, tokenViews, type TokenView } from '../tokens';
+  import { FULL_VIEW, type FogOp, type MapData, type MapPin as Pin, type MapToken, type MapView } from '../types';
+  import { drawTokens, snap, tokenCell, tokenViews, type TokenView } from '../tokens';
+  import type { CardSummary } from '../../../shared/cards';
+  import { cardAsset } from '../../../shared/cards';
+  import { visibleIn } from '../../../shared/adventures';
+  import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
+  import { caption, imageGroups } from '../../portraits/library';
   import PinPanel from './PinPanel.svelte';
   import TokenPanel from './TokenPanel.svelte';
   import { ui, type Tool } from './ui.svelte';
@@ -106,6 +111,8 @@
     void data?.view;
     void data?.grid;
     void data?.pins;
+    void data?.tokenScale;
+    void ui.tokenScale;
     void ui.pin;
     void tokens;
     void ui.token;
@@ -145,7 +152,7 @@
       grid: gridPreview ? { ...data.grid, ...gridPreview } : data.grid,
       underFog: (c) =>
         drawTokens(c, tv ? tokens.map((t) => (t.id === tv.id ? { ...t, x: tv.x, y: tv.y } : t)) : tokens, i, xf, {
-          cell: cellOf(data.grid, i.w),
+          cell: tokenCell(live(data), i.w),
           onload: draw,
           master: { selected: ui.token, hover: hoverToken, font: `500 ${11 * dpr()}px -apple-system, system-ui, sans-serif` },
         }),
@@ -219,7 +226,7 @@
   // Жетон под точкой canvas (сверху — маленькие, их рисуют последними).
   function tokenAt(p: { x: number; y: number }): TokenView | null {
     if (!img || !data) return null;
-    const cell = cellOf(data.grid, img.w) * xf.s;
+    const cell = tokenCell(live(data), img.w) * xf.s;
     let best: TokenView | null = null;
     for (const t of tokens) {
       const d = Math.hypot(p.x - (t.x * img.w * xf.s + xf.ox), p.y - (t.y * img.h * xf.s + xf.oy));
@@ -435,28 +442,92 @@
   }
 
   // ---- Жетоны ----
-  // Участники текущего боя, которых ещё нет на этой карте: рядами в середине того, что видят игроки
-  // (сначала партия), с сеткой — по клеткам.
-  function addFight() {
-    if (!path || !data || !img) return;
-    const on = new Set(data.tokens.map((t) => t.combatant));
-    const list = app.initiative.combatants
-      .filter((c) => !on.has(c.id))
-      .sort((a, b) => Number(b.side === 'party') - Number(a.side === 'party'));
-    if (!list.length) return;
-    const cell = cellOf(data.grid, img.w);
-    const v = data.view;
-    const cx = (v.x + v.w / 2) * img.w;
-    const cy = (v.y + v.h / 2) * img.h;
-    const perRow = Math.min(6, list.length);
-    const rows = Math.ceil(list.length / perRow);
-    const tokens = list.map((c, i) => {
-      const x = (cx + ((i % perRow) - (perRow - 1) / 2) * cell * 1.2) / img!.w;
-      const y = (cy + (Math.floor(i / perRow) - (rows - 1) / 2) * cell * 1.2) / img!.h;
-      const at = data!.grid.on ? snap(x, y, 1, data!.grid, img!) : { x, y };
-      return { id: crypto.randomUUID(), ...at, size: 1, name: c.name, portrait: c.portrait, side: c.side, hidden: false, combatant: c.id };
-    });
+  // Масштаб жетонов с учётом ползунка, который сейчас тянут.
+  const live = (d: MapData): MapData => (ui.tokenScale === null ? d : { ...d, tokenScale: ui.tokenScale });
+  type NewToken = Omit<MapToken, 'id' | 'x' | 'y'>;
+
+  // Поставить жетоны в середине того, что видят игроки (сначала партия), на свободные места: по кольцам вокруг
+  // середины, занятые жетонами клетки пропускаются. С сеткой — по клеткам.
+  function placeTokens(list: NewToken[]) {
+    if (!path || !data || !img || !list.length) return;
+    const d = data;
+    const im = img;
+    const sorted = [...list].sort((a, b) => Number(b.side === 'party') - Number(a.side === 'party'));
+    const cell = tokenCell(live(d), im.w);
+    const step = cell * 1.2;
+    const cx = (d.view.x + d.view.w / 2) * im.w;
+    const cy = (d.view.y + d.view.h / 2) * im.h;
+    const taken = d.tokens.map((t) => ({ x: t.x * im.w, y: t.y * im.h, r: (t.size * cell) / 2 }));
+    const free = (x: number, y: number, r: number) => taken.every((t) => Math.hypot(t.x - x, t.y - y) >= (t.r + r) * 0.95);
+    const tokens: MapToken[] = [];
+    for (const t of sorted) {
+      const r = (t.size * cell) / 2;
+      let at = { x: cx / im.w, y: cy / im.h };
+      search: for (let ring = 0; ring < 40; ring++) {
+        for (let dy = -ring; dy <= ring; dy++) {
+          for (let dx = -ring; dx <= ring; dx++) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+            const p = { x: (cx + dx * step * t.size) / im.w, y: (cy + dy * step * t.size) / im.h };
+            const q = d.grid.on ? snap(p.x, p.y, t.size, d.grid, im) : p;
+            if (q.x < 0 || q.y < 0 || q.x > 1 || q.y > 1) continue;
+            if (free(q.x * im.w, q.y * im.h, r)) {
+              at = q;
+              break search;
+            }
+          }
+        }
+      }
+      taken.push({ x: at.x * im.w, y: at.y * im.h, r });
+      tokens.push({ id: crypto.randomUUID(), ...at, ...t });
+    }
     dispatch('maps', 'addTokens', { path, tokens });
+  }
+
+  // Участники текущего боя, которых ещё нет на этой карте. Жетон, уже стоящий без боя с тем же именем (например,
+  // герой, поставленный «Партией»), не дублируется, а привязывается к участнику; сначала — с тем же портретом.
+  async function addFight() {
+    if (!data || !path) return;
+    const on = new Set(data.tokens.map((t) => t.combatant));
+    const loose = data.tokens.filter((t) => !t.combatant);
+    const fresh: NewToken[] = [];
+    for (const c of app.initiative.combatants) {
+      if (on.has(c.id)) continue;
+      const same = loose.findIndex((t) => t.name === c.name && t.portrait === c.portrait);
+      const i = same >= 0 ? same : loose.findIndex((t) => t.name === c.name);
+      if (i >= 0) {
+        await dispatch('maps', 'updateToken', { path, id: loose[i]!.id, changes: { combatant: c.id } });
+        loose.splice(i, 1);
+      } else fresh.push({ size: 1, name: c.name, portrait: c.portrait, side: c.side, hidden: false, combatant: c.id });
+    }
+    placeTokens(fresh);
+  }
+
+  // Жетон по карточке (NPC, монстр, герой) — без боя.
+  function addCard(c: CardSummary) {
+    placeTokens([{ size: 1, name: c.name, portrait: c.portrait ? cardAsset(c.ref.scope, c.portrait) : null, side: c.side, hidden: false }]);
+  }
+
+  // Партия текущего приключения: карточки персонажей игроков и портреты из папок партии, кого ещё нет на карте.
+  async function addParty() {
+    if (!data) return;
+    await connectCards();
+    const has = (name: string, portrait: string | null) => data!.tokens.some((t) => t.name === name && t.portrait === portrait);
+    const list: NewToken[] = [];
+    for (const c of bestiary.all) {
+      if (c.kind !== 'character' || c.ref.scope !== 'vault' || c.folder === undefined || !visibleIn(app.adventures, c.folder)) continue;
+      const portrait = c.portrait ? cardAsset(c.ref.scope, c.portrait) : null;
+      if (!has(c.name, portrait)) list.push({ size: 1, name: c.name, portrait, side: 'party', hidden: false });
+    }
+    const tree = app.vault.tree;
+    for (const g of tree ? imageGroups(tree, app.vault.name, 'party', app.adventures) : []) {
+      for (const f of g.items) {
+        if (bestiary.cardFor(f.path)) continue;
+        const name = caption(app.portraits, f.path);
+        if (!has(name, f.path)) list.push({ size: 1, name, portrait: f.path, side: 'party', hidden: false });
+      }
+    }
+    placeTokens(list);
+    return list.length;
   }
 
   // ---- Кнопки ----
@@ -612,7 +683,7 @@
       ></canvas>
       {#if !img}<div class="loading faint">Загрузка карты…</div>{/if}
       {#if ui.tokenList}
-        <TokenPanel {path} {tokens} {data} fight={app.initiative.combatants} onaddfight={addFight} />
+        <TokenPanel {path} {tokens} {data} fight={app.initiative.combatants} onaddfight={addFight} onaddcard={addCard} onaddparty={addParty} />
       {:else if pin || ui.pinList}
         <PinPanel {path} {pins} {pin} bind:focusTitle onpick={centerOn} onremove={removePin} />
       {/if}

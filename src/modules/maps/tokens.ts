@@ -2,9 +2,9 @@
 import type { InitiativeState } from '../initiative/types';
 import { assetUrl } from '../../shared/vault';
 import type { Xf } from './render';
-import type { Grid, MapToken } from './types';
+import type { Grid, MapData, MapToken } from './types';
 
-// Жетон, каким его рисовать: свои поля + состояние участника боя.
+// Жетон, каким его рисовать: свои поля + состояние участника боя (портрет — участника, а если у него нет — свой).
 export interface TokenView extends MapToken {
   turn: boolean;
   down: boolean;
@@ -19,12 +19,15 @@ export function tokenViews(tokens: MapToken[], ini: InitiativeState): TokenView[
     if (!c) return { ...t, turn: false, down: false, wound: 0 };
     const down = c.hp !== null && c.hp <= 0;
     const wound = d.wounds && !c.hideWounds && c.maxHp && c.hp !== null && c.hp > 0 ? Math.min(1, Math.max(0, 1 - c.hp / c.maxHp)) : 0;
-    return { ...t, name: c.name, portrait: c.portrait, side: c.side, hidden: t.hidden || c.hidden, turn: ini.turn === c.id, down, wound };
+    return { ...t, name: c.name, portrait: c.portrait ?? t.portrait, side: c.side, hidden: t.hidden || c.hidden, turn: ini.turn === c.id, down, wound };
   });
 }
 
 // Размер клетки в пикселях картинки: по сетке карты (и когда она выключена — её число клеток).
 export const cellOf = (grid: Grid, imgW: number) => imgW / grid.cells;
+
+// Диаметр жетона 1×1 в пикселях картинки: клетка сетки с учётом масштаба жетонов карты.
+export const tokenCell = (d: MapData, imgW: number) => cellOf(d.grid, imgW) * (d.tokenScale ?? 1);
 
 // Ближайшее место на сетке для жетона размером size клеток: центр клетки у нечётных, угол — у чётных.
 export function snap(x: number, y: number, size: number, grid: Grid, img: { w: number; h: number }) {

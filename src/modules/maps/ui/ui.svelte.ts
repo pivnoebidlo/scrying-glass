@@ -19,4 +19,6 @@ export const ui = $state({
   // Выбранный жетон и открыт ли список жетонов.
   token: null as string | null,
   tokenList: false,
+  // Масштаб жетонов, пока ползунок тянут (в ядро уходит, когда отпустят).
+  tokenScale: null as number | null,
 });

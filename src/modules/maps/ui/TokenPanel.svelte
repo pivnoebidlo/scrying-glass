@@ -1,7 +1,10 @@
 <!-- Жетоны карты: добавить участников текущего боя, размер, спрятать от игроков, убрать. Жетоны из боя берут
      имя, портрет, сторону и ранения из инициативы. -->
 <script lang="ts">
-  import { Eye, EyeOff, Swords, Trash2, X } from '@lucide/svelte';
+  import { Eye, EyeOff, Shield, Swords, Trash2, X } from '@lucide/svelte';
+  import Slider from '../../../renderer/lib/Slider.svelte';
+  import type { CardSummary } from '../../../shared/cards';
+  import CardSearch from './CardSearch.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { assetUrl, thumb } from '../../../shared/vault';
   import type { Combatant } from '../../initiative/types';
@@ -15,7 +18,25 @@
     data,
     fight,
     onaddfight,
-  }: { path: string; tokens: TokenView[]; data: MapData; fight: Combatant[]; onaddfight: () => void } = $props();
+    onaddcard,
+    onaddparty,
+  }: {
+    path: string;
+    tokens: TokenView[];
+    data: MapData;
+    fight: Combatant[];
+    onaddfight: () => void | Promise<void>;
+    onaddcard: (c: CardSummary) => void;
+    onaddparty: () => Promise<number | undefined>;
+  } = $props();
+
+  const shownScale = $derived(ui.tokenScale ?? data.tokenScale ?? 1);
+  let status = $state('');
+  async function party() {
+    const n = await onaddparty();
+    status = n ? '' : 'Вся партия уже на карте';
+    if (status) setTimeout(() => (status = ''), 3000);
+  }
 
   // Размеры D&D: крошечный и маленький занимают клетку так же, как средний.
   const SIZES = [
@@ -43,9 +64,22 @@
     <button class="icon-btn" title="Закрыть" onclick={() => (ui.tokenList = false)}><X size={15} /></button>
   </header>
 
-  <button class="btn" disabled={!missing} title="Участники текущего боя, которых ещё нет на этой карте" onclick={onaddfight}>
-    <Swords size={14} /> Из боя{missing ? ` (${missing})` : ''}
-  </button>
+  <div class="row">
+    <button class="btn" disabled={!missing} title="Участники текущего боя, которых ещё нет на этой карте" onclick={onaddfight}>
+      <Swords size={14} /> Из боя{missing ? ` (${missing})` : ''}
+    </button>
+    <button class="btn" title="Персонажи игроков текущего приключения, которых ещё нет на карте" onclick={party}><Shield size={14} /> Партия</button>
+  </div>
+  <CardSearch placeholder="Добавить по карточке: стражник, волк…" onpick={onaddcard} />
+  {#if status}<p class="faint hint">{status}</p>{/if}
+
+  <div class="scale" title="Размер жетонов на этой карте: 100% — жетон 1×1 размером с клетку сетки">
+    <span class="faint">Размер</span>
+    <div class="slider">
+      <Slider value={shownScale} min={0.25} max={4} step={0.05} oninput={(v) => (ui.tokenScale = v)} onchange={(v) => dispatch('maps', 'setTokenScale', { path, value: v }).then(() => (ui.tokenScale = null))} />
+    </div>
+    <span class="faint pct">{Math.round(shownScale * 100)}%</span>
+  </div>
 
   {#if tokens.length}
     <ul>
@@ -73,7 +107,7 @@
     </ul>
     <p class="faint hint">Двигайте жетоны инструментом жетонов или рукой. Под туманом игроки их не видят.</p>
   {:else}
-    <p class="faint hint">Жетонов нет. «Из боя» поставит на карту участников текущего боя из «Инициативы».</p>
+    <p class="faint hint">Жетонов нет. «Из боя» — участники текущего боя, «Партия» — герои приключения, поиск — любая карточка.</p>
   {/if}
 </div>
 
@@ -101,8 +135,29 @@
     flex: 1;
     font-weight: 600;
   }
+  .row {
+    display: flex;
+    gap: 6px;
+  }
+  .row .btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .scale {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .slider {
+    flex: 1;
+  }
+  .pct {
+    width: 36px;
+    text-align: right;
+  }
   ul {
-    max-height: 55vh;
+    max-height: 45vh;
     overflow: auto;
     margin: 0;
     padding: 0;

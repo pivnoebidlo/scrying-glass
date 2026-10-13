@@ -3,7 +3,7 @@
   import { untrack } from 'svelte';
   import { vaultUrl } from '../../../shared/vault';
   import { buildFog, drawMap, drawPins, fitCanvas, fitView, fogCanvas, loadImage, type LoadedImage } from '../render';
-  import { cellOf, drawTokens, type TokenView } from '../tokens';
+  import { drawTokens, tokenCell, type TokenView } from '../tokens';
   import type { MapData, MapView } from '../types';
 
   let { path, data, tokens = [], pinSize = 1 }: { path: string; data: MapData; tokens?: TokenView[]; pinSize?: number } = $props();
@@ -33,7 +33,7 @@
       fogBlur: Math.max(canvas.width, canvas.height) * 0.006,
       grid: data.grid,
       // Жетоны под туманом: в неоткрытой части их не видно.
-      underFog: (c) => img && drawTokens(c, tokens, img, xf, { cell: cellOf(data.grid, img.w), onload: draw }),
+      underFog: (c) => img && drawTokens(c, tokens, img, xf, { cell: tokenCell(data, img.w), onload: draw }),
     });
     // Метки, которые мастер показал, — поверх тумана: место игрокам уже известно.
     const r = Math.min(canvas.width, canvas.height) * 0.016 * pinSize;
@@ -57,6 +57,7 @@
     void data.grid;
     void data.pins;
     void tokens;
+    void data.tokenScale;
     void pinSize;
     untrack(draw);
   });
