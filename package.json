@@ -15,7 +15,8 @@
     "import-srd": "node --no-warnings scripts/import-srd.ts",
     "postinstall": "node node_modules/electron/install.js",
     "icon": "electron scripts/render-icon.cjs",
-    "dist": "electron-vite build && electron-builder"
+    "dist": "electron-vite build && electron-builder",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@lucide/svelte": "^1.55.0",
@@ -27,6 +28,7 @@
     "svelte": "^5.57.2",
     "svelte-check": "^4.7.6",
     "typescript": "^6.0.3",
-    "vite": "^7.3.7"
+    "vite": "^7.3.7",
+    "vitest": "^3.2.7"
   }
 }

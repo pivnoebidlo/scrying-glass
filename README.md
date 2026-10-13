@@ -24,6 +24,7 @@
     npm run dev        # разработка: окна перезагружаются при сохранении
     npm run build      # сборка в out/
     npm start          # запуск собранной версии
+    npm test           # тесты ядра
     npm run typecheck  # проверка типов
     npm run import-srd # пересобрать встроенный бестиарий из SRD (нужен интернет)
     npm run dist       # установщик для своей системы в dist/ (electron-builder.yml)

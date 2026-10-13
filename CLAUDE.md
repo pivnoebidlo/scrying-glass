@@ -14,16 +14,19 @@ Electron-приложение для мастера D&D: окно управле
     npm run build      # сборка в out/
     npm start          # запуск собранной версии
     npm run typecheck  # svelte-check: проверка типов .ts и .svelte
+    npm test           # тесты ядра (vitest, tests/*.test.ts): кубы, порядок, инициатива, карты, хранилище
     npm run import-srd # пересобрать встроенный бестиарий resources/srd/ из SRD (нужен интернет)
     npm run dist       # установщик для своей системы в dist/ (настройки — electron-builder.yml)
     npm run icon       # build/icon.png из build/icon.svg (рисует Electron: ImageMagick не умеет градиенты SVG)
 
-Перед коммитом: `npm run typecheck` и `npm run build` без ошибок.
+Перед коммитом: `npm run typecheck`, `npm test` и `npm run build` без ошибок. Тесты — для чистых функций и
+действий модулей (`tests/helpers.ts`: контекст без Electron, дерево хранилища из путей, вызов действия); Electron
+и окна в них не поднимаются. Vitest 3.2 — он работает поверх Vite 7, который нужен electron-vite.
 
 ## Выпуск
 - GitHub, публичный репозиторий, лицензия GPL-3.0-or-later. Сборки только 64-битные: macOS arm64 и x64 (dmg),
   Windows x64 (nsis), Linux x64 (deb, rpm, AppImage). Тег `v<версия>` (равна version в package.json) запускает
-  `.github/workflows/release.yml` → черновик релиза. `check.yml` — типы и сборка на каждый push в main.
+  `.github/workflows/release.yml` → черновик релиза. `check.yml` — типы, тесты и сборка на каждый push в main.
 - Не подписываем (пользователь решил пока так): macOS — ad-hoc подпись (`identity: '-'`), без нотаризации.
 - В package-lock.json однажды оказалась испорченная версия caniuse-lite (`1.0.4.001815` вместо `1.0.30001815`):
   локально всё ставилось из кэша, а `npm ci` на GitHub упал с 404. Если npm пишет EINVALIDTAGNAME или 404 на
@@ -172,4 +175,4 @@ Electron-приложение для мастера D&D: окно управле
 (main/cards.ts); открытая в редакторе — `bestiary.checkExternal` → плашка в `CardEditor` (`external`).
 Возможное продолжение бестиария: синхронизация чисел перевода с оригиналом, подписи статблока на других языках (сейчас ru/en, остальные —
 английские), вторая ролевая система.
-Отложено: тесты ядра, подпись сборок (Apple Developer, сертификат Windows).
+Отложено: подпись сборок (Apple Developer, сертификат Windows).
