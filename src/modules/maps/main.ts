@@ -2,7 +2,7 @@
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { allFiles } from '../../shared/vault';
 import { dataOf } from './data';
-import type { FogOp, Grid, MapData, MapPin, MapsState, MapView } from './types';
+import type { FogOp, Grid, MapData, MapPin, MapsState, MapToken, MapView } from './types';
 
 // Туман хранится операциями, но не бесконечно: самые старые сворачивать нечем, поэтому просто ограничиваем.
 const MAX_OPS = 2000;
@@ -33,11 +33,11 @@ function prune(s: MapsState, ctx: ModuleContext): MapsState {
   return { ...s, maps, current: s.current && exists.has(s.current) ? s.current : null };
 }
 
-// Карты из сохранений до меток.
+// Карты из сохранений до меток и жетонов.
 const withPins = (s: MapsState): MapsState =>
-  Object.values(s.maps).every((d) => d.pins)
+  Object.values(s.maps).every((d) => d.pins && d.tokens)
     ? s
-    : { ...s, maps: Object.fromEntries(Object.entries(s.maps).map(([p, d]) => [p, { ...d, pins: d.pins ?? [] }])) };
+    : { ...s, maps: Object.fromEntries(Object.entries(s.maps).map(([p, d]) => [p, { ...d, pins: d.pins ?? [], tokens: d.tokens ?? [] }])) };
 
 const initialState: MapsState = { current: null, maps: {}, defaultFog: 'hidden', pinSize: 1 };
 
@@ -103,6 +103,19 @@ export default defineModule({
 
     removePin(s, { path, id }: { path: string; id: string }) {
       return withMap(s, path, (d) => ({ ...d, pins: d.pins.filter((p) => p.id !== id) }));
+    },
+
+    addTokens(s, { path, tokens }: { path: string; tokens: MapToken[] }) {
+      return withMap(s, path, (d) => ({ ...d, tokens: [...d.tokens, ...tokens] }));
+    },
+
+    updateToken(s, { path, id, changes }: { path: string; id: string; changes: Partial<Omit<MapToken, 'id'>> }) {
+      return withMap(s, path, (d) => ({ ...d, tokens: d.tokens.map((t) => (t.id === id ? { ...t, ...changes } : t)) }));
+    },
+
+    // Без id — убрать все жетоны карты.
+    removeToken(s, { path, id }: { path: string; id?: string }) {
+      return withMap(s, path, (d) => ({ ...d, tokens: id ? d.tokens.filter((t) => t.id !== id) : [] }));
     },
 
     setDefaultFog(s, { value }: { value: 'hidden' | 'revealed' }) {

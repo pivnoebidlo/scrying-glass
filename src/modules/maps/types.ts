@@ -1,4 +1,4 @@
-import type { CardRef } from '../../shared/cards';
+import type { CardRef, CardSide } from '../../shared/cards';
 import type { PinIcon } from './icons';
 
 // Карты. Все координаты — доли размера карты (0..1): x — от ширины, y — от высоты.
@@ -61,11 +61,28 @@ export const PIN_COLORS = {
 } as const;
 export type PinColor = keyof typeof PIN_COLORS;
 
+// Жетон на карте: участник боя или кто-то ещё. Размер — в клетках сетки (1 — средний, 2 — большой…).
+// Если жетон из боя (combatant), имя, портрет, сторона, ранения и «спрятан» берутся из инициативы, пока участник
+// там есть; свои поля — копия на момент добавления.
+export interface MapToken {
+  id: string;
+  x: number;
+  y: number;
+  size: number;
+  name: string;
+  portrait: string | null;
+  side: CardSide;
+  // Спрятан от игроков.
+  hidden: boolean;
+  combatant?: string;
+}
+
 export interface MapData {
   fog: Fog;
   view: MapView;
   grid: Grid;
   pins: MapPin[];
+  tokens: MapToken[];
 }
 
 export interface MapsState {

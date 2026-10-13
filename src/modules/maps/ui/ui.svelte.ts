@@ -2,7 +2,7 @@
 import type { PinIcon } from '../icons';
 import type { PinColor } from '../types';
 
-export type Tool = 'pan' | 'reveal' | 'hide' | 'revealRect' | 'hideRect' | 'view' | 'pin' | 'grid';
+export type Tool = 'pan' | 'reveal' | 'hide' | 'revealRect' | 'hideRect' | 'view' | 'pin' | 'grid' | 'token';
 
 export const ui = $state({
   selected: null as string | null,
@@ -16,4 +16,7 @@ export const ui = $state({
   pinColor: 'red' as PinColor,
   pinIcon: 'pin' as PinIcon,
   pinShown: false,
+  // Выбранный жетон и открыт ли список жетонов.
+  token: null as string | null,
+  tokenList: false,
 });

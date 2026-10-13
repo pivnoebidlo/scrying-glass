@@ -3,7 +3,7 @@
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
   import {
-    Brush, Eraser, Eye, EyeOff, Grid3x3, Hand, Move3d, MapPin, MapPinPlus, Maximize, Move, ScanEye, SquareDashed, SquareDashedMousePointer, Undo2,
+    Brush, CircleUserRound, Eraser, Eye, EyeOff, Grid3x3, Hand, Move3d, UsersRound, MapPin, MapPinPlus, Maximize, Move, ScanEye, SquareDashed, SquareDashedMousePointer, Undo2,
   } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { playerDisplay } from '../../../renderer/lib/nav';
@@ -16,7 +16,9 @@
     applyFogOp, buildFog, drawMap, drawPins, fitCanvas, fogCanvas, loadImage, pinHead, visibleArea, type LoadedImage, type Xf,
   } from '../render';
   import { FULL_VIEW, type FogOp, type MapPin as Pin, type MapView } from '../types';
+  import { cellOf, drawTokens, snap, tokenViews, type TokenView } from '../tokens';
   import PinPanel from './PinPanel.svelte';
+  import TokenPanel from './TokenPanel.svelte';
   import { ui, type Tool } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'maps'> = $props();
@@ -38,11 +40,14 @@
     { id: 'hideRect', title: 'Скрыть прямоугольник', icon: SquareDashed },
     { id: 'view', title: 'Двигать область, которую видят игроки', icon: Move },
     { id: 'pin', title: 'Метки: щелчок — поставить, метку можно перетащить', icon: MapPinPlus },
+    { id: 'token', title: 'Жетоны: тащите жетон (с сеткой встаёт по клеткам)', icon: CircleUserRound },
   ];
 
   // Метки этой карты; выбранная — та, что открыта в панели.
   const pins = $derived(data?.pins ?? []);
   const pin = $derived(pins.find((p) => p.id === ui.pin) ?? null);
+  // Жетоны с состоянием участников боя (ход, ранения, побеждён).
+  const tokens = $derived(data ? tokenViews(data.tokens, app.initiative) : []);
 
   let canvas = $state<HTMLCanvasElement>();
   let img = $state.raw<LoadedImage | null>(null);
@@ -60,10 +65,13 @@
     | { kind: 'rect'; mode: 'reveal' | 'hide'; x0: number; y0: number; x1: number; y1: number }
     | { kind: 'view'; sx: number; sy: number; view0: MapView }
     | { kind: 'pin'; id: string; sx: number; sy: number; x0: number; y0: number; moved: boolean }
-    | { kind: 'grid'; sx: number; sy: number; ox: number; oy: number };
+    | { kind: 'grid'; sx: number; sy: number; ox: number; oy: number }
+    | { kind: 'token'; id: string; sx: number; sy: number; x0: number; y0: number; moved: boolean };
   let drag = $state.raw<Drag | null>(null);
   // Метка, которую сейчас тащат: её новое место до отпускания мыши.
   let pinPreview: { id: string; x: number; y: number } | null = null;
+  let tokenPreview: { id: string; x: number; y: number } | null = null;
+  let hoverToken: string | null = null;
   // Сдвиг сетки, пока его тащат.
   let gridPreview: { ox: number; oy: number } | null = null;
   let overPin = $state(false);
@@ -99,13 +107,18 @@
     void data?.grid;
     void data?.pins;
     void ui.pin;
+    void tokens;
+    void ui.token;
     untrack(draw);
   });
 
   // Другая карта — метка с прошлой не выбрана.
   $effect(() => {
     void path;
-    untrack(() => (ui.pin = null));
+    untrack(() => {
+      ui.pin = null;
+      ui.token = null;
+    });
   });
 
   // ---- Рисование ----
@@ -124,7 +137,19 @@
       fitted = true;
     }
     const ctx = c.getContext('2d')!;
-    drawMap(ctx, img, fog, xf, { fogAlpha: 0.6, fogBlur: 0, grid: gridPreview ? { ...data.grid, ...gridPreview } : data.grid });
+    const tv = tokenPreview;
+    const i = img;
+    drawMap(ctx, img, fog, xf, {
+      fogAlpha: 0.6,
+      fogBlur: 0,
+      grid: gridPreview ? { ...data.grid, ...gridPreview } : data.grid,
+      underFog: (c) =>
+        drawTokens(c, tv ? tokens.map((t) => (t.id === tv.id ? { ...t, x: tv.x, y: tv.y } : t)) : tokens, i, xf, {
+          cell: cellOf(data.grid, i.w),
+          onload: draw,
+          master: { selected: ui.token, hover: hoverToken, font: `500 ${11 * dpr()}px -apple-system, system-ui, sans-serif` },
+        }),
+    });
     const pv = pinPreview;
     drawPins(ctx, pv ? pins.map((p) => (p.id === pv.id ? { ...p, x: pv.x, y: pv.y } : p)) : pins, img, xf, {
       r: PIN_R * dpr(),
@@ -191,6 +216,18 @@
     return null;
   }
 
+  // Жетон под точкой canvas (сверху — маленькие, их рисуют последними).
+  function tokenAt(p: { x: number; y: number }): TokenView | null {
+    if (!img || !data) return null;
+    const cell = cellOf(data.grid, img.w) * xf.s;
+    let best: TokenView | null = null;
+    for (const t of tokens) {
+      const d = Math.hypot(p.x - (t.x * img.w * xf.s + xf.ox), p.y - (t.y * img.h * xf.s + xf.oy));
+      if (d <= (t.size * cell) / 2 && (!best || t.size <= best.size)) best = t;
+    }
+    return best;
+  }
+
   function down(e: PointerEvent) {
     if (!img || !fog || !path || !data || !canvas) return;
     // Недописанное название или заметка сохраняются до того, как выбор метки сменится.
@@ -202,13 +239,22 @@
     }
     const p = at(e);
     const hit = e.button === 0 && !spaceDown && (ui.tool === 'pin' || ui.tool === 'pan') ? pinAt(p) : null;
-    if (hit) {
+    const tok = !hit && e.button === 0 && !spaceDown && (ui.tool === 'token' || ui.tool === 'pan') ? tokenAt(p) : null;
+    if (tok) {
+      ui.token = tok.id;
+      ui.pin = null;
+      ui.tokenList = true;
+      drag = { kind: 'token', id: tok.id, sx: p.x, sy: p.y, x0: tok.x, y0: tok.y, moved: false };
+    } else if (hit) {
+      ui.tokenList = false;
+      ui.token = null;
       ui.pin = hit.id;
       drag = { kind: 'pin', id: hit.id, sx: p.x, sy: p.y, x0: hit.x, y0: hit.y, moved: false };
     } else if (e.button === 0 && !spaceDown && ui.tool === 'pin') {
       const m = toMap(p);
       if (m.x < 0 || m.y < 0 || m.x > 1 || m.y > 1) return;
       const id = crypto.randomUUID();
+      ui.tokenList = false;
       dispatch('maps', 'addPin', { path, pin: { id, x: m.x, y: m.y, title: '', note: '', color: ui.pinColor, icon: ui.pinIcon, shown: ui.pinShown } });
       ui.pin = id;
       focusTitle = true;
@@ -237,7 +283,11 @@
   function move(e: PointerEvent) {
     const p = at(e);
     pointer = p;
-    if (!drag) overPin = (ui.tool === 'pin' || ui.tool === 'pan') && !spaceDown && !!pinAt(p);
+    hoverToken = drag ? null : (tokenAt(p)?.id ?? null);
+    if (!drag)
+      overPin =
+        !spaceDown &&
+        (((ui.tool === 'pin' || ui.tool === 'pan') && !!pinAt(p)) || ((ui.tool === 'token' || ui.tool === 'pan') && !!tokenAt(p)));
     if (!drag || !img || !fog) return draw();
     if (drag.kind === 'pan') {
       xf = { ...xf, ox: drag.ox + p.x - drag.sx, oy: drag.oy + p.y - drag.sy };
@@ -263,6 +313,11 @@
         x: clamp(drag.x0 + (p.x - drag.sx) / xf.s / img.w),
         y: clamp(drag.y0 + (p.y - drag.sy) / xf.s / img.h),
       };
+    } else if (drag.kind === 'token') {
+      if (!drag.moved && Math.hypot(p.x - drag.sx, p.y - drag.sy) < 3 * dpr()) return;
+      if (ui.tool !== 'token') return;
+      drag = { ...drag, moved: true };
+      tokenPreview = { id: drag.id, x: drag.x0 + (p.x - drag.sx) / xf.s / img.w, y: drag.y0 + (p.y - drag.sy) / xf.s / img.h };
     } else if (drag.kind === 'grid' && data) {
       const step = (img.w / data.grid.cells) * xf.s;
       const frac = (v: number) => ((v % 1) + 1) % 1;
@@ -291,6 +346,12 @@
       const pv = pinPreview;
       await dispatch('maps', 'updatePin', { path, id: pv.id, changes: { x: pv.x, y: pv.y } });
       pinPreview = null;
+    } else if (d.kind === 'token' && tokenPreview && data) {
+      const tv = tokenPreview;
+      const t = data.tokens.find((x) => x.id === tv.id);
+      const at = data.grid.on && t ? snap(tv.x, tv.y, t.size, data.grid, img) : tv;
+      await dispatch('maps', 'updateToken', { path, id: tv.id, changes: { x: at.x, y: at.y } });
+      tokenPreview = null;
     } else if (d.kind === 'grid' && gridPreview) {
       await dispatch('maps', 'setGrid', { path, grid: gridPreview });
       gridPreview = null;
@@ -314,6 +375,7 @@
 
   function leave() {
     pointer = null;
+    hoverToken = null;
     draw();
   }
 
@@ -322,11 +384,16 @@
 
   function keydown(e: KeyboardEvent) {
     if (typing(e)) return;
-    if (e.key === 'Escape' && ui.pin) {
+    if (e.key === 'Escape' && (ui.pin || ui.token)) {
       ui.pin = null;
+      ui.token = null;
     } else if ((e.key === 'Delete' || e.key === 'Backspace') && pin && path) {
       e.preventDefault();
       removePin(pin);
+    } else if ((e.key === 'Delete' || e.key === 'Backspace') && ui.token && path) {
+      e.preventDefault();
+      dispatch('maps', 'removeToken', { path, id: ui.token });
+      ui.token = null;
     } else if (e.code === 'Space') {
       e.preventDefault();
       spaceDown = true;
@@ -367,6 +434,31 @@
     draw();
   }
 
+  // ---- Жетоны ----
+  // Участники текущего боя, которых ещё нет на этой карте: рядами в середине того, что видят игроки
+  // (сначала партия), с сеткой — по клеткам.
+  function addFight() {
+    if (!path || !data || !img) return;
+    const on = new Set(data.tokens.map((t) => t.combatant));
+    const list = app.initiative.combatants
+      .filter((c) => !on.has(c.id))
+      .sort((a, b) => Number(b.side === 'party') - Number(a.side === 'party'));
+    if (!list.length) return;
+    const cell = cellOf(data.grid, img.w);
+    const v = data.view;
+    const cx = (v.x + v.w / 2) * img.w;
+    const cy = (v.y + v.h / 2) * img.h;
+    const perRow = Math.min(6, list.length);
+    const rows = Math.ceil(list.length / perRow);
+    const tokens = list.map((c, i) => {
+      const x = (cx + ((i % perRow) - (perRow - 1) / 2) * cell * 1.2) / img!.w;
+      const y = (cy + (Math.floor(i / perRow) - (rows - 1) / 2) * cell * 1.2) / img!.h;
+      const at = data!.grid.on ? snap(x, y, 1, data!.grid, img!) : { x, y };
+      return { id: crypto.randomUUID(), ...at, size: 1, name: c.name, portrait: c.portrait, side: c.side, hidden: false, combatant: c.id };
+    });
+    dispatch('maps', 'addTokens', { path, tokens });
+  }
+
   // ---- Кнопки ----
   function showMineToPlayers() {
     if (!img || !path || !canvas) return;
@@ -386,10 +478,10 @@
   }
 
   const cursor = $derived(
-    drag?.kind === 'pin'
-      ? ui.tool === 'pin' ? 'grabbing' : 'pointer'
+    drag?.kind === 'pin' || drag?.kind === 'token'
+      ? ui.tool === 'pin' || ui.tool === 'token' ? 'grabbing' : 'pointer'
       : overPin
-        ? ui.tool === 'pin' ? 'grab' : 'pointer'
+        ? ui.tool === 'pin' || ui.tool === 'token' ? 'grab' : 'pointer'
         : spaceDown || ui.tool === 'pan'
       ? drag?.kind === 'pan'
         ? 'grabbing'
@@ -482,7 +574,27 @@
       {/if}
 
       <div class="sep"></div>
-      <button class="btn" class:on={ui.pinList} title="Список меток на этой карте" onclick={() => (ui.pinList = !ui.pinList)}>
+      <button
+        class="btn"
+        class:on={ui.tokenList}
+        title="Жетоны на этой карте"
+        onclick={() => {
+          ui.tokenList = !ui.tokenList;
+          ui.pinList = false;
+          ui.pin = null;
+        }}
+      >
+        <UsersRound size={14} /> Жетоны{#if data.tokens.length}<span class="faint">&nbsp;{data.tokens.length}</span>{/if}
+      </button>
+      <button
+        class="btn"
+        class:on={ui.pinList}
+        title="Список меток на этой карте"
+        onclick={() => {
+          ui.pinList = !ui.pinList;
+          ui.tokenList = false;
+        }}
+      >
         <MapPin size={14} /> Метки{#if pins.length}<span class="faint">&nbsp;{pins.length}</span>{/if}
       </button>
     </header>
@@ -499,7 +611,9 @@
         onwheel={wheel}
       ></canvas>
       {#if !img}<div class="loading faint">Загрузка карты…</div>{/if}
-      {#if pin || ui.pinList}
+      {#if ui.tokenList}
+        <TokenPanel {path} {tokens} {data} fight={app.initiative.combatants} onaddfight={addFight} />
+      {:else if pin || ui.pinList}
         <PinPanel {path} {pins} {pin} bind:focusTitle onpick={centerOn} onremove={removePin} />
       {/if}
     </div>

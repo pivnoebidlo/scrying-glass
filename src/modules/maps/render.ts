@@ -102,6 +102,8 @@ export interface DrawOptions {
   // Размытие края тумана, пиксели canvas.
   fogBlur: number;
   grid: Grid;
+  // Что рисовать под туманом (жетоны): у игроков туман их прячет.
+  underFog?: (ctx: CanvasRenderingContext2D) => void;
 }
 
 export function drawMap(ctx: CanvasRenderingContext2D, img: LoadedImage, fog: HTMLCanvasElement, xf: Xf, o: DrawOptions) {
@@ -133,6 +135,13 @@ export function drawMap(ctx: CanvasRenderingContext2D, img: LoadedImage, fog: HT
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.lineWidth = 1 / xf.s;
     ctx.stroke();
+  }
+
+  if (o.underFog) {
+    ctx.save();
+    o.underFog(ctx);
+    ctx.restore();
+    ctx.setTransform(xf.s, 0, 0, xf.s, xf.ox, xf.oy);
   }
 
   ctx.globalAlpha = o.fogAlpha;

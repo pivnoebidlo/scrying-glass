@@ -8,6 +8,7 @@ export function dataOf(s: MapsState, path: string): MapData {
       view: FULL_VIEW,
       grid: { on: false, cells: 30 },
       pins: [],
+      tokens: [],
     }
   );
 }
