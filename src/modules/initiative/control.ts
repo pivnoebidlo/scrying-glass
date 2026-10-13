@@ -26,7 +26,10 @@ export default defineControl({
     {
       id: 'initiative',
       title: 'Добавить в инициативу',
-      badge: 'в бою',
+      badge: (app, path) => {
+        const n = app.initiative.combatants.filter((c) => c.portrait === path).length;
+        return n > 1 ? `в бою ×${n}` : 'в бою';
+      },
       icon: UserPlus,
       active: (app, path) => app.initiative.combatants.some((c) => c.portrait === path),
       toggle: async (app, path) => {

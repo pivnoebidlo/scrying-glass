@@ -6,6 +6,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { caption, characterGroups } from '../library';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
+  import PasteButton from '../../../renderer/lib/PasteButton.svelte';
   import Caption from './Caption.svelte';
   import CardBar from './CardBar.svelte';
   import ThumbSize from '../../../renderer/lib/ThumbSize.svelte';
@@ -63,6 +64,7 @@
       <Search size={14} />
       <input type="text" placeholder="Поиск по имени" bind:value={ui.search} />
     </label>
+    <PasteButton {app} role="characters" />
     <button
       class="btn"
       title="Персонаж игрока из Long Story Short (экспорт листа в JSON) или файл карточек Scrying Glass. Повторный импорт того же персонажа обновляет его лист"
@@ -128,6 +130,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
     padding: 12px 0;
     background: var(--bg-primary);
   }
@@ -152,8 +155,13 @@
   .search:focus-within {
     border-color: var(--accent);
   }
+  .search {
+    flex: 0 1 220px;
+    min-width: 120px;
+  }
   .search input {
-    width: 220px;
+    width: 100%;
+    min-width: 0;
     border: 0;
     padding: 5px 0;
     background: none;

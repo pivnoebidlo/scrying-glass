@@ -1,18 +1,19 @@
-<!-- Плитка монстра во вкладке «Персонажи»: портрет (клик — показать игрокам), название, «в бой» с количеством
-     и статблок. Монстр без портрета — с заглушкой. -->
+<!-- Плитка монстра во вкладке «Персонажи»: портрет с теми же кнопками, что у картинок (портрет, фон, раздатка,
+     в инициативу; без «в Корзину» — портрет принадлежит карточке), название, «в бой» с количеством и статблок.
+     Монстр без портрета — с заглушкой. -->
 <script lang="ts">
   import { ScrollText, Skull, Swords } from '@lucide/svelte';
   import { openTab } from '../../../renderer/lib/nav';
-  import { dispatch, store } from '../../../renderer/lib/store.svelte';
-  import { cardAsset, cardImageUrl, type CardSummary } from '../../../shared/cards';
+  import { store } from '../../../renderer/lib/store.svelte';
+  import { cardAsset, type CardSummary } from '../../../shared/cards';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import { addToInitiative } from '../../bestiary/ui/combat';
+  import ImageCard from '../../../renderer/lib/ImageCard.svelte';
 
   let { card }: { card: CardSummary } = $props();
 
   let count = $state(1);
   const asset = $derived(card.portrait ? cardAsset(card.ref.scope, card.portrait) : null);
-  const onScreen = $derived(!!asset && store.state.portraits.onScreen.includes(asset));
   const inFight = $derived(store.state.initiative.combatants.filter((c) => c.card?.id === card.ref.id && c.card.scope === card.ref.scope).length);
 
   async function fight() {
@@ -21,18 +22,7 @@
   }
 </script>
 
-<div class="tile" class:on={onScreen}>
-  {#if asset && card.portrait}
-    <button class="thumb" title={onScreen ? 'Убрать с экрана' : 'Показать портретом'} onclick={() => dispatch('portraits', 'toggle', { path: asset })}>
-      <img src={cardImageUrl(card.ref.scope, card.portrait)} alt="" loading="lazy" />
-    </button>
-  {:else}
-    <button class="thumb empty" title="Открыть статблок (портрета нет)" onclick={() => bestiary.show(card.ref)}><Skull size={32} /></button>
-  {/if}
-  <div class="badges">
-    {#if onScreen}<span class="badge">портрет</span>{/if}
-    {#if inFight}<span class="badge">в бою{inFight > 1 ? ` ×${inFight}` : ''}</span>{/if}
-  </div>
+{#snippet below()}
   <div class="name" title={card.name}>{card.name}</div>
   <div class="bar">
     <button class="sub" title="Открыть статблок" onclick={() => bestiary.show(card.ref)}>
@@ -41,7 +31,17 @@
     <input class="count" type="number" min="1" max="20" bind:value={count} title="Сколько добавить в бой" />
     <button class="icon-btn" title="В инициативу" onclick={fight}><Swords size={13} /></button>
   </div>
-</div>
+{/snippet}
+
+{#if asset}
+  <ImageCard path={asset} primary="portrait" trash={false}>{@render below()}</ImageCard>
+{:else}
+  <div class="tile">
+    <button class="thumb empty" title="Открыть статблок (портрета нет)" onclick={() => bestiary.show(card.ref)}><Skull size={32} /></button>
+    {#if inFight}<div class="badges"><span class="badge">в бою{inFight > 1 ? ` ×${inFight}` : ''}</span></div>{/if}
+    {@render below()}
+  </div>
+{/if}
 
 <style>
   .tile {
@@ -51,9 +51,6 @@
     background: var(--bg-secondary);
     overflow: hidden;
   }
-  .tile.on {
-    border-color: var(--accent);
-  }
   .thumb {
     display: block;
     width: 100%;
@@ -61,12 +58,6 @@
     border: 0;
     background: none;
     cursor: pointer;
-  }
-  .thumb img {
-    display: block;
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    object-fit: cover;
   }
   .thumb.empty {
     display: grid;

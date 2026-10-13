@@ -1,7 +1,7 @@
 <!-- Вкладка «Файлы»: содержимое выбранной папки хранилища. -->
 <script lang="ts">
   import { ChevronRight, ClipboardPaste, Download, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
-  import type { ModuleProps } from '../../../renderer/lib/contrib';
+  import { badgeOf, type ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { findFolder, folderRole } from '../../../shared/vault';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
@@ -163,7 +163,7 @@
           <li class:on={on.length > 0}>
             <Music size={14} />
             <span class="track" title={f.name}>{trackName(f.path)}</span>
-            {#each on as a (a.id)}<span class="badge">{a.badge}</span>{/each}
+            {#each on as a (a.id)}<span class="badge">{badgeOf(a, store.state, f.path)}</span>{/each}
             {#each audioActions as a (a.id)}
               <button class="icon-btn" class:active={a.active(store.state, f.path)} title={a.title} onclick={() => a.toggle(store.state, f.path)}>
                 <a.icon size={14} />

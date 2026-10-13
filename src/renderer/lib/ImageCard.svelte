@@ -1,18 +1,20 @@
-<!-- Карточка картинки из хранилища. Кнопки — действия модулей (портрет, на весь экран, …),
-     клик по картинке выполняет основное действие. Нижняя часть карточки — на усмотрение того, кто её показывает. -->
+<!-- Карточка картинки из хранилища. Кнопки — действия модулей (портрет, на весь экран, …) и «в Корзину»
+     (trash={false} — без неё), клик по картинке выполняет основное действие. Нижняя часть карточки — на усмотрение того, кто её показывает. -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { vaultUrl } from '../../shared/vault';
   import { imageActions } from './registry';
   import { dispatch, store } from './store.svelte';
   import { Trash2 } from '@lucide/svelte';
+  import { badgeOf } from './contrib';
 
   let {
     path,
     primary,
     aspect = '3 / 4',
+    trash = true,
     children,
-  }: { path: string; primary: string; aspect?: string; children?: Snippet } = $props();
+  }: { path: string; primary: string; aspect?: string; trash?: boolean; children?: Snippet } = $props();
 
   const app = $derived(store.state);
   const main = $derived(imageActions.find((a) => a.id === primary) ?? imageActions[0]);
@@ -31,7 +33,7 @@
   {/if}
 
   <div class="badges">
-    {#each active as a (a.id)}<span class="badge">{a.badge}</span>{/each}
+    {#each active as a (a.id)}<span class="badge">{badgeOf(a, app, path)}</span>{/each}
   </div>
 
   <div class="actions">
@@ -41,9 +43,11 @@
         <a.icon size={13} />
       </button>
     {/each}
-    <button class="action trash" title="Переместить в Корзину" onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
-      <Trash2 size={13} />
-    </button>
+    {#if trash}
+      <button class="action trash" title="Переместить в Корзину" onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
+        <Trash2 size={13} />
+      </button>
+    {/if}
   </div>
 
   {@render children?.()}

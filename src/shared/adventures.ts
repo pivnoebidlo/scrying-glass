@@ -60,3 +60,10 @@ export function placeTitle(adv: AdventuresState, dir: string, vaultName: string)
 // Порядок групп: сначала текущее приключение (его корень, потом главы), затем общее.
 export const placeOrder = (adv: AdventuresState, dir: string) =>
   adv.current !== null && adventureOf(adv, dir) === null ? 1 : 0;
+
+// Куда класть новые файлы вкладки (вставка из буфера): папка роли в текущем приключении, без приключения —
+// в корне хранилища. null — такой папки нет.
+export function roleFolderHere(tree: VaultFolder, adv: AdventuresState, role: FolderRole): VaultFolder | null {
+  const base = adv.current === null ? tree : tree.folders.find((f) => f.path === adv.current);
+  return base?.folders.find((f) => folderRole(f.name) === role) ?? null;
+}

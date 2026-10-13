@@ -4,6 +4,7 @@
   import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
+  import PasteButton from '../../../renderer/lib/PasteButton.svelte';
   import { prettyName } from '../../../shared/vault';
   import { imageGroups } from '../../portraits/library';
   import { ui } from './ui.svelte';
@@ -29,6 +30,7 @@
       <Search size={14} />
       <input type="text" placeholder="Поиск по названию" bind:value={ui.search} />
     </label>
+    <PasteButton {app} role="backgrounds" />
     <div class="spacer"></div>
     <ThumbSize grid="backgrounds" />
   </header>
@@ -74,6 +76,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
     padding: 12px 0;
     background: var(--bg-primary);
   }
@@ -92,8 +95,13 @@
   .search:focus-within {
     border-color: var(--accent);
   }
+  .search {
+    flex: 0 1 220px;
+    min-width: 120px;
+  }
   .search input {
-    width: 220px;
+    width: 100%;
+    min-width: 0;
     border: 0;
     padding: 5px 0;
     background: none;

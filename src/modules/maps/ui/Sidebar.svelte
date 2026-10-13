@@ -6,6 +6,7 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { mapGroups, mapName } from '../library';
   import { ui } from './ui.svelte';
+  import PasteButton from '../../../renderer/lib/PasteButton.svelte';
 
   let { ms, app }: ModuleProps<'maps'> = $props();
   const groups = $derived(app.vault.tree ? mapGroups(app.vault.tree, app.vault.name, ms, app.adventures) : []);
@@ -17,6 +18,8 @@
 </script>
 
 <div class="list">
+  <!-- Без ⌘V: боковая панель карт может быть открыта рядом с чужой вкладкой, где ⌘V значит своё. -->
+  <div class="tools"><PasteButton {app} role="maps" hotkey={false} /></div>
   {#each groups as g (g.key)}
     <div class="group faint" title={g.key}>{g.title}</div>
     {#each g.items as p (p)}
@@ -57,6 +60,10 @@
   }
   .list {
     padding: 0 6px 10px;
+  }
+  .tools {
+    display: flex;
+    padding: 4px 2px 0;
   }
   .group {
     padding: 10px 8px 4px;

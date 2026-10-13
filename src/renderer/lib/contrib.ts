@@ -44,12 +44,14 @@ export interface FileAction {
   id: string;
   // Подсказка на кнопке: «Показать портретом».
   title: string;
-  // Метка, когда действие включено: «портрет».
-  badge: string;
+  // Метка, когда действие включено: «портрет» (или своя для картинки: «в бою ×3»).
+  badge: string | ((app: AppState, path: string) => string);
   icon: Component;
   active(app: AppState, path: string): boolean;
   toggle(app: AppState, path: string): void;
 }
+
+export const badgeOf = (a: FileAction, app: AppState, path: string) => (typeof a.badge === 'string' ? a.badge : a.badge(app, path));
 
 // Экран игроков: слой сцены. Слои с большим order лежат выше.
 export interface DisplayContribution<K extends ModuleId> {
