@@ -104,6 +104,10 @@ class Bestiary {
   placeRequest = $state.raw<PlaceRequest | null>(null);
   // Снимок черновика при открытии: есть ли несохранённые изменения.
   draftStart = '';
+  // Файл карточки, открытой в редакторе, изменили снаружи (в другой программе): новая версия с диска
+  // или 'deleted' — файл удалили. Редактор предлагает загрузить её или оставить свои правки.
+  external = $state.raw<Card | 'deleted' | null>(null);
+  private saving = false;
 
   // Все версии одной карточки: оригинал и переводы.
   groups = $derived.by(() => {
@@ -175,6 +179,7 @@ class Bestiary {
   private open(d: Omit<Draft, 'copied'> & { copied?: string[] }) {
     this.draft = { ...d, copied: d.copied ?? [] };
     this.draftStart = JSON.stringify(d.card);
+    this.external = null;
     this.peeked = null;
     openTab('bestiary');
   }
@@ -278,7 +283,14 @@ class Bestiary {
     const d = this.draft;
     if (!d || !d.card.name.trim()) return false;
     const card = clean($state.snapshot(d.card)) as Card;
-    const ref = await window.api.saveCard(d.scope, card, d.folder);
+    this.saving = true;
+    let ref: CardRef;
+    try {
+      ref = await window.api.saveCard(d.scope, card, d.folder);
+    } finally {
+      this.saving = false;
+    }
+    this.external = null;
     // Картинки, которые добавили и тут же убрали, не нужны.
     const unused = d.copied.filter((p) => !card.portraits.includes(p));
     if (unused.length) await window.api.discardCardImages(d.scope, unused);
@@ -287,11 +299,39 @@ class Bestiary {
     return true;
   }
 
+  // Карточки в ядре обновились: не изменился ли файл той, что открыта в редакторе.
+  async checkExternal() {
+    const d = this.draft;
+    if (!d?.original || this.saving) return;
+    // Ссылка внутри черновика — реактивный прокси, через IPC его не передать.
+    const c = await window.api.getCard($state.snapshot(d.original));
+    if (this.draft !== d || this.saving) return;
+    if (!c) this.external = 'deleted';
+    else if (JSON.stringify(c) !== this.draftStart) this.external = c;
+  }
+
+  // Загрузить версию с диска вместо своих правок.
+  takeExternal() {
+    const d = this.draft;
+    const c = this.external;
+    if (!d || !c || c === 'deleted') return;
+    d.card = structuredClone(c);
+    this.draftStart = JSON.stringify(c);
+    this.external = null;
+  }
+
+  // Оставить свои правки: при сохранении они заменят версию с диска.
+  keepMine() {
+    if (this.external && this.external !== 'deleted') this.draftStart = JSON.stringify(this.external);
+    this.external = null;
+  }
+
   cancel(): boolean {
     if (this.dirty && !confirm('Закрыть редактор без сохранения?')) return false;
     const d = this.draft;
     if (d?.copied.length) window.api.discardCardImages(d.scope, $state.snapshot(d.copied));
     this.draft = null;
+    this.external = null;
     return true;
   }
 
@@ -364,6 +404,7 @@ export const bestiary = new Bestiary();
 async function refresh() {
   bestiary.all = await window.api.listCards();
   bestiary.rev++;
+  bestiary.checkExternal();
 }
 
 // Список грузится при первом показе бестиария, а не при запуске: этот файл попадает и в окно игроков.

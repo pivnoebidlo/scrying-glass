@@ -184,8 +184,35 @@ export function initCards(library: string) {
   setLibrary(library);
 }
 
+// Карточки библиотеки, изменённые снаружи (в редакторе, синхронизацией): перечитываем с задержкой,
+// чтобы пачка изменений обработалась один раз.
+let libraryWatcher: fs.FSWatcher | null = null;
+function watchLibrary(root: string) {
+  libraryWatcher?.close();
+  libraryWatcher = null;
+  const dir = path.join(root, 'cards');
+  let timer: NodeJS.Timeout | null = null;
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    libraryWatcher = fs.watch(dir, { recursive: true }, () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (libraryRoot !== root) return;
+        loadLibrary();
+        changed();
+      }, 300);
+    });
+    libraryWatcher.on('error', () => {
+      /* папку могли удалить; карточки перечитаются при следующем сохранении */
+    });
+  } catch {
+    libraryWatcher = null;
+  }
+}
+
 export function setLibrary(root: string) {
   libraryRoot = root;
+  watchLibrary(root);
   loadLibrary();
   loadSrdPortraits();
   changed();

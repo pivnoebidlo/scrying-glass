@@ -107,6 +107,19 @@
     <button class="btn primary" disabled={saving} onclick={save} title="⌘S"><Save size={14} /> Сохранить</button>
   </header>
 
+  {#if bestiary.external}
+    <div class="external">
+      {#if bestiary.external === 'deleted'}
+        <span>Файл карточки удалили в другой программе. «Сохранить» создаст его заново.</span>
+        <button class="btn" onclick={() => bestiary.keepMine()}>Понятно</button>
+      {:else}
+        <span>Файл карточки изменили в другой программе.</span>
+        <button class="btn" onclick={() => bestiary.takeExternal()} title="Правки в редакторе пропадут">Загрузить новую версию</button>
+        <button class="btn" onclick={() => bestiary.keepMine()} title="При сохранении они заменят версию с диска">Оставить мои правки</button>
+      {/if}
+    </div>
+  {/if}
+
   <div class="columns">
     <form class="form" onsubmit={(e) => e.preventDefault()}>
       <section>
@@ -417,5 +430,18 @@
   }
   .pv-desc :global(p) {
     margin: 0 0 6px;
+  }
+  .external {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+  }
+  .external span {
+    flex: 1;
+    min-width: 200px;
   }
 </style>
