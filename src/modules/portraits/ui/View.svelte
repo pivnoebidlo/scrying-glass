@@ -1,5 +1,6 @@
-<!-- Вкладка «Персонажи»: портреты из папок characters, сгруппированные по папкам. У портрета может быть
-     карточка NPC (лежит рядом в той же папке): статблок и кнопка «в инициативу». -->
+<!-- Вкладка «Персонажи»: портреты из папок characters и party, сгруппированные по папкам. У портрета может быть
+     карточка NPC или лист персонажа (лежит рядом в той же папке): статблок и кнопка «в инициативу». Ниже — монстры
+     приключения (карточки из его папок бестиария), чтобы накидывать их в бой отсюда же. -->
 <script lang="ts">
   import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -15,6 +16,8 @@
   import { Download } from '@lucide/svelte';
   import { connectCardNames } from './cardNames.svelte';
   import { ui } from './ui.svelte';
+  import MonsterTile from './MonsterTile.svelte';
+  import { monsterGroups } from './monsters';
 
   let { ms, app }: ModuleProps<'portraits'> = $props();
 
@@ -43,6 +46,15 @@
       .filter((g) => g.items.length || !q);
   });
   const collapsed = $state<Record<string, boolean>>({});
+
+  const monsters = $derived(monsterGroups(bestiary.all, app.adventures, app.vault.name, bestiary.filters.lang === 'all' ? 'ru' : bestiary.filters.lang));
+  const visibleMonsters = $derived.by(() => {
+    const q = ui.search.trim().toLowerCase();
+    return monsters
+      .filter((g) => ui.group === 'all' || g.key === ui.group)
+      .map((g) => ({ ...g, items: q ? g.items.filter((c) => c.name.toLowerCase().includes(q)) : g.items }))
+      .filter((g) => g.items.length);
+  });
 </script>
 
 <div class="view">
@@ -61,7 +73,7 @@
     <ThumbSize grid="portraits" />
   </header>
 
-  {#if groups.length === 0}
+  {#if groups.length === 0 && monsters.length === 0}
     <div class="empty">
       <p>В хранилище пока нет папок с персонажами.</p>
       <p class="faint">
@@ -69,7 +81,7 @@
         появятся здесь. Картинку из любой другой папки можно показать игрокам через «Файлы».
       </p>
     </div>
-  {:else if visible.length === 0}
+  {:else if visible.length === 0 && visibleMonsters.length === 0}
     <div class="empty faint">Ничего не найдено.</div>
   {/if}
 
@@ -86,6 +98,19 @@
               <CardBar path={f.path} name={caption(ms, f.path)} />
             </ImageCard>
           {/each}
+        </div>
+      {/if}
+    </section>
+  {/each}
+
+  {#each visibleMonsters as g (g.key)}
+    <section>
+      <button class="group-title" onclick={() => (collapsed[g.key] = !collapsed[g.key])}>
+        {collapsed[g.key] ? '▸' : '▾'} {g.title} <span class="faint">{g.items.length}</span>
+      </button>
+      {#if !collapsed[g.key]}
+        <div class="grid" style:--thumb="{thumbs.portraits}px">
+          {#each g.items as c (c.ref.id)}<MonsterTile card={c} />{/each}
         </div>
       {/if}
     </section>
