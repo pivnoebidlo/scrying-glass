@@ -10,7 +10,7 @@ const initialState: InitiativeState = {
   turn: null,
   round: 0,
   showToPlayers: true,
-  display: { size: 1.5, names: true, wounds: true },
+  display: { size: 1.5, names: true, wounds: true, position: 'top' },
 };
 
 const d20 = () => 1 + Math.floor(Math.random() * 20);
@@ -59,6 +59,9 @@ export default defineModule({
   persist: true,
   initialState,
 
+  // В сохранённом состоянии прошлых версий нет новых настроек полосы (положение) — дополняем по умолчанию.
+  init: (s) => ({ ...s, display: { ...initialState.display, ...s.display } }),
+
   actions: {
     // encounter — добавить в заготовку, а не в текущий бой.
     add(s, { c, encounter }: { c: Partial<Omit<Combatant, 'id'>>; encounter?: string }) {
@@ -73,6 +76,7 @@ export default defineModule({
         side: c.side ?? 'enemy',
         portrait: c.portrait ?? null,
         hidden: c.hidden ?? false,
+        hideWounds: c.hideWounds ?? false,
         conditions: [],
         card: c.card ?? null,
       };

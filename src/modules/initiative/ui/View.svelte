@@ -1,6 +1,6 @@
 <!-- Вкладка «Инициатива»: таблица участников боя для мастера. -->
 <script lang="ts">
-  import { ChevronLeft, ChevronRight, Dices, Save, Eye, EyeOff, ScrollText, Square, Swords, Trash2, X } from '@lucide/svelte';
+  import { ChevronLeft, ChevronRight, Dices, Save, Eye, EyeOff, Heart, HeartOff, ScrollText, Square, Swords, Trash2, X } from '@lucide/svelte';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -8,6 +8,7 @@
   import { SIDES, CONDITIONS, type Combatant, type Side } from '../types';
   import AvatarPick from './AvatarPick.svelte';
   import QuickAdd from './QuickAdd.svelte';
+  import StripControls from './StripControls.svelte';
   import EncounterView from './EncounterView.svelte';
   import { newEncounterName, ui } from './ui.svelte';
 
@@ -67,6 +68,7 @@
     <button class="btn" title="Бросить d20 + бонус за противников и союзников без инициативы" onclick={() => dispatch('initiative', 'rollNpcs', {})}>
       <Dices size={14} /> Бросить за NPC
     </button>
+    <StripControls d={ms.display} />
     <label class="show" title="Полоса очерёдности на экране игроков">
       <input type="checkbox" checked={ms.showToPlayers} onchange={(e) => dispatch('initiative', 'setShowToPlayers', { value: e.currentTarget.checked })} />
       игрокам
@@ -149,6 +151,16 @@
               {#if c.card}
                 {@const ref = c.card}
                 <button class="icon-btn" title="Статблок" onclick={() => bestiary.show(ref)}><ScrollText size={14} /></button>
+              {/if}
+              {#if ms.display.wounds}
+                <button
+                  class="icon-btn"
+                  class:off={c.hideWounds}
+                  title={c.hideWounds ? 'Игроки не видят его ранения — показывать' : 'Не показывать игрокам его ранения (портрет не краснеет)'}
+                  onclick={() => update(c, { hideWounds: !c.hideWounds })}
+                >
+                  {#if c.hideWounds}<HeartOff size={14} />{:else}<Heart size={14} />{/if}
+                </button>
               {/if}
               <button class="icon-btn" title={c.hidden ? 'Спрятан от игроков — показать' : 'Спрятать от игроков'} onclick={() => update(c, { hidden: !c.hidden })}>
                 {#if c.hidden}<EyeOff size={14} />{:else}<Eye size={14} />{/if}
@@ -314,5 +326,9 @@
   }
   .empty {
     padding: 24px 0;
+  }
+  /* Ранения этого участника игроки не видят. */
+  .off {
+    color: var(--accent);
   }
 </style>

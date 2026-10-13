@@ -1,7 +1,7 @@
 <!-- Заготовка боя: участники, подготовленные заранее. «В бой» добавляет их к текущему бою (партия, которая уже
      там, остаётся), заготовка при этом сохраняется — бой можно повторить. -->
 <script lang="ts">
-  import { Eye, EyeOff, ScrollText, Swords, Trash2, X } from '@lucide/svelte';
+  import { Eye, EyeOff, Heart, HeartOff, ScrollText, Swords, Trash2, X } from '@lucide/svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import { SIDES, type Combatant, type Encounter, type Side } from '../types';
@@ -83,6 +83,14 @@
                 {@const ref = c.card}
                 <button class="icon-btn" title="Статблок" onclick={() => bestiary.show(ref)}><ScrollText size={14} /></button>
               {/if}
+              <button
+                class="icon-btn"
+                class:off={c.hideWounds}
+                title={c.hideWounds ? 'Игроки не будут видеть его ранения — показывать' : 'Не показывать игрокам его ранения (портрет не краснеет)'}
+                onclick={() => update(c, { hideWounds: !c.hideWounds })}
+              >
+                {#if c.hideWounds}<HeartOff size={14} />{:else}<Heart size={14} />{/if}
+              </button>
               <button class="icon-btn" title={c.hidden ? 'Появится спрятанным от игроков — показать' : 'Спрятать от игроков (засада)'} onclick={() => update(c, { hidden: !c.hidden })}>
                 {#if c.hidden}<EyeOff size={14} />{:else}<Eye size={14} />{/if}
               </button>
@@ -176,5 +184,9 @@
   }
   .empty {
     padding: 24px 0;
+  }
+  /* Ранения этого участника игроки не видят. */
+  .off {
+    color: var(--accent);
   }
 </style>

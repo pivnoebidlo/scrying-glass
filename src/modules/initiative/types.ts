@@ -18,6 +18,8 @@ export interface Combatant {
   portrait: string | null;
   // Спрятан от игроков (засада, невидимка).
   hidden: boolean;
+  // Не показывать игрокам его ранения (портрет не краснеет), даже если ранения включены в настройках.
+  hideWounds?: boolean;
   conditions: string[];
   // Карточка из бестиария, если участник добавлен оттуда (открыть статблок).
   card?: CardRef | null;
@@ -50,7 +52,11 @@ export interface StripSettings {
   names: boolean;
   // Краснеть портрету по мере ранений (игроки видят, насколько ранен противник).
   wounds: boolean;
+  // Где полоса на экране игроков.
+  position: StripPosition;
 }
+
+export type StripPosition = 'top' | 'bottom' | 'left' | 'right';
 
 // Состояния из правил D&D 5e.
 export const CONDITIONS = [

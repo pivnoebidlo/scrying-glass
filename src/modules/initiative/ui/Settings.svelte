@@ -3,6 +3,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
+  import type { StripPosition } from '../types';
 
   let { ms }: ModuleProps<'initiative'> = $props();
   const d = $derived(ms.display);
@@ -15,11 +16,24 @@
 <div class="setting">
   <div class="info">
     <div class="name">Размер портретов</div>
-    <div class="desc">Полоса очерёдности сверху экрана игроков: портреты и подписи. Сейчас — ×{size.toFixed(1)}.</div>
+    <div class="desc">Полоса очерёдности на экране игроков: портреты и подписи. Сейчас — ×{size.toFixed(1)}.</div>
   </div>
   <div class="slider">
     <Slider value={size} min={0.8} max={3} step={0.1} oninput={(v) => (size = v)} onchange={(v) => dispatch('initiative', 'setDisplay', { size: v })} />
   </div>
+</div>
+
+<div class="setting">
+  <div class="info">
+    <div class="name">Где полоса</div>
+    <div class="desc">Её можно быстро переставить и кнопками в заголовке вкладки «Инициатива».</div>
+  </div>
+  <select value={d.position ?? 'top'} onchange={(e) => dispatch('initiative', 'setDisplay', { position: e.currentTarget.value as StripPosition })}>
+    <option value="top">Сверху</option>
+    <option value="bottom">Снизу</option>
+    <option value="left">Слева</option>
+    <option value="right">Справа</option>
+  </select>
 </div>
 
 <div class="setting">
@@ -35,7 +49,7 @@
     <div class="name">Ранения на портретах</div>
     <div class="desc">
       Портрет краснеет по мере потери хитов — так игроки видят, насколько ранен противник (числа не показываются).
-      Побеждённые остаются на полосе серыми.
+      Побеждённые остаются на полосе серыми. Для отдельного участника ранения можно скрыть кнопкой с сердцем в трекере.
     </div>
   </div>
   <input type="checkbox" checked={d.wounds} onchange={(e) => dispatch('initiative', 'setDisplay', { wounds: e.currentTarget.checked })} />

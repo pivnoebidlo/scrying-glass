@@ -17,11 +17,11 @@
 
   const down = (c: Combatant) => c.hp !== null && c.hp <= 0;
   // Доля потерянных хитов: 0 — цел, 1 — при смерти.
-  const wound = (c: Combatant) => (d.wounds && c.maxHp && c.hp !== null && c.hp > 0 ? Math.min(1, Math.max(0, 1 - c.hp / c.maxHp)) : 0);
+  const wound = (c: Combatant) => (d.wounds && !c.hideWounds && c.maxHp && c.hp !== null && c.hp > 0 ? Math.min(1, Math.max(0, 1 - c.hp / c.maxHp)) : 0);
 </script>
 
 {#if shown}
-  <div class="bar" style:--s={d.size} transition:fade|global={{ duration: 300 }}>
+  <div class="bar {d.position ?? 'top'}" style:--s={d.size} transition:fade|global={{ duration: 300 }}>
     <div class="round">Раунд {ms.round}</div>
     <div class="list">
       {#each visible as c (c.id)}
@@ -53,6 +53,51 @@
     font-family: Georgia, serif;
     color: #fff;
     pointer-events: none;
+  }
+  /* Снизу: затемнение от нижнего края, новые ряды растут вверх. */
+  .bar.bottom {
+    top: auto;
+    bottom: 0;
+    align-items: flex-end;
+    padding: calc(var(--u) * 3) 2cqmin calc(var(--u) * 1.5);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+  }
+  .bar.bottom .list {
+    flex-wrap: wrap-reverse;
+  }
+  .bar.bottom .round {
+    padding: 0 0 calc(var(--u) * 2.6);
+  }
+  /* Слева и справа: столбец сверху вниз, не влезло — следующий столбец ближе к центру экрана. */
+  .bar.left,
+  .bar.right {
+    bottom: 0;
+    flex-direction: column;
+    align-items: center;
+    padding: 2cqmin calc(var(--u) * 1.5);
+  }
+  .bar.left {
+    right: auto;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+    padding-right: calc(var(--u) * 4);
+  }
+  .bar.right {
+    left: auto;
+    background: linear-gradient(to left, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0));
+    padding-left: calc(var(--u) * 4);
+  }
+  .bar.left .list,
+  .bar.right .list {
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  .bar.right .list {
+    flex-wrap: wrap-reverse;
+  }
+  .bar.left .round,
+  .bar.right .round {
+    padding: 0;
   }
   .round {
     flex: none;
