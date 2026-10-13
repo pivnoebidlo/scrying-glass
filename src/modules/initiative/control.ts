@@ -16,6 +16,12 @@ export default defineControl({
   order: 25,
   view: View,
   screen: OnScreen,
+  screenEmpty: (app) =>
+    app.initiative.combatants.some((c) => c.id === app.initiative.turn)
+      ? null
+      : app.initiative.combatants.length
+        ? `бой не идёт (${app.initiative.combatants.length})`
+        : 'бой не идёт',
   imageActions: [
     {
       id: 'initiative',

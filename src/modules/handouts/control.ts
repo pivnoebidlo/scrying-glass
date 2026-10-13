@@ -16,6 +16,7 @@ export default defineControl({
   view: View,
   sidebar: Sidebar,
   screen: OnScreen,
+  screenEmpty: (app) => (app.handouts.current ? null : 'нет'),
   imageActions: [
     {
       id: 'handout',

@@ -151,8 +151,14 @@ class Bestiary {
     this.selected = ref && { scope: ref.scope, id: ref.id };
   }
 
-  // Показать карточку в выдвижной панели — из «Персонажей», «Файлов», трекера инициативы.
+  // Показать карточку в выдвижной панели — из «Персонажей», «Файлов», трекера инициативы. Повторное нажатие на ту же
+  // кнопку закрывает панель (в том числе если в ней переключили язык карточки).
   show(ref: CardRef) {
+    const open = this.peeked;
+    if (open && (sameRef(open, ref) || this.versionsOf(ref).some((c) => sameRef(c.ref, open)))) {
+      this.peeked = null;
+      return;
+    }
     this.peeked = { scope: ref.scope, id: ref.id };
   }
 

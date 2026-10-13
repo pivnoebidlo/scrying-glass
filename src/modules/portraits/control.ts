@@ -15,6 +15,7 @@ export default defineControl({
   view: View,
   sidebar: Sidebar,
   screen: OnScreen,
+  screenEmpty: (app) => (app.portraits.onScreen.length ? null : 'никого'),
   settings: Settings,
   imageActions: [
     {

@@ -17,6 +17,7 @@ export default defineControl({
   view: View,
   sidebar: Sidebar,
   screen: OnScreen,
+  screenEmpty: (app) => (app.scene.background ? null : 'нет'),
   settings: Settings,
   imageActions: [
     {

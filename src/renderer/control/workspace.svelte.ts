@@ -13,6 +13,7 @@ interface Saved {
   sidebar: ModuleId | null;
   sidebarOpen: boolean;
   displayId: number | null;
+  screenClosed: string[];
 }
 
 const known = new Set<string>(controlContributions.map((c) => c.id));
@@ -34,6 +35,8 @@ class Workspace {
   settingsSection = $state<string>('');
   // Экран, выбранный для игроков (null — подобрать автоматически).
   displayId = $state<number | null>(null);
+  // Блоки правой панели «Экран игроков», которые мастер свернул (пустые блоки свёрнуты и так).
+  screenClosed = $state<string[]>([]);
 
   constructor() {
     const s = load();
@@ -42,6 +45,7 @@ class Workspace {
     this.sidebar = s.sidebar && known.has(s.sidebar) ? s.sidebar : null;
     this.sidebarOpen = s.sidebarOpen ?? true;
     this.displayId = s.displayId ?? null;
+    this.screenClosed = s.screenClosed ?? [];
 
     // При первом запуске открываем первый модуль.
     const first = controlContributions[0];
@@ -96,6 +100,7 @@ class Workspace {
       sidebar: this.sidebar,
       sidebarOpen: this.sidebarOpen,
       displayId: this.displayId,
+      screenClosed: this.screenClosed,
     };
     try {
       localStorage.setItem(KEY, JSON.stringify(s));

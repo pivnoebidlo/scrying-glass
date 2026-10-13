@@ -1,6 +1,7 @@
-<!-- Правая панель: что сейчас видят игроки, и управление экраном. -->
+<!-- Правая панель: что сейчас видят игроки, и управление экраном. Блоки модулей сворачиваются нажатием на заголовок;
+     пустой блок (на экране от модуля ничего нет) свёрнут в одну строку «Карты · нет», его можно развернуть. -->
 <script lang="ts">
-  import { Monitor, MonitorOff, Moon, Sun } from '@lucide/svelte';
+  import { ChevronDown, ChevronRight, Monitor, MonitorOff, Moon, Sun } from '@lucide/svelte';
   import Stage from '../lib/Stage.svelte';
   import { controlContributions } from '../lib/registry';
   import { dispatch, store } from '../lib/store.svelte';
@@ -9,6 +10,15 @@
   const display = $derived(workspace.display);
   const ratio = $derived(display ? `${display.width} / ${display.height}` : '16 / 9');
   const widgets = controlContributions.filter((c) => c.screen);
+
+  // Пустые блоки, которые развернули (только до перезапуска).
+  let peek = $state<string[]>([]);
+  const without = (list: string[], id: string) => list.filter((x) => x !== id);
+
+  function toggleBlock(id: string, empty: boolean) {
+    if (empty) peek = peek.includes(id) ? without(peek, id) : [...peek, id];
+    else workspace.screenClosed = workspace.screenClosed.includes(id) ? without(workspace.screenClosed, id) : [...workspace.screenClosed, id];
+  }
 
   function toggleDisplay() {
     if (store.displayOpen) window.api.closeDisplay();
@@ -60,10 +70,24 @@
 
   {#each widgets as c (c.id)}
     {#if c.screen}
-      <div class="pane-title">{c.title}</div>
-      <div class="section">
-        <c.screen ms={store.state[c.id]} app={store.state} />
-      </div>
+      {@const empty = c.screenEmpty?.(store.state) ?? null}
+      {@const open = empty === null ? !workspace.screenClosed.includes(c.id) : peek.includes(c.id)}
+      <button
+        class="pane-title block-title"
+        class:empty={empty !== null}
+        title={open ? 'Свернуть' : 'Развернуть'}
+        onclick={() => toggleBlock(c.id, empty !== null)}
+      >
+        {#if open}<ChevronDown size={12} />{:else}<ChevronRight size={12} />{/if}
+        <span>{c.title}</span>
+        {#if empty !== null && !open}<span class="summary">· {empty}</span>{/if}
+        {#if empty === null && !open}<span class="dot" title="Что-то есть на экране"></span>{/if}
+      </button>
+      {#if open}
+        <div class="section">
+          <c.screen ms={store.state[c.id]} app={store.state} />
+        </div>
+      {/if}
     {/if}
   {/each}
 </aside>
@@ -75,6 +99,44 @@
     overflow: auto;
     background: var(--bg-secondary);
     border-left: 1px solid var(--border);
+  }
+  .block-title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    border: 0;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+  }
+  .block-title:hover {
+    color: var(--text-normal);
+  }
+  .block-title.empty {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .block-title :global(svg) {
+    flex: none;
+    margin-left: -3px;
+    color: var(--text-faint);
+  }
+  .summary {
+    overflow: hidden;
+    color: var(--text-faint);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    margin-left: 2px;
+    border-radius: 50%;
+    background: var(--accent);
   }
   .section {
     display: flex;

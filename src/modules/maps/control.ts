@@ -16,6 +16,7 @@ export default defineControl({
   view: Editor,
   sidebar: Sidebar,
   screen: OnScreen,
+  screenEmpty: (app) => (app.maps.current ? null : 'нет'),
   settings: Settings,
   imageActions: [
     {

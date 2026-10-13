@@ -26,6 +26,9 @@ export interface ControlContribution<K extends ModuleId> {
   header?: ModuleComponent<K>;
   // Блок в правой панели «Экран игроков».
   screen?: ModuleComponent<K>;
+  // Блок пуст (на экране ничего от модуля нет): короткая строка вместо него — «нет», «бой не идёт».
+  // Пустой блок свёрнут в одну строку с заголовком; развернуть можно нажатием.
+  screenEmpty?: (app: AppState) => string | null;
   // Раздел в окне настроек.
   settings?: ModuleComponent<K>;
   // Что модуль умеет делать с файлами хранилища (кнопки на карточке картинки, в строке трека).
