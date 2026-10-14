@@ -100,9 +100,9 @@
       {#if !builtin}
         <button class="icon-btn" title="Открыть файл в другой программе (например, в Obsidian)" onclick={() => window.api.openFile(item.path)}><ExternalLink size={15} /></button>
         {#if replaces}
-          <button class="btn" title="Удалить правку (файл — в Корзину) и показывать встроенную запись, как в SRD" onclick={trash}><RotateCcw size={14} /> Вернуть как в SRD</button>
+          <button class="btn" title="Удалить правку (файл — в корзину) и показывать встроенную запись, как в SRD" onclick={trash}><RotateCcw size={14} /> Вернуть как в SRD</button>
         {:else}
-          <button class="icon-btn" title="Удалить запись в Корзину" onclick={trash}><Trash2 size={15} /></button>
+          <button class="icon-btn" title="Удалить запись в корзину" onclick={trash}><Trash2 size={15} /></button>
         {/if}
       {/if}
     </header>

@@ -69,7 +69,7 @@
           >
             <Wind size={14} />
           </button>
-          <button class="icon-btn trash" title="Переместить в Корзину" onclick={() => dispatch('vault', 'trash', { paths: [t.path] })}>
+          <button class="icon-btn trash" title="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [t.path] })}>
             <Trash2 size={14} />
           </button>
         </li>

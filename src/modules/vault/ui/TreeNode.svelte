@@ -22,7 +22,7 @@
 
 <button
   class="row"
-  class:active={ui.folder === folder.path}
+  class:active={!ui.trash && ui.folder === folder.path}
   style:padding-left="{8 + depth * 14}px"
   title={folder.path}
   onclick={() => {

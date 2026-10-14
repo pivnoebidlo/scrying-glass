@@ -61,6 +61,12 @@ const api: Api = {
   readLibraryData: (name) => ipcRenderer.invoke('library:readData', name),
   writeLibraryData: (name, data) => ipcRenderer.invoke('library:writeData', { name, data }),
   openFile: (path) => ipcRenderer.invoke('vault:openFile', path),
+  listTrash: () => ipcRenderer.invoke('trash:list'),
+  restoreTrash: (place, id) => ipcRenderer.invoke('trash:restore', { place, id }),
+  purgeTrash: (place, id, title) => ipcRenderer.invoke('trash:purge', { place, id, title }),
+  emptyTrash: () => ipcRenderer.invoke('trash:empty'),
+  revealTrash: (place) => ipcRenderer.invoke('trash:reveal', place),
+  onTrashChanged: (cb) => { ipcRenderer.on('trash:changed', () => cb()); },
 
   listDisplays: () => ipcRenderer.invoke('displays:list'),
   onDisplaysChanged: (cb) => { ipcRenderer.on('displays:changed', () => cb()); },

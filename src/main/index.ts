@@ -14,6 +14,8 @@ import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
+import { emptyTrash, listTrash, moveToTrash, onTrashChanged, purgeTrash, restoreFromTrash } from './trash';
+import type { TrashPlace } from '../shared/trash';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
@@ -22,7 +24,7 @@ import { createTable, isTablePath, listLibraryTables, readTable, seedLibraryTabl
 import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import {
@@ -330,23 +332,23 @@ ipcMain.handle('compendium:rename', async (_event, { path: rel, title }: { path:
   return next;
 });
 
-// Файл библиотеки (таблица, запись справочника) — в Корзину, с подтверждением (файлы хранилища удаляет действие
-// vault/trash).
+// Файл библиотеки (таблица, запись справочника) — в корзину библиотеки, с подтверждением (файлы хранилища удаляет
+// действие vault/trash).
 ipcMain.handle('tables:trash', async (_event, rel: string) => {
   const abs = rel.startsWith(LIBRARY) && (isTablePath(rel) || entries.isPath(rel)) ? resolveTable(rel) : null;
   if (!abs || !fs.existsSync(abs)) return false;
   const win = getControlWindow();
   const opts = {
     type: 'warning' as const,
-    message: `Переместить «${path.basename(abs)}» в Корзину?`,
-    detail: 'Этот файл — в общей библиотеке: он пропадёт во всех кампаниях. Его можно будет вернуть из Корзины.',
-    buttons: ['В Корзину', 'Отмена'],
+    message: `Переместить «${path.basename(abs)}» в корзину?`,
+    detail: 'Этот файл — в общей библиотеке: он пропадёт во всех кампаниях. Вернуть можно в разделе «Файлы» → «Корзина».',
+    buttons: ['В корзину', 'Отмена'],
     defaultId: 0,
     cancelId: 1,
   };
   const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
   if (res.response !== 0) return false;
-  await shell.trashItem(abs);
+  moveToTrash(libraryPath()!, [rel.slice(LIBRARY.length)], { title: path.basename(abs), kind: 'file' });
   if (entries.isPath(rel)) await afterEntryWrite(rel);
   else await afterTableWrite(rel);
   return true;
@@ -515,6 +517,14 @@ ipcMain.handle('archive:restore', async () => {
 // ---------- Приключение одним файлом (main/packs.ts) ----------
 const inAdventure = (adv: string, p: string) => p === adv || p.startsWith(adv + '/');
 type AnyRec = Record<string, unknown>;
+// Что приложение знает об удалённом приключении: хранится в корзине вместе с папкой.
+interface AdventureData {
+  scenes: AnyRec[];
+  encounters: AnyRec[];
+  maps: AnyRec;
+  order: AnyRec;
+  names: AnyRec;
+}
 
 ipcMain.handle('packs:export', async (_event, adventure: string) => {
   const folder = resolveInVault(adventure);
@@ -578,8 +588,9 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
   return save.filePath;
 });
 
-// Удалить приключение: папка — в Корзину (её можно вернуть), из приложения — его сцены, заготовки боёв, разметка
-// карт, порядок плиток и подписи портретов. Спрашивает подтверждение; перед удалением — снимок.
+// Удалить приключение: папка — в корзину приложения, из приложения — его сцены, заготовки боёв, разметка карт,
+// порядок плиток и подписи портретов (они сохраняются в корзине вместе с папкой и возвращаются с ней — AdventureData).
+// Спрашивает подтверждение; перед удалением — снимок.
 ipcMain.handle('adventures:delete', async (_event, name: string) => {
   const folder = resolveInVault(name);
   if (!vaultRoot || !folder || !isDir(folder) || name.includes('/')) return false;
@@ -593,9 +604,8 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     type: 'warning' as const,
     message: `Удалить приключение «${name}»?`,
     detail: [
-      `Папка приключения (файлов: ${files}) переместится в Корзину — её можно будет вернуть оттуда.`,
-      `Из приложения уберутся сцены (${scenes}), заготовки боёв (${encounters}) и разметка карт (${maps}) этого приключения.`,
-      'Перед удалением сохраняется снимок: сцены и заготовки можно вернуть в «Резервных копиях».',
+      `Папка приключения (файлов: ${files}) переместится в корзину, из приложения уберутся сцены (${scenes}), заготовки боёв (${encounters}) и разметка карт (${maps}) этого приключения.`,
+      'Вернуть всё вместе можно в разделе «Файлы» → «Корзина».',
     ].join('\n\n'),
     buttons: ['Удалить', 'Отмена'],
     defaultId: 1,
@@ -605,8 +615,22 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
   if (res.response !== 0) return false;
   saveVault();
   snapshotNow('manual', true);
-  await shell.trashItem(folder);
   const drop = <T,>(o: Record<string, T>, keep: (k: string) => boolean) => Object.fromEntries(Object.entries(o).filter(([k]) => keep(k)));
+  const st = stateById as Record<string, AnyRec>;
+  const mine = (k: string) => inAdventure(name, k) || inAdventure(`monsters:${name}`, k);
+  const data: AdventureData = {
+    scenes: (st['scenes']!['scenes'] as AnyRec[]).filter((x) => x['adventure'] === name),
+    encounters: (st['initiative']!['encounters'] as AnyRec[]).filter((x) => x['adventure'] === name),
+    maps: drop(st['maps']!['maps'] as AnyRec, (k) => inAdventure(name, k)),
+    order: drop(st['order']!['groups'] as AnyRec, mine),
+    names: drop(st['portraits']!['names'] as AnyRec, (k) => inAdventure(name, k)),
+  };
+  try {
+    moveToTrash(vaultRoot, [name], { title: name, kind: 'adventure', data });
+  } catch (e) {
+    dialog.showErrorBox('Не удалось переместить папку в корзину', `${folder}\n\n${String(e)}`);
+    return false;
+  }
   const merge = (id: string, fn: (st: AnyRec) => AnyRec) =>
     enqueue(id, async () => {
       stateById[id] = fn(stateById[id] as AnyRec);
@@ -614,12 +638,100 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
   await merge('scenes', (st) => ({ ...st, scenes: (st['scenes'] as AnyRec[]).filter((x) => x['adventure'] !== name) }));
   await merge('initiative', (st) => ({ ...st, encounters: (st['encounters'] as AnyRec[]).filter((x) => x['adventure'] !== name) }));
   await merge('maps', (st) => ({ ...st, maps: drop(st['maps'] as AnyRec, (k) => !inAdventure(name, k)) }));
-  await merge('order', (st) => ({ ...st, groups: drop(st['groups'] as AnyRec, (k) => !inAdventure(name, k) && !inAdventure(`monsters:${name}`, k)) }));
+  await merge('order', (st) => ({ ...st, groups: drop(st['groups'] as AnyRec, (k) => !mine(k)) }));
   await merge('portraits', (st) => ({ ...st, names: drop(st['names'] as AnyRec, (k) => !inAdventure(name, k)) }));
   await runAction('adventures', 'unmark', { path: name });
   saveVault();
   await enqueue('vault', async () => rescanVault());
   return true;
+});
+
+// ---------- Корзина приложения (main/trash.ts): у хранилища и библиотеки — своя ----------
+const trashRoot = (place: TrashPlace) => (place === 'vault' ? vaultRoot : libraryPath());
+onTrashChanged(() => {
+  for (const win of BrowserWindow.getAllWindows()) win.webContents.send('trash:changed');
+});
+
+ipcMain.handle('trash:list', () => ({
+  vault: vaultRoot ? listTrash(vaultRoot, 'vault') : [],
+  library: libraryPath() ? listTrash(libraryPath()!, 'library') : [],
+}));
+
+// Вернуть на место. Приключение возвращается вместе со сценами, заготовками и разметкой карт; если его название
+// заняли — под новым («Страд (2)»). Что вернулось: название и путь главного файла.
+ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlace; id: string }) => {
+  const root = trashRoot(place);
+  if (!root) return null;
+  let res;
+  try {
+    res = restoreFromTrash(root, id);
+  } catch (e) {
+    dialog.showErrorBox('Не удалось вернуть из корзины', String(e));
+    return null;
+  }
+  if (!res?.moved.length) return null;
+  const main = res.moved[0]!;
+  if (place === 'vault' && res.meta.kind === 'adventure' && res.meta.data) {
+    const data = remap(res.meta.data as AdventureData, main.from, main.to);
+    const merge = (mod: string, fn: (st: AnyRec) => AnyRec) =>
+      enqueue(mod, async () => {
+        stateById[mod] = fn(stateById[mod] as AnyRec);
+      });
+    const addList = (list: AnyRec[], more: AnyRec[]) => [...list, ...more.filter((x) => !list.some((y) => y['id'] === x['id']))];
+    await merge('scenes', (st) => ({ ...st, scenes: addList(st['scenes'] as AnyRec[], data.scenes) }));
+    await merge('initiative', (st) => ({ ...st, encounters: addList(st['encounters'] as AnyRec[], data.encounters) }));
+    await merge('maps', (st) => ({ ...st, maps: { ...data.maps, ...(st['maps'] as AnyRec) } }));
+    await merge('order', (st) => ({ ...st, groups: { ...data.order, ...(st['groups'] as AnyRec) } }));
+    await merge('portraits', (st) => ({ ...st, names: { ...data.names, ...(st['names'] as AnyRec) } }));
+    saveVault();
+  }
+  if (place === 'vault') {
+    await enqueue('vault', async () => rescanVault());
+    if (res.meta.kind === 'adventure') await runAction('adventures', 'mark', { path: main.to });
+  } else {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send('tables:changed');
+      win.webContents.send('compendium:changed');
+    }
+  }
+  reloadCards();
+  return { title: res.meta.title, path: place === 'library' ? LIBRARY + main.to : main.to, kind: res.meta.kind };
+});
+
+async function confirmPurge(message: string) {
+  const win = getControlWindow();
+  const opts = {
+    type: 'warning' as const,
+    message,
+    detail: 'Это нельзя отменить.',
+    buttons: ['Удалить навсегда', 'Отмена'],
+    defaultId: 1,
+    cancelId: 1,
+  };
+  const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
+  return res.response === 0;
+}
+
+ipcMain.handle('trash:purge', async (_event, { place, id, title }: { place: TrashPlace; id: string; title: string }) => {
+  const root = trashRoot(place);
+  if (!root || !(await confirmPurge(`Удалить «${title}» навсегда?`))) return false;
+  return purgeTrash(root, id);
+});
+
+ipcMain.handle('trash:empty', async () => {
+  const roots = [vaultRoot, libraryPath()].filter((r): r is string => !!r);
+  const count = (vaultRoot ? listTrash(vaultRoot, 'vault').length : 0) + (libraryPath() ? listTrash(libraryPath()!, 'library').length : 0);
+  if (!count || !(await confirmPurge(`Очистить корзину? Удалится навсегда: ${count}.`))) return false;
+  for (const r of roots) emptyTrash(r);
+  return true;
+});
+
+ipcMain.handle('trash:reveal', async (_event, place: TrashPlace) => {
+  const root = trashRoot(place);
+  if (!root) return;
+  const dir = path.join(root, '.trash');
+  fs.mkdirSync(dir, { recursive: true });
+  await shell.openPath(dir);
 });
 
 // Название папки приключения: без символов, запрещённых в именах файлов, не скрытое.
@@ -752,7 +864,7 @@ ipcMain.handle('cards:delete', async (_event, ref: CardRef) => {
   const opts = {
     type: 'warning' as const,
     message: `Удалить карточку «${card.name}»?`,
-    detail: 'Файл карточки будет удалён с диска.',
+    detail: 'Карточка переместится в корзину. Вернуть можно в разделе «Файлы» → «Корзина».',
     buttons: ['Удалить', 'Отмена'],
     defaultId: 0,
     cancelId: 1,

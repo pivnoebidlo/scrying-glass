@@ -1,4 +1,4 @@
-<!-- Карточка картинки из хранилища. Кнопки — действия модулей (портрет, на весь экран, …) и «в Корзину»
+<!-- Карточка картинки из хранилища. Кнопки — действия модулей (портрет, на весь экран, …) и «в корзину»
      (trash={false} — без неё), клик по картинке выполняет основное действие. Нижняя часть карточки — на усмотрение того, кто её показывает. -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
@@ -44,7 +44,7 @@
       </button>
     {/each}
     {#if trash}
-      <button class="action trash" title="Переместить в Корзину" onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
+      <button class="action trash" title="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
         <Trash2 size={13} />
       </button>
     {/if}

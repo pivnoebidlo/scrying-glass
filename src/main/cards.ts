@@ -20,6 +20,7 @@ import { folderRole, roleFolders, roleNames, type VaultFolder } from '../shared/
 import { systemOf } from '../systems';
 import { fromLss, isLssExport } from '../systems/dnd5e/lss';
 import { freeName, writeJsonAtomic } from './files';
+import { moveToTrash } from './trash';
 
 const cards = new Map<string, Card>();
 // Файл каждой своей карточки (ключ — refKey).
@@ -346,12 +347,26 @@ export function saveCard(scope: CardScope, card: Card, folder?: string): CardRef
 }
 
 // Удаляет файл карточки. images — её картинки, которые удалить вместе с ней (см. ownImages).
-export function deleteCard(ref: CardRef, images: string[] = []) {
+// toTrash — в корзину приложения одним элементом (их можно вернуть); иначе насовсем (после переноса карточки).
+export function deleteCard(ref: CardRef, images: string[] = [], toTrash = true) {
   const file = files.get(refKey(ref));
-  if (!file) return;
-  fs.rmSync(file, { force: true });
-  for (const rel of images) removeImage(ref.scope, rel);
+  const root = scopeRoot(ref.scope);
+  if (!file || !root) return;
+  if (toTrash) {
+    const rel = path.relative(root, file).split(path.sep).join('/');
+    moveToTrash(root, [rel, ...images], { title: cards.get(refKey(ref))?.name ?? path.basename(file, '.json'), kind: 'card' });
+  } else {
+    fs.rmSync(file, { force: true });
+    for (const rel of images) removeImage(ref.scope, rel);
+  }
   reload(ref.scope);
+  changed();
+}
+
+// Перечитать карточки хранилища и библиотеки (например, после возврата из корзины).
+export function reloadCards() {
+  reload('library');
+  reload('vault');
   changed();
 }
 
@@ -465,7 +480,7 @@ export function moveCard(ref: CardRef, to: CardScope, folder?: string): CardRef 
   if (!c || !copy || !dir) return null;
   const draft = copy.card;
   // Скопированные картинки остались на старом месте — убираем их вместе со старым файлом.
-  deleteCard(ref, ref.scope === to ? [] : ownImages(ref));
+  deleteCard(ref, ref.scope === to ? [] : ownImages(ref), false);
   fs.mkdirSync(dir, { recursive: true });
   const file = path.join(dir, fileName(dir, c.name));
   writeJsonAtomic(file, { ...draft, origin: c.origin, id: c.id, format: 1 });

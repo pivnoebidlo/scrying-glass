@@ -37,7 +37,7 @@
         >
           <Eye size={13} />
         </button>
-        <button class="icon-btn trash" title="Переместить в Корзину" onclick={() => dispatch('vault', 'trash', { paths: [p] })}>
+        <button class="icon-btn trash" title="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [p] })}>
           <Trash2 size={13} />
         </button>
       </div>

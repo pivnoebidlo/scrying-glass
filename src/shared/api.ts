@@ -2,6 +2,7 @@
 import type { Card, CardRef, CardScope, CardSummary } from './cards';
 import type { BuiltinBook } from './compendium';
 import type { Note } from './notes';
+import type { TrashItem, TrashKind, TrashPlace } from './trash';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 
 export interface DisplayInfo {
@@ -84,7 +85,7 @@ export interface Api {
   listLibraryTables(): Promise<{ path: string; text: string }[]>;
   // Встроенные таблицы — в библиотеку (только новые; restore — и удалённые). Сколько файлов записано.
   seedLibraryTables(files: { name: string; text: string }[], restore?: boolean): Promise<number>;
-  // Таблица библиотеки — в Корзину (спросит подтверждение). true — удалена.
+  // Таблица или запись библиотеки — в корзину (спросит подтверждение). true — удалена.
   trashLibraryTable(path: string): Promise<boolean>;
   onTablesChanged(cb: () => void): void;
   writeTable(path: string, text: string): Promise<boolean>;
@@ -97,7 +98,7 @@ export interface Api {
   // Приключение одним файлом (.sgpack, main/packs.ts): экспорт спросит про музыку и куда сохранить (путь или null),
   // импорт — какой файл (что вышло или null — отменили).
   exportAdventure(name: string): Promise<string | null>;
-  // Удалить приключение: папка — в Корзину, его сцены, заготовки и разметка карт — из приложения (спросит).
+  // Удалить приключение: папка — в корзину, его сцены, заготовки и разметка карт — из приложения (спросит).
   deleteAdventure(name: string): Promise<boolean>;
   // Импорт в два шага: выбрать файл (название из него, есть ли такое уже, свободный вариант), потом — импорт под
   // выбранным названием (занятое не принимается).
@@ -118,6 +119,14 @@ export interface Api {
   writeLibraryData(name: string, data: unknown): Promise<boolean>;
   // Открыть файл хранилища в программе по умолчанию.
   openFile(path: string): Promise<void>;
+  // Корзина приложения (main/trash.ts): у хранилища и библиотеки своя. Вернуть (что вернулось или null), удалить
+  // насовсем и очистить (спросят подтверждение), показать папку .trash в Finder.
+  listTrash(): Promise<{ vault: TrashItem[]; library: TrashItem[] }>;
+  restoreTrash(place: TrashPlace, id: string): Promise<{ title: string; path: string; kind: TrashKind } | null>;
+  purgeTrash(place: TrashPlace, id: string, title: string): Promise<boolean>;
+  emptyTrash(): Promise<boolean>;
+  revealTrash(place: TrashPlace): Promise<void>;
+  onTrashChanged(cb: () => void): void;
 
   listDisplays(): Promise<DisplayInfo[]>;
   onDisplaysChanged(cb: () => void): void;

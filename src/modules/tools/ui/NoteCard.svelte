@@ -1,4 +1,4 @@
-<!-- Плитка записки: лист в миниатюре, название, кнопки «показать игрокам», «править», «в Корзину».
+<!-- Плитка записки: лист в миниатюре, название, кнопки «показать игрокам», «править», «в корзину».
      Клик по листу показывает записку игрокам (или убирает), как у картинок раздатки. -->
 <script lang="ts">
   import { Pencil, Scroll, Trash2 } from '@lucide/svelte';
@@ -22,7 +22,7 @@
 
   const shown = $derived(store.state.handouts.current === path);
 
-  // Подтверждение спросит само действие (системный диалог, файл уходит в Корзину).
+  // Подтверждение спросит само действие (системный диалог, файл уходит в корзину приложения).
   const trash = () => dispatch('vault', 'trash', { paths: [path] });
 </script>
 
@@ -34,7 +34,7 @@
   <div class="actions">
     <button class="act" title={shown ? 'Убрать с экрана' : 'Показать игрокам'} class:active={shown} onclick={() => dispatch('handouts', 'toggle', { path })}><Scroll size={14} /></button>
     <button class="act" title="Править" onclick={() => (onopen ? onopen() : editNote(path))}><Pencil size={14} /></button>
-    <button class="act" title="В Корзину" onclick={trash}><Trash2 size={14} /></button>
+    <button class="act" title="В корзину" onclick={trash}><Trash2 size={14} /></button>
   </div>
   <div class="caption" title={path}>{noteTitle(path)}</div>
 </div>

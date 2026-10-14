@@ -1,22 +1,31 @@
 <!-- Боковая панель: дерево папок хранилища. -->
 <script lang="ts">
-  import { Library } from '@lucide/svelte';
+  import { Library, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
   import TreeNode from './TreeNode.svelte';
   import { ui } from './ui.svelte';
+  import { loadTrash, trashCount } from './trash.svelte';
 
   let { ms }: ModuleProps<'vault'> = $props();
 
   function select(path: string) {
     ui.folder = path;
+    ui.trash = false;
     openTab('vault');
   }
+
+  // Корзина своя у каждого хранилища: другое открыли — перечитываем.
+  const root = $derived(ms.root);
+  $effect(() => {
+    void root;
+    void loadTrash();
+  });
 </script>
 
 {#if ms.tree}
   <div class="tree">
-    <button class="row root" class:active={ui.folder === ''} title={ms.root} onclick={() => select('')}>
+    <button class="row root" class:active={!ui.trash && ui.folder === ''} title={ms.root} onclick={() => select('')}>
       <Library size={14} />
       <span class="name">{ms.name}</span>
     </button>
@@ -26,6 +35,11 @@
     {#if ms.tree.folders.length === 0}
       <p class="faint hint">Папок пока нет. Создайте их в Finder — они появятся здесь сами.</p>
     {/if}
+    <button class="row bin" class:active={ui.trash} title="Удалённые файлы, карточки, записи и приключения" onclick={() => ((ui.trash = true), openTab('vault'))}>
+      <Trash2 size={14} />
+      <span class="name">Корзина</span>
+      {#if trashCount()}<span class="faint count">{trashCount()}</span>{/if}
+    </button>
   </div>
 {/if}
 
@@ -35,6 +49,12 @@
   }
   .root {
     font-weight: 600;
+  }
+  .bin {
+    margin-top: 10px;
+  }
+  .count {
+    font-size: 12px;
   }
   .hint {
     padding: 0 8px;

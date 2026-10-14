@@ -88,7 +88,7 @@
     if (!ms.current) return;
     const name = ms.current;
     open = false;
-    if (await window.api.deleteAdventure(name)) flash(`Приключение «${name}» удалено (папка — в Корзине).`);
+    if (await window.api.deleteAdventure(name)) flash(`Приключение «${name}» удалено. Вернуть — «Файлы» → «Корзина».`);
   }
 
   // Персонажи игроков текущего приключения (или всего хранилища) — одним файлом карточек с портретами.
@@ -163,7 +163,7 @@
       <button onclick={importPack} title="Добавить приключение из файла .sgpack"><span class="mark"><Upload size={13} /></span> Импорт приключения…</button>
       <div class="sep"></div>
       {#if ms.current}
-        <button class="danger" onclick={remove} title="Папка — в Корзину, сцены и заготовки приключения — из приложения">
+        <button class="danger" onclick={remove} title="Папка — в корзину, сцены и заготовки приключения — из приложения">
           <span class="mark"><Trash2 size={13} /></span> Удалить «{ms.current}»…
         </button>
       {/if}

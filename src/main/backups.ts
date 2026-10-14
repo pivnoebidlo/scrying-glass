@@ -49,7 +49,8 @@ function libraryFiles(lib: string): string[] {
     for (const e of entries) {
       const r = rel ? `${rel}/${e.name}` : e.name;
       if (e.isDirectory()) {
-        if (depth < 6 && !(rel === '' && e.name === 'images')) walk(path.join(dir, e.name), r, depth + 1);
+        // Корзину (.trash) и прочие скрытые папки не копируем.
+        if (depth < 6 && !e.name.startsWith('.') && !(rel === '' && e.name === 'images')) walk(path.join(dir, e.name), r, depth + 1);
       } else if (e.isFile() && /\.(json|md|txt)$/i.test(e.name) && !e.name.endsWith('.tmp')) out.push(r);
     }
   };

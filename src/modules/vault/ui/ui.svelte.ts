@@ -1,16 +1,17 @@
-// Состояние интерфейса файлов: выбранная папка и раскрытые ветки дерева. Запоминается между запусками.
+// Состояние интерфейса файлов: выбранная папка (trash — открыта корзина) и раскрытые ветки дерева. Запоминается
+// между запусками.
 import { folderRole, type FolderRole } from '../../../shared/vault';
 import { BookOpen, Dices, Folder, Map, Music, Scroll, Shield, Skull, Users, Wallpaper } from '@lucide/svelte';
 import type { Component } from 'svelte';
 
 const KEY = 'sg.files';
 
-function load(): { folder: string; expanded: Record<string, boolean> } {
+function load(): { folder: string; trash: boolean; expanded: Record<string, boolean> } {
   try {
     const s = JSON.parse(localStorage.getItem(KEY) || '{}');
-    return { folder: s.folder ?? '', expanded: s.expanded ?? {} };
+    return { folder: s.folder ?? '', trash: !!s.trash, expanded: s.expanded ?? {} };
   } catch {
-    return { folder: '', expanded: {} };
+    return { folder: '', trash: false, expanded: {} };
   }
 }
 

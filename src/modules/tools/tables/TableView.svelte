@@ -1,5 +1,5 @@
 <!-- Одна таблица: бросок (пробел или кнопка), результаты сверху, все варианты ниже (щелчок — выбрать вручную).
-     Таблицу можно править здесь же, открыть в другой программе (Obsidian), удалить в Корзину или скопировать
+     Таблицу можно править здесь же, открыть в другой программе (Obsidian), удалить в корзину или скопировать
      в приключение, в общие таблицы хранилища или в библиотеку (для всех кампаний). -->
 <script lang="ts">
   import { ChevronLeft, Copy, Dices, ExternalLink, Pencil, Trash2 } from '@lucide/svelte';
@@ -47,7 +47,7 @@
     }
   }
 
-  // В Корзину (спросит подтверждение). Таблицу библиотеки удаляет ядро, таблицу хранилища — действие vault/trash.
+  // В корзину (спросит подтверждение). Таблицу библиотеки удаляет ядро, таблицу хранилища — действие vault/trash.
   async function trash() {
     const p = item.path;
     if (isLibraryTable(p)) {
@@ -83,7 +83,7 @@
     <button class="btn" onclick={() => ((draft = item.text), (editing = !editing))}><Pencil size={14} /> {editing ? 'Не править' : 'Править'}</button>
     <CopyToMenu title="Скопировать в приключение, в общие таблицы хранилища или в библиотеку" library onpick={copyTo} />
     <button class="icon-btn" title="Открыть файл в другой программе (например, в Obsidian)" onclick={() => window.api.openFile(item.path)}><ExternalLink size={15} /></button>
-    <button class="icon-btn" title="Удалить таблицу в Корзину" onclick={trash}><Trash2 size={15} /></button>
+    <button class="icon-btn" title="Удалить таблицу в корзину" onclick={trash}><Trash2 size={15} /></button>
   </header>
   {#if item.table.description}<p class="faint about">{item.table.description}</p>{/if}
   {#if status}<p class="status">{status}</p>{/if}

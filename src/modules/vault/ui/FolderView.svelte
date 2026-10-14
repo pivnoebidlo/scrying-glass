@@ -10,6 +10,7 @@
   import { trackName } from '../../../shared/vault';
   import { folderIcon, ui } from './ui.svelte';
   import CardRow from './CardRow.svelte';
+  import TrashView from './TrashView.svelte';
   import NoteCard from '../../tools/ui/NoteCard.svelte';
   import { onMount } from 'svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
@@ -66,7 +67,7 @@
   // ⌘V во вкладке «Файлы» — вставить картинку из буфера в открытую папку (если фокус не в поле ввода).
   function onkeydown(e: KeyboardEvent) {
     const t = e.target as HTMLElement | null;
-    if (!(e.metaKey || e.ctrlKey) || e.code !== 'KeyV' || !folder) return;
+    if (!(e.metaKey || e.ctrlKey) || e.code !== 'KeyV' || !folder || ui.trash) return;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     e.preventDefault();
     dispatch('vault', 'pasteImage', { folder: folder.path });
@@ -82,7 +83,9 @@
 
 <svelte:window {onkeydown} />
 
-{#if folder}
+{#if ui.trash && ms.tree}
+  <TrashView vaultName={ms.name} />
+{:else if folder}
   <div class="view">
     <header class="toolbar">
       <nav class="crumbs">
@@ -192,7 +195,7 @@
                 <a.icon size={14} />
               </button>
             {/each}
-            <button class="icon-btn trash" title="Переместить в Корзину" onclick={() => dispatch('vault', 'trash', { paths: [f.path] })}>
+            <button class="icon-btn trash" title="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [f.path] })}>
               <Trash2 size={14} />
             </button>
           </li>
