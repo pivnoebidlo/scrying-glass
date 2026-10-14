@@ -2,7 +2,7 @@
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { allFiles } from '../../shared/vault';
 import { isNotePath } from '../../shared/notes';
-import type { Entry } from '../../shared/compendium';
+import { BUILTIN, type Entry } from '../../shared/compendium';
 import { LIBRARY } from '../../shared/vault';
 import { readNoteFile } from '../../main/notes';
 import type { HandoutsState } from './types';
@@ -21,7 +21,7 @@ function prune(s: HandoutsState, ctx: ModuleContext): HandoutsState {
   const tree = ctx.vault.tree;
   if (!tree || !s.current) return withNote(s, ctx);
   // Запись справочника из библиотеки — вне хранилища, её не проверяем.
-  if (s.current.startsWith(LIBRARY) && s.entry) return s;
+  if ((s.current.startsWith(LIBRARY) || s.current.startsWith(BUILTIN)) && s.entry) return s;
   const exists = allFiles(tree).some((f) => f.path === s.current && (f.kind === 'image' || f.kind === 'note' || f.kind === 'entry'));
   return withNote(exists ? s : { ...s, current: null }, ctx);
 }

@@ -3,7 +3,7 @@
 import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
 import { store } from '../../../renderer/lib/store.svelte';
 import { placeOrder, placeTitle, roleFolderHere, visibleIn } from '../../../shared/adventures';
-import { entryTitle, parseEntry, searchKey, type Entry } from '../../../shared/compendium';
+import { BUILTIN, entryTitle, parseEntry, searchKey, type Entry } from '../../../shared/compendium';
 import { allFiles, dirname, LIBRARY, roleFolders, roleNames } from '../../../shared/vault';
 
 export interface EntryItem {
@@ -13,13 +13,59 @@ export interface EntryItem {
   group: string;
   order: number;
   entry: Entry;
-  text: string;
+  // Английское название встроенной записи — тоже находится поиском и по [[ссылке]].
+  en?: string;
 }
 
 export const LIBRARY_GROUP = 'Библиотека';
 export const isLibraryEntry = (path: string) => path.startsWith(LIBRARY);
+export const isBuiltinEntry = (path: string) => path.startsWith(BUILTIN);
 
-export const book = $state({ vault: [] as EntryItem[], library: [] as EntryItem[], rev: 0, loaded: false });
+export const book = $state({ vault: [] as EntryItem[], library: [] as EntryItem[], builtin: [] as EntryItem[], rev: 0, loaded: false });
+
+// Какие встроенные записи показывать: редакция SRD, обе или никакие. Помнит окно (localStorage).
+export type Edition = 'dnd5e-2024' | 'dnd5e-2014' | 'all' | 'none';
+export const EDITIONS: { id: Edition; title: string }[] = [
+  { id: 'dnd5e-2024', title: 'SRD 5.2.1 (2024)' },
+  { id: 'dnd5e-2014', title: 'SRD 5.1 (2014)' },
+  { id: 'all', title: 'Обе редакции SRD' },
+  { id: 'none', title: 'Без SRD — только свои' },
+];
+const EDITION_KEY = 'compendium.edition';
+function savedEdition(): Edition {
+  try {
+    const v = localStorage.getItem(EDITION_KEY);
+    if (EDITIONS.some((e) => e.id === v)) return v as Edition;
+  } catch {
+    /* нет хранилища — по умолчанию */
+  }
+  return 'dnd5e-2024';
+}
+export const srd = $state({ edition: savedEdition() });
+export function setEdition(e: Edition) {
+  srd.edition = e;
+  try {
+    localStorage.setItem(EDITION_KEY, e);
+  } catch {
+    /* не запомним — не страшно */
+  }
+}
+
+let builtinLoaded = false;
+async function loadBuiltin() {
+  if (builtinLoaded) return;
+  builtinLoaded = true;
+  const books = await window.api.listBuiltinEntries();
+  book.builtin = books.flatMap((b) =>
+    b.entries.map(({ en, ...e }) => ({
+      path: `${BUILTIN}${b.system}/${e.type}/${e.title}`,
+      group: b.source.title,
+      order: 3,
+      entry: { ...e, fields: { ...e.fields, source: `${b.source.title}, перевод OmnisGM` } },
+      en,
+    }))
+  );
+}
 
 let hooked = false;
 let loadedFor = '';
@@ -31,10 +77,11 @@ export async function loadEntries() {
     hooked = true;
     window.api.onCompendiumChanged(() => book.rev++);
   }
+  void loadBuiltin();
   if (libraryFor !== book.rev) {
     libraryFor = book.rev;
     const list = await window.api.listLibraryEntries();
-    book.library = list.map((f) => ({ path: f.path, group: LIBRARY_GROUP, order: 2, entry: parseEntry(f.text, entryTitle(f.path)), text: f.text }));
+    book.library = list.map((f) => ({ path: f.path, group: LIBRARY_GROUP, order: 2, entry: parseEntry(f.text, entryTitle(f.path)) }));
   }
   const app = store.state;
   const tree = app.vault.tree;
@@ -49,7 +96,7 @@ export async function loadEntries() {
   const list = await Promise.all(
     files.map(async (f) => {
       const text = (await window.api.readEntry(f.path)) ?? '';
-      return { path: f.path, group: placeTitle(app.adventures, f.dir, app.vault.name), order: placeOrder(app.adventures, f.dir), entry: parseEntry(text, entryTitle(f.path)), text };
+      return { path: f.path, group: placeTitle(app.adventures, f.dir, app.vault.name), order: placeOrder(app.adventures, f.dir), entry: parseEntry(text, entryTitle(f.path)) };
     })
   );
   if (loadedFor === key) {
@@ -59,14 +106,23 @@ export async function loadEntries() {
 }
 
 const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
+const builtinShown = () => {
+  const ed = srd.edition;
+  return ed === 'none' ? [] : ed === 'all' ? book.builtin : book.builtin.filter((e) => e.path.startsWith(`${BUILTIN}${ed}/`));
+};
 export const allEntries = () =>
-  [...book.vault, ...book.library].sort((a, b) => a.order - b.order || collator.compare(a.entry.title, b.entry.title));
+  [...book.vault, ...book.library, ...builtinShown()].sort((a, b) => a.order - b.order || collator.compare(a.entry.title, b.entry.title));
 
-// [[Ссылка]] на запись: по названию, без регистра и «ё»; запись приключения важнее общей, общая — библиотечной.
+// [[Ссылка]] на запись: по названию (или английскому названию встроенной), без регистра и «ё»; запись приключения
+// важнее общей, общая — библиотечной, своя — встроенной. Встроенная ищется и в скрытой редакции (ссылка не должна
+// пропадать), но выбранная — первой.
 export function resolveEntry(name: string): EntryItem | null {
   const k = searchKey(name.trim());
-  return allEntries().find((e) => searchKey(e.entry.title) === k) ?? null;
+  const hit = (e: EntryItem) => searchKey(e.entry.title) === k || (!!e.en && searchKey(e.en) === k);
+  return allEntries().find(hit) ?? book.builtin.find(hit) ?? null;
 }
+// Запись по пути, в том числе встроенная из скрытой редакции.
+export const entryAt = (path: string) => allEntries().find((e) => e.path === path) ?? book.builtin.find((e) => e.path === path);
 
 // Поиск: по названию, меткам и тексту; совпадение в названии — выше.
 export function search(list: EntryItem[], query: string): EntryItem[] {
@@ -76,7 +132,8 @@ export function search(list: EntryItem[], query: string): EntryItem[] {
     .map((e) => {
       const t = searchKey(e.entry.title);
       const tags = Array.isArray(e.entry.fields['tags']) ? searchKey((e.entry.fields['tags'] as string[]).join(' ')) : '';
-      const s = t === q ? 0 : t.startsWith(q) ? 1 : t.includes(q) ? 2 : tags.includes(q) ? 3 : searchKey(e.entry.body).includes(q) ? 4 : -1;
+      const en = e.en ? searchKey(e.en) : '';
+      const s = t === q || en === q ? 0 : t.startsWith(q) || en.startsWith(q) ? 1 : t.includes(q) || en.includes(q) ? 2 : tags.includes(q) ? 3 : searchKey(e.entry.body).includes(q) ? 4 : -1;
       return { e, s };
     })
     .filter((x) => x.s >= 0);

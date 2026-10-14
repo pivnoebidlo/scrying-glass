@@ -11,7 +11,7 @@
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import CopyToMenu from '../../tools/ui/CopyToMenu.svelte';
   import EntryEditor from './EntryEditor.svelte';
-  import { allEntries, book, entriesFolder, isLibraryEntry, loadEntries, resolveEntry } from './store.svelte';
+  import { book, entriesFolder, entryAt, isBuiltinEntry, isLibraryEntry, loadEntries, resolveEntry, srd } from './store.svelte';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { openEntry, ui } from './ui.svelte';
 
@@ -28,7 +28,8 @@
     loadEntries();
   });
 
-  const item = $derived((book.vault, book.library, ui.open ? allEntries().find((e) => e.path === ui.open) : undefined));
+  const item = $derived((book.vault, book.library, book.builtin, srd.edition, ui.open ? entryAt(ui.open) : undefined));
+  const builtin = $derived(!!item && isBuiltinEntry(item.path));
   const shown = $derived(!!item && app.handouts.current === item.path);
   let status = $state('');
 
@@ -56,8 +57,9 @@
 
   async function copyTo(place: string | null) {
     if (!item) return;
-    const path = await window.api.createEntry(entriesFolder(place), item.entry.title, serializeEntry(item.entry));
-    if (path) flash('Копия сделана.');
+    const path = await window.api.createEntry(entriesFolder(place), item.entry.title, serializeEntry($state.snapshot(item.entry)));
+    if (path && builtin) openEntry(path);
+    else if (path) flash('Копия сделана.');
   }
 
   async function trash() {
@@ -72,22 +74,24 @@
   }
 </script>
 
-{#if item && ui.editing}
+{#if item && ui.editing && !builtin}
   {#key item.path}<EntryEditor {item} />{/key}
 {:else if item}
   <div class="view">
     <header class="bar">
       <button class="icon-btn" title="Назад" disabled={!ui.back.length} onclick={back}><ChevronLeft size={16} /></button>
-      <span class="faint where" title={item.path}>{item.group}</span>
+      <span class="faint where" title={builtin ? 'Встроенная запись, только чтение: «Копия в…» — своя, её можно править' : item.path}>{item.en ? `${item.group} · ${item.en}` : item.group}</span>
       {#if status}<span class="status">{status}</span>{/if}
       <div class="spacer"></div>
       <button class="btn" class:primary={!shown} onclick={() => dispatch('handouts', 'toggleEntry', { path: item.path, entry: $state.snapshot(item.entry) })}>
         {#if shown}<EyeOff size={14} /> Убрать у игроков{:else}<Eye size={14} /> Показать игрокам{/if}
       </button>
-      <button class="btn" onclick={() => (ui.editing = true)}><Pencil size={14} /> Править</button>
-      <CopyToMenu title="Скопировать в приключение, в общее или в библиотеку" library onpick={copyTo} />
-      <button class="icon-btn" title="Открыть файл в другой программе (например, в Obsidian)" onclick={() => window.api.openFile(item.path)}><ExternalLink size={15} /></button>
-      <button class="icon-btn" title="Удалить запись в Корзину" onclick={trash}><Trash2 size={15} /></button>
+      {#if !builtin}<button class="btn" onclick={() => (ui.editing = true)}><Pencil size={14} /> Править</button>{/if}
+      <CopyToMenu title={builtin ? 'Своя копия, которую можно править: в приключение, в общее или в библиотеку' : 'Скопировать в приключение, в общее или в библиотеку'} library onpick={copyTo} />
+      {#if !builtin}
+        <button class="icon-btn" title="Открыть файл в другой программе (например, в Obsidian)" onclick={() => window.api.openFile(item.path)}><ExternalLink size={15} /></button>
+        <button class="icon-btn" title="Удалить запись в Корзину" onclick={trash}><Trash2 size={15} /></button>
+      {/if}
     </header>
     <div class="page">
       <EntryCard entry={item.entry} onlink={follow} />
@@ -104,6 +108,11 @@
     <p class="faint">
       В тексте [[Название записи]] — ссылка на другую запись (или на карточку монстра). «Показать игрокам» выводит
       запись на экран игроков, как раздатку. «+» в списке слева — новая запись.
+    </p>
+    <p class="faint">
+      Встроенные заклинания, магические предметы, черты, состояния и правила — из SRD 5.1 и SRD 5.2.1 (Wizards of the
+      Coast, CC BY 4.0) в переводе OmnisGM (rules.omnisgm.com, CC BY 4.0). Редакция выбирается над списком; встроенную
+      запись можно скопировать к себе и править.
     </p>
   </div>
 {/if}

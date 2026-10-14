@@ -32,6 +32,7 @@ const api: Api = {
 
   readEntry: (path) => ipcRenderer.invoke('compendium:read', path),
   listLibraryEntries: () => ipcRenderer.invoke('compendium:listLibrary'),
+  listBuiltinEntries: () => ipcRenderer.invoke('compendium:builtin'),
   writeEntry: (path, text) => ipcRenderer.invoke('compendium:write', { path, text }),
   createEntry: (folder, title, text) => ipcRenderer.invoke('compendium:create', { folder, title, text }),
   renameEntry: (path, title) => ipcRenderer.invoke('compendium:rename', { path, title }),

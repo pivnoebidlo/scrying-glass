@@ -5,7 +5,7 @@
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { blankEntry, entrySubtitle, serializeEntry, TYPES, typeOf } from '../../../shared/compendium';
   import { LIBRARY } from '../../../shared/vault';
-  import { allEntries, book, entriesFolder, loadEntries, search } from './store.svelte';
+  import { allEntries, book, EDITIONS, entriesFolder, loadEntries, search, setEdition, srd, type Edition } from './store.svelte';
   import { openEntry, ui } from './ui.svelte';
 
   let { app }: ModuleProps<'compendium'> = $props();
@@ -20,7 +20,7 @@
     loadEntries();
   });
 
-  const all = $derived((book.vault, book.library, allEntries()));
+  const all = $derived((book.vault, book.library, book.builtin, srd.edition, allEntries()));
   // Типы, которые есть среди записей (встроенные — всегда, в порядке описания), со счётчиками.
   const types = $derived.by(() => {
     const counts = new Map<string, number>();
@@ -76,6 +76,10 @@
       <button class="btn primary" onclick={create}>Создать</button>
     </div>
   {/if}
+
+  <select class="edition" title="Встроенные записи (SRD в переводе OmnisGM)" value={srd.edition} onchange={(e) => setEdition(e.currentTarget.value as Edition)}>
+    {#each EDITIONS as ed (ed.id)}<option value={ed.id}>{ed.title}</option>{/each}
+  </select>
 
   <div class="types">
     <button class:active={ui.type === 'all'} onclick={() => (ui.type = 'all')}>Все <span>{all.length}</span></button>
@@ -146,6 +150,9 @@
     flex-direction: column;
     gap: 2px;
     color: var(--text-muted);
+  }
+  .edition {
+    font-size: 12px;
   }
   .types {
     display: flex;

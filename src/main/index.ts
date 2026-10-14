@@ -19,7 +19,7 @@ import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
 import { createNote, readNote, renameNote, writeNote } from './notes';
 import { createTable, isTablePath, listLibraryTables, readTable, seedLibraryTables, tableResolver, watchLibraryTables, writeTable } from './tables';
-import { entries, watchLibraryCompendium } from './compendium';
+import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
 import type { Note } from '../shared/notes';
 import {
   cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
@@ -310,6 +310,7 @@ const afterEntryWrite = async (rel: string) => {
 };
 ipcMain.handle('compendium:read', (_event, rel: string) => entries.read(resolveTable, rel));
 ipcMain.handle('compendium:listLibrary', () => entries.listLibrary(libraryPath()));
+ipcMain.handle('compendium:builtin', () => builtinEntries());
 ipcMain.handle('compendium:write', async (_event, { path: rel, text }: { path: string; text: string }) => {
   const ok = entries.write(resolveTable, rel, text);
   if (ok) await afterEntryWrite(rel);

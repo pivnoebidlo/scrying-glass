@@ -1,5 +1,6 @@
 // API, который preload открывает окнам как window.api.
 import type { Card, CardRef, CardScope, CardSummary } from './cards';
+import type { BuiltinBook } from './compendium';
 import type { Note } from './notes';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 
@@ -71,6 +72,8 @@ export interface Api {
   // («library:compendium/…»). Удаление записи библиотеки — trashLibraryTable.
   readEntry(path: string): Promise<string | null>;
   listLibraryEntries(): Promise<{ path: string; text: string }[]>;
+  // Встроенный справочник (SRD по редакциям), только чтение.
+  listBuiltinEntries(): Promise<BuiltinBook[]>;
   writeEntry(path: string, text: string): Promise<boolean>;
   createEntry(folder: string, title: string, text: string): Promise<string | null>;
   renameEntry(path: string, title: string): Promise<string | null>;

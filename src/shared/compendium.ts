@@ -90,6 +90,15 @@ export interface Entry {
   body: string;
 }
 
+// Встроенный справочник одной редакции (resources/compendium/<система>.json): записи с английским названием `en`.
+export interface BuiltinBook {
+  system: string;
+  source: { title: string; attribution: string; url: string; license: string };
+  entries: (Entry & { en?: string })[];
+}
+// Путь встроенной записи: «srd:<система>/<тип>/<название>».
+export const BUILTIN = 'srd:';
+
 export const ENTRY_EXT = '.md';
 export const entryTitle = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.(md|txt)$/i, '');
 

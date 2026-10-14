@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entrySubtitle, parseEntry, serializeEntry } from '../src/shared/compendium';
+import { entrySubtitle, parseEntry, serializeEntry, type BuiltinBook } from '../src/shared/compendium';
 
 describe('записи справочника', () => {
   it('шапка: строки, числа, да/нет, списки в обоих видах; без шапки — заметка', () => {
@@ -35,4 +35,24 @@ describe('разметка записи', () => {
       '<h3>На высоких уровнях</h3><p>Урон <strong>растёт</strong> на <a class="wikilink" data-link="Огненный шар">1к6</a> &lt;b&gt;.</p><ul><li>раз</li><li>два</li></ul><table><thead><tr><th>Ур</th><th>Урон</th></tr></thead><tbody><tr><td>3</td><td>8к6</td></tr></tbody></table>',
     );
   });
+});
+
+describe('встроенный справочник', () => {
+  for (const system of ['dnd5e-2014', 'dnd5e-2024']) {
+    it(`${system}: у заклинаний и предметов есть поля, названия не повторяются`, async () => {
+      const fs = await import('node:fs');
+      const book = JSON.parse(fs.readFileSync(`resources/compendium/${system}.json`, 'utf8')) as BuiltinBook;
+      const spells = book.entries.filter((e) => e.type === 'spell');
+      expect(spells.length).toBeGreaterThan(300);
+      for (const s of spells) {
+        expect(typeof s.fields['level']).toBe('number');
+        expect(s.fields['school'], s.title).toBeTruthy();
+        expect(s.fields['casting_time'], s.title).toBeTruthy();
+      }
+      expect(book.entries.filter((e) => e.type === 'item').every((e) => e.fields['category'])).toBe(true);
+      expect(book.entries.filter((e) => e.type === 'condition').length).toBe(15);
+      const keys = book.entries.map((e) => `${e.type}/${e.title}`);
+      expect(new Set(keys).size).toBe(keys.length);
+    });
+  }
 });

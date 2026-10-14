@@ -13,6 +13,7 @@
     "start": "electron-vite preview",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json",
     "import-srd": "node --no-warnings scripts/import-srd.ts",
+    "import-compendium": "node --no-warnings scripts/import-compendium.ts",
     "postinstall": "node node_modules/electron/install.js",
     "icon": "electron scripts/render-icon.cjs",
     "dist": "electron-vite build && electron-builder",
