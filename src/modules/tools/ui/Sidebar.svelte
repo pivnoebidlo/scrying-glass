@@ -1,6 +1,6 @@
 <!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
 <script lang="ts">
-  import { Dices, FileText, Gauge, Hourglass, ScrollText, Table2 } from '@lucide/svelte';
+  import { Calculator, Dices, FileText, Gauge, Hourglass, ScrollText, Table2 } from '@lucide/svelte';
   import { tables } from '../tables/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
@@ -44,6 +44,10 @@
     <Hourglass size={14} />
     <span class="name">Таймер</span>
     {#if app.timer.active}<span class="count">идёт</span>{/if}
+  </button>
+  <button class="item" class:active={ui.tool === 'pointbuy'} onclick={() => (ui.tool = 'pointbuy')}>
+    <Calculator size={14} />
+    <span class="name">Покупка характеристик</span>
   </button>
   <p class="faint more">Здесь появятся и другие инструменты мастера.</p>
 </div>

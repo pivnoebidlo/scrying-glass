@@ -11,6 +11,7 @@
   import TablesView from '../tables/TablesView.svelte';
   import Calculator from '../difficulty/Calculator.svelte';
   import TimerTool from '../../timer/ui/TimerTool.svelte';
+  import PointBuy from '../pointbuy/PointBuy.svelte';
 
   let { app }: ModuleProps<'tools'> = $props();
 
@@ -31,6 +32,8 @@
   <Calculator />
 {:else if ui.tool === 'timer'}
   <TimerTool />
+{:else if ui.tool === 'pointbuy'}
+  <PointBuy />
 {:else if ui.note && exists}
   {#key ui.note}<NoteEditor path={ui.note} />{/key}
 {:else}

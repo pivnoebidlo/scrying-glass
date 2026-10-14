@@ -1,7 +1,7 @@
 // Что открыто в «Инструментах»: инструмент, записка в редакторе (путь в хранилище), таблица (id из tables/store).
 import { openTab } from '../../../renderer/lib/nav';
 
-export type ToolId = 'notes' | 'tables' | 'difficulty' | 'timer';
+export type ToolId = 'notes' | 'tables' | 'difficulty' | 'timer' | 'pointbuy';
 
 export const ui = $state({
   tool: 'notes' as ToolId,
