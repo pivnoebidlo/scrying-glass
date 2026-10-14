@@ -10,6 +10,7 @@
   import { ui } from './ui.svelte';
   import TablesView from '../tables/TablesView.svelte';
   import Calculator from '../difficulty/Calculator.svelte';
+  import TimerTool from '../../timer/ui/TimerTool.svelte';
 
   let { app }: ModuleProps<'tools'> = $props();
 
@@ -28,6 +29,8 @@
   <TablesView />
 {:else if ui.tool === 'difficulty'}
   <Calculator />
+{:else if ui.tool === 'timer'}
+  <TimerTool />
 {:else if ui.note && exists}
   {#key ui.note}<NoteEditor path={ui.note} />{/key}
 {:else}
