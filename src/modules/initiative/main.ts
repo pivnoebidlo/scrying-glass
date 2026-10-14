@@ -1,7 +1,8 @@
 // Трекер инициативы: участники боя, очерёдность ходов, раунды, хиты, состояния.
 import { randomUUID } from 'node:crypto';
 import { defineModule } from '../../shared/module';
-import { defeated, ordered } from './order';
+import { defeated, ordered, refreshed } from './order';
+import { DEFAULT_SYSTEM, systemOf } from '../../systems';
 import type { Combatant, Encounter, InitiativeState, StripSettings } from './types';
 
 const initialState: InitiativeState = {
@@ -13,8 +14,6 @@ const initialState: InitiativeState = {
   display: { size: 1.5, names: true, wounds: true, position: 'top' },
   party: { size: 4, level: 1 },
 };
-
-const d20 = () => 1 + Math.floor(Math.random() * 20);
 
 // Следующий (step = 1) или предыдущий (-1) ход. Побеждённые пропускаются; переход через начало — новый раунд.
 function advance(s: InitiativeState, step: 1 | -1): InitiativeState {
@@ -52,8 +51,8 @@ const patchEncounter = (s: InitiativeState, id: string, fn: (e: Encounter) => En
   encounters: s.encounters.map((e) => (e.id === id ? fn(e) : e)),
 });
 
-// Копия участника для боя: новый id, полные хиты, без инициативы и состояний.
-const fresh = (c: Combatant): Combatant => ({ ...c, id: randomUUID(), init: null, hp: c.maxHp, conditions: [] });
+// Копия участника для боя: новый id, полные хиты и чистый стресс, без инициативы и состояний.
+const fresh = (c: Combatant): Combatant => ({ ...refreshed(c), id: randomUUID() });
 
 export default defineModule({
   id: 'initiative',
@@ -79,6 +78,8 @@ export default defineModule({
         hidden: c.hidden ?? false,
         hideWounds: c.hideWounds ?? false,
         conditions: [],
+        ...(c.stress ? { stress: c.stress } : {}),
+        ...(c.consequences ? { consequences: c.consequences } : {}),
         card: c.card ?? null,
       };
       return withList(s, encounter, (list) => [...list, full]);
@@ -106,6 +107,19 @@ export default defineModule({
       }));
     },
 
+    // Fate: отметить или снять клетку стресса.
+    toggleStress(s, { id, track, box }: { id: string; track: string; box: number }) {
+      return patch(s, id, (c) => ({
+        ...c,
+        stress: c.stress?.map((t) => (t.id === track ? { ...t, boxes: t.boxes.map((on, i) => (i === box ? !on : on)) } : t)),
+      }));
+    },
+
+    // Fate: текст последствия (пусто — ячейка свободна).
+    setConsequence(s, { id, index, text }: { id: string; index: number; text: string }) {
+      return patch(s, id, (c) => ({ ...c, consequences: c.consequences?.map((q, i) => (i === index ? { ...q, text: text.trim() } : q)) }));
+    },
+
     remove(s, { id, encounter }: { id: string; encounter?: string }) {
       if (encounter) return withList(s, encounter, (list) => list.filter((c) => c.id !== id));
       // Если удаляют того, чей ход, ход переходит к следующему.
@@ -114,13 +128,13 @@ export default defineModule({
       return { ...next, combatants, turn: combatants.length > 0 && next.turn !== id ? next.turn : null };
     },
 
-    // Бросить инициативу за противников и союзников, у которых её ещё нет (all — за всех, кроме партии).
-    rollNpcs(s, { all }: { all?: boolean }) {
+    // Бросить инициативу за противников и союзников, у которых её ещё нет (all — за всех, кроме партии). Как —
+    // решает система приключения: в D&D к20 + бонус, в Fate — просто значение навыка.
+    rollNpcs(s, { all, system }: { all?: boolean; system?: string }) {
+      const value = systemOf(system ?? DEFAULT_SYSTEM).tracker.roll.value;
       return {
         ...s,
-        combatants: s.combatants.map((c) =>
-          c.side !== 'party' && (all || c.init === null) ? { ...c, init: d20() + c.bonus } : c
-        ),
+        combatants: s.combatants.map((c) => (c.side !== 'party' && (all || c.init === null) ? { ...c, init: value(c.bonus) } : c)),
       };
     },
 

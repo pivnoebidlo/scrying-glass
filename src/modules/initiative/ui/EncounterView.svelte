@@ -10,7 +10,8 @@
   import Difficulty from './Difficulty.svelte';
   import { ui } from './ui.svelte';
   import { systemFor } from '../../../shared/adventures';
-  import { isDnd } from '../../../systems';
+  import { isDnd, systemOf } from '../../../systems';
+  import { fromFields } from '../../../systems/tracker';
 
   let { e }: { e: Encounter } = $props();
 
@@ -18,6 +19,9 @@
   const update = (c: Combatant, changes: Partial<Omit<Combatant, 'id'>>) => dispatch('initiative', 'update', { id: c.id, changes, encounter: e.id });
 
   const adventures = $derived(store.state.adventures.list);
+  // Числа участников — как в системе приключения заготовки.
+  const system = $derived(systemFor(store.state.adventures, e.adventure));
+  const tracker = $derived(systemOf(system).tracker);
 
   async function start() {
     await dispatch('initiative', 'startEncounter', { id: e.id });
@@ -46,7 +50,7 @@
       </select>
     {/if}
     <div class="spacer"></div>
-    {#if isDnd(systemFor(store.state.adventures, e.adventure))}<Difficulty list={e.combatants} />{/if}
+    {#if isDnd(system)}<Difficulty list={e.combatants} />{/if}
     <button class="btn primary" disabled={!e.combatants.length} title="Добавить участников к текущему бою" onclick={start}><Swords size={14} /> В бой</button>
     <button class="icon-btn" title="Удалить заготовку" onclick={remove}><Trash2 size={15} /></button>
   </header>
@@ -57,9 +61,8 @@
         <tr>
           <th></th>
           <th>Имя</th>
-          <th class="c-num" title="Бонус инициативы">Бонус</th>
-          <th class="c-num">Хиты</th>
-          <th class="c-num" title="Класс доспеха">КД</th>
+          <th class="c-num" title={tracker.bonus.title}>{tracker.bonus.label}</th>
+          {#each tracker.fields as f (f.key)}<th class="c-num" title={f.title}>{f.label}</th>{/each}
           <th></th>
         </tr>
       </thead>
@@ -76,12 +79,17 @@
             <td class="c-num">
               <input type="text" inputmode="numeric" value={c.bonus} onchange={(ev) => update(c, { bonus: num(ev.currentTarget.value) ?? 0 })} />
             </td>
-            <td class="c-num">
-              <input type="text" inputmode="numeric" value={c.maxHp ?? ''} placeholder="—" onchange={(ev) => update(c, { maxHp: num(ev.currentTarget.value) })} />
-            </td>
-            <td class="c-num">
-              <input type="text" inputmode="numeric" value={c.ac ?? ''} placeholder="—" onchange={(ev) => update(c, { ac: num(ev.currentTarget.value) })} />
-            </td>
+            {#each tracker.fields as f (f.key)}
+              <td class="c-num">
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  value={f.get(c) ?? ''}
+                  placeholder="—"
+                  onchange={(ev) => update(c, fromFields([f], { [f.key]: num(ev.currentTarget.value) }, c))}
+                />
+              </td>
+            {/each}
             <td class="c-act">
               {#if c.card}
                 {@const ref = c.card}

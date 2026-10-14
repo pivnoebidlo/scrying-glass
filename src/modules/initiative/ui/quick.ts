@@ -2,12 +2,22 @@
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import type { CardSummary } from '../../../shared/cards';
 import { sameRef } from '../../../shared/cards';
-import { inCurrentFamily, visibleIn } from '../../../shared/adventures';
+import { inCurrentFamily, systemFor, visibleIn } from '../../../shared/adventures';
+import { systemOf } from '../../../systems';
+import { fromFields } from '../../../systems/tracker';
 import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
 import { addToInitiative } from '../../bestiary/ui/combat';
 import { caption, imageGroups } from '../../portraits/library';
 
 const MAX = 12;
+
+// Система боя или заготовки (у заготовки — её приключения): какие числа у участников.
+export function systemHere(encounter?: string): string {
+  const s = store.state;
+  const adventure = encounter ? (s.initiative.encounters.find((e) => e.id === encounter)?.adventure ?? null) : s.adventures.current;
+  return systemFor(s.adventures, adventure);
+}
+export const trackerHere = (encounter?: string) => systemOf(systemHere(encounter)).tracker;
 
 // Подсказки по имени: точное совпадение, потом начало имени, потом середина; при равных — сначала карточки
 // приключения (и общие): монстры, NPC, партия; потом библиотека и SRD на языке фильтра бестиария. Только карточки
@@ -55,7 +65,9 @@ export async function addParty(encounter?: string): Promise<number> {
   const portraits = tree ? imageGroups(tree, app.vault.name, 'party', app.adventures).flatMap((g) => g.items.map((f) => f.path)) : [];
   for (const path of portraits) {
     if (bestiary.cardFor(path) || list().some((x) => x.portrait === path)) continue;
-    await dispatch('initiative', 'add', { c: { name: caption(app.portraits, path), portrait: path, side: 'party' }, encounter });
+    // Числа — как у участника, введённого вручную с пустыми полями (в Fate — обычные дорожки стресса).
+    const numbers = fromFields(trackerHere(encounter).fields, {});
+    await dispatch('initiative', 'add', { c: { ...numbers, name: caption(app.portraits, path), portrait: path, side: 'party' }, encounter });
     added++;
   }
   return added;

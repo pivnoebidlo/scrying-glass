@@ -1,4 +1,4 @@
-<!-- Экран игроков: полоса очерёдности сверху. Хиты и КД не показываются; обводка — сторона (партия золотая,
+<!-- Экран игроков: полоса очерёдности сверху. Хиты, КД и стресс не показываются; обводка — сторона (партия золотая,
      союзник синий, нейтрал серый, противник красный), портрет краснеет по мере ранений (настройка), побеждённые
      остаются серыми. Спрятанных (засада) не видно. Размер и подписи — в настройках «Инициативы». -->
 <script lang="ts">
@@ -6,7 +6,7 @@
   import { flip } from 'svelte/animate';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { assetUrl } from '../../../shared/vault';
-  import { ordered } from '../order';
+  import { down, ordered, woundOf } from '../order';
   import type { Combatant } from '../types';
 
   let { ms }: ModuleProps<'initiative'> = $props();
@@ -15,9 +15,8 @@
   const visible = $derived(ordered(ms.combatants).filter((c) => !c.hidden));
   const shown = $derived(ms.showToPlayers && ms.turn !== null && visible.length > 0);
 
-  const down = (c: Combatant) => c.hp !== null && c.hp <= 0;
-  // Доля потерянных хитов: 0 — цел, 1 — при смерти.
-  const wound = (c: Combatant) => (d.wounds && !c.hideWounds && c.maxHp && c.hp !== null && c.hp > 0 ? Math.min(1, Math.max(0, 1 - c.hp / c.maxHp)) : 0);
+  // Насколько ранен: 0 — цел, 1 — при смерти (хиты или стресс и последствия).
+  const wound = (c: Combatant) => (d.wounds && !c.hideWounds ? woundOf(c) : 0);
 </script>
 
 {#if shown}

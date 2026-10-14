@@ -3,6 +3,10 @@
   import { Dices, Trash2, X } from '@lucide/svelte';
   import { diceText } from '../../shared/dice';
   import { rolls, type RollEntry } from './rolls.svelte';
+  import { ladderText } from '../../systems/fate/ladder';
+
+  // Грань куба Fate: «+», «−» или пусто.
+  const face = (f: number) => (f > 0 ? '+' : f < 0 ? '−' : '·');
 
   let list = $state<HTMLElement>();
 
@@ -40,6 +44,12 @@
               {#if crit(e)}<span class="tag crit">крит!</span>{:else if fumble(e)}<span class="tag fumble">промах</span>{/if}
             </div>
           {/if}
+          {#if e.fate}
+            <div class="line">
+              <span class="total">{ladderText(e.fate.total)}</span>
+              <span class="note">4dF: <span class="faces">{e.fate.faces.map(face).join(' ')}</span> {signed(e.fate.bonus)}</span>
+            </div>
+          {/if}
           {#each e.damage as d, i (i)}
             <div class="line dmg">
               <span class="total">{d.total}</span>
@@ -55,6 +65,10 @@
 {/if}
 
 <style>
+  .faces {
+    font-family: ui-monospace, monospace;
+    letter-spacing: 0.1em;
+  }
   .log {
     position: fixed;
     right: 292px;

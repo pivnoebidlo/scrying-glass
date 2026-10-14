@@ -1,6 +1,6 @@
 <!-- Добавление участников: в бой или в заготовку (encounter). Поле имени подсказывает карточки приключения
-     (монстры, NPC, партия), библиотеки и SRD: выбор подсказки добавляет существо с его хитами, КД и картинками.
-     Без подсказки — участник «вручную» с числами из полей. -->
+     (монстры, NPC, партия), библиотеки и SRD: выбор подсказки добавляет существо с его числами (хиты и КД, стресс)
+     и картинками. Без подсказки — участник «вручную» с числами из полей; какие поля — решает система приключения. -->
 <script lang="ts">
   import { thumb } from '../../../shared/vault';
   import { Plus, Shield, Skull, User, Users } from '@lucide/svelte';
@@ -10,7 +10,8 @@
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { addToInitiative } from '../../bestiary/ui/combat';
   import { SIDES, type Side } from '../types';
-  import { addParty, suggest } from './quick';
+  import { addParty, suggest, trackerHere } from './quick';
+  import { fromFields } from '../../../systems/tracker';
 
   let { encounter }: { encounter?: string } = $props();
 
@@ -18,7 +19,10 @@
 
   const num = (v: string) => (v.trim() === '' || isNaN(Number(v)) ? null : Number(v));
 
-  let form = $state({ name: '', side: 'enemy' as Side, init: '', bonus: '', hp: '', ac: '', count: '1' });
+  let form = $state({ name: '', side: 'enemy' as Side, init: '', bonus: '', count: '1' });
+  // Числа системы: «Хиты», «КД» или «Физ.», «Мент.», «Посл.».
+  let values = $state<Record<string, string>>({});
+  const tracker = $derived(trackerHere(encounter));
   let focused = $state(false);
   let active = $state(0);
   let status = $state('');
@@ -50,11 +54,18 @@
     const n = count();
     for (let i = 1; i <= n; i++) {
       await dispatch('initiative', 'add', {
-        c: { name: n > 1 ? `${name} ${i}` : name, side: form.side, init: num(form.init), bonus: num(form.bonus) ?? 0, maxHp: num(form.hp), ac: num(form.ac) },
+        c: {
+          ...fromFields(tracker.fields, Object.fromEntries(tracker.fields.map((f) => [f.key, num(values[f.key] ?? '')]))),
+          name: n > 1 ? `${name} ${i}` : name,
+          side: form.side,
+          init: num(form.init),
+          bonus: num(form.bonus) ?? 0,
+        },
         encounter,
       });
     }
-    form = { ...form, name: '', init: '', hp: '', ac: '', count: '1' };
+    form = { ...form, name: '', init: '', count: '1' };
+    values = {};
   }
 
   async function party() {
@@ -113,11 +124,12 @@
     {#each Object.entries(SIDES) as [v, t] (v)}<option value={v}>{t}</option>{/each}
   </select>
   {#if !encounter}
-    <input class="f-num" type="text" inputmode="numeric" placeholder="Иниц." title="Инициатива (можно бросить потом)" bind:value={form.init} />
+    <input class="f-num" type="text" inputmode="numeric" placeholder={tracker.init.label} title="{tracker.init.title} (можно задать потом)" bind:value={form.init} />
   {/if}
-  <input class="f-num" type="text" inputmode="numeric" placeholder="Бонус" title="Бонус инициативы" bind:value={form.bonus} />
-  <input class="f-num" type="text" inputmode="numeric" placeholder="Хиты" bind:value={form.hp} />
-  <input class="f-num" type="text" inputmode="numeric" placeholder="КД" bind:value={form.ac} />
+  <input class="f-num" type="text" inputmode="numeric" placeholder={tracker.bonus.label} title={tracker.bonus.title} bind:value={form.bonus} />
+  {#each tracker.fields as f (f.key)}
+    <input class="f-num" type="text" inputmode="numeric" placeholder={f.label} title={f.title} bind:value={values[f.key]} />
+  {/each}
   <input class="f-num" type="text" inputmode="numeric" placeholder="×1" title="Сколько таких добавить (Гоблин 1, Гоблин 2, …)" bind:value={form.count} />
   <button class="btn" type="submit" disabled={!form.name.trim()} title="Добавить с введённым именем и числами"><Plus size={14} /> Добавить</button>
   <button class="btn" type="button" title="Персонажи игроков текущего приключения, которых здесь ещё нет" onclick={party}><Shield size={14} /> Партия</button>

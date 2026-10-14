@@ -3,6 +3,7 @@ import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import { sameRef, type CardSide, type CardSummary } from '../../../shared/cards';
 import { rollFormula } from './dice';
 import type { Combatant } from '../../initiative/types';
+import { systemOf } from '../../../systems';
 
 // Участники текущего боя или заготовки.
 const listOf = (encounter?: string): Combatant[] =>
@@ -32,7 +33,9 @@ export interface AddOptions {
 
 export async function addToInitiative(c: CardSummary, opts: AddOptions = {}) {
   const n = Math.max(1, Math.min(20, Math.round(opts.count ?? 1) || 1));
-  const { hp, ac, initiative, hpFormula } = c.combat;
+  const { hp, hpFormula } = c.combat;
+  // Числа участника (хиты и КД, стресс и последствия) — как их понимает система карточки.
+  const numbers = systemOf(c.system).tracker.fromCard(c.combat);
   // Портреты раздаются по очереди: четыре разбойника и четыре картинки — у каждого своя. Начинаем с той, что
   // ещё меньше всех занята в бою (добавлять можно и по одному).
   const used = new Map(c.images.map((p) => [p, 0]));
@@ -48,9 +51,9 @@ export async function addToInitiative(c: CardSummary, opts: AddOptions = {}) {
   };
   for (const name of names(c.name, n, list)) {
     const portrait = nextPortrait();
-    const maxHp = opts.rollHp && hpFormula ? (rollFormula(hpFormula) ?? hp) : hp;
+    const rolled = opts.rollHp && hpFormula ? (rollFormula(hpFormula) ?? hp) : null;
     await dispatch('initiative', 'add', {
-      c: { name, maxHp, ac, bonus: initiative, side: opts.side ?? c.side, card: c.ref, portrait },
+      c: { ...numbers, ...(rolled !== null ? { maxHp: rolled, hp: rolled } : {}), name, side: opts.side ?? c.side, card: c.ref, portrait },
       encounter: opts.encounter,
     });
   }

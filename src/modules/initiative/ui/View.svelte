@@ -5,7 +5,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { defeated, ordered } from '../order';
-  import { SIDES, CONDITIONS, conditionEntry, type Combatant, type Side } from '../types';
+  import { SIDES, type Combatant, type Side } from '../types';
   import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
   import AvatarPick from './AvatarPick.svelte';
   import QuickAdd from './QuickAdd.svelte';
@@ -14,7 +14,8 @@
   import Difficulty from './Difficulty.svelte';
   import { newEncounterName, ui } from './ui.svelte';
   import { currentSystem } from '../../../shared/adventures';
-  import { isDnd } from '../../../systems';
+  import { isDnd, systemOf } from '../../../systems';
+  import { trackerCells } from '../../../systems/ui';
 
   let { ms, app }: ModuleProps<'initiative'> = $props();
 
@@ -28,6 +29,11 @@
     ui.encounter = id;
   }
 
+  // Что показывать у участника, решает система приключения: хиты и КД или стресс и последствия.
+  const system = $derived(currentSystem(app.adventures));
+  const tracker = $derived(systemOf(system).tracker);
+  const Cells = $derived(trackerCells(system));
+
   const list = $derived(ordered(ms.combatants));
   const running = $derived(ms.turn !== null);
 
@@ -37,12 +43,10 @@
 
   const update = (c: Combatant, changes: Partial<Omit<Combatant, 'id'>>) => dispatch('initiative', 'update', { id: c.id, changes });
 
-  // «-7» или «7» — урон, «+5» — лечение.
-  function applyHp(c: Combatant, input: HTMLInputElement) {
+  // Аспект (Fate) вводится текстом: Enter — добавить.
+  function addAspect(c: Combatant, input: HTMLInputElement) {
     const v = input.value.trim();
-    const n = Number(v);
-    if (!v || isNaN(n)) return;
-    dispatch('initiative', 'changeHp', { id: c.id, amount: v.startsWith('+') ? Math.abs(n) : -Math.abs(n) });
+    if (v && !c.conditions.includes(v)) dispatch('initiative', 'toggleCondition', { id: c.id, condition: v });
     input.value = '';
   }
 
@@ -69,9 +73,9 @@
       <button class="btn primary" disabled={!list.length} onclick={() => dispatch('initiative', 'start')}><Swords size={14} /> Начать бой</button>
     {/if}
     <div class="spacer"></div>
-    {#if isDnd(currentSystem(app.adventures))}<Difficulty list={ms.combatants} />{/if}
-    <button class="btn" title="Бросить d20 + бонус за противников и союзников без инициативы" onclick={() => dispatch('initiative', 'rollNpcs', {})}>
-      <Dices size={14} /> Бросить за NPC
+    {#if isDnd(system)}<Difficulty list={ms.combatants} />{/if}
+    <button class="btn" title={tracker.roll.title} onclick={() => dispatch('initiative', 'rollNpcs', { system })}>
+      <Dices size={14} /> {tracker.roll.label}
     </button>
     <StripControls d={ms.display} />
     <label class="show" title="Полоса очерёдности на экране игроков">
@@ -88,13 +92,11 @@
     <table>
       <thead>
         <tr>
-          <th class="c-init" title="Инициатива">Иниц.</th>
+          <th class="c-init" title={tracker.init.title}>{tracker.init.label}</th>
           <th></th>
           <th>Имя</th>
-          <th class="c-hp">Хиты</th>
-          <th class="c-dmg" title="«7» или «-7» — урон, «+5» — лечение, Enter — применить">±</th>
-          <th class="c-ac" title="Класс доспеха">КД</th>
-          <th>Состояния</th>
+          <Cells head />
+          <th>{tracker.conditions.label}</th>
           <th></th>
         </tr>
       </thead>
@@ -111,49 +113,46 @@
                 <!-- Сторону можно поменять прямо в бою: союзник, на которого напали, становится противником. -->
                 <select class="side-select" value={c.side} title="Сторона" onchange={(e) => update(c, { side: e.currentTarget.value as Side })}>
                   {#each Object.entries(SIDES) as [v, t] (v)}<option value={v}>{t}</option>{/each}
-                </select>{c.bonus ? ` · бонус ${c.bonus > 0 ? '+' : ''}${c.bonus}` : ''}
+                </select>{c.bonus ? ` · ${tracker.bonus.short} ${c.bonus > 0 ? '+' : ''}${c.bonus}` : ''}
               </span>
             </td>
-            <td class="c-hp">
-              {#if c.maxHp !== null}
-                <span class:low={c.hp !== null && c.hp <= c.maxHp / 2}>{c.hp ?? '—'}</span><span class="faint">/</span><input
-                  class="max"
-                  type="text"
-                  inputmode="numeric"
-                  value={c.maxHp}
-                  title="Максимум хитов"
-                  onchange={(e) => update(c, { maxHp: num(e.currentTarget.value), hp: Math.min(c.hp ?? 0, num(e.currentTarget.value) ?? Infinity) })}
-                />
-              {:else}
-                <input class="max" type="text" inputmode="numeric" placeholder="—" title="Максимум хитов" onchange={(e) => update(c, { maxHp: num(e.currentTarget.value), hp: num(e.currentTarget.value) })} />
-              {/if}
-            </td>
-            <td class="c-dmg">
-              <input type="text" placeholder="±" disabled={c.maxHp === null} onkeydown={(e) => e.key === 'Enter' && applyHp(c, e.currentTarget)} onblur={(e) => applyHp(c, e.currentTarget)} />
-            </td>
-            <td class="c-ac">
-              <input type="text" inputmode="numeric" value={c.ac ?? ''} placeholder="—" onchange={(e) => update(c, { ac: num(e.currentTarget.value) })} />
-            </td>
+            <Cells {c} />
             <td class="c-cond">
               {#each c.conditions as cond (cond)}
+                {@const entry = tracker.conditions.entry}
                 <span class="chip">
-                  <button class="cond" title="Что это значит — открыть в справочнике" onclick={() => peekEntry(conditionEntry(cond))}>{cond}</button>
+                  {#if entry}
+                    <button class="cond" title="Что это значит — открыть в справочнике" onclick={() => peekEntry(entry(cond))}>{cond}</button>
+                  {:else}
+                    <span>{cond}</span>
+                  {/if}
                   <button class="off" title="Снять" onclick={() => dispatch('initiative', 'toggleCondition', { id: c.id, condition: cond })}><X size={10} /></button>
                 </span>
               {/each}
-              <select
-                class="add-cond"
-                value=""
-                title="Добавить состояние"
-                onchange={(e) => {
-                  const v = e.currentTarget.value;
-                  if (v) dispatch('initiative', 'toggleCondition', { id: c.id, condition: v });
-                  e.currentTarget.value = '';
-                }}
-              >
-                <option value="">+</option>
-                {#each CONDITIONS.filter((x) => !c.conditions.includes(x)) as cond (cond)}<option value={cond}>{cond}</option>{/each}
-              </select>
+              {#if tracker.conditions.free}
+                <input
+                  class="add-aspect"
+                  type="text"
+                  placeholder="+ аспект"
+                  title="Аспект на участнике («В огне», «Прижат к стене»): Enter — добавить"
+                  onkeydown={(e) => e.key === 'Enter' && addAspect(c, e.currentTarget)}
+                  onblur={(e) => addAspect(c, e.currentTarget)}
+                />
+              {:else}
+                <select
+                  class="add-cond"
+                  value=""
+                  title="Добавить состояние"
+                  onchange={(e) => {
+                    const v = e.currentTarget.value;
+                    if (v) dispatch('initiative', 'toggleCondition', { id: c.id, condition: v });
+                    e.currentTarget.value = '';
+                  }}
+                >
+                  <option value="">+</option>
+                  {#each tracker.conditions.list.filter((x) => !c.conditions.includes(x)) as cond (cond)}<option value={cond}>{cond}</option>{/each}
+                </select>
+              {/if}
             </td>
             <td class="c-act">
               {#if c.card}
@@ -221,7 +220,7 @@
     width: 100%;
     border-collapse: collapse;
   }
-  th {
+  table :global(th) {
     padding: 4px 6px;
     color: var(--text-faint);
     font-size: 11px;
@@ -230,15 +229,15 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
-  td {
+  table :global(td) {
     padding: 4px 6px;
     border-top: 1px solid var(--border);
     vertical-align: middle;
   }
-  tr.turn td {
+  tr.turn :global(td) {
     background: var(--accent-soft);
   }
-  tr.turn td:first-child {
+  tr.turn :global(td:first-child) {
     box-shadow: inset 3px 0 0 var(--accent);
   }
   tr.down {
@@ -247,13 +246,13 @@
   tr.hidden-row .name {
     font-style: italic;
   }
-  td input[type='text'] {
+  table :global(td input[type='text']) {
     width: 100%;
     padding: 3px 5px;
     border-color: transparent;
     background: none;
   }
-  td input[type='text']:hover {
+  table :global(td input[type='text']:hover) {
     border-color: var(--border);
   }
   .c-init {
@@ -283,29 +282,6 @@
   .side-select:hover {
     border-color: var(--border);
     color: var(--text-normal);
-  }
-  .c-hp {
-    width: 110px;
-    white-space: nowrap;
-  }
-  .c-hp .max {
-    width: 48px;
-  }
-  .low {
-    color: var(--danger);
-  }
-  .c-dmg {
-    width: 56px;
-  }
-  .c-dmg input {
-    border-color: var(--border) !important;
-    text-align: center;
-  }
-  .c-ac {
-    width: 50px;
-  }
-  .c-ac input {
-    text-align: center;
   }
   .c-cond {
     max-width: 260px;
@@ -340,6 +316,10 @@
   }
   .chip .off:hover {
     color: var(--text-normal);
+  }
+  .add-aspect {
+    width: 90px !important;
+    font-size: 12px;
   }
   .add-cond {
     width: 36px;

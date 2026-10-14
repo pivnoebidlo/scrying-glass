@@ -1,5 +1,6 @@
 // Жетоны: живые данные из инициативы, размер клетки, привязка к сетке, рисование на canvas.
 import type { InitiativeState } from '../initiative/types';
+import { down as isDown, woundOf } from '../initiative/order';
 import { assetUrl } from '../../shared/vault';
 import type { Xf } from './render';
 import type { Grid, MapData, MapToken } from './types';
@@ -8,7 +9,7 @@ import type { Grid, MapData, MapToken } from './types';
 export interface TokenView extends MapToken {
   turn: boolean;
   down: boolean;
-  // Доля потерянных хитов (0..1), если игроки видят ранения.
+  // Насколько ранен (0..1), если игроки видят ранения.
   wound: number;
 }
 
@@ -17,8 +18,8 @@ export function tokenViews(tokens: MapToken[], ini: InitiativeState): TokenView[
   return tokens.map((t) => {
     const c = t.combatant ? ini.combatants.find((x) => x.id === t.combatant) : undefined;
     if (!c) return { ...t, turn: false, down: false, wound: 0 };
-    const down = c.hp !== null && c.hp <= 0;
-    const wound = d.wounds && !c.hideWounds && c.maxHp && c.hp !== null && c.hp > 0 ? Math.min(1, Math.max(0, 1 - c.hp / c.maxHp)) : 0;
+    const down = isDown(c);
+    const wound = d.wounds && !c.hideWounds ? woundOf(c) : 0;
     return { ...t, name: c.name, portrait: c.portrait ?? t.portrait, side: c.side, hidden: t.hidden || c.hidden, turn: ini.turn === c.id, down, wound };
   });
 }

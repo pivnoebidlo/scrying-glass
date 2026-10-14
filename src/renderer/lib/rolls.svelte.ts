@@ -1,5 +1,5 @@
-// Журнал бросков мастера: броски из статблоков и листов персонажей. Только в окне управления, игрокам не виден.
-import { parseDice, rollD20, rollDamage, type D20Mode, type D20Roll, type DamageRoll } from '../../shared/dice';
+// Журнал бросков мастера: броски из статблоков и листов персонажей (к20 и урон D&D, кубы Fate). Только в окне управления, игрокам не виден.
+import { parseDice, rollD20, rollDamage, rollFate, type D20Mode, type D20Roll, type DamageRoll, type FateRoll } from '../../shared/dice';
 
 export interface RollEntry {
   id: number;
@@ -8,6 +8,8 @@ export interface RollEntry {
   who: string;
   what: string;
   d20?: D20Roll;
+  // Кубы Fate (4dF) + навык.
+  fate?: FateRoll;
   // Попадание проверяется по натуральной 20/1 только у атак.
   attack?: boolean;
   damage: DamageRoll[];
@@ -36,6 +38,11 @@ class Rolls {
     const crit = d20.natural === 20;
     const dmg = damage.map(parseDice).filter((x) => x !== null).map((x) => rollDamage(x, crit));
     this.push({ who, what, d20, attack: true, damage: dmg });
+  }
+
+  // Fate: 4dF + навык.
+  fate(who: string, what: string, bonus: number) {
+    this.push({ who, what, fate: rollFate(bonus), damage: [] });
   }
 
   damage(who: string, what: string, damage: string, crit = false) {

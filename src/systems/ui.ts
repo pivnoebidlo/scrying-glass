@@ -8,6 +8,10 @@ import CharacterEditor from './dnd5e/CharacterEditor.svelte';
 import { isCharacter } from './dnd5e/character';
 import GenericStats from './GenericStats.svelte';
 import GenericEditor from './GenericEditor.svelte';
+import DndTrackerCells from './dnd5e/TrackerCells.svelte';
+import FateTrackerCells from './fate/TrackerCells.svelte';
+import type { Combatant } from '../modules/initiative/types';
+import { familyOf } from '.';
 
 type StatsView = Component<{ card: Card<any> }>;
 type StatsEditor = Component<{ stats: any; system: string }, {}, 'stats'>;
@@ -27,3 +31,8 @@ export const statsView = (system: string, stats?: unknown): StatsView =>
   system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterSheet : (views[system] ?? GenericStats);
 export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
   system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterEditor : (editors[system] ?? GenericEditor);
+
+// Ячейки строки участника в трекере инициативы (хиты и КД, стресс и последствия): по семейству системы.
+type TrackerCells = Component<{ c?: Combatant; head?: boolean }>;
+const trackers: Record<string, TrackerCells> = { fate: FateTrackerCells };
+export const trackerCells = (system: string): TrackerCells => trackers[familyOf(system)] ?? DndTrackerCells;

@@ -81,7 +81,8 @@ Electron-приложение для мастера D&D: окно управле
   Редактор: `modules/bestiary/ui/CardEditor.svelte` (общая часть) + редактор системы из `systems/ui.ts`.
   Просмотр карточки — `CardView.svelte` (сам грузит карточку по ссылке): во вкладке бестиария и в выдвижной панели
   `CardDrawer` (`bestiary.show(ref)` — открыть её откуда угодно; рисует фоновый компонент бестиария).
-- Броски: `shared/dice.ts` (разбор «2d6+5», к20 с преимуществом/помехой, крит), журнал `renderer/lib/rolls.svelte.ts`
+- Броски: `shared/dice.ts` (разбор «2d6+5», к20 с преимуществом/помехой, крит, 4dF — `rollFate`; лестница Fate —
+  `systems/fate/ladder.ts`), журнал `renderer/lib/rolls.svelte.ts`
   + `RollLog.svelte` — только в окне управления, вне `AppState` (игрокам не показываются). Кнопки — в `StatBlock` и
   `CharacterSheet` (атака — `Block.attack`, у персонажа бонус и урон разбираются из строк листа).
 - Картинки вне хранилища (библиотека карточек) в портретах и инициативе — строки «library:<путь>», адрес даёт
@@ -126,7 +127,14 @@ Electron-приложение для мастера D&D: окно управле
   справочник (`fitsHere`: поле `system` записи, иначе `family` типа — заклинания и т. п. D&D, правила и заметки —
   любые; встроенный SRD — только в D&D, `srdHere`; типы — `typesHere`). Инструменты D&D (сложность боя, покупка
   характеристик) и плашка сложности — только в D&D. Система уходит в .sgpack (`manifest.system`) и в корзину с
-  приключением. Fate Core пока зарегистрирована без своего вида (карточка — «поле — значение»).
+  приключением. Fate Core пока без своего вида карточки («поле — значение»), но со своим трекером.
+- Трекер системы (`SystemDef.tracker`, тип — `systems/tracker.ts`; `dnd5e/tracker.ts`, `fate/tracker.ts`): подписи
+  очерёдности и бонуса, кнопка «Бросить за NPC» (`roll.value` — действие `rollNpcs` получает `system`), состояния
+  (список D&D или свободные аспекты Fate), числа участника `fields` (быстрое добавление и заготовка; складывать —
+  `fromFields`), участник из карточки — `fromCard`. Ячейки строки боя — компонент `trackerCells` из `systems/ui.ts`
+  (рисует свои `<td>`, `head` — `<th>`; стили таблицы в `View.svelte` поэтому `:global`). У участника Fate —
+  `stress` (дорожки клеток), `consequences`, `out`; действия `toggleStress`, `setConsequence`. Выбыл и насколько
+  ранен — `down` / `woundOf` в `initiative/order.ts` (полоса игроков и жетоны), новый бой — `refreshed`.
 - Карты (`modules/maps`): у карты (`MapData`, по пути) туман операциями, обзор игроков, сетка и метки `pins`
   (доли размера карты; `shown` — видят игроки, заметка только у мастера; старые сохранения дополняет `init`).
   Рисование — `render.ts` (`drawMap`, `drawPins`) общее для редактора и экрана игроков; метки у игроков поверх
@@ -214,7 +222,7 @@ Electron-приложение для мастера D&D: окно управле
   MutationObserver пересобирает ссылки после перерисовки. Фоновый компонент справочника `EntryDrawer.svelte` грузит
   записи, заполняет указатель и рисует панель (с панелью карточки — одна из двух, «назад» к карточке), в нём же
   `QuickSearch.svelte` (⌘K: записи + `bestiary.all`). Состояния трекера → записи — `CONDITION_ENTRY` в
-  `initiative/types.ts`. Другие названия — поле `aliases` (`altNames` в store: английское + aliases).
+  `systems/dnd5e/conditions.ts` (через `tracker.conditions.entry`). Другие названия — поле `aliases` (`altNames` в store: английское + aliases).
   Свои типы: `CustomType` (id = значение `type:` в файле, поля `FieldDef` с `subtitle` — значение в строке под
   названием), разбор и проверка — `parseCustomTypes`, ключ из подписи — `keyFrom` (транслитерация); файл
   `<библиотека>/compendium-types.json` (IPC `library:readData` / `writeData`). В окне — `renderer/lib/entry/types.svelte.ts`

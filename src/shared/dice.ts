@@ -75,3 +75,15 @@ export function rollDamage(expr: DiceExpr, crit = false): DamageRoll {
   const total = Math.max(0, rolls.flat().reduce((a, b) => a + b, 0) + expr.bonus);
   return { expr, rolls, crit, total };
 }
+
+// Кубы Fate (4dF): у каждого грани −1, 0, +1 (по две). Итог — сумма граней и бонуса (навыка).
+export interface FateRoll {
+  faces: number[];
+  bonus: number;
+  total: number;
+}
+
+export function rollFate(bonus: number): FateRoll {
+  const faces = Array.from({ length: 4 }, () => Math.ceil(die(6) / 2) - 2);
+  return { faces, bonus, total: faces.reduce((a, b) => a + b, 0) + bonus };
+}

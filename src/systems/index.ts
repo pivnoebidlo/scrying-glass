@@ -3,6 +3,9 @@
 import type { CardKind, CombatStats } from '../shared/cards';
 import * as dnd5e from './dnd5e/stats';
 import * as character from './dnd5e/character';
+import type { TrackerDef } from './tracker';
+import { dndTracker } from './dnd5e/tracker';
+import { fateTracker } from './fate/tracker';
 
 export interface SystemDef {
   id: string;
@@ -15,6 +18,8 @@ export interface SystemDef {
   combat(stats: any): CombatStats;
   // Пустой блок stats для новой карточки: у персонажа игрока — лист, у остальных — статблок.
   blank(kind?: CardKind): unknown;
+  // Трекер инициативы: очерёдность, числа участника, состояния.
+  tracker: TrackerDef;
 }
 
 // У D&D два вида блока stats: статблок (монстры, NPC) и лист персонажа игрока — их различает форма.
@@ -26,6 +31,7 @@ const dnd = (id: string, title: string): SystemDef => ({
   rank: (s) => (character.isCharacter(s) ? character.totalLevel(s) : (s as dnd5e.Dnd5eStats).cr),
   combat: (s) => (character.isCharacter(s) ? character.characterCombat(s) : dnd5e.combatStats(s)),
   blank: (kind) => (kind === 'character' ? character.blankCharacter() : dnd5e.blankStats()),
+  tracker: dndTracker,
 });
 
 // Fate Core: пока без своего вида — карточка показывается как «поле — значение».
@@ -37,6 +43,7 @@ const fate: SystemDef = {
   rank: () => null,
   combat: () => ({ hp: null, ac: null, initiative: 0 }),
   blank: () => ({}),
+  tracker: fateTracker,
 };
 
 export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)'), fate];
@@ -58,6 +65,8 @@ const unknown = (id: string): SystemDef => ({
   rank: () => null,
   combat: () => ({ hp: null, ac: null, initiative: 0 }),
   blank: () => ({}),
+  // У неизвестной системы — хиты и КД, как у D&D: самое привычное.
+  tracker: dndTracker,
 });
 
 export const systemOf = (id: string) => systems.find((s) => s.id === id) ?? unknown(id);
