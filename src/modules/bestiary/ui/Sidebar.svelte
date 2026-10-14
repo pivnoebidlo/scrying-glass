@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { Download, FilePlus, Plus, Search, Upload } from '@lucide/svelte';
   import { langName, sameRef } from '../../../shared/cards';
-  import { familyOf, systems } from '../../../systems';
+  import { familyOf, isEnabled, systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dirname, roleFolders } from '../../../shared/vault';
   import { currentSystem, inCurrentFamily, placeTitle, visibleIn } from '../../../shared/adventures';
@@ -27,7 +27,9 @@
 
   // Карточки — только системы приключения; выбирать можно редакцию внутри семейства (D&D 2014 / 2024).
   const inFamily = $derived(bestiary.all.filter((c) => inCurrentFamily(app.adventures, c.system)).length);
-  const editions = $derived(systems.filter((s) => s.family === familyOf(currentSystem(app.adventures))));
+  const editions = $derived(
+    (app.vault.systemsOff, systems.filter((s) => s.family === familyOf(currentSystem(app.adventures)) && (isEnabled(s.id) || s.id === currentSystem(app.adventures))))
+  );
 
   const f = bestiary.filters;
   // Длинный список рисуем частями: сотни строк сразу заметно тормозят при наборе в поиске.

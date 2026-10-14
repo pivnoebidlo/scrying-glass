@@ -15,6 +15,7 @@ import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { systemFor } from '../shared/adventures';
+import { setSystemsOff } from '../systems';
 import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
 import type { TrashPlace, TrashSettings } from '../shared/trash';
 import { migrateOldCampaign } from './migrate';
@@ -59,6 +60,8 @@ interface AppSettings {
   backups?: string | null;
   // Корзина: удалять сразу или в корзину, через сколько дней очищать (shared/trash.ts).
   trash?: TrashSettings;
+  // Отключённые ролевые системы (systems/index.ts).
+  systemsOff?: string[];
 }
 const RECENT_MAX = 10;
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -70,6 +73,7 @@ function loadSettings() {
     // Остальные поля (папка снимков, корзина) — как сохранены.
     settings = { ...saved, vault: saved?.vault ?? null, recent: saved?.recent ?? [], library: saved?.library ?? null, roles: saved?.roles ?? null };
     setTrashSettings(settings.trash);
+    setSystemsOff(settings.systemsOff);
   } catch {
     /* не прочитались — начнём с выбора хранилища */
   }
@@ -90,6 +94,7 @@ function vaultState(): VaultState {
     tree: vaultTree,
     recent: settings.recent,
     roles: setRoleNames(settings.roles),
+    systemsOff: setSystemsOff(settings.systemsOff),
   };
 }
 
@@ -223,6 +228,13 @@ function setRoles(roles: Partial<RoleNames> | null): VaultState {
   return vaultRoot ? rescanVault() : vaultState();
 }
 
+// Отключить ненужные ролевые системы (все сразу нельзя — setSystemsOff оставит хотя бы одну).
+function setSystemsOffSetting(list: string[]): VaultState {
+  settings = { ...settings, systemsOff: setSystemsOff(list) };
+  writeJsonAtomic(settingsFile(), settings);
+  return vaultState();
+}
+
 // ---------- Рассылка состояния ----------
 function broadcastState() {
   for (const win of BrowserWindow.getAllWindows()) {
@@ -239,6 +251,7 @@ const vault: VaultAccess = {
   rescan: rescanVault,
   forget: forgetVault,
   setRoles,
+  setSystemsOff: setSystemsOffSetting,
 };
 
 const ctx: ModuleContext = {

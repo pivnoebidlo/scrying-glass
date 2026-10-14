@@ -1,16 +1,20 @@
-<!-- Выбор ролевой системы: группами по семействам (D&D 5e — две редакции, Fate). -->
+<!-- Выбор ролевой системы: группами по семействам (D&D 5e — две редакции, Fate). Отключённые в настройках не
+     предлагаются; уже выбранная остаётся в списке, даже если её отключили. -->
 <script lang="ts">
-  import { FAMILIES, systems } from '../../../systems';
+  import { enabledSystems, FAMILIES, systems } from '../../../systems';
+  import { store } from '../../../renderer/lib/store.svelte';
 
   let { value, onchange }: { value: string; onchange: (system: string) => void } = $props();
-  const known = $derived(systems.some((s) => s.id === value));
+  // vault.systemsOff — чтобы список обновился после смены настроек.
+  const list = $derived((store.state.vault.systemsOff, enabledSystems()));
+  const known = $derived(list.some((s) => s.id === value));
 </script>
 
 <select {value} onchange={(e) => onchange(e.currentTarget.value)}>
-  {#each FAMILIES as f (f.id)}
+  {#each FAMILIES.filter((f) => list.some((s) => s.family === f.id)) as f (f.id)}
     <optgroup label={f.title}>
-      {#each systems.filter((s) => s.family === f.id) as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
+      {#each list.filter((s) => s.family === f.id) as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
     </optgroup>
   {/each}
-  {#if !known}<option {value}>{value}</option>{/if}
+  {#if !known}<option {value}>{systems.find((s) => s.id === value)?.title ?? value}{systems.some((s) => s.id === value) ? ' (отключена)' : ''}</option>{/if}
 </select>

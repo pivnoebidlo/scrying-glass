@@ -6,10 +6,13 @@
   import { blankEntry, entrySubtitle, serializeEntry } from '../../../shared/compendium';
   import { customTypes, typeDef } from '../../../renderer/lib/entry/types.svelte';
   import { LIBRARY } from '../../../shared/vault';
-  import { allEntries, book, EDITIONS, entriesFolder, loadEntries, search, setEdition, srd, srdHere, typesHere, type Edition } from './store.svelte';
+  import { allEntries, book, editionNow, editionsHere, entriesFolder, loadEntries, search, setEdition, srd, srdHere, typesHere, type Edition } from './store.svelte';
   import { openEntry, ui } from './ui.svelte';
 
   let { app }: ModuleProps<'compendium'> = $props();
+  // Редакции SRD без отключённых в настройках систем.
+  const editions = $derived((app.vault.systemsOff, editionsHere()));
+  const edition = $derived((app.vault.systemsOff, srd.edition, editionNow()));
 
   const tree = $derived(app.vault.tree);
   const adv = $derived(app.adventures.current);
@@ -81,8 +84,8 @@
   {/if}
 
   {#if srdHere()}
-    <select class="edition" title="Встроенные записи (SRD в переводе OmnisGM)" value={srd.edition} onchange={(e) => setEdition(e.currentTarget.value as Edition)}>
-      {#each EDITIONS as ed (ed.id)}<option value={ed.id}>{ed.title}</option>{/each}
+    <select class="edition" title="Встроенные записи (SRD в переводе OmnisGM)" value={edition} onchange={(e) => setEdition(e.currentTarget.value as Edition)}>
+      {#each editions as ed (ed.id)}<option value={ed.id}>{ed.title}</option>{/each}
     </select>
   {/if}
 

@@ -2,6 +2,7 @@
 import type { DisplayInfo } from '../../shared/api';
 import type { AppState } from '../../shared/types';
 import { setRoleNames } from '../../shared/vault';
+import { setSystemsOff } from '../../systems';
 
 class Store {
   // Снимок состояния ядра. Целиком заменяется при каждом изменении, поэтому без глубокой реактивности.
@@ -20,6 +21,7 @@ export async function connect(opts: { displays?: boolean } = {}) {
   // Названия папок ролей нужны folderRole() и прочим функциям shared/vault.ts — ставим их до нового состояния.
   const apply = (s: AppState) => {
     setRoleNames(s.vault.roles);
+    setSystemsOff(s.vault.systemsOff);
     store.state = s;
   };
   window.api.onState(apply);

@@ -128,6 +128,11 @@ Electron-приложение для мастера D&D: окно управле
   любые; встроенный SRD — только в D&D, `srdHere`; типы — `typesHere`). Инструменты D&D (сложность боя, покупка
   характеристик) и плашка сложности — только в D&D. Система уходит в .sgpack (`manifest.system`) и в корзину с
   приключением. Fate Core пока без своего вида карточки («поле — значение»), но со своим трекером.
+  Ненужные системы отключаются в настройках «Приключения» (`adventures/ui/Settings.svelte`): `settings.systemsOff` в
+  settings.json приложения → `vault.systemsOff` → `setSystemsOff` в `systems/index.ts` (ядро — из настроек, окна — в
+  `store.svelte.ts`, как названия ролей; все отключить нельзя). Отключённые не предлагает `SystemSelect`
+  (`enabledSystems`), `inCurrentFamily` скрывает их карточки (кроме системы самого приключения), справочник — их
+  редакции SRD (`editionsHere` / `editionNow`); по умолчанию — `defaultSystem()`, явно выбранная система остаётся.
 - Трекер системы (`SystemDef.tracker`, тип — `systems/tracker.ts`; `dnd5e/tracker.ts`, `fate/tracker.ts`): подписи
   очерёдности и бонуса, кнопка «Бросить за NPC» (`roll.value` — действие `rollNpcs` получает `system`), состояния
   (список D&D или свободные аспекты Fate), числа участника `fields` (быстрое добавление и заготовка; складывать —

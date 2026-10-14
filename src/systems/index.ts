@@ -57,6 +57,20 @@ export const FAMILIES: { id: string; title: string }[] = [
 // Система, если для приключения она не выбрана.
 export const DEFAULT_SYSTEM = 'dnd5e-2024';
 
+// Отключённые в настройках системы (settings.json приложения, общие для всех хранилищ): их не предлагают при
+// выборе, их карточки и встроенные записи не показываются. Ставит ядро из настроек, окна — из `vault.systemsOff`.
+// Все отключить нельзя.
+let off = new Set<string>();
+export function setSystemsOff(list?: string[] | null): string[] {
+  const known = (list ?? []).filter((id) => systems.some((s) => s.id === id));
+  off = new Set(known.length < systems.length ? known : []);
+  return [...off];
+}
+export const isEnabled = (id: string) => !off.has(id);
+export const enabledSystems = () => systems.filter((s) => !off.has(s.id));
+// Система по умолчанию с учётом отключённых.
+export const defaultSystem = () => (isEnabled(DEFAULT_SYSTEM) ? DEFAULT_SYSTEM : (enabledSystems()[0]?.id ?? DEFAULT_SYSTEM));
+
 const unknown = (id: string): SystemDef => ({
   id,
   title: id,

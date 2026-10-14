@@ -12,7 +12,7 @@ import { deleteWords, discard, trashSettings } from '../../main/trash';
 const openDialog = (ctx: ModuleContext, opts: OpenDialogOptions) =>
   ctx.controlWindow ? ctx.dialog.showOpenDialog(ctx.controlWindow, opts) : ctx.dialog.showOpenDialog(opts);
 
-const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES };
+const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [] };
 
 export default defineModule({
   id: 'vault',
@@ -46,6 +46,11 @@ export default defineModule({
     // Названия папок ролей (настройки приложения). null — вернуть названия по умолчанию.
     setRoles(_s, { roles }: { roles: Partial<RoleNames> | null }, ctx) {
       return ctx.vault.setRoles(roles);
+    },
+
+    // Отключённые ролевые системы (настройки приложения).
+    setSystemsOff(_s, { list }: { list: string[] }, ctx) {
+      return ctx.vault.setSystemsOff(list);
     },
 
     // Скопировать файлы в папку хранилища. Существующие файлы не перезаписываются.

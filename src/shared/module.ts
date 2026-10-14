@@ -16,6 +16,8 @@ export interface VaultAccess {
   forget(root: string): VaultState;
   // Свои названия папок ролей (null — названия по умолчанию). Сохраняются в настройках приложения.
   setRoles(roles: Partial<RoleNames> | null): VaultState;
+  // Отключённые ролевые системы. Сохраняются в настройках приложения.
+  setSystemsOff(list: string[]): VaultState;
 }
 
 // Контекст, который получают действия и хуки модулей.

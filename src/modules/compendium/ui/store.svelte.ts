@@ -3,7 +3,7 @@
 import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
 import { store } from '../../../renderer/lib/store.svelte';
 import { currentSystem, placeOrder, placeTitle, roleFolderHere, visibleIn } from '../../../shared/adventures';
-import { familyOf } from '../../../systems';
+import { familyOf, isEnabled } from '../../../systems';
 import { allTypes, typeDef } from '../../../renderer/lib/entry/types.svelte';
 import { BUILTIN, OVERRIDES, entryFamily, entryTitle, parseEntry, searchKey, type Entry } from '../../../shared/compendium';
 import { allFiles, dirname, LIBRARY, roleFolders, roleNames } from '../../../shared/vault';
@@ -44,6 +44,15 @@ function savedEdition(): Edition {
   return 'dnd5e-2024';
 }
 export const srd = $state({ edition: savedEdition() });
+// Редакции, которые можно выбрать: без отключённых в настройках систем («обе» — только если включены обе).
+const editionOn = (id: string) => isEnabled(id) || id === currentSystem(store.state.adventures);
+export const editionsHere = () =>
+  EDITIONS.filter((e) => (e.id === 'all' ? editionOn('dnd5e-2014') && editionOn('dnd5e-2024') : e.id === 'none' || editionOn(e.id)));
+// Выбранная редакция, а если её отключили — первая доступная.
+export const editionNow = (): Edition => {
+  const list = editionsHere();
+  return list.some((e) => e.id === srd.edition) ? srd.edition : (list[0]?.id ?? 'none');
+};
 export function setEdition(e: Edition) {
   srd.edition = e;
   try {
@@ -124,7 +133,7 @@ const fitsHere = (e: EntryItem) => {
 };
 // Встроенный SRD — только в приключениях D&D, в выбранной редакции.
 const editionShown = (builtinPath: string) => {
-  const ed = srd.edition;
+  const ed = editionNow();
   return srdHere() && (ed === 'all' || (ed !== 'none' && builtinPath.startsWith(`${BUILTIN}${ed}/`)));
 };
 // Своя запись: правка встроенной видна вместе с её редакцией и получает её английское название и подпись места.
