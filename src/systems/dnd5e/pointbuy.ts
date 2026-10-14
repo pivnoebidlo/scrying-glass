@@ -25,29 +25,48 @@ export const zero = (): Scores => ({ str: 0, dex: 0, con: 0, int: 0, wis: 0, cha
 export const spent = (base: Scores) => ABILITIES.reduce((n, a) => n + costOf(base[a]), 0);
 export const isStandardArray = (base: Scores) => [...ABILITIES.map((a) => base[a])].sort((x, y) => y - x).join() === STANDARD_ARRAY.join();
 
-// Расы SRD 5.1 (правила 2014 года): постоянные бонусы и сколько «+1 на выбор» (полуэльф: +1 к двум другим).
-export interface Race {
-  title: string;
+// Бонусы расы (правила 2014 года): постоянные и сколько «+1 на выбор» (полуэльф: +1 к двум другим).
+export interface RaceBonus {
   fixed: Partial<Scores>;
   choose?: { count: number; except: Ability[] };
 }
-export const RACES_2014: Record<string, Race> = {
-  hilldwarf: { title: 'Холмовой дварф', fixed: { con: 2, wis: 1 } },
-  mountaindwarf: { title: 'Горный дварф', fixed: { con: 2, str: 2 } },
-  highelf: { title: 'Высший эльф', fixed: { dex: 2, int: 1 } },
-  lightfoot: { title: 'Легконогий полурослик', fixed: { dex: 2, cha: 1 } },
-  stout: { title: 'Коренастый полурослик', fixed: { dex: 2, con: 1 } },
-  human: { title: 'Человек', fixed: { str: 1, dex: 1, con: 1, int: 1, wis: 1, cha: 1 } },
-  dragonborn: { title: 'Драконорождённый', fixed: { str: 2, cha: 1 } },
-  rockgnome: { title: 'Скальный гном', fixed: { int: 2, con: 1 } },
-  halfelf: { title: 'Полуэльф', fixed: { cha: 2 }, choose: { count: 2, except: ['cha'] } },
-  halforc: { title: 'Полуорк', fixed: { str: 2, con: 1 } },
-  tiefling: { title: 'Тифлинг', fixed: { cha: 2, int: 1 } },
-};
+
+export interface Subrace extends RaceBonus {
+  id: string;
+  title: string;
+}
+
+export interface RaceDef extends RaceBonus {
+  id: string;
+  title: string;
+  // Подрасы: если есть, одну из них нужно выбрать; её бонусы складываются с бонусами расы.
+  subraces: Subrace[];
+}
+
+// Расы SRD 5.1 с подрасами. Свои расы и подрасы (в том числе к этим) пользователь добавляет сам.
+export const RACES_2014: RaceDef[] = [
+  { id: 'dwarf', title: 'Дварф', fixed: { con: 2 }, subraces: [{ id: 'hill', title: 'Холмовой', fixed: { wis: 1 } }, { id: 'mountain', title: 'Горный', fixed: { str: 2 } }] },
+  { id: 'elf', title: 'Эльф', fixed: { dex: 2 }, subraces: [{ id: 'high', title: 'Высший', fixed: { int: 1 } }] },
+  { id: 'halfling', title: 'Полурослик', fixed: { dex: 2 }, subraces: [{ id: 'lightfoot', title: 'Легконогий', fixed: { cha: 1 } }, { id: 'stout', title: 'Коренастый', fixed: { con: 1 } }] },
+  { id: 'human', title: 'Человек', fixed: { str: 1, dex: 1, con: 1, int: 1, wis: 1, cha: 1 }, subraces: [] },
+  { id: 'dragonborn', title: 'Драконорождённый', fixed: { str: 2, cha: 1 }, subraces: [] },
+  { id: 'gnome', title: 'Гном', fixed: { int: 2 }, subraces: [{ id: 'rock', title: 'Скальный', fixed: { con: 1 } }] },
+  { id: 'halfelf', title: 'Полуэльф', fixed: { cha: 2 }, choose: { count: 2, except: ['cha'] }, subraces: [] },
+  { id: 'halforc', title: 'Полуорк', fixed: { str: 2, con: 1 }, subraces: [] },
+  { id: 'tiefling', title: 'Тифлинг', fixed: { cha: 2, int: 1 }, subraces: [] },
+];
+
+// Бонусы расы с подрасой: постоянные складываются, «+1 на выбор» — от того, у кого он есть.
+export function combine(race: RaceBonus, sub?: RaceBonus | null): RaceBonus {
+  const fixed: Partial<Scores> = { ...race.fixed };
+  for (const [a, v] of Object.entries(sub?.fixed ?? {}) as [Ability, number][]) fixed[a] = (fixed[a] ?? 0) + v;
+  const choose = sub?.choose?.count ? sub.choose : race.choose?.count ? race.choose : undefined;
+  return { fixed, choose };
+}
 
 // Все допустимые наборы бонусов: «2024» — +2 и +1 к разным или +1 к трём; раса 2014 года — её бонусы
 // (с «+1 на выбор» — все варианты выбора).
-export function bonusOptions(mode: '2024' | { race: string }): Scores[] {
+export function bonusOptions(mode: '2024' | RaceBonus): Scores[] {
   const out: Scores[] = [];
   if (mode === '2024') {
     for (const a of ABILITIES) for (const b of ABILITIES) if (a !== b) out.push({ ...zero(), [a]: 2, [b]: 1 });
@@ -56,16 +75,14 @@ export function bonusOptions(mode: '2024' | { race: string }): Scores[] {
         for (let k = j + 1; k < 6; k++) out.push({ ...zero(), [ABILITIES[i]!]: 1, [ABILITIES[j]!]: 1, [ABILITIES[k]!]: 1 });
     return out;
   }
-  const race = RACES_2014[mode.race];
-  if (!race) return [zero()];
-  const base = { ...zero(), ...race.fixed };
-  if (!race.choose) return [base];
-  const free = ABILITIES.filter((a) => !race.choose!.except.includes(a));
+  const base = { ...zero(), ...mode.fixed };
+  if (!mode.choose?.count) return [base];
+  const free = ABILITIES.filter((a) => !mode.choose!.except.includes(a));
   const pick = (from: number, left: number, acc: Scores) => {
     if (!left) return void out.push(acc);
     for (let i = from; i < free.length; i++) pick(i + 1, left - 1, { ...acc, [free[i]!]: acc[free[i]!] + 1 });
   };
-  pick(0, race.choose.count, base);
+  pick(0, Math.min(mode.choose.count, free.length), base);
   return out;
 }
 
@@ -96,7 +113,7 @@ export function problemsOf(base: Scores, rules: Rules): Problem[] {
 // Проверка готовых итоговых значений: перебрать допустимые бонусы и найти лучший вариант — законный и с
 // наибольшей тратой (обычно ровно весь бюджет), а если законного нет — с наименьшим числом нарушений.
 // extra — прочие увеличения (уровни, черты), вычитаются до бонусов.
-export function checkFinal(final: Scores, extra: Scores, mode: '2024' | { race: string }, rules: Rules): Check {
+export function checkFinal(final: Scores, extra: Scores, mode: '2024' | RaceBonus, rules: Rules): Check {
   let best: Check | null = null;
   const score = (c: Check) => (c.problems.length ? -1000 * c.problems.length - Math.abs(c.spent - rules.budget) : c.spent);
   for (const bonus of bonusOptions(mode)) {

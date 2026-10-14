@@ -145,7 +145,9 @@ Electron-приложение для мастера D&D: окно управле
   сигнал WebAudio на устройство вывода музыки); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
   окна только пересчитывают остаток по `setInterval`. Страница в «Инструментах» — `timer/ui/TimerTool.svelte`.
   Покупка характеристик: правила, расы SRD 2014 и проверка готовых значений (перебор допустимых бонусов) —
-  `systems/dnd5e/pointbuy.ts`, страница — `tools/pointbuy/PointBuy.svelte` (набросок — `state.svelte.ts`).
+  `systems/dnd5e/pointbuy.ts` (расы — раса + подрасы, `combine`), страница — `tools/pointbuy/PointBuy.svelte`
+  (набросок — `state.svelte.ts`); свои расы и подрасы — `races.svelte.ts` + `RaceEditor.svelte`, файл
+  `<библиотека>/pointbuy.json` (IPC `library:readData` / `writeData`, имена файлов — по списку в main/index.ts).
 - Порядок плиток, заданный перетаскиванием («Персонажи», «Фоны», «Раздатка», «Файлы»): модуль `order` (ключ — группа: путь папки
   или `monsters:<папка>`, значение — id плиток), `applyOrder` в `shared/order.ts`, перетаскивание — действие
   `use:sortable` (`renderer/lib/sortable.ts`), только внутри группы. «Файлы» пишут в те же ключи (путь папки,

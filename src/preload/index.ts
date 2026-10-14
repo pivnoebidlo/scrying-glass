@@ -37,6 +37,8 @@ const api: Api = {
   onTablesChanged: (cb) => { ipcRenderer.on('tables:changed', () => cb()); },
   writeTable: (path, text) => ipcRenderer.invoke('tables:write', { path, text }),
   createTable: (folder, title, text) => ipcRenderer.invoke('tables:create', { folder, title, text }),
+  readLibraryData: (name) => ipcRenderer.invoke('library:readData', name),
+  writeLibraryData: (name, data) => ipcRenderer.invoke('library:writeData', { name, data }),
   openFile: (path) => ipcRenderer.invoke('vault:openFile', path),
 
   listDisplays: () => ipcRenderer.invoke('displays:list'),

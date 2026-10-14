@@ -68,6 +68,9 @@ export interface Api {
   onTablesChanged(cb: () => void): void;
   writeTable(path: string, text: string): Promise<boolean>;
   createTable(folder: string, title: string, text: string): Promise<string | null>;
+  // Данные инструментов в библиотеке (общие для всех кампаний): pointbuy.json — свои расы.
+  readLibraryData(name: string): Promise<unknown>;
+  writeLibraryData(name: string, data: unknown): Promise<boolean>;
   // Открыть файл хранилища в программе по умолчанию.
   openFile(path: string): Promise<void>;
 

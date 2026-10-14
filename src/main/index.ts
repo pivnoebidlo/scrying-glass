@@ -313,6 +313,19 @@ ipcMain.handle('tables:trash', async (_event, rel: string) => {
   await afterTableWrite(rel);
   return true;
 });
+// Небольшие данные инструментов, общие для всех кампаний: JSON-файлы в библиотеке (только из списка).
+const LIBRARY_DATA = new Set(['pointbuy.json']);
+ipcMain.handle('library:readData', (_event, name: string) => {
+  const lib = libraryPath();
+  return LIBRARY_DATA.has(name) && lib ? (readJson(path.join(lib, name)) ?? null) : null;
+});
+ipcMain.handle('library:writeData', (_event, { name, data }: { name: string; data: unknown }) => {
+  const lib = libraryPath();
+  if (!LIBRARY_DATA.has(name) || !lib) return false;
+  writeJsonAtomic(path.join(lib, name), data);
+  return true;
+});
+
 // Открыть файл в программе по умолчанию (таблицу — например, в Obsidian или текстовом редакторе).
 ipcMain.handle('vault:openFile', async (_event, rel: string) => {
   const abs = rel.startsWith(LIBRARY) ? resolveTable(rel) : resolveInVault(rel);
