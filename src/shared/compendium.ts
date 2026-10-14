@@ -9,7 +9,11 @@
 //   ---
 //   Яркая вспышка… [[Ослеплённый]]
 //
+// Записи привязаны к ролевой системе: поле `system` в шапке (id системы или семейства: dnd5e-2024, dnd5e, fate),
+// без него — по типу (заклинание, предмет, черта, состояние — D&D), правила и заметки — для любой системы.
+//
 // Только типы, подписи и чистые функции: используются ядром и окнами.
+import { familyOf } from '../systems';
 
 export type FieldValue = string | number | boolean | string[];
 
@@ -29,6 +33,8 @@ export interface TypeDef {
   // Во множественном числе — для фильтра: «Заклинания».
   plural: string;
   fields: FieldDef[];
+  // Семейство систем, к которому относится тип (dnd5e — заклинания и т. п.); нет — тип для любой системы.
+  family?: string;
 }
 
 const SCHOOLS = ['Ограждение', 'Вызов', 'Прорицание', 'Очарование', 'Воплощение', 'Иллюзия', 'Некромантия', 'Преобразование'];
@@ -59,6 +65,7 @@ export const TYPES: Record<string, TypeDef> = {
       { key: 'ritual', title: 'Ритуал', kind: 'bool' },
       { key: 'classes', title: 'Классы', kind: 'list', hint: 'через запятую' },
     ],
+    family: 'dnd5e',
   },
   item: {
     title: 'Предмет',
@@ -70,6 +77,7 @@ export const TYPES: Record<string, TypeDef> = {
       { key: 'cost', title: 'Цена', kind: 'text' },
       { key: 'weight', title: 'Вес', kind: 'text' },
     ],
+    family: 'dnd5e',
   },
   feat: {
     title: 'Черта',
@@ -79,11 +87,22 @@ export const TYPES: Record<string, TypeDef> = {
       { key: 'prerequisite', title: 'Требование', kind: 'text' },
       { key: 'repeatable', title: 'Можно брать повторно', kind: 'bool' },
     ],
+    family: 'dnd5e',
   },
-  condition: { title: 'Состояние', plural: 'Состояния', fields: [] },
+  condition: { title: 'Состояние', plural: 'Состояния', fields: [], family: 'dnd5e' },
   rule: { title: 'Правило', plural: 'Правила', fields: [{ key: 'category', title: 'Раздел', kind: 'text', hint: 'бой, отдых, путешествие…' }] },
   note: { title: 'Заметка', plural: 'Заметки', fields: [] },
 };
+
+// Поле шапки с системой записи.
+export const SYSTEM_FIELD = 'system';
+
+// Семейство систем записи (null — подходит любой): поле system, иначе — по типу.
+export function entryFamily(e: Entry, def: TypeDef | undefined = TYPES[e.type]): string | null {
+  const s = e.fields[SYSTEM_FIELD];
+  if (typeof s === 'string' && s.trim()) return familyOf(s.trim());
+  return def?.family ?? null;
+}
 
 export const typeOf = (t: string): TypeDef => TYPES[t] ?? { title: t || 'Запись', plural: t || 'Записи', fields: [] };
 

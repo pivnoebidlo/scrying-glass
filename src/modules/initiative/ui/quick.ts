@@ -2,7 +2,7 @@
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import type { CardSummary } from '../../../shared/cards';
 import { sameRef } from '../../../shared/cards';
-import { visibleIn } from '../../../shared/adventures';
+import { inCurrentFamily, visibleIn } from '../../../shared/adventures';
 import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
 import { addToInitiative } from '../../bestiary/ui/combat';
 import { caption, imageGroups } from '../../portraits/library';
@@ -10,7 +10,8 @@ import { caption, imageGroups } from '../../portraits/library';
 const MAX = 12;
 
 // Подсказки по имени: точное совпадение, потом начало имени, потом середина; при равных — сначала карточки
-// приключения (и общие): монстры, NPC, партия; потом библиотека и SRD на языке фильтра бестиария.
+// приключения (и общие): монстры, NPC, партия; потом библиотека и SRD на языке фильтра бестиария. Только карточки
+// системы приключения (её семейства).
 export function suggest(query: string): CardSummary[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
@@ -19,7 +20,7 @@ export function suggest(query: string): CardSummary[] {
   const rank = (c: CardSummary) => {
     const n = c.name.toLowerCase();
     const match = n === q ? 0 : n.startsWith(q) ? 1 : n.includes(q) ? 2 : -1;
-    if (match < 0) return -1;
+    if (match < 0 || !inCurrentFamily(adv, c.system)) return -1;
     const own = c.ref.scope === 'vault' && c.folder !== undefined && visibleIn(adv, c.folder);
     if (!own && (c.ref.scope === 'vault' || c.lang !== lang)) return -1;
     return match * 3 + (own ? 0 : c.ref.scope === 'library' ? 1 : 2);

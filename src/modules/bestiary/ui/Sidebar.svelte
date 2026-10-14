@@ -3,10 +3,10 @@
   import { onMount } from 'svelte';
   import { Download, FilePlus, Plus, Search, Upload } from '@lucide/svelte';
   import { langName, sameRef } from '../../../shared/cards';
-  import { systems } from '../../../systems';
+  import { familyOf, systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dirname, roleFolders } from '../../../shared/vault';
-  import { placeTitle, visibleIn } from '../../../shared/adventures';
+  import { currentSystem, inCurrentFamily, placeTitle, visibleIn } from '../../../shared/adventures';
   import { bestiary, connectCards } from './cards.svelte';
 
   let { app }: ModuleProps<'bestiary'> = $props();
@@ -24,6 +24,10 @@
   const folderTitle = (path: string) => folders.find((f) => f.folder.path === path)?.title ?? path;
 
   onMount(connectCards);
+
+  // Карточки — только системы приключения; выбирать можно редакцию внутри семейства (D&D 2014 / 2024).
+  const inFamily = $derived(bestiary.all.filter((c) => inCurrentFamily(app.adventures, c.system)).length);
+  const editions = $derived(systems.filter((s) => s.family === familyOf(currentSystem(app.adventures))));
 
   const f = bestiary.filters;
   // Длинный список рисуем частями: сотни строк сразу заметно тормозят при наборе в поиске.
@@ -84,10 +88,16 @@
     </div>
   </div>
   <!-- Система и место — на всю ширину (длинные подписи: «D&D 5e (2014)», «· Глава 1 / monsters»), вид и язык — парой. -->
-  <select bind:value={f.system} title="Система">
-    <option value="all">Все системы</option>
-    {#each systems as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
-  </select>
+  {#if editions.length > 1}
+    <select
+      value={editions.some((s) => s.id === f.system) ? f.system : 'all'}
+      onchange={(e) => (f.system = e.currentTarget.value)}
+      title="Редакция. Система — у приключения (меню приключения над панелью)"
+    >
+      <option value="all">Все редакции</option>
+      {#each editions as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
+    </select>
+  {/if}
   <div class="row">
     <select bind:value={f.kind} title="Монстры, NPC или персонажи игроков">
       <option value="all">Все виды</option>
@@ -111,13 +121,13 @@
 </div>
 
 {#if status}<div class="status">{status}</div>{/if}
-<div class="count faint">{bestiary.visible.length} {bestiary.visible.length === bestiary.all.length ? '' : `из ${bestiary.all.length}`}</div>
+<div class="count faint">{bestiary.visible.length} {bestiary.visible.length === inFamily ? '' : `из ${inFamily}`}</div>
 
 <div class="list">
   {#each bestiary.visible.slice(0, limit) as c (c.ref.scope + ':' + c.ref.id)}
     <button class="item" class:active={sameRef(c.ref, bestiary.selected)} onclick={() => bestiary.select(c.ref)}>
       <span class="name"
-        >{c.name}{#if f.system === 'all'}<span class="tag">{c.system.replace(/^dnd5e-/, '')}</span>{/if}{#if f.lang === 'all'}<span
+        >{c.name}{#if editions.length > 1 && !editions.some((s) => s.id === f.system)}<span class="tag">{c.system.replace(/^dnd5e-/, '')}</span>{/if}{#if f.lang === 'all'}<span
             class="tag">{c.lang}</span
           >{/if}{#if c.edited}<span class="tag" title="Встроенная карточка, изменённая вами">изм.</span>{/if}</span
       >

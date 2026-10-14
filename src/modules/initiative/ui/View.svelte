@@ -13,6 +13,8 @@
   import EncounterView from './EncounterView.svelte';
   import Difficulty from './Difficulty.svelte';
   import { newEncounterName, ui } from './ui.svelte';
+  import { currentSystem } from '../../../shared/adventures';
+  import { isDnd } from '../../../systems';
 
   let { ms, app }: ModuleProps<'initiative'> = $props();
 
@@ -67,7 +69,7 @@
       <button class="btn primary" disabled={!list.length} onclick={() => dispatch('initiative', 'start')}><Swords size={14} /> Начать бой</button>
     {/if}
     <div class="spacer"></div>
-    <Difficulty list={ms.combatants} />
+    {#if isDnd(currentSystem(app.adventures))}<Difficulty list={ms.combatants} />{/if}
     <button class="btn" title="Бросить d20 + бонус за противников и союзников без инициативы" onclick={() => dispatch('initiative', 'rollNpcs', {})}>
       <Dices size={14} /> Бросить за NPC
     </button>

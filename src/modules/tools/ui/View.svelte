@@ -13,7 +13,11 @@
   import TimerTool from '../../timer/ui/TimerTool.svelte';
   import PointBuy from '../pointbuy/PointBuy.svelte';
 
+  import { currentSystem } from '../../../shared/adventures';
+  import { isDnd } from '../../../systems';
+
   let { app }: ModuleProps<'tools'> = $props();
+  const dnd = $derived(isDnd(currentSystem(app.adventures)));
 
   connectNotes();
   const groups = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures) : []);
@@ -28,11 +32,11 @@
 
 {#if ui.tool === 'tables'}
   <TablesView />
-{:else if ui.tool === 'difficulty'}
+{:else if ui.tool === 'difficulty' && dnd}
   <Calculator />
 {:else if ui.tool === 'timer'}
   <TimerTool />
-{:else if ui.tool === 'pointbuy'}
+{:else if ui.tool === 'pointbuy' && dnd}
   <PointBuy />
 {:else if ui.note && exists}
   {#key ui.note}<NoteEditor path={ui.note} />{/key}

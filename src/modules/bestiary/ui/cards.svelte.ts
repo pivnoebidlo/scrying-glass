@@ -4,7 +4,7 @@ import type { Card, CardRef, CardScope, CardSummary } from '../../../shared/card
 import { defaultSide, imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
-import { visibleIn } from '../../../shared/adventures';
+import { currentSystem, inCurrentFamily, visibleIn } from '../../../shared/adventures';
 import { dirname, folderRole } from '../../../shared/vault';
 import { systemOf } from '../../../systems';
 
@@ -12,7 +12,7 @@ const KEY = 'sg.bestiary';
 
 interface Filters {
   search: string;
-  // 'all' или id системы.
+  // 'all' (все системы семейства приключения) или id системы. Карточки других семейств не видны.
   system: string;
   // Язык, который показывать в первую очередь: у переведённых карточек видна только одна версия.
   // 'all' — все версии подряд.
@@ -132,9 +132,8 @@ class Bestiary {
       // Карточки хранилища — только текущего приключения и общие.
       const adv = store.state.adventures;
       const inAdventure = (c: CardSummary) => c.ref.scope !== 'vault' || c.folder === undefined || visibleIn(adv, c.folder);
-      const members = group.filter(
-        (c) => (f.system === 'all' || c.system === f.system) && (f.kind === 'all' || c.kind === f.kind) && inScope(c) && inAdventure(c)
-      );
+      const system = (c: CardSummary) => inCurrentFamily(adv, c.system) && (f.system === 'all' || c.system === f.system || !inCurrentFamily(adv, f.system));
+      const members = group.filter((c) => system(c) && (f.kind === 'all' || c.kind === f.kind) && inScope(c) && inAdventure(c));
       if (!members.length) continue;
       // Ищем по всем версиям: «goblin» найдёт и «Гоблина».
       if (q && !group.some((c) => fold(c.name).includes(q))) continue;
@@ -201,12 +200,19 @@ class Bestiary {
     });
   }
 
+  // Система новой карточки: выбранная в фильтре (если она из семейства приключения), иначе — приключения.
+  private newSystem() {
+    const adv = store.state.adventures;
+    const f = this.filters.system;
+    return f !== 'all' && inCurrentFamily(adv, f) ? f : currentSystem(adv);
+  }
+
   // Новая карточка: система и язык — из фильтров, если они выбраны.
   // place — куда (например, открытая во «Файлах» папка); без него спросим.
   async create(at?: Place) {
     const place = at ?? (await this.choosePlace({ title: 'Где хранить новую карточку?', action: 'Создать', library: true }));
     if (!place) return;
-    const system = this.filters.system !== 'all' ? this.filters.system : 'dnd5e-2024';
+    const system = this.newSystem();
     const lang = this.filters.lang !== 'all' ? this.filters.lang : 'ru';
     // Вид — по папке: в папке персонажей — NPC, в папке партии — персонаж игрока, иначе монстр.
     const role = place.folder !== undefined ? place.folder.split('/').map(folderRole).filter(Boolean).at(-1) : null;
@@ -222,7 +228,7 @@ class Bestiary {
   // Карточка для портрета: ложится рядом с картинкой, картинка — её портрет. В папке партии — лист персонажа
   // игрока, в остальных — карточка NPC.
   createFor(portrait: string, name: string) {
-    const system = this.filters.system !== 'all' ? this.filters.system : 'dnd5e-2024';
+    const system = this.newSystem();
     const lang = this.filters.lang !== 'all' ? this.filters.lang : 'ru';
     const party = portrait.split('/').some((p) => folderRole(p) === 'party');
     const kind = party ? 'character' : 'npc';

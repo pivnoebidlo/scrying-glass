@@ -2,6 +2,7 @@
 // Вкладки показывают текущее приключение и «общее» — всё, что лежит вне приключений. Вкладка «Файлы»
 // по-прежнему показывает хранилище целиком. Только типы и чистые функции: используются ядром и окнами.
 import { basename, folderRole, roleNames, type FolderRole, type VaultFolder } from './vault';
+import { DEFAULT_SYSTEM, familyOf } from '../systems';
 
 export interface AdventuresState {
   // Пути папок приключений (первый уровень хранилища, то есть просто имена).
@@ -10,6 +11,9 @@ export interface AdventuresState {
   current: string | null;
   // Список уже составлялся: при первом открытии приключения угадываются по папкам внутри.
   initialized: boolean;
+  // Ролевая система приключения (id из systems/index.ts); ключ '' — всё хранилище и общее вне приключений.
+  // Нет записи — DEFAULT_SYSTEM. Вкладки показывают карточки и записи семейства этой системы.
+  systems?: Record<string, string>;
 }
 
 // Без приключений: видно всё, подписи — путь целиком.
@@ -31,6 +35,13 @@ const within = (path: string, dir: string) => path === dir || path.startsWith(di
 
 // Приключение, в котором лежит путь (или null — путь вне приключений, «общее»).
 export const adventureOf = (adv: AdventuresState, path: string) => adv.list.find((a) => within(path, a)) ?? null;
+
+// Система приключения (null — всего хранилища) и текущая — по открытому приключению.
+export const systemFor = (adv: AdventuresState, adventure: string | null) =>
+  (adventure !== null ? adv.systems?.[adventure] : undefined) ?? adv.systems?.[''] ?? DEFAULT_SYSTEM;
+export const currentSystem = (adv: AdventuresState) => systemFor(adv, adv.current);
+// Подходит ли карточка или запись этой системы текущему приключению: то же семейство (2014 и 2024 — вместе).
+export const inCurrentFamily = (adv: AdventuresState, system: string) => familyOf(system) === familyOf(currentSystem(adv));
 
 // Видно ли то, что лежит по пути, при текущем приключении: своё приключение и общее — да, чужие — нет.
 export function visibleIn(adv: AdventuresState, path: string): boolean {

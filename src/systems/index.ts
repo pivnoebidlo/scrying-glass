@@ -7,6 +7,8 @@ import * as character from './dnd5e/character';
 export interface SystemDef {
   id: string;
   title: string;
+  // Семейство: редакции одной игры (D&D 5e 2014 и 2024). Приключение показывает карточки и записи своего семейства.
+  family: string;
   subtitle(stats: any, lang: string): string;
   // Число для сортировки (у D&D — показатель опасности).
   rank(stats: any): number | null;
@@ -19,17 +21,39 @@ export interface SystemDef {
 const dnd = (id: string, title: string): SystemDef => ({
   id,
   title,
+  family: 'dnd5e',
   subtitle: (s, lang) => (character.isCharacter(s) ? character.characterSubtitle(s) : dnd5e.subtitle(s, lang)),
   rank: (s) => (character.isCharacter(s) ? character.totalLevel(s) : (s as dnd5e.Dnd5eStats).cr),
   combat: (s) => (character.isCharacter(s) ? character.characterCombat(s) : dnd5e.combatStats(s)),
   blank: (kind) => (kind === 'character' ? character.blankCharacter() : dnd5e.blankStats()),
 });
 
-export const systems: SystemDef[] = [dnd('dnd5e-2014', 'D&D 5e (2014)'), dnd('dnd5e-2024', 'D&D 5e (2024)')];
+// Fate Core: пока без своего вида — карточка показывается как «поле — значение».
+const fate: SystemDef = {
+  id: 'fate-core',
+  title: 'Fate Core',
+  family: 'fate',
+  subtitle: () => '',
+  rank: () => null,
+  combat: () => ({ hp: null, ac: null, initiative: 0 }),
+  blank: () => ({}),
+};
+
+export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)'), fate];
+
+// Семейства систем по порядку (для выбора системы приключения — группами).
+export const FAMILIES: { id: string; title: string }[] = [
+  { id: 'dnd5e', title: 'D&D 5e' },
+  { id: 'fate', title: 'Fate' },
+];
+
+// Система, если для приключения она не выбрана.
+export const DEFAULT_SYSTEM = 'dnd5e-2024';
 
 const unknown = (id: string): SystemDef => ({
   id,
   title: id,
+  family: id,
   subtitle: () => id,
   rank: () => null,
   combat: () => ({ hp: null, ac: null, initiative: 0 }),
@@ -37,3 +61,6 @@ const unknown = (id: string): SystemDef => ({
 });
 
 export const systemOf = (id: string) => systems.find((s) => s.id === id) ?? unknown(id);
+
+export const familyOf = (id: string) => systemOf(id).family;
+export const isDnd = (id: string) => familyOf(id) === 'dnd5e';

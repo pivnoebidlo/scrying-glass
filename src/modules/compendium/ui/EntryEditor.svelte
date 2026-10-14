@@ -7,8 +7,8 @@
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import { BUILTIN, COMMON_FIELDS, OVERRIDES, serializeEntry, type Entry, type FieldDef, type FieldValue } from '../../../shared/compendium';
   import { ui } from './ui.svelte';
-  import { allTypes, forPlayers, typeDef } from '../../../renderer/lib/entry/types.svelte';
-  import { entriesFolder, isBuiltinEntry, type EntryItem } from './store.svelte';
+  import { forPlayers, typeDef } from '../../../renderer/lib/entry/types.svelte';
+  import { entriesFolder, isBuiltinEntry, typesHere, type EntryItem } from './store.svelte';
   import { LIBRARY } from '../../../shared/vault';
   import { openEntry } from './ui.svelte';
 
@@ -88,8 +88,8 @@
   <header class="bar">
     <input class="title" type="text" bind:value={draft.title} placeholder="Название" />
     <select bind:value={draft.type} title="Тип записи">
-      {#each allTypes() as t (t.id)}<option value={t.id}>{t.def.title}</option>{/each}
-      {#if !allTypes().some((t) => t.id === draft.type)}<option value={draft.type}>{draft.type}</option>{/if}
+      {#each typesHere() as t (t.id)}<option value={t.id}>{t.def.title}</option>{/each}
+      {#if !typesHere().some((t) => t.id === draft.type)}<option value={draft.type}>{draft.type}</option>{/if}
     </select>
     {#if builtin}<span class="faint note" title="Правка ляжет в библиотеку (для всех кампаний) и заменит встроенную запись. Вернуть как было — «Вернуть как в SRD».">Правка встроенной записи</span>{/if}
     {#if error}<span class="error">{error}</span>{/if}

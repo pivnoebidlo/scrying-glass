@@ -4,7 +4,7 @@ import * as fs from 'node:fs';
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { looksLikeAdventure, missingFolders, type AdventuresState } from '../../shared/adventures';
 
-const initialState: AdventuresState = { list: [], current: null, initialized: false };
+const initialState: AdventuresState = { list: [], current: null, initialized: false, systems: {} };
 
 // Убирает из списка папки, которых больше нет; при первом открытии хранилища угадывает приключения.
 function sync(s: AdventuresState, ctx: ModuleContext): AdventuresState {
@@ -15,7 +15,7 @@ function sync(s: AdventuresState, ctx: ModuleContext): AdventuresState {
   if (!s.initialized) list = tree.folders.filter(looksLikeAdventure).map((f) => f.path);
   const current = s.current !== null && list.includes(s.current) ? s.current : (list[0] ?? null);
   const same = list.length === s.list.length && list.every((p, i) => p === s.list[i]) && current === s.current;
-  return same && s.initialized ? s : { list, current, initialized: true };
+  return same && s.initialized ? s : { ...s, list, current, initialized: true };
 }
 
 // Создаёт недостающие стандартные папки во всех приключениях. true — что-то создано.
@@ -60,14 +60,25 @@ export default defineModule({
       return { ...s, list, current: s.current === path ? (list[0] ?? null) : s.current };
     },
 
+    // Ролевая система приключения (path: null — всего хранилища и общего).
+    setSystem(s, { path, system }: { path: string | null; system: string }) {
+      return { ...s, systems: { ...s.systems, [path ?? '']: system } };
+    },
+
     // Новое приключение: папка со стандартными подпапками. Название с «/» и подобным не годится.
-    create(s, { name }: { name: string }, ctx) {
+    // system — его ролевая система (нет — как у хранилища).
+    create(s, { name, system }: { name: string; system?: string }, ctx) {
       const clean = name.replace(/[/\\:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
       const dir = clean && !clean.startsWith('.') ? ctx.vault.resolve(clean) : null;
       if (!dir) return s;
       fs.mkdirSync(dir, { recursive: true });
       ctx.vault.rescan();
-      const next = { ...s, list: [...new Set([...s.list, clean])].sort((a, b) => a.localeCompare(b, 'ru')), current: clean };
+      const next = {
+        ...s,
+        list: [...new Set([...s.list, clean])].sort((a, b) => a.localeCompare(b, 'ru')),
+        current: clean,
+        systems: system ? { ...s.systems, [clean]: system } : s.systems,
+      };
       ensure(next, ctx);
       ctx.vault.rescan();
       return next;

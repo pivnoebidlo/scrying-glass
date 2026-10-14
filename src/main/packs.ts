@@ -29,6 +29,8 @@ export interface PackManifest {
   exported: number;
   app: string;
   music: boolean;
+  // Ролевая система приключения (нет — файл из версии до 0.18: D&D по умолчанию).
+  system?: string;
 }
 
 export interface LibraryCard {

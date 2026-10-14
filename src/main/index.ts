@@ -14,6 +14,7 @@ import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
+import { systemFor } from '../shared/adventures';
 import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
 import type { TrashPlace, TrashSettings } from '../shared/trash';
 import { migrateOldCampaign } from './migrate';
@@ -530,6 +531,8 @@ interface AdventureData {
   maps: AnyRec;
   order: AnyRec;
   names: AnyRec;
+  // Ролевая система приключения (у удалённых до 0.18 нет).
+  system?: string;
 }
 
 ipcMain.handle('packs:export', async (_event, adventure: string) => {
@@ -586,7 +589,15 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
   }
   await writePack(save.filePath, {
     folder,
-    manifest: { scryingGlass: 'adventure', version: 1, name: adventure, exported: Date.now(), app: app.getVersion(), music: !!ask.checkboxChecked },
+    manifest: {
+      scryingGlass: 'adventure',
+      version: 1,
+      name: adventure,
+      exported: Date.now(),
+      app: app.getVersion(),
+      music: !!ask.checkboxChecked,
+      system: systemFor(state.adventures, adventure),
+    },
     slices,
     library,
   });
@@ -630,6 +641,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     maps: drop(st['maps']!['maps'] as AnyRec, (k) => inAdventure(name, k)),
     order: drop(st['order']!['groups'] as AnyRec, mine),
     names: drop(st['portraits']!['names'] as AnyRec, (k) => inAdventure(name, k)),
+    system: state.adventures.systems?.[name],
   };
   try {
     discard(vaultRoot, [name], { title: name, kind: 'adventure', data });
@@ -716,7 +728,11 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
   }
   if (place === 'vault') {
     await enqueue('vault', async () => rescanVault());
-    if (res.meta.kind === 'adventure') await runAction('adventures', 'mark', { path: main.to });
+    if (res.meta.kind === 'adventure') {
+      await runAction('adventures', 'mark', { path: main.to });
+      const system = (res.meta.data as AdventureData | undefined)?.system;
+      if (system) await runAction('adventures', 'setSystem', { path: main.to, system });
+    }
   } else {
     for (const win of BrowserWindow.getAllWindows()) {
       win.webContents.send('tables:changed');
@@ -840,6 +856,7 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
     saveVault();
     await enqueue('vault', async () => rescanVault());
     await runAction('adventures', 'mark', { path: name });
+    if (pack.manifest.system) await runAction('adventures', 'setSystem', { path: name, system: pack.manifest.system });
     await runAction('adventures', 'select', { path: name });
     return { name, renamed: name !== from, scenes: scenes.length, encounters: encounters.length, cards };
   } finally {

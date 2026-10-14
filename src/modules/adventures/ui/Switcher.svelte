@@ -2,7 +2,8 @@
      одним файлом (.sgpack). -->
 <script lang="ts">
   import { Check, ChevronsUpDown, Download, Map, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
-  import { roleFolderHere, visibleIn } from '../../../shared/adventures';
+  import { currentSystem, roleFolderHere, visibleIn } from '../../../shared/adventures';
+  import SystemSelect from './SystemSelect.svelte';
   import { roleNames } from '../../../shared/vault';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -13,6 +14,9 @@
   let open = $state(false);
   let creating = $state(false);
   let name = $state('');
+  // Система нового приключения: по умолчанию — как у текущего.
+  let newSystem = $state('');
+  const system = $derived(currentSystem(ms));
 
   const title = $derived(ms.current ?? (ms.list.length ? 'Всё хранилище' : app.vault.name));
 
@@ -114,7 +118,7 @@
 
   async function create() {
     if (!name.trim()) return;
-    await dispatch('adventures', 'create', { name });
+    await dispatch('adventures', 'create', { name, system: newSystem || system });
     name = '';
     creating = false;
     open = false;
@@ -142,6 +146,10 @@
         <span class="mark">{#if ms.current === null}<Check size={13} />{/if}</span>
         <span class="muted">Всё хранилище</span>
       </button>
+      <label class="system" title={ms.current ? 'Ролевая система этого приключения: какие карточки, записи и инструменты показывать' : 'Ролевая система для всего хранилища и приключений без своей'}>
+        <span class="faint">Система</span>
+        <SystemSelect value={system} onchange={(v) => dispatch('adventures', 'setSystem', { path: ms.current, system: v })} />
+      </label>
       <div class="sep"></div>
       {#if creating}
         <form class="create" onsubmit={(e) => (e.preventDefault(), create())}>
@@ -149,6 +157,7 @@
           <input type="text" placeholder="Название приключения" bind:value={name} autofocus />
           <button class="btn primary" type="submit" disabled={!name.trim()}>Создать</button>
         </form>
+        <label class="system"><span class="faint">Система</span><SystemSelect value={newSystem || system} onchange={(v) => (newSystem = v)} /></label>
         <p class="hint faint">Появится папка с подпапками characters, monsters, backgrounds, maps, music.</p>
       {:else}
         <button onclick={() => (creating = true)}><span class="mark"><Plus size={13} /></span> Создать приключение…</button>
@@ -196,6 +205,17 @@
 {/if}
 
 <style>
+  .system {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  .system :global(select) {
+    flex: 1;
+    min-width: 0;
+  }
   .danger:hover {
     color: var(--danger, #e04545);
   }

@@ -2,8 +2,10 @@
 // всех кампаний). Тексты читаются через ядро и перечитываются, когда файлы изменились (здесь или снаружи).
 import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
 import { store } from '../../../renderer/lib/store.svelte';
-import { placeOrder, placeTitle, roleFolderHere, visibleIn } from '../../../shared/adventures';
-import { BUILTIN, OVERRIDES, entryTitle, parseEntry, searchKey, type Entry } from '../../../shared/compendium';
+import { currentSystem, placeOrder, placeTitle, roleFolderHere, visibleIn } from '../../../shared/adventures';
+import { familyOf } from '../../../systems';
+import { allTypes, typeDef } from '../../../renderer/lib/entry/types.svelte';
+import { BUILTIN, OVERRIDES, entryFamily, entryTitle, parseEntry, searchKey, type Entry } from '../../../shared/compendium';
 import { allFiles, dirname, LIBRARY, roleFolders, roleNames } from '../../../shared/vault';
 
 export interface EntryItem {
@@ -111,13 +113,24 @@ export function overrideOf(e: EntryItem): string | null {
   const v = e.entry.fields[OVERRIDES];
   return typeof v === 'string' && v ? BUILTIN + v : null;
 }
+// Семейство системы текущего приключения: справочник показывает записи этого семейства и общие (без системы).
+export const hereFamily = () => familyOf(currentSystem(store.state.adventures));
+export const srdHere = () => hereFamily() === 'dnd5e';
+// Типы записей для системы приключения: её и общие.
+export const typesHere = () => allTypes().filter((t) => !t.def.family || t.def.family === hereFamily());
+const fitsHere = (e: EntryItem) => {
+  const f = entryFamily(e.entry, typeDef(e.entry.type));
+  return f === null || f === hereFamily();
+};
+// Встроенный SRD — только в приключениях D&D, в выбранной редакции.
 const editionShown = (builtinPath: string) => {
   const ed = srd.edition;
-  return ed === 'all' || (ed !== 'none' && builtinPath.startsWith(`${BUILTIN}${ed}/`));
+  return srdHere() && (ed === 'all' || (ed !== 'none' && builtinPath.startsWith(`${BUILTIN}${ed}/`)));
 };
 // Своя запись: правка встроенной видна вместе с её редакцией и получает её английское название и подпись места.
 function ownShown(list: EntryItem[]): EntryItem[] {
   return list.flatMap((e) => {
+    if (!fitsHere(e)) return [];
     const over = overrideOf(e);
     if (!over) return [e];
     if (!editionShown(over)) return [];

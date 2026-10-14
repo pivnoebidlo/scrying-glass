@@ -6,8 +6,12 @@
   import { noteTitle } from '../../../shared/notes';
   import { noteGroups } from './library';
   import { ui } from './ui.svelte';
+  import { currentSystem } from '../../../shared/adventures';
+  import { isDnd } from '../../../systems';
 
   let { app }: ModuleProps<'tools'> = $props();
+  // Инструменты D&D (сложность боя, покупка характеристик) — только в приключениях D&D.
+  const dnd = $derived(isDnd(currentSystem(app.adventures)));
   const notes = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures).flatMap((g) => g.items) : []);
 </script>
 
@@ -36,19 +40,23 @@
       </button>
     {/each}
   {/if}
-  <button class="item" class:active={ui.tool === 'difficulty'} onclick={() => (ui.tool = 'difficulty')}>
-    <Gauge size={14} />
-    <span class="name">Сложность боя</span>
-  </button>
+  {#if dnd}
+    <button class="item" class:active={ui.tool === 'difficulty'} onclick={() => (ui.tool = 'difficulty')}>
+      <Gauge size={14} />
+      <span class="name">Сложность боя</span>
+    </button>
+  {/if}
   <button class="item" class:active={ui.tool === 'timer'} onclick={() => (ui.tool = 'timer')}>
     <Hourglass size={14} />
     <span class="name">Таймер</span>
     {#if app.timer.active}<span class="count">идёт</span>{/if}
   </button>
-  <button class="item" class:active={ui.tool === 'pointbuy'} onclick={() => (ui.tool = 'pointbuy')}>
-    <Calculator size={14} />
-    <span class="name">Покупка характеристик</span>
-  </button>
+  {#if dnd}
+    <button class="item" class:active={ui.tool === 'pointbuy'} onclick={() => (ui.tool = 'pointbuy')}>
+      <Calculator size={14} />
+      <span class="name">Покупка характеристик</span>
+    </button>
+  {/if}
   <p class="faint more">Здесь появятся и другие инструменты мастера.</p>
 </div>
 

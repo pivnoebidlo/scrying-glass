@@ -4,9 +4,9 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { blankEntry, entrySubtitle, serializeEntry } from '../../../shared/compendium';
-  import { allTypes, customTypes, typeDef } from '../../../renderer/lib/entry/types.svelte';
+  import { customTypes, typeDef } from '../../../renderer/lib/entry/types.svelte';
   import { LIBRARY } from '../../../shared/vault';
-  import { allEntries, book, EDITIONS, entriesFolder, loadEntries, search, setEdition, srd, type Edition } from './store.svelte';
+  import { allEntries, book, EDITIONS, entriesFolder, loadEntries, search, setEdition, srd, srdHere, typesHere, type Edition } from './store.svelte';
   import { openEntry, ui } from './ui.svelte';
 
   let { app }: ModuleProps<'compendium'> = $props();
@@ -27,7 +27,7 @@
     const counts = new Map<string, number>();
     for (const e of all) counts.set(e.entry.type, (counts.get(e.entry.type) ?? 0) + 1);
     void customTypes.list;
-    const ids = [...new Set([...allTypes().map((t) => t.id), ...counts.keys()])];
+    const ids = [...new Set([...typesHere().map((t) => t.id), ...counts.keys()])];
     return ids.map((id) => ({ id, title: typeDef(id).plural, n: counts.get(id) ?? 0 }));
   });
   const shown = $derived(search(ui.type === 'all' ? all : all.filter((e) => e.entry.type === ui.type), ui.query));
@@ -71,7 +71,7 @@
   {#if creating}
     <div class="create">
       <label>Тип
-        <select bind:value={newType}>{#each allTypes() as t (t.id)}<option value={t.id}>{t.def.title}</option>{/each}</select>
+        <select bind:value={newType}>{#each typesHere() as t (t.id)}<option value={t.id}>{t.def.title}</option>{/each}</select>
       </label>
       <label>Где
         <select bind:value={place}>{#each places as p (p.id ?? '')}<option value={p.id}>{p.title}</option>{/each}</select>
@@ -80,9 +80,11 @@
     </div>
   {/if}
 
-  <select class="edition" title="Встроенные записи (SRD в переводе OmnisGM)" value={srd.edition} onchange={(e) => setEdition(e.currentTarget.value as Edition)}>
-    {#each EDITIONS as ed (ed.id)}<option value={ed.id}>{ed.title}</option>{/each}
-  </select>
+  {#if srdHere()}
+    <select class="edition" title="Встроенные записи (SRD в переводе OmnisGM)" value={srd.edition} onchange={(e) => setEdition(e.currentTarget.value as Edition)}>
+      {#each EDITIONS as ed (ed.id)}<option value={ed.id}>{ed.title}</option>{/each}
+    </select>
+  {/if}
 
   <div class="types">
     <button class:active={ui.type === 'all'} onclick={() => (ui.type = 'all')}>Все <span>{all.length}</span></button>
