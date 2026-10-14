@@ -27,6 +27,7 @@
     npm test           # тесты ядра
     npm run typecheck  # проверка типов
     npm run import-srd # пересобрать встроенный бестиарий из SRD (нужен интернет)
+    npm run build-fate # собрать встроенный справочник Fate из scripts/fate-core.md
     npm run dist       # установщик для своей системы в dist/ (electron-builder.yml)
     npm run icon       # иконка build/icon.png из build/icon.svg
 
@@ -105,6 +106,11 @@ monsters / монстры / bestiary / бестиарий / creatures / суще
 правку. «Копия в…» делает отдельную запись. Искать можно и по английскому названию (fireball).
 Источник: System Reference Document 5.1 и 5.2.1 © Wizards of the Coast, CC BY 4.0; перевод — OmnisGM
 (rules.omnisgm.com), CC BY 4.0. Подробнее — `resources/compendium/README.md`.
+
+В приключениях Fate Core вместо SRD D&D встроены правила Fate (лестница, кубы, исходы, четыре действия, аспекты,
+призывы и принуждения, жетоны судьбы, конфликт, стресс, последствия, состязания, трюки, вехи, NPC) и все 18 навыков
+с примерами трюков — пересказ Fate Core SRD на русском, сделанный для приложения (Evil Hat Productions, CC BY 3.0).
+Тексты лежат в `scripts/fate-core.md`, `npm run build-fate` собирает из них `resources/compendium/fate-core.json`.
 
 Справочник под рукой из любой вкладки:
 - заклинания в статблоках (курсивом, как в SRD) и в списках заклинаний листа персонажа — ссылки: щелчок открывает

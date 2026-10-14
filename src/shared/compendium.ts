@@ -90,6 +90,7 @@ export const TYPES: Record<string, TypeDef> = {
     family: 'dnd5e',
   },
   condition: { title: 'Состояние', plural: 'Состояния', fields: [], family: 'dnd5e' },
+  skill: { title: 'Навык', plural: 'Навыки', fields: [], family: 'fate' },
   rule: { title: 'Правило', plural: 'Правила', fields: [{ key: 'category', title: 'Раздел', kind: 'text', hint: 'бой, отдых, путешествие…' }] },
   note: { title: 'Заметка', plural: 'Заметки', fields: [] },
 };
@@ -171,7 +172,8 @@ export interface Entry {
 // Встроенный справочник одной редакции (resources/compendium/<система>.json): записи с английским названием `en`.
 export interface BuiltinBook {
   system: string;
-  source: { title: string; attribution: string; url: string; license: string };
+  // translator — кто перевёл (нет — OmnisGM, как у SRD D&D).
+  source: { title: string; attribution: string; url: string; license: string; translator?: string };
   entries: (Entry & { en?: string })[];
 }
 // Путь встроенной записи: «srd:<система>/<тип>/<название>».

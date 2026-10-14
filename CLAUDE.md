@@ -17,6 +17,7 @@ Electron-приложение для мастера D&D: окно управле
     npm test           # тесты ядра (vitest, tests/*.test.ts): кубы, порядок, инициатива, карты, хранилище
     npm run import-srd # пересобрать встроенный бестиарий resources/srd/ из SRD (нужен интернет)
     npm run import-compendium # пересобрать встроенный справочник resources/compendium/ (нужен интернет)
+    npm run build-fate # встроенный справочник Fate: resources/compendium/fate-core.json из scripts/fate-core.md
     npm run dist       # установщик для своей системы в dist/ (настройки — electron-builder.yml)
     npm run icon       # build/icon.png из build/icon.svg (рисует Electron: ImageMagick не умеет градиенты SVG)
 
@@ -127,7 +128,11 @@ Electron-приложение для мастера D&D: окно управле
   справочник (`fitsHere`: поле `system` записи, иначе `family` типа — заклинания и т. п. D&D, правила и заметки —
   любые; встроенный SRD — только в D&D, `srdHere`; типы — `typesHere`). Инструменты D&D (сложность боя, покупка
   характеристик) и плашка сложности — только в D&D. Система уходит в .sgpack (`manifest.system`) и в корзину с
-  приключением. Fate Core: карточка — `systems/fate/stats.ts` (`FateStats`: `tier`, концепция, проблема, аспекты, навыки
+  приключением.
+  Встроенный справочник Fate — `resources/compendium/fate-core.json` (`npm run build-fate` из `scripts/fate-core.md`,
+  тексты свои по Fate Core SRD, CC BY 3.0; тип `skill` — семейство fate); встроенные записи показываются по семейству
+  системы приключения (`editionShown` в store справочника), выбор редакции SRD — только у D&D.
+  Fate Core: карточка — `systems/fate/stats.ts` (`FateStats`: `tier`, концепция, проблема, аспекты, навыки
   текстом с числом, трюки, восстановление; стресс и последствия — по правилам `stressOf` / `consequencesOf`, если не
   заданы явно; очерёдность — Внимательность или `initiativeSkill`), вид `Sheet.svelte` (броски `rolls.fate`),
   редактор `Editor.svelte`; один вид для всех `kind`. Чужой блок stats у карточки Fate — общий вид (`fits` в `systems/ui.ts`).
@@ -308,5 +313,5 @@ Electron-приложение для мастера D&D: окно управле
 Возможное продолжение бестиария: синхронизация чисел перевода с оригиналом, подписи статблока на других языках (сейчас ru/en, остальные —
 английские).
 Вторая ролевая система — Fate Core (0.18.0 и после): система у приключения, трекер, карточка, аспекты и жетоны,
-отключение систем. Возможное продолжение: встроенные записи справочника для Fate.
+отключение систем, встроенный справочник Fate.
 Отложено: подпись сборок (Apple Developer, сертификат Windows).

@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { entryFamily, TYPES, type BuiltinBook } from '../src/shared/compendium';
 import initiative from '../src/modules/initiative/main';
 import { defeated, ordered, refreshed, woundOf } from '../src/modules/initiative/order';
 import type { Combatant, InitiativeState } from '../src/modules/initiative/types';
@@ -8,7 +10,7 @@ import { ladderText } from '../src/systems/fate/ladder';
 import { fateTracker } from '../src/systems/fate/tracker';
 import { dndTracker } from '../src/systems/dnd5e/tracker';
 import { fromFields } from '../src/systems/tracker';
-import { blankStats, consequencesOf, pyramid, stressOf, type FateStats } from '../src/systems/fate/stats';
+import { blankStats, consequencesOf, DEFAULT_SKILLS, pyramid, stressOf, type FateStats } from '../src/systems/fate/stats';
 import { run } from './helpers';
 import fate from '../src/modules/fate/main';
 import type { FateState } from '../src/modules/fate/types';
@@ -200,5 +202,20 @@ describe('углы аспектов и жетонов', () => {
     expect(s.place).toEqual({ aspects: 'top-right', points: 'bottom-right' });
     const old = { ...fate.initialState, place: undefined } as unknown as FateState;
     expect(fate.init!(old, {} as never).place).toEqual(fate.initialState.place);
+  });
+});
+
+describe('встроенный справочник Fate', () => {
+  const book = JSON.parse(readFileSync(new URL('../resources/compendium/fate-core.json', import.meta.url), 'utf8')) as BuiltinBook;
+
+  it('навыки — те же, что в карточке Fate; типы записей известны и привязаны к Fate или общие', () => {
+    expect(book.system).toBe('fate-core');
+    const skills = book.entries.filter((e) => e.type === 'skill');
+    expect(skills.map((e) => e.title).sort()).toEqual([...DEFAULT_SKILLS['ru']!].sort());
+    expect(skills.map((e) => e.en).sort()).toEqual([...DEFAULT_SKILLS['en']!].sort());
+    for (const e of book.entries) {
+      expect(TYPES[e.type], e.title).toBeDefined();
+      expect([null, 'fate']).toContain(entryFamily(e));
+    }
   });
 });

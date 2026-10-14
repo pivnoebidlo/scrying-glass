@@ -13,7 +13,7 @@
   import CopyToMenu from '../../tools/ui/CopyToMenu.svelte';
   import EntryEditor from './EntryEditor.svelte';
   import TypesEditor from './TypesEditor.svelte';
-  import { book, entriesFolder, entryAt, isBuiltinEntry, isLibraryEntry, loadEntries, overrideOf, resolveEntry, srd } from './store.svelte';
+  import { book, entriesFolder, entryAt, hereFamily, isBuiltinEntry, isLibraryEntry, loadEntries, overrideOf, resolveEntry, srd } from './store.svelte';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { openEntry, ui } from './ui.svelte';
 
@@ -122,11 +122,19 @@
       В тексте [[Название записи]] — ссылка на другую запись (или на карточку монстра). «Показать игрокам» выводит
       запись на экран игроков, как раздатку. «+» в списке слева — новая запись.
     </p>
-    <p class="faint">
-      Встроенные заклинания, магические предметы, черты, состояния и правила — из SRD 5.1 и SRD 5.2.1 (Wizards of the
-      Coast, CC BY 4.0) в переводе OmnisGM (rules.omnisgm.com, CC BY 4.0). Редакция выбирается над списком. Встроенную
-      запись можно править: правка ляжет в библиотеку и заменит её, «Вернуть как в SRD» — убрать правку.
-    </p>
+    {#if hereFamily() === 'fate'}
+      <p class="faint">
+        Встроенные правила и навыки — пересказ Fate Core SRD (Evil Hat Productions, CC BY 3.0) на русском, сделанный для
+        приложения. Встроенную запись можно править: правка ляжет в библиотеку и заменит её, «Вернуть как в SRD» —
+        убрать правку.
+      </p>
+    {:else}
+      <p class="faint">
+        Встроенные заклинания, магические предметы, черты, состояния и правила — из SRD 5.1 и SRD 5.2.1 (Wizards of the
+        Coast, CC BY 4.0) в переводе OmnisGM (rules.omnisgm.com, CC BY 4.0). Редакция выбирается над списком. Встроенную
+        запись можно править: правка ляжет в библиотеку и заменит её, «Вернуть как в SRD» — убрать правку.
+      </p>
+    {/if}
   </div>
 {/if}
 

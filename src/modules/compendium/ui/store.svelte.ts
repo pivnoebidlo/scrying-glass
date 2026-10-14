@@ -72,7 +72,7 @@ async function loadBuiltin() {
       path: `${BUILTIN}${b.system}/${e.type}/${e.title}`,
       group: b.source.title,
       order: 3,
-      entry: { ...e, fields: { ...e.fields, source: `${b.source.title}, перевод OmnisGM` } },
+      entry: { ...e, fields: { ...e.fields, source: `${b.source.title}, перевод ${b.source.translator ?? 'OmnisGM'}` } },
       en,
     }))
   );
@@ -131,10 +131,14 @@ const fitsHere = (e: EntryItem) => {
   const f = entryFamily(e.entry, typeDef(e.entry.type));
   return f === null || f === hereFamily();
 };
-// Встроенный SRD — только в приключениях D&D, в выбранной редакции.
+// Встроенные записи — системы приключения (её семейства, без отключённых систем); у D&D — в выбранной редакции.
+const systemOfBuiltin = (builtinPath: string) => builtinPath.slice(BUILTIN.length).split('/')[0]!;
 const editionShown = (builtinPath: string) => {
+  const system = systemOfBuiltin(builtinPath);
+  if (familyOf(system) !== hereFamily() || !isEnabled(system)) return false;
+  if (!srdHere()) return true;
   const ed = editionNow();
-  return srdHere() && (ed === 'all' || (ed !== 'none' && builtinPath.startsWith(`${BUILTIN}${ed}/`)));
+  return ed === 'all' || (ed !== 'none' && system === ed);
 };
 // Своя запись: правка встроенной видна вместе с её редакцией и получает её английское название и подпись места.
 function ownShown(list: EntryItem[]): EntryItem[] {
