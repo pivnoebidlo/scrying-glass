@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entrySubtitle, parseEntry, serializeEntry, type BuiltinBook } from '../src/shared/compendium';
+import { entrySubtitle, keyFrom, parseCustomTypes, parseEntry, serializeEntry, type BuiltinBook } from '../src/shared/compendium';
 
 describe('записи справочника', () => {
   it('шапка: строки, числа, да/нет, списки в обоих видах; без шапки — заметка', () => {
@@ -55,4 +55,51 @@ describe('встроенный справочник', () => {
       expect(new Set(keys).size).toBe(keys.length);
     });
   }
+});
+
+describe('свои типы записей', () => {
+  it('ключ из подписи — латиницей', () => {
+    expect(keyFrom('Сфера влияния')).toBe('sfera_vliyaniya');
+    expect(keyFrom('Мировоззрение')).toBe('mirovozzrenie');
+    expect(keyFrom('3 круг')).toBe('f_3_krug');
+    expect(keyFrom('')).toBe('');
+  });
+
+  it('разбор файла: встроенные id, повторы, занятые ключи и битые поля пропускаются', () => {
+    const types = parseCustomTypes({
+      types: [
+        { id: 'deity', title: 'Божество', fields: [
+          { key: 'alignment', title: 'Мировоззрение', kind: 'select', options: ['Добро', '', 1] },
+          { key: 'tags', title: 'Метки' },
+          { key: 'alignment', title: 'Повтор' },
+          { key: 'domains', title: 'Домены', kind: 'list', subtitle: true },
+          { key: 'x', title: 'Странный вид', kind: 'table' },
+        ] },
+        { id: 'spell', title: 'Не заклинание' },
+        { id: 'deity', title: 'Повтор' },
+        { id: 'плохо', title: 'Кириллица в ключе' },
+        { id: 'faction', title: 'Фракция' },
+      ],
+    });
+    expect(types.map((t) => t.id)).toEqual(['deity', 'faction']);
+    expect(types[0]!.fields).toEqual([
+      { key: 'alignment', title: 'Мировоззрение', kind: 'select', options: ['Добро'] },
+      { key: 'domains', title: 'Домены', kind: 'list', subtitle: true },
+      { key: 'x', title: 'Странный вид', kind: 'text' },
+    ]);
+    expect(types[1]!.plural).toBe('Фракция');
+    expect(parseCustomTypes(null)).toEqual([]);
+  });
+
+  it('строка под названием и порядок полей в файле — по своему типу', () => {
+    const [deity] = parseCustomTypes({ types: [{ id: 'deity', title: 'Божество', fields: [
+      { key: 'alignment', title: 'Мировоззрение', kind: 'text', subtitle: true },
+      { key: 'domains', title: 'Домены', kind: 'list', subtitle: true },
+      { key: 'symbol', title: 'Символ', kind: 'text' },
+    ] }] });
+    const e = parseEntry('---\ntype: deity\nsymbol: Молот\ndomains: [Война, Кузня]\nalignment: Хаотично-доброе\n---\nТекст', 'Морадин');
+    expect(entrySubtitle(e, deity)).toBe('Божество, Хаотично-доброе, Война, Кузня');
+    expect(entrySubtitle({ ...e, fields: {} }, deity)).toBe('Божество');
+    expect(serializeEntry(e, deity)).toBe('---\ntype: deity\nalignment: Хаотично-доброе\ndomains:\n  - Война\n  - Кузня\nsymbol: Молот\n---\n\nТекст\n');
+  });
 });

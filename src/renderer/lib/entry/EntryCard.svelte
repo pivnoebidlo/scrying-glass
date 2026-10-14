@@ -3,17 +3,19 @@
      и источника). -->
 <script lang="ts">
   import '../note/fonts.css';
-  import { COMMON_FIELDS, entrySubtitle, fieldText, typeOf, type Entry } from '../../../shared/compendium';
+  import { COMMON_FIELDS, entrySubtitle, fieldText, type Entry } from '../../../shared/compendium';
+  import { typeDef } from './types.svelte';
   import { entryHtml } from './markup';
 
   let { entry, players = false, onlink }: { entry: Entry; players?: boolean; onlink?: (name: string) => void } = $props();
 
-  const def = $derived(typeOf(entry.type));
+  // Свой тип у игроков приходит вместе с записью (entry.def), у мастера — из библиотеки.
+  const def = $derived(entry.def ?? typeDef(entry.type));
   // Поля для показа: по описанию типа (кроме того, что уже в строке типа), у неизвестного типа — все.
   const IN_SUBTITLE: Record<string, string[]> = { spell: ['level', 'school', 'ritual', 'concentration'], item: ['category', 'rarity', 'attunement'], feat: ['category', 'prerequisite'], rule: ['category'] };
   const rows = $derived.by(() => {
     const skip = new Set([...(IN_SUBTITLE[entry.type] ?? []), 'tags', 'source', 'overrides']);
-    const known = def.fields.filter((f) => !skip.has(f.key) && entry.fields[f.key] !== undefined && entry.fields[f.key] !== '' && entry.fields[f.key] !== false);
+    const known = def.fields.filter((f) => !skip.has(f.key) && !f.subtitle && entry.fields[f.key] !== undefined && entry.fields[f.key] !== '' && entry.fields[f.key] !== false);
     const extra = Object.keys(entry.fields).filter((k) => !skip.has(k) && !def.fields.some((f) => f.key === k) && !COMMON_FIELDS.some((f) => f.key === k));
     return [...known.map((f) => ({ title: f.title, value: fieldText(entry.fields[f.key]!) })), ...extra.map((k) => ({ title: k, value: fieldText(entry.fields[k]!) }))];
   });
@@ -58,7 +60,7 @@
 <article class="entry" class:players onclick={click} bind:this={el} style:--k={fontScale}>
   <header>
     <h1>{entry.title}</h1>
-    <div class="sub">{entrySubtitle(entry)}</div>
+    <div class="sub">{entrySubtitle(entry, def)}</div>
     {#if aliases.length && !players}<div class="aka">Также: {aliases.join(', ')}</div>{/if}
   </header>
   {#if rows.length}

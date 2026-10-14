@@ -4,6 +4,7 @@
   import { BookOpen, Search, Skull } from '@lucide/svelte';
   import { tick } from 'svelte';
   import { peekEntryAt } from '../../../renderer/lib/entry/peek.svelte';
+  import { typeDef } from '../../../renderer/lib/entry/types.svelte';
   import { entrySubtitle, searchKey } from '../../../shared/compendium';
   import type { CardSummary } from '../../../shared/cards';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
@@ -119,7 +120,7 @@
                 {#if h.kind === 'entry'}
                   <BookOpen size={14} />
                   <span class="t">{h.e.entry.title}</span>
-                  <span class="s">{entrySubtitle(h.e.entry)} · {h.e.group}</span>
+                  <span class="s">{entrySubtitle(h.e.entry, typeDef(h.e.entry.type))} · {h.e.group}</span>
                 {:else}
                   <Skull size={14} />
                   <span class="t">{h.c.name}</span>

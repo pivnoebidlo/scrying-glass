@@ -707,7 +707,7 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
 });
 
 // Небольшие данные инструментов, общие для всех кампаний: JSON-файлы в библиотеке (только из списка).
-const LIBRARY_DATA = new Set(['pointbuy.json']);
+const LIBRARY_DATA = new Set(['pointbuy.json', 'compendium-types.json']);
 ipcMain.handle('library:readData', (_event, name: string) => {
   const lib = libraryPath();
   return LIBRARY_DATA.has(name) && lib ? (readJson(path.join(lib, name)) ?? null) : null;

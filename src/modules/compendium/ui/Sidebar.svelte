@@ -1,9 +1,10 @@
 <!-- Боковая панель справочника: поиск, тип записей, список; «+» — новая запись (какого типа и где). -->
 <script lang="ts">
-  import { Plus, Search } from '@lucide/svelte';
+  import { Plus, Search, Shapes } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
-  import { blankEntry, entrySubtitle, serializeEntry, TYPES, typeOf } from '../../../shared/compendium';
+  import { blankEntry, entrySubtitle, serializeEntry } from '../../../shared/compendium';
+  import { allTypes, customTypes, typeDef } from '../../../renderer/lib/entry/types.svelte';
   import { LIBRARY } from '../../../shared/vault';
   import { allEntries, book, EDITIONS, entriesFolder, loadEntries, search, setEdition, srd, type Edition } from './store.svelte';
   import { openEntry, ui } from './ui.svelte';
@@ -25,8 +26,9 @@
   const types = $derived.by(() => {
     const counts = new Map<string, number>();
     for (const e of all) counts.set(e.entry.type, (counts.get(e.entry.type) ?? 0) + 1);
-    const ids = [...new Set([...Object.keys(TYPES), ...counts.keys()])];
-    return ids.map((id) => ({ id, title: typeOf(id).plural, n: counts.get(id) ?? 0 }));
+    void customTypes.list;
+    const ids = [...new Set([...allTypes().map((t) => t.id), ...counts.keys()])];
+    return ids.map((id) => ({ id, title: typeDef(id).plural, n: counts.get(id) ?? 0 }));
   });
   const shown = $derived(search(ui.type === 'all' ? all : all.filter((e) => e.entry.type === ui.type), ui.query));
 
@@ -47,8 +49,8 @@
   }
 
   async function create() {
-    const def = typeOf(newType);
-    const path = await window.api.createEntry(entriesFolder(place), `Новая запись (${def.title.toLowerCase()})`, serializeEntry(blankEntry(newType)));
+    const def = typeDef(newType);
+    const path = await window.api.createEntry(entriesFolder(place), `Новая запись (${def.title.toLowerCase()})`, serializeEntry(blankEntry(newType), def));
     creating = false;
     if (!path) return;
     openEntry(path);
@@ -63,12 +65,13 @@
       <input type="text" placeholder="Поиск: название, метки, текст" bind:value={ui.query} />
     </label>
     <button class="icon-btn" title="Новая запись" onclick={startCreate}><Plus size={16} /></button>
+    <button class="icon-btn" class:on={ui.page === 'types'} title="Типы записей: свои типы и их поля" onclick={() => (ui.page = ui.page === 'types' ? 'entry' : 'types')}><Shapes size={15} /></button>
   </div>
 
   {#if creating}
     <div class="create">
       <label>Тип
-        <select bind:value={newType}>{#each Object.entries(TYPES) as [id, t] (id)}<option value={id}>{t.title}</option>{/each}</select>
+        <select bind:value={newType}>{#each allTypes() as t (t.id)}<option value={t.id}>{t.def.title}</option>{/each}</select>
       </label>
       <label>Где
         <select bind:value={place}>{#each places as p (p.id ?? '')}<option value={p.id}>{p.title}</option>{/each}</select>
@@ -94,7 +97,7 @@
       <li>
         <button class:active={ui.open === e.path} title={e.path} onclick={() => openEntry(e.path)}>
           <span class="t">{e.entry.title}</span>
-          <span class="s">{entrySubtitle(e.entry)} · {e.group}</span>
+          <span class="s">{entrySubtitle(e.entry, typeDef(e.entry.type))} · {e.group}</span>
         </button>
       </li>
     {/each}
@@ -115,9 +118,13 @@
     display: flex;
     gap: 4px;
   }
+  .icon-btn.on {
+    color: var(--accent);
+  }
   .search {
     display: flex;
     flex: 1;
+    min-width: 0;
     align-items: center;
     gap: 6px;
     padding: 0 8px;

@@ -3,6 +3,7 @@
 <script lang="ts">
   import { ChevronLeft, ExternalLink, Eye, EyeOff, Pencil, RotateCcw, Trash2 } from '@lucide/svelte';
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
+  import { forPlayers, typeDef } from '../../../renderer/lib/entry/types.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
@@ -11,6 +12,7 @@
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import CopyToMenu from '../../tools/ui/CopyToMenu.svelte';
   import EntryEditor from './EntryEditor.svelte';
+  import TypesEditor from './TypesEditor.svelte';
   import { book, entriesFolder, entryAt, isBuiltinEntry, isLibraryEntry, loadEntries, overrideOf, resolveEntry, srd } from './store.svelte';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { openEntry, ui } from './ui.svelte';
@@ -62,7 +64,7 @@
     // Копия — самостоятельная запись, а не ещё одна замена встроенной.
     const entry = $state.snapshot(item.entry) as Entry;
     const { [OVERRIDES]: _, ...fields } = entry.fields;
-    const path = await window.api.createEntry(entriesFolder(place), item.entry.title, serializeEntry({ ...entry, fields }));
+    const path = await window.api.createEntry(entriesFolder(place), item.entry.title, serializeEntry({ ...entry, fields }, typeDef(entry.type)));
     if (path && builtin) openEntry(path);
     else if (path) flash('Копия сделана.');
   }
@@ -79,7 +81,9 @@
   }
 </script>
 
-{#if item && ui.editing}
+{#if ui.page === 'types'}
+  <TypesEditor />
+{:else if item && ui.editing}
   {#key item.path}<EntryEditor {item} />{/key}
 {:else if item}
   <div class="view">
@@ -88,7 +92,7 @@
       <span class="faint where" title={builtin ? 'Встроенная запись. «Править» сохранит правку в библиотеку, она заменит встроенную' : item.path}>{item.en ? `${item.group} · ${item.en}` : item.group}</span>
       {#if status}<span class="status">{status}</span>{/if}
       <div class="spacer"></div>
-      <button class="btn" class:primary={!shown} onclick={() => dispatch('handouts', 'toggleEntry', { path: item.path, entry: $state.snapshot(item.entry) })}>
+      <button class="btn" class:primary={!shown} onclick={() => dispatch('handouts', 'toggleEntry', { path: item.path, entry: forPlayers($state.snapshot(item.entry) as Entry) })}>
         {#if shown}<EyeOff size={14} /> Убрать у игроков{:else}<Eye size={14} /> Показать игрокам{/if}
       </button>
       <button class="btn" onclick={() => (ui.editing = true)}><Pencil size={14} /> Править</button>

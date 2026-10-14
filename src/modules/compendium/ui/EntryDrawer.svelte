@@ -7,7 +7,10 @@
   import type { CardRef } from '../../../shared/cards';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
+  import { forPlayers } from '../../../renderer/lib/entry/types.svelte';
   import { closeEntryPeek, entryPeek, setSpellIndex } from '../../../renderer/lib/entry/peek.svelte';
+  import { loadCustomTypes } from '../../../renderer/lib/entry/types.svelte';
+  import type { Entry } from '../../../shared/compendium';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
@@ -27,6 +30,7 @@
     loadEntries();
   });
   $effect(() => setSpellIndex(spellNames()));
+  void loadCustomTypes();
 
   // Панель карточки и панель записи — на одном месте: открылась одна — закрываем другую.
   let lastEntry: string[] | null = null;
@@ -88,7 +92,7 @@
       {#if item}
         {@const it = item}
         <button class="btn" title="Открыть во вкладке «Справочник»" onclick={() => (openEntry(it.path), closeEntryPeek())}><BookOpen size={14} /> Во вкладке</button>
-        <button class="btn" onclick={() => dispatch('handouts', 'toggleEntry', { path: it.path, entry: $state.snapshot(it.entry) })}>
+        <button class="btn" onclick={() => dispatch('handouts', 'toggleEntry', { path: it.path, entry: forPlayers($state.snapshot(it.entry) as Entry) })}>
           {#if shown}<EyeOff size={14} /> Убрать у игроков{:else}<Eye size={14} /> Показать игрокам{/if}
         </button>
         <span class="faint where">{it.en ? `${it.group} · ${it.en}` : it.group}</span>

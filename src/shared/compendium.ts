@@ -20,6 +20,8 @@ export interface FieldDef {
   options?: string[];
   // Подсказка в редакторе.
   hint?: string;
+  // Своё поле: значение — в строке под названием («Божество, хаотично-доброе»), а не строкой «поле — значение».
+  subtitle?: boolean;
 }
 
 export interface TypeDef {
@@ -85,11 +87,66 @@ export const TYPES: Record<string, TypeDef> = {
 
 export const typeOf = (t: string): TypeDef => TYPES[t] ?? { title: t || 'Запись', plural: t || 'Записи', fields: [] };
 
+// ---------- Свои типы ----------
+// Описывает пользователь (окно «Типы записей»), хранятся в библиотеке — compendium-types.json, общие для всех кампаний.
+// id — то, что пишется в шапке файла (type: deity); встроенные id заняты.
+export interface CustomType extends TypeDef {
+  id: string;
+}
+export const CUSTOM_TYPES_FILE = 'compendium-types.json';
+
+const TRANSLIT: Record<string, string> = {
+  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n',
+  о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '',
+  э: 'e', ю: 'yu', я: 'ya',
+};
+// Ключ из подписи: «Сфера влияния» → «sfera_vliyaniya» (ключи в шапке — латиницей, как у встроенных полей).
+export function keyFrom(title: string): string {
+  const k = [...title.toLowerCase()]
+    .map((ch) => TRANSLIT[ch] ?? ch)
+    .join('')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return /^[a-z]/.test(k) ? k : k ? `f_${k}` : '';
+}
+export const validKey = (k: string) => /^[A-Za-z_][\w-]*$/.test(k);
+
+const KINDS = ['text', 'number', 'bool', 'select', 'list'] as const;
+// Прочитать файл своих типов: битые и повторные пропускаются, встроенные id не перекрываются.
+export function parseCustomTypes(data: unknown): CustomType[] {
+  const list = Array.isArray((data as { types?: unknown })?.types) ? ((data as { types: unknown[] }).types) : [];
+  const seen = new Set(Object.keys(TYPES));
+  const out: CustomType[] = [];
+  for (const raw of list) {
+    const t = raw as Partial<CustomType>;
+    if (!t || typeof t.id !== 'string' || !validKey(t.id) || seen.has(t.id) || typeof t.title !== 'string') continue;
+    seen.add(t.id);
+    const keys = new Set<string>(['tags', 'source', 'aliases', 'type']);
+    const fields: FieldDef[] = [];
+    for (const f of Array.isArray(t.fields) ? t.fields : []) {
+      if (!f || typeof f.key !== 'string' || !validKey(f.key) || keys.has(f.key) || typeof f.title !== 'string') continue;
+      keys.add(f.key);
+      fields.push({
+        key: f.key,
+        title: f.title,
+        kind: KINDS.includes(f.kind as (typeof KINDS)[number]) ? f.kind : 'text',
+        ...(f.kind === 'select' && Array.isArray(f.options) ? { options: f.options.filter((o): o is string => typeof o === 'string' && !!o.trim()) } : {}),
+        ...(typeof f.hint === 'string' && f.hint ? { hint: f.hint } : {}),
+        ...(f.subtitle ? { subtitle: true } : {}),
+      });
+    }
+    out.push({ id: t.id, title: t.title, plural: typeof t.plural === 'string' && t.plural ? t.plural : t.title, fields });
+  }
+  return out;
+}
+
 export interface Entry {
   title: string;
   type: string;
   fields: Record<string, FieldValue>;
   body: string;
+  // Описание своего типа — только когда запись уходит на экран игроков (окно игроков не читает библиотеку).
+  def?: TypeDef;
 }
 
 // Встроенный справочник одной редакции (resources/compendium/<система>.json): записи с английским названием `en`.
@@ -161,8 +218,7 @@ export function parseEntry(text: string, title: string): Entry {
 const quote = (s: string) => (s === '' || /^[\s\-?:,[\]{}#&*!|>'"%@`]|: |\s#|^(true|false|null|~)$|^-?\d+(\.\d+)?$|\s$/.test(s) ? JSON.stringify(s) : s);
 
 // Запись — в текст файла. Пустые поля не пишутся; порядок — как в описании типа, потом остальные.
-export function serializeEntry(e: Entry): string {
-  const def = typeOf(e.type);
+export function serializeEntry(e: Entry, def: TypeDef = typeOf(e.type)): string {
   const order = [...def.fields, ...COMMON_FIELDS].map((f) => f.key);
   const keys = [...order.filter((k) => k in e.fields), ...Object.keys(e.fields).filter((k) => !order.includes(k))];
   const lines = [`type: ${quote(e.type)}`];
@@ -176,7 +232,7 @@ export function serializeEntry(e: Entry): string {
 }
 
 // Строка под названием: «3 уровень, воплощение», «Чудесный предмет, редкий, требует настройки».
-export function entrySubtitle(e: Entry): string {
+export function entrySubtitle(e: Entry, def: TypeDef = e.def ?? typeOf(e.type)): string {
   const f = e.fields;
   const low = (v: FieldValue | undefined) => (typeof v === 'string' ? v.toLowerCase() : '');
   switch (e.type) {
@@ -189,8 +245,12 @@ export function entrySubtitle(e: Entry): string {
       return [f['category'] || 'Предмет', low(f['rarity']), f['attunement'] ? `требует настройки${f['attunement'] === 'да' || f['attunement'] === true ? '' : ` (${f['attunement']})`}` : ''].filter(Boolean).join(', ');
     case 'feat':
       return [f['category'] ? `Черта: ${low(f['category'])}` : 'Черта', f['prerequisite'] ? `требует: ${f['prerequisite']}` : ''].filter(Boolean).join(', ');
-    default:
-      return [typeOf(e.type).title, typeof f['category'] === 'string' ? low(f['category']) : ''].filter(Boolean).join(', ');
+    default: {
+      // Свой тип: название типа и поля, отмеченные «в строке под названием».
+      const marked = def.fields.filter((d) => d.subtitle && f[d.key] !== undefined && f[d.key] !== '' && f[d.key] !== false);
+      if (marked.length) return [def.title, ...marked.map((d) => (d.kind === 'bool' ? d.title.toLowerCase() : fieldText(f[d.key]!)))].join(', ');
+      return [def.title, typeof f['category'] === 'string' ? low(f['category']) : ''].filter(Boolean).join(', ');
+    }
   }
 }
 
