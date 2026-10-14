@@ -53,7 +53,9 @@ describe('снимки', () => {
 
   it('хранятся последние 20, по одному на день за месяц и ручные', () => {
     const day = 86_400_000;
-    const now = Date.UTC(2026, 9, 14, 12);
+    // Местные 23:00: 30 снимков за последние 15 часов — внутри одних местных суток в любом часовом поясе (снимки
+    // «по одному на день» считаются по местной дате).
+    const now = new Date(2026, 9, 14, 23).getTime();
     const snap = (i: number, created: number, reason: SnapshotMeta['reason'] = 'auto'): SnapshotMeta => ({ id: `s${i}`, created, reason, vault: null, vaultName: '', files: 1, bytes: 1, hash: String(i) });
     // 30 снимков за последние сутки (каждые 30 минут), по два в день за 40 дней до этого, один старый ручной.
     const list = [
