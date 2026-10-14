@@ -13,7 +13,9 @@
 
 {#if ms.current}
   <div class="row">
-    {#if isNotePath(ms.current)}
+    {#if ms.entry}
+      <span class="name" title={ms.current}>{ms.entry.title}</span>
+    {:else if isNotePath(ms.current)}
       <div class="mini">{#if ms.note}<NotePaper note={ms.note} />{/if}</div>
       <span class="name" title={ms.current}>{noteTitle(ms.current)}</span>
     {:else}

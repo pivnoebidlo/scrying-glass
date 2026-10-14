@@ -16,6 +16,7 @@
     { role: 'maps', title: 'Карты', desc: 'Карты с туманом войны.' },
     { role: 'music', title: 'Музыка', desc: 'Музыка и атмосфера.' },
     { role: 'tables', title: 'Таблицы', desc: 'Таблицы случайностей и генераторы (Markdown-файлы).' },
+    { role: 'compendium', title: 'Справочник', desc: 'Заклинания, предметы, черты, правила, заметки (Markdown-файлы).' },
   ];
   const titleOf = (role: FolderRole) => ROLES.find((r) => r.role === role)!.title;
 

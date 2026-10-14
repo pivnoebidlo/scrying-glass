@@ -67,6 +67,14 @@ export interface Api {
   // Новое название = новое имя файла. Новый путь или null.
   renameNote(path: string, title: string): Promise<string | null>;
 
+  // Справочник (shared/compendium.ts): Markdown-записи в папках справочника хранилища и в библиотеке
+  // («library:compendium/…»). Удаление записи библиотеки — trashLibraryTable.
+  readEntry(path: string): Promise<string | null>;
+  listLibraryEntries(): Promise<{ path: string; text: string }[]>;
+  writeEntry(path: string, text: string): Promise<boolean>;
+  createEntry(folder: string, title: string, text: string): Promise<string | null>;
+  renameEntry(path: string, title: string): Promise<string | null>;
+  onCompendiumChanged(cb: () => void): void;
   // Таблицы случайностей (shared/tables.ts): .md / .txt в папках таблиц хранилища или в библиотеке
   // (пути «library:tables/…» — общие для всех кампаний).
   readTable(path: string): Promise<string | null>;

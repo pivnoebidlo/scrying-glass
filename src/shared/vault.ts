@@ -5,8 +5,9 @@ export const IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
 export const AUDIO_EXT = ['.mp3', '.ogg', '.wav', '.flac', '.m4a'];
 
 // note — записка, сделанная в приложении («….note.json», см. shared/notes.ts); table — таблица случайностей
-// (.md / .txt, только в папках таблиц, см. shared/tables.ts).
-export type FileKind = 'image' | 'audio' | 'note' | 'table';
+// (.md / .txt, только в папках таблиц, см. shared/tables.ts); entry — запись справочника (.md в папках справочника,
+// см. shared/compendium.ts).
+export type FileKind = 'image' | 'audio' | 'note' | 'table' | 'entry';
 
 // Пути внутри хранилища — относительные, через «/», корень — пустая строка.
 export interface VaultFile {
@@ -33,7 +34,7 @@ export interface VaultState {
 }
 
 // Назначение папки угадывается по названию. Это подсказка, а не требование.
-export type FolderRole = 'characters' | 'party' | 'maps' | 'music' | 'backgrounds' | 'handouts' | 'bestiary' | 'tables';
+export type FolderRole = 'characters' | 'party' | 'maps' | 'music' | 'backgrounds' | 'handouts' | 'bestiary' | 'tables' | 'compendium';
 export type RoleNames = Record<FolderRole, string[]>;
 
 // Названия по умолчанию. Первое — то, с которым приложение создаёт папку (стандартные папки приключения).
@@ -50,6 +51,8 @@ export const DEFAULT_ROLES: RoleNames = {
   bestiary: ['monsters', 'bestiary', 'бестиарий', 'монстры', 'creatures', 'существа'],
   // Таблицы случайностей (Markdown-файлы): слухи, имена, события. Приключению сама не создаётся.
   tables: ['tables', 'таблицы', 'генераторы', 'random'],
+  // Справочник (Markdown-файлы): заклинания, предметы, черты, правила, заметки. Приключению сама не создаётся.
+  compendium: ['compendium', 'справочник', 'reference', 'wiki'],
 };
 
 export const roleName = (name: string) => name.normalize('NFC').trim().toLowerCase();

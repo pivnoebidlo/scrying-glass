@@ -2,11 +2,15 @@
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { allFiles } from '../../shared/vault';
 import { isNotePath } from '../../shared/notes';
+import type { Entry } from '../../shared/compendium';
+import { LIBRARY } from '../../shared/vault';
 import { readNoteFile } from '../../main/notes';
 import type { HandoutsState } from './types';
 
 // Записка у игроков — её содержимое с диска (перечитывается при каждом изменении файлов хранилища).
 function withNote(s: HandoutsState, ctx: ModuleContext): HandoutsState {
+  // Запись справочника у игроков — только пока показана именно она.
+  if (s.entry && !s.current) s = { ...s, entry: null };
   const abs = s.current && isNotePath(s.current) ? ctx.vault.resolve(s.current) : null;
   const note = abs ? readNoteFile(abs) : null;
   return note === null && s.note === null ? s : { ...s, note };
@@ -16,7 +20,9 @@ function withNote(s: HandoutsState, ctx: ModuleContext): HandoutsState {
 function prune(s: HandoutsState, ctx: ModuleContext): HandoutsState {
   const tree = ctx.vault.tree;
   if (!tree || !s.current) return withNote(s, ctx);
-  const exists = allFiles(tree).some((f) => f.path === s.current && (f.kind === 'image' || f.kind === 'note'));
+  // Запись справочника из библиотеки — вне хранилища, её не проверяем.
+  if (s.current.startsWith(LIBRARY) && s.entry) return s;
+  const exists = allFiles(tree).some((f) => f.path === s.current && (f.kind === 'image' || f.kind === 'note' || f.kind === 'entry'));
   return withNote(exists ? s : { ...s, current: null }, ctx);
 }
 
@@ -33,16 +39,31 @@ export default defineModule({
   actions: {
     // Показать раздатку; та же самая — убрать.
     toggle(s, { path }: { path: string }, ctx) {
-      return withNote({ ...s, current: s.current === path ? null : path }, ctx);
+      return withNote({ ...s, current: s.current === path ? null : path, entry: null }, ctx);
+    },
+
+    // Запись справочника: показать (та же — убрать). Окно передаёт запись целиком.
+    toggleEntry(s, { path, entry }: { path: string; entry: Entry }) {
+      return s.current === path ? { ...s, current: null, entry: null, note: null } : { ...s, current: path, entry, note: null };
+    },
+
+    // Файл раздатки переименовали: показ остаётся (с той же запиской или записью).
+    move(s, { from, to }: { from: string; to: string }) {
+      return s.current === from ? { ...s, current: to } : s;
+    },
+
+    // Запись поправили, пока она у игроков, — обновить у них.
+    updateEntry(s, { path, entry }: { path: string; entry: Entry }) {
+      return s.current === path ? { ...s, entry } : s;
     },
 
     // Показать именно эту раздатку (null — убрать): так включаются сцены.
     set(s, { path }: { path: string | null }, ctx) {
-      return withNote({ ...s, current: path }, ctx);
+      return withNote({ ...s, current: path, entry: path && path === s.current ? s.entry : null }, ctx);
     },
 
     clear(s) {
-      return { ...s, current: null, note: null };
+      return { ...s, current: null, note: null, entry: null };
     },
   },
 });

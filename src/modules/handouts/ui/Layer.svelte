@@ -4,6 +4,7 @@
   import { fade, scale } from 'svelte/transition';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
+  import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
   import { isNotePath } from '../../../shared/notes';
   import { vaultUrl } from '../../../shared/vault';
 
@@ -14,7 +15,9 @@
   {#if ms.current}
     <!-- |global: переход должен срабатывать и когда блок пересоздаётся из-за смены картинки ({#key}). -->
     <div class="backdrop" transition:fade|global={{ duration: 400 }}>
-      {#if isNotePath(ms.current)}
+      {#if ms.entry}
+        <div class="entry" transition:scale|global={{ start: 0.94, duration: 400 }}><EntryCard entry={ms.entry} players /></div>
+      {:else if isNotePath(ms.current)}
         {#if ms.note}
           <div class="note" transition:scale|global={{ start: 0.94, duration: 400 }}><NotePaper note={ms.note} shadow /></div>
         {/if}
@@ -43,5 +46,11 @@
   .note {
     position: absolute;
     inset: 4cqmin;
+  }
+  .entry {
+    position: absolute;
+    inset: 4cqmin;
+    display: grid;
+    place-items: center;
   }
 </style>

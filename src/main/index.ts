@@ -18,7 +18,8 @@ import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
 import { createNote, readNote, renameNote, writeNote } from './notes';
-import { createTable, listLibraryTables, readTable, seedLibraryTables, tableResolver, watchLibraryTables, writeTable } from './tables';
+import { createTable, isTablePath, listLibraryTables, readTable, seedLibraryTables, tableResolver, watchLibraryTables, writeTable } from './tables';
+import { entries, watchLibraryCompendium } from './compendium';
 import type { Note } from '../shared/notes';
 import {
   cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
@@ -302,15 +303,42 @@ ipcMain.handle('tables:create', async (_event, { folder, title, text }: { folder
   if (rel) await afterTableWrite(rel);
   return rel;
 });
-// Таблица библиотеки — в Корзину, с подтверждением (таблицы хранилища удаляет действие vault/trash).
+// Справочник: записи в папках справочника хранилища и в библиотеке («library:compendium/…»).
+const afterEntryWrite = async (rel: string) => {
+  if (rel.startsWith(LIBRARY)) for (const win of BrowserWindow.getAllWindows()) win.webContents.send('compendium:changed');
+  else await afterNoteWrite();
+};
+ipcMain.handle('compendium:read', (_event, rel: string) => entries.read(resolveTable, rel));
+ipcMain.handle('compendium:listLibrary', () => entries.listLibrary(libraryPath()));
+ipcMain.handle('compendium:write', async (_event, { path: rel, text }: { path: string; text: string }) => {
+  const ok = entries.write(resolveTable, rel, text);
+  if (ok) await afterEntryWrite(rel);
+  return ok;
+});
+ipcMain.handle('compendium:create', async (_event, { folder, title, text }: { folder: string; title: string; text: string }) => {
+  const rel = entries.create(resolveTable, folder, title, text);
+  if (rel) await afterEntryWrite(rel);
+  return rel;
+});
+ipcMain.handle('compendium:rename', async (_event, { path: rel, title }: { path: string; title: string }) => {
+  const next = entries.rename(resolveTable, rel, title);
+  if (next && next !== rel) {
+    await runAction('handouts', 'move', { from: rel, to: next });
+    await afterEntryWrite(next);
+  }
+  return next;
+});
+
+// Файл библиотеки (таблица, запись справочника) — в Корзину, с подтверждением (файлы хранилища удаляет действие
+// vault/trash).
 ipcMain.handle('tables:trash', async (_event, rel: string) => {
-  const abs = rel.startsWith(LIBRARY) ? resolveTable(rel) : null;
+  const abs = rel.startsWith(LIBRARY) && (isTablePath(rel) || entries.isPath(rel)) ? resolveTable(rel) : null;
   if (!abs || !fs.existsSync(abs)) return false;
   const win = getControlWindow();
   const opts = {
     type: 'warning' as const,
     message: `Переместить «${path.basename(abs)}» в Корзину?`,
-    detail: 'Это общая таблица библиотеки: она пропадёт во всех кампаниях. Файл можно будет вернуть из Корзины.',
+    detail: 'Этот файл — в общей библиотеке: он пропадёт во всех кампаниях. Его можно будет вернуть из Корзины.',
     buttons: ['В Корзину', 'Отмена'],
     defaultId: 0,
     cancelId: 1,
@@ -318,7 +346,8 @@ ipcMain.handle('tables:trash', async (_event, rel: string) => {
   const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
   if (res.response !== 0) return false;
   await shell.trashItem(abs);
-  await afterTableWrite(rel);
+  if (entries.isPath(rel)) await afterEntryWrite(rel);
+  else await afterTableWrite(rel);
   return true;
 });
 // ---------- Снимки (резервные копии данных приложения, main/backups.ts) ----------
@@ -330,7 +359,7 @@ function appVaultFiles(): string[] {
   const out: string[] = [];
   if (!vaultRoot) return out;
   if (fs.existsSync(vaultStateFile())) out.push(`${DATA_DIR}/state.json`);
-  if (vaultTree) out.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'table').map((f) => f.path));
+  if (vaultTree) out.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'table' || f.kind === 'entry').map((f) => f.path));
   out.push(...listCards().filter((c) => c.ref.scope === 'vault' && c.file).map((c) => c.file!));
   return out;
 }
@@ -838,7 +867,10 @@ ipcMain.handle('cards:chooseLibrary', async (_event, { reset }: { reset?: boolea
   writeJsonAtomic(settingsFile(), settings);
   setLibrary(dir ?? defaultLibrary());
   watchLibraryTables(libraryPath());
+  watchLibraryCompendium(libraryPath());
+  watchLibraryCompendium(libraryPath());
   for (const win of BrowserWindow.getAllWindows()) win.webContents.send('tables:changed');
+  for (const win of BrowserWindow.getAllWindows()) win.webContents.send('compendium:changed');
 });
 
 ipcMain.handle('displays:list', () => listDisplays());

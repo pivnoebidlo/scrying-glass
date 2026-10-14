@@ -30,6 +30,12 @@ const api: Api = {
   createNote: (folder, title, note) => ipcRenderer.invoke('notes:create', { folder, title, note }),
   renameNote: (path, title) => ipcRenderer.invoke('notes:rename', { path, title }),
 
+  readEntry: (path) => ipcRenderer.invoke('compendium:read', path),
+  listLibraryEntries: () => ipcRenderer.invoke('compendium:listLibrary'),
+  writeEntry: (path, text) => ipcRenderer.invoke('compendium:write', { path, text }),
+  createEntry: (folder, title, text) => ipcRenderer.invoke('compendium:create', { folder, title, text }),
+  renameEntry: (path, title) => ipcRenderer.invoke('compendium:rename', { path, title }),
+  onCompendiumChanged: (cb) => { ipcRenderer.on('compendium:changed', () => cb()); },
   readTable: (path) => ipcRenderer.invoke('tables:read', path),
   listLibraryTables: () => ipcRenderer.invoke('tables:listLibrary'),
   seedLibraryTables: (files, restore) => ipcRenderer.invoke('tables:seed', { files, restore }),
