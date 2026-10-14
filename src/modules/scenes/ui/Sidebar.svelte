@@ -11,7 +11,7 @@
   let { ms, app }: ModuleProps<'scenes'> = $props();
 
   // Сцены текущего приключения и общие.
-  const list = $derived(scenesFor(ms, app.adventures.current));
+  const list = $derived(scenesFor(ms, app.adventures));
 
   let dragged = $state<string | null>(null);
   let over = $state<number | null>(null);

@@ -5,9 +5,14 @@
   import { openTab } from '../../../renderer/lib/nav';
   import TreeNode from './TreeNode.svelte';
   import { ui } from './ui.svelte';
+  import { adventureHidden } from '../../../shared/adventures';
   import { loadTrash, trashCount } from './trash.svelte';
 
-  let { ms }: ModuleProps<'vault'> = $props();
+  let { ms, app }: ModuleProps<'vault'> = $props();
+
+  // Приключения отключённых в настройках систем не показываются.
+  const folders = $derived(ms.tree ? ms.tree.folders.filter((f) => !adventureHidden(app.adventures, f.path)) : []);
+  const hidden = $derived(ms.tree ? ms.tree.folders.length - folders.length : 0);
 
   function select(path: string) {
     ui.folder = path;
@@ -29,9 +34,14 @@
       <Library size={14} />
       <span class="name">{ms.name}</span>
     </button>
-    {#each ms.tree.folders as f (f.path)}
+    {#each folders as f (f.path)}
       <TreeNode folder={f} depth={0} {select} />
     {/each}
+    {#if hidden}
+      <p class="faint hint" title="Их ролевая система отключена в настройках («Приключения» → «Ролевые системы»)">
+        Скрыто приключений: {hidden} — система отключена
+      </p>
+    {/if}
     {#if ms.tree.folders.length === 0}
       <p class="faint hint">Папок пока нет. Создайте их в Finder — они появятся здесь сами.</p>
     {/if}

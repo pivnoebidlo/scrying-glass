@@ -4,13 +4,18 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { newEncounterName, ui } from './ui.svelte';
+  import { adventureHidden } from '../../../shared/adventures';
 
   let { ms, app }: ModuleProps<'initiative'> = $props();
 
   // Заготовки текущего приключения и общие; без приключения — все. Если папка больше не приключение — тоже видна.
   const adv = $derived(app.adventures);
   const list = $derived(
-    ms.encounters.filter((e) => adv.current === null || e.adventure === null || e.adventure === adv.current || !adv.list.includes(e.adventure))
+    ms.encounters.filter(
+      (e) =>
+        e.adventure === null ||
+        (!adventureHidden(adv, e.adventure) && (adv.current === null || e.adventure === adv.current || !adv.list.includes(e.adventure)))
+    )
   );
   const running = $derived(ms.turn !== null);
 

@@ -10,7 +10,7 @@
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { allEntries, altNames, book, isBuiltinEntry, search, srd, type EntryItem } from './store.svelte';
   import { openEntry } from './ui.svelte';
-  import { inCurrentFamily } from '../../../shared/adventures';
+  import { inCurrentFamily, visibleIn } from '../../../shared/adventures';
   import { store } from '../../../renderer/lib/store.svelte';
 
   type Hit = { kind: 'entry'; e: EntryItem; score: number } | { kind: 'card'; c: CardSummary; score: number };
@@ -36,7 +36,7 @@
       return { kind: 'entry' as const, e, score: s < 0 ? alt : s };
     });
     const cards: Hit[] = bestiary.all
-      .filter((c) => inCurrentFamily(store.state.adventures, c.system))
+      .filter((c) => inCurrentFamily(store.state.adventures, c.system) && (c.ref.scope !== 'vault' || c.folder === undefined || visibleIn(store.state.adventures, c.folder)))
       .map((c) => ({ kind: 'card' as const, c, score: nameScore(c.name, q) }))
       .filter((h) => h.score >= 0);
     // При равном совпадении: свои записи и карточки — раньше встроенных, английские карточки — последними.

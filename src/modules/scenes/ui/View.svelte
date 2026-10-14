@@ -5,12 +5,13 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { activate, capture, describe, missing, PART_TITLES } from '../apply';
   import { PARTS, scenesFor, type Part } from '../types';
+  import { shownAdventures } from '../../../shared/adventures';
   import { saveCurrent, ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'scenes'> = $props();
 
   // Сцены текущего приключения и общие.
-  const list = $derived(scenesFor(ms, app.adventures.current));
+  const list = $derived(scenesFor(ms, app.adventures));
   const sc = $derived(list.find((x) => x.id === ui.selected) ?? list.find((x) => x.id === ms.active) ?? list[0]);
   const lost = $derived(sc ? missing(app, sc) : []);
 
@@ -49,7 +50,7 @@
           onchange={(e) => dispatch('scenes', 'setAdventure', { id: sc.id, adventure: e.currentTarget.value || null })}
         >
           <option value="">Общая — видна во всех приключениях</option>
-          {#each app.adventures.list as a (a)}<option value={a}>{a}</option>{/each}
+          {#each shownAdventures(app.adventures) as a (a)}<option value={a}>{a}</option>{/each}
         </select>
       </label>
     {/if}

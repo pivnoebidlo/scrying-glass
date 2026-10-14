@@ -6,7 +6,7 @@
   import { familyOf, isDnd, isEnabled, systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dirname, roleFolders } from '../../../shared/vault';
-  import { currentSystem, inCurrentFamily, placeTitle, visibleIn } from '../../../shared/adventures';
+  import { adventureHidden, adventureOf, currentSystem, inCurrentFamily, placeTitle, visibleIn } from '../../../shared/adventures';
   import { bestiary, connectCards } from './cards.svelte';
 
   let { app }: ModuleProps<'bestiary'> = $props();
@@ -26,9 +26,12 @@
   onMount(connectCards);
 
   // Карточки — только системы приключения; выбирать можно редакцию внутри семейства (D&D 2014 / 2024).
-  const inFamily = $derived(bestiary.all.filter((c) => inCurrentFamily(app.adventures, c.system)).length);
+  // Счётчик «из N» — без карточек скрытых приключений (их система отключена).
+  const inFamily = $derived(
+    bestiary.all.filter((c) => inCurrentFamily(app.adventures, c.system) && (c.ref.scope !== 'vault' || c.folder === undefined || !adventureHidden(app.adventures, adventureOf(app.adventures, c.folder)))).length
+  );
   const editions = $derived(
-    (app.vault.systemsOff, systems.filter((s) => s.family === familyOf(currentSystem(app.adventures)) && (isEnabled(s.id) || s.id === currentSystem(app.adventures))))
+    (app.vault.systemsOff, systems.filter((s) => s.family === familyOf(currentSystem(app.adventures)) && isEnabled(s.id)))
   );
 
   const f = bestiary.filters;

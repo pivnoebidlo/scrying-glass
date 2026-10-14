@@ -7,7 +7,7 @@
   import { scenesFor } from '../types';
 
   let { ms, app }: ModuleProps<'scenes'> = $props();
-  const list = $derived(scenesFor(ms, app.adventures.current));
+  const list = $derived(scenesFor(ms, app.adventures));
   const mod = navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl+';
 </script>
 

@@ -133,9 +133,13 @@ Electron-приложение для мастера D&D: окно управле
   редактор `Editor.svelte`; один вид для всех `kind`. Чужой блок stats у карточки Fate — общий вид (`fits` в `systems/ui.ts`).
   Ненужные системы отключаются в настройках «Приключения» (`adventures/ui/Settings.svelte`): `settings.systemsOff` в
   settings.json приложения → `vault.systemsOff` → `setSystemsOff` в `systems/index.ts` (ядро — из настроек, окна — в
-  `store.svelte.ts`, как названия ролей; все отключить нельзя). Отключённые не предлагает `SystemSelect`
-  (`enabledSystems`), `inCurrentFamily` скрывает их карточки (кроме системы самого приключения), справочник — их
-  редакции SRD (`editionsHere` / `editionNow`); по умолчанию — `defaultSystem()`, явно выбранная система остаётся.
+  `store.svelte.ts`, как названия ролей; все отключить нельзя). Контента отключённой системы не видно нигде:
+  `SystemSelect` её не предлагает (`enabledSystems`), `inCurrentFamily` скрывает карточки, справочник — редакции SRD
+  (`editionsHere` / `editionNow`). Приключение с отключённой системой скрыто целиком (`adventureHidden`,
+  `shownAdventures`): переключатель, дерево «Файлов», `visibleIn` (и во «Всём хранилище»), `scenesFor`, заготовки,
+  списки выбора приключения; открытое — `Ensure.svelte` переключает на всё хранилище. Приключение без своей системы —
+  с системой хранилища, а без неё — `DEFAULT_SYSTEM` (старые приключения — D&D); само «Всё хранилище» с отключённой
+  системой берёт `defaultSystem()` (первую включённую). Ядро (экспорт, снимки) ничего не скрывает.
 - Трекер системы (`SystemDef.tracker`, тип — `systems/tracker.ts`; `dnd5e/tracker.ts`, `fate/tracker.ts`): подписи
   очерёдности и бонуса, кнопка «Бросить за NPC» (`roll.value` — действие `rollNpcs` получает `system`), состояния
   (список D&D или свободные аспекты Fate), числа участника `fields` (быстрое добавление и заготовка; складывать —

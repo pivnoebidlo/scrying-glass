@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { currentSystem, inCurrentFamily, systemFor, type AdventuresState } from '../src/shared/adventures';
+import { adventureHidden, currentSystem, inCurrentFamily, shownAdventures, systemFor, visibleIn, type AdventuresState } from '../src/shared/adventures';
+import { scenesFor, type ScenesState } from '../src/modules/scenes/types';
 import { entryFamily, parseEntry } from '../src/shared/compendium';
 import { DEFAULT_SYSTEM, enabledSystems, familyOf, isDnd, setSystemsOff, systems } from '../src/systems';
 
@@ -54,9 +55,32 @@ describe('отключённые системы', () => {
     expect(systemFor(adv({ Страд: 'dnd5e-2024' }, null), 'Страд')).toBe('dnd5e-2024');
   });
 
-  it('карточки отключённой редакции скрыты, своей системы приключения — видны', () => {
+  it('карточки отключённой системы скрыты всегда', () => {
     setSystemsOff(['dnd5e-2014']);
     expect(inCurrentFamily(adv({ Страд: 'dnd5e-2024' }, 'Страд'), 'dnd5e-2014')).toBe(false);
-    expect(inCurrentFamily(adv({ Страд: 'dnd5e-2014' }, 'Страд'), 'dnd5e-2014')).toBe(true);
+    expect(inCurrentFamily(adv({ Страд: 'dnd5e-2024' }, 'Страд'), 'dnd5e-2024')).toBe(true);
+  });
+
+  it('приключение отключённой системы скрыто вместе с папками, сценами и заготовками', () => {
+    setSystemsOff(['dnd5e-2024', 'dnd5e-2014']);
+    const a = adv({ Страд: 'dnd5e-2024', Дрезден: 'fate-core' }, null);
+    expect(adventureHidden(a, 'Страд')).toBe(true);
+    // Обычная папка — не приключение, не скрывается.
+    expect(adventureHidden(a, 'maps')).toBe(false);
+    expect(shownAdventures(a)).toEqual(['Дрезден']);
+    expect(visibleIn(a, 'Страд/monsters/x.json')).toBe(false);
+    expect(visibleIn(a, 'Дрезден/monsters/x.json')).toBe(true);
+    expect(visibleIn(a, 'monsters/x.json')).toBe(true);
+    const scenes = { scenes: [{ adventure: 'Страд' }, { adventure: 'Дрезден' }, { adventure: null }] } as unknown as ScenesState;
+    expect(scenesFor(scenes, a).map((x) => x.adventure)).toEqual(['Дрезден', null]);
+  });
+
+  it('приключение без своей системы — D&D по умолчанию: отключили D&D — оно скрыто, хранилище берёт включённую', () => {
+    setSystemsOff(['dnd5e-2024', 'dnd5e-2014']);
+    const a = adv(undefined, null);
+    expect(adventureHidden(a, 'Страд')).toBe(true);
+    expect(currentSystem(a)).toBe('fate-core');
+    // Система хранилища наследуется приключениями без своей.
+    expect(adventureHidden(adv({ '': 'fate-core' }, null), 'Страд')).toBe(false);
   });
 });

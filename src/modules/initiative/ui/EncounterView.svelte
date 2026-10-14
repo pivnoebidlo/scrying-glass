@@ -9,7 +9,7 @@
   import QuickAdd from './QuickAdd.svelte';
   import Difficulty from './Difficulty.svelte';
   import { ui } from './ui.svelte';
-  import { systemFor } from '../../../shared/adventures';
+  import { shownAdventures, systemFor } from '../../../shared/adventures';
   import { isDnd, systemOf } from '../../../systems';
   import { fromFields } from '../../../systems/tracker';
 
@@ -18,7 +18,7 @@
   const num = (v: string) => (v.trim() === '' || isNaN(Number(v)) ? null : Number(v));
   const update = (c: Combatant, changes: Partial<Omit<Combatant, 'id'>>) => dispatch('initiative', 'update', { id: c.id, changes, encounter: e.id });
 
-  const adventures = $derived(store.state.adventures.list);
+  const adventures = $derived(shownAdventures(store.state.adventures));
   // Числа участников — как в системе приключения заготовки.
   const system = $derived(systemFor(store.state.adventures, e.adventure));
   const tracker = $derived(systemOf(system).tracker);

@@ -45,7 +45,7 @@ function savedEdition(): Edition {
 }
 export const srd = $state({ edition: savedEdition() });
 // Редакции, которые можно выбрать: без отключённых в настройках систем («обе» — только если включены обе).
-const editionOn = (id: string) => isEnabled(id) || id === currentSystem(store.state.adventures);
+const editionOn = (id: string) => (void store.state.vault.systemsOff, isEnabled(id));
 export const editionsHere = () =>
   EDITIONS.filter((e) => (e.id === 'all' ? editionOn('dnd5e-2014') && editionOn('dnd5e-2024') : e.id === 'none' || editionOn(e.id)));
 // Выбранная редакция, а если её отключили — первая доступная.

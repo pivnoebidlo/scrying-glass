@@ -2,7 +2,7 @@
      одним файлом (.sgpack). -->
 <script lang="ts">
   import { Check, ChevronsUpDown, Download, Map, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
-  import { currentSystem, roleFolderHere, visibleIn } from '../../../shared/adventures';
+  import { currentSystem, roleFolderHere, shownAdventures, visibleIn } from '../../../shared/adventures';
   import SystemSelect from './SystemSelect.svelte';
   import { roleNames } from '../../../shared/vault';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
@@ -18,7 +18,10 @@
   let newSystem = $state('');
   const system = $derived(currentSystem(ms));
 
-  const title = $derived(ms.current ?? (ms.list.length ? 'Всё хранилище' : app.vault.name));
+  // Приключения отключённых систем скрыты (настройки «Приключения» → «Ролевые системы»).
+  const list = $derived(shownAdventures(ms));
+  const hidden = $derived(ms.list.length - list.length);
+  const title = $derived(ms.current ?? (list.length ? 'Всё хранилище' : app.vault.name));
 
   function select(path: string | null) {
     dispatch('adventures', 'select', { path });
@@ -136,7 +139,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="backdrop" onclick={() => ((open = false), (creating = false))}></div>
     <div class="menu">
-      {#each ms.list as a (a)}
+      {#each list as a (a)}
         <button onclick={() => select(a)}>
           <span class="mark">{#if ms.current === a}<Check size={13} />{/if}</span>
           {a}
@@ -146,6 +149,7 @@
         <span class="mark">{#if ms.current === null}<Check size={13} />{/if}</span>
         <span class="muted">Всё хранилище</span>
       </button>
+      {#if hidden}<p class="hint faint">Скрыто приключений: {hidden} — их система отключена в настройках.</p>{/if}
       <label class="system" title={ms.current ? 'Ролевая система этого приключения: какие карточки, записи и инструменты показывать' : 'Ролевая система для всего хранилища и приключений без своей'}>
         <span class="faint">Система</span>
         <SystemSelect value={system} onchange={(v) => dispatch('adventures', 'setSystem', { path: ms.current, system: v })} />

@@ -3,7 +3,8 @@
 <script lang="ts">
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { DEFAULT_SYSTEM, FAMILIES, systems } from '../../../systems';
+  import { FAMILIES, systems } from '../../../systems';
+  import { systemFor } from '../../../shared/adventures';
 
   let { ms, app }: ModuleProps<'adventures'> = $props();
 
@@ -17,12 +18,12 @@
     'fate-core': 'Аспекты, стресс и последствия в бою, кубы Fate',
   };
 
-  // Приключения, у которых выбрана эта система ('' — всё хранилище).
+  // Приключения с этой системой (своей или унаследованной от хранилища) и само хранилище.
   const usedBy = (id: string) =>
-    Object.entries(ms.systems ?? {})
-      .filter(([, s]) => s === id)
-      .map(([a]) => (a ? `«${a}»` : 'всё хранилище'))
-      .concat(!ms.systems?.[''] && id === DEFAULT_SYSTEM ? ['система по умолчанию'] : []);
+    ms.list
+      .filter((a) => systemFor(ms, a) === id)
+      .map((a) => `«${a}»${off.has(id) ? ' (скрыто)' : ''}`)
+      .concat(systemFor(ms, null) === id ? ['всё хранилище'] : []);
 
   function toggle(id: string, on: boolean) {
     const next = on ? [...off].filter((x) => x !== id) : [...off, id];
@@ -32,9 +33,10 @@
 
 <h3>Ролевые системы</h3>
 <p class="desc faint">
-  Ненужные системы можно отключить: их не будет при выборе системы приключения, а их карточки и встроенные записи
-  справочника скроются. Файлы при этом не меняются, приключения с отключённой системой работают как прежде. Настройка
-  общая для всех хранилищ.
+  Ненужные системы можно отключить: их не будет при выборе системы приключения, их карточки и встроенные записи
+  справочника скроются, а приключения с такой системой пропадут из списка, вкладок и «Файлов» вместе со своими сценами
+  и заготовками боёв. Файлы при этом не меняются и не удаляются: включите систему — всё вернётся. Настройка общая для
+  всех хранилищ.
 </p>
 
 {#each FAMILIES as f (f.id)}

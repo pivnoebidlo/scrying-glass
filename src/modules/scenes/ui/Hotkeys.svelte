@@ -9,7 +9,7 @@
   function onkeydown(e: KeyboardEvent) {
     if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
     const n = Number(e.key);
-    const sc = Number.isInteger(n) && n >= 1 && n <= 9 ? scenesFor(ms, app.adventures.current)[n - 1] : undefined;
+    const sc = Number.isInteger(n) && n >= 1 && n <= 9 ? scenesFor(ms, app.adventures)[n - 1] : undefined;
     if (!sc) return;
     e.preventDefault();
     activate(app, sc);

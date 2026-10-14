@@ -4,6 +4,7 @@
   import { FilePlus2 } from '@lucide/svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import { LIBRARY } from '../../../shared/vault';
+  import { shownAdventures } from '../../../shared/adventures';
 
   let {
     label = 'Копия в…',
@@ -14,7 +15,7 @@
   }: { label?: string; title: string; library?: boolean; primary?: boolean; onpick: (place: string | null) => void } = $props();
 
   const places = $derived([
-    ...store.state.adventures.list.map((a) => ({ id: a as string | null, title: a })),
+    ...shownAdventures(store.state.adventures).map((a) => ({ id: a as string | null, title: a })),
     { id: null, title: 'Общее (вне приключений)' },
     ...(library ? [{ id: LIBRARY as string | null, title: 'Библиотека — для всех кампаний' }] : []),
   ]);

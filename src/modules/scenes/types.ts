@@ -1,5 +1,6 @@
 import type { AmbientLoop } from '../music/types';
 import type { Fit } from '../scene/types';
+import { adventureHidden, type AdventuresState } from '../../shared/adventures';
 
 // Части экрана, которые сцена может задавать. Выключенная часть при включении сцены не меняется.
 export type Part = 'background' | 'map' | 'portraits' | 'handout' | 'music' | 'ambience';
@@ -23,9 +24,10 @@ export interface Scene {
 
 export type SceneContent = Omit<Scene, 'id' | 'name' | 'include'>;
 
-// Сцены, которые видны при текущем приключении: его собственные и общие. Без приключения — все.
-export const scenesFor = (s: ScenesState, current: string | null) =>
-  current === null ? s.scenes : s.scenes.filter((x) => !x.adventure || x.adventure === current);
+// Сцены, которые видны при текущем приключении: его собственные и общие. Без приключения — все, кроме скрытых
+// приключений (их система отключена).
+export const scenesFor = (s: ScenesState, adv: AdventuresState) =>
+  s.scenes.filter((x) => !x.adventure || (adv.current === null ? !adventureHidden(adv, x.adventure) : x.adventure === adv.current));
 
 export interface ScenesState {
   scenes: Scene[];

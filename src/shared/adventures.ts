@@ -2,7 +2,7 @@
 // Вкладки показывают текущее приключение и «общее» — всё, что лежит вне приключений. Вкладка «Файлы»
 // по-прежнему показывает хранилище целиком. Только типы и чистые функции: используются ядром и окнами.
 import { basename, folderRole, roleNames, type FolderRole, type VaultFolder } from './vault';
-import { defaultSystem, familyOf, isEnabled } from '../systems';
+import { DEFAULT_SYSTEM, defaultSystem, familyOf, isEnabled } from '../systems';
 
 export interface AdventuresState {
   // Пути папок приключений (первый уровень хранилища, то есть просто имена).
@@ -37,21 +37,32 @@ const within = (path: string, dir: string) => path === dir || path.startsWith(di
 export const adventureOf = (adv: AdventuresState, path: string) => adv.list.find((a) => within(path, a)) ?? null;
 
 // Система приключения (null — всего хранилища) и текущая — по открытому приключению.
-export const systemFor = (adv: AdventuresState, adventure: string | null) =>
-  (adventure !== null ? adv.systems?.[adventure] : undefined) ?? adv.systems?.[''] ?? defaultSystem();
-export const currentSystem = (adv: AdventuresState) => systemFor(adv, adv.current);
-// Подходит ли карточка или запись этой системы текущему приключению: то же семейство (2014 и 2024 — вместе), и
-// система не отключена в настройках (своя система приключения видна всегда).
-export function inCurrentFamily(adv: AdventuresState, system: string): boolean {
-  const here = currentSystem(adv);
-  return familyOf(system) === familyOf(here) && (system === here || isEnabled(system));
+// Приключение без своей системы — с системой хранилища, а без неё — с DEFAULT_SYSTEM (так было до выбора систем:
+// старые приключения — это D&D). Отключённая система приключения его скрывает (adventureHidden). Само хранилище
+// («Всё хранилище») с отключённой системой берёт первую включённую — иначе в нём не было бы видно ничего.
+export function systemFor(adv: AdventuresState, adventure: string | null): string {
+  const vault = adv.systems?.[''] ?? DEFAULT_SYSTEM;
+  if (adventure !== null) return adv.systems?.[adventure] ?? vault;
+  return isEnabled(vault) ? vault : defaultSystem();
 }
 
+// Приключение, чья система отключена в настройках, скрыто целиком: его нет в переключателе и дереве файлов, его
+// папки, сцены и заготовки не видны ни в одной вкладке (и во «Всём хранилище»).
+export const adventureHidden = (adv: AdventuresState, adventure: string | null) =>
+  adventure !== null && adv.list.includes(adventure) && !isEnabled(systemFor(adv, adventure));
+export const shownAdventures = (adv: AdventuresState) => adv.list.filter((a) => !adventureHidden(adv, a));
+export const currentSystem = (adv: AdventuresState) => systemFor(adv, adv.current);
+// Подходит ли карточка или запись этой системы текущему приключению: то же семейство (2014 и 2024 — вместе), и
+// система не отключена в настройках.
+export const inCurrentFamily = (adv: AdventuresState, system: string) =>
+  isEnabled(system) && familyOf(system) === familyOf(currentSystem(adv));
+
 // Видно ли то, что лежит по пути, при текущем приключении: своё приключение и общее — да, чужие — нет.
+// Скрытые приключения (система отключена) не видны никогда.
 export function visibleIn(adv: AdventuresState, path: string): boolean {
-  if (adv.current === null) return true;
   const a = adventureOf(adv, path);
-  return a === null || a === adv.current;
+  if (adventureHidden(adv, a)) return false;
+  return adv.current === null || a === null || a === adv.current;
 }
 
 // Подпись группы по папке, где она лежит: «Глава 1» внутри текущего приключения, название приключения

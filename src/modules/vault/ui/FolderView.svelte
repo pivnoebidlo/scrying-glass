@@ -19,11 +19,15 @@
   import { thumbs } from '../../../renderer/lib/thumbs.svelte';
   import { sortable } from '../../../renderer/lib/sortable';
   import { applyOrder } from '../../../shared/order';
+  import { adventureHidden, adventureOf, visibleIn } from '../../../shared/adventures';
 
   let { ms, app }: ModuleProps<'vault'> = $props();
 
-  // Если выбранную папку удалили, показываем корень.
-  const folder = $derived(ms.tree ? (findFolder(ms.tree, ui.folder) ?? ms.tree) : null);
+  // Если выбранную папку удалили или она внутри скрытого приключения (его система отключена), показываем корень.
+  const folder = $derived(
+    ms.tree ? ((!adventureHidden(app.adventures, adventureOf(app.adventures, ui.folder)) && findFolder(ms.tree, ui.folder)) || ms.tree) : null
+  );
+  const subfolders = $derived(folder ? folder.folders.filter((f) => visibleIn({ ...app.adventures, current: null }, f.path)) : []);
 
   // Папка первого уровня может быть приключением: отсюда его отмечают и открывают.
   const topLevel = $derived(!!folder?.path && !folder.path.includes('/') && !folderRole(folder.name));
@@ -136,9 +140,9 @@
       </button>
     </header>
 
-    {#if folder.folders.length}
+    {#if subfolders.length}
       <div class="folders">
-        {#each folder.folders as f (f.path)}
+        {#each subfolders as f (f.path)}
           {@const Icon = folderIcon(f.name)}
           <button class="folder" onclick={() => go(f.path)}>
             <Icon size={16} />
