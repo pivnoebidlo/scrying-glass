@@ -119,7 +119,7 @@
       <span class="name"
         >{c.name}{#if f.system === 'all'}<span class="tag">{c.system.replace(/^dnd5e-/, '')}</span>{/if}{#if f.lang === 'all'}<span
             class="tag">{c.lang}</span
-          >{/if}</span
+          >{/if}{#if c.edited}<span class="tag" title="Встроенная карточка, изменённая вами">изм.</span>{/if}</span
       >
       <span class="sub">{c.subtitle}{#if c.folder !== undefined && !f.scope.startsWith('vault:')} · {folderTitle(c.folder)}{/if}</span>
     </button>

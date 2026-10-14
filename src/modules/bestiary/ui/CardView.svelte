@@ -3,7 +3,7 @@
 <script lang="ts">
   import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
-  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Pencil, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Pencil, RotateCcw, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
   import ImagePicker from './ImagePicker.svelte';
   import type { AppState } from '../../../shared/types';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -64,7 +64,7 @@
 
   // Где лежит карточка: «Встроенный SRD», «Библиотека», «Тыквенный фестиваль / monsters».
   function where(c: CardSummary): string {
-    if (c.ref.scope === 'srd') return 'Встроенный SRD';
+    if (c.ref.scope === 'srd') return c.edited ? 'Встроенный SRD, изменён' : 'Встроенный SRD';
     if (c.ref.scope === 'library') return 'Библиотека';
     return folderLabel(app, c.folder);
   }
@@ -139,11 +139,17 @@
           <div class="info faint">{info}</div>
           <div class="manage">
             {#if cref.scope === 'srd'}
-              <button
-                class="btn"
-                title="Встроенные карточки только для чтения. Копию можно править, переводить и дополнять портретами"
-                onclick={() => bestiary.copy(cref)}><Copy size={13} /> Сделать копию…</button
+              <button class="btn" title="Правка сохранится в библиотеку и заменит встроенную карточку везде: в боях, на картах, в поиске" onclick={() => bestiary.edit(cref)}
+                ><Pencil size={13} /> Править</button
               >
+              <button class="btn" title="Отдельная карточка на основе этой — в библиотеке или папке приключения" onclick={() => bestiary.copy(cref)}
+                ><Copy size={13} /> Сделать копию…</button
+              >
+              {#if summary.edited}
+                <button class="btn" title="Удалить правку (файл — в корзину) и показывать карточку, как в SRD" onclick={() => bestiary.revert(cref)}
+                  ><RotateCcw size={13} /> Вернуть как в SRD</button
+                >
+              {/if}
             {:else}
               <button class="btn" onclick={() => bestiary.edit(cref)}><Pencil size={13} /> Править</button>
               <button class="btn" title="Новая карточка на основе этой — в библиотеке или папке приключения" onclick={() => bestiary.copy(cref)}

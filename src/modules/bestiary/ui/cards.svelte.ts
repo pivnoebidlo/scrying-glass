@@ -244,10 +244,16 @@ class Bestiary {
     return own.find((c) => c.images[0] === portrait) ?? own[0];
   }
 
+  // Встроенная карточка правится на месте: правка ляжет в библиотеку и заменит её везде (main/cards.ts).
   async edit(ref: CardRef) {
     const c = await window.api.getCard(ref);
-    const place = placeOf(this.all.find((x) => sameRef(x.ref, ref)));
+    const place = ref.scope === 'srd' ? { scope: 'srd' as const } : placeOf(this.all.find((x) => sameRef(x.ref, ref)));
     if (c && place) this.open({ ...place, original: ref, card: structuredClone(c) });
+  }
+
+  // Убрать правку встроенной карточки (спросит ядро).
+  revert(ref: CardRef) {
+    return window.api.revertSrdCard(ref);
   }
 
   // Копия: открывается в редакторе, файл появится при сохранении.
@@ -293,7 +299,7 @@ class Bestiary {
     this.external = null;
     // Картинки, которые добавили и тут же убрали, не нужны.
     const unused = d.copied.filter((p) => !card.portraits.includes(p));
-    if (unused.length) await window.api.discardCardImages(d.scope, unused);
+    if (unused.length) await window.api.discardCardImages(imageScope(d.scope), unused);
     this.draft = null;
     this.select(ref);
     return true;
@@ -329,7 +335,7 @@ class Bestiary {
   cancel(): boolean {
     if (this.dirty && !confirm('Закрыть редактор без сохранения?')) return false;
     const d = this.draft;
-    if (d?.copied.length) window.api.discardCardImages(d.scope, $state.snapshot(d.copied));
+    if (d?.copied.length) window.api.discardCardImages(imageScope(d.scope), $state.snapshot(d.copied));
     this.draft = null;
     this.external = null;
     return true;

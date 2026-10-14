@@ -7,6 +7,7 @@
 // - хранилище: файлы *.json в папках бестиария (monsters / монстры / bestiary / …) на любой глубине —
 //   у каждого приключения свои. Картинки — любые картинки хранилища, а добавленные с диска копируются
 //   в папку карточки.
+// - правки встроенных карточек: файлы библиотеки с полем overrides (id карточки SRD) — см. «Правки встроенных».
 // Пути картинок — от корня библиотеки или хранилища, через «/».
 // id карточки хранится в её файле; если его нет или он повторяется (файл скопировали руками), берётся
 // производный от пути — и записывается в файл при следующем сохранении.
@@ -71,12 +72,23 @@ function loadBuiltin() {
 const builtin = new Map<string, Card>();
 let srdPortraits: Record<string, string[]> = {};
 
+// ---------- Правки встроенных карточек ----------
+// Встроенные файлы не меняются. «Править» у карточки SRD сохраняет правку — карточку в библиотеке с полем
+// overrides: <id карточки SRD>. Она заменяет встроенную под той же ссылкой (srd:<id>): бои, метки, жетоны и
+// переводы продолжают на неё указывать. Среди карточек библиотеки правка не показывается; удалить её (в корзину) —
+// «Вернуть как в SRD». Портреты и у исправленной карточки — из srd.json (общие для всех её языков).
+const overrides = new Map<string, { file: string; card: Card }>();
+
 const srdFile = () => libraryRoot && path.join(libraryRoot, 'srd.json');
 const srdKey = (c: Card) => (c.origin?.relation === 'translation' ? c.origin.id : c.id);
 
 function applySrd() {
-  for (const [id, c] of builtin) {
-    const portraits = srdPortraits[srdKey(c)];
+  for (const [id, orig] of builtin) {
+    const o = overrides.get(id)?.card;
+    // У правки своё содержимое, но место в группе переводов и источник — встроенной карточки.
+    const c: Card = o ? { ...o, id, origin: orig.origin, source: orig.source, portraits: orig.portraits } : orig;
+    delete c.overrides;
+    const portraits = srdPortraits[srdKey(orig)];
     cards.set(refKey({ scope: 'srd', id }), portraits?.length ? { ...c, portraits } : c);
   }
 }
@@ -150,7 +162,53 @@ function loadFiles(scope: CardScope, root: string, list: string[]) {
 }
 
 function loadLibrary() {
-  if (libraryRoot) loadFiles('library', libraryRoot, jsonFiles(path.join(libraryRoot, 'cards')));
+  if (!libraryRoot) return;
+  loadFiles('library', libraryRoot, jsonFiles(path.join(libraryRoot, 'cards')));
+  // Правки встроенных — не карточки библиотеки, а замена встроенных.
+  overrides.clear();
+  for (const [key, c] of [...cards]) {
+    if (!key.startsWith('library:') || !c.overrides || !builtin.has(c.overrides)) continue;
+    overrides.set(c.overrides, { file: files.get(key)!, card: c });
+    cards.delete(key);
+    files.delete(key);
+  }
+  applySrd();
+}
+
+export const isEditedSrd = (ref: CardRef) => ref.scope === 'srd' && overrides.has(ref.id);
+
+// Сохранить правку встроенной карточки (в свой файл библиотеки или новый). Портреты — в srd.json.
+function saveSrdEdit(card: Card): CardRef {
+  const orig = builtin.get(card.id);
+  if (!orig || !libraryRoot) throw new Error('Встроенная карточка не найдена');
+  const ref: CardRef = { scope: 'srd', id: card.id };
+  const prev = overrides.get(card.id);
+  let file = prev?.file;
+  if (!file) {
+    const dir = path.join(libraryRoot, 'cards');
+    fs.mkdirSync(dir, { recursive: true });
+    file = path.join(dir, fileName(dir, card.name));
+  }
+  const { portraits, origin: _origin, source: _source, ...rest } = card;
+  writeJsonAtomic(file, { ...rest, id: prev?.card.id ?? newId('library', card.name), overrides: card.id, portraits: [], format: 1 });
+  const key = srdKey(orig);
+  if (portraits.length) srdPortraits[key] = portraits;
+  else delete srdPortraits[key];
+  const pf = srdFile();
+  if (pf) writeJsonAtomic(pf, { portraits: srdPortraits });
+  loadLibrary();
+  changed();
+  return ref;
+}
+
+// «Вернуть как в SRD»: файл правки — в корзину (оттуда правку можно вернуть). false — правки нет.
+export function revertSrd(ref: CardRef): boolean {
+  const o = ref.scope === 'srd' ? overrides.get(ref.id) : undefined;
+  if (!o || !libraryRoot) return false;
+  discard(libraryRoot, [toRel(libraryRoot, o.file)], { title: `${o.card.name} (правка SRD)`, kind: 'card' });
+  loadLibrary();
+  changed();
+  return true;
 }
 
 // Папки, куда приложение только что записало карточки: в дереве хранилища они появятся только после
@@ -258,6 +316,7 @@ function summarize(ref: CardRef, c: Card): CardSummary {
     subtitle,
     rank,
     combat,
+    ...(ref.scope === 'srd' && overrides.has(ref.id) ? { edited: true } : {}),
   };
 }
 
@@ -329,7 +388,7 @@ function reload(scope: CardScope) {
 // Сохраняет карточку. Уже существующая (id есть в этом месте) пишется в свой файл, новая — в папку folder
 // (для хранилища; папка создаётся, если её нет). Возвращает ссылку на карточку.
 export function saveCard(scope: CardScope, card: Card, folder?: string): CardRef {
-  if (scope === 'srd') throw new Error('Встроенные карточки только для чтения');
+  if (scope === 'srd') return saveSrdEdit(card);
   const existing = card.id ? files.get(refKey({ scope, id: card.id })) : undefined;
   const id = existing ? card.id : newId(scope, card.name);
   let file = existing;

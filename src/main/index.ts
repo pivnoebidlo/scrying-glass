@@ -24,7 +24,7 @@ import { createTable, isTablePath, listLibraryTables, readTable, seedLibraryTabl
 import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import {
@@ -905,6 +905,23 @@ ipcMain.handle('cards:delete', async (_event, ref: CardRef) => {
   if (res.response !== 0) return false;
   deleteCard(ref, res.checkboxChecked ? images : []);
   return true;
+});
+// «Вернуть как в SRD»: убрать правку встроенной карточки (с подтверждением; файл правки — в корзину).
+ipcMain.handle('cards:revertSrd', async (_event, ref: CardRef) => {
+  const card = getCard(ref);
+  if (!card || ref.scope !== 'srd') return false;
+  const win = getControlWindow();
+  const words = deleteWords();
+  const opts = {
+    type: 'warning' as const,
+    message: `Вернуть «${card.name}» как в SRD?`,
+    detail: `Ваша правка удалится, везде будет встроенная карточка. Портреты останутся. ${words.how}`,
+    buttons: ['Вернуть как в SRD', 'Отмена'],
+    defaultId: 0,
+    cancelId: 1,
+  };
+  const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
+  return res.response === 0 && revertSrd(ref);
 });
 ipcMain.handle('cards:setSrdPortraits', (_event, { ref, portraits }: { ref: CardRef; portraits: string[] }) => setSrdPortraits(ref, portraits));
 ipcMain.handle('cards:discardImages', (_event, { scope, paths, ownedOnly }: { scope: CardScope; paths: string[]; ownedOnly?: boolean }) =>

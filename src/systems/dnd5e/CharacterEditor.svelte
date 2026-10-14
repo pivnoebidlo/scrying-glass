@@ -218,7 +218,11 @@
         onchange={(e) => setOptional('pb', e.currentTarget.value)}
       />
     </label>
-    <label class="check"><input type="checkbox" bind:checked={stats.inspiration} /> вдохновение</label>
+    <label class="check"><input
+        type="checkbox"
+        checked={!!stats.inspiration}
+        onchange={(e) => (e.currentTarget.checked ? (stats.inspiration = true) : delete stats.inspiration)}
+      /> вдохновение</label>
   </div>
 </section>
 

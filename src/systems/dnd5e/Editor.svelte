@@ -126,7 +126,11 @@
         <input type="number" value={stats.speed[k] ?? ''} onchange={(e) => setSpeed(k, e.currentTarget.value)} />
       </label>
     {/each}
-    <label class="check"><input type="checkbox" bind:checked={stats.speed.hover} /> парит</label>
+    <label class="check"><input
+        type="checkbox"
+        checked={!!stats.speed.hover}
+        onchange={(e) => (e.currentTarget.checked ? (stats.speed.hover = true) : delete stats.speed.hover)}
+      /> парит</label>
   </div>
 </section>
 

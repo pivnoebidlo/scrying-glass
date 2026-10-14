@@ -4,7 +4,7 @@
   import { thumb } from '../../../shared/vault';
   import { ClipboardPaste, FolderOpen, HardDrive, Save, Star, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
-  import { LANGUAGES, cardImageUrl, defaultSide, langName, type CardKind, type CardSide } from '../../../shared/cards';
+  import { LANGUAGES, cardImageUrl, defaultSide, imageScope, langName, type CardKind, type CardSide } from '../../../shared/cards';
   import { folderLabel } from './places';
   import { systemOf, systems } from '../../../systems';
   import { statsEditor, statsView } from '../../../systems/ui';
@@ -16,7 +16,9 @@
   let { app, draft }: { app: AppState; draft: Draft } = $props();
 
   // «в библиотеке», «в Тыквенный фестиваль / monsters»
-  const placeText = $derived(draft.scope === 'library' ? 'в библиотеке' : `в папке ${folderLabel(app, draft.folder)}`);
+  const placeText = $derived(
+    draft.scope === 'srd' ? '— сохранится в библиотеку и заменит её везде' : draft.scope === 'library' ? 'в библиотеке' : `в папке ${folderLabel(app, draft.folder)}`
+  );
   const KINDS: Record<CardKind, string> = { monster: 'Монстр', npc: 'NPC', character: 'Персонаж игрока' };
 
   const card = $derived(draft.card);
@@ -54,7 +56,7 @@
 
   async function addImage(vaultPath?: string, fromClipboard = false) {
     picking = false;
-    const res = await window.api.addCardImage(draft.scope, vaultPath, draft.folder, fromClipboard);
+    const res = await window.api.addCardImage(imageScope(draft.scope), vaultPath, draft.folder, fromClipboard);
     if (!res) return;
     if (res.copied) draft.copied.push(res.path);
     if (!card.portraits.includes(res.path)) card.portraits.push(res.path);
@@ -95,7 +97,9 @@
   <header class="bar">
     <div class="title">
       {draft.original
-        ? 'Правка карточки'
+        ? draft.scope === 'srd'
+          ? 'Правка встроенной карточки'
+          : 'Правка карточки'
         : card.origin?.relation === 'translation'
           ? `Перевод на ${langName(card.lang)}`
           : card.origin
@@ -213,7 +217,7 @@
             <button type="button" class="btn" onclick={() => addImage(undefined, true)}><ClipboardPaste size={14} /> Из буфера</button>
             <button type="button" class="btn" onclick={() => addImage()}><HardDrive size={14} /> С диска…</button>
             <span class="faint hint">
-              {draft.scope === 'library'
+              {draft.scope !== 'vault'
                 ? 'Картинки копируются в папку библиотеки, чтобы карточка работала в любой кампании.'
                 : 'Картинки с диска копируются в папку карточки.'}
             </span>
