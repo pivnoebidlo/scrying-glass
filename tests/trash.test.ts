@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { emptyTrash, listTrash, moveToTrash, purgeTrash, restoreFromTrash } from '../src/main/trash';
+import { discard, emptyTrash, listTrash, moveToTrash, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings } from '../src/main/trash';
 
 let root: string;
 const put = (rel: string, text = 'x') => {
@@ -15,7 +15,10 @@ const has = (rel: string) => fs.existsSync(path.join(root, ...rel.split('/')));
 beforeEach(() => {
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-trash-'));
 });
-afterEach(() => fs.rmSync(root, { recursive: true, force: true }));
+afterEach(() => {
+  fs.rmSync(root, { recursive: true, force: true });
+  setTrashSettings(null);
+});
 
 describe('корзина приложения', () => {
   it('файл уходит в .trash и возвращается на место', () => {
@@ -77,5 +80,29 @@ describe('корзина приложения', () => {
     expect(item).toMatchObject({ id: 'старое', title: 'карта.png', kind: 'file', paths: ['карта.png'], size: 5 });
     restoreFromTrash(root, 'старое');
     expect(has('карта.png')).toBe(true);
+  });
+
+  it('корзина выключена — удаляется сразу, мимо .trash', () => {
+    put('a/b.png');
+    put('c.png');
+    expect(discard(root, ['c.png'], { title: 'c.png', kind: 'file' })).toBe(true);
+    expect(listTrash(root, 'vault').length).toBe(1);
+    setTrashSettings({ keep: false });
+    expect(discard(root, ['a', '../x', 'нет.png'], { title: 'a', kind: 'folder' })).toBe(true);
+    expect(has('a')).toBe(false);
+    expect(listTrash(root, 'vault').length).toBe(1);
+  });
+
+  it('автоочистка убирает только то, что старше срока', () => {
+    put('old.png');
+    put('new.png');
+    const old = moveToTrash(root, ['old.png'], { title: 'old.png', kind: 'file' })!;
+    moveToTrash(root, ['new.png'], { title: 'new.png', kind: 'file' });
+    const metaFile = path.join(root, '.trash', old, '.meta.json');
+    const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
+    fs.writeFileSync(metaFile, JSON.stringify({ ...meta, deleted: Date.now() - 31 * 864e5 }));
+    expect(pruneTrash(root, 0)).toBe(0);
+    expect(pruneTrash(root, 30)).toBe(1);
+    expect(listTrash(root, 'vault').map((x) => x.title)).toEqual(['new.png']);
   });
 });

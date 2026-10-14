@@ -3,6 +3,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import RoleNames from './RoleNames.svelte';
+  import TrashSettings from './TrashSettings.svelte';
 
   let { ms }: ModuleProps<'vault'> = $props();
   const others = $derived(ms.recent.filter((r) => r !== ms.root));
@@ -41,6 +42,8 @@
 {/if}
 
 <RoleNames {ms} />
+
+<TrashSettings />
 
 <style>
   .path {

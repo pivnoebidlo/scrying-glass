@@ -24,3 +24,11 @@ export interface TrashItem extends Omit<TrashMeta, 'data'> {
   // Размер на диске (байт).
   size: number;
 }
+
+// Настройки корзины (settings.json приложения, общие для всех хранилищ). keep: false — удалять сразу, без корзины;
+// days — через сколько дней удалённое уходит из корзины насовсем (0 — никогда).
+export interface TrashSettings {
+  keep: boolean;
+  days: number;
+}
+export const TRASH_DEFAULTS: TrashSettings = { keep: true, days: 0 };

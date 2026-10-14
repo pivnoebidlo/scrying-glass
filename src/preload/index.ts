@@ -66,6 +66,8 @@ const api: Api = {
   purgeTrash: (place, id, title) => ipcRenderer.invoke('trash:purge', { place, id, title }),
   emptyTrash: () => ipcRenderer.invoke('trash:empty'),
   revealTrash: (place) => ipcRenderer.invoke('trash:reveal', place),
+  trashSettings: () => ipcRenderer.invoke('trash:settings'),
+  setTrashSettings: (next) => ipcRenderer.invoke('trash:setSettings', next),
   onTrashChanged: (cb) => { ipcRenderer.on('trash:changed', () => cb()); },
 
   listDisplays: () => ipcRenderer.invoke('displays:list'),

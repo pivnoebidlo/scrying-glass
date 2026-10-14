@@ -5,7 +5,7 @@
   import type { Component } from 'svelte';
   import { AUDIO_EXT, IMAGE_EXT, thumb } from '../../../shared/vault';
   import type { TrashItem, TrashPlace } from '../../../shared/trash';
-  import { trash, trashCount } from './trash.svelte';
+  import { daysTitle, trash, trashCount } from './trash.svelte';
   import { ui } from './ui.svelte';
 
   let { vaultName }: { vaultName: string } = $props();
@@ -83,6 +83,12 @@
   <p class="faint hint">
     Удалённое в приложении лежит здесь, пока корзину не очистят: в скрытой папке <code>.trash</code> хранилища (или библиотеки — для
     общих таблиц, записей и карточек). Приключение возвращается вместе со сценами, заготовками боёв и разметкой карт.
+    {#if !trash.settings.keep}
+      <strong>Сейчас корзина выключена: удалённое стирается сразу.</strong>
+    {:else if trash.settings.days}
+      Удалённое стирается насовсем {daysTitle(trash.settings.days).toLowerCase()}.
+    {/if}
+    Изменить — в настройках, раздел «Файлы».
   </p>
   {#if message}<p class="message">{message}</p>{/if}
 

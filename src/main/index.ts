@@ -14,8 +14,8 @@ import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
-import { emptyTrash, listTrash, moveToTrash, onTrashChanged, purgeTrash, restoreFromTrash } from './trash';
-import type { TrashPlace } from '../shared/trash';
+import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
+import type { TrashPlace, TrashSettings } from '../shared/trash';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
@@ -56,6 +56,8 @@ interface AppSettings {
   roles?: Partial<RoleNames> | null;
   // Папка снимков и полных копий (null — в папке данных приложения).
   backups?: string | null;
+  // Корзина: удалять сразу или в корзину, через сколько дней очищать (shared/trash.ts).
+  trash?: TrashSettings;
 }
 const RECENT_MAX = 10;
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -64,7 +66,9 @@ let settings: AppSettings = { vault: null, recent: [] };
 function loadSettings() {
   try {
     const saved = readJson(settingsFile()) as Partial<AppSettings> | undefined;
-    settings = { vault: saved?.vault ?? null, recent: saved?.recent ?? [], library: saved?.library ?? null, roles: saved?.roles ?? null };
+    // Остальные поля (папка снимков, корзина) — как сохранены.
+    settings = { ...saved, vault: saved?.vault ?? null, recent: saved?.recent ?? [], library: saved?.library ?? null, roles: saved?.roles ?? null };
+    setTrashSettings(settings.trash);
   } catch {
     /* не прочитались — начнём с выбора хранилища */
   }
@@ -154,6 +158,7 @@ async function openVault(root: string | null): Promise<VaultState> {
       stateById['vault'] = vaultState();
     }
     saveVault();
+    pruneAll();
     // Снимок при открытии — чуть позже, чтобы не задерживать запуск.
     setTimeout(() => vaultRoot === root && snapshotNow('open'), 3000);
   }
@@ -338,17 +343,18 @@ ipcMain.handle('tables:trash', async (_event, rel: string) => {
   const abs = rel.startsWith(LIBRARY) && (isTablePath(rel) || entries.isPath(rel)) ? resolveTable(rel) : null;
   if (!abs || !fs.existsSync(abs)) return false;
   const win = getControlWindow();
+  const words = deleteWords();
   const opts = {
     type: 'warning' as const,
-    message: `Переместить «${path.basename(abs)}» в корзину?`,
-    detail: 'Этот файл — в общей библиотеке: он пропадёт во всех кампаниях. Вернуть можно в разделе «Файлы» → «Корзина».',
-    buttons: ['В корзину', 'Отмена'],
+    message: trashSettings().keep ? `Переместить «${path.basename(abs)}» в корзину?` : `Удалить «${path.basename(abs)}» насовсем?`,
+    detail: `Этот файл — в общей библиотеке: он пропадёт во всех кампаниях. ${words.how}`,
+    buttons: [words.button, 'Отмена'],
     defaultId: 0,
     cancelId: 1,
   };
   const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
   if (res.response !== 0) return false;
-  moveToTrash(libraryPath()!, [rel.slice(LIBRARY.length)], { title: path.basename(abs), kind: 'file' });
+  discard(libraryPath()!, [rel.slice(LIBRARY.length)], { title: path.basename(abs), kind: 'file' });
   if (entries.isPath(rel)) await afterEntryWrite(rel);
   else await afterTableWrite(rel);
   return true;
@@ -604,8 +610,8 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     type: 'warning' as const,
     message: `Удалить приключение «${name}»?`,
     detail: [
-      `Папка приключения (файлов: ${files}) переместится в корзину, из приложения уберутся сцены (${scenes}), заготовки боёв (${encounters}) и разметка карт (${maps}) этого приключения.`,
-      'Вернуть всё вместе можно в разделе «Файлы» → «Корзина».',
+      `Папка приключения (файлов: ${files}) ${trashSettings().keep ? 'переместится в корзину' : 'удалится насовсем'}, из приложения уберутся сцены (${scenes}), заготовки боёв (${encounters}) и разметка карт (${maps}) этого приключения.`,
+      trashSettings().keep ? 'Вернуть всё вместе можно в разделе «Файлы» → «Корзина».' : 'Корзина выключена в настройках («Файлы»). Сцены и заготовки останутся только в снимке («Резервные копии»).',
     ].join('\n\n'),
     buttons: ['Удалить', 'Отмена'],
     defaultId: 1,
@@ -626,9 +632,9 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     names: drop(st['portraits']!['names'] as AnyRec, (k) => inAdventure(name, k)),
   };
   try {
-    moveToTrash(vaultRoot, [name], { title: name, kind: 'adventure', data });
+    discard(vaultRoot, [name], { title: name, kind: 'adventure', data });
   } catch (e) {
-    dialog.showErrorBox('Не удалось переместить папку в корзину', `${folder}\n\n${String(e)}`);
+    dialog.showErrorBox('Не удалось удалить папку приключения', `${folder}\n\n${String(e)}`);
     return false;
   }
   const merge = (id: string, fn: (st: AnyRec) => AnyRec) =>
@@ -650,6 +656,29 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
 const trashRoot = (place: TrashPlace) => (place === 'vault' ? vaultRoot : libraryPath());
 onTrashChanged(() => {
   for (const win of BrowserWindow.getAllWindows()) win.webContents.send('trash:changed');
+});
+
+// Автоочистка: из обеих корзин — то, что лежит дольше срока из настроек. При открытии хранилища, при смене
+// настроек и раз в час.
+function pruneAll() {
+  const days = trashSettings().days;
+  for (const root of [vaultRoot, libraryPath()]) {
+    try {
+      if (root) pruneTrash(root, days);
+    } catch (e) {
+      console.error('Корзина не очистилась', e);
+    }
+  }
+}
+setInterval(pruneAll, 60 * 60 * 1000);
+
+ipcMain.handle('trash:settings', () => trashSettings());
+ipcMain.handle('trash:setSettings', (_event, next: Partial<TrashSettings>) => {
+  setTrashSettings({ ...trashSettings(), ...next });
+  settings = { ...settings, trash: trashSettings() };
+  writeJsonAtomic(settingsFile(), settings);
+  pruneAll();
+  return trashSettings();
 });
 
 ipcMain.handle('trash:list', () => ({
@@ -864,7 +893,7 @@ ipcMain.handle('cards:delete', async (_event, ref: CardRef) => {
   const opts = {
     type: 'warning' as const,
     message: `Удалить карточку «${card.name}»?`,
-    detail: 'Карточка переместится в корзину. Вернуть можно в разделе «Файлы» → «Корзина».',
+    detail: trashSettings().keep ? `Карточка переместится в корзину. ${deleteWords().how}` : deleteWords().how,
     buttons: ['Удалить', 'Отмена'],
     defaultId: 0,
     cancelId: 1,

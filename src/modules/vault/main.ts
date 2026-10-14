@@ -7,7 +7,7 @@ import { defineModule, type ModuleContext } from '../../shared/module';
 import { AUDIO_EXT, DEFAULT_ROLES, IMAGE_EXT, type RoleNames, type VaultState } from '../../shared/vault';
 import { clipboardImage, freeName } from '../../main/files';
 import { listCards } from '../../main/cards';
-import { moveToTrash } from '../../main/trash';
+import { deleteWords, discard, trashSettings } from '../../main/trash';
 
 const openDialog = (ctx: ModuleContext, opts: OpenDialogOptions) =>
   ctx.controlWindow ? ctx.dialog.showOpenDialog(ctx.controlWindow, opts) : ctx.dialog.showOpenDialog(opts);
@@ -85,8 +85,9 @@ export default defineModule({
       return ctx.vault.rescan();
     },
 
-    // Переместить файлы хранилища в корзину приложения (с подтверждением, main/trash.ts). Это единственное место,
-    // где приложение удаляет файлы пользователя, — только по его команде и так, чтобы их можно было вернуть.
+    // Переместить файлы хранилища в корзину приложения (с подтверждением, main/trash.ts; если корзину выключили в
+    // настройках — удалить сразу). Это единственное место, где приложение удаляет файлы пользователя, — только по
+    // его команде.
     async trash(s, { paths }: { paths: string[] }, ctx) {
       const files = paths.map((p) => ({ rel: p, abs: ctx.vault.resolve(p) })).filter((f): f is { rel: string; abs: string } => !!f.abs && fs.existsSync(f.abs));
       if (!files.length) return s;
@@ -96,18 +97,20 @@ export default defineModule({
       const ownersNote = owners.length
         ? `Это портрет карточки ${owners.map((n) => `«${n}»`).join(', ')}: карточка останется, но без этой картинки. Чтобы удалить саму карточку, удалите её в разделе «Карточки».\n\n`
         : '';
+      const words = deleteWords();
+      const what = files.length === 1 ? `«${names[0]}»` : `файлов: ${files.length}`;
       const opts = {
         type: 'warning' as const,
-        message: files.length === 1 ? `Переместить «${names[0]}» в корзину?` : `Переместить в корзину файлов: ${files.length}?`,
-        detail: (files.length > 1 ? names.join('\n') + '\n\n' : '') + ownersNote + 'Вернуть можно в разделе «Файлы» → «Корзина».',
-        buttons: ['В корзину', 'Отмена'],
+        message: trashSettings().keep ? `Переместить в корзину ${what}?` : `Удалить ${what} насовсем?`,
+        detail: (files.length > 1 ? names.join('\n') + '\n\n' : '') + ownersNote + words.how,
+        buttons: [words.button, 'Отмена'],
         defaultId: 0,
         cancelId: 1,
       };
       const res = ctx.controlWindow ? await ctx.dialog.showMessageBox(ctx.controlWindow, opts) : await ctx.dialog.showMessageBox(opts);
       if (res.response !== 0) return s;
       const root = ctx.vault.root!;
-      for (const f of files) moveToTrash(root, [f.rel], { title: path.basename(f.abs), kind: fs.statSync(f.abs).isDirectory() ? 'folder' : 'file' });
+      for (const f of files) discard(root, [f.rel], { title: path.basename(f.abs), kind: fs.statSync(f.abs).isDirectory() ? 'folder' : 'file' });
       return ctx.vault.rescan();
     },
 

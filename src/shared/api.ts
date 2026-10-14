@@ -2,7 +2,7 @@
 import type { Card, CardRef, CardScope, CardSummary } from './cards';
 import type { BuiltinBook } from './compendium';
 import type { Note } from './notes';
-import type { TrashItem, TrashKind, TrashPlace } from './trash';
+import type { TrashItem, TrashKind, TrashPlace, TrashSettings } from './trash';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 
 export interface DisplayInfo {
@@ -126,6 +126,9 @@ export interface Api {
   purgeTrash(place: TrashPlace, id: string, title: string): Promise<boolean>;
   emptyTrash(): Promise<boolean>;
   revealTrash(place: TrashPlace): Promise<void>;
+  // Настройки корзины: удалять сразу или в корзину, через сколько дней очищать (0 — никогда).
+  trashSettings(): Promise<TrashSettings>;
+  setTrashSettings(next: Partial<TrashSettings>): Promise<TrashSettings>;
   onTrashChanged(cb: () => void): void;
 
   listDisplays(): Promise<DisplayInfo[]>;

@@ -6,7 +6,7 @@
 // Скрытые папки приложение не сканирует, резервные копии и экспорт их пропускают.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { TrashItem, TrashMeta, TrashPlace } from '../shared/trash';
+import { TRASH_DEFAULTS, type TrashItem, type TrashMeta, type TrashPlace, type TrashSettings } from '../shared/trash';
 
 export const TRASH_DIR = '.trash';
 const META = '.meta.json';
@@ -16,6 +16,18 @@ let listener: () => void = () => {};
 export function onTrashChanged(fn: () => void) {
   listener = fn;
 }
+
+let settings: TrashSettings = { ...TRASH_DEFAULTS };
+export const trashSettings = () => settings;
+export function setTrashSettings(next: Partial<TrashSettings> | null | undefined) {
+  settings = { ...TRASH_DEFAULTS, ...next };
+}
+
+// Подписи для подтверждения удаления: куда уйдёт и как вернуть (корзина выключена — насовсем).
+export const deleteWords = () =>
+  settings.keep
+    ? { button: 'В корзину', how: 'Вернуть можно в разделе «Файлы» → «Корзина».' }
+    : { button: 'Удалить', how: 'Корзина выключена в настройках («Файлы»): удаление нельзя отменить.' };
 
 // Путь внутри root (без выхода за его пределы и без пустого пути).
 function inside(root: string, rel: string): string | null {
@@ -68,6 +80,20 @@ export function moveToTrash(root: string, paths: string[], meta: Omit<TrashMeta,
   fs.writeFileSync(path.join(dir, META), JSON.stringify(full, null, 2));
   listener();
   return id;
+}
+
+// Удалить по команде пользователя: в корзину или, если она выключена в настройках, сразу насовсем.
+// true — что-то удалено.
+export function discard(root: string, paths: string[], meta: Omit<TrashMeta, 'paths' | 'deleted'>): boolean {
+  if (settings.keep) return !!moveToTrash(root, paths, meta);
+  let done = false;
+  for (const rel of paths) {
+    const abs = inside(root, rel);
+    if (!abs || rel.split('/')[0] === TRASH_DIR || !fs.existsSync(abs)) continue;
+    fs.rmSync(abs, { recursive: true, force: true });
+    done = true;
+  }
+  return done;
 }
 
 function readMeta(dir: string): TrashMeta | null {
@@ -167,4 +193,13 @@ export function purgeTrash(root: string, id: string): boolean {
 export function emptyTrash(root: string) {
   fs.rmSync(path.join(root, TRASH_DIR), { recursive: true, force: true });
   listener();
+}
+
+// Убрать насовсем то, что лежит в корзине дольше days дней. Сколько убрано.
+export function pruneTrash(root: string, days: number, now = Date.now()): number {
+  if (!(days > 0)) return 0;
+  const old = listTrash(root, 'vault').filter((it) => now - it.deleted > days * 864e5);
+  for (const it of old) fs.rmSync(path.join(root, TRASH_DIR, it.id), { recursive: true, force: true });
+  if (old.length) listener();
+  return old.length;
 }
