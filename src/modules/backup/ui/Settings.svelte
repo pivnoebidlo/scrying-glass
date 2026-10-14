@@ -1,6 +1,6 @@
 <!-- Раздел настроек «Резервные копии»: снимки данных приложения (делаются сами), восстановление из снимка. -->
 <script lang="ts">
-  import { ArchiveRestore, Camera, FolderOpen } from '@lucide/svelte';
+  import { ArchiveRestore, Camera, FileArchive, FolderOpen, Upload } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import type { BackupInfo } from '../../../shared/api';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -13,7 +13,37 @@
   let parts = $state({ vault: true, library: true });
 
   const load = async () => (list = await window.api.listBackups());
-  onMount(load);
+  let sizes = $state<{ library: number; media: number } | null>(null);
+  onMount(async () => {
+    load();
+    sizes = await window.api.backupSizes();
+  });
+
+  let media = $state(false);
+  let busy = $state('');
+  async function saveFile() {
+    busy = 'Сохраняется копия…';
+    try {
+      const f = await window.api.saveFullBackup(media);
+      if (f) flash('Копия сохранена.');
+    } catch (e) {
+      flash(`Не удалось: ${String(e)}`);
+    } finally {
+      busy = '';
+    }
+  }
+  async function restoreFile() {
+    busy = 'Восстановление…';
+    try {
+      const r = await window.api.restoreFullBackup();
+      if (r) flash(`Восстановлено файлов: ${r.files}, хранилище «${r.vault}» открыто.`);
+      await load();
+    } catch (e) {
+      flash(`Не удалось: ${String(e)}`);
+    } finally {
+      busy = '';
+    }
+  }
 
   const vaultRoot = $derived(app.vault.root);
   const REASONS: Record<BackupInfo['reason'], string> = {
@@ -63,6 +93,27 @@
   {#if status}<span class="status">{status}</span>{/if}
 </div>
 
+<div class="setting">
+  <div class="info">
+    <div class="name">Полная копия в файл</div>
+    <div class="desc">
+      Один файл (.sgbackup): настройки, вся библиотека (карточки с картинками, таблицы, свои расы) и данные хранилища —
+      сцены, карты, заготовки, записки, таблицы, карточки. Пригодится для переноса на новый компьютер или чтобы
+      положить копию в облако. Восстанавливается в это хранилище или в другую папку.
+    </div>
+  </div>
+</div>
+<label class="media">
+  <input type="checkbox" bind:checked={media} />
+  Вместе с картинками и музыкой хранилища{sizes ? ` (≈ ${size(sizes.media)}; без них — библиотека ≈ ${size(sizes.library)})` : ''}
+</label>
+<div class="actions">
+  <button class="btn" disabled={!!busy} onclick={saveFile}><FileArchive size={14} /> Сохранить копию…</button>
+  <button class="btn" disabled={!!busy} onclick={restoreFile}><Upload size={14} /> Восстановить из файла…</button>
+  {#if busy}<span class="status">{busy}</span>{/if}
+</div>
+
+<h4>Снимки</h4>
 {#if list.length}
   <ul class="list">
     {#each list as b (b.id)}
@@ -89,6 +140,17 @@
 {/if}
 
 <style>
+  h4 {
+    margin: 18px 0 6px;
+    font-size: 13px;
+  }
+  .media {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0 8px;
+    font-size: 13px;
+  }
   .actions {
     display: flex;
     align-items: center;

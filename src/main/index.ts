@@ -8,6 +8,7 @@ import type { AppState } from '../shared/types';
 import { allFiles, LIBRARY, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
 import { folderFiles, freeFolder, PACK_EXT, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
+import { BACKUP_EXT, backupSizes, placeFiles, readBackup, writeBackup } from './archive';
 import { randomUUID } from 'node:crypto';
 import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
@@ -321,14 +322,19 @@ ipcMain.handle('tables:trash', async (_event, rel: string) => {
 // ---------- Снимки (резервные копии данных приложения, main/backups.ts) ----------
 const backupsDir = () => path.join(app.getPath('userData'), 'backups');
 
+// Файлы приложения в хранилище: состояние, записки, таблицы, карточки (пути внутри хранилища).
+function appVaultFiles(): string[] {
+  const out: string[] = [];
+  if (!vaultRoot) return out;
+  if (fs.existsSync(vaultStateFile())) out.push(`${DATA_DIR}/state.json`);
+  if (vaultTree) out.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'table').map((f) => f.path));
+  out.push(...listCards().filter((c) => c.ref.scope === 'vault' && c.file).map((c) => c.file!));
+  return out;
+}
+
 function snapshotNow(reason: Reason, force = false) {
   try {
-    const vaultFiles: string[] = [];
-    if (vaultRoot) {
-      if (fs.existsSync(vaultStateFile())) vaultFiles.push(`${DATA_DIR}/state.json`);
-      if (vaultTree) vaultFiles.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'table').map((f) => f.path));
-      vaultFiles.push(...listCards().filter((c) => c.ref.scope === 'vault' && c.file).map((c) => c.file!));
-    }
+    const vaultFiles = appVaultFiles();
     return createSnapshot({ dir: backupsDir(), vaultRoot, vaultFiles, library: libraryPath(), settingsFile: settingsFile() }, reason, force);
   } catch (e) {
     console.error('Снимок не сделан', e);
@@ -376,6 +382,73 @@ ipcMain.handle('backups:restore', async (_event, { id, vault, library }: { id: s
   }
   if (toVault && vaultRoot) await enqueue('vault', () => openVault(vaultRoot));
   return n;
+});
+
+// ---------- Полная резервная копия одним файлом (main/archive.ts) ----------
+const backupSources = () => ({ vaultRoot, vaultFiles: appVaultFiles(), library: libraryPath(), settingsFile: settingsFile() });
+ipcMain.handle('archive:sizes', () => backupSizes(backupSources()));
+ipcMain.handle('archive:create', async (_event, { media }: { media: boolean }) => {
+  saveVault();
+  const win = getControlWindow();
+  const day = new Date().toISOString().slice(0, 10);
+  const save = await dialog.showSaveDialog(win!, {
+    title: 'Сохранить резервную копию',
+    defaultPath: path.join(app.getPath('documents'), `Scrying Glass — ${vaultRoot ? path.basename(vaultRoot) : 'данные'} — ${day}.${BACKUP_EXT}`),
+    filters: [{ name: 'Резервная копия Scrying Glass', extensions: [BACKUP_EXT] }],
+  });
+  if (save.canceled || !save.filePath) return null;
+  await writeBackup(save.filePath, backupSources(), {
+    scryingGlass: 'backup', version: 1, created: Date.now(), app: app.getVersion(), vaultName: vaultRoot ? path.basename(vaultRoot) : '', media,
+  });
+  shell.showItemInFolder(save.filePath);
+  return save.filePath;
+});
+// Восстановить из файла: в текущее хранилище или в другую папку (тогда она открывается). Библиотека из копии
+// дополняет и заменяет файлы библиотеки; из настроек берутся только названия папок ролей.
+ipcMain.handle('archive:restore', async () => {
+  const win = getControlWindow();
+  const pick = await dialog.showOpenDialog(win!, {
+    title: 'Восстановить из резервной копии',
+    filters: [{ name: 'Резервная копия Scrying Glass', extensions: [BACKUP_EXT] }],
+    properties: ['openFile'],
+  });
+  const file = pick.filePaths[0];
+  if (pick.canceled || !file) return null;
+  const tmp = path.join(app.getPath('userData'), `restore-${randomUUID().slice(0, 8)}`);
+  try {
+    const { manifest, settings: saved } = await readBackup(file, tmp);
+    const when = new Date(manifest.created).toLocaleString('ru');
+    const buttons = vaultRoot ? [`В текущее хранилище «${path.basename(vaultRoot)}»`, 'В другую папку…', 'Отмена'] : ['В папку…', 'Отмена'];
+    const ask = await dialog.showMessageBox(win!, {
+      type: 'question',
+      message: `Восстановить копию «${manifest.vaultName || 'данные'}» от ${when}?`,
+      detail: `Файлы из копии заменят такие же в хранилище и библиотеке, остальные файлы останутся.${manifest.media ? '' : ' Картинок и музыки хранилища в этой копии нет.'} Перед восстановлением сохраняется снимок нынешнего состояния.`,
+      buttons,
+      defaultId: 0,
+      cancelId: buttons.length - 1,
+    });
+    let target: string | null = null;
+    if (vaultRoot && ask.response === 0) target = vaultRoot;
+    else if (ask.response === buttons.length - 2) {
+      const dir = await dialog.showOpenDialog(win!, { title: 'Папка для хранилища', buttonLabel: 'Восстановить сюда', properties: ['openDirectory', 'createDirectory'] });
+      target = dir.canceled ? null : (dir.filePaths[0] ?? null);
+    }
+    if (!target) return null;
+    saveVault();
+    snapshotNow('before-restore', true);
+    let files = 0;
+    if (isDir(path.join(tmp, 'vault'))) files += placeFiles(path.join(tmp, 'vault'), target);
+    const lib = libraryPath();
+    if (lib && isDir(path.join(tmp, 'library'))) files += placeFiles(path.join(tmp, 'library'), lib);
+    const roles = (saved as { roles?: Partial<RoleNames> | null } | null)?.roles;
+    if (roles) setRoles(roles);
+    if (lib) setLibrary(lib);
+    for (const w of BrowserWindow.getAllWindows()) w.webContents.send('tables:changed');
+    await enqueue('vault', () => openVault(target));
+    return { files, vault: path.basename(target) };
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
 });
 
 // ---------- Приключение одним файлом (main/packs.ts) ----------

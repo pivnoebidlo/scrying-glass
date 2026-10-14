@@ -78,6 +78,11 @@ export interface Api {
   onTablesChanged(cb: () => void): void;
   writeTable(path: string, text: string): Promise<boolean>;
   createTable(folder: string, title: string, text: string): Promise<string | null>;
+  // Полная резервная копия одним файлом (.sgbackup, main/archive.ts): сколько весят библиотека и папка хранилища,
+  // сохранить (media — вместе с картинками и музыкой хранилища; путь или null), восстановить (спросит файл и куда).
+  backupSizes(): Promise<{ library: number; media: number }>;
+  saveFullBackup(media: boolean): Promise<string | null>;
+  restoreFullBackup(): Promise<{ files: number; vault: string } | null>;
   // Приключение одним файлом (.sgpack, main/packs.ts): экспорт спросит про музыку и куда сохранить (путь или null),
   // импорт — какой файл (что вышло или null — отменили).
   exportAdventure(name: string): Promise<string | null>;
