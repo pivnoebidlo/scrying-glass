@@ -1,12 +1,15 @@
 <!-- Одна таблица: бросок (пробел или кнопка), результаты сверху, все варианты ниже (щелчок — выбрать вручную).
-     Свою таблицу можно править здесь же или открыть в другой программе (Obsidian), встроенную — скопировать. -->
+     Свою таблицу можно править здесь же, открыть в другой программе (Obsidian) или удалить в Корзину; любую —
+     скопировать в папку таблиц любого приключения или в общую. -->
 <script lang="ts">
-  import { ChevronLeft, Copy, Dices, ExternalLink, FilePlus2, Pencil, Trash2 } from '@lucide/svelte';
+  import { ChevronLeft, Copy, Dices, ExternalLink, Pencil, Trash2 } from '@lucide/svelte';
+  import { dispatch } from '../../../renderer/lib/store.svelte';
   import { inline } from '../../../renderer/lib/markdown';
   import { store } from '../../../renderer/lib/store.svelte';
   import { roleFolderHere } from '../../../shared/adventures';
   import { tableDie } from '../../../shared/tables';
-  import { roleNames } from '../../../shared/vault';
+  import { allFiles, roleNames } from '../../../shared/vault';
+  import CopyToMenu from '../ui/CopyToMenu.svelte';
   import { ui } from '../ui/ui.svelte';
   import { history, pick, roll, type TableItem } from './store.svelte';
 
@@ -31,14 +34,30 @@
     editing = false;
   }
 
-  // Встроенная таблица — копия в папку таблиц приключения (или корня хранилища), дальше её можно править.
-  async function copyToVault() {
+  let status = $state('');
+
+  // Копия в папку таблиц приключения target (null — в корень хранилища); папки нет — создаётся.
+  async function copyTo(target: string | null) {
     const app = store.state;
-    const here = app.vault.tree ? roleFolderHere(app.vault.tree, app.adventures, 'tables') : null;
+    const here = app.vault.tree ? roleFolderHere(app.vault.tree, { ...app.adventures, current: target }, 'tables') : null;
     const name = roleNames().tables[0]!;
-    const folder = here?.path ?? (app.adventures.current ? `${app.adventures.current}/${name}` : name);
+    const folder = here?.path ?? (target ? `${target}/${name}` : name);
     const path = await window.api.createTable(folder, item.table.title, item.text);
-    if (path) ui.table = path;
+    if (!path) return;
+    // Видно здесь (текущее приключение или общее) — открываем копию; иначе — просто сообщаем, куда легла.
+    if (target === app.adventures.current || target === null || app.adventures.current === null) ui.table = path;
+    else {
+      status = `Копия — в «${target}»: её видно, когда это приключение выбрано.`;
+      setTimeout(() => (status = ''), 4000);
+    }
+  }
+
+  // В Корзину (действие само спросит подтверждение).
+  async function trash() {
+    if (!item.path) return;
+    const p = item.path;
+    const s = await dispatch('vault', 'trash', { paths: [p] });
+    if (!s.vault.tree || !allFiles(s.vault.tree).some((f) => f.path === p)) ui.table = null;
   }
 
   function onkeydown(e: KeyboardEvent) {
@@ -62,12 +81,19 @@
     <span class="faint meta">{item.path ? item.path : 'встроенная'} · {item.table.entries.length} вар.{die ? ` · d${die}` : ''}</span>
     {#if item.path}
       <button class="btn" onclick={() => ((draft = item.text), (editing = !editing))}><Pencil size={14} /> {editing ? 'Не править' : 'Править'}</button>
+    {/if}
+    <CopyToMenu
+      label={item.path ? 'Копия в…' : 'Копия в хранилище'}
+      title={item.path ? 'Скопировать в другое приключение или в общие таблицы' : 'Скопировать в хранилище, чтобы править'}
+      onpick={copyTo}
+    />
+    {#if item.path}
       <button class="icon-btn" title="Открыть файл в другой программе (например, в Obsidian)" onclick={() => window.api.openFile(item.path!)}><ExternalLink size={15} /></button>
-    {:else}
-      <button class="btn" title="Скопировать в папку таблиц приключения, чтобы править" onclick={copyToVault}><FilePlus2 size={14} /> Копия в хранилище</button>
+      <button class="icon-btn" title="Удалить таблицу в Корзину" onclick={trash}><Trash2 size={15} /></button>
     {/if}
   </header>
   {#if item.table.description}<p class="faint about">{item.table.description}</p>{/if}
+  {#if status}<p class="status">{status}</p>{/if}
 
   {#if editing}
     <textarea rows="18" bind:value={draft}></textarea>
@@ -146,6 +172,10 @@
   }
   .row .spacer {
     flex: 1;
+  }
+  .status {
+    margin: 8px 0 0 34px;
+    color: var(--accent);
   }
   .about {
     margin: 6px 0 0 34px;

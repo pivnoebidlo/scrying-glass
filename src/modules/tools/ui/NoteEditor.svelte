@@ -11,6 +11,8 @@
     type Note, type NoteEdge, type NoteFont, type NoteInk, type NotePaper as Paper, type NoteSeal, type NoteShape,
   } from '../../../shared/notes';
   import { ui } from './ui.svelte';
+  import CopyToMenu from './CopyToMenu.svelte';
+  import { notesFolder } from '../../../renderer/lib/note/notes.svelte';
 
   let { path }: { path: string } = $props();
 
@@ -62,6 +64,21 @@
 
   const shown = $derived(store.state.handouts.current === path);
 
+  // Копия записки в папку раздатки другого приключения (или общую). В текущее — открываем копию.
+  let status = $state('');
+  async function copyTo(target: string | null) {
+    if (!note) return;
+    const app = store.state;
+    const folder = notesFolder(app.vault.tree, { ...app.adventures, current: target });
+    const copy = await window.api.createNote(folder, noteTitle(path), { ...$state.snapshot(note), seed: note.seed } as Note);
+    if (!copy) return;
+    if (target === app.adventures.current || app.adventures.current === null) ui.note = copy;
+    else {
+      status = `Копия — в «${target ?? 'Общее'}»`;
+      setTimeout(() => (status = ''), 4000);
+    }
+  }
+
   // Шрифты по группам для списка.
   const fontGroups = Object.entries(NOTE_FONTS).reduce<Record<string, [NoteFont, string][]>>((acc, [id, f]) => {
     (acc[f.group] ??= []).push([id as NoteFont, f.title]);
@@ -76,7 +93,9 @@
     <button class="icon-btn" title="Ко всем запискам" onclick={() => (ui.note = null)}><ChevronLeft size={16} /></button>
     <input class="title" type="text" bind:value={title} title="Название записки (и имя файла)" onchange={rename} onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
     <span class="faint status">{missing ? '' : saved ? 'сохранено' : 'сохраняется…'}</span>
+    {#if status}<span class="copied">{status}</span>{/if}
     <div class="spacer"></div>
+    <CopyToMenu title="Скопировать записку в раздатку другого приключения" onpick={copyTo} />
     <button class="btn" class:primary={!shown} disabled={!note} onclick={() => dispatch('handouts', 'toggle', { path })}>
       {#if shown}<EyeOff size={14} /> Убрать у игроков{:else}<Eye size={14} /> Показать игрокам{/if}
     </button>
@@ -222,6 +241,10 @@
   }
   .spacer {
     flex: 1;
+  }
+  .copied {
+    color: var(--accent);
+    font-size: 12px;
   }
   .columns {
     display: grid;
