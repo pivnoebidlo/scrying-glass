@@ -10,6 +10,8 @@ import { dndTracker } from '../src/systems/dnd5e/tracker';
 import { fromFields } from '../src/systems/tracker';
 import { blankStats, consequencesOf, pyramid, stressOf, type FateStats } from '../src/systems/fate/stats';
 import { run } from './helpers';
+import fate from '../src/modules/fate/main';
+import type { FateState } from '../src/modules/fate/types';
 
 const S0 = initiative.initialState;
 const act = (s: InitiativeState, a: string, p?: unknown) => run(initiative, s, a, p);
@@ -154,5 +156,38 @@ describe('карточка Fate', () => {
     expect(pyramid(s).map(([r, l]) => [r, l.map((x) => x.name)])).toEqual([[3, ['Б']], [1, ['А', 'В']]]);
     expect(systemOf('fate-core').subtitle(s, 'ru')).toBe('Сыщица');
     expect(systemOf('fate-core').subtitle(card(), 'ru')).toBe('Главный');
+  });
+});
+
+describe('аспекты сцены и жетоны судьбы', () => {
+  const F0 = fate.initialState;
+  const fa = (s: FateState, a: string, p?: unknown) => run(fate, s, a, p);
+
+  it('аспект: пустой не добавляется, призывы от 0 до 9, скрытый — по флагу', () => {
+    let s = fa(F0, 'addAspect', { text: '  ' });
+    expect(s.aspects).toEqual([]);
+    s = fa(s, 'addAspect', { text: ' Горящий склад ', hidden: true });
+    const id = s.aspects[0]!.id;
+    expect(s.aspects[0]).toMatchObject({ text: 'Горящий склад', invokes: 0, hidden: true });
+    s = fa(s, 'updateAspect', { id, changes: { invokes: 15, text: ' ' } });
+    expect(s.aspects[0]).toMatchObject({ text: 'Горящий склад', invokes: 9 });
+    s = fa(s, 'updateAspect', { id, changes: { invokes: -1 } });
+    expect(s.aspects[0]!.invokes).toBe(0);
+  });
+
+  it('жетоны: партия без повторов, новая сессия — до восстановления, мастер — по жетону на персонажа', () => {
+    const ref = { scope: 'vault' as const, id: 'a' };
+    let s = fa(F0, 'addHolders', { list: [{ name: 'Сыщица', portrait: null, card: ref, refresh: 3 }] });
+    s = fa(s, 'addHolders', { list: [{ name: 'Сыщица Мор', portrait: 'p.png', card: ref, refresh: 2 }, { name: 'Громила', portrait: null, refresh: 1 }] });
+    expect(s.holders.map((h) => [h.name, h.points, h.refresh])).toEqual([['Сыщица Мор', 3, 2], ['Громила', 1, 1]]);
+    const [a, b] = s.holders;
+    s = fa(s, 'points', { id: a!.id, delta: -3 });
+    s = fa(s, 'points', { id: b!.id, delta: 4 });
+    s = fa(s, 'newSession');
+    expect(s.holders.map((h) => h.points)).toEqual([2, 5]);
+    s = fa(s, 'newScene');
+    expect(s.gm).toBe(2);
+    s = fa(s, 'gm', { delta: -5 });
+    expect(s.gm).toBe(0);
   });
 });

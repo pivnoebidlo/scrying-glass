@@ -69,7 +69,7 @@
   </div>
 
   {#each widgets as c (c.id)}
-    {#if c.screen}
+    {#if c.screen && (c.screenWhen?.(store.state) ?? true)}
       {@const empty = c.screenEmpty?.(store.state) ?? null}
       {@const open = empty === null ? !workspace.screenClosed.includes(c.id) : peek.includes(c.id)}
       <button

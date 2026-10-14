@@ -16,5 +16,6 @@ import tools from './tools/main';
 import timer from './timer/main';
 import backup from './backup/main';
 import compendium from './compendium/main';
+import fate from './fate/main';
 
-export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary, order, tools, timer, backup, compendium] as const;
+export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary, order, tools, timer, backup, compendium, fate] as const;
