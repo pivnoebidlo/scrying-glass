@@ -1,11 +1,12 @@
-// Что открыто в «Инструментах»: инструмент и записка в редакторе (путь в хранилище).
+// Что открыто в «Инструментах»: инструмент, записка в редакторе (путь в хранилище), таблица (id из tables/store).
 import { openTab } from '../../../renderer/lib/nav';
 
-export type ToolId = 'notes';
+export type ToolId = 'notes' | 'tables';
 
 export const ui = $state({
   tool: 'notes' as ToolId,
   note: null as string | null,
+  table: null as string | null,
 });
 
 // Открыть записку в редакторе (из «Раздатки», правой панели или списка записок).

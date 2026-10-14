@@ -1,6 +1,6 @@
 // Состояние интерфейса файлов: выбранная папка и раскрытые ветки дерева. Запоминается между запусками.
 import { folderRole, type FolderRole } from '../../../shared/vault';
-import { Folder, Map, Music, Scroll, Shield, Skull, Users, Wallpaper } from '@lucide/svelte';
+import { Dices, Folder, Map, Music, Scroll, Shield, Skull, Users, Wallpaper } from '@lucide/svelte';
 import type { Component } from 'svelte';
 
 const KEY = 'sg.files';
@@ -27,7 +27,7 @@ $effect.root(() => {
 });
 
 export const ROLE_ICONS: Record<FolderRole, Component> = {
-  characters: Users, party: Shield, maps: Map, music: Music, backgrounds: Wallpaper, handouts: Scroll, bestiary: Skull,
+  characters: Users, party: Shield, maps: Map, music: Music, backgrounds: Wallpaper, handouts: Scroll, bestiary: Skull, tables: Dices,
 };
 
 export const folderIcon = (name: string): Component => {

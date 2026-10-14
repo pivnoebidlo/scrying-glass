@@ -30,6 +30,11 @@ const api: Api = {
   createNote: (folder, title, note) => ipcRenderer.invoke('notes:create', { folder, title, note }),
   renameNote: (path, title) => ipcRenderer.invoke('notes:rename', { path, title }),
 
+  readTable: (path) => ipcRenderer.invoke('tables:read', path),
+  writeTable: (path, text) => ipcRenderer.invoke('tables:write', { path, text }),
+  createTable: (folder, title, text) => ipcRenderer.invoke('tables:create', { folder, title, text }),
+  openFile: (path) => ipcRenderer.invoke('vault:openFile', path),
+
   listDisplays: () => ipcRenderer.invoke('displays:list'),
   onDisplaysChanged: (cb) => { ipcRenderer.on('displays:changed', () => cb()); },
 

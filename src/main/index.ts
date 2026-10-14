@@ -14,6 +14,7 @@ import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
 import { createNote, readNote, renameNote, writeNote } from './notes';
+import { createTable, readTable, writeTable } from './tables';
 import type { Note } from '../shared/notes';
 import {
   cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
@@ -270,6 +271,24 @@ ipcMain.handle('notes:create', async (_event, { folder, title, note }: { folder:
   if (rel) await afterNoteWrite();
   return rel;
 });
+// Таблицы случайностей: Markdown-файлы в папках таблиц.
+ipcMain.handle('tables:read', (_event, rel: string) => readTable(resolveInVault, rel));
+ipcMain.handle('tables:write', async (_event, { path: rel, text }: { path: string; text: string }) => {
+  const ok = writeTable(resolveInVault, rel, text);
+  if (ok) await afterNoteWrite();
+  return ok;
+});
+ipcMain.handle('tables:create', async (_event, { folder, title, text }: { folder: string; title: string; text: string }) => {
+  const rel = createTable(resolveInVault, folder, title, text);
+  if (rel) await afterNoteWrite();
+  return rel;
+});
+// Открыть файл в программе по умолчанию (таблицу — например, в Obsidian или текстовом редакторе).
+ipcMain.handle('vault:openFile', async (_event, rel: string) => {
+  const abs = resolveInVault(rel);
+  if (abs) await shell.openPath(abs);
+});
+
 // Переименование меняет путь: раздатка у игроков и сцены, где была эта записка, переходят на новый.
 ipcMain.handle('notes:rename', async (_event, { path: rel, title }: { path: string; title: string }) => {
   const next = renameNote(resolveInVault, rel, title);

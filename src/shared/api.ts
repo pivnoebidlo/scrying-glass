@@ -57,6 +57,13 @@ export interface Api {
   // Новое название = новое имя файла. Новый путь или null.
   renameNote(path: string, title: string): Promise<string | null>;
 
+  // Таблицы случайностей (shared/tables.ts): .md / .txt в папках таблиц.
+  readTable(path: string): Promise<string | null>;
+  writeTable(path: string, text: string): Promise<boolean>;
+  createTable(folder: string, title: string, text: string): Promise<string | null>;
+  // Открыть файл хранилища в программе по умолчанию.
+  openFile(path: string): Promise<void>;
+
   listDisplays(): Promise<DisplayInfo[]>;
   onDisplaysChanged(cb: () => void): void;
 

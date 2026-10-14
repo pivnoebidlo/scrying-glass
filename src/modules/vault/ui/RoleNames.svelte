@@ -15,6 +15,7 @@
     { role: 'handouts', title: 'Раздатка', desc: 'Записки, письма, улики.' },
     { role: 'maps', title: 'Карты', desc: 'Карты с туманом войны.' },
     { role: 'music', title: 'Музыка', desc: 'Музыка и атмосфера.' },
+    { role: 'tables', title: 'Таблицы', desc: 'Таблицы случайностей и генераторы (Markdown-файлы).' },
   ];
   const titleOf = (role: FolderRole) => ROLES.find((r) => r.role === role)!.title;
 
