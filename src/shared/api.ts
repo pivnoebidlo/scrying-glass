@@ -11,6 +11,16 @@ export interface DisplayInfo {
   height: number;
 }
 
+export interface BackupInfo {
+  id: string;
+  created: number;
+  reason: 'open' | 'auto' | 'quit' | 'manual' | 'before-restore';
+  vault: string | null;
+  vaultName: string;
+  files: number;
+  bytes: number;
+}
+
 export interface Api {
   getState(): Promise<AppState>;
   dispatch<K extends ModuleId, A extends ActionName<K>>(module: K, name: A, ...payload: ActionArgs<K, A>): Promise<AppState>;
@@ -68,6 +78,12 @@ export interface Api {
   onTablesChanged(cb: () => void): void;
   writeTable(path: string, text: string): Promise<boolean>;
   createTable(folder: string, title: string, text: string): Promise<string | null>;
+  // Снимки данных приложения (main/backups.ts): список (новые сверху), сделать сейчас, восстановить (спросит
+  // подтверждение; число записанных файлов, 0 — отменили), открыть папку снимков.
+  listBackups(): Promise<BackupInfo[]>;
+  createBackup(): Promise<BackupInfo | null>;
+  restoreBackup(id: string, parts: { vault: boolean; library: boolean }): Promise<number>;
+  revealBackups(): Promise<void>;
   // Данные инструментов в библиотеке (общие для всех кампаний): pointbuy.json — свои расы.
   readLibraryData(name: string): Promise<unknown>;
   writeLibraryData(name: string, data: unknown): Promise<boolean>;

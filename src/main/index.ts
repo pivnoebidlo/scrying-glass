@@ -5,7 +5,8 @@ import * as fs from 'node:fs';
 import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
-import { LIBRARY, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
+import { allFiles, LIBRARY, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
+import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
 import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
@@ -145,6 +146,8 @@ async function openVault(root: string | null): Promise<VaultState> {
       stateById['vault'] = vaultState();
     }
     saveVault();
+    // Снимок при открытии — чуть позже, чтобы не задерживать запуск.
+    setTimeout(() => vaultRoot === root && snapshotNow('open'), 3000);
   }
   broadcastState();
   return vaultState();
@@ -313,6 +316,66 @@ ipcMain.handle('tables:trash', async (_event, rel: string) => {
   await afterTableWrite(rel);
   return true;
 });
+// ---------- Снимки (резервные копии данных приложения, main/backups.ts) ----------
+const backupsDir = () => path.join(app.getPath('userData'), 'backups');
+
+function snapshotNow(reason: Reason, force = false) {
+  try {
+    const vaultFiles: string[] = [];
+    if (vaultRoot) {
+      if (fs.existsSync(vaultStateFile())) vaultFiles.push(`${DATA_DIR}/state.json`);
+      if (vaultTree) vaultFiles.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'table').map((f) => f.path));
+      vaultFiles.push(...listCards().filter((c) => c.ref.scope === 'vault' && c.file).map((c) => c.file!));
+    }
+    return createSnapshot({ dir: backupsDir(), vaultRoot, vaultFiles, library: libraryPath(), settingsFile: settingsFile() }, reason, force);
+  } catch (e) {
+    console.error('Снимок не сделан', e);
+    return null;
+  }
+}
+
+// Раз в полчаса работы — снимок, если что-то изменилось.
+setInterval(() => vaultRoot && snapshotNow('auto'), 30 * 60 * 1000);
+app.on('before-quit', () => {
+  if (vaultRoot) snapshotNow('quit');
+});
+
+ipcMain.handle('backups:list', () => listSnapshots(backupsDir()));
+ipcMain.handle('backups:create', () => snapshotNow('manual', true));
+ipcMain.handle('backups:reveal', async () => {
+  fs.mkdirSync(backupsDir(), { recursive: true });
+  await shell.openPath(backupsDir());
+});
+// Восстановить: спросить, перед этим — снимок нынешнего состояния, потом вернуть файлы и перечитать хранилище
+// и библиотеку. Данные хранилища — только в то же хранилище, из которого снимок.
+ipcMain.handle('backups:restore', async (_event, { id, vault, library }: { id: string; vault: boolean; library: boolean }) => {
+  const meta = listSnapshots(backupsDir()).find((s) => s.id === id);
+  if (!meta) return 0;
+  const toVault = vault && !!vaultRoot && meta.vault === vaultRoot;
+  if (!toVault && !library) return 0;
+  const win = getControlWindow();
+  const what = [toVault && `данные хранилища «${meta.vaultName}» (сцены, карты, заготовки, записки, таблицы, карточки)`, library && 'библиотеку (общие карточки, таблицы, свои расы)'].filter(Boolean).join(' и ');
+  const opts = {
+    type: 'warning' as const,
+    message: `Восстановить ${what} из снимка ${new Date(meta.created).toLocaleString('ru')}?`,
+    detail: 'Перед этим приложение сохранит снимок нынешнего состояния — восстановление можно будет отменить тем же способом. Файлы, появившиеся после снимка, останутся.',
+    buttons: ['Восстановить', 'Отмена'],
+    defaultId: 0,
+    cancelId: 1,
+  };
+  const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
+  if (res.response !== 0) return 0;
+  saveVault();
+  snapshotNow('before-restore', true);
+  const n = restoreSnapshot(backupsDir(), id, { vaultRoot, library: libraryPath() }, { vault: toVault, library });
+  if (library) {
+    setLibrary(libraryPath()!);
+    for (const w of BrowserWindow.getAllWindows()) w.webContents.send('tables:changed');
+  }
+  if (toVault && vaultRoot) await enqueue('vault', () => openVault(vaultRoot));
+  return n;
+});
+
 // Небольшие данные инструментов, общие для всех кампаний: JSON-файлы в библиотеке (только из списка).
 const LIBRARY_DATA = new Set(['pointbuy.json']);
 ipcMain.handle('library:readData', (_event, name: string) => {
