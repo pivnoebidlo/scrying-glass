@@ -9,7 +9,7 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { LANGUAGES, cardAsset, cardImageUrl, langName, sameRef, type Card, type CardRef, type CardSide, type CardSummary } from '../../../shared/cards';
-  import { systemOf } from '../../../systems';
+  import { isDnd, systemOf } from '../../../systems';
   import { statsView } from '../../../systems/ui';
   import { markdown } from '../../../renderer/lib/markdown';
   import { bestiary } from './cards.svelte';
@@ -197,9 +197,9 @@
             <div class="spacer"></div>
             <!-- Персонаж игрока в бою один и с хитами по листу. -->
             {#if summary.kind !== 'character'}
-              <label class="hp" title={summary.combat.hpFormula ? `Бросить ${summary.combat.hpFormula} для каждого` : 'Нет формулы хитов'}>
+              {#if isDnd(summary.system)}<label class="hp" title={summary.combat.hpFormula ? `Бросить ${summary.combat.hpFormula} для каждого` : 'Нет формулы хитов'}>
                 <input type="checkbox" bind:checked={rollHp} disabled={!summary.combat.hpFormula} /> случайные хиты
-              </label>
+              </label>{/if}
               <input class="count" type="number" min="1" max="20" bind:value={count} title="Сколько добавить" />
             {/if}
             <select class="side" value={side ?? summary.side} onchange={(e) => (side = e.currentTarget.value as CardSide)} title="На чьей стороне в бою">

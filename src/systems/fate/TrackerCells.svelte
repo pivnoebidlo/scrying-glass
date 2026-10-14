@@ -20,21 +20,28 @@
 {#if head}
   <th class="c-stress" title="Клетка N поглощает N сдвигов; щелчок — отметить или снять">Стресс</th>
   <th class="c-cons" title="Последствие — аспект на сколько-то сдвигов: 2 — лёгкое, 4 — среднее, 6 — тяжёлое">Последствия</th>
-  <th class="c-out"></th>
 {:else if c}
   {@const it = c}
   <td class="c-stress">
-    {#each c.stress ?? [] as t (t.id)}
-      <div class="track" title="{trackTitle(t.id)} стресс">
-        <span class="tl faint">{trackTitle(t.id).slice(0, 1)}</span>
-        {#each t.boxes as on, i (i)}
-          <button class="box" class:on onclick={() => dispatch('initiative', 'toggleStress', { id: it.id, track: t.id, box: i })}>{i + 1}</button>
+    <div class="stress-row">
+      <div>
+        {#each c.stress ?? [] as t (t.id)}
+          <div class="track" title="{trackTitle(t.id)} стресс">
+            <span class="tl faint">{trackTitle(t.id).slice(0, 1)}</span>
+            {#each t.boxes as on, i (i)}
+              <button class="box" class:on onclick={() => dispatch('initiative', 'toggleStress', { id: it.id, track: t.id, box: i })}>{i + 1}</button>
+            {/each}
+            {#if !t.boxes.length}<span class="faint none">нет</span>{/if}
+          </div>
+        {:else}
+          <button class="link faint" title="Физический и ментальный стресс по две клетки, три последствия" onclick={() => addTracks(it)}>+ стресс</button>
         {/each}
-        {#if !t.boxes.length}<span class="faint none">нет</span>{/if}
       </div>
-    {:else}
-      <button class="link faint" title="Физический и ментальный стресс по две клетки, три последствия" onclick={() => addTracks(it)}>+ стресс</button>
-    {/each}
+      <!-- Выведен из боя: пропускает ход, у игроков серый. -->
+      <button class="icon-btn out" class:on={c.out} title={c.out ? 'Выведен из боя — вернуть' : 'Вывести из боя (пропускает ход, у игроков — серый)'} onclick={() => update(it, { out: !it.out })}>
+        <Ban size={14} />
+      </button>
+    </div>
   </td>
   <td class="c-cons">
     {#each c.consequences ?? [] as q, i (i)}
@@ -48,11 +55,6 @@
         onchange={(e) => dispatch('initiative', 'setConsequence', { id: it.id, index: i, text: e.currentTarget.value })}
       />
     {/each}
-  </td>
-  <td class="c-out">
-    <button class="icon-btn" class:on={c.out} title={c.out ? 'Выведен из боя — вернуть' : 'Вывести из боя (пропускает ход, у игроков — серый)'} onclick={() => update(it, { out: !it.out })}>
-      <Ban size={14} />
-    </button>
   </td>
 {/if}
 
@@ -92,20 +94,25 @@
     background: var(--danger);
     color: var(--bg-primary);
   }
+  .stress-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .out {
+    margin-left: auto;
+  }
   .c-cons {
-    width: 150px;
+    width: 110px;
   }
   .cons {
     display: block;
-    width: 140px !important;
+    width: 106px !important;
     margin: 1px 0;
     font-size: 12px;
   }
   .cons.filled {
     color: var(--danger);
-  }
-  .c-out {
-    width: 32px;
   }
   .on {
     color: var(--danger);

@@ -8,6 +8,7 @@ import { ladderText } from '../src/systems/fate/ladder';
 import { fateTracker } from '../src/systems/fate/tracker';
 import { dndTracker } from '../src/systems/dnd5e/tracker';
 import { fromFields } from '../src/systems/tracker';
+import { blankStats, consequencesOf, pyramid, stressOf, type FateStats } from '../src/systems/fate/stats';
 import { run } from './helpers';
 
 const S0 = initiative.initialState;
@@ -113,5 +114,45 @@ describe('бой в Fate', () => {
     expect(r.stress![0]!.boxes).toEqual([false]);
     expect(r.consequences![0]!.text).toBe('');
     expect(r.out).toBe(false);
+  });
+});
+
+describe('карточка Fate', () => {
+  const card = (over: Partial<FateStats> = {}): FateStats => ({ ...blankStats('npc'), ...over });
+
+  it('стресс по Телосложению и Воле, последствия по важности', () => {
+    const s = card({ skills: [{ name: 'Телосложение', rating: 3 }, { name: 'Воля', rating: 1 }] });
+    expect(stressOf(s)).toEqual([{ id: 'physical', boxes: 4 }, { id: 'mental', boxes: 3 }]);
+    expect(consequencesOf(s)).toEqual([2, 4, 6]);
+    expect(consequencesOf(card({ skills: [{ name: 'Will', rating: 5 }] }))).toEqual([2, 4, 6, 2]);
+    expect(consequencesOf(card({ tier: 'supporting' }))).toEqual([2, 4]);
+  });
+
+  it('безымянный NPC: клетки по лучшему навыку, без последствий', () => {
+    const s = card({ tier: 'nameless', skills: [{ name: 'Драка', rating: 2 }] });
+    expect(stressOf(s)).toEqual([{ id: 'physical', boxes: 1 }]);
+    expect(consequencesOf(s)).toEqual([]);
+  });
+
+  it('заданные вручную стресс и последствия важнее правил', () => {
+    const s = card({ stress: [{ id: 'physical', boxes: 1 }], consequences: [2] });
+    expect(stressOf(s)).toEqual([{ id: 'physical', boxes: 1 }]);
+    expect(consequencesOf(s)).toEqual([2]);
+  });
+
+  it('очерёдность — Внимательность или выбранный навык; в бой — через систему', () => {
+    const s = card({ skills: [{ name: 'Внимательность', rating: 2 }, { name: 'Эмпатия', rating: 4 }] });
+    expect(systemOf('fate-core').combat(s).initiative).toBe(2);
+    expect(systemOf('fate-core').combat({ ...s, initiativeSkill: 'эмпатия' }).initiative).toBe(4);
+    const c = fateTracker.fromCard(systemOf('fate-core').combat(s));
+    expect(c.bonus).toBe(2);
+    expect(c.stress!.map((t) => t.boxes.length)).toEqual([2, 2]);
+  });
+
+  it('пирамида навыков — ступенями сверху вниз; строка под названием — концепция', () => {
+    const s = card({ highConcept: 'Сыщица', skills: [{ name: 'А', rating: 1 }, { name: 'Б', rating: 3 }, { name: 'В', rating: 1 }] });
+    expect(pyramid(s).map(([r, l]) => [r, l.map((x) => x.name)])).toEqual([[3, ['Б']], [1, ['А', 'В']]]);
+    expect(systemOf('fate-core').subtitle(s, 'ru')).toBe('Сыщица');
+    expect(systemOf('fate-core').subtitle(card(), 'ru')).toBe('Главный');
   });
 });

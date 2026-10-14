@@ -6,6 +6,7 @@ import * as character from './dnd5e/character';
 import type { TrackerDef } from './tracker';
 import { dndTracker } from './dnd5e/tracker';
 import { fateTracker } from './fate/tracker';
+import * as fateStats from './fate/stats';
 
 export interface SystemDef {
   id: string;
@@ -34,15 +35,16 @@ const dnd = (id: string, title: string): SystemDef => ({
   tracker: dndTracker,
 });
 
-// Fate Core: пока без своего вида — карточка показывается как «поле — значение».
+// Fate Core: один вид карточки для персонажей и NPC (аспекты, навыки, трюки, стресс, последствия).
 const fate: SystemDef = {
   id: 'fate-core',
   title: 'Fate Core',
   family: 'fate',
-  subtitle: () => '',
-  rank: () => null,
-  combat: () => ({ hp: null, ac: null, initiative: 0 }),
-  blank: () => ({}),
+  subtitle: (s) => (fateStats.isFate(s) ? fateStats.subtitle(s) : ''),
+  // Для сортировки — лучший навык.
+  rank: (s) => (fateStats.isFate(s) ? fateStats.topRating(s) : null),
+  combat: (s) => (fateStats.isFate(s) ? fateStats.combatStats(s) : { hp: null, ac: null, initiative: 0 }),
+  blank: (kind) => fateStats.blankStats(kind),
   tracker: fateTracker,
 };
 

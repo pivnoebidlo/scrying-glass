@@ -264,7 +264,7 @@
     text-align: center;
   }
   .c-name {
-    min-width: 160px;
+    min-width: 140px;
   }
   .side {
     display: block;

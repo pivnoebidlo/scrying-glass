@@ -8,6 +8,9 @@ import CharacterEditor from './dnd5e/CharacterEditor.svelte';
 import { isCharacter } from './dnd5e/character';
 import GenericStats from './GenericStats.svelte';
 import GenericEditor from './GenericEditor.svelte';
+import FateSheet from './fate/Sheet.svelte';
+import FateEditor from './fate/Editor.svelte';
+import { isFate } from './fate/stats';
 import DndTrackerCells from './dnd5e/TrackerCells.svelte';
 import FateTrackerCells from './fate/TrackerCells.svelte';
 import type { Combatant } from '../modules/initiative/types';
@@ -19,18 +22,22 @@ type StatsEditor = Component<{ stats: any; system: string }, {}, 'stats'>;
 const views: Record<string, StatsView> = {
   'dnd5e-2014': Dnd5eStatBlock,
   'dnd5e-2024': Dnd5eStatBlock,
+  'fate-core': FateSheet,
 };
 
 const editors: Record<string, StatsEditor> = {
   'dnd5e-2014': Dnd5eEditor,
   'dnd5e-2024': Dnd5eEditor,
+  'fate-core': FateEditor,
 };
 
 // stats нужен, чтобы отличить лист персонажа игрока от статблока.
+// Карточка Fate с чужим блоком stats (например, старая «поле — значение») — общий вид, чтобы ничего не потерять.
+const fits = (system: string, stats: unknown) => system !== 'fate-core' || stats === undefined || isFate(stats);
 export const statsView = (system: string, stats?: unknown): StatsView =>
-  system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterSheet : (views[system] ?? GenericStats);
+  system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterSheet : fits(system, stats) ? (views[system] ?? GenericStats) : GenericStats;
 export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
-  system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterEditor : (editors[system] ?? GenericEditor);
+  system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterEditor : fits(system, stats) ? (editors[system] ?? GenericEditor) : GenericEditor;
 
 // Ячейки строки участника в трекере инициативы (хиты и КД, стресс и последствия): по семейству системы.
 type TrackerCells = Component<{ c?: Combatant; head?: boolean }>;

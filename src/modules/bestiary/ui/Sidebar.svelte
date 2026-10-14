@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { Download, FilePlus, Plus, Search, Upload } from '@lucide/svelte';
   import { langName, sameRef } from '../../../shared/cards';
-  import { familyOf, isEnabled, systems } from '../../../systems';
+  import { familyOf, isDnd, isEnabled, systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dirname, roleFolders } from '../../../shared/vault';
   import { currentSystem, inCurrentFamily, placeTitle, visibleIn } from '../../../shared/adventures';
@@ -115,7 +115,7 @@
   </div>
   <select bind:value={f.scope} title="Где лежат карточки">
     <option value="all">Везде</option>
-    <option value="srd">SRD</option>
+    {#if isDnd(currentSystem(app.adventures)) || f.scope === 'srd'}<option value="srd">SRD</option>{/if}
     <option value="library">Библиотека</option>
     <option value="vault">Хранилище</option>
     {#each folders as fl (fl.folder.path)}<option value="vault:{fl.folder.path}">· {fl.title}</option>{/each}

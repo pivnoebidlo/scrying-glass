@@ -6,7 +6,7 @@ import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
 import { currentSystem, inCurrentFamily, visibleIn } from '../../../shared/adventures';
 import { dirname, folderRole } from '../../../shared/vault';
-import { systemOf } from '../../../systems';
+import { isDnd, systemOf } from '../../../systems';
 
 const KEY = 'sg.bestiary';
 
@@ -127,8 +127,10 @@ class Bestiary {
     const q = fold(f.search.trim());
     const out: CardSummary[] = [];
     for (const group of this.groups.values()) {
+      // Встроенный SRD есть только у D&D: в другой системе фильтр «SRD» показывает всё.
+      const srdNone = f.scope === 'srd' && !isDnd(currentSystem(store.state.adventures));
       const inScope = (c: CardSummary) =>
-        f.scope === 'all' || c.ref.scope === f.scope || (f.scope.startsWith('vault:') && c.ref.scope === 'vault' && c.folder === f.scope.slice(6));
+        f.scope === 'all' || srdNone || c.ref.scope === f.scope || (f.scope.startsWith('vault:') && c.ref.scope === 'vault' && c.folder === f.scope.slice(6));
       // Карточки хранилища — только текущего приключения и общие.
       const adv = store.state.adventures;
       const inAdventure = (c: CardSummary) => c.ref.scope !== 'vault' || c.folder === undefined || visibleIn(adv, c.folder);

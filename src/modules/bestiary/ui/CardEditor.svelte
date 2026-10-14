@@ -6,7 +6,7 @@
   import type { AppState } from '../../../shared/types';
   import { LANGUAGES, cardImageUrl, defaultSide, imageScope, langName, type CardKind, type CardSide } from '../../../shared/cards';
   import { folderLabel } from './places';
-  import { systemOf, systems } from '../../../systems';
+  import { familyOf, isDnd, systemOf, systems } from '../../../systems';
   import { statsEditor, statsView } from '../../../systems/ui';
   import { isCharacter } from '../../../systems/dnd5e/character';
   import { bestiary, type Draft } from './cards.svelte';
@@ -33,7 +33,7 @@
 
   // Смена системы: характеристики другой системы несовместимы, начинаем с пустых (с подтверждением).
   function changeSystem(id: string) {
-    const sameFamily = id.startsWith('dnd5e-') && card.system.startsWith('dnd5e-');
+    const sameFamily = familyOf(id) === familyOf(card.system);
     if (!sameFamily && !confirm('У другой системы другие характеристики. Начать их заново?')) return;
     if (!sameFamily) card.stats = systemOf(id).blank(card.kind);
     card.system = id;
@@ -43,7 +43,8 @@
   // заново (с подтверждением). Сторона в бою — по новому виду, если её не меняли.
   function changeKind(select: HTMLSelectElement, kind: CardKind) {
     const sheet = kind === 'character';
-    if (sheet !== isCharacter(card.stats)) {
+    // У Fate один вид для всех — характеристики остаются.
+    if (isDnd(card.system) && sheet !== isCharacter(card.stats)) {
       if (!confirm(sheet ? 'У персонажа игрока вместо статблока — лист. Начать его заново?' : 'У монстра и NPC вместо листа — статблок. Начать его заново?')) {
         select.value = card.kind;
         return;
