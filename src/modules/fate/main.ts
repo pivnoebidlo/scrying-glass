@@ -1,13 +1,14 @@
 // Fate: аспекты сцены и жетоны судьбы персонажей и мастера (см. types.ts). Показываются в приключениях Fate.
 import { randomUUID } from 'node:crypto';
 import { defineModule } from '../../shared/module';
-import { MAX_INVOKES, MAX_POINTS, type FateHolder, type FateState, type SceneAspect } from './types';
+import { CORNERS, MAX_INVOKES, MAX_POINTS, type Corner, type FateHolder, type FateState, type SceneAspect } from './types';
 
 const initialState: FateState = {
   aspects: [],
   holders: [],
   gm: 0,
   show: { aspects: true, points: true },
+  place: { aspects: 'bottom-left', points: 'bottom-right' },
 };
 
 const clamp = (n: number, max: number) => Math.min(max, Math.max(0, Math.round(n)));
@@ -25,6 +26,9 @@ export default defineModule({
   id: 'fate',
   persist: true,
   initialState,
+
+  // В сохранениях до выбора углов его нет — дополняем.
+  init: (s) => ({ ...s, place: { ...initialState.place, ...s.place } }),
 
   actions: {
     // ---- Аспекты сцены ----
@@ -100,6 +104,11 @@ export default defineModule({
 
     setShow(s, changes: Partial<FateState['show']>) {
       return { ...s, show: { ...s.show, ...changes } };
+    },
+
+    setPlace(s, changes: Partial<Record<keyof FateState['place'], Corner>>) {
+      const ok = Object.fromEntries(Object.entries(changes).filter(([, v]) => CORNERS.includes(v as Corner)));
+      return { ...s, place: { ...s.place, ...ok } };
     },
   },
 });

@@ -1,5 +1,5 @@
 <!-- Правая панель (приключения Fate): аспекты сцены с бесплатными призывами и жетоны судьбы персонажей и мастера.
-     Глаз у заголовка — показывать ли это игрокам. -->
+     У заголовка — в каком углу экрана игроков и показывать ли это им. -->
 <script lang="ts">
   import { Eye, EyeOff, Minus, Plus, RefreshCw, UsersRound, X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -7,6 +7,7 @@
   import { assetUrl, thumb } from '../../../shared/vault';
   import { MAX_INVOKES } from '../types';
   import { addParty } from './party';
+  import CornerPick from './CornerPick.svelte';
 
   let { ms }: ModuleProps<'fate'> = $props();
 
@@ -32,6 +33,7 @@
 
 <div class="head">
   <span class="label">Аспекты сцены</span>
+  <CornerPick value={ms.place.aspects} what="Аспекты" onpick={(c) => dispatch('fate', 'setPlace', { aspects: c })} />
   <button
     class="icon-btn"
     class:off={!ms.show.aspects}
@@ -90,6 +92,7 @@
 
 <div class="head points-head">
   <span class="label">Жетоны судьбы</span>
+  <CornerPick value={ms.place.points} what="Жетоны" onpick={(c) => dispatch('fate', 'setPlace', { points: c })} />
   <button
     class="icon-btn"
     class:off={!ms.show.points}

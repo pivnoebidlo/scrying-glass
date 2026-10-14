@@ -191,3 +191,14 @@ describe('аспекты сцены и жетоны судьбы', () => {
     expect(s.gm).toBe(0);
   });
 });
+
+describe('углы аспектов и жетонов', () => {
+  it('по умолчанию — слева и справа внизу; неизвестный угол не принимается; старое сохранение дополняется', () => {
+    let s = fate.initialState;
+    expect(s.place).toEqual({ aspects: 'bottom-left', points: 'bottom-right' });
+    s = run(fate, s, 'setPlace', { aspects: 'top-right', points: 'середина' });
+    expect(s.place).toEqual({ aspects: 'top-right', points: 'bottom-right' });
+    const old = { ...fate.initialState, place: undefined } as unknown as FateState;
+    expect(fate.init!(old, {} as never).place).toEqual(fate.initialState.place);
+  });
+});
