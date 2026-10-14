@@ -12,7 +12,7 @@
   // Поля для показа: по описанию типа (кроме того, что уже в строке типа), у неизвестного типа — все.
   const IN_SUBTITLE: Record<string, string[]> = { spell: ['level', 'school', 'ritual', 'concentration'], item: ['category', 'rarity', 'attunement'], feat: ['category', 'prerequisite'], rule: ['category'] };
   const rows = $derived.by(() => {
-    const skip = new Set([...(IN_SUBTITLE[entry.type] ?? []), 'tags', 'source']);
+    const skip = new Set([...(IN_SUBTITLE[entry.type] ?? []), 'tags', 'source', 'overrides']);
     const known = def.fields.filter((f) => !skip.has(f.key) && entry.fields[f.key] !== undefined && entry.fields[f.key] !== '' && entry.fields[f.key] !== false);
     const extra = Object.keys(entry.fields).filter((k) => !skip.has(k) && !def.fields.some((f) => f.key === k) && !COMMON_FIELDS.some((f) => f.key === k));
     return [...known.map((f) => ({ title: f.title, value: fieldText(entry.fields[f.key]!) })), ...extra.map((k) => ({ title: k, value: fieldText(entry.fields[k]!) }))];

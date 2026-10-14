@@ -5,9 +5,11 @@
   import { untrack } from 'svelte';
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
-  import { COMMON_FIELDS, serializeEntry, TYPES, typeOf, type Entry, type FieldDef, type FieldValue } from '../../../shared/compendium';
+  import { BUILTIN, COMMON_FIELDS, OVERRIDES, serializeEntry, TYPES, typeOf, type Entry, type FieldDef, type FieldValue } from '../../../shared/compendium';
   import { ui } from './ui.svelte';
-  import type { EntryItem } from './store.svelte';
+  import { entriesFolder, isBuiltinEntry, type EntryItem } from './store.svelte';
+  import { LIBRARY } from '../../../shared/vault';
+  import { openEntry } from './ui.svelte';
 
   let { item }: { item: EntryItem } = $props();
 
@@ -19,7 +21,9 @@
   const def = $derived(typeOf(draft.type));
   const fields = $derived([...def.fields, ...COMMON_FIELDS]);
   // Поля, которых нет у типа (из Obsidian или прошлого типа), — показываем и даём править как текст.
-  const extra = $derived(Object.keys(draft.fields).filter((k) => !fields.some((f) => f.key === k)));
+  const extra = $derived(Object.keys(draft.fields).filter((k) => k !== OVERRIDES && !fields.some((f) => f.key === k)));
+  // Встроенная запись: правка сохранится в библиотеку и заменит её.
+  const builtin = $derived(isBuiltinEntry(item.path));
 
   const listText = (v: FieldValue | undefined) => (Array.isArray(v) ? v.join(', ') : v === undefined ? '' : String(v));
   function set(f: FieldDef, raw: string | boolean) {
@@ -41,6 +45,18 @@
     error = '';
     try {
       const snap = $state.snapshot(draft) as Entry;
+      if (builtin) {
+        // Первая правка встроенной: своя запись в библиотеке, заменяющая её.
+        const entry = { ...snap, title, fields: { ...snap.fields, [OVERRIDES]: item.path.slice(BUILTIN.length) } };
+        const path = await window.api.createEntry(entriesFolder(LIBRARY), title, serializeEntry(entry));
+        if (!path) throw new Error('файл не записан');
+        if (store.state.handouts.current === item.path) {
+          await dispatch('handouts', 'move', { from: item.path, to: path });
+          await dispatch('handouts', 'updateEntry', { path, entry });
+        }
+        openEntry(path);
+        return;
+      }
       let path = item.path;
       if (!(await window.api.writeEntry(path, serializeEntry({ ...snap, title })))) throw new Error('файл не записан');
       if (title !== item.entry.title) {
@@ -74,6 +90,7 @@
       {#each Object.entries(TYPES) as [id, t] (id)}<option value={id}>{t.title}</option>{/each}
       {#if !TYPES[draft.type]}<option value={draft.type}>{draft.type}</option>{/if}
     </select>
+    {#if builtin}<span class="faint note" title="Правка ляжет в библиотеку (для всех кампаний) и заменит встроенную запись. Вернуть как было — «Вернуть как в SRD».">Правка встроенной записи</span>{/if}
     {#if error}<span class="error">{error}</span>{/if}
     <div class="spacer"></div>
     <button class="btn" onclick={() => (ui.editing = false)}>Отмена</button>
@@ -138,6 +155,9 @@
   }
   .spacer {
     flex: 1;
+  }
+  .note {
+    font-size: 12px;
   }
   .error {
     color: var(--danger, #e04545);

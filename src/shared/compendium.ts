@@ -100,6 +100,9 @@ export interface BuiltinBook {
 }
 // Путь встроенной записи: «srd:<система>/<тип>/<название>».
 export const BUILTIN = 'srd:';
+// Правка встроенной записи — своя запись в библиотеке с полем overrides: «<система>/<тип>/<название>» (путь без
+// «srd:»). Она заменяет встроенную везде: в списке, поиске, ссылках. Удалить правку — вернуть как в SRD.
+export const OVERRIDES = 'overrides';
 
 export const ENTRY_EXT = '.md';
 export const entryTitle = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.(md|txt)$/i, '');

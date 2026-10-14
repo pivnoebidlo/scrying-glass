@@ -3,7 +3,7 @@
 import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
 import { store } from '../../../renderer/lib/store.svelte';
 import { placeOrder, placeTitle, roleFolderHere, visibleIn } from '../../../shared/adventures';
-import { BUILTIN, entryTitle, parseEntry, searchKey, type Entry } from '../../../shared/compendium';
+import { BUILTIN, OVERRIDES, entryTitle, parseEntry, searchKey, type Entry } from '../../../shared/compendium';
 import { allFiles, dirname, LIBRARY, roleFolders, roleNames } from '../../../shared/vault';
 
 export interface EntryItem {
@@ -106,12 +106,31 @@ export async function loadEntries() {
 }
 
 const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
-const builtinShown = () => {
+// Правка встроенной записи: какую заменяет (путь встроенной) или null.
+export function overrideOf(e: EntryItem): string | null {
+  const v = e.entry.fields[OVERRIDES];
+  return typeof v === 'string' && v ? BUILTIN + v : null;
+}
+const editionShown = (builtinPath: string) => {
   const ed = srd.edition;
-  return ed === 'none' ? [] : ed === 'all' ? book.builtin : book.builtin.filter((e) => e.path.startsWith(`${BUILTIN}${ed}/`));
+  return ed === 'all' || (ed !== 'none' && builtinPath.startsWith(`${BUILTIN}${ed}/`));
+};
+// Своя запись: правка встроенной видна вместе с её редакцией и получает её английское название и подпись места.
+function ownShown(list: EntryItem[]): EntryItem[] {
+  return list.flatMap((e) => {
+    const over = overrideOf(e);
+    if (!over) return [e];
+    if (!editionShown(over)) return [];
+    const orig = book.builtin.find((b) => b.path === over);
+    return [{ ...e, en: e.en ?? orig?.en, group: `${e.group} · правка ${orig?.group ?? 'SRD'}`, order: 3 }];
+  });
+}
+const builtinShown = () => {
+  const replaced = new Set([...book.vault, ...book.library].map(overrideOf).filter(Boolean));
+  return book.builtin.filter((e) => editionShown(e.path) && !replaced.has(e.path));
 };
 export const allEntries = () =>
-  [...book.vault, ...book.library, ...builtinShown()].sort((a, b) => a.order - b.order || collator.compare(a.entry.title, b.entry.title));
+  [...ownShown(book.vault), ...ownShown(book.library), ...builtinShown()].sort((a, b) => a.order - b.order || collator.compare(a.entry.title, b.entry.title));
 
 // [[Ссылка]] на запись: по названию (или английскому названию встроенной), без регистра и «ё»; запись приключения
 // важнее общей, общая — библиотечной, своя — встроенной. Встроенная ищется и в скрытой редакции (ссылка не должна
@@ -133,7 +152,11 @@ export function resolveEntry(names: string | string[]): EntryItem | null {
 export const spellNames = () =>
   [...book.vault, ...book.library, ...book.builtin].filter((e) => e.entry.type === 'spell').flatMap((e) => [e.entry.title, ...altNames(e)]);
 // Запись по пути, в том числе встроенная из скрытой редакции.
-export const entryAt = (path: string) => allEntries().find((e) => e.path === path) ?? book.builtin.find((e) => e.path === path);
+// Встроенная, которую заменила правка, — это правка.
+export function entryAt(path: string): EntryItem | undefined {
+  const all = allEntries();
+  return all.find((e) => e.path === path) ?? all.find((e) => overrideOf(e) === path) ?? book.builtin.find((e) => e.path === path);
+}
 
 // Поиск: по названию, меткам и тексту; совпадение в названии — выше.
 export function search(list: EntryItem[], query: string): EntryItem[] {
