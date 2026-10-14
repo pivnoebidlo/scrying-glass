@@ -25,6 +25,7 @@
     "electron": "^44.7.0",
     "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",
+    "fflate": "^0.8.2",
     "svelte": "^5.57.2",
     "svelte-check": "^4.7.6",
     "typescript": "^6.0.3",

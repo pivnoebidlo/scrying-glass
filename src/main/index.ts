@@ -7,6 +7,8 @@ import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/mo
 import type { AppState } from '../shared/types';
 import { allFiles, LIBRARY, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
+import { folderFiles, freeFolder, PACK_EXT, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
+import { randomUUID } from 'node:crypto';
 import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
@@ -374,6 +376,137 @@ ipcMain.handle('backups:restore', async (_event, { id, vault, library }: { id: s
   }
   if (toVault && vaultRoot) await enqueue('vault', () => openVault(vaultRoot));
   return n;
+});
+
+// ---------- Приключение одним файлом (main/packs.ts) ----------
+const inAdventure = (adv: string, p: string) => p === adv || p.startsWith(adv + '/');
+type AnyRec = Record<string, unknown>;
+
+ipcMain.handle('packs:export', async (_event, adventure: string) => {
+  const folder = resolveInVault(adventure);
+  if (!vaultRoot || !folder || !isDir(folder)) return null;
+  const win = getControlWindow();
+  const all = folderFiles(folder, true);
+  const mb = (n: number) => `${Math.round(n / 1024 / 1024)} МБ`;
+  const musicSize = all.filter((f) => /\.(mp3|ogg|wav|flac|m4a)$/i.test(f.rel)).reduce((n, f) => n + f.size, 0);
+  const ask = await (win ? dialog.showMessageBox(win, {
+    type: 'question',
+    message: `Экспорт приключения «${adventure}»`,
+    detail: `В файл войдут папка приключения со всеми картинками, записками, таблицами и карточками, его сцены, карты (туман, метки, жетоны), заготовки боёв и общие карточки, на которые они ссылаются. Без музыки — ${mb(all.reduce((n, f) => n + f.size, 0) - musicSize)}.`,
+    checkboxLabel: musicSize ? `Вместе с музыкой (ещё ${mb(musicSize)})` : undefined,
+    checkboxChecked: false,
+    buttons: ['Экспортировать…', 'Отмена'],
+    defaultId: 0,
+    cancelId: 1,
+  }) : Promise.resolve({ response: 0, checkboxChecked: false }));
+  if (ask.response !== 0) return null;
+  const save = await dialog.showSaveDialog(win!, {
+    title: 'Сохранить приключение',
+    defaultPath: path.join(app.getPath('documents'), `${adventure.replace(/[/\\:*?"<>|]/g, '_')}.${PACK_EXT}`),
+    filters: [{ name: 'Приключение Scrying Glass', extensions: [PACK_EXT] }],
+  });
+  if (save.canceled || !save.filePath) return null;
+
+  const s = state as unknown as AnyRec & { scenes: { scenes: AnyRec[] }; maps: { maps: Record<string, AnyRec> }; initiative: { encounters: AnyRec[] }; order: { groups: Record<string, string[]> }; portraits: { names: Record<string, string> } };
+  const pick = <T,>(o: Record<string, T>, keep: (k: string) => boolean) => Object.fromEntries(Object.entries(o).filter(([k]) => keep(k)));
+  const slices: PackSlices = {
+    scenes: s.scenes.scenes.filter((x) => x['adventure'] === adventure),
+    maps: pick(s.maps.maps, (k) => inAdventure(adventure, k)),
+    encounters: s.initiative.encounters.filter((x) => x['adventure'] === adventure),
+    order: pick(s.order.groups, (k) => inAdventure(adventure, k) || inAdventure(`monsters:${adventure}`, k)),
+    names: pick(s.portraits.names, (k) => inAdventure(adventure, k)),
+  };
+  // Общие карточки, на которые ссылаются заготовки и метки карт приключения.
+  const refs = new Set<string>();
+  const collect = (v: unknown): void => {
+    if (Array.isArray(v)) v.forEach(collect);
+    else if (v && typeof v === 'object') {
+      const o = v as AnyRec;
+      if (o['scope'] === 'library' && typeof o['id'] === 'string') refs.add(o['id']);
+      Object.values(o).forEach(collect);
+    }
+  };
+  collect([slices.encounters, slices.maps]);
+  const lib = libraryPath();
+  const library: LibraryCard[] = [];
+  for (const id of refs) {
+    const card = getCard({ scope: 'library', id }) as (AnyRec & { portraits?: string[] }) | null;
+    if (!card || !lib) continue;
+    library.push({ id, json: card, images: (card.portraits ?? []).map((rel) => ({ rel, abs: path.join(lib, ...rel.split('/')) })) });
+  }
+  await writePack(save.filePath, {
+    folder,
+    manifest: { scryingGlass: 'adventure', version: 1, name: adventure, exported: Date.now(), app: app.getVersion(), music: !!ask.checkboxChecked },
+    slices,
+    library,
+  });
+  shell.showItemInFolder(save.filePath);
+  return save.filePath;
+});
+
+ipcMain.handle('packs:import', async () => {
+  if (!vaultRoot) return null;
+  const root = vaultRoot;
+  const win = getControlWindow();
+  const pickFile = await dialog.showOpenDialog(win!, {
+    title: 'Импорт приключения',
+    filters: [{ name: 'Приключение Scrying Glass', extensions: [PACK_EXT] }],
+    properties: ['openFile'],
+  });
+  const file = pickFile.filePaths[0];
+  if (pickFile.canceled || !file) return null;
+  const tmp = path.join(root, DATA_DIR, `import-${randomUUID().slice(0, 8)}`);
+  try {
+    const pack = await readPack(file, tmp);
+    snapshotNow('manual', true);
+    const from = pack.manifest.name;
+    const name = freeFolder(root, from);
+    const src = path.join(tmp, 'files', from);
+    if (isDir(src)) fs.renameSync(src, path.join(root, name));
+    else fs.mkdirSync(path.join(root, name), { recursive: true });
+
+    // Общие карточки — в библиотеку, если такой ещё нет (свою не перезаписываем), с картинками.
+    const lib = libraryPath();
+    let cards = 0;
+    if (lib) {
+      for (const c of pack.cards) {
+        if (getCard({ scope: 'library', id: c.id })) continue;
+        writeJsonAtomic(path.join(lib, 'cards', `${c.id}.json`), c.json);
+        for (const rel of ((c.json as { portraits?: string[] })?.portraits ?? [])) {
+          const from = path.join(tmp, 'library', ...rel.split('/'));
+          const to = path.join(lib, ...rel.split('/'));
+          if (fs.existsSync(from) && !fs.existsSync(to)) {
+            fs.mkdirSync(path.dirname(to), { recursive: true });
+            fs.copyFileSync(from, to);
+          }
+        }
+        cards++;
+      }
+      if (cards) setLibrary(lib);
+    }
+
+    // Состояние приключения: пути — под новое название папки, сцены и заготовки — с новыми id.
+    const sl = remap(pack.slices, from, name);
+    const fresh = <T extends AnyRec>(x: T) => ({ ...x, id: randomUUID() });
+    const scenes = (sl.scenes as AnyRec[]).map(fresh);
+    const encounters = (sl.encounters as (AnyRec & { combatants?: AnyRec[] })[]).map((e) => ({ ...fresh(e), combatants: (e.combatants ?? []).map(fresh) }));
+    const merge = (id: string, fn: (s: AnyRec) => AnyRec) =>
+      enqueue(id, async () => {
+        stateById[id] = fn(stateById[id] as AnyRec);
+      });
+    await merge('scenes', (s) => ({ ...s, scenes: [...(s['scenes'] as AnyRec[]), ...scenes] }));
+    await merge('maps', (s) => ({ ...s, maps: { ...(s['maps'] as AnyRec), ...sl.maps } }));
+    await merge('initiative', (s) => ({ ...s, encounters: [...(s['encounters'] as AnyRec[]), ...encounters] }));
+    await merge('order', (s) => ({ ...s, groups: { ...(s['groups'] as AnyRec), ...sl.order } }));
+    await merge('portraits', (s) => ({ ...s, names: { ...(s['names'] as AnyRec), ...sl.names } }));
+    saveVault();
+    await enqueue('vault', async () => rescanVault());
+    await runAction('adventures', 'mark', { path: name });
+    await runAction('adventures', 'select', { path: name });
+    return { name, renamed: name !== from, scenes: scenes.length, encounters: encounters.length, cards };
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
 });
 
 // Небольшие данные инструментов, общие для всех кампаний: JSON-файлы в библиотеке (только из списка).

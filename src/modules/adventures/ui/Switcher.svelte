@@ -1,6 +1,7 @@
-<!-- Над боковой панелью: текущее приключение, выбор другого и создание нового. -->
+<!-- Над боковой панелью: текущее приключение, выбор другого и создание нового; экспорт и импорт приключения
+     одним файлом (.sgpack). -->
 <script lang="ts">
-  import { Check, ChevronsUpDown, Map, Plus } from '@lucide/svelte';
+  import { Check, ChevronsUpDown, Download, Map, Plus, Upload } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
 
@@ -15,6 +16,41 @@
   function select(path: string | null) {
     dispatch('adventures', 'select', { path });
     open = false;
+  }
+
+  // Экспорт и импорт идут долго (картинки, музыка): показываем, что работа идёт, и чем закончилась.
+  let busy = $state('');
+  let done = $state('');
+  function flash(text: string) {
+    done = text;
+    setTimeout(() => (done = ''), 6000);
+  }
+
+  async function exportCurrent() {
+    if (!ms.current) return;
+    open = false;
+    busy = `Экспорт «${ms.current}»…`;
+    try {
+      const file = await window.api.exportAdventure(ms.current);
+      if (file) flash('Приключение сохранено в файл.');
+    } catch (e) {
+      flash(`Не удалось: ${String(e)}`);
+    } finally {
+      busy = '';
+    }
+  }
+
+  async function importPack() {
+    open = false;
+    busy = 'Импорт приключения…';
+    try {
+      const r = await window.api.importAdventure();
+      if (r) flash(`Импортировано «${r.name}»${r.renamed ? ' (такое название уже было)' : ''}: сцен ${r.scenes}, заготовок боёв ${r.encounters}${r.cards ? `, общих карточек ${r.cards}` : ''}.`);
+    } catch (e) {
+      flash(`Не удалось: ${String(e)}`);
+    } finally {
+      busy = '';
+    }
   }
 
   async function create() {
@@ -59,11 +95,24 @@
         <button onclick={() => (creating = true)}><span class="mark"><Plus size={13} /></span> Создать приключение…</button>
       {/if}
       <p class="hint faint">Сделать приключением существующую папку можно во вкладке «Файлы».</p>
+      <div class="sep"></div>
+      {#if ms.current}
+        <button onclick={exportCurrent} title="Папка приключения, его сцены, карты, заготовки боёв и нужные общие карточки — одним файлом">
+          <span class="mark"><Download size={13} /></span> Экспорт «{ms.current}»…
+        </button>
+      {/if}
+      <button onclick={importPack} title="Добавить приключение из файла .sgpack"><span class="mark"><Upload size={13} /></span> Импорт приключения…</button>
     </div>
   {/if}
+  {#if busy || done}<p class="status">{busy || done}</p>{/if}
 </div>
 
 <style>
+  .status {
+    margin: 6px 4px 0;
+    color: var(--accent);
+    font-size: 12px;
+  }
   .switcher {
     position: relative;
     padding: 8px 8px 0;

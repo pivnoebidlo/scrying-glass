@@ -78,6 +78,10 @@ export interface Api {
   onTablesChanged(cb: () => void): void;
   writeTable(path: string, text: string): Promise<boolean>;
   createTable(folder: string, title: string, text: string): Promise<string | null>;
+  // Приключение одним файлом (.sgpack, main/packs.ts): экспорт спросит про музыку и куда сохранить (путь или null),
+  // импорт — какой файл (что вышло или null — отменили).
+  exportAdventure(name: string): Promise<string | null>;
+  importAdventure(): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number } | null>;
   // Снимки данных приложения (main/backups.ts): список (новые сверху), сделать сейчас, восстановить (спросит
   // подтверждение; число записанных файлов, 0 — отменили), открыть папку снимков.
   listBackups(): Promise<BackupInfo[]>;

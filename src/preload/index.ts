@@ -37,6 +37,8 @@ const api: Api = {
   onTablesChanged: (cb) => { ipcRenderer.on('tables:changed', () => cb()); },
   writeTable: (path, text) => ipcRenderer.invoke('tables:write', { path, text }),
   createTable: (folder, title, text) => ipcRenderer.invoke('tables:create', { folder, title, text }),
+  exportAdventure: (name) => ipcRenderer.invoke('packs:export', name),
+  importAdventure: () => ipcRenderer.invoke('packs:import'),
   listBackups: () => ipcRenderer.invoke('backups:list'),
   createBackup: () => ipcRenderer.invoke('backups:create'),
   restoreBackup: (id, parts) => ipcRenderer.invoke('backups:restore', { id, ...parts }),
