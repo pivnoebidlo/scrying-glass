@@ -1,7 +1,10 @@
 <!-- Над боковой панелью: текущее приключение, выбор другого и создание нового; экспорт и импорт приключения
      одним файлом (.sgpack). -->
 <script lang="ts">
-  import { Check, ChevronsUpDown, Download, Map, Plus, Upload } from '@lucide/svelte';
+  import { Check, ChevronsUpDown, Download, Map, Plus, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
+  import { roleFolderHere, visibleIn } from '../../../shared/adventures';
+  import { roleNames } from '../../../shared/vault';
+  import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
 
@@ -53,6 +56,27 @@
     }
   }
 
+  // Персонажи игроков текущего приключения (или всего хранилища) — одним файлом карточек с портретами.
+  async function exportParty() {
+    open = false;
+    await connectCards();
+    const party = bestiary.all.filter((c) => c.kind === 'character' && c.ref.scope === 'vault' && c.folder !== undefined && visibleIn(ms, c.folder));
+    if (!party.length) return flash('Персонажей игроков здесь нет: их листы лежат в папках партии.');
+    const n = await window.api.exportCards({ refs: party.map((c) => $state.snapshot(c.ref)), name: `Партия — ${ms.current ?? app.vault.name}` });
+    if (n) flash(`Экспортировано персонажей: ${n}.`);
+  }
+
+  // Карточки персонажей (файл экспорта или выгрузка Long Story Short) — в папку партии текущего приключения.
+  async function importParty() {
+    open = false;
+    const tree = app.vault.tree;
+    const here = tree ? roleFolderHere(tree, ms, 'party') : null;
+    const name = roleNames().party[0]!;
+    const folder = here?.path ?? (ms.current ? `${ms.current}/${name}` : name);
+    const msg = await bestiary.importFiles({ scope: 'vault', folder });
+    if (msg) flash(msg.replace(/\n/g, '; '));
+  }
+
   async function create() {
     if (!name.trim()) return;
     await dispatch('adventures', 'create', { name });
@@ -102,6 +126,11 @@
         </button>
       {/if}
       <button onclick={importPack} title="Добавить приключение из файла .sgpack"><span class="mark"><Upload size={13} /></span> Импорт приключения…</button>
+      <div class="sep"></div>
+      <button onclick={exportParty} title="Листы персонажей игроков с портретами — одним файлом"><span class="mark"><UsersRound size={13} /></span> Экспорт партии…</button>
+      <button onclick={importParty} title="Файл карточек или выгрузка Long Story Short — в папку партии приключения">
+        <span class="mark"><UserRoundPlus size={13} /></span> Импорт персонажей…
+      </button>
     </div>
   {/if}
   {#if busy || done}<p class="status">{busy || done}</p>{/if}

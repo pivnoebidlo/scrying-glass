@@ -161,7 +161,8 @@ Electron-приложение для мастера D&D: окно управле
   Полная копия одним файлом: `main/archive.ts` (.sgbackup: settings.json, library/… целиком с `tables/.builtin.json`,
   vault/… — структура папок всегда, файлы приложения всегда, картинки и музыка по `media`), IPC `archive:*`;
   восстановление — в текущее хранилище или выбранную папку (`placeFiles`, затем `openVault`), из настроек — только
-  роли папок. ZIP потоком — общий `main/zip.ts` (`writeZip`, `readZip` с проверкой путей, `folderFiles`, `folderDirs`).
+  роли папок. Партия: «Экспорт партии…» / «Импорт персонажей…» в `Switcher.svelte` — через `exportCards` и
+  `bestiary.importFiles` в папку партии приключения. ZIP потоком — общий `main/zip.ts` (`writeZip`, `readZip` с проверкой путей, `folderFiles`, `folderDirs`).
 - Порядок плиток, заданный перетаскиванием («Персонажи», «Фоны», «Раздатка», «Файлы»): модуль `order` (ключ — группа: путь папки
   или `monsters:<папка>`, значение — id плиток), `applyOrder` в `shared/order.ts`, перетаскивание — действие
   `use:sortable` (`renderer/lib/sortable.ts`), только внутри группы. «Файлы» пишут в те же ключи (путь папки,
