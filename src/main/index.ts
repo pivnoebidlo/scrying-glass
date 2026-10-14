@@ -5,7 +5,7 @@ import * as fs from 'node:fs';
 import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
-import { setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
+import { LIBRARY, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
 import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
@@ -14,7 +14,7 @@ import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
 import { createNote, readNote, renameNote, writeNote } from './notes';
-import { createTable, readTable, writeTable } from './tables';
+import { createTable, listLibraryTables, readTable, seedLibraryTables, tableResolver, watchLibraryTables, writeTable } from './tables';
 import type { Note } from '../shared/notes';
 import {
   cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
@@ -271,21 +271,51 @@ ipcMain.handle('notes:create', async (_event, { folder, title, note }: { folder:
   if (rel) await afterNoteWrite();
   return rel;
 });
-// Таблицы случайностей: Markdown-файлы в папках таблиц.
-ipcMain.handle('tables:read', (_event, rel: string) => readTable(resolveInVault, rel));
+// Таблицы случайностей: Markdown-файлы в папках таблиц хранилища и в библиотеке («library:tables/…»).
+const resolveTable = tableResolver(resolveInVault, resolveInLibrary);
+const libraryTables = () => libraryPath();
+// После записи: таблица хранилища — пересканировать хранилище; библиотеки — окна перечитают по tables:changed.
+const afterTableWrite = async (rel: string) => {
+  if (rel.startsWith(LIBRARY)) for (const win of BrowserWindow.getAllWindows()) win.webContents.send('tables:changed');
+  else await afterNoteWrite();
+};
+ipcMain.handle('tables:read', (_event, rel: string) => readTable(resolveTable, rel));
+ipcMain.handle('tables:listLibrary', () => listLibraryTables(libraryTables()));
+ipcMain.handle('tables:seed', (_event, { files, restore }: { files: { name: string; text: string }[]; restore?: boolean }) =>
+  seedLibraryTables(libraryTables(), files, restore)
+);
 ipcMain.handle('tables:write', async (_event, { path: rel, text }: { path: string; text: string }) => {
-  const ok = writeTable(resolveInVault, rel, text);
-  if (ok) await afterNoteWrite();
+  const ok = writeTable(resolveTable, rel, text);
+  if (ok) await afterTableWrite(rel);
   return ok;
 });
 ipcMain.handle('tables:create', async (_event, { folder, title, text }: { folder: string; title: string; text: string }) => {
-  const rel = createTable(resolveInVault, folder, title, text);
-  if (rel) await afterNoteWrite();
+  const rel = createTable(resolveTable, folder, title, text);
+  if (rel) await afterTableWrite(rel);
   return rel;
+});
+// Таблица библиотеки — в Корзину, с подтверждением (таблицы хранилища удаляет действие vault/trash).
+ipcMain.handle('tables:trash', async (_event, rel: string) => {
+  const abs = rel.startsWith(LIBRARY) ? resolveTable(rel) : null;
+  if (!abs || !fs.existsSync(abs)) return false;
+  const win = getControlWindow();
+  const opts = {
+    type: 'warning' as const,
+    message: `Переместить «${path.basename(abs)}» в Корзину?`,
+    detail: 'Это общая таблица библиотеки: она пропадёт во всех кампаниях. Файл можно будет вернуть из Корзины.',
+    buttons: ['В Корзину', 'Отмена'],
+    defaultId: 0,
+    cancelId: 1,
+  };
+  const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
+  if (res.response !== 0) return false;
+  await shell.trashItem(abs);
+  await afterTableWrite(rel);
+  return true;
 });
 // Открыть файл в программе по умолчанию (таблицу — например, в Obsidian или текстовом редакторе).
 ipcMain.handle('vault:openFile', async (_event, rel: string) => {
-  const abs = resolveInVault(rel);
+  const abs = rel.startsWith(LIBRARY) ? resolveTable(rel) : resolveInVault(rel);
   if (abs) await shell.openPath(abs);
 });
 
@@ -431,6 +461,8 @@ ipcMain.handle('cards:chooseLibrary', async (_event, { reset }: { reset?: boolea
   settings = { ...settings, library: dir };
   writeJsonAtomic(settingsFile(), settings);
   setLibrary(dir ?? defaultLibrary());
+  watchLibraryTables(libraryPath());
+  for (const win of BrowserWindow.getAllWindows()) win.webContents.send('tables:changed');
 });
 
 ipcMain.handle('displays:list', () => listDisplays());
@@ -444,6 +476,7 @@ app.whenReady().then(async () => {
   loadSettings();
   stateById['vault'] = vaultState();
   initCards(settings.library ?? defaultLibrary());
+  watchLibraryTables(libraryPath());
 
   // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>,
   // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>. ?w=<ширина> — миниатюра.

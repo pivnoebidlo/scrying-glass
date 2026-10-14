@@ -57,8 +57,15 @@ export interface Api {
   // Новое название = новое имя файла. Новый путь или null.
   renameNote(path: string, title: string): Promise<string | null>;
 
-  // Таблицы случайностей (shared/tables.ts): .md / .txt в папках таблиц.
+  // Таблицы случайностей (shared/tables.ts): .md / .txt в папках таблиц хранилища или в библиотеке
+  // (пути «library:tables/…» — общие для всех кампаний).
   readTable(path: string): Promise<string | null>;
+  listLibraryTables(): Promise<{ path: string; text: string }[]>;
+  // Встроенные таблицы — в библиотеку (только новые; restore — и удалённые). Сколько файлов записано.
+  seedLibraryTables(files: { name: string; text: string }[], restore?: boolean): Promise<number>;
+  // Таблица библиотеки — в Корзину (спросит подтверждение). true — удалена.
+  trashLibraryTable(path: string): Promise<boolean>;
+  onTablesChanged(cb: () => void): void;
   writeTable(path: string, text: string): Promise<boolean>;
   createTable(folder: string, title: string, text: string): Promise<string | null>;
   // Открыть файл хранилища в программе по умолчанию.

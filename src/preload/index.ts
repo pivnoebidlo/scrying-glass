@@ -31,6 +31,10 @@ const api: Api = {
   renameNote: (path, title) => ipcRenderer.invoke('notes:rename', { path, title }),
 
   readTable: (path) => ipcRenderer.invoke('tables:read', path),
+  listLibraryTables: () => ipcRenderer.invoke('tables:listLibrary'),
+  seedLibraryTables: (files, restore) => ipcRenderer.invoke('tables:seed', { files, restore }),
+  trashLibraryTable: (path) => ipcRenderer.invoke('tables:trash', path),
+  onTablesChanged: (cb) => { ipcRenderer.on('tables:changed', () => cb()); },
   writeTable: (path, text) => ipcRenderer.invoke('tables:write', { path, text }),
   createTable: (folder, title, text) => ipcRenderer.invoke('tables:create', { folder, title, text }),
   openFile: (path) => ipcRenderer.invoke('vault:openFile', path),

@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { describe, expect, it, vi } from 'vitest';
 import { expand, parseTable, rollTable, tableDie, tableKey } from '../src/shared/tables';
+import { createTable, isTablePath, listLibraryTables, readTable, seedLibraryTables, tableResolver, writeTable } from '../src/main/tables';
+
+// Ядро ходит в Electron только за окнами (рассылка событий) — в тестах окон нет.
+vi.mock('electron', () => ({ BrowserWindow: { getAllWindows: () => [] } }));
 
 // Предсказуемая «случайность»: значения по кругу.
 const seq = (...xs: number[]) => {
@@ -58,9 +65,7 @@ describe('броски по таблицам', () => {
   });
 });
 
-describe('встроенные таблицы', async () => {
-  const fs = await import('node:fs');
-  const path = await import('node:path');
+describe('встроенные таблицы', () => {
   const dir = path.join(__dirname, '../src/modules/tools/tables/builtin');
   const list = fs.readdirSync(dir).map((f) => parseTable(fs.readFileSync(path.join(dir, f), 'utf8'), f.replace(/\.md$/, '')));
   const resolve = (n: string) => list.find((t) => tableKey(t.title) === tableKey(n)) ?? null;
@@ -76,6 +81,44 @@ describe('встроенные таблицы', async () => {
         for (const m of e.text.matchAll(/\[\[([^\]|]+)/g)) expect(resolve(m[1]!), `${t.title}: ${m[1]}`).not.toBeNull();
       }
       for (let i = 0; i < 20; i++) expect(rollTable(t, { resolve })!.text, t.title).not.toMatch(/[[\]{}]/);
+    }
+  });
+});
+
+describe('таблицы в библиотеке', () => {
+  it('встроенные кладутся один раз: удалённая сама не возвращается, «вернуть» — возвращает', () => {
+    const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-lib-'));
+    try {
+      const files = [{ name: 'Погода', text: '- ясно' }, { name: 'Слухи', text: '- слух' }];
+      expect(seedLibraryTables(lib, files)).toBe(2);
+      fs.rmSync(path.join(lib, 'tables', 'Погода.md'));
+      expect(seedLibraryTables(lib, files)).toBe(0);
+      expect(listLibraryTables(lib).map((t) => t.path)).toEqual(['library:tables/Слухи.md']);
+      // Новая встроенная таблица в следующей версии приложения — кладётся.
+      expect(seedLibraryTables(lib, [...files, { name: 'Имена', text: '- Борин' }])).toBe(1);
+      expect(seedLibraryTables(lib, files, true)).toBe(1);
+      expect(fs.existsSync(path.join(lib, 'tables', 'Погода.md'))).toBe(true);
+    } finally {
+      fs.rmSync(lib, { recursive: true, force: true });
+    }
+  });
+
+  it('пути таблиц: хранилище — только в папках таблиц, библиотека — только в tables/', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-tables-'));
+    try {
+      const resolve = tableResolver((r) => path.join(root, 'vault', r), (r) => path.join(root, 'lib', r));
+      expect(isTablePath('Страд/таблицы/Слухи.md')).toBe(true);
+      expect(isTablePath('Страд/заметки/Слухи.md')).toBe(false);
+      expect(isTablePath('library:tables/Слухи.md')).toBe(true);
+      expect(isTablePath('library:cards/x.md')).toBe(false);
+      expect(createTable(resolve, 'Страд/заметки', 'Т', '- а')).toBeNull();
+      const v = createTable(resolve, 'Страд/таблицы', 'Слухи: новые', '- а')!;
+      const l = createTable(resolve, 'library:tables', 'Слухи', '- б')!;
+      expect([v, l]).toEqual(['Страд/таблицы/Слухи новые.md', 'library:tables/Слухи.md']);
+      expect(writeTable(resolve, l, '- в')).toBe(true);
+      expect(readTable(resolve, l)).toBe('- в');
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
     }
   });
 });

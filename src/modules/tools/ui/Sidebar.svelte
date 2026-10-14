@@ -1,7 +1,7 @@
 <!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
 <script lang="ts">
   import { Dices, FileText, ScrollText, Table2 } from '@lucide/svelte';
-  import { BUILTIN, tables } from '../tables/store.svelte';
+  import { tables } from '../tables/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
   import { noteGroups } from './library';
@@ -26,11 +26,11 @@
   <button class="item" class:active={ui.tool === 'tables' && !ui.table} onclick={() => ((ui.tool = 'tables'), (ui.table = null))}>
     <Dices size={14} />
     <span class="name">Таблицы случайностей</span>
-    <span class="count">{tables.vault.length + BUILTIN.length}</span>
+    <span class="count">{tables.vault.length + tables.library.length || ''}</span>
   </button>
   {#if ui.tool === 'tables'}
-    {#each [...tables.vault, ...BUILTIN] as t (t.id)}
-      <button class="item sub" class:active={ui.table === t.id} title={t.path ?? 'встроенная'} onclick={() => (ui.table = t.id)}>
+    {#each [...tables.vault, ...tables.library] as t (t.id)}
+      <button class="item sub" class:active={ui.table === t.id} title={t.path} onclick={() => (ui.table = t.id)}>
         <Table2 size={13} />
         <span class="name">{t.table.title}</span>
       </button>

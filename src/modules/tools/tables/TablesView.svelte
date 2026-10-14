@@ -1,14 +1,14 @@
 <!-- Таблицы случайностей: список (свои — из папок таблиц, и встроенные) или открытая таблица. -->
 <script lang="ts">
-  import { FilePlus2 } from '@lucide/svelte';
+  import { RotateCcw } from '@lucide/svelte';
+  import CopyToMenu from '../ui/CopyToMenu.svelte';
+  import { tablesFolder } from './place';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
-  import { roleFolderHere } from '../../../shared/adventures';
   import { tableDie } from '../../../shared/tables';
-  import { roleNames } from '../../../shared/vault';
   import { ui } from '../ui/ui.svelte';
-  import { BUILTIN, loadTables, tables, type TableItem } from './store.svelte';
+  import { loadTables, restoreBuiltins, tables, type TableItem } from './store.svelte';
   import TableView from './TableView.svelte';
 
   // Перечитываем, когда меняется дерево хранилища или ядро сообщило о новых файлах.
@@ -18,10 +18,11 @@
     void tree;
     void adv;
     void notes.rev;
+    void tables.rev;
     loadTables();
   });
 
-  const all = $derived([...tables.vault, ...BUILTIN]);
+  const all = $derived([...tables.vault, ...tables.library]);
   const open = $derived(ui.table ? all.find((t) => t.id === ui.table) : undefined);
   const groups = $derived.by(() => {
     const m = new Map<string, TableItem[]>();
@@ -31,13 +32,16 @@
 
   const TEMPLATE = '# Новая таблица\n\nПояснение (необязательно).\n\n- Первый вариант\n- Второй вариант\n- 2× Вариант, который выпадает вдвое чаще\n';
 
-  async function create() {
-    const app = store.state;
-    const here = app.vault.tree ? roleFolderHere(app.vault.tree, app.adventures, 'tables') : null;
-    const name = roleNames().tables[0]!;
-    const folder = here?.path ?? (app.adventures.current ? `${app.adventures.current}/${name}` : name);
-    const path = await window.api.createTable(folder, 'Новая таблица', TEMPLATE);
+  async function create(place: string | null) {
+    const path = await window.api.createTable(tablesFolder(place), 'Новая таблица', TEMPLATE);
     if (path) ui.table = path;
+  }
+
+  let restored = $state('');
+  async function restore() {
+    const n = await restoreBuiltins();
+    restored = n ? `Вернулось таблиц: ${n}` : 'Все встроенные таблицы на месте';
+    setTimeout(() => (restored = ''), 3000);
   }
 </script>
 
@@ -50,12 +54,13 @@
     <header class="head">
       <h2>Таблицы случайностей</h2>
       <div class="spacer"></div>
-      <button class="btn primary" onclick={create}><FilePlus2 size={14} /> Новая таблица</button>
+      <CopyToMenu label="Новая таблица" title="Где создать: в приключении, в общем или в библиотеке (для всех кампаний)" library primary onpick={create} />
     </header>
     <p class="faint intro">
       Слухи, погода, события в пути, имена. Своя таблица — обычный Markdown-файл в папке <RoleFolderNames role="tables" />:
       её удобно писать и в Obsidian. Строки списка — варианты, «1-4:» — диапазоны, [[Другая таблица]] — бросок по
-      другой таблице, {'{2d6}'} — кубы, {'{меч|топор}'} — один из вариантов.
+      другой таблице, {'{2d6}'} — кубы, {'{меч|топор}'} — один из вариантов. Таблицы библиотеки общие для всех
+      кампаний; встроенные таблицы лежат там же — их можно дополнять своими вариантами.
     </p>
     {#each groups as [g, list] (g)}
       <section>
@@ -71,6 +76,10 @@
         </div>
       </section>
     {/each}
+    <footer class="foot">
+      <button class="btn" title="Положить в библиотеку встроенные таблицы, которые были удалены" onclick={restore}><RotateCcw size={14} /> Вернуть встроенные таблицы</button>
+      {#if restored}<span class="faint">{restored}</span>{/if}
+    </footer>
   </div>
 {/if}
 
@@ -105,6 +114,12 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 8px;
+  }
+  .foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 24px;
   }
   .card {
     display: flex;

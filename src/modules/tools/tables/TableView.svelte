@@ -1,17 +1,17 @@
 <!-- Одна таблица: бросок (пробел или кнопка), результаты сверху, все варианты ниже (щелчок — выбрать вручную).
-     Свою таблицу можно править здесь же, открыть в другой программе (Obsidian) или удалить в Корзину; любую —
-     скопировать в папку таблиц любого приключения или в общую. -->
+     Таблицу можно править здесь же, открыть в другой программе (Obsidian), удалить в Корзину или скопировать
+     в приключение, в общие таблицы хранилища или в библиотеку (для всех кампаний). -->
 <script lang="ts">
   import { ChevronLeft, Copy, Dices, ExternalLink, Pencil, Trash2 } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { inline } from '../../../renderer/lib/markdown';
   import { store } from '../../../renderer/lib/store.svelte';
-  import { roleFolderHere } from '../../../shared/adventures';
   import { tableDie } from '../../../shared/tables';
-  import { allFiles, roleNames } from '../../../shared/vault';
+  import { allFiles } from '../../../shared/vault';
+  import { tablesFolder, visibleHere } from './place';
   import CopyToMenu from '../ui/CopyToMenu.svelte';
   import { ui } from '../ui/ui.svelte';
-  import { history, pick, roll, type TableItem } from './store.svelte';
+  import { history, isLibraryTable, pick, roll, tables, type TableItem } from './store.svelte';
 
   let { item }: { item: TableItem } = $props();
 
@@ -29,33 +29,34 @@
   }
 
   async function save() {
-    if (!item.path) return;
     await window.api.writeTable(item.path, draft);
     editing = false;
   }
 
   let status = $state('');
 
-  // Копия в папку таблиц приключения target (null — в корень хранилища); папки нет — создаётся.
-  async function copyTo(target: string | null) {
-    const app = store.state;
-    const here = app.vault.tree ? roleFolderHere(app.vault.tree, { ...app.adventures, current: target }, 'tables') : null;
-    const name = roleNames().tables[0]!;
-    const folder = here?.path ?? (target ? `${target}/${name}` : name);
-    const path = await window.api.createTable(folder, item.table.title, item.text);
+  // Копия в папку таблиц места (приключение, «Общее» или библиотека); нет папки — создаётся.
+  async function copyTo(place: string | null) {
+    const path = await window.api.createTable(tablesFolder(place), item.table.title, item.text);
     if (!path) return;
-    // Видно здесь (текущее приключение или общее) — открываем копию; иначе — просто сообщаем, куда легла.
-    if (target === app.adventures.current || target === null || app.adventures.current === null) ui.table = path;
+    // Видно здесь — открываем копию; иначе — сообщаем, куда легла.
+    if (visibleHere(place)) ui.table = path;
     else {
-      status = `Копия — в «${target}»: её видно, когда это приключение выбрано.`;
+      status = `Копия — в «${place}»: её видно, когда это приключение выбрано.`;
       setTimeout(() => (status = ''), 4000);
     }
   }
 
-  // В Корзину (действие само спросит подтверждение).
+  // В Корзину (спросит подтверждение). Таблицу библиотеки удаляет ядро, таблицу хранилища — действие vault/trash.
   async function trash() {
-    if (!item.path) return;
     const p = item.path;
+    if (isLibraryTable(p)) {
+      if (await window.api.trashLibraryTable(p)) {
+        ui.table = null;
+        tables.rev++;
+      }
+      return;
+    }
     const s = await dispatch('vault', 'trash', { paths: [p] });
     if (!s.vault.tree || !allFiles(s.vault.tree).some((f) => f.path === p)) ui.table = null;
   }
@@ -78,19 +79,11 @@
   <header class="head">
     <button class="icon-btn" title="Ко всем таблицам" onclick={() => (ui.table = null)}><ChevronLeft size={16} /></button>
     <h2>{item.table.title}</h2>
-    <span class="faint meta">{item.path ? item.path : 'встроенная'} · {item.table.entries.length} вар.{die ? ` · d${die}` : ''}</span>
-    {#if item.path}
-      <button class="btn" onclick={() => ((draft = item.text), (editing = !editing))}><Pencil size={14} /> {editing ? 'Не править' : 'Править'}</button>
-    {/if}
-    <CopyToMenu
-      label={item.path ? 'Копия в…' : 'Копия в хранилище'}
-      title={item.path ? 'Скопировать в другое приключение или в общие таблицы' : 'Скопировать в хранилище, чтобы править'}
-      onpick={copyTo}
-    />
-    {#if item.path}
-      <button class="icon-btn" title="Открыть файл в другой программе (например, в Obsidian)" onclick={() => window.api.openFile(item.path!)}><ExternalLink size={15} /></button>
-      <button class="icon-btn" title="Удалить таблицу в Корзину" onclick={trash}><Trash2 size={15} /></button>
-    {/if}
+    <span class="faint meta" title={item.path}>{isLibraryTable(item.path) ? 'библиотека, для всех кампаний' : item.path} · {item.table.entries.length} вар.{die ? ` · d${die}` : ''}</span>
+    <button class="btn" onclick={() => ((draft = item.text), (editing = !editing))}><Pencil size={14} /> {editing ? 'Не править' : 'Править'}</button>
+    <CopyToMenu title="Скопировать в приключение, в общие таблицы хранилища или в библиотеку" library onpick={copyTo} />
+    <button class="icon-btn" title="Открыть файл в другой программе (например, в Obsidian)" onclick={() => window.api.openFile(item.path)}><ExternalLink size={15} /></button>
+    <button class="icon-btn" title="Удалить таблицу в Корзину" onclick={trash}><Trash2 size={15} /></button>
   </header>
   {#if item.table.description}<p class="faint about">{item.table.description}</p>{/if}
   {#if status}<p class="status">{status}</p>{/if}

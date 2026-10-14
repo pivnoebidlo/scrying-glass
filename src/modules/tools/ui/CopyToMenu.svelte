@@ -1,13 +1,22 @@
-<!-- Кнопка «Копия в…»: список приключений и «Общее». Без приключений — копирует сразу в общее. -->
+<!-- Кнопка с выбором места: приключения, «Общее» (вне приключений) и, если library, библиотека — общая для всех
+     кампаний (место — LIBRARY). Одно-единственное место выбирается сразу, без списка. -->
 <script lang="ts">
   import { FilePlus2 } from '@lucide/svelte';
   import { store } from '../../../renderer/lib/store.svelte';
+  import { LIBRARY } from '../../../shared/vault';
 
-  let { label = 'Копия в…', title, onpick }: { label?: string; title: string; onpick: (adventure: string | null) => void } = $props();
+  let {
+    label = 'Копия в…',
+    title,
+    library = false,
+    primary = false,
+    onpick,
+  }: { label?: string; title: string; library?: boolean; primary?: boolean; onpick: (place: string | null) => void } = $props();
 
   const places = $derived([
     ...store.state.adventures.list.map((a) => ({ id: a as string | null, title: a })),
     { id: null, title: 'Общее (вне приключений)' },
+    ...(library ? [{ id: LIBRARY as string | null, title: 'Библиотека — для всех кампаний' }] : []),
   ]);
   let open = $state(false);
 
@@ -20,7 +29,7 @@
 <svelte:window onclick={(e) => open && !(e.target as HTMLElement).closest('.copy-to') && (open = false)} />
 
 <div class="copy-to">
-  <button class="btn" {title} onclick={() => (places.length > 1 ? (open = !open) : pick(null))}><FilePlus2 size={14} /> {label}</button>
+  <button class="btn" class:primary {title} onclick={() => (places.length > 1 ? (open = !open) : pick(null))}><FilePlus2 size={14} /> {label}</button>
   {#if open}
     <ul class="menu" role="menu">
       {#each places as p (p.id ?? '')}
