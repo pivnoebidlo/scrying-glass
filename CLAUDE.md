@@ -155,9 +155,12 @@ Electron-приложение для мастера D&D: окно управле
   трогает) и перечитывает хранилище (`openVault`) и библиотеку. Раздел настроек — модуль `backup` (без состояния).
   Приключение одним файлом: `main/packs.ts` (.sgpack = ZIP через fflate, потоком: manifest.json, state.json — срезы
   сцен/карт/заготовок/порядка/подписей, files/<приключение>/…, library/ — общие карточки по ссылкам), IPC
-  `packs:export` / `packs:import` в main/index.ts (импорт: распаковка в `.scrying-glass/import-*`, свободное имя
-  папки, `remap` путей, новые id сцен и заготовок, слияние в состояние модулей, `adventures/mark`). Меню —
-  `adventures/ui/Switcher.svelte`.
+  `packs:export` / `packs:pick` + `packs:import` в main/index.ts (импорт в два шага: название из manifest.json без
+  распаковки — `readEntry`, занято — окно в `Switcher` спрашивает другое; потом распаковка в `.scrying-glass/import-*`,
+  `remap` путей, новые id сцен и заготовок, слияние в состояние модулей, `adventures/mark`). Меню —
+  `adventures/ui/Switcher.svelte`. Удаление приключения — IPC `adventures:delete` (подтверждение, снимок, папка — в
+  Корзину, чистка сцен / заготовок / карт / порядка / подписей, `adventures/unmark`).
+  Папка снимков — `settings.backups` (`backupsDir()`; IPC `backups:dir` / `backups:chooseDir`, снимки переезжают).
   Полная копия одним файлом: `main/archive.ts` (.sgbackup: settings.json, library/… целиком с `tables/.builtin.json`,
   vault/… — структура папок всегда, файлы приложения всегда, картинки и музыка по `media`), IPC `archive:*`;
   восстановление — в текущее хранилище или выбранную папку (`placeFiles`, затем `openVault`), из настроек — только

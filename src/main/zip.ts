@@ -100,6 +100,34 @@ export async function readZip(file: string, dir: string, keep: (name: string) =>
   return new Map([...small].map(([k, v]) => [k, Buffer.concat(v)]));
 }
 
+// Прочитать один небольшой файл из начала архива (manifest.json кладётся первым): чтение останавливается, как только
+// он прочитан, — большой архив не читается целиком. null — такого файла нет.
+export async function readEntry(file: string, name: string): Promise<Buffer | null> {
+  const uz = new Unzip();
+  uz.register(UnzipInflate);
+  uz.register(UnzipPassThrough);
+  const parts: Uint8Array[] = [];
+  let done = false;
+  let error: Error | null = null;
+  uz.onfile = (f) => {
+    if (f.name !== name) return;
+    f.ondata = (err, data, final) => {
+      if (err) error = err;
+      else parts.push(data);
+      if (final || err) done = true;
+    };
+    f.start();
+  };
+  const rs = fs.createReadStream(file, { highWaterMark: 1 << 16 });
+  for await (const chunk of rs) {
+    uz.push(chunk as Buffer);
+    if (done || error) break;
+  }
+  rs.destroy();
+  if (error) throw error;
+  return done ? Buffer.concat(parts) : null;
+}
+
 // Вложенные папки (пути от неё), без скрытых.
 export function folderDirs(dir: string): string[] {
   const out: string[] = [];

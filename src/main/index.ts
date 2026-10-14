@@ -7,7 +7,7 @@ import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/mo
 import type { AppState } from '../shared/types';
 import { allFiles, LIBRARY, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
-import { folderFiles, freeFolder, PACK_EXT, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
+import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
 import { BACKUP_EXT, backupSizes, placeFiles, readBackup, writeBackup } from './archive';
 import { randomUUID } from 'node:crypto';
 import type { CardRef, CardScope } from '../shared/cards';
@@ -51,6 +51,8 @@ interface AppSettings {
   library?: string | null;
   // Свои названия папок ролей (только изменённые роли; остальные — по умолчанию).
   roles?: Partial<RoleNames> | null;
+  // Папка снимков и полных копий (null — в папке данных приложения).
+  backups?: string | null;
 }
 const RECENT_MAX = 10;
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -320,7 +322,8 @@ ipcMain.handle('tables:trash', async (_event, rel: string) => {
   return true;
 });
 // ---------- Снимки (резервные копии данных приложения, main/backups.ts) ----------
-const backupsDir = () => path.join(app.getPath('userData'), 'backups');
+const defaultBackups = () => path.join(app.getPath('userData'), 'backups');
+const backupsDir = () => settings.backups || defaultBackups();
 
 // Файлы приложения в хранилище: состояние, записки, таблицы, карточки (пути внутри хранилища).
 function appVaultFiles(): string[] {
@@ -349,6 +352,33 @@ app.on('before-quit', () => {
 });
 
 ipcMain.handle('backups:list', () => listSnapshots(backupsDir()));
+ipcMain.handle('backups:dir', () => ({ path: backupsDir(), isDefault: !settings.backups }));
+// Другая папка снимков (reset — по умолчанию): уже сделанные снимки переезжают туда же.
+ipcMain.handle('backups:chooseDir', async (_event, { reset }: { reset?: boolean } = {}) => {
+  let dir: string | null = null;
+  if (!reset) {
+    const win = getControlWindow();
+    const opts = { title: 'Папка резервных копий', buttonLabel: 'Выбрать', properties: ['openDirectory' as const, 'createDirectory' as const] };
+    const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+    if (res.canceled || !res.filePaths[0]) return { path: backupsDir(), isDefault: !settings.backups };
+    dir = res.filePaths[0];
+  }
+  const from = backupsDir();
+  const to = dir ?? defaultBackups();
+  if (path.resolve(from) !== path.resolve(to)) {
+    fs.mkdirSync(to, { recursive: true });
+    for (const s of listSnapshots(from)) {
+      const src = path.join(from, s.id);
+      const dest = path.join(to, s.id);
+      if (fs.existsSync(dest)) continue;
+      fs.cpSync(src, dest, { recursive: true });
+      fs.rmSync(src, { recursive: true, force: true });
+    }
+  }
+  settings = { ...settings, backups: dir };
+  writeJsonAtomic(settingsFile(), settings);
+  return { path: backupsDir(), isDefault: !settings.backups };
+});
 ipcMain.handle('backups:create', () => snapshotNow('manual', true));
 ipcMain.handle('backups:reveal', async () => {
   fs.mkdirSync(backupsDir(), { recursive: true });
@@ -393,7 +423,8 @@ ipcMain.handle('archive:create', async (_event, { media }: { media: boolean }) =
   const day = new Date().toISOString().slice(0, 10);
   const save = await dialog.showSaveDialog(win!, {
     title: 'Сохранить резервную копию',
-    defaultPath: path.join(app.getPath('documents'), `Scrying Glass — ${vaultRoot ? path.basename(vaultRoot) : 'данные'} — ${day}.${BACKUP_EXT}`),
+    // По умолчанию — в папку резервных копий (если её выбрали, например, в облаке), иначе — в «Документы».
+    defaultPath: path.join(settings.backups || app.getPath('documents'), `Scrying Glass — ${vaultRoot ? path.basename(vaultRoot) : 'данные'} — ${day}.${BACKUP_EXT}`),
     filters: [{ name: 'Резервная копия Scrying Glass', extensions: [BACKUP_EXT] }],
   });
   if (save.canceled || !save.filePath) return null;
@@ -517,9 +548,56 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
   return save.filePath;
 });
 
-ipcMain.handle('packs:import', async () => {
+// Удалить приключение: папка — в Корзину (её можно вернуть), из приложения — его сцены, заготовки боёв, разметка
+// карт, порядок плиток и подписи портретов. Спрашивает подтверждение; перед удалением — снимок.
+ipcMain.handle('adventures:delete', async (_event, name: string) => {
+  const folder = resolveInVault(name);
+  if (!vaultRoot || !folder || !isDir(folder) || name.includes('/')) return false;
+  const s = state as unknown as { scenes: { scenes: AnyRec[] }; initiative: { encounters: AnyRec[] }; maps: { maps: Record<string, unknown> } };
+  const files = folderFiles(folder, true).length;
+  const scenes = s.scenes.scenes.filter((x) => x['adventure'] === name).length;
+  const encounters = s.initiative.encounters.filter((x) => x['adventure'] === name).length;
+  const maps = Object.keys(s.maps.maps).filter((k) => inAdventure(name, k)).length;
+  const win = getControlWindow();
+  const opts = {
+    type: 'warning' as const,
+    message: `Удалить приключение «${name}»?`,
+    detail: [
+      `Папка приключения (файлов: ${files}) переместится в Корзину — её можно будет вернуть оттуда.`,
+      `Из приложения уберутся сцены (${scenes}), заготовки боёв (${encounters}) и разметка карт (${maps}) этого приключения.`,
+      'Перед удалением сохраняется снимок: сцены и заготовки можно вернуть в «Резервных копиях».',
+    ].join('\n\n'),
+    buttons: ['Удалить', 'Отмена'],
+    defaultId: 1,
+    cancelId: 1,
+  };
+  const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
+  if (res.response !== 0) return false;
+  saveVault();
+  snapshotNow('manual', true);
+  await shell.trashItem(folder);
+  const drop = <T,>(o: Record<string, T>, keep: (k: string) => boolean) => Object.fromEntries(Object.entries(o).filter(([k]) => keep(k)));
+  const merge = (id: string, fn: (st: AnyRec) => AnyRec) =>
+    enqueue(id, async () => {
+      stateById[id] = fn(stateById[id] as AnyRec);
+    });
+  await merge('scenes', (st) => ({ ...st, scenes: (st['scenes'] as AnyRec[]).filter((x) => x['adventure'] !== name) }));
+  await merge('initiative', (st) => ({ ...st, encounters: (st['encounters'] as AnyRec[]).filter((x) => x['adventure'] !== name) }));
+  await merge('maps', (st) => ({ ...st, maps: drop(st['maps'] as AnyRec, (k) => !inAdventure(name, k)) }));
+  await merge('order', (st) => ({ ...st, groups: drop(st['groups'] as AnyRec, (k) => !inAdventure(name, k) && !inAdventure(`monsters:${name}`, k)) }));
+  await merge('portraits', (st) => ({ ...st, names: drop(st['names'] as AnyRec, (k) => !inAdventure(name, k)) }));
+  await runAction('adventures', 'unmark', { path: name });
+  saveVault();
+  await enqueue('vault', async () => rescanVault());
+  return true;
+});
+
+// Название папки приключения: без символов, запрещённых в именах файлов, не скрытое.
+const cleanName = (name: string) => name.replace(/[/\\:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().replace(/^\.+/, '');
+
+// Шаг 1: выбрать файл и узнать название приключения (без распаковки). exists — такое уже есть в хранилище.
+ipcMain.handle('packs:pick', async () => {
   if (!vaultRoot) return null;
-  const root = vaultRoot;
   const win = getControlWindow();
   const pickFile = await dialog.showOpenDialog(win!, {
     title: 'Импорт приключения',
@@ -528,12 +606,28 @@ ipcMain.handle('packs:import', async () => {
   });
   const file = pickFile.filePaths[0];
   if (pickFile.canceled || !file) return null;
+  const m = await packManifest(file);
+  return { file, name: m.name, exists: fs.existsSync(path.join(vaultRoot, m.name)), suggestion: freeFolder(vaultRoot, m.name) };
+});
+
+// Свободно ли название для нового приключения (для подсказки при вводе).
+ipcMain.handle('packs:nameFree', (_event, name: string) => {
+  const n = cleanName(name);
+  return !!vaultRoot && !!n && !fs.existsSync(path.join(vaultRoot, n));
+});
+
+// Шаг 2: импорт под выбранным названием (занятое не принимается).
+ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: string; name: string }) => {
+  if (!vaultRoot) return null;
+  const root = vaultRoot;
+  const target = cleanName(wanted);
+  if (!target || fs.existsSync(path.join(root, target))) throw new Error(`Название «${wanted}» занято или не годится для папки`);
   const tmp = path.join(root, DATA_DIR, `import-${randomUUID().slice(0, 8)}`);
   try {
     const pack = await readPack(file, tmp);
     snapshotNow('manual', true);
     const from = pack.manifest.name;
-    const name = freeFolder(root, from);
+    const name = target;
     const src = path.join(tmp, 'files', from);
     if (isDir(src)) fs.renameSync(src, path.join(root, name));
     else fs.mkdirSync(path.join(root, name), { recursive: true });

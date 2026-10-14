@@ -86,13 +86,22 @@ export interface Api {
   // Приключение одним файлом (.sgpack, main/packs.ts): экспорт спросит про музыку и куда сохранить (путь или null),
   // импорт — какой файл (что вышло или null — отменили).
   exportAdventure(name: string): Promise<string | null>;
-  importAdventure(): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number } | null>;
+  // Удалить приключение: папка — в Корзину, его сцены, заготовки и разметка карт — из приложения (спросит).
+  deleteAdventure(name: string): Promise<boolean>;
+  // Импорт в два шага: выбрать файл (название из него, есть ли такое уже, свободный вариант), потом — импорт под
+  // выбранным названием (занятое не принимается).
+  pickAdventurePack(): Promise<{ file: string; name: string; exists: boolean; suggestion: string } | null>;
+  adventureNameFree(name: string): Promise<boolean>;
+  importAdventure(file: string, name: string): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number } | null>;
   // Снимки данных приложения (main/backups.ts): список (новые сверху), сделать сейчас, восстановить (спросит
   // подтверждение; число записанных файлов, 0 — отменили), открыть папку снимков.
   listBackups(): Promise<BackupInfo[]>;
   createBackup(): Promise<BackupInfo | null>;
   restoreBackup(id: string, parts: { vault: boolean; library: boolean }): Promise<number>;
   revealBackups(): Promise<void>;
+  // Папка снимков и полных копий; выбрать другую (reset — по умолчанию) — снимки переезжают туда.
+  backupsDir(): Promise<{ path: string; isDefault: boolean }>;
+  chooseBackupsDir(reset?: boolean): Promise<{ path: string; isDefault: boolean }>;
   // Данные инструментов в библиотеке (общие для всех кампаний): pointbuy.json — свои расы.
   readLibraryData(name: string): Promise<unknown>;
   writeLibraryData(name: string, data: unknown): Promise<boolean>;

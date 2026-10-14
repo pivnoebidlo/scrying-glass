@@ -10,7 +10,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { AUDIO_EXT } from '../shared/vault';
-import { folderDirs, folderFiles as walkFolder, readZip, writeZip, type ZipEntry } from './zip';
+import { folderDirs, folderFiles as walkFolder, readEntry, readZip, writeZip, type ZipEntry } from './zip';
 
 export const PACK_EXT = 'sgpack';
 
@@ -68,6 +68,14 @@ export interface ReadPack {
   // Где лежат распакованные файлы: tmp/files/<название> и tmp/library.
   dir: string;
   cards: { id: string; json: unknown }[];
+}
+
+// Описание приключения из файла — без распаковки (для вопроса о названии).
+export async function packManifest(file: string): Promise<PackManifest> {
+  const b = await readEntry(file, 'manifest.json');
+  const m = b ? (JSON.parse(new TextDecoder().decode(b)) as PackManifest) : null;
+  if (m?.scryingGlass !== 'adventure' || typeof m.name !== 'string') throw new Error('Это не файл приключения Scrying Glass');
+  return m;
 }
 
 // Распаковать во временную папку tmp (её создаёт и потом удаляет вызывающий).

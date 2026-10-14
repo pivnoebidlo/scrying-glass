@@ -1,7 +1,7 @@
 <!-- Над боковой панелью: текущее приключение, выбор другого и создание нового; экспорт и импорт приключения
      одним файлом (.sgpack). -->
 <script lang="ts">
-  import { Check, ChevronsUpDown, Download, Map, Plus, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
+  import { Check, ChevronsUpDown, Download, Map, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
   import { roleFolderHere, visibleIn } from '../../../shared/adventures';
   import { roleNames } from '../../../shared/vault';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
@@ -43,17 +43,52 @@
     }
   }
 
+  // Импорт: выбрать файл; если такое приключение уже есть — спросить другое название (окно ниже).
+  let asking = $state<{ file: string; name: string } | null>(null);
+  let newName = $state('');
+  let nameFree = $state(true);
+  $effect(() => {
+    const n = newName;
+    if (!asking) return;
+    let stale = false;
+    window.api.adventureNameFree(n).then((ok) => !stale && (nameFree = ok));
+    return () => (stale = true);
+  });
+
   async function importPack() {
     open = false;
+    try {
+      const p = await window.api.pickAdventurePack();
+      if (!p) return;
+      if (p.exists) {
+        asking = { file: p.file, name: p.name };
+        newName = p.suggestion;
+        return;
+      }
+      await runImport(p.file, p.name);
+    } catch (e) {
+      flash(`Не удалось: ${String(e)}`);
+    }
+  }
+
+  async function runImport(file: string, name: string) {
+    asking = null;
     busy = 'Импорт приключения…';
     try {
-      const r = await window.api.importAdventure();
-      if (r) flash(`Импортировано «${r.name}»${r.renamed ? ' (такое название уже было)' : ''}: сцен ${r.scenes}, заготовок боёв ${r.encounters}${r.cards ? `, общих карточек ${r.cards}` : ''}.`);
+      const r = await window.api.importAdventure(file, name);
+      if (r) flash(`Импортировано «${r.name}»: сцен ${r.scenes}, заготовок боёв ${r.encounters}${r.cards ? `, общих карточек ${r.cards}` : ''}.`);
     } catch (e) {
       flash(`Не удалось: ${String(e)}`);
     } finally {
       busy = '';
     }
+  }
+
+  async function remove() {
+    if (!ms.current) return;
+    const name = ms.current;
+    open = false;
+    if (await window.api.deleteAdventure(name)) flash(`Приключение «${name}» удалено (папка — в Корзине).`);
   }
 
   // Персонажи игроков текущего приключения (или всего хранилища) — одним файлом карточек с портретами.
@@ -127,6 +162,12 @@
       {/if}
       <button onclick={importPack} title="Добавить приключение из файла .sgpack"><span class="mark"><Upload size={13} /></span> Импорт приключения…</button>
       <div class="sep"></div>
+      {#if ms.current}
+        <button class="danger" onclick={remove} title="Папка — в Корзину, сцены и заготовки приключения — из приложения">
+          <span class="mark"><Trash2 size={13} /></span> Удалить «{ms.current}»…
+        </button>
+      {/if}
+      <div class="sep"></div>
       <button onclick={exportParty} title="Листы персонажей игроков с портретами — одним файлом"><span class="mark"><UsersRound size={13} /></span> Экспорт партии…</button>
       <button onclick={importParty} title="Файл карточек или выгрузка Long Story Short — в папку партии приключения">
         <span class="mark"><UserRoundPlus size={13} /></span> Импорт персонажей…
@@ -136,7 +177,65 @@
   {#if busy || done}<p class="status">{busy || done}</p>{/if}
 </div>
 
+{#if asking}
+  {@const a = asking}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="modal-back" onclick={(e) => e.target === e.currentTarget && (asking = null)}>
+    <form class="modal" onsubmit={(e) => (e.preventDefault(), nameFree && newName.trim() && runImport(a.file, newName))}>
+      <h3>Приключение «{a.name}» уже есть</h3>
+      <p class="faint">Как назвать импортируемое? Это будет название его папки в хранилище.</p>
+      <!-- svelte-ignore a11y_autofocus -->
+      <input type="text" bind:value={newName} autofocus />
+      {#if !nameFree && newName.trim()}<p class="warn">Такое название уже занято.</p>{/if}
+      <div class="row">
+        <button class="btn" type="button" onclick={() => (asking = null)}>Отмена</button>
+        <button class="btn primary" type="submit" disabled={!nameFree || !newName.trim()}>Импортировать</button>
+      </div>
+    </form>
+  </div>
+{/if}
+
 <style>
+  .danger:hover {
+    color: var(--danger, #e04545);
+  }
+  .modal-back {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.5);
+  }
+  .modal {
+    width: 380px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    background: var(--bg-secondary);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  }
+  .modal h3 {
+    margin: 0 0 6px;
+    font-size: 15px;
+  }
+  .modal p {
+    margin: 0 0 10px;
+    font-size: 13px;
+  }
+  .modal input {
+    width: 100%;
+  }
+  .modal .warn {
+    margin-top: 6px;
+    color: #f0c45a;
+  }
+  .modal .row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+  }
   .status {
     margin: 6px 4px 0;
     color: var(--accent);

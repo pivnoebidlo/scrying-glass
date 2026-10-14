@@ -14,10 +14,17 @@
 
   const load = async () => (list = await window.api.listBackups());
   let sizes = $state<{ library: number; media: number } | null>(null);
+  let dir = $state<{ path: string; isDefault: boolean } | null>(null);
   onMount(async () => {
     load();
+    dir = await window.api.backupsDir();
     sizes = await window.api.backupSizes();
   });
+
+  async function chooseDir(reset = false) {
+    dir = await window.api.chooseBackupsDir(reset);
+    await load();
+  }
 
   let media = $state(false);
   let busy = $state('');
@@ -74,6 +81,21 @@
     if (n) flash(`Восстановлено файлов: ${n}.`);
   }
 </script>
+
+<div class="setting">
+  <div class="info">
+    <div class="name">Папка резервных копий</div>
+    <div class="desc">
+      Здесь лежат снимки; сюда же по умолчанию предлагается сохранять полную копию. Можно выбрать папку в облаке
+      (iCloud Drive, Яндекс Диск, Dropbox) — копии сами окажутся там. При смене папки снимки переезжают.
+      <div class="path" title={dir?.path}>{dir ? dir.path : '…'}{dir?.isDefault ? ' (по умолчанию)' : ''}</div>
+    </div>
+  </div>
+  <div class="dir-actions">
+    <button class="btn" onclick={() => chooseDir()}>Изменить…</button>
+    {#if dir && !dir.isDefault}<button class="btn" onclick={() => chooseDir(true)}>По умолчанию</button>{/if}
+  </div>
+</div>
 
 <div class="setting">
   <div class="info">
@@ -140,6 +162,18 @@
 {/if}
 
 <style>
+  .path {
+    margin-top: 4px;
+    overflow: hidden;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dir-actions {
+    display: flex;
+    gap: 6px;
+  }
   h4 {
     margin: 18px 0 6px;
     font-size: 13px;
