@@ -90,3 +90,7 @@ input[type=checkbox] { accent-color: var(--accent); }
 .sort-vertical::after { top: auto; bottom: auto; left: 0; right: 0; width: auto; height: 3px; }
 .sort-vertical.sort-before::after { top: -2px; }
 .sort-vertical.sort-after::after { bottom: -2px; }
+
+/* Ссылка на запись справочника в статблоке и листе (renderer/lib/entry/links.ts): видна, но не кричит. */
+a.wikilink.spell { color: inherit; text-decoration: underline dotted color-mix(in srgb, var(--accent) 70%, transparent); text-underline-offset: 2px; cursor: pointer; }
+a.wikilink.spell:hover { color: var(--accent); }

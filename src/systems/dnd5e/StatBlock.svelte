@@ -2,6 +2,7 @@
 <script lang="ts">
   import type { Card } from '../../shared/cards';
   import { escape, markdown } from '../../renderer/lib/markdown';
+  import { spellLinks } from '../../renderer/lib/entry/links';
   import { Dices } from '@lucide/svelte';
   import { modeOf, rolls, ROLL_HINT } from '../../renderer/lib/rolls.svelte';
   import { ABILITIES, crText, dict, initiativeOf, mod, signed, sizeText, type Block, type Dnd5eStats, type SpeedKind } from './stats';
@@ -61,7 +62,7 @@
   }
 </script>
 
-<article class="statblock">
+<article class="statblock" use:spellLinks={'em'}>
   <p class="meta">{[sizeText(s, card.lang), [s.type, s.alignment].filter(Boolean).join(', ')].filter(Boolean).join(' · ')}</p>
 
   <div class="rule"></div>

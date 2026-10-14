@@ -2,6 +2,7 @@
 <script lang="ts">
   import type { Card } from '../../shared/cards';
   import { markdown } from '../../renderer/lib/markdown';
+  import { spellLinks } from '../../renderer/lib/entry/links';
   import { modeOf, rolls, ROLL_HINT } from '../../renderer/lib/rolls.svelte';
   import { parseBonus, parseDice } from '../../shared/dice';
   import { ABILITIES, dict, mod, signed, sizeText, SKILL_ABILITY } from './stats';
@@ -154,7 +155,7 @@
           {lvl === '0' ? 'Заговоры' : `${lvl}-й уровень`}
           {#if c.spellcasting.slots[lvl]}<span class="slots">{#each Array(c.spellcasting.slots[lvl]) as _, i (i)}<span class="slot"></span>{/each} ячеек: {c.spellcasting.slots[lvl]}</span>{/if}
         </h4>
-        {#if c.spellcasting.spells[lvl]}<div class="text spells">{@html markdown(c.spellcasting.spells[lvl])}</div>{/if}
+        {#if c.spellcasting.spells[lvl]}<div class="text spells" use:spellLinks={'text'}>{@html markdown(c.spellcasting.spells[lvl])}</div>{/if}
       </section>
     {/each}
   {:else if tab === 'features'}

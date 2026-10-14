@@ -5,7 +5,8 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { defeated, ordered } from '../order';
-  import { SIDES, CONDITIONS, type Combatant, type Side } from '../types';
+  import { SIDES, CONDITIONS, conditionEntry, type Combatant, type Side } from '../types';
+  import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
   import AvatarPick from './AvatarPick.svelte';
   import QuickAdd from './QuickAdd.svelte';
   import StripControls from './StripControls.svelte';
@@ -133,7 +134,10 @@
             </td>
             <td class="c-cond">
               {#each c.conditions as cond (cond)}
-                <button class="chip" title="Снять" onclick={() => dispatch('initiative', 'toggleCondition', { id: c.id, condition: cond })}>{cond} <X size={10} /></button>
+                <span class="chip">
+                  <button class="cond" title="Что это значит — открыть в справочнике" onclick={() => peekEntry(conditionEntry(cond))}>{cond}</button>
+                  <button class="off" title="Снять" onclick={() => dispatch('initiative', 'toggleCondition', { id: c.id, condition: cond })}><X size={10} /></button>
+                </span>
               {/each}
               <select
                 class="add-cond"
@@ -314,7 +318,26 @@
     border-radius: 999px;
     background: var(--bg-active);
     font-size: 11px;
+  }
+  .chip button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
     cursor: pointer;
+  }
+  .chip .cond:hover {
+    color: var(--accent);
+    text-decoration: underline dotted;
+  }
+  .chip .off {
+    color: var(--text-faint);
+  }
+  .chip .off:hover {
+    color: var(--text-normal);
   }
   .add-cond {
     width: 36px;

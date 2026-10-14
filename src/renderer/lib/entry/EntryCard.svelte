@@ -18,6 +18,7 @@
     return [...known.map((f) => ({ title: f.title, value: fieldText(entry.fields[f.key]!) })), ...extra.map((k) => ({ title: k, value: fieldText(entry.fields[k]!) }))];
   });
   const html = $derived(entryHtml(entry.body));
+  const aliases = $derived(Array.isArray(entry.fields['aliases']) ? (entry.fields['aliases'] as string[]) : []);
   const tags = $derived(Array.isArray(entry.fields['tags']) ? (entry.fields['tags'] as string[]) : []);
 
   // На экране игроков длинная запись должна поместиться целиком: уменьшаем шрифт, пока текст не влезет.
@@ -58,6 +59,7 @@
   <header>
     <h1>{entry.title}</h1>
     <div class="sub">{entrySubtitle(entry)}</div>
+    {#if aliases.length && !players}<div class="aka">Также: {aliases.join(', ')}</div>{/if}
   </header>
   {#if rows.length}
     <dl>
@@ -90,6 +92,10 @@
   .sub {
     color: var(--text-muted);
     font-style: italic;
+  }
+  .aka {
+    color: var(--text-faint);
+    font-size: 12px;
   }
   dl {
     margin: 0 0 10px;

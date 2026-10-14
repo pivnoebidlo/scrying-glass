@@ -116,11 +116,22 @@ export const allEntries = () =>
 // [[Ссылка]] на запись: по названию (или английскому названию встроенной), без регистра и «ё»; запись приключения
 // важнее общей, общая — библиотечной, своя — встроенной. Встроенная ищется и в скрытой редакции (ссылка не должна
 // пропадать), но выбранная — первой.
-export function resolveEntry(name: string): EntryItem | null {
-  const k = searchKey(name.trim());
-  const hit = (e: EntryItem) => searchKey(e.entry.title) === k || (!!e.en && searchKey(e.en) === k);
+// Несколько названий («Ослеплён», «Ослеплённый», «Blinded») — подходит любое, своя запись всё равно важнее встроенной.
+// Другие названия записи: английское (у встроенной) и поле aliases.
+export const altNames = (e: EntryItem): string[] => {
+  const a = e.entry.fields['aliases'];
+  return [...(e.en ? [e.en] : []), ...(Array.isArray(a) ? a : typeof a === 'string' && a ? [a] : [])];
+};
+
+export function resolveEntry(names: string | string[]): EntryItem | null {
+  const keys = new Set((Array.isArray(names) ? names : [names]).map((n) => searchKey(n.trim())));
+  const hit = (e: EntryItem) => keys.has(searchKey(e.entry.title)) || altNames(e).some((n) => keys.has(searchKey(n)));
   return allEntries().find(hit) ?? book.builtin.find(hit) ?? null;
 }
+
+// Названия всех заклинаний (свои и встроенные обеих редакций, с английскими) — для ссылок в статблоках и листах.
+export const spellNames = () =>
+  [...book.vault, ...book.library, ...book.builtin].filter((e) => e.entry.type === 'spell').flatMap((e) => [e.entry.title, ...altNames(e)]);
 // Запись по пути, в том числе встроенная из скрытой редакции.
 export const entryAt = (path: string) => allEntries().find((e) => e.path === path) ?? book.builtin.find((e) => e.path === path);
 
@@ -132,8 +143,8 @@ export function search(list: EntryItem[], query: string): EntryItem[] {
     .map((e) => {
       const t = searchKey(e.entry.title);
       const tags = Array.isArray(e.entry.fields['tags']) ? searchKey((e.entry.fields['tags'] as string[]).join(' ')) : '';
-      const en = e.en ? searchKey(e.en) : '';
-      const s = t === q || en === q ? 0 : t.startsWith(q) || en.startsWith(q) ? 1 : t.includes(q) || en.includes(q) ? 2 : tags.includes(q) ? 3 : searchKey(e.entry.body).includes(q) ? 4 : -1;
+      const alts = altNames(e).map(searchKey);
+      const s = t === q || alts.includes(q) ? 0 : t.startsWith(q) || alts.some((a) => a.startsWith(q)) ? 1 : t.includes(q) || alts.some((a) => a.includes(q)) ? 2 : tags.includes(q) ? 3 : searchKey(e.entry.body).includes(q) ? 4 : -1;
       return { e, s };
     })
     .filter((x) => x.s >= 0);
