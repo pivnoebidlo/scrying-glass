@@ -7,6 +7,7 @@
   import { SIDES, type Combatant, type Encounter, type Side } from '../types';
   import AvatarPick from './AvatarPick.svelte';
   import QuickAdd from './QuickAdd.svelte';
+  import Difficulty from './Difficulty.svelte';
   import { ui } from './ui.svelte';
 
   let { e }: { e: Encounter } = $props();
@@ -43,6 +44,7 @@
       </select>
     {/if}
     <div class="spacer"></div>
+    <Difficulty list={e.combatants} />
     <button class="btn primary" disabled={!e.combatants.length} title="Добавить участников к текущему бою" onclick={start}><Swords size={14} /> В бой</button>
     <button class="icon-btn" title="Удалить заготовку" onclick={remove}><Trash2 size={15} /></button>
   </header>

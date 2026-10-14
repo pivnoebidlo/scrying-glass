@@ -70,7 +70,7 @@ export function crText(cr: number): string {
 export const initiativeOf = (s: Dnd5eStats) => s.initiative ?? mod(s.abilities.dex);
 
 export function combatStats(s: Dnd5eStats): CombatStats {
-  return { hp: s.hp, ac: s.ac, initiative: initiativeOf(s), hpFormula: s.hpFormula };
+  return { hp: s.hp, ac: s.ac, initiative: initiativeOf(s), hpFormula: s.hpFormula, xp: s.xp || xpFor(s.cr) };
 }
 
 // «Маленький или Средний». Размер пишется отдельно от типа: по-русски прилагательное пришлось бы

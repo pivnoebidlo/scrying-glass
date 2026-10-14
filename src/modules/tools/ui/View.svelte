@@ -9,6 +9,7 @@
   import { noteGroups } from './library';
   import { ui } from './ui.svelte';
   import TablesView from '../tables/TablesView.svelte';
+  import Calculator from '../difficulty/Calculator.svelte';
 
   let { app }: ModuleProps<'tools'> = $props();
 
@@ -25,6 +26,8 @@
 
 {#if ui.tool === 'tables'}
   <TablesView />
+{:else if ui.tool === 'difficulty'}
+  <Calculator />
 {:else if ui.note && exists}
   {#key ui.note}<NoteEditor path={ui.note} />{/key}
 {:else}

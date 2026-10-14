@@ -10,6 +10,7 @@
   import QuickAdd from './QuickAdd.svelte';
   import StripControls from './StripControls.svelte';
   import EncounterView from './EncounterView.svelte';
+  import Difficulty from './Difficulty.svelte';
   import { newEncounterName, ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'initiative'> = $props();
@@ -65,6 +66,7 @@
       <button class="btn primary" disabled={!list.length} onclick={() => dispatch('initiative', 'start')}><Swords size={14} /> Начать бой</button>
     {/if}
     <div class="spacer"></div>
+    <Difficulty list={ms.combatants} />
     <button class="btn" title="Бросить d20 + бонус за противников и союзников без инициативы" onclick={() => dispatch('initiative', 'rollNpcs', {})}>
       <Dices size={14} /> Бросить за NPC
     </button>

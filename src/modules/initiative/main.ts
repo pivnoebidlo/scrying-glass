@@ -11,6 +11,7 @@ const initialState: InitiativeState = {
   round: 0,
   showToPlayers: true,
   display: { size: 1.5, names: true, wounds: true, position: 'top' },
+  party: { size: 4, level: 1 },
 };
 
 const d20 = () => 1 + Math.floor(Math.random() * 20);
@@ -179,6 +180,11 @@ export default defineModule({
     startEncounter(s, { id }: { id: string }) {
       const e = s.encounters.find((x) => x.id === id);
       return e ? { ...s, combatants: [...s.combatants, ...e.combatants.map(fresh)] } : s;
+    },
+
+    setParty(s, changes: Partial<InitiativeState['party']>) {
+      const p = { ...s.party, ...changes };
+      return { ...s, party: { size: Math.min(10, Math.max(1, Math.round(p.size))), level: Math.min(20, Math.max(1, Math.round(p.level))) } };
     },
 
     setDisplay(s, changes: Partial<StripSettings>) {

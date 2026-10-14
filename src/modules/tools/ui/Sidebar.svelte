@@ -1,6 +1,6 @@
 <!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
 <script lang="ts">
-  import { Dices, FileText, ScrollText, Table2 } from '@lucide/svelte';
+  import { Dices, FileText, Gauge, ScrollText, Table2 } from '@lucide/svelte';
   import { tables } from '../tables/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
@@ -36,6 +36,10 @@
       </button>
     {/each}
   {/if}
+  <button class="item" class:active={ui.tool === 'difficulty'} onclick={() => (ui.tool = 'difficulty')}>
+    <Gauge size={14} />
+    <span class="name">Сложность боя</span>
+  </button>
   <p class="faint more">Здесь появятся и другие инструменты мастера.</p>
 </div>
 

@@ -44,6 +44,8 @@ export interface InitiativeState {
   showToPlayers: boolean;
   // Вид полосы на экране игроков.
   display: StripSettings;
+  // Партия для расчёта сложности, если героев нет ни в бою, ни в приключении, и уровень героев без листа.
+  party: { size: number; level: number };
 }
 
 export interface StripSettings {
