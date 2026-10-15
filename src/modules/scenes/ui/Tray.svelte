@@ -6,7 +6,7 @@
   import { BookOpen, Eye, Plus, ScrollText, X } from '@lucide/svelte';
   import type { Snippet } from 'svelte';
   import FilePicker from '../../../renderer/lib/FilePicker.svelte';
-  import { draggedFile } from '../../../renderer/lib/sortable';
+  import { draggedFile, sortable } from '../../../renderer/lib/sortable';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { allFiles, assetUrl, prettyName, thumb, type FileKind, type FolderRole } from '../../../shared/vault';
   import { isNotePath } from '../../../shared/notes';
@@ -60,6 +60,7 @@
 
   const accepts = (path: string | null) => !!path && kinds.includes(kindOf.get(path) as FileKind) && !tray.includes(path);
   const add = (paths: string[]) => paths.length && dispatch('scenes', 'trayAdd', { owner: $state.snapshot(owner), part, paths });
+  const reorder = (ids: string[]) => dispatch('scenes', 'traySet', { owner: $state.snapshot(owner), part, ids });
   const remove = (path: string) => dispatch('scenes', 'trayRemove', { owner: $state.snapshot(owner), part, path });
 
   function ondragover(e: DragEvent) {
@@ -83,7 +84,7 @@
     <div class="grid" class:wide>
       {#each items as path (path)}
         {@const on = isOn(path)}
-        <div class="tile" class:on>
+        <div class="tile" class:on use:sortable={{ group: `tray:${part}`, id: path, ids: tray, disabled: !tray.includes(path), onmove: reorder }}>
           <button class="pick" title={`${caption(path)} — ${on ? 'убрать с экрана' : 'показать игрокам'}`} onclick={() => toggle(path)}>
             {#if isNotePath(path)}
               <span class="doc"><ScrollText size={18} /><b>{caption(path)}</b></span>

@@ -96,6 +96,11 @@ export default defineModule({
       return editTray(s, owner, (t) => addTo(t, part, paths));
     },
 
+    // Новый порядок (перетаскиванием в правой панели): только то, что уже было в подборке.
+    traySet(s, { owner, part, ids }: { owner: TrayOwner; part: TrayPart; ids: string[] }) {
+      return editTray(s, owner, (t) => ({ ...t, [part]: [...ids.filter((x) => t[part].includes(x)), ...t[part].filter((x) => !ids.includes(x))] }));
+    },
+
     trayRemove(s, { owner, part, path }: { owner: TrayOwner; part: TrayPart; path: string }) {
       return editTray(s, owner, (t) => removeFrom(t, part, path));
     },

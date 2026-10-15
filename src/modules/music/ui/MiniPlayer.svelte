@@ -8,7 +8,8 @@
   import type { Repeat as RepeatMode } from '../types';
   import { formatTime, live, playback, seek } from './playback.svelte';
   import { playlists, playlistTitle } from './playlists';
-  import { Disc3, FolderOpen } from '@lucide/svelte';
+  import { Disc3, FolderOpen, Star } from '@lucide/svelte';
+  import { trayOwner } from '../../scenes/tray';
   import TrayChips from '../../scenes/ui/TrayChips.svelte';
   import { allFiles, fileKind, folderRole } from '../../../shared/vault';
   import { visibleIn } from '../../../shared/adventures';
@@ -21,6 +22,20 @@
     if (ms.playlist === id && ms.queue.length) return dispatch('music', 'playPause');
     return isTrack(id) ? dispatch('music', 'playTrack', { path: id }) : dispatch('music', 'playFolder', { folder: id });
   }
+  // Основная музыка включённой сцены — играет, когда сцену включают. Звёздочка у строки подборки: назначить или снять
+  // (тогда сцена музыку не меняет).
+  const scene = $derived.by(() => {
+    const o = trayOwner(app.scenes, app.adventures);
+    return 'scene' in o ? app.scenes.scenes.find((x) => x.id === o.scene) : undefined;
+  });
+  const main = $derived(scene?.include.music ? scene.music.playlist : null);
+  async function setMain(id: string) {
+    if (!scene) return;
+    if (main === id) return dispatch('scenes', 'setInclude', { id: scene.id, part: 'music', value: false });
+    await dispatch('scenes', 'setContent', { id: scene.id, content: { music: { playlist: id, shuffle: ms.shuffle } } });
+    await dispatch('scenes', 'setInclude', { id: scene.id, part: 'music', value: true });
+  }
+
   // Плейлист в подборке — по названию папки (папка music — по папке, где она лежит).
   function folderTitle(path: string) {
     const parts = path.split('/');
@@ -56,7 +71,20 @@
   iconOf={(id) => (isTrack(id) ? Disc3 : FolderOpen)}
   pickTitle="Плейлисты и треки"
   hint="Музыка под рукой: тема локации, бой, погоня — щелчок переключает."
-/>
+>
+  {#snippet extra(id: string)}
+    {#if scene}
+      <button
+        class="star"
+        class:main={main === id}
+        title={main === id ? `Основная музыка сцены «${scene.name}» — включается вместе с ней. Снять` : `Сделать основной музыкой сцены «${scene.name}»: включается вместе с ней`}
+        onclick={() => setMain(id)}
+      >
+        <Star size={11} />
+      </button>
+    {/if}
+  {/snippet}
+</TrayChips>
 
 {#if track}
   <div class="now">
@@ -117,6 +145,28 @@
 {/if}
 
 <style>
+  .star {
+    display: none;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--text-faint);
+    cursor: pointer;
+  }
+  :global(.chip:hover) .star,
+  .star.main {
+    display: grid;
+  }
+  .star.main {
+    color: #f0c45a;
+  }
+  .star.main :global(svg) {
+    fill: currentColor;
+  }
   .now,
   .idle {
     margin-top: 10px;

@@ -15,6 +15,8 @@ export interface SortableOpts {
   vertical?: boolean;
   // Файл плитки: его можно перетащить в подборку правой панели (и при disabled — без перестановки).
   file?: string;
+  // Свой порядок (подборка правой панели), а не модуль order.
+  onmove?: (ids: string[]) => void;
 }
 
 // Что тащим сейчас (одно на окно).
@@ -75,6 +77,7 @@ export const sortable: Action<HTMLElement, SortableOpts | undefined> = (node, in
     e.preventDefault();
     const next = moveId(o.ids, dragging!.id, o.id, sideAfter(e));
     dragging = null;
+    if (o.onmove) return o.onmove(next);
     // Здесь может быть видна только часть группы («Файлы» показывают папку без вложенных, а вкладка — с ними):
     // места остальных сохранённых плиток не теряем, они идут следом.
     const saved = store.state.order.groups[o.group] ?? [];

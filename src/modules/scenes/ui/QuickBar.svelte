@@ -1,21 +1,60 @@
-<!-- Правая панель: сцены одной кнопкой (⌘1…⌘9 — первые девять). -->
+<!-- Правая панель: сцены одной кнопкой (⌘1…⌘9 — первые девять). «+» — сохранить текущее (сначала имя), двойной
+     щелчок по сцене — переименовать. -->
 <script lang="ts">
   import { Plus, X } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { activate } from '../apply';
-  import { saveCurrent } from './ui.svelte';
+  import { saveCurrent, suggestCurrent } from './ui.svelte';
   import { scenesFor } from '../types';
 
   let { ms, app }: ModuleProps<'scenes'> = $props();
   const list = $derived(scenesFor(ms, app.adventures));
   const mod = navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl+';
+
+  // Поле имени: новая сцена ('new') или переименование (id сцены).
+  let editing = $state<string | null>(null);
+  let draft = $state('');
+  function startNew() {
+    draft = suggestCurrent();
+    editing = 'new';
+  }
+  function startRename(id: string, name: string) {
+    draft = name;
+    editing = id;
+  }
+  async function commit() {
+    const what = editing;
+    editing = null;
+    if (what === 'new') await saveCurrent(draft, false);
+    else if (what && draft.trim()) await dispatch('scenes', 'rename', { id: what, name: draft.trim() });
+  }
+  function onkey(e: KeyboardEvent) {
+    if (e.key === 'Enter') commit();
+    if (e.key === 'Escape') editing = null;
+  }
+  const focus = (node: HTMLInputElement) => {
+    node.focus();
+    node.select();
+  };
 </script>
+
+{#snippet field(placeholder: string)}
+  <input class="field" type="text" bind:value={draft} {placeholder} use:focus onkeydown={onkey} onblur={() => (editing = null)} />
+{/snippet}
 
 <div class="scenes">
   {#each list as sc, i (sc.id)}
+    {#if editing === sc.id}
+      {@render field('Название сцены')}
+    {:else}
     <div class="scene" class:live={ms.active === sc.id}>
-      <button class="main" title={i < 9 ? `${sc.name} (${mod}${i + 1})` : sc.name} onclick={() => activate(app, sc)}>
+      <button
+        class="main"
+        title={`${sc.name}${i < 9 ? ` (${mod}${i + 1})` : ''} — двойной щелчок: переименовать`}
+        onclick={() => activate(app, sc)}
+        ondblclick={() => startRename(sc.id, sc.name)}
+      >
         {#if i < 9}<span class="key">{i + 1}</span>{/if}
         <span class="name">{sc.name}</span>
       </button>
@@ -24,10 +63,15 @@
         <button class="leave" title="Выйти из сцены: на экране всё остаётся, в панели — подборка приключения" onclick={() => dispatch('scenes', 'markActive', { id: null })}><X size={11} /></button>
       {/if}
     </div>
+    {/if}
   {/each}
-  <button class="scene add" title="Сохранить то, что сейчас на экране, новой сценой" onclick={saveCurrent}>
-    <Plus size={13} />{#if !list.length}<span class="name">Сохранить текущее</span>{/if}
-  </button>
+  {#if editing === 'new'}
+    {@render field('Название новой сцены')}
+  {:else}
+    <button class="scene add" title="Сохранить то, что на экране, и подборку новой сценой" onclick={startNew}>
+      <Plus size={13} />{#if !list.length}<span class="name">Сохранить текущее</span>{/if}
+    </button>
+  {/if}
 </div>
 
 <style>
@@ -94,6 +138,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .field {
+    flex: 1 1 100%;
+    padding: 4px 8px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-s);
   }
   .add {
     color: var(--text-muted);

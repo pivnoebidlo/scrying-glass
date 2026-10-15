@@ -5,6 +5,7 @@
   import type { Component, Snippet } from 'svelte';
   import ListPicker, { type PickOption } from '../../../renderer/lib/ListPicker.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
+  import { sortable } from '../../../renderer/lib/sortable';
   import type { AppState } from '../../../shared/types';
   import { currentTray, shown, trayOwner, type TrayPart } from '../tray';
 
@@ -18,6 +19,7 @@
     iconOf,
     pickTitle,
     hint,
+    extra,
     children,
   }: {
     app: AppState;
@@ -31,6 +33,8 @@
     iconOf: (id: string) => Component;
     pickTitle: string;
     hint: string;
+    // Своя кнопка у строки (звёздочка основной музыки сцены).
+    extra?: Snippet<[string]>;
     children?: Snippet;
   } = $props();
 
@@ -40,17 +44,19 @@
 
   let picking = $state(false);
   const add = (ids: string[]) => ids.length && dispatch('scenes', 'trayAdd', { owner: $state.snapshot(owner), part, paths: ids });
+  const reorder = (ids: string[]) => dispatch('scenes', 'traySet', { owner: $state.snapshot(owner), part, ids });
   const remove = (id: string) => dispatch('scenes', 'trayRemove', { owner: $state.snapshot(owner), part, path: id });
 </script>
 
 <div class="chips">
   {#each items as id (id)}
     {@const Icon = iconOf(id)}
-    <div class="chip" class:on={isOn(id)}>
+    <div class="chip" class:on={isOn(id)} use:sortable={{ group: `tray:${part}`, id, ids: tray, disabled: !tray.includes(id), onmove: reorder }}>
       <button class="main" title={caption(id)} onclick={() => toggle(id)}>
         <Icon size={13} />
         <span class="name">{caption(id)}</span>
       </button>
+      {@render extra?.(id)}
       {#if tray.includes(id)}
         <button class="remove" title="Убрать из подборки" onclick={() => remove(id)}><X size={11} /></button>
       {/if}

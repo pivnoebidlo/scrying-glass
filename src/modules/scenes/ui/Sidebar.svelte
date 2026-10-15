@@ -64,7 +64,7 @@
 </div>
 
 <div class="actions">
-  <button class="btn" onclick={saveCurrent}><Plus size={14} /> Сохранить текущее</button>
+  <button class="btn" onclick={() => saveCurrent()}><Plus size={14} /> Сохранить текущее</button>
 </div>
 
 <style>
