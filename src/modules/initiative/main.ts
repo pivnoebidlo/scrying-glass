@@ -193,7 +193,7 @@ export default defineModule({
     // Сама заготовка остаётся: бой можно повторить.
     startEncounter(s, { id }: { id: string }) {
       const e = s.encounters.find((x) => x.id === id);
-      return e ? { ...s, combatants: [...s.combatants, ...e.combatants.map(fresh)] } : s;
+      return e ? { ...s, combatants: [...s.combatants, ...e.combatants.map((c) => ({ ...fresh(c), encounter: id }))] } : s;
     },
 
     setParty(s, changes: Partial<InitiativeState['party']>) {

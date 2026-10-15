@@ -1,4 +1,4 @@
-<!-- Правая панель: чей ход. -->
+<!-- Правая панель: заготовки боёв под рукой (подборка) и чей ход. -->
 <script lang="ts">
   import { ChevronLeft, ChevronRight } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -6,8 +6,21 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { defeated, ordered } from '../order';
   import Avatar from './Avatar.svelte';
+  import { Swords } from '@lucide/svelte';
+  import TrayChips from '../../scenes/ui/TrayChips.svelte';
+  import { ui } from './ui.svelte';
 
-  let { ms }: ModuleProps<'initiative'> = $props();
+  let { ms, app }: ModuleProps<'initiative'> = $props();
+
+  // Подборка: заготовки боёв. Щелчок — участники в бой (дальше — инициатива во вкладке); идущий — к вкладке.
+  const inFight = (id: string) => ms.combatants.some((c) => c.encounter === id);
+  async function start(id: string) {
+    if (!inFight(id)) await dispatch('initiative', 'startEncounter', { id });
+    ui.encounter = null;
+    openTab('initiative');
+  }
+  const here = $derived(ms.encounters.filter((e) => !e.adventure || app.adventures.current === null || e.adventure === app.adventures.current));
+  const options = () => here.map((e) => ({ id: e.id, title: e.name, sub: `участников: ${e.combatants.length}${e.adventure && app.adventures.current === null ? ` · ${e.adventure}` : ''}` }));
   const list = $derived(ordered(ms.combatants));
   const i = $derived(list.findIndex((c) => c.id === ms.turn));
   const current = $derived(list[i]);
@@ -15,8 +28,20 @@
   const next = $derived(i < 0 ? undefined : [...list.slice(i + 1), ...list.slice(0, i)].find((c) => !defeated(c)));
 </script>
 
+<TrayChips
+  {app}
+  part="encounters"
+  isOn={inFight}
+  toggle={start}
+  {options}
+  caption={(id) => ms.encounters.find((e) => e.id === id)?.name ?? null}
+  iconOf={() => Swords}
+  pickTitle="Заготовки боёв"
+  hint="Бои под рукой: крысы или гоблины — щелчок добавляет участников в бой."
+/>
+
 {#if current}
-  <div class="row">
+  <div class="row turn">
     <Avatar c={current} size="32px" />
     <div class="who">
       <div class="name">{current.name}</div>
@@ -26,13 +51,16 @@
     <button class="btn primary" title="Следующий ход" onclick={() => dispatch('initiative', 'next')}><ChevronRight size={16} /></button>
   </div>
 {:else}
-  <div class="faint">
+  <div class="faint turn">
     Бой не идёт.
     {#if list.length}<button class="link" onclick={() => openTab('initiative')}>Участников: {list.length}</button>{/if}
   </div>
 {/if}
 
 <style>
+  .turn {
+    margin-top: 10px;
+  }
   .row {
     display: flex;
     align-items: center;

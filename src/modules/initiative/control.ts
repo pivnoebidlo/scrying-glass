@@ -1,6 +1,7 @@
 // Инициатива в окне управления: таблица боя, блок «чей ход» и кнопка «в инициативу» на картинках.
 import { Swords, UserPlus } from '@lucide/svelte';
 import { defineControl } from '../../renderer/lib/contrib';
+import { inTray } from '../scenes/tray';
 import { dispatch } from '../../renderer/lib/store.svelte';
 import { caption } from '../portraits/library';
 import { folderRole } from '../../shared/vault';
@@ -21,7 +22,7 @@ export default defineControl({
   settings: Settings,
   screen: OnScreen,
   screenEmpty: (app) =>
-    app.initiative.combatants.some((c) => c.id === app.initiative.turn)
+    app.initiative.combatants.some((c) => c.id === app.initiative.turn) || inTray(app, 'encounters')
       ? null
       : app.initiative.combatants.length
         ? `бой не идёт (${app.initiative.combatants.length})`

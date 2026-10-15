@@ -1,9 +1,10 @@
 // Снимок экрана в сцену и включение сцены. Работает в окне управления через обычные действия модулей.
 import { dispatch } from '../../renderer/lib/store.svelte';
 import type { AppState } from '../../shared/types';
-import { allFiles, isLibraryAsset, prettyName, trackName } from '../../shared/vault';
+import { allFiles, fileKind, isLibraryAsset, prettyName, trackName } from '../../shared/vault';
 import { playlistTitle } from '../music/ui/playlists';
 import type { Part, Scene, SceneContent } from './types';
+import type { Tray } from './tray';
 
 // Что сейчас видят и слышат игроки.
 export function capture(app: AppState): SceneContent {
@@ -18,10 +19,10 @@ export function capture(app: AppState): SceneContent {
 }
 
 // Название новой сцены по её содержимому.
-export function suggestName(c: SceneContent, count: number): string {
-  if (c.map.path) return prettyName(c.map.path);
-  if (c.background.path) return prettyName(c.background.path);
-  if (c.portraits.paths[0]) return prettyName(c.portraits.paths[0]);
+// Ничего не показано — по подборке.
+export function suggestName(c: SceneContent, count: number, tray?: Tray): string {
+  const first = c.map.path ?? c.background.path ?? c.portraits.paths[0] ?? tray?.map[0] ?? tray?.background[0];
+  if (first) return prettyName(first);
   return `Сцена ${count + 1}`;
 }
 
@@ -79,6 +80,7 @@ async function applyMusic(app: AppState, m: Scene['music']) {
   if (!m.playlist) return app.music.playing ? dispatch('music', 'stop') : undefined;
   // Этот плейлист уже играет — не перезапускаем.
   if (app.music.playing && app.music.playlist === m.playlist) return;
+  if (fileKind(m.playlist) === 'audio') return dispatch('music', 'playTrack', { path: m.playlist });
   await dispatch('music', 'setShuffle', { value: m.shuffle });
   await dispatch('music', 'playFolder', { folder: m.playlist });
 }

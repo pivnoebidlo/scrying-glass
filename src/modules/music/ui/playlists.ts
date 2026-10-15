@@ -1,5 +1,5 @@
 // Плейлисты: папки хранилища, в которых прямо лежат аудиофайлы.
-import { dirname, folderRole, walk, type VaultFolder } from '../../../shared/vault';
+import { dirname, fileKind, folderRole, trackName, walk, type VaultFolder } from '../../../shared/vault';
 import { NO_ADVENTURE, placeOrder, placeTitle, visibleIn, type AdventuresState } from '../../../shared/adventures';
 
 export interface Playlist {
@@ -26,5 +26,7 @@ export function playlists(tree: VaultFolder, vaultName: string, adv: AdventuresS
 
 export function playlistTitle(tree: VaultFolder | null, vaultName: string, path: string | null): string {
   if (path === null || !tree) return '';
+  // Один трек (playTrack).
+  if (fileKind(path) === 'audio') return trackName(path);
   return playlists(tree, vaultName).find((p) => p.path === path)?.title ?? (path.split('/').join(' / ') || vaultName);
 }

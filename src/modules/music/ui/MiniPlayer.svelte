@@ -7,9 +7,35 @@
   import { trackName } from '../../../shared/vault';
   import type { Repeat as RepeatMode } from '../types';
   import { formatTime, live, playback, seek } from './playback.svelte';
-  import { playlistTitle } from './playlists';
+  import { playlists, playlistTitle } from './playlists';
+  import { Disc3, FolderOpen } from '@lucide/svelte';
+  import TrayChips from '../../scenes/ui/TrayChips.svelte';
+  import { allFiles, fileKind, folderRole } from '../../../shared/vault';
+  import { visibleIn } from '../../../shared/adventures';
 
   let { ms, app }: ModuleProps<'music'> = $props();
+
+  // Подборка: плейлисты (папки) и отдельные треки. Щелчок — играть (трек — по кругу), играющее — пауза.
+  const isTrack = (id: string) => fileKind(id) === 'audio';
+  function toggleItem(id: string) {
+    if (ms.playlist === id && ms.queue.length) return dispatch('music', 'playPause');
+    return isTrack(id) ? dispatch('music', 'playTrack', { path: id }) : dispatch('music', 'playFolder', { folder: id });
+  }
+  // Плейлист в подборке — по названию папки (папка music — по папке, где она лежит).
+  function folderTitle(path: string) {
+    const parts = path.split('/');
+    const name = parts.at(-1) ?? '';
+    return (folderRole(name) === 'music' ? parts.at(-2) : name) || app.vault.name;
+  }
+  function options() {
+    const tree = app.vault.tree;
+    if (!tree) return [];
+    const lists = playlists(tree, app.vault.name, app.adventures).map((p) => ({ id: p.path, title: p.title, sub: `треков: ${p.count}`, group: 'Плейлисты' }));
+    const tracks = allFiles(tree, 'audio')
+      .filter((f) => visibleIn(app.adventures, f.path))
+      .map((f) => ({ id: f.path, title: trackName(f.path), sub: playlistTitle(tree, app.vault.name, f.path.slice(0, f.path.lastIndexOf('/'))), group: 'Треки' }));
+    return [...lists, ...tracks];
+  }
 
   const track = $derived(ms.queue[ms.index]);
   const NEXT_REPEAT: Record<RepeatMode, RepeatMode> = { all: 'one', one: 'off', off: 'all' };
@@ -19,6 +45,18 @@
     off: 'Без повтора',
   };
 </script>
+
+<TrayChips
+  {app}
+  part="music"
+  isOn={(id) => ms.playing && ms.playlist === id}
+  toggle={toggleItem}
+  {options}
+  caption={(id) => (isTrack(id) ? trackName(id) : folderTitle(id))}
+  iconOf={(id) => (isTrack(id) ? Disc3 : FolderOpen)}
+  pickTitle="Плейлисты и треки"
+  hint="Музыка под рукой: тема локации, бой, погоня — щелчок переключает."
+/>
 
 {#if track}
   <div class="now">
@@ -55,7 +93,7 @@
     />
   </div>
 {:else}
-  <div class="faint">Ничего не играет. Выберите плейлист в «Музыке» или трек в «Файлах».</div>
+  <div class="faint idle">Ничего не играет.</div>
 {/if}
 
 {#if ms.ambience.length}
@@ -79,6 +117,10 @@
 {/if}
 
 <style>
+  .now,
+  .idle {
+    margin-top: 10px;
+  }
   .now {
     min-width: 0;
   }

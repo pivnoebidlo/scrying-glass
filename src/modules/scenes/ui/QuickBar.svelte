@@ -1,6 +1,7 @@
 <!-- Правая панель: сцены одной кнопкой (⌘1…⌘9 — первые девять). -->
 <script lang="ts">
-  import { Plus } from '@lucide/svelte';
+  import { Plus, X } from '@lucide/svelte';
+  import { dispatch } from '../../../renderer/lib/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { activate } from '../apply';
   import { saveCurrent } from './ui.svelte';
@@ -13,10 +14,16 @@
 
 <div class="scenes">
   {#each list as sc, i (sc.id)}
-    <button class="scene" class:live={ms.active === sc.id} title={i < 9 ? `${sc.name} (${mod}${i + 1})` : sc.name} onclick={() => activate(app, sc)}>
-      {#if i < 9}<span class="key">{i + 1}</span>{/if}
-      <span class="name">{sc.name}</span>
-    </button>
+    <div class="scene" class:live={ms.active === sc.id}>
+      <button class="main" title={i < 9 ? `${sc.name} (${mod}${i + 1})` : sc.name} onclick={() => activate(app, sc)}>
+        {#if i < 9}<span class="key">{i + 1}</span>{/if}
+        <span class="name">{sc.name}</span>
+      </button>
+      {#if ms.active === sc.id}
+        <!-- Экран не меняется: в панели снова подборка приключения (например, чтобы собрать следующую сцену). -->
+        <button class="leave" title="Выйти из сцены: на экране всё остаётся, в панели — подборка приключения" onclick={() => dispatch('scenes', 'markActive', { id: null })}><X size={11} /></button>
+      {/if}
+    </div>
   {/each}
   <button class="scene add" title="Сохранить то, что сейчас на экране, новой сценой" onclick={saveCurrent}>
     <Plus size={13} />{#if !list.length}<span class="name">Сохранить текущее</span>{/if}
@@ -46,6 +53,36 @@
   .scene.live {
     border-color: var(--accent);
     background: var(--accent-soft);
+  }
+  .scene:has(.main) {
+    padding: 0;
+  }
+  .main {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 4px 8px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .leave {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    margin-right: 3px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--text-faint);
+    cursor: pointer;
+  }
+  .leave:hover {
+    color: var(--text-normal);
+    background: var(--bg-hover);
   }
   .key {
     color: var(--text-faint);

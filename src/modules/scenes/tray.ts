@@ -5,11 +5,15 @@ import type { AdventuresState } from '../../shared/adventures';
 import type { Scene, SceneContent, ScenesState } from './types';
 import { scenesFor } from './types';
 
-export type TrayPart = 'background' | 'map' | 'portraits' | 'handout';
-export const TRAY_PARTS: TrayPart[] = ['background', 'map', 'portraits', 'handout'];
+// music — плейлисты (папки) и отдельные треки; encounters — id заготовок боёв, остальное — пути файлов.
+export type TrayPart = 'background' | 'map' | 'portraits' | 'handout' | 'music' | 'encounters';
+export const TRAY_PARTS: TrayPart[] = ['background', 'map', 'portraits', 'handout', 'music', 'encounters'];
+const FILE_PARTS: TrayPart[] = ['background', 'map', 'portraits', 'handout', 'music'];
 
 export type Tray = Record<TrayPart, string[]>;
-export const emptyTray = (): Tray => ({ background: [], map: [], portraits: [], handout: [] });
+export const emptyTray = (): Tray => ({ background: [], map: [], portraits: [], handout: [], music: [], encounters: [] });
+// Подборки до музыки и боёв — без этих частей.
+const full = (t: Partial<Tray> | undefined): Tray => ({ ...emptyTray(), ...t });
 
 // Что сейчас на экране игроков — по частям подборки. Только нужное из состояния, чтобы работало и в ядре.
 export interface ScreenNow {
@@ -17,6 +21,8 @@ export interface ScreenNow {
   maps: { current: string | null };
   portraits: { onScreen: string[] };
   handouts: { current: string | null };
+  music: { playing: boolean; playlist: string | null };
+  initiative: { combatants: { encounter?: string }[] };
 }
 export function shown(app: ScreenNow): Tray {
   const one = (p: string | null) => (p ? [p] : []);
@@ -25,13 +31,15 @@ export function shown(app: ScreenNow): Tray {
     map: one(app.maps.current),
     portraits: [...app.portraits.onScreen],
     handout: one(app.handouts.current),
+    music: app.music.playing ? one(app.music.playlist) : [],
+    encounters: [...new Set(app.initiative.combatants.map((c) => c.encounter).filter((e): e is string => !!e))],
   };
 }
 
 // Подборка сцены по её содержимому: так начинается подборка новой сцены и сцен из прежних версий.
 export function trayOf(c: SceneContent): Tray {
   const one = (p: string | null) => (p ? [p] : []);
-  return { background: one(c.background.path), map: one(c.map.path), portraits: [...c.portraits.paths], handout: one(c.handout.path) };
+  return { ...emptyTray(), background: one(c.background.path), map: one(c.map.path), portraits: [...c.portraits.paths], handout: one(c.handout.path), music: one(c.music.playlist) };
 }
 
 // Чья подборка сейчас в панели: включённой сцены (если она видна в текущем приключении) или приключения.
@@ -44,7 +52,7 @@ export function trayOwner(s: ScenesState, adv: AdventuresState): TrayOwner {
 export function currentTray(s: ScenesState, adv: AdventuresState): Tray {
   const o = trayOwner(s, adv);
   const t = 'scene' in o ? s.scenes.find((x) => x.id === o.scene)?.tray : s.trays?.[o.adventure];
-  return t ?? emptyTray();
+  return full(t);
 }
 
 // Есть ли что-то в текущей подборке (блок правой панели тогда не сворачивается в «нет»).
@@ -54,9 +62,15 @@ export const inTray = (app: { scenes: ScenesState; adventures: AdventuresState }
 // Поменять подборку (чью — окно знает: trayOwner).
 export function editTray(s: ScenesState, o: TrayOwner, fn: (t: Tray) => Tray): ScenesState {
   if ('scene' in o) {
-    return { ...s, scenes: s.scenes.map((x): Scene => (x.id === o.scene ? { ...x, tray: fn(x.tray ?? emptyTray()) } : x)) };
+    return { ...s, scenes: s.scenes.map((x): Scene => (x.id === o.scene ? { ...x, tray: fn(full(x.tray)) } : x)) };
   }
-  return { ...s, trays: { ...s.trays, [o.adventure]: fn(s.trays?.[o.adventure] ?? emptyTray()) } };
+  return { ...s, trays: { ...s.trays, [o.adventure]: fn(full(s.trays?.[o.adventure])) } };
+}
+
+// Объединить подборки (новая сцена из подборки и того, что на экране).
+export function merge(a: Tray, b: Tray): Tray {
+  for (const part of TRAY_PARTS) a = addTo(a, part, b[part]);
+  return a;
 }
 
 export function addTo(t: Tray, part: TrayPart, paths: string[]): Tray {
@@ -78,9 +92,10 @@ export function addShown(t: Tray, before: ScreenNow, after: ScreenNow): Tray {
 // Убрать из подборок пути, которых больше нет (keep — путь существует или он вне хранилища).
 export function pruneTrays(s: ScenesState, keep: (path: string) => boolean): ScenesState {
   let changed = false;
-  const clean = (t: Tray): Tray => {
-    const next = Object.fromEntries(TRAY_PARTS.map((p) => [p, t[p].filter(keep)])) as Tray;
-    if (TRAY_PARTS.some((p) => next[p].length !== t[p].length)) {
+  const clean = (old: Tray): Tray => {
+    const t = full(old);
+    const next = { ...t, ...Object.fromEntries(FILE_PARTS.map((p) => [p, t[p].filter(keep)])) } as Tray;
+    if (FILE_PARTS.some((p) => next[p].length !== t[p].length)) {
       changed = true;
       return next;
     }

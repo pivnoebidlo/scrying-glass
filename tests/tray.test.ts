@@ -6,11 +6,13 @@ import type { AdventuresState } from '../src/shared/adventures';
 import { ctx, run, tree } from './helpers';
 
 const adv = (current: string | null): AdventuresState => ({ list: ['Страд', 'Фандалин'], current, initialized: true });
-const screen = (o: Partial<{ bg: string | null; map: string | null; portraits: string[]; handout: string | null }> = {}): ScreenNow => ({
+const screen = (o: Partial<{ bg: string | null; map: string | null; portraits: string[]; handout: string | null; music: string; encounters: string[] }> = {}): ScreenNow => ({
   scene: { background: o.bg ?? null },
   maps: { current: o.map ?? null },
   portraits: { onScreen: o.portraits ?? [] },
   handouts: { current: o.handout ?? null },
+  music: { playing: !!o.music, playlist: o.music ?? null },
+  initiative: { combatants: (o.encounters ?? []).map((encounter) => ({ encounter })) },
 });
 const content = {
   background: { path: 'Страд/backgrounds/замок.jpg', fit: 'cover' as const },
@@ -28,7 +30,7 @@ const after = (s: ScenesState, a: AdventuresState, before: ScreenNow, now: Scree
 describe('подборка правой панели', () => {
   it('новое на экране — в подборку; что уже было на экране — не повторяется', () => {
     const t = addShown(emptyTray(), screen({ portraits: ['a.png'] }), screen({ bg: 'bg.jpg', portraits: ['a.png', 'b.png'], handout: 'n.note.json' }));
-    expect(t).toEqual({ background: ['bg.jpg'], map: [], portraits: ['b.png'], handout: ['n.note.json'] });
+    expect(t).toEqual({ ...emptyTray(), background: ['bg.jpg'], portraits: ['b.png'], handout: ['n.note.json'] });
   });
 
   it('без включённой сцены — подборка приключения, у каждого своя', () => {
@@ -42,7 +44,7 @@ describe('подборка правой панели', () => {
   it('новая сцена начинает подборку со своего содержимого и становится владельцем подборки', () => {
     const s = run(scenes, base, 'create', { name: 'Замок', content, adventure: 'Страд' });
     const sc = s.scenes[0]!;
-    expect(sc.tray).toEqual({ background: ['Страд/backgrounds/замок.jpg'], map: [], portraits: ['Страд/characters/страд.png'], handout: [] });
+    expect(sc.tray).toEqual({ ...emptyTray(), background: ['Страд/backgrounds/замок.jpg'], portraits: ['Страд/characters/страд.png'] });
     expect(trayOwner(s, adv('Страд'))).toEqual({ scene: sc.id });
     // В другом приключении сцена не видна — там подборка приключения.
     expect(trayOwner(s, adv('Фандалин'))).toEqual({ adventure: 'Фандалин' });
@@ -50,6 +52,25 @@ describe('подборка правой панели', () => {
     const s2 = after(s, adv('Страд'), screen(), screen({ handout: 'Страд/handouts/письмо.png' }));
     expect(s2.scenes[0]!.tray!.handout).toEqual(['Страд/handouts/письмо.png']);
     expect(s2.trays?.['Страд']).toBeUndefined();
+  });
+
+  it('новая сцена из накиданного в панель: подборка вместе с тем, что на экране', () => {
+    const tray = { ...emptyTray(), background: ['Страд/backgrounds/туман.jpg'], music: ['Страд/music/башня.mp3'], encounters: ['e1'] };
+    const s = run(scenes, base, 'create', { name: 'Башня', content, adventure: 'Страд', tray });
+    expect(s.scenes[0]!.tray).toEqual({
+      ...emptyTray(),
+      background: ['Страд/backgrounds/туман.jpg', 'Страд/backgrounds/замок.jpg'],
+      portraits: ['Страд/characters/страд.png'],
+      music: ['Страд/music/башня.mp3'],
+      encounters: ['e1'],
+    });
+  });
+
+  it('музыка и бои: включённое попадает в подборку, на паузе — нет', () => {
+    let s = after(base, adv('Страд'), screen(), screen({ music: 'Страд/music/бой', encounters: ['крысы'] }));
+    expect(s.trays?.['Страд']).toMatchObject({ music: ['Страд/music/бой'], encounters: ['крысы'] });
+    s = after(s, adv(null), screen(), { ...screen(), music: { playing: false, playlist: 'общая' } });
+    expect(currentTray(s, adv(null)).music).toEqual([]);
   });
 
   it('добавить и убрать вручную; повтор не дублируется', () => {
@@ -63,9 +84,14 @@ describe('подборка правой панели', () => {
 
   it('сцены прежних версий получают подборку из содержимого; пропавшие файлы уходят из подборок', () => {
     const old = { id: 's1', name: 'Замок', adventure: 'Страд', include: { background: true, map: true, portraits: true, handout: true, music: true, ambience: true }, ...content } as Scene;
-    const s: ScenesState = { ...base, scenes: [old], trays: { Страд: { ...emptyTray(), portraits: ['Страд/characters/нет.png', 'library:images/x.png'] } } };
-    const next = scenes.init!(s, ctx(tree(['Страд/backgrounds/замок.jpg'])));
+    const s: ScenesState = {
+      ...base,
+      scenes: [old],
+      trays: { Страд: { ...emptyTray(), portraits: ['Страд/characters/нет.png', 'library:images/x.png'], music: ['Страд/music', 'Страд/нет'], encounters: ['e1'] } },
+    };
+    const next = scenes.init!(s, ctx(tree(['Страд/backgrounds/замок.jpg', 'Страд/music/башня.mp3'])));
     expect(next.scenes[0]!.tray).toEqual({ ...emptyTray(), background: ['Страд/backgrounds/замок.jpg'] });
-    expect(next.trays?.['Страд']?.portraits).toEqual(['library:images/x.png']);
+    // Папки (плейлисты) остаются, бои — не пути, их очистка не трогает.
+    expect(next.trays?.['Страд']).toMatchObject({ portraits: ['library:images/x.png'], music: ['Страд/music'], encounters: ['e1'] });
   });
 });

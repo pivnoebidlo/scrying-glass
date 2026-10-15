@@ -101,6 +101,12 @@ export default defineModule({
       return start({ ...s, playlist: folder, queue }, index);
     },
 
+    // Один трек отдельно от папки (из подборки правой панели): очередь — только он, с повтором — по кругу.
+    // playlist тогда — путь самого трека.
+    playTrack(s, { path }: { path: string }) {
+      return start({ ...s, playlist: path, queue: [path] }, 0);
+    },
+
     jump(s, { index }: { index: number }) {
       return index >= 0 && index < s.queue.length ? start(s, index) : s;
     },
