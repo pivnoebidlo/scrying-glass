@@ -2,7 +2,8 @@
 // тот же рисунок на плитке, в редакторе и у игроков. Лист — 1000 единиц в ширину (как у NotePaper), след
 // рисуется в своих единицах (поперечник 200) и ставится на лист преобразованием.
 // Слои: `multiply` (пятна темнят бумагу и текст под собой) и `normal` (воск, блики, тлеющий край).
-import { markTint, NOTE_MARKS, NOTE_TINTS, type NoteCrease, type NoteMark } from '../../../shared/notes';
+import { markTint, NOTE_TINTS, type NoteCrease, type NoteMark } from '../../../shared/notes';
+import { SEAL_EMBLEMS } from '../../../shared/emblems';
 
 export const SHEET_W = 1000;
 
@@ -73,6 +74,64 @@ function satellites(r: Rand, c: string, n: number, from: number, to: number, siz
   return s;
 }
 
+const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+// Знак Lucide (сетка 24) в квадрате со стороной size вокруг 0, 0.
+function emblem(id: keyof typeof SEAL_EMBLEMS, size: number, attrs: string, dx = 0, dy = 0): string {
+  const k = size / 24;
+  const paths = SEAL_EMBLEMS[id].paths.map((d) => `<path d="${d}"/>`).join('');
+  return `<g transform="translate(${f(-size / 2 + dx)} ${f(-size / 2 + dy)}) scale(${k.toFixed(3)})" fill="none" stroke-linecap="round" stroke-linejoin="round" ${attrs}>${paths}</g>`;
+}
+
+// Сургучная печать: растёкшийся сургуч, вдавленный круг с ободком, знак или буква; сломанная — две половинки.
+function seal(m: NoteMark, r: Rand, c: string, key: string, uid: string): string {
+  const d = blob(r, 0, 0, 86, 0.12, 28);
+  const defs =
+    `<radialGradient id="${key}-g" cx="40%" cy="35%" r="75%"><stop offset="0%" stop-color="${shade(c, 1.35)}"/><stop offset="50%" stop-color="${c}"/><stop offset="100%" stop-color="${shade(c, 0.6)}"/></radialGradient>` +
+    `<linearGradient id="${key}-rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${shade(c, 1.55)}"/><stop offset="55%" stop-color="${c}"/><stop offset="100%" stop-color="${shade(c, 0.4)}"/></linearGradient>`;
+  const mark = m.emblem
+    ? emblem(m.emblem, 72, `stroke="${shade(c, 1.4)}" stroke-width="1.6" opacity="0.6"`, 1.2, 1.2) + emblem(m.emblem, 72, `stroke="${shade(c, 0.45)}" stroke-width="2"`)
+    : m.text
+      ? `<text x="1.5" y="3" text-anchor="middle" dominant-baseline="central" font-family="'Ruslan Display', serif" font-size="84" fill="${shade(c, 1.35)}" opacity="0.6">${esc(m.text)}</text>` +
+        `<text x="0" y="1.5" text-anchor="middle" dominant-baseline="central" font-family="'Ruslan Display', serif" font-size="84" fill="${shade(c, 0.45)}">${esc(m.text)}</text>`
+      : '';
+  const body =
+    `<path d="${d}" transform="translate(3 6)" fill="#000" opacity="0.45" filter="url(#${uid}-shadow)"/>` +
+    `<path d="${d}" fill="url(#${key}-g)"/>` +
+    `<circle r="60" fill="${shade(c, 0.88)}"/><circle r="60" fill="none" stroke="url(#${key}-rim)" stroke-width="7"/>` +
+    `<circle r="50" fill="none" stroke="${shade(c, 0.5)}" stroke-width="2"/><circle r="48.5" fill="none" stroke="${shade(c, 1.3)}" stroke-width="1" opacity="0.5"/>` +
+    mark +
+    `<ellipse cx="-34" cy="-40" rx="24" ry="10" transform="rotate(-35 -34 -40)" fill="#fff" opacity="0.16" filter="url(#${uid}-shadow)"/>`;
+  if (!m.broken) return `<defs>${defs}</defs>${body}`;
+  // Трещина сверху вниз; правая половина отъехала и повернулась.
+  const crack: Pt[] = Array.from({ length: 9 }, (_, i) => [(r() - 0.5) * 26 + (i % 2 ? 6 : -6), -110 + i * 27.5] as Pt);
+  const left = poly([[-120, -120], ...crack, [-120, 120]]);
+  const right = poly([[120, -120], ...crack, [120, 120]]);
+  return (
+    `<defs>${defs}<clipPath id="${key}-l"><path d="${left}"/></clipPath><clipPath id="${key}-r"><path d="${right}"/></clipPath></defs>` +
+    `<g clip-path="url(#${key}-l)" transform="translate(-3 -1) rotate(-2)">${body}</g>` +
+    `<g clip-path="url(#${key}-r)" transform="translate(7 5) rotate(5)">${body}</g>`
+  );
+}
+
+// Чернильный штамп: двойной круг, надпись по кругу, знак в середине; краска легла неровно.
+function stamp(m: NoteMark, r: Rand, c: string, key: string, uid: string): string {
+  const text = (m.text ?? '').toUpperCase();
+  let gaps = '';
+  for (let i = 0; i < 9; i++) gaps += `<path d="${blob(r, (r() - 0.5) * 170, (r() - 0.5) * 170, 6 + r() * 20, 0.4, 12)}" fill="#000" opacity="${(0.3 + r() * 0.6).toFixed(2)}"/>`;
+  const R = 61;
+  const ring = text
+    ? `<path id="${key}-tp" d="M0 ${R}a${R} ${R} 0 1 1 0.01 0" fill="none"/>` +
+      `<text font-family="'Old Standard TT', serif" font-size="17" font-weight="700" fill="${c}"><textPath href="#${key}-tp" textLength="${f(2 * Math.PI * R * 0.96)}" lengthAdjust="spacing">${esc(text)}</textPath></text>` +
+      `<circle r="47" fill="none" stroke="${c}" stroke-width="2"/>`
+    : '';
+  const center = m.emblem ? emblem(m.emblem, text ? 54 : 90, `stroke="${c}" stroke-width="${text ? 2.2 : 1.8}"`) : '';
+  return (
+    `<mask id="${key}-ink"><rect x="-110" y="-110" width="220" height="220" fill="#fff"/>${gaps}</mask>` +
+    `<g mask="url(#${key}-ink)" filter="url(#${uid}-rough)" opacity="0.85"><circle r="93" fill="none" stroke="${c}" stroke-width="6"/><circle r="84" fill="none" stroke="${c}" stroke-width="2"/>${ring}${center}</g>`
+  );
+}
+
 // Пятно жидкости: заливка + темнее по краю (так высыхает кровь и чернила).
 const liquid = (d: string, c: string, op = 0.9) =>
   `<path d="${d}" fill="${c}" opacity="${op}"/><path d="${d}" fill="none" stroke="${shade(c, 0.55)}" stroke-width="2.5" opacity="0.55"/>`;
@@ -80,6 +139,8 @@ const liquid = (d: string, c: string, op = 0.9) =>
 interface Parts {
   multiply: string;
   normal: string;
+  // Поверх листа без обрезки краем (печати).
+  top?: string;
 }
 
 // Что рисует каждый вид — в своих единицах (поперечник около 200, середина в 0, 0).
@@ -249,6 +310,10 @@ export function markShape(m: NoteMark, uid: string, stain: string): Parts {
       }
       return { multiply: `<g ${rough}>${dark}</g>`, normal: `<g ${rough}>${light}</g>` };
     }
+    case 'seal':
+      return { multiply: '', normal: '', top: seal(m, r, c, key, uid) };
+    case 'stamp':
+      return { multiply: stamp(m, r, c, key, uid), normal: '' };
   }
 }
 
@@ -262,22 +327,25 @@ export function holePath(m: NoteMark): string {
 export const markTransform = (m: NoteMark, H: number) =>
   `translate(${f(m.x * SHEET_W)} ${f(m.y * H)}) rotate(${f(m.angle)}) scale(${((m.size * SHEET_W) / 200).toFixed(4)})`;
 
-export function marksSvg(marks: NoteMark[], uid: string, H: number, stain: string): Parts {
+export function marksSvg(marks: NoteMark[], uid: string, H: number, stain: string): Required<Parts> {
   let multiply = '';
   let normal = '';
+  let top = '';
   for (const m of marks) {
     const p = markShape(m, uid, stain);
     const g = (s: string) => (s ? `<g transform="${markTransform(m, H)}" opacity="${m.opacity.toFixed(2)}">${s}</g>` : '');
     multiply += g(p.multiply);
     normal += g(p.normal);
+    top += g(p.top ?? '');
   }
-  return { multiply, normal };
+  return { multiply, normal, top };
 }
 
 // Фильтры следов: неровный край, мягкость, обугливание; плавное затухание отпечатка.
 export const markDefs = (uid: string) =>
   `<filter id="${uid}-rough" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="5"/></filter>` +
   `<filter id="${uid}-soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter>` +
+  `<filter id="${uid}-shadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>` +
   `<filter id="${uid}-burn" x="-40%" y="-40%" width="180%" height="180%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="7"/><feDisplacementMap in="SourceGraphic" scale="22"/><feGaussianBlur stdDeviation="6"/></filter>` +
   `<radialGradient id="${uid}-fade"><stop offset="0%" stop-color="#fff"/><stop offset="70%" stop-color="#fff" stop-opacity="0.85"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></radialGradient>`;
 

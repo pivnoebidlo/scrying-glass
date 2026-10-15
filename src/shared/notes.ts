@@ -10,6 +10,8 @@ export const noteTitle = (path: string) => {
   return name.slice(0, name.length - NOTE_SUFFIX.length);
 };
 
+import { SEAL_EMBLEMS, type SealEmblem } from './emblems';
+
 // Шрифты лежат внутри приложения (renderer/lib/note/fonts, лицензия OFL), все с кириллицей.
 export const NOTE_FONTS = {
   marck: { title: 'Письмо от руки', family: 'Marck Script', group: 'Рукописные' },
@@ -17,11 +19,20 @@ export const NOTE_FONTS = {
   caveat: { title: 'Быстрая записка', family: 'Caveat', group: 'Рукописные' },
   greatvibes: { title: 'Каллиграфия', family: 'Great Vibes', group: 'Рукописные' },
   amatic: { title: 'Узкий от руки', family: 'Amatic SC', group: 'Рукописные' },
+  neucha: { title: 'Простой почерк', family: 'Neucha', group: 'Рукописные' },
+  brush: { title: 'Кистью', family: 'Comforter Brush', group: 'Рукописные' },
   cormorant: { title: 'Книжный', family: 'Cormorant Garamond', group: 'Книжные' },
   oldstandard: { title: 'Старая книга', family: 'Old Standard TT', group: 'Книжные' },
+  kurale: { title: 'Старинный книжный', family: 'Kurale', group: 'Книжные' },
+  forum: { title: 'Высеченный', family: 'Forum', group: 'Книжные' },
+  yeseva: { title: 'Вывеска', family: 'Yeseva One', group: 'Книжные' },
   ruslan: { title: 'Старорусский', family: 'Ruslan Display', group: 'Особые' },
   ponomar: { title: 'Древняя рукопись', family: 'Ponomar', group: 'Особые' },
+  monomakh: { title: 'Летопись', family: 'Monomakh', group: 'Особые' },
   underdog: { title: 'Грубый', family: 'Underdog', group: 'Особые' },
+  wetpaint: { title: 'Потёки (кровью на стене)', family: 'Rubik Wet Paint', group: 'Жуткие' },
+  distressed: { title: 'Истёртый', family: 'Rubik Distressed', group: 'Жуткие' },
+  beastly: { title: 'Чудовищный', family: 'Rubik Beastly', group: 'Жуткие' },
 } as const;
 export type NoteFont = keyof typeof NOTE_FONTS;
 
@@ -59,9 +70,6 @@ export const NOTE_INKS = {
 } as const;
 export type NoteInk = keyof typeof NOTE_INKS;
 
-export const NOTE_SEALS = { none: '', red: '#9b1c1c', black: '#2a2522', green: '#2f5d3a', blue: '#26407a', gold: '#b08a2e' } as const;
-export type NoteSeal = keyof typeof NOTE_SEALS;
-
 // Состояние бумаги: складки и помятость поверх всего листа.
 export const NOTE_CREASES = { none: 'Гладкая', folded: 'Сложена вчетверо', crumpled: 'Помята', crushed: 'Скомкана' } as const;
 export type NoteCrease = keyof typeof NOTE_CREASES;
@@ -77,8 +85,13 @@ export const NOTE_TINTS = {
   coffee: { title: 'Чай или кофе', color: '#6b4220' },
   slime: { title: 'Слизь', color: '#3f5a12' },
   candle: { title: 'Свечной воск', color: '#cdb98e' },
-  redWax: { title: 'Красный воск', color: '#8e1a16' },
-  blackWax: { title: 'Чёрный воск', color: '#26211e' },
+  redWax: { title: 'Красный сургуч', color: '#8e1a16' },
+  blackWax: { title: 'Чёрный сургуч', color: '#2a2522' },
+  greenWax: { title: 'Зелёный сургуч', color: '#2f5d3a' },
+  blueWax: { title: 'Синий сургуч', color: '#26407a' },
+  goldWax: { title: 'Золотой сургуч', color: '#b08a2e' },
+  redInk: { title: 'Красные чернила', color: '#9a1d1d' },
+  blueInk: { title: 'Синие чернила', color: '#22357a' },
 } as const;
 export type NoteTint = keyof typeof NOTE_TINTS;
 
@@ -95,6 +108,8 @@ export const NOTE_MARKS = {
   scorch: { title: 'Подпалина', group: 'Повреждения', size: 0.3, tints: [] },
   hole: { title: 'Прожжённая дыра', group: 'Повреждения', size: 0.16, tints: [] },
   claws: { title: 'Следы когтей', group: 'Повреждения', size: 0.35, tints: [] },
+  seal: { title: 'Сургучная печать', group: 'Печати', size: 0.17, tints: ['redWax', 'blackWax', 'greenWax', 'blueWax', 'goldWax'] },
+  stamp: { title: 'Штамп', group: 'Печати', size: 0.26, tints: ['redInk', 'blueInk', 'ink'] },
 } as const satisfies Record<string, { title: string; group: string; size: number; tints: readonly NoteTint[] }>;
 export type NoteMarkKind = keyof typeof NOTE_MARKS;
 
@@ -111,7 +126,14 @@ export interface NoteMark {
   tint?: NoteTint;
   // Свой рисунок у каждого следа.
   seed: number;
+  // Печать и штамп: буква (у печати, если нет знака) или надпись по кругу (у штампа); знак в середине.
+  text?: string;
+  emblem?: SealEmblem;
+  // Сломанная печать (письмо вскрыто).
+  broken?: boolean;
 }
+
+export const SEAL_TEXT_MAX = { seal: 2, stamp: 40 } as const;
 
 export const MARK_SIZE = { min: 0.03, max: 1 } as const;
 export const MAX_MARKS = 200;
@@ -126,6 +148,7 @@ export function newMark(kind: NoteMarkKind, x: number, y: number): NoteMark {
     angle: Math.round(Math.random() * 360),
     opacity: 1,
     seed: Math.floor(Math.random() * 1e6),
+    ...(kind === 'seal' ? { emblem: 'crown' as const } : kind === 'stamp' ? { emblem: 'crown' as const, text: 'Королевская канцелярия' } : {}),
   };
 }
 
@@ -148,12 +171,11 @@ export interface Note {
   edge: NoteEdge;
   shape: NoteShape;
   ink: NoteInk;
+  // Неровность почерка: 0 — ровно, 1 — буквы пляшут (дрожащая рука, безумие).
+  shaky: number;
   // Подпись внизу справа (своим шрифтом), пусто — без подписи.
   signature: string;
   signatureFont: NoteFont;
-  // Сургучная печать внизу и буква на ней.
-  seal: NoteSeal;
-  sealLetter: string;
   // Случайное зерно бумаги: у каждой записки свои пятна и края.
   seed: number;
   crease: NoteCrease;
@@ -173,10 +195,9 @@ export function newNote(): Note {
     edge: 'straight',
     shape: 'portrait',
     ink: 'auto',
+    shaky: 0,
     signature: '',
     signatureFont: 'greatvibes',
-    seal: 'none',
-    sealLetter: '',
     seed: Math.floor(Math.random() * 10000),
     crease: 'none',
     marks: [],
@@ -193,6 +214,23 @@ export function parseNote(raw: unknown): Note | null {
   const d = newNote();
   const num = (v: unknown, def: number, min: number, max: number) => (typeof v === 'number' && isFinite(v) ? Math.min(max, Math.max(min, v)) : def);
   const str = (v: unknown, def: string) => (typeof v === 'string' ? v : def);
+  const shape = pick(r['shape'], NOTE_SHAPES, d.shape);
+  const marks = (Array.isArray(r['marks']) ? r['marks'] : []).flatMap((m) => parseMark(m, num)).slice(0, MAX_MARKS);
+  // До 0.23 печать была одна, в углу (поля seal и sealLetter) — теперь это след «Сургучная печать» на том же месте.
+  const legacy = LEGACY_SEALS[str(r['seal'], 'none')];
+  if (legacy) {
+    const signed = !!str(r['signature'], '').trim();
+    marks.push({
+      ...newMark('seal', signed ? 0.15 : 0.85, 1 - 0.14 * NOTE_SHAPES[shape].aspect),
+      id: 'seal',
+      size: 0.15,
+      angle: 0,
+      tint: legacy,
+      emblem: undefined,
+      text: str(r['sealLetter'], '').slice(0, 2),
+      seed: num(r['seed'], 1, 0, 1e9),
+    });
+  }
   return {
     scryingGlass: 'note',
     version: 1,
@@ -202,17 +240,18 @@ export function parseNote(raw: unknown): Note | null {
     align: pick(r['align'], { left: 1, center: 1, justify: 1 }, d.align),
     paper: pick(r['paper'], NOTE_PAPERS, d.paper),
     edge: pick(r['edge'], NOTE_EDGES, d.edge),
-    shape: pick(r['shape'], NOTE_SHAPES, d.shape),
+    shape,
     ink: pick(r['ink'], NOTE_INKS, d.ink),
+    shaky: num(r['shaky'], 0, 0, 1),
     signature: str(r['signature'], ''),
     signatureFont: pick(r['signatureFont'], NOTE_FONTS, d.signatureFont),
-    seal: pick(r['seal'], NOTE_SEALS, d.seal),
-    sealLetter: str(r['sealLetter'], '').slice(0, 2),
     seed: num(r['seed'], d.seed, 0, 1e9),
     crease: pick(r['crease'], NOTE_CREASES, d.crease),
-    marks: (Array.isArray(r['marks']) ? r['marks'] : []).flatMap((m) => parseMark(m, num)).slice(0, MAX_MARKS),
+    marks,
   };
 }
+
+const LEGACY_SEALS: Record<string, NoteTint> = { red: 'redWax', black: 'blackWax', green: 'greenWax', blue: 'blueWax', gold: 'goldWax' };
 
 function parseMark(raw: unknown, num: (v: unknown, def: number, min: number, max: number) => number): NoteMark[] {
   if (!raw || typeof raw !== 'object') return [];
@@ -230,5 +269,14 @@ function parseMark(raw: unknown, num: (v: unknown, def: number, min: number, max
     opacity: num(m['opacity'], 1, 0.1, 1),
     ...(tint ? { tint } : {}),
     seed: num(m['seed'], 1, 0, 1e9),
+    ...(kind === 'seal' || kind === 'stamp' ? sealFields(kind, m) : {}),
   }];
+}
+
+function sealFields(kind: 'seal' | 'stamp', m: Record<string, unknown>): Pick<NoteMark, 'text' | 'emblem' | 'broken'> {
+  const out: Pick<NoteMark, 'text' | 'emblem' | 'broken'> = {};
+  if (typeof m['text'] === 'string' && m['text']) out.text = m['text'].slice(0, SEAL_TEXT_MAX[kind]);
+  if (typeof m['emblem'] === 'string' && m['emblem'] in SEAL_EMBLEMS) out.emblem = m['emblem'] as SealEmblem;
+  if (kind === 'seal' && m['broken'] === true) out.broken = true;
+  return out;
 }

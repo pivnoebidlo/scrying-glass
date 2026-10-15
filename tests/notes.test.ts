@@ -18,12 +18,11 @@ describe('формат записки', () => {
   });
 
   it('неизвестные и испорченные поля — по умолчанию, числа в пределах', () => {
-    const n = parseNote({ scryingGlass: 'note', text: 'Привет', font: 'comic-sans', size: 99, paper: 'dark', sealLetter: 'АБВ' })!;
+    const n = parseNote({ scryingGlass: 'note', text: 'Привет', font: 'comic-sans', size: 99, paper: 'dark' })!;
     expect(n.text).toBe('Привет');
     expect(n.font).toBe(newNote().font);
     expect(n.size).toBe(15);
     expect(n.paper).toBe('dark');
-    expect(n.sealLetter).toBe('АБ');
     expect(parseNote({ text: 'не записка' })).toBeNull();
   });
 
@@ -53,6 +52,20 @@ describe('следы и помятость', () => {
     expect(markTint(n.marks[1]!)).toBe('coffee');
     expect(parseNote({ scryingGlass: 'note' })!.marks).toEqual([]);
     expect(parseNote({ scryingGlass: 'note', crease: 'порвана' })!.crease).toBe('none');
+  });
+
+  it('печать из старых записок (одна, в углу) становится следом на том же месте', () => {
+    const n = parseNote({ scryingGlass: 'note', shape: 'portrait', seal: 'green', sealLetter: 'АБВ', signature: 'Гилберт', seed: 5 })!;
+    expect(n.marks).toHaveLength(1);
+    expect(n.marks[0]).toMatchObject({ kind: 'seal', tint: 'greenWax', text: 'АБ', x: 0.15 });
+    expect(n.marks[0]!.y).toBeCloseTo(1 - 0.14 * 0.75);
+    expect('seal' in n).toBe(false);
+    expect(parseNote({ scryingGlass: 'note', seal: 'none' })!.marks).toEqual([]);
+    // Знак — только из известных, надпись — в пределах.
+    const s = parseNote({ scryingGlass: 'note', marks: [{ kind: 'stamp', emblem: 'pentagram', text: 'x'.repeat(99), broken: true }] })!.marks[0]!;
+    expect(s.emblem).toBeUndefined();
+    expect(s.text).toHaveLength(40);
+    expect(s.broken).toBeUndefined();
   });
 
   it('рисунок следа зависит только от зерна; дыры — в маске листа', () => {

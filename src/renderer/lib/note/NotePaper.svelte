@@ -3,7 +3,7 @@
      одинаково. Бумага рисуется SVG-фильтрами (зерно, пятна, затемнение к краям), края — по зерну записки. -->
 <script lang="ts">
   import './fonts.css';
-  import { NOTE_FONTS, NOTE_INKS, NOTE_SEALS, NOTE_SHAPES, type Note } from '../../../shared/notes';
+  import { NOTE_FONTS, NOTE_INKS, NOTE_SHAPES, type Note } from '../../../shared/notes';
   import { noteHtml } from './markup';
   import { creaseSvg, holesMask, markDefs, marksSvg, rng } from './marks';
 
@@ -100,8 +100,45 @@
     edit.onpick(e, id, (e.clientX - box.left) / box.width, (e.clientY - box.top) / box.height);
   }
 
-  const html = $derived(noteHtml(note.text));
-  const seal = $derived(NOTE_SEALS[note.seal]);
+  // Неровный почерк: каждая буква чуть повёрнута, сдвинута и другого размера (по зерну записки). Слова не
+  // разрываются (буквы — inline-block, иначе строка рвалась бы где угодно).
+  function shake(src: string, amount: number, seed: number): string {
+    if (amount <= 0) return src;
+    const r = rng(seed + 55);
+    const t = document.createElement('template');
+    t.innerHTML = src;
+    const walker = document.createTreeWalker(t.content, NodeFilter.SHOW_TEXT);
+    const texts: Text[] = [];
+    while (walker.nextNode()) texts.push(walker.currentNode as Text);
+    for (const node of texts) {
+      const frag = document.createDocumentFragment();
+      for (const part of node.data.split(/(\s+)/)) {
+        if (!part) continue;
+        if (/^\s+$/.test(part)) {
+          frag.append(part);
+          continue;
+        }
+        const word = document.createElement('span');
+        word.className = 'w';
+        for (const ch of part) {
+          const l = document.createElement('span');
+          l.className = 'l';
+          l.textContent = ch;
+          const rot = (r() - 0.5) * amount * 34;
+          const dx = (r() - 0.5) * amount * 0.08;
+          const dy = (r() - 0.5) * amount * 0.3;
+          const sc = 1 + (r() - 0.5) * amount * 0.4;
+          l.style.transform = `translate(${dx.toFixed(3)}em, ${dy.toFixed(3)}em) rotate(${rot.toFixed(1)}deg) scale(${sc.toFixed(3)})`;
+          word.append(l);
+        }
+        frag.append(word);
+      }
+      node.replaceWith(frag);
+    }
+    return t.innerHTML;
+  }
+
+  const html = $derived(shake(noteHtml(note.text), note.shaky, note.seed));
 
   let content = $state<HTMLDivElement>();
   // Не влезает ли текст в лист (предупреждение в редакторе).
@@ -192,14 +229,9 @@
         {/if}
       </div>
 
-      {#if seal}
-        <div class="seal" class:left={!!note.signature.trim()} style:--seal={seal}>
-          <span>{note.sealLetter}</span>
-        </div>
-      {/if}
-
+  
       <!-- Следы и складки — поверх текста: пятно темнит и бумагу, и буквы под собой. -->
-      {#if marks.multiply || marks.normal}
+      {#if marks.multiply || marks.normal || marks.top}
         <svg class="multiply" viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true">
           <!-- SVG собран из чисел в marks.ts. -->
           <defs>{@html markDefs(uid)}</defs>
@@ -207,6 +239,8 @@
         </svg>
         <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true">
           <g clip-path="url(#{uid}-clip)">{@html marks.normal}</g>
+          <!-- Печати лежат на листе, а не в нём: край бумаги их не обрезает. -->
+          {@html marks.top}
         </svg>
       {/if}
       {#if crease}
@@ -338,29 +372,10 @@
     font-size: 1.35em;
     text-align: right;
   }
-  /* Сургучная печать: неровный круг с выпуклым ободом и буквой. */
-  .seal {
-    position: absolute;
-    right: 7cqw;
-    bottom: 5cqw;
-    display: grid;
-    place-items: center;
-    width: 15cqw;
-    aspect-ratio: 1;
-    border-radius: 47% 53% 50% 46% / 52% 46% 54% 48%;
-    background: radial-gradient(circle at 38% 34%, color-mix(in srgb, var(--seal) 70%, #fff), var(--seal) 45%, color-mix(in srgb, var(--seal) 60%, #000));
-    box-shadow:
-      0 0.4cqw 1cqw rgba(0, 0, 0, 0.45),
-      inset 0 0 0 1.4cqw color-mix(in srgb, var(--seal) 85%, #000);
+  .content :global(.w) {
+    white-space: nowrap;
   }
-  .seal.left {
-    right: auto;
-    left: 7cqw;
-  }
-  .seal span {
-    font-family: 'Ruslan Display', serif;
-    font-size: 6.5cqw;
-    color: color-mix(in srgb, var(--seal) 55%, #000);
-    text-shadow: 0 0.15cqw 0 color-mix(in srgb, var(--seal) 60%, #fff);
+  .content :global(.l) {
+    display: inline-block;
   }
 </style>

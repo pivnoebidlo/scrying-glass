@@ -7,12 +7,13 @@
   import Slider from '../../../renderer/lib/Slider.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import {
-    MARK_SIZE, NOTE_CREASES, NOTE_EDGES, NOTE_FONTS, NOTE_INKS, NOTE_MARKS, NOTE_PAPERS, NOTE_SEALS, NOTE_SHAPES, NOTE_TINTS, MAX_MARKS,
+    MARK_SIZE, NOTE_CREASES, NOTE_EDGES, NOTE_FONTS, NOTE_INKS, NOTE_MARKS, NOTE_PAPERS, NOTE_SHAPES, NOTE_TINTS, MAX_MARKS, SEAL_TEXT_MAX,
     markTint, newMark, noteTitle,
-    type Note, type NoteCrease, type NoteEdge, type NoteFont, type NoteInk, type NoteMarkKind, type NotePaper as Paper, type NoteSeal,
+    type Note, type NoteCrease, type NoteEdge, type NoteFont, type NoteInk, type NoteMarkKind, type NotePaper as Paper,
     type NoteShape, type NoteTint,
   } from '../../../shared/notes';
   import { markDefs, markShape } from '../../../renderer/lib/note/marks';
+  import { SEAL_EMBLEMS, type SealEmblem } from '../../../shared/emblems';
   import { ui } from './ui.svelte';
   import CopyToMenu from './CopyToMenu.svelte';
   import { notesFolder } from '../../../renderer/lib/note/notes.svelte';
@@ -101,7 +102,7 @@
   // Значок вида в палитре — сам след в миниатюре.
   const icon = (kind: NoteMarkKind) => {
     const p = markShape({ ...newMark(kind, 0, 0), id: kind, seed: 7, angle: 0 }, 'pal', '#9c6a2e');
-    return `<defs>${markDefs('pal')}</defs>${p.multiply}${p.normal}`;
+    return `<defs>${markDefs('pal')}</defs>${p.multiply}${p.normal}${p.top ?? ''}`;
   };
 
   function onpick(e: PointerEvent, id: string | null, x: number, y: number) {
@@ -164,7 +165,7 @@
     }
   }
 
-  const SEAL_TITLES: Record<NoteSeal, string> = { none: 'Без печати', red: 'Красная', black: 'Чёрная', green: 'Зелёная', blue: 'Синяя', gold: 'Золотая' };
+  const emblems = Object.entries(SEAL_EMBLEMS) as [SealEmblem, (typeof SEAL_EMBLEMS)[SealEmblem]][];
 </script>
 
 <svelte:window {onkeydown} />
@@ -215,6 +216,11 @@
         <div class="field">
           <span>Размер текста</span>
           <div class="size"><Slider value={note.size} min={2} max={10} step={0.1} oninput={(v) => (note!.size = v)} /><span class="faint">{note.size.toFixed(1)}</span></div>
+        </div>
+
+        <div class="field">
+          <span title="Буквы пляшут: дрожащая рука, спешка, безумие">Неровность почерка</span>
+          <div class="size"><Slider value={note.shaky} min={0} max={1} step={0.01} oninput={(v) => (note!.shaky = v)} /><span class="faint">{Math.round(note.shaky * 100)}</span></div>
         </div>
 
         <div class="row">
@@ -272,20 +278,6 @@
           </label>
         </div>
 
-        <div class="row">
-          <label class="field grow">
-            <span>Сургучная печать</span>
-            <select value={note.seal} onchange={(e) => (note!.seal = e.currentTarget.value as NoteSeal)}>
-              {#each Object.keys(NOTE_SEALS) as id (id)}<option value={id}>{SEAL_TITLES[id as NoteSeal]}</option>{/each}
-            </select>
-          </label>
-          {#if note.seal !== 'none'}
-            <label class="field">
-              <span>Буква</span>
-              <input class="letter" type="text" maxlength="2" bind:value={note.sealLetter} placeholder="Г" />
-            </label>
-          {/if}
-        </div>
 
         <section class="marks">
           <div class="marks-head">
@@ -326,6 +318,33 @@
                     {#each tints as t (t)}<option value={t}>{NOTE_TINTS[t].title}</option>{/each}
                   </select>
                 </label>
+              {/if}
+              {#if mark.kind === 'seal' || mark.kind === 'stamp'}
+                {@const kind = mark.kind}
+                <label class="field">
+                  <span>{kind === 'seal' ? 'Буква (если нет знака)' : 'Надпись по кругу'}</span>
+                  <input
+                    type="text"
+                    maxlength={SEAL_TEXT_MAX[kind]}
+                    value={mark.text ?? ''}
+                    placeholder={kind === 'seal' ? 'Г' : 'Королевская канцелярия'}
+                    oninput={(e) => (mark!.text = e.currentTarget.value)}
+                  />
+                </label>
+                <div class="field">
+                  <span>Знак</span>
+                  <div class="emblems">
+                    <button type="button" class:active={!mark.emblem} title="Без знака" onclick={() => (mark!.emblem = undefined)}>—</button>
+                    {#each emblems as [id, e] (id)}
+                      <button type="button" class:active={mark.emblem === id} title={e.title} onclick={() => (mark!.emblem = id)}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{#each e.paths as d (d)}<path {d} />{/each}</svg>
+                      </button>
+                    {/each}
+                  </div>
+                </div>
+                {#if kind === 'seal'}
+                  <label class="check"><input type="checkbox" checked={!!mark.broken} onchange={(e) => (mark!.broken = e.currentTarget.checked || undefined)} /> Сломана — письмо вскрыто</label>
+                {/if}
               {/if}
               <div class="field">
                 <span>Размер</span>
@@ -464,10 +483,6 @@
     background: var(--accent);
     color: #fff;
   }
-  .letter {
-    width: 56px;
-    text-align: center;
-  }
   .preview {
     display: flex;
     flex-direction: column;
@@ -554,6 +569,38 @@
     padding: 10px;
     border: 1px solid var(--border);
     border-radius: var(--radius-m);
+  }
+  .emblems {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+  .emblems button {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .emblems button.active {
+    border-color: var(--accent);
+    color: var(--text-normal);
+  }
+  .emblems svg {
+    width: 16px;
+    height: 16px;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    cursor: pointer;
   }
   .sel-head {
     display: flex;
