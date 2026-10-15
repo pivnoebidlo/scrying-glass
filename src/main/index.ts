@@ -26,7 +26,7 @@ import { createTable, isTablePath, listLibraryTables, readTable, seedLibraryTabl
 import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, readLss, updateFromLss, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import {
@@ -1018,9 +1018,27 @@ ipcMain.handle('cards:pickImport', async () => {
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
   return res.canceled ? [] : res.filePaths;
 });
-ipcMain.handle('cards:import', (_event, { files, scope, folder }: { files: string[]; scope: CardScope; folder?: string }) =>
-  importCards(files, scope, folder)
+ipcMain.handle('cards:import', (_event, { files, scope, folder, newLss }: { files: string[]; scope: CardScope; folder?: string; newLss?: boolean }) =>
+  importCards(files, scope, folder, newLss)
 );
+// Обновление персонажа из экспорта Long Story Short: выбрать файл и показать изменения, потом обновить карточку.
+const lssPreview = (file: string) => {
+  const r = readLss(file);
+  return { name: r.name, system: r.system, stats: r.stats, lssId: r.lssId };
+};
+ipcMain.handle('cards:pickLss', async () => {
+  const win = getControlWindow();
+  const opts = {
+    title: 'Экспорт персонажа из Long Story Short',
+    properties: ['openFile' as const],
+    filters: [{ name: 'Персонаж LSS', extensions: ['json'] }],
+  };
+  const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+  const file = res.canceled ? undefined : res.filePaths[0];
+  return file ? { file, lss: lssPreview(file) } : null;
+});
+ipcMain.handle('cards:readLss', (_event, file: string) => lssPreview(file));
+ipcMain.handle('cards:updateFromLss', (_event, { ref, file }: { ref: CardRef; file: string }) => updateFromLss(ref, file));
 
 function noImageInClipboard() {
   const win = getControlWindow();

@@ -1,6 +1,6 @@
 // Бестиарий в окне управления: краткий список карточек из ядра, фильтры и выбранная карточка.
 // Фильтры запоминаются между запусками (в окне, не в хранилище).
-import type { Card, CardRef, CardScope, CardSummary } from '../../../shared/cards';
+import type { Card, CardRef, CardScope, CardSummary, LssPreview } from '../../../shared/cards';
 import { defaultSide, imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
@@ -56,6 +56,17 @@ export interface Draft {
 }
 
 // Запрос «где хранить?» — окно выбора места (PlacePicker) показывается, пока он есть.
+// Персонаж из LSS, у которого уже есть карточка: окно LssUpdate показывает, что изменилось, и ждёт решения.
+// import — спросили при импорте (можно и создать новую карточку), иначе — «Обновить из LSS…» у карточки.
+export type LssChoice = 'update' | 'new' | 'cancel';
+export interface LssRequest {
+  target: CardRef;
+  current: Card;
+  lss: LssPreview;
+  import: boolean;
+  resolve(c: LssChoice): void;
+}
+
 export interface PlaceRequest {
   title: string;
   action: string;
@@ -102,6 +113,7 @@ class Bestiary {
   rev = $state(0);
   draft = $state<Draft | null>(null);
   placeRequest = $state.raw<PlaceRequest | null>(null);
+  lssRequest = $state.raw<LssRequest | null>(null);
   // Снимок черновика при открытии: есть ли несохранённые изменения.
   draftStart = '';
   // Файл карточки, открытой в редакторе, изменили снаружи (в другой программе): новая версия с диска
@@ -200,6 +212,36 @@ class Bestiary {
         },
       };
     });
+  }
+
+  private askLss(req: Omit<LssRequest, 'resolve'>): Promise<LssChoice> {
+    return new Promise((resolve) => {
+      this.lssRequest = {
+        ...req,
+        resolve: (c) => {
+          this.lssRequest = null;
+          resolve(c);
+        },
+      };
+    });
+  }
+
+  // «Обновить из LSS…»: выбрать свежий экспорт персонажа, посмотреть изменения и обновить карточку. Сообщение
+  // о результате или null — передумали.
+  async updateFromLss(ref: CardRef): Promise<string | null> {
+    const current = await window.api.getCard($state.snapshot(ref));
+    if (!current) return null;
+    let picked;
+    try {
+      picked = await window.api.pickLss();
+    } catch (e) {
+      return `Не удалось прочитать файл: ${e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e)}`;
+    }
+    if (!picked) return null;
+    const choice = await this.askLss({ target: $state.snapshot(ref), current, lss: picked.lss, import: false });
+    if (choice !== 'update') return null;
+    await window.api.updateFromLss($state.snapshot(ref), picked.file);
+    return `«${picked.lss.name}» обновлён из LSS`;
   }
 
   // Система новой карточки: выбранная в фильтре (если она из семейства приключения), иначе — приключения.
@@ -393,9 +435,23 @@ class Bestiary {
     if (!files.length) return null;
     place ??= await this.choosePlace({ title: 'Куда импортировать карточки?', action: 'Импортировать', library: true });
     if (!place) return null;
-    const { count, errors, updated } = await window.api.importCards(files, place.scope, place.folder);
+    const { count, errors, matches } = await window.api.importCards(files, place.scope, place.folder);
+    // Персонажи LSS, у которых карточка уже есть: показать изменения и спросить — обновить или создать новую.
+    const updated: string[] = [];
+    let added = count;
+    for (const m of matches) {
+      const current = await window.api.getCard(m.ref);
+      const lss = await window.api.readLss(m.file);
+      const choice = current ? await this.askLss({ target: m.ref, current, lss, import: true }) : 'new';
+      if (choice === 'update') {
+        await window.api.updateFromLss(m.ref, m.file);
+        updated.push(lss.name);
+      } else if (choice === 'new') {
+        added += (await window.api.importCards([m.file], place.scope, place.folder, true)).count;
+      }
+    }
     return [
-      count || !updated.length ? `Импортировано карточек: ${count}` : '',
+      added || !updated.length ? `Импортировано карточек: ${added}` : '',
       updated.length ? `Обновлены: ${updated.join(', ')}` : '',
       ...errors,
     ]

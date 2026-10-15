@@ -15,11 +15,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
 import { app, BrowserWindow } from 'electron';
-import type { Card, CardRef, CardScope, CardSummary } from '../shared/cards';
+import type { Card, CardRef, CardScope, CardSummary, LssMatch } from '../shared/cards';
 import { cardAsset, defaultSide, refKey } from '../shared/cards';
 import { folderRole, roleFolders, roleNames, type VaultFolder } from '../shared/vault';
 import { systemOf } from '../systems';
-import { fromLss, isLssExport } from '../systems/dnd5e/lss';
+import { fromLss, isLssExport, type LssImport } from '../systems/dnd5e/lss';
 import { freeName, writeJsonAtomic } from './files';
 import { discard } from './trash';
 
@@ -643,17 +643,57 @@ function readImport(file: string): Bundle {
   throw new Error('Это не файл карточек Scrying Glass');
 }
 
-// Персонаж из Long Story Short. Если он уже импортирован в это место (тот же id в LSS), карточка обновляется:
-// лист заменяется, а портреты, заметки и теги остаются. Аватар из LSS становится портретом новой карточки.
-async function importLss(j: { data: string; edition?: string }, to: CardScope, dir: string, imgDir: { abs: string; rel: string }): Promise<'new' | 'updated'> {
-  const r = fromLss(j);
-  const existing = r.lssId ? [...cards].find(([k, c]) => k.startsWith(to + ':') && c.links?.lss === r.lssId) : undefined;
-  if (existing) {
-    const [key, c] = existing;
-    const file = files.get(key)!;
-    writeJsonAtomic(file, { ...c, name: r.name, system: r.system, stats: r.stats, format: 1 });
-    return 'updated';
+// Экспорт персонажа из Long Story Short (JSON-файл) — для предпросмотра перед обновлением карточки.
+export function readLss(file: string): LssImport {
+  const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (!isLssExport(raw)) throw new Error('Это не экспорт персонажа из Long Story Short');
+  return fromLss(raw);
+}
+
+// Карточка, которую этот экспорт LSS, скорее всего, обновляет: в этом месте — с тем же id в LSS, а без него —
+// персонаж с тем же именем в той же папке (id в экспорте LSS нет, его достаём только из адреса аватарки).
+function lssMatch(r: LssImport, to: CardScope, dir: string): CardRef | null {
+  for (const [key, c] of cards) {
+    if (!key.startsWith(to + ':') || c.kind !== 'character') continue;
+    if (r.lssId && c.links?.lss === r.lssId) return { scope: to, id: c.id };
   }
+  for (const [key, c] of cards) {
+    if (!key.startsWith(to + ':') || c.kind !== 'character' || c.name.trim().toLowerCase() !== r.name.trim().toLowerCase()) continue;
+    const file = files.get(key);
+    if (file && path.dirname(file) === dir) return { scope: to, id: c.id };
+  }
+  return null;
+}
+
+// Обновить карточку персонажа из экспорта LSS: лист, имя и система — новые; портреты, заметки, теги, сторона —
+// прежние. Прежняя версия файла уходит в корзину приложения (если она включена), её можно вернуть.
+export function updateFromLss(ref: CardRef, file: string): CardRef | null {
+  const r = readLss(file);
+  const key = refKey(ref);
+  const old = cards.get(key);
+  const out = files.get(key);
+  const root = scopeRoot(ref.scope);
+  if (!old || !out || !root || ref.scope === 'srd') return null;
+  const lss = r.lssId ?? old.links?.lss;
+  const card: Card = {
+    ...old,
+    format: 1,
+    name: r.name,
+    system: r.system,
+    stats: r.stats,
+    ...(lss ? { links: { ...old.links, lss }, source: { title: 'Long Story Short', url: `https://longstoryshort.app/characters/digital/${lss}/` } } : {}),
+  };
+  const rel = path.relative(root, out).split(path.sep).join('/');
+  discard(root, [rel], { title: `${old.name} — до обновления из LSS`, kind: 'card' });
+  writeJsonAtomic(out, card);
+  remember(ref.scope, out);
+  reload(ref.scope);
+  changed();
+  return ref;
+}
+
+// Персонаж из Long Story Short — новая карточка. Аватар из LSS становится её портретом.
+async function importLss(r: LssImport, to: CardScope, dir: string, imgDir: { abs: string; rel: string }) {
   const portraits: string[] = [];
   if (r.avatarUrl) {
     try {
@@ -679,17 +719,22 @@ async function importLss(j: { data: string; edition?: string }, to: CardScope, d
   writeJsonAtomic(out, card);
   remember(to, out);
   cards.set(refKey({ scope: to, id }), card);
-  return 'new';
 }
 
 // Импортирует файлы в библиотеку или папку хранилища: файлы обмена Scrying Glass, одиночные карточки и экспорт
-// персонажей из Long Story Short. Карточки добавляются как новые (существующие не перезаписываются), кроме
-// повторного импорта персонажа из LSS — он обновляет свою карточку. Связи «перевод — оригинал» сохраняются.
-export async function importCards(list: string[], to: CardScope, folder?: string): Promise<{ count: number; errors: string[]; updated: string[] }> {
+// персонажей из Long Story Short. Карточки добавляются как новые (существующие не перезаписываются). Персонаж
+// LSS, у которого в этом месте уже есть карточка (см. lssMatch), не импортируется, а возвращается в matches:
+// окно покажет, что изменилось, и спросит — обновить её или создать новую (newLss — сразу новые, без вопроса).
+export async function importCards(
+  list: string[],
+  to: CardScope,
+  folder?: string,
+  newLss = false
+): Promise<{ count: number; errors: string[]; matches: LssMatch[] }> {
   const dir = targetDir(to, folder);
   const imgDir = imagesDir(to, folder);
-  const updated: string[] = [];
-  if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: ['Некуда импортировать'], updated };
+  const matches: LssMatch[] = [];
+  if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: ['Некуда импортировать'], matches };
   let count = 0;
   const errors: string[] = [];
   for (const file of list) {
@@ -697,8 +742,13 @@ export async function importCards(list: string[], to: CardScope, folder?: string
     try {
       const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (isLssExport(raw)) {
-        if ((await importLss(raw, to, dir, imgDir)) === 'updated') updated.push(fromLss(raw).name);
-        else count++;
+        const r = fromLss(raw);
+        const ref = newLss ? null : lssMatch(r, to, dir);
+        if (ref) matches.push({ file, ref });
+        else {
+          await importLss(r, to, dir, imgDir);
+          count++;
+        }
         continue;
       }
       bundle = readImport(file);
@@ -751,7 +801,7 @@ export async function importCards(list: string[], to: CardScope, folder?: string
   }
   reload(to);
   changed();
-  return { count, errors, updated };
+  return { count, errors, matches };
 }
 
 // Карточки места хранения целиком (для экспорта библиотеки или карточек хранилища; folder — одной папки).

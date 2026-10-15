@@ -116,3 +116,17 @@ export const cardAsset = (scope: CardScope, p: string) => (scope === 'vault' ? p
 // Куда копировать картинку для карточки: для встроенных — в библиотеку.
 export const imageScope = (scope: CardScope): CardScope => (scope === 'srd' ? 'library' : scope);
 export const cardImageUrl = (scope: CardScope, p: string) => assetUrl(cardAsset(scope, p));
+
+// Экспорт персонажа из Long Story Short, у которого уже есть карточка (импорт её не трогает, а спрашивает).
+export interface LssMatch {
+  file: string;
+  ref: CardRef;
+}
+
+// Что пришло в экспорте LSS (для предпросмотра изменений): stats — лист персонажа D&D.
+export interface LssPreview {
+  name: string;
+  system: string;
+  stats: unknown;
+  lssId: string | null;
+}

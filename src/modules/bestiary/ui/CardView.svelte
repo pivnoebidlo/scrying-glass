@@ -3,7 +3,7 @@
 <script lang="ts">
   import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
-  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Pencil, RotateCcw, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Pencil, RefreshCw, RotateCcw, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
   import ImagePicker from './ImagePicker.svelte';
   import type { AppState } from '../../../shared/types';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -15,6 +15,14 @@
   import { bestiary } from './cards.svelte';
   import { addToInitiative } from './combat';
   import { folderLabel } from './places';
+
+  // Чем закончилось «Обновить из LSS…» (пропадает через несколько секунд).
+  let lssStatus = $state('');
+  $effect(() => {
+    if (!lssStatus) return;
+    const t = setTimeout(() => (lssStatus = ''), 5000);
+    return () => clearTimeout(t);
+  });
 
   let {
     app,
@@ -158,6 +166,14 @@
               <button class="btn" title="Переложить карточку в библиотеку или в папку другого приключения, без копии" onclick={() => bestiary.move(cref)}
                 ><ArrowRightLeft size={13} /> Перенести…</button
               >
+              {#if summary.kind === 'character' && isDnd(summary.system)}
+                <button
+                  class="btn"
+                  title="Игрок переделал персонажа в Long Story Short: выберите новый экспорт (JSON) — будет видно, что изменилось, и карточка обновится"
+                  onclick={async () => (lssStatus = (await bestiary.updateFromLss(cref)) ?? '')}
+                  ><RefreshCw size={13} /> Обновить из LSS…</button
+                >
+              {/if}
               <button class="icon-btn" title="Удалить карточку" onclick={() => bestiary.remove(cref)}><Trash2 size={14} /></button>
             {/if}
             <button
@@ -166,6 +182,7 @@
               onclick={() => window.api.exportCards({ refs: versions.map((v) => v.ref), name: summary.name })}
             ><Upload size={14} /></button>
           </div>
+          {#if lssStatus}<div class="lss-status faint">{lssStatus}</div>{/if}
           <div class="actions">
             <div class="langs">
               {#each versions as v (v.ref.scope + v.ref.id)}
@@ -238,6 +255,10 @@
 {/if}
 
 <style>
+  .lss-status {
+    margin-top: 6px;
+    font-size: 12px;
+  }
   .card-view {
     padding: 16px 24px 32px;
   }

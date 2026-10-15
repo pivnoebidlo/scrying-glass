@@ -1,5 +1,5 @@
 // API, который preload открывает окнам как window.api.
-import type { Card, CardRef, CardScope, CardSummary } from './cards';
+import type { Card, CardRef, CardScope, CardSummary, LssMatch, LssPreview } from './cards';
 import type { BuiltinBook } from './compendium';
 import type { Note } from './notes';
 import type { TrashItem, TrashKind, TrashPlace, TrashSettings } from './trash';
@@ -56,8 +56,15 @@ export interface Api {
   exportCards(what: { refs?: CardRef[]; scope?: CardScope; folder?: string; name: string }): Promise<number | null>;
   // Импорт: выбрать файлы (диалог), затем импортировать их в выбранное место.
   pickImportFiles(): Promise<string[]>;
-  // updated — персонажи из LSS, которые уже были и обновились.
-  importCards(files: string[], scope: CardScope, folder?: string): Promise<{ count: number; errors: string[]; updated: string[] }>;
+  // matches — персонажи из LSS, у которых в этом месте уже есть карточка: окно спрашивает, обновить её или создать
+  // новую (newLss — импортировать их новыми).
+  importCards(files: string[], scope: CardScope, folder?: string, newLss?: boolean): Promise<{ count: number; errors: string[]; matches: LssMatch[] }>;
+  // Выбрать экспорт персонажа из LSS (диалог) и прочитать его для предпросмотра. null — отменили.
+  pickLss(): Promise<{ file: string; lss: LssPreview } | null>;
+  // Прочитать экспорт LSS по пути (для совпадений импорта).
+  readLss(file: string): Promise<LssPreview>;
+  // Обновить карточку персонажа из экспорта LSS (прежняя версия — в корзину).
+  updateFromLss(ref: CardRef, file: string): Promise<CardRef | null>;
   library(): Promise<{ path: string | null; isDefault: boolean }>;
   chooseLibrary(reset?: boolean): Promise<void>;
   revealLibrary(): Promise<void>;

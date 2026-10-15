@@ -91,7 +91,11 @@ Electron-приложение для мастера D&D: окно управле
 - Персонажи игроков: карточка `kind: 'character'`, в `stats` — лист (`systems/dnd5e/character.ts`, вид
   `CharacterSheet.svelte`); система различает лист и статблок по форме (`isCharacter`). Лежат в папках роли
   `party`, сторона «партия». Импорт из Long Story Short — `systems/dnd5e/lss.ts` (тексты LSS — документы
-  TipTap/ProseMirror), повторный импорт обновляет карточку по `links.lss`. Редактор листа —
+  TipTap/ProseMirror), повторный импорт и «Обновить из LSS…» у карточки
+  обновляют её через окно «Что изменилось» (`bestiary/ui/LssUpdate.svelte`, разница листов — `systems/dnd5e/diff.ts`):
+  `importCards` не трогает персонажа, у которого есть карточка (`lssMatch`: `links.lss` — id LSS есть только в адресе
+  аватарки, иначе то же имя в той же папке), а возвращает `matches`; `updateFromLss` (IPC `cards:updateFromLss`,
+  `cards:pickLss`, `cards:readLss`) пишет новый лист, прежний файл — в корзину. Редактор листа —
   `CharacterEditor.svelte` (смена вида карточки в редакторе переключает статблок и лист).
 - Обмен карточками: один JSON `{ scryingGlass: 'cards', version: 1, cards, images }` с картинками в base64
   (`exportCards` / `importCards` в `main/cards.ts`); при импорте id новые, `origin` внутри файла переписывается.
