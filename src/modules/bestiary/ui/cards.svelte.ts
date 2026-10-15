@@ -58,7 +58,9 @@ export interface Draft {
 // Запрос «где хранить?» — окно выбора места (PlacePicker) показывается, пока он есть.
 // Персонаж из LSS, у которого уже есть карточка: окно LssUpdate показывает, что изменилось, и ждёт решения.
 // import — спросили при импорте (можно и создать новую карточку), иначе — «Обновить из LSS…» у карточки.
-export type LssChoice = 'update' | 'new' | 'cancel';
+// update — с итогом, собранным из выбранных изменений (merged; нет — всё из файла).
+export type LssMerged = { name: string; system: string; stats: unknown };
+export type LssChoice = { kind: 'update'; merged?: LssMerged } | { kind: 'new' } | { kind: 'cancel' };
 export interface LssRequest {
   target: CardRef;
   current: Card;
@@ -239,9 +241,9 @@ class Bestiary {
     }
     if (!picked) return null;
     const choice = await this.askLss({ target: $state.snapshot(ref), current, lss: picked.lss, import: false });
-    if (choice !== 'update') return null;
-    await window.api.updateFromLss($state.snapshot(ref), picked.file);
-    return `«${picked.lss.name}» обновлён из LSS`;
+    if (choice.kind !== 'update') return null;
+    await window.api.updateFromLss($state.snapshot(ref), picked.file, choice.merged);
+    return `«${choice.merged?.name ?? picked.lss.name}» обновлён из LSS`;
   }
 
   // Система новой карточки: выбранная в фильтре (если она из семейства приключения), иначе — приключения.
@@ -442,12 +444,14 @@ class Bestiary {
     for (const m of matches) {
       const current = await window.api.getCard(m.ref);
       const lss = await window.api.readLss(m.file);
-      const choice = current ? await this.askLss({ target: m.ref, current, lss, import: true }) : 'new';
-      if (choice === 'update') {
-        await window.api.updateFromLss(m.ref, m.file);
-        updated.push(lss.name);
-      } else if (choice === 'new') {
-        added += (await window.api.importCards([m.file], place.scope, place.folder, true)).count;
+      const choice: LssChoice = current ? await this.askLss({ target: m.ref, current, lss, import: true }) : { kind: 'new' };
+      if (choice.kind === 'update') {
+        await window.api.updateFromLss(m.ref, m.file, choice.merged);
+        updated.push(choice.merged?.name ?? lss.name);
+      } else if (choice.kind === 'new') {
+        const r = await window.api.importCards([m.file], place.scope, place.folder, true);
+        added += r.count;
+        errors.push(...r.errors);
       }
     }
     return [

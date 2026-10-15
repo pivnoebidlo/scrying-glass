@@ -129,4 +129,6 @@ export interface LssPreview {
   system: string;
   stats: unknown;
   lssId: string | null;
+  // Что перенести не получилось (заклинания-карточки LSS и т. п.).
+  warnings: string[];
 }

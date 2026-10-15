@@ -63,8 +63,9 @@ export interface Api {
   pickLss(): Promise<{ file: string; lss: LssPreview } | null>;
   // Прочитать экспорт LSS по пути (для совпадений импорта).
   readLss(file: string): Promise<LssPreview>;
-  // Обновить карточку персонажа из экспорта LSS (прежняя версия — в корзину).
-  updateFromLss(ref: CardRef, file: string): Promise<CardRef | null>;
+  // Обновить карточку персонажа из экспорта LSS (прежняя версия — в корзину); merged — итог, собранный из
+  // выбранных мастером изменений (нет — всё из файла).
+  updateFromLss(ref: CardRef, file: string, merged?: { name: string; system: string; stats: unknown }): Promise<CardRef | null>;
   library(): Promise<{ path: string | null; isDefault: boolean }>;
   chooseLibrary(reset?: boolean): Promise<void>;
   revealLibrary(): Promise<void>;

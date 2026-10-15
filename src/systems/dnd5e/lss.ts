@@ -69,12 +69,18 @@ export interface LssImport {
   // Id персонажа в LSS: по нему повторный импорт обновляет карточку, а не создаёт новую.
   lssId: string | null;
   avatarUrl: string | null;
+  // Что из LSS перенести не получилось (например, заклинания-карточки: в экспорте только их id).
+  warnings: string[];
 }
 
-export const isLssExport = (j: unknown): j is { data: string; edition?: string } =>
+// Книга заклинаний LSS в режиме «карточки»: в экспорте только id заклинаний из базы LSS, без названий (база закрыта
+// входом), а списков по кругам текстом нет.
+type LssExport = { data: string; edition?: string; spells?: { mode?: string; prepared?: unknown[]; book?: unknown[] } };
+
+export const isLssExport = (j: unknown): j is LssExport =>
   !!j && typeof j === 'object' && (j as { jsonType?: string }).jsonType === 'character' && typeof (j as { data?: unknown }).data === 'string';
 
-export function fromLss(j: { data: string; edition?: string }): LssImport {
+export function fromLss(j: LssExport): LssImport {
   const d = JSON.parse(j.data);
   const info = d.info ?? {};
   const stats = d.stats ?? {};
@@ -170,5 +176,15 @@ export function fromLss(j: { data: string; edition?: string }): LssImport {
     stats: character,
     lssId: avatarUrl ? (/\/avatar\/([0-9a-f]{24})/.exec(avatarUrl)?.[1] ?? null) : null,
     avatarUrl,
+    warnings: spellWarning(j, Object.keys(spells).length > 0),
   };
+}
+
+function spellWarning(j: LssExport, hasText: boolean): string[] {
+  const ids = new Set([...(j.spells?.prepared ?? []), ...(j.spells?.book ?? [])].filter((x) => typeof x === 'string'));
+  if (!ids.size || hasText) return [];
+  return [
+    `Заклинания (${ids.size}) в LSS ведутся карточками — в экспорте только их номера, без названий, поэтому в карточку они не попали. ` +
+      'Переключите книгу заклинаний персонажа в LSS на текст и экспортируйте заново — или впишите заклинания в карточку вручную.',
+  ];
 }

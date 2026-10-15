@@ -665,10 +665,11 @@ function lssMatch(r: LssImport, to: CardScope, dir: string): CardRef | null {
   return null;
 }
 
-// Обновить карточку персонажа из экспорта LSS: лист, имя и система — новые; портреты, заметки, теги, сторона —
-// прежние. Прежняя версия файла уходит в корзину приложения (если она включена), её можно вернуть.
-export function updateFromLss(ref: CardRef, file: string): CardRef | null {
-  const r = readLss(file);
+// Обновить карточку персонажа из экспорта LSS: лист, имя и система — новые (или то, что мастер выбрал из
+// изменений: merged), портреты, заметки, теги, сторона — прежние. Прежняя версия файла уходит в корзину приложения
+// (если она включена), её можно вернуть.
+export function updateFromLss(ref: CardRef, file: string, merged?: { name: string; system: string; stats: unknown }): CardRef | null {
+  const r = { ...readLss(file), ...merged };
   const key = refKey(ref);
   const old = cards.get(key);
   const out = files.get(key);
@@ -748,6 +749,7 @@ export async function importCards(
         else {
           await importLss(r, to, dir, imgDir);
           count++;
+          errors.push(...r.warnings.map((w) => `«${r.name}»: ${w}`));
         }
         continue;
       }

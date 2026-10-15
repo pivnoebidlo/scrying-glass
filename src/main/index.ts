@@ -1024,7 +1024,7 @@ ipcMain.handle('cards:import', (_event, { files, scope, folder, newLss }: { file
 // Обновление персонажа из экспорта Long Story Short: выбрать файл и показать изменения, потом обновить карточку.
 const lssPreview = (file: string) => {
   const r = readLss(file);
-  return { name: r.name, system: r.system, stats: r.stats, lssId: r.lssId };
+  return { name: r.name, system: r.system, stats: r.stats, lssId: r.lssId, warnings: r.warnings };
 };
 ipcMain.handle('cards:pickLss', async () => {
   const win = getControlWindow();
@@ -1038,7 +1038,9 @@ ipcMain.handle('cards:pickLss', async () => {
   return file ? { file, lss: lssPreview(file) } : null;
 });
 ipcMain.handle('cards:readLss', (_event, file: string) => lssPreview(file));
-ipcMain.handle('cards:updateFromLss', (_event, { ref, file }: { ref: CardRef; file: string }) => updateFromLss(ref, file));
+ipcMain.handle('cards:updateFromLss', (_event, { ref, file, merged }: { ref: CardRef; file: string; merged?: { name: string; system: string; stats: unknown } }) =>
+  updateFromLss(ref, file, merged)
+);
 
 function noImageInClipboard() {
   const win = getControlWindow();
