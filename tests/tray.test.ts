@@ -6,13 +6,14 @@ import type { AdventuresState } from '../src/shared/adventures';
 import { ctx, run, tree } from './helpers';
 
 const adv = (current: string | null): AdventuresState => ({ list: ['Страд', 'Фандалин'], current, initialized: true });
-const screen = (o: Partial<{ bg: string | null; map: string | null; portraits: string[]; handout: string | null; music: string; encounters: string[] }> = {}): ScreenNow => ({
+const screen = (o: Partial<{ bg: string | null; map: string | null; portraits: string[]; handout: string | null; music: string; encounters: string[]; ambience: string[]; sound: string; seq: number }> = {}): ScreenNow => ({
   scene: { background: o.bg ?? null },
   maps: { current: o.map ?? null },
   portraits: { onScreen: o.portraits ?? [] },
   handouts: { current: o.handout ?? null },
-  music: { playing: !!o.music, playlist: o.music ?? null },
+  music: { playing: !!o.music, playlist: o.music ?? null, ambience: (o.ambience ?? []).map((path) => ({ path })), ambiencePlaying: !!o.ambience?.length },
   initiative: { combatants: (o.encounters ?? []).map((encounter) => ({ encounter })) },
+  sounds: { last: { path: o.sound ?? null, seq: o.seq ?? 0 } },
 });
 const content = {
   background: { path: 'Страд/backgrounds/замок.jpg', fit: 'cover' as const },
@@ -69,8 +70,17 @@ describe('подборка правой панели', () => {
   it('музыка и бои: включённое попадает в подборку, на паузе — нет', () => {
     let s = after(base, adv('Страд'), screen(), screen({ music: 'Страд/music/бой', encounters: ['крысы'] }));
     expect(s.trays?.['Страд']).toMatchObject({ music: ['Страд/music/бой'], encounters: ['крысы'] });
-    s = after(s, adv(null), screen(), { ...screen(), music: { playing: false, playlist: 'общая' } });
+    s = after(s, adv(null), screen(), { ...screen(), music: { ...screen().music, playing: false, playlist: 'общая' } });
     expect(currentTray(s, adv(null)).music).toEqual([]);
+  });
+
+  it('атмосфера и звуки: включённая атмосфера и сыгранный звук — в подборку', () => {
+    let s = after(base, adv(null), screen(), screen({ ambience: ['дождь.mp3'], sound: 'гром.mp3', seq: 1 }));
+    expect(currentTray(s, adv(null))).toMatchObject({ ambience: ['дождь.mp3'], sounds: ['гром.mp3'] });
+    // Тот же звук ещё раз — без повтора; команда «остановить» (path null) ничего не добавляет.
+    s = after(s, adv(null), screen({ sound: 'гром.mp3', seq: 1 }), screen({ sound: 'гром.mp3', seq: 2 }));
+    s = after(s, adv(null), screen({ seq: 2 }), screen({ seq: 3 }));
+    expect(currentTray(s, adv(null)).sounds).toEqual(['гром.mp3']);
   });
 
   it('добавить и убрать вручную; повтор не дублируется', () => {

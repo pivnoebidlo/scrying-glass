@@ -36,6 +36,20 @@
     await dispatch('scenes', 'setInclude', { id: scene.id, part: 'music', value: true });
   }
 
+  // Атмосфера в подборке: щелчок добавляет зацикленный звук (и включает атмосферу) или убирает его.
+  function toggleLoop(path: string) {
+    const has = ms.ambience.some((a) => a.path === path);
+    if (has && !ms.ambiencePlaying) return dispatch('music', 'toggleAmbience');
+    return dispatch('music', 'toggleAmbient', { path });
+  }
+  function audioOptions() {
+    const tree = app.vault.tree;
+    if (!tree) return [];
+    return allFiles(tree, 'audio')
+      .filter((f) => visibleIn(app.adventures, f.path))
+      .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')) }));
+  }
+
   // Плейлист в подборке — по названию папки (папка music — по папке, где она лежит).
   function folderTitle(path: string) {
     const parts = path.split('/');
@@ -124,6 +138,21 @@
   <div class="faint idle">Ничего не играет.</div>
 {/if}
 
+<div class="amb-tray">
+  <div class="faint label-row">Атмосфера</div>
+  <TrayChips
+    {app}
+    part="ambience"
+    isOn={(path) => ms.ambiencePlaying && ms.ambience.some((a) => a.path === path)}
+    toggle={toggleLoop}
+    options={audioOptions}
+    caption={trackName}
+    iconOf={() => Wind}
+    pickTitle="Звуки атмосферы"
+    hint="Дождь, таверна, лес — зацикленные звуки поверх музыки. Щелчок включает и выключает."
+  />
+</div>
+
 {#if ms.ambience.length}
   <div class="ambience">
     <button
@@ -145,6 +174,18 @@
 {/if}
 
 <style>
+  .amb-tray {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .label-row {
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
   .star {
     display: none;
     place-items: center;
@@ -218,9 +259,7 @@
     gap: 8px;
   }
   .ambience {
-    margin-top: 4px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border);
+    margin-top: 8px;
   }
   .label {
     flex: none;

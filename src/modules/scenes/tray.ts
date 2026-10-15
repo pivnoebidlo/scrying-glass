@@ -5,13 +5,14 @@ import type { AdventuresState } from '../../shared/adventures';
 import type { Scene, SceneContent, ScenesState } from './types';
 import { scenesFor } from './types';
 
-// music — плейлисты (папки) и отдельные треки; encounters — id заготовок боёв, остальное — пути файлов.
-export type TrayPart = 'background' | 'map' | 'portraits' | 'handout' | 'music' | 'encounters';
-export const TRAY_PARTS: TrayPart[] = ['background', 'map', 'portraits', 'handout', 'music', 'encounters'];
-const FILE_PARTS: TrayPart[] = ['background', 'map', 'portraits', 'handout', 'music'];
+// music — плейлисты (папки) и отдельные треки; ambience — зацикленные звуки атмосферы; sounds — разовые эффекты;
+// encounters — id заготовок боёв, остальное — пути файлов.
+export type TrayPart = 'background' | 'map' | 'portraits' | 'handout' | 'music' | 'ambience' | 'sounds' | 'encounters';
+export const TRAY_PARTS: TrayPart[] = ['background', 'map', 'portraits', 'handout', 'music', 'ambience', 'sounds', 'encounters'];
+const FILE_PARTS: TrayPart[] = ['background', 'map', 'portraits', 'handout', 'music', 'ambience', 'sounds'];
 
 export type Tray = Record<TrayPart, string[]>;
-export const emptyTray = (): Tray => ({ background: [], map: [], portraits: [], handout: [], music: [], encounters: [] });
+export const emptyTray = (): Tray => ({ background: [], map: [], portraits: [], handout: [], music: [], ambience: [], sounds: [], encounters: [] });
 // Подборки до музыки и боёв — без этих частей.
 const full = (t: Partial<Tray> | undefined): Tray => ({ ...emptyTray(), ...t });
 
@@ -21,8 +22,9 @@ export interface ScreenNow {
   maps: { current: string | null };
   portraits: { onScreen: string[] };
   handouts: { current: string | null };
-  music: { playing: boolean; playlist: string | null };
+  music: { playing: boolean; playlist: string | null; ambience: { path: string }[]; ambiencePlaying: boolean };
   initiative: { combatants: { encounter?: string }[] };
+  sounds: { last: { path: string | null; seq: number } };
 }
 export function shown(app: ScreenNow): Tray {
   const one = (p: string | null) => (p ? [p] : []);
@@ -32,6 +34,9 @@ export function shown(app: ScreenNow): Tray {
     portraits: [...app.portraits.onScreen],
     handout: one(app.handouts.current),
     music: app.music.playing ? one(app.music.playlist) : [],
+    ambience: app.music.ambiencePlaying ? app.music.ambience.map((a) => a.path) : [],
+    // Разовый звук «на экране» не держится: он попадает в подборку, когда его сыграли (addShown).
+    sounds: [],
     encounters: [...new Set(app.initiative.combatants.map((c) => c.encounter).filter((e): e is string => !!e))],
   };
 }
@@ -39,7 +44,7 @@ export function shown(app: ScreenNow): Tray {
 // Подборка сцены по её содержимому: так начинается подборка новой сцены и сцен из прежних версий.
 export function trayOf(c: SceneContent): Tray {
   const one = (p: string | null) => (p ? [p] : []);
-  return { ...emptyTray(), background: one(c.background.path), map: one(c.map.path), portraits: [...c.portraits.paths], handout: one(c.handout.path), music: one(c.music.playlist) };
+  return { ...emptyTray(), background: one(c.background.path), map: one(c.map.path), portraits: [...c.portraits.paths], handout: one(c.handout.path), music: one(c.music.playlist), ambience: c.ambience.loops.map((l) => l.path) };
 }
 
 // Чья подборка сейчас в панели: включённой сцены (если она видна в текущем приключении) или приключения.
@@ -86,6 +91,8 @@ export function addShown(t: Tray, before: ScreenNow, after: ScreenNow): Tray {
   const was = shown(before);
   const now = shown(after);
   for (const part of TRAY_PARTS) t = addTo(t, part, now[part].filter((p) => !was[part].includes(p)));
+  const sfx = after.sounds?.last;
+  if (sfx?.path && sfx.seq !== before.sounds?.last.seq) t = addTo(t, 'sounds', [sfx.path]);
   return t;
 }
 
