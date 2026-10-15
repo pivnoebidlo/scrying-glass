@@ -1,6 +1,7 @@
 // Музыка (очередь из папки) и атмосфера (зацикленные звуки поверх музыки).
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { allFiles, findFolder } from '../../shared/vault';
+import { isBuiltinSound } from '../../shared/sounds';
 import type { AmbientLoop, MusicState, Repeat } from './types';
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -35,7 +36,8 @@ function prune(s: MusicState, ctx: ModuleContext): MusicState {
   const exists = new Set(allFiles(tree, 'audio').map((f) => f.path));
   const current = s.queue[s.index];
   const queue = s.queue.filter((p) => exists.has(p));
-  const ambience = s.ambience.filter((a) => exists.has(a.path));
+  // Встроенные звуки (sound:…) — вне хранилища, их не проверяем.
+  const ambience = s.ambience.filter((a) => exists.has(a.path) || isBuiltinSound(a.path));
   if (queue.length === s.queue.length && ambience.length === s.ambience.length) return s;
   const kept = current ? queue.indexOf(current) : -1;
   const next = { ...s, queue, ambience };

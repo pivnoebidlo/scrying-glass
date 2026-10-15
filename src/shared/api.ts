@@ -1,4 +1,5 @@
 // API, который preload открывает окнам как window.api.
+import type { BuiltinSounds } from './sounds';
 import type { Card, CardRef, CardScope, CardSummary, LssMatch, LssPreview } from './cards';
 import type { BuiltinBook } from './compendium';
 import type { Note } from './notes';
@@ -29,6 +30,9 @@ export interface Api {
   onState(cb: (state: AppState) => void): void;
 
   // Карточки живут отдельно от состояния: их сотни, рассылать их после каждого действия незачем.
+  // Встроенные звуки (resources/sounds): пути «sound:…».
+  builtinSounds(): Promise<BuiltinSounds>;
+
   listCards(): Promise<CardSummary[]>;
   getCard(ref: CardRef): Promise<Card | null>;
   onCardsChanged(cb: () => void): void;

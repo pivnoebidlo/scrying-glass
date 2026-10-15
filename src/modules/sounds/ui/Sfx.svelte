@@ -3,7 +3,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { vaultUrl } from '../../../shared/vault';
+  import { assetUrl } from '../../../shared/vault';
   import { output, route } from '../../music/ui/output.svelte';
   import { fade } from '../../music/ui/playback.svelte';
   import { sfx } from './playing.svelte';
@@ -22,7 +22,7 @@
 
   function play(path: string) {
     stop(path);
-    const a = new Audio(vaultUrl(path));
+    const a = new Audio(assetUrl(path));
     a.volume = sfx.volume ?? ms.volume;
     route(a, output.sink);
     a.onended = a.onerror = () => {

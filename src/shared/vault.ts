@@ -177,8 +177,13 @@ export const vaultUrl = (path: string) => 'sg-asset://v/' + encodeURIComponent(p
 export const LIBRARY = 'library:';
 export const isLibraryAsset = (path: string) => path.startsWith(LIBRARY);
 export const libraryAsset = (rel: string) => LIBRARY + rel;
+// Встроенные звуки приложения — «sound:…» (shared/sounds.ts).
 export const assetUrl = (path: string) =>
-  isLibraryAsset(path) ? 'sg-asset://l/' + encodeURIComponent(path.slice(LIBRARY.length)) : vaultUrl(path);
+  isLibraryAsset(path)
+    ? 'sg-asset://l/' + encodeURIComponent(path.slice(LIBRARY.length))
+    : path.startsWith('sound:')
+      ? 'sg-asset://s/' + encodeURIComponent(path.slice('sound:'.length))
+      : vaultUrl(path);
 
 // Миниатюра картинки для плиток и списков (ширина в точках; ядро делает копии 128, 256, 512 и 1024 и кэширует).
 // На экране игроков — только полные картинки.

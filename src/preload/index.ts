@@ -7,6 +7,8 @@ const api: Api = {
   dispatch: (module, name, ...payload) => ipcRenderer.invoke('action', { module, name, payload: payload[0] }),
   onState: (cb) => { ipcRenderer.on('state:changed', (_e, s) => cb(s)); },
 
+  builtinSounds: () => ipcRenderer.invoke('sounds:builtin'),
+
   listCards: () => ipcRenderer.invoke('cards:list'),
   getCard: (ref) => ipcRenderer.invoke('cards:get', ref),
   onCardsChanged: (cb) => { ipcRenderer.on('cards:changed', () => cb()); },

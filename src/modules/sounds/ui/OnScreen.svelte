@@ -9,15 +9,18 @@
   import { visibleIn } from '../../../shared/adventures';
   import TrayChips from '../../scenes/ui/TrayChips.svelte';
   import { sfx } from './playing.svelte';
+  import { builtin, loadBuiltin } from './builtin.svelte';
 
   let { ms, app }: ModuleProps<'sounds'> = $props();
 
+  // Встроенные эффекты, потом свои аудиофайлы приключения (их бывает много — в конце списка).
+  loadBuiltin();
   function options() {
     const tree = app.vault.tree;
-    if (!tree) return [];
-    return allFiles(tree, 'audio')
+    const own = (tree ? allFiles(tree, 'audio') : [])
       .filter((f) => visibleIn(app.adventures, f.path))
-      .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')) }));
+      .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')), group: 'В хранилище' }));
+    return [...builtin.sfx.map((p) => ({ id: p, title: trackName(p), group: 'Встроенные' })), ...own];
   }
 </script>
 

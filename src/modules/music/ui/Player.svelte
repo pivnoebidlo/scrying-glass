@@ -4,7 +4,7 @@
   import { untrack } from 'svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { vaultUrl } from '../../../shared/vault';
+  import { vaultUrl, assetUrl } from '../../../shared/vault';
   import { fade, isFading, live, playback, provideSeek } from './playback.svelte';
   import { output, route, watchDevices } from './output.svelte';
 
@@ -145,7 +145,7 @@
       for (const item of items) {
         let a = loops.get(item.path);
         if (!a) {
-          a = new Audio(vaultUrl(item.path));
+          a = new Audio(assetUrl(item.path));
           a.loop = true;
           a.volume = 0;
           route(a, output.sink);

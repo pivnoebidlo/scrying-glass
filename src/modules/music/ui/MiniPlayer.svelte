@@ -11,6 +11,7 @@
   import { Disc3, FolderOpen, Star } from '@lucide/svelte';
   import { trayOwner } from '../../scenes/tray';
   import TrayChips from '../../scenes/ui/TrayChips.svelte';
+  import { builtin, loadBuiltin } from '../../sounds/ui/builtin.svelte';
   import { allFiles, fileKind, folderRole } from '../../../shared/vault';
   import { visibleIn } from '../../../shared/adventures';
 
@@ -42,12 +43,14 @@
     if (has && !ms.ambiencePlaying) return dispatch('music', 'toggleAmbience');
     return dispatch('music', 'toggleAmbient', { path });
   }
+  // Встроенная атмосфера, потом свои аудиофайлы приключения (их бывает много — в конце списка).
+  loadBuiltin();
   function audioOptions() {
     const tree = app.vault.tree;
-    if (!tree) return [];
-    return allFiles(tree, 'audio')
+    const own = (tree ? allFiles(tree, 'audio') : [])
       .filter((f) => visibleIn(app.adventures, f.path))
-      .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')) }));
+      .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')), group: 'В хранилище' }));
+    return [...builtin.ambience.map((p) => ({ id: p, title: trackName(p), group: 'Встроенные' })), ...own];
   }
 
   // Плейлист в подборке — по названию папки (папка music — по папке, где она лежит).

@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { allFiles, isLibraryAsset, walk } from '../../shared/vault';
 import { BUILTIN } from '../../shared/compendium';
+import { isBuiltinSound } from '../../shared/sounds';
 import type { AdventuresState } from '../../shared/adventures';
 import type { Part, Scene, SceneContent, ScenesState } from './types';
 import { addShown, addTo, editTray, emptyTray, merge, pruneTrays, removeFrom, trayOf, trayOwner, type ScreenNow, type Tray, type TrayOwner, type TrayPart } from './tray';
@@ -29,7 +30,7 @@ function prune(s: ScenesState, ctx: ModuleContext): ScenesState {
   // Файлы и папки (плейлисты в подборке музыки).
   const exists = new Set(allFiles(tree).map((f) => f.path));
   walk(tree, (f) => exists.add(f.path));
-  return pruneTrays(s, (p) => exists.has(p) || isLibraryAsset(p) || p.startsWith(BUILTIN));
+  return pruneTrays(s, (p) => exists.has(p) || isLibraryAsset(p) || p.startsWith(BUILTIN) || isBuiltinSound(p));
 }
 
 export default defineModule({

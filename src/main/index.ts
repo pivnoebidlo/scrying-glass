@@ -29,6 +29,7 @@ import {
   cardsOf, readLss, updateFromLss, lssSpellTable, importLssSpells, clearLssSpells, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
+import { builtinSounds, resolveSound } from './sounds';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
 } from './windows';
@@ -302,6 +303,8 @@ function reactTo(id: string, before: Record<string, unknown>) {
     });
   }
 }
+
+ipcMain.handle('sounds:builtin', () => builtinSounds());
 
 ipcMain.handle('action', (_event, { module: id, name, payload }: { module: string; name: string; payload: unknown }) => runAction(id, name, payload));
 
@@ -1143,11 +1146,12 @@ app.whenReady().then(async () => {
   watchLibraryTables(libraryPath());
 
   // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>,
-  // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>. ?w=<ширина> — миниатюра.
+  // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>, встроенные звуки: sg-asset://s/<путь>.
+  // ?w=<ширина> — миниатюра.
   protocol.handle('sg-asset', async (request) => {
     const url = new URL(request.url);
     const rel = decodeURIComponent(url.pathname.slice(1));
-    const file = url.host === 'v' ? resolveInVault(rel) : url.host === 'l' ? resolveInLibrary(rel) : null;
+    const file = url.host === 'v' ? resolveInVault(rel) : url.host === 'l' ? resolveInLibrary(rel) : url.host === 's' ? resolveSound(rel) : null;
     if (!file) return new Response('Not found', { status: 404 });
     const w = Number(url.searchParams.get('w'));
     if (w > 0 && canThumb(file)) {

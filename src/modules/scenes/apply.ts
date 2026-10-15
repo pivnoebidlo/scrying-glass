@@ -5,6 +5,7 @@ import { allFiles, fileKind, isLibraryAsset, prettyName, trackName } from '../..
 import { playlistTitle } from '../music/ui/playlists';
 import type { Part, Scene, SceneContent } from './types';
 import type { Tray } from './tray';
+import { isBuiltinSound } from '../../shared/sounds';
 
 // Что сейчас видят и слышат игроки.
 export function capture(app: AppState): SceneContent {
@@ -38,7 +39,7 @@ export function missing(app: AppState, sc: Scene): string[] {
     sc.include.handout && sc.handout.path,
     ...(sc.include.ambience ? sc.ambience.loops.map((l) => l.path) : []),
   ].filter((p): p is string => !!p);
-  return used.filter((p) => !files.has(p) && !isLibraryAsset(p));
+  return used.filter((p) => !files.has(p) && !isLibraryAsset(p) && !isBuiltinSound(p));
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -66,7 +67,7 @@ export async function activate(app: AppState, sc: Scene) {
   }
   if (on('portraits')) jobs.push(dispatch('portraits', 'setOnScreen', { paths: sc.portraits.paths.filter((p) => exists.has(p) || isLibraryAsset(p)) }));
   if (on('handout')) jobs.push(dispatch('handouts', 'set', { path: ok(sc.handout.path) }));
-  if (on('ambience')) jobs.push(dispatch('music', 'setAmbience', { loops: sc.ambience.loops.filter((l) => exists.has(l.path)) }));
+  if (on('ambience')) jobs.push(dispatch('music', 'setAmbience', { loops: sc.ambience.loops.filter((l) => exists.has(l.path) || isBuiltinSound(l.path)) }));
   if (on('music')) jobs.push(applyMusic(app, sc.music));
   await Promise.all(jobs);
 
