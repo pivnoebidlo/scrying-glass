@@ -5,8 +5,20 @@
   import './fonts.css';
   import { NOTE_FONTS, NOTE_INKS, NOTE_SEALS, NOTE_SHAPES, type Note } from '../../../shared/notes';
   import { noteHtml } from './markup';
+  import { creaseSvg, holesMask, markDefs, marksSvg, rng } from './marks';
 
-  let { note, shadow = false, overflow = $bindable(false) }: { note: Note; shadow?: boolean; overflow?: boolean } = $props();
+  // edit — редактор следов: выбранный след и нажатие на лист (id следа или null — мимо следов; x, y — доли листа).
+  interface Edit {
+    selected: string | null;
+    placing: boolean;
+    onpick: (e: PointerEvent, id: string | null, x: number, y: number) => void;
+  }
+  let {
+    note,
+    shadow = false,
+    overflow = $bindable(false),
+    edit,
+  }: { note: Note; shadow?: boolean; overflow?: boolean; edit?: Edit } = $props();
 
   // У каждой записки на странице свои id фильтров (их может быть много — плитки).
   const uid = 'n' + Math.random().toString(36).slice(2, 9);
@@ -25,18 +37,6 @@
   const ink = $derived(NOTE_INKS[note.ink].color || p.ink);
   const scroll = $derived(note.shape === 'scroll');
   const rollH = 46;
-
-  // Детерминированный генератор случайных чисел: та же записка — те же края и пятна.
-  function rng(seed: number) {
-    let a = (seed * 2654435761) >>> 0 || 1;
-    return () => {
-      a = (a + 0x6d2b79f5) >>> 0;
-      let t = a;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-    };
-  }
 
   // Контур листа: ровный, рваный (мелкие острые зубцы) или обгоревший (плавные волны с выгрызами).
   const outline = $derived.by(() => {
@@ -90,6 +90,16 @@
   // Цвет из «#rrggbb» в доли для feColorMatrix.
   const rgb = (hex: string) => [1, 3, 5].map((i) => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3));
 
+  const marks = $derived(marksSvg(note.marks, uid, H, p.mottle));
+  const crease = $derived(creaseSvg(note.crease, note.seed, H, uid));
+  const mask = $derived(holesMask(note.marks, H));
+
+  function pick(e: PointerEvent, id: string | null) {
+    if (!edit || e.button !== 0) return;
+    const box = (e.currentTarget as Element).closest('svg')!.getBoundingClientRect();
+    edit.onpick(e, id, (e.clientX - box.left) / box.width, (e.clientY - box.top) / box.height);
+  }
+
   const html = $derived(noteHtml(note.text));
   const seal = $derived(NOTE_SEALS[note.seal]);
 
@@ -113,78 +123,115 @@
 
 <div class="fit">
   <div class="sheet" class:shadow style:aspect-ratio="{aspect}" style:--a={aspect} style:--ink={ink}>
-    <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true">
-      <defs>
-        <clipPath id="{uid}-clip"><path d={outline} /></clipPath>
-        <filter id="{uid}-mottle" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="4" seed={note.seed % 1000} />
-          <feColorMatrix type="matrix" values="0 0 0 0 {rgb(p.mottle)[0]}  0 0 0 0 {rgb(p.mottle)[1]}  0 0 0 0 {rgb(p.mottle)[2]}  1.8 0 0 0 -0.7" />
-        </filter>
-        <filter id="{uid}-grain" x="0" y="0" width="100%" height="100%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" seed={(note.seed + 3) % 1000} />
-          <feColorMatrix type="matrix" values="0 0 0 0 {rgb(p.grain)[0]}  0 0 0 0 {rgb(p.grain)[1]}  0 0 0 0 {rgb(p.grain)[2]}  1.4 0 0 0 -0.55" />
-        </filter>
-        <filter id="{uid}-blur"><feGaussianBlur stdDeviation="14" /></filter>
-        <filter id="{uid}-soft"><feGaussianBlur stdDeviation="4" /></filter>
-        <radialGradient id="{uid}-vig" cx="50%" cy="50%" r="72%">
-          <stop offset="55%" stop-color={p.vignette} stop-opacity="0" />
-          <stop offset="100%" stop-color={p.vignette} stop-opacity={note.paper === 'dark' ? 0.75 : 0.55} />
-        </radialGradient>
-        <radialGradient id="{uid}-spot">
-          <stop offset="0%" stop-color={p.mottle} stop-opacity="0.9" />
-          <stop offset="70%" stop-color={p.mottle} stop-opacity="0.35" />
-          <stop offset="100%" stop-color={p.mottle} stop-opacity="0" />
-        </radialGradient>
-        <linearGradient id="{uid}-roll" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color={p.vignette} />
-          <stop offset="45%" stop-color={p.fiber} />
-          <stop offset="100%" stop-color={p.vignette} />
-        </linearGradient>
-      </defs>
+    <div class="layers" style:mask-image={mask} style:-webkit-mask-image={mask}>
+      <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <clipPath id="{uid}-clip"><path d={outline} /></clipPath>
+          <filter id="{uid}-mottle" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.006" numOctaves="4" seed={note.seed % 1000} />
+            <feColorMatrix type="matrix" values="0 0 0 0 {rgb(p.mottle)[0]}  0 0 0 0 {rgb(p.mottle)[1]}  0 0 0 0 {rgb(p.mottle)[2]}  1.8 0 0 0 -0.7" />
+          </filter>
+          <filter id="{uid}-grain" x="0" y="0" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" seed={(note.seed + 3) % 1000} />
+            <feColorMatrix type="matrix" values="0 0 0 0 {rgb(p.grain)[0]}  0 0 0 0 {rgb(p.grain)[1]}  0 0 0 0 {rgb(p.grain)[2]}  1.4 0 0 0 -0.55" />
+          </filter>
+          <filter id="{uid}-blur"><feGaussianBlur stdDeviation="14" /></filter>
+          <filter id="{uid}-soft"><feGaussianBlur stdDeviation="4" /></filter>
+          <radialGradient id="{uid}-vig" cx="50%" cy="50%" r="72%">
+            <stop offset="55%" stop-color={p.vignette} stop-opacity="0" />
+            <stop offset="100%" stop-color={p.vignette} stop-opacity={note.paper === 'dark' ? 0.75 : 0.55} />
+          </radialGradient>
+          <radialGradient id="{uid}-spot">
+            <stop offset="0%" stop-color={p.mottle} stop-opacity="0.9" />
+            <stop offset="70%" stop-color={p.mottle} stop-opacity="0.35" />
+            <stop offset="100%" stop-color={p.mottle} stop-opacity="0" />
+          </radialGradient>
+          <linearGradient id="{uid}-roll" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color={p.vignette} />
+            <stop offset="45%" stop-color={p.fiber} />
+            <stop offset="100%" stop-color={p.vignette} />
+          </linearGradient>
+        </defs>
 
-      <g clip-path="url(#{uid}-clip)">
-        <rect width={W} height={H} fill={p.base} />
-        <rect width={W} height={H} filter="url(#{uid}-mottle)" opacity={note.paper === 'vellum' ? 0.35 : 0.6} />
-        {#each spots as s, i (i)}<circle cx={s.x} cy={s.y} r={s.r} fill="url(#{uid}-spot)" opacity={s.o} />{/each}
-        <rect width={W} height={H} fill="url(#{uid}-vig)" />
-        <rect width={W} height={H} filter="url(#{uid}-grain)" opacity="0.22" />
-        {#if note.edge === 'burnt'}
-          <!-- Обуглившийся край: тёмная размытая кайма по контуру, внутри листа. -->
-          <path d={outline} fill="none" stroke="#1e0e04" stroke-width="70" filter="url(#{uid}-blur)" opacity="0.95" />
-          <path d={outline} fill="none" stroke="#120802" stroke-width="10" filter="url(#{uid}-soft)" />
-        {:else if note.edge === 'torn'}
-          <!-- Рваный край: светлые волокна бумаги по разрыву. -->
-          <path d={outline} fill="none" stroke={p.fiber} stroke-width="5" opacity="0.7" />
+        <g clip-path="url(#{uid}-clip)">
+          <rect width={W} height={H} fill={p.base} />
+          <rect width={W} height={H} filter="url(#{uid}-mottle)" opacity={note.paper === 'vellum' ? 0.35 : 0.6} />
+          {#each spots as s, i (i)}<circle cx={s.x} cy={s.y} r={s.r} fill="url(#{uid}-spot)" opacity={s.o} />{/each}
+          <rect width={W} height={H} fill="url(#{uid}-vig)" />
+          <rect width={W} height={H} filter="url(#{uid}-grain)" opacity="0.22" />
+          {#if note.edge === 'burnt'}
+            <!-- Обуглившийся край: тёмная размытая кайма по контуру, внутри листа. -->
+            <path d={outline} fill="none" stroke="#1e0e04" stroke-width="70" filter="url(#{uid}-blur)" opacity="0.95" />
+            <path d={outline} fill="none" stroke="#120802" stroke-width="10" filter="url(#{uid}-soft)" />
+          {:else if note.edge === 'torn'}
+            <!-- Рваный край: светлые волокна бумаги по разрыву. -->
+            <path d={outline} fill="none" stroke={p.fiber} stroke-width="5" opacity="0.7" />
+          {/if}
+        </g>
+
+        {#if scroll}
+          {#each [0, H - rollH] as y (y)}
+            <rect x="0" {y} width={W} height={rollH} rx={rollH / 2} fill="url(#{uid}-roll)" />
+            <rect x="0" y={y + rollH * 0.2} width="22" height={rollH * 0.6} rx="6" fill="#3a2414" />
+            <rect x={W - 22} y={y + rollH * 0.2} width="22" height={rollH * 0.6} rx="6" fill="#3a2414" />
+          {/each}
         {/if}
-      </g>
+      </svg>
 
-      {#if scroll}
-        {#each [0, H - rollH] as y (y)}
-          <rect x="0" {y} width={W} height={rollH} rx={rollH / 2} fill="url(#{uid}-roll)" />
-          <rect x="0" y={y + rollH * 0.2} width="22" height={rollH * 0.6} rx="6" fill="#3a2414" />
-          <rect x={W - 22} y={y + rollH * 0.2} width="22" height={rollH * 0.6} rx="6" fill="#3a2414" />
-        {/each}
+      <div
+        class="content {note.align}"
+        class:scroll
+        bind:this={content}
+        style:font-family="'{NOTE_FONTS[note.font].family}', serif"
+        style:font-size="{note.size}cqw"
+      >
+        <!-- Текст экранирован в noteHtml. -->
+        {@html html}
+        {#if note.signature.trim()}
+          <div class="signature" style:font-family="'{NOTE_FONTS[note.signatureFont].family}', serif">{note.signature}</div>
+        {/if}
+      </div>
+
+      {#if seal}
+        <div class="seal" class:left={!!note.signature.trim()} style:--seal={seal}>
+          <span>{note.sealLetter}</span>
+        </div>
       {/if}
-    </svg>
 
-    <div
-      class="content {note.align}"
-      class:scroll
-      bind:this={content}
-      style:font-family="'{NOTE_FONTS[note.font].family}', serif"
-      style:font-size="{note.size}cqw"
-    >
-      <!-- Текст экранирован в noteHtml. -->
-      {@html html}
-      {#if note.signature.trim()}
-        <div class="signature" style:font-family="'{NOTE_FONTS[note.signatureFont].family}', serif">{note.signature}</div>
+      <!-- Следы и складки — поверх текста: пятно темнит и бумагу, и буквы под собой. -->
+      {#if marks.multiply || marks.normal}
+        <svg class="multiply" viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true">
+          <!-- SVG собран из чисел в marks.ts. -->
+          <defs>{@html markDefs(uid)}</defs>
+          <g clip-path="url(#{uid}-clip)">{@html marks.multiply}</g>
+        </svg>
+        <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true">
+          <g clip-path="url(#{uid}-clip)">{@html marks.normal}</g>
+        </svg>
+      {/if}
+      {#if crease}
+        <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true">
+          <g clip-path="url(#{uid}-clip)">{@html crease}</g>
+        </svg>
       {/if}
     </div>
 
-    {#if seal}
-      <div class="seal" class:left={!!note.signature.trim()} style:--seal={seal}>
-        <span>{note.sealLetter}</span>
-      </div>
+    {#if edit}
+      <svg class="edit" class:placing={edit.placing} viewBox="0 0 {W} {H}" preserveAspectRatio="none" role="presentation" onpointerdown={(e) => pick(e, null)}>
+        {#each note.marks as m (m.id)}
+          <circle
+            class="hit"
+            role="presentation"
+            cx={m.x * W}
+            cy={m.y * H}
+            r={m.size * W * 0.4}
+            onpointerdown={(e) => (e.stopPropagation(), pick(e, m.id))}
+          />
+          {#if m.id === edit.selected}
+            <circle class="sel" cx={m.x * W} cy={m.y * H} r={(m.size * W) / 2} />
+          {/if}
+        {/each}
+      </svg>
     {/if}
   </div>
 </div>
@@ -206,6 +253,35 @@
   }
   .sheet.shadow {
     filter: drop-shadow(0 1.2cqw 3cqw rgba(0, 0, 0, 0.6));
+  }
+  .layers {
+    position: absolute;
+    inset: 0;
+    mask-size: 100% 100%;
+    -webkit-mask-size: 100% 100%;
+  }
+  svg.multiply {
+    mix-blend-mode: multiply;
+  }
+  svg:not(.edit) {
+    pointer-events: none;
+  }
+  .edit .hit {
+    fill: transparent;
+    cursor: move;
+  }
+  .edit.placing,
+  .edit.placing .hit {
+    cursor: crosshair;
+  }
+  .edit .sel {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.5;
+    stroke-dasharray: 10 7;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 2px #000);
+    pointer-events: none;
   }
   svg {
     position: absolute;

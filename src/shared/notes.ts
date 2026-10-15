@@ -62,6 +62,79 @@ export type NoteInk = keyof typeof NOTE_INKS;
 export const NOTE_SEALS = { none: '', red: '#9b1c1c', black: '#2a2522', green: '#2f5d3a', blue: '#26407a', gold: '#b08a2e' } as const;
 export type NoteSeal = keyof typeof NOTE_SEALS;
 
+// Состояние бумаги: складки и помятость поверх всего листа.
+export const NOTE_CREASES = { none: 'Гладкая', folded: 'Сложена вчетверо', crumpled: 'Помята', crushed: 'Скомкана' } as const;
+export type NoteCrease = keyof typeof NOTE_CREASES;
+
+// Цвета следов. Не у каждого вида следа все цвета: какие можно — `tints` в NOTE_MARKS.
+export const NOTE_TINTS = {
+  blood: { title: 'Свежая кровь', color: '#7a0b0b' },
+  driedBlood: { title: 'Засохшая кровь', color: '#4a1a0c' },
+  ink: { title: 'Чернила', color: '#15100c' },
+  soot: { title: 'Сажа', color: '#2b2622' },
+  mud: { title: 'Грязь', color: '#4a3a22' },
+  wine: { title: 'Вино', color: '#5a0f2e' },
+  coffee: { title: 'Чай или кофе', color: '#6b4220' },
+  slime: { title: 'Слизь', color: '#3f5a12' },
+  candle: { title: 'Свечной воск', color: '#cdb98e' },
+  redWax: { title: 'Красный воск', color: '#8e1a16' },
+  blackWax: { title: 'Чёрный воск', color: '#26211e' },
+} as const;
+export type NoteTint = keyof typeof NOTE_TINTS;
+
+// Виды следов: подпись, группа в палитре, размер по умолчанию (доля ширины листа), цвета (первый — по умолчанию).
+export const NOTE_MARKS = {
+  splatter: { title: 'Брызги', group: 'Пятна', size: 0.28, tints: ['blood', 'driedBlood', 'ink', 'mud', 'wine', 'slime'] },
+  drops: { title: 'Капли', group: 'Пятна', size: 0.2, tints: ['blood', 'driedBlood', 'ink', 'wine', 'slime'] },
+  smear: { title: 'Мазок', group: 'Пятна', size: 0.4, tints: ['blood', 'driedBlood', 'soot', 'mud', 'ink'] },
+  blot: { title: 'Клякса', group: 'Пятна', size: 0.14, tints: ['ink', 'blood', 'driedBlood'] },
+  fingerprint: { title: 'Отпечаток пальца', group: 'Отпечатки', size: 0.1, tints: ['blood', 'driedBlood', 'soot', 'mud', 'ink'] },
+  ring: { title: 'След от кружки', group: 'Отпечатки', size: 0.3, tints: ['coffee', 'wine'] },
+  water: { title: 'Разводы воды', group: 'Отпечатки', size: 0.45, tints: [] },
+  wax: { title: 'Капли воска', group: 'Отпечатки', size: 0.14, tints: ['candle', 'redWax', 'blackWax'] },
+  scorch: { title: 'Подпалина', group: 'Повреждения', size: 0.3, tints: [] },
+  hole: { title: 'Прожжённая дыра', group: 'Повреждения', size: 0.16, tints: [] },
+  claws: { title: 'Следы когтей', group: 'Повреждения', size: 0.35, tints: [] },
+} as const satisfies Record<string, { title: string; group: string; size: number; tints: readonly NoteTint[] }>;
+export type NoteMarkKind = keyof typeof NOTE_MARKS;
+
+// След на листе. x, y — середина в долях листа, size — поперечник в долях ширины, angle — градусы.
+export interface NoteMark {
+  id: string;
+  kind: NoteMarkKind;
+  x: number;
+  y: number;
+  size: number;
+  angle: number;
+  opacity: number;
+  // Нет — первый из цветов вида (или без цвета).
+  tint?: NoteTint;
+  // Свой рисунок у каждого следа.
+  seed: number;
+}
+
+export const MARK_SIZE = { min: 0.03, max: 1 } as const;
+export const MAX_MARKS = 200;
+
+export function newMark(kind: NoteMarkKind, x: number, y: number): NoteMark {
+  return {
+    id: Math.random().toString(36).slice(2, 10),
+    kind,
+    x,
+    y,
+    size: NOTE_MARKS[kind].size,
+    angle: Math.round(Math.random() * 360),
+    opacity: 1,
+    seed: Math.floor(Math.random() * 1e6),
+  };
+}
+
+// Цвет следа: свой (если вид такой допускает) или первый из цветов вида; у бесцветных — null.
+export function markTint(m: NoteMark): NoteTint | null {
+  const tints: readonly NoteTint[] = NOTE_MARKS[m.kind].tints;
+  return m.tint && tints.includes(m.tint) ? m.tint : (tints[0] ?? null);
+}
+
 export interface Note {
   scryingGlass: 'note';
   version: 1;
@@ -83,6 +156,9 @@ export interface Note {
   sealLetter: string;
   // Случайное зерно бумаги: у каждой записки свои пятна и края.
   seed: number;
+  crease: NoteCrease;
+  // Следы поверх листа (кровь, отпечатки, подпалины…), по порядку: последний — сверху.
+  marks: NoteMark[];
 }
 
 export function newNote(): Note {
@@ -102,6 +178,8 @@ export function newNote(): Note {
     seal: 'none',
     sealLetter: '',
     seed: Math.floor(Math.random() * 10000),
+    crease: 'none',
+    marks: [],
   };
 }
 
@@ -131,5 +209,26 @@ export function parseNote(raw: unknown): Note | null {
     seal: pick(r['seal'], NOTE_SEALS, d.seal),
     sealLetter: str(r['sealLetter'], '').slice(0, 2),
     seed: num(r['seed'], d.seed, 0, 1e9),
+    crease: pick(r['crease'], NOTE_CREASES, d.crease),
+    marks: (Array.isArray(r['marks']) ? r['marks'] : []).flatMap((m) => parseMark(m, num)).slice(0, MAX_MARKS),
   };
+}
+
+function parseMark(raw: unknown, num: (v: unknown, def: number, min: number, max: number) => number): NoteMark[] {
+  if (!raw || typeof raw !== 'object') return [];
+  const m = raw as Record<string, unknown>;
+  if (typeof m['kind'] !== 'string' || !(m['kind'] in NOTE_MARKS)) return [];
+  const kind = m['kind'] as NoteMarkKind;
+  const tint = typeof m['tint'] === 'string' && m['tint'] in NOTE_TINTS ? (m['tint'] as NoteTint) : undefined;
+  return [{
+    id: typeof m['id'] === 'string' && m['id'] ? m['id'] : Math.random().toString(36).slice(2, 10),
+    kind,
+    x: num(m['x'], 0.5, -0.2, 1.2),
+    y: num(m['y'], 0.5, -0.2, 1.2),
+    size: num(m['size'], NOTE_MARKS[kind].size, MARK_SIZE.min, MARK_SIZE.max),
+    angle: num(m['angle'], 0, -360, 720),
+    opacity: num(m['opacity'], 1, 0.1, 1),
+    ...(tint ? { tint } : {}),
+    seed: num(m['seed'], 1, 0, 1e9),
+  }];
 }

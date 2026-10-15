@@ -1,15 +1,18 @@
 <!-- Редактор записки: слева текст и оформление, справа лист, как его увидят игроки. Сохраняется само
      (через полсекунды после правки); если записка у игроков, она обновляется у них тоже. -->
 <script lang="ts">
-  import { AlignCenter, AlignJustify, AlignLeft, ChevronLeft, Dices, Eye, EyeOff, TriangleAlert } from '@lucide/svelte';
+  import { AlignCenter, AlignJustify, AlignLeft, ArrowUpToLine, ChevronLeft, Dices, Eraser, Eye, EyeOff, Trash2, TriangleAlert } from '@lucide/svelte';
   import { onDestroy, untrack } from 'svelte';
   import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import {
-    NOTE_EDGES, NOTE_FONTS, NOTE_INKS, NOTE_PAPERS, NOTE_SEALS, NOTE_SHAPES, noteTitle,
-    type Note, type NoteEdge, type NoteFont, type NoteInk, type NotePaper as Paper, type NoteSeal, type NoteShape,
+    MARK_SIZE, NOTE_CREASES, NOTE_EDGES, NOTE_FONTS, NOTE_INKS, NOTE_MARKS, NOTE_PAPERS, NOTE_SEALS, NOTE_SHAPES, NOTE_TINTS, MAX_MARKS,
+    markTint, newMark, noteTitle,
+    type Note, type NoteCrease, type NoteEdge, type NoteFont, type NoteInk, type NoteMarkKind, type NotePaper as Paper, type NoteSeal,
+    type NoteShape, type NoteTint,
   } from '../../../shared/notes';
+  import { markDefs, markShape } from '../../../renderer/lib/note/marks';
   import { ui } from './ui.svelte';
   import CopyToMenu from './CopyToMenu.svelte';
   import { notesFolder } from '../../../renderer/lib/note/notes.svelte';
@@ -85,8 +88,86 @@
     return acc;
   }, {});
 
+  // ---- Следы ----
+  // Выбранный в палитре вид: щелчок по листу ставит такой след (пока вид не снят — Esc или ещё щелчок по нему).
+  let tool = $state<NoteMarkKind | null>(null);
+  let selected = $state<string | null>(null);
+  const mark = $derived(note?.marks.find((m) => m.id === selected) ?? null);
+
+  const markGroups = Object.entries(NOTE_MARKS).reduce<Record<string, NoteMarkKind[]>>((acc, [id, k]) => {
+    (acc[k.group] ??= []).push(id as NoteMarkKind);
+    return acc;
+  }, {});
+  // Значок вида в палитре — сам след в миниатюре.
+  const icon = (kind: NoteMarkKind) => {
+    const p = markShape({ ...newMark(kind, 0, 0), id: kind, seed: 7, angle: 0 }, 'pal', '#9c6a2e');
+    return `<defs>${markDefs('pal')}</defs>${p.multiply}${p.normal}`;
+  };
+
+  function onpick(e: PointerEvent, id: string | null, x: number, y: number) {
+    if (!note) return;
+    if (tool) {
+      if (note.marks.length >= MAX_MARKS) return;
+      const m = newMark(tool, x, y);
+      note.marks.push(m);
+      selected = m.id;
+      return;
+    }
+    selected = id;
+    if (!id) return;
+    // Перетаскивание: сдвиг в долях листа от точки нажатия.
+    const box = (e.currentTarget as Element).closest('svg')!.getBoundingClientRect();
+    const m = note.marks.find((x) => x.id === id)!;
+    const start = { x: m.x, y: m.y, cx: e.clientX, cy: e.clientY };
+    const move = (ev: PointerEvent) => {
+      m.x = Math.min(1.1, Math.max(-0.1, start.x + (ev.clientX - start.cx) / box.width));
+      m.y = Math.min(1.1, Math.max(-0.1, start.y + (ev.clientY - start.cy) / box.height));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  function removeMark() {
+    if (!note || !selected) return;
+    note.marks = note.marks.filter((m) => m.id !== selected);
+    selected = null;
+  }
+
+  function toTop() {
+    if (!note || !mark) return;
+    const m = mark;
+    note.marks = [...note.marks.filter((x) => x.id !== m.id), m];
+  }
+
+  // Колёсико над листом: размер выбранного следа, с Shift — поворот.
+  function onwheel(e: WheelEvent) {
+    if (!mark) return;
+    const d = Math.sign(e.deltaY || e.deltaX);
+    if (e.shiftKey) mark.angle = (mark.angle + d * 5 + 360) % 360;
+    else mark.size = Math.min(MARK_SIZE.max, Math.max(MARK_SIZE.min, +(mark.size * (d > 0 ? 0.92 : 1.08)).toFixed(3)));
+  }
+
+  function onkeydown(e: KeyboardEvent) {
+    const t = e.target as HTMLElement;
+    if (t.closest('input, textarea, select, [contenteditable]')) return;
+    if (e.key === 'Escape' && (tool || selected)) {
+      e.stopPropagation();
+      if (tool) tool = null;
+      else selected = null;
+    } else if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
+      e.preventDefault();
+      removeMark();
+    }
+  }
+
   const SEAL_TITLES: Record<NoteSeal, string> = { none: 'Без печати', red: 'Красная', black: 'Чёрная', green: 'Зелёная', blue: 'Синяя', gold: 'Золотая' };
 </script>
+
+<svelte:window {onkeydown} />
 
 <div class="editor">
   <header class="bar">
@@ -164,6 +245,12 @@
               {#each Object.entries(NOTE_INKS) as [id, i] (id)}<option value={id}>{i.title}</option>{/each}
             </select>
           </label>
+          <label class="field grow">
+            <span>Состояние</span>
+            <select value={note.crease} onchange={(e) => (note!.crease = e.currentTarget.value as NoteCrease)}>
+              {#each Object.entries(NOTE_CREASES) as [id, t] (id)}<option value={id}>{t}</option>{/each}
+            </select>
+          </label>
           <div class="field">
             <span>Пятна и края</span>
             <button type="button" class="btn" title="Другие пятна и другой рисунок края" onclick={() => (note!.seed = Math.floor(Math.random() * 10000))}><Dices size={14} /> Перемешать</button>
@@ -199,10 +286,66 @@
             </label>
           {/if}
         </div>
+
+        <section class="marks">
+          <div class="marks-head">
+            <span>Следы</span>
+            {#if note.marks.length}
+              <button type="button" class="link" title="Убрать с листа все следы" onclick={() => ((note!.marks = []), (selected = null))}><Eraser size={12} /> Убрать все</button>
+            {/if}
+          </div>
+          {#each Object.entries(markGroups) as [g, kinds] (g)}
+            <div class="palette" aria-label={g}>
+              {#each kinds as k (k)}
+                <button type="button" class:active={tool === k} title={tool === k ? 'Хватит ставить (Esc)' : `${NOTE_MARKS[k].title}: щёлкните по листу`} onclick={() => ((tool = tool === k ? null : k), (selected = null))}>
+                  <svg viewBox="-110 -110 220 220" aria-hidden="true">{@html icon(k)}</svg>
+                  <span>{NOTE_MARKS[k].title}</span>
+                </button>
+              {/each}
+            </div>
+          {/each}
+          <small class="faint">
+            {#if tool}Щёлкайте по листу, чтобы поставить «{NOTE_MARKS[tool].title.toLowerCase()}». Esc — хватит.
+            {:else}Выберите след и щёлкните по листу. Поставленный след можно перетащить; колёсико — размер, Shift + колёсико — поворот, Delete — убрать.{/if}
+          </small>
+
+          {#if mark}
+            {@const tints: readonly NoteTint[] = NOTE_MARKS[mark.kind].tints}
+            <div class="selected">
+              <div class="sel-head">
+                <strong>{NOTE_MARKS[mark.kind].title}</strong>
+                <div class="spacer"></div>
+                <button type="button" class="icon-btn" title="Другой рисунок" onclick={() => (mark!.seed = Math.floor(Math.random() * 1e6))}><Dices size={14} /></button>
+                <button type="button" class="icon-btn" title="Поверх остальных следов" onclick={toTop}><ArrowUpToLine size={14} /></button>
+                <button type="button" class="icon-btn" title="Убрать след (Delete)" onclick={removeMark}><Trash2 size={14} /></button>
+              </div>
+              {#if tints.length > 1}
+                <label class="field">
+                  <span>Цвет</span>
+                  <select value={markTint(mark)} onchange={(e) => (mark!.tint = e.currentTarget.value as NoteTint)}>
+                    {#each tints as t (t)}<option value={t}>{NOTE_TINTS[t].title}</option>{/each}
+                  </select>
+                </label>
+              {/if}
+              <div class="field">
+                <span>Размер</span>
+                <div class="size"><Slider value={mark.size} min={MARK_SIZE.min} max={MARK_SIZE.max} step={0.005} oninput={(v) => (mark!.size = v)} /><span class="faint">{Math.round(mark.size * 100)}</span></div>
+              </div>
+              <div class="field">
+                <span>Поворот</span>
+                <div class="size"><Slider value={mark.angle} min={0} max={360} step={1} oninput={(v) => (mark!.angle = v)} /><span class="faint">{Math.round(mark.angle)}°</span></div>
+              </div>
+              <div class="field">
+                <span>Насыщенность</span>
+                <div class="size"><Slider value={mark.opacity} min={0.1} max={1} step={0.01} oninput={(v) => (mark!.opacity = v)} /><span class="faint">{Math.round(mark.opacity * 100)}</span></div>
+              </div>
+            </div>
+          {/if}
+        </section>
       </form>
 
       <div class="preview">
-        <div class="paper"><NotePaper note={note} shadow bind:overflow /></div>
+        <div class="paper" {onwheel}><NotePaper note={note} shadow bind:overflow edit={{ selected, placing: !!tool, onpick }} /></div>
         {#if overflow}
           <p class="warn"><TriangleAlert size={14} /> Текст не помещается на лист: уменьшите размер текста, сократите текст или выберите форму побольше.</p>
         {/if}
@@ -344,6 +487,78 @@
     margin: 0;
     color: #f0c45a;
     font-size: 12px;
+  }
+  .marks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .marks-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .link:hover {
+    color: var(--text-normal);
+  }
+  .palette {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .palette button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: #e3c58f;
+    color: #3b2412;
+    font-size: 10.5px;
+    line-height: 1.15;
+    cursor: pointer;
+  }
+  .palette button:hover {
+    border-color: var(--text-muted);
+  }
+  .palette button.active {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .palette svg {
+    width: 34px;
+    height: 34px;
+  }
+  .selected {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+  }
+  .sel-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
   .empty {
     padding: 40px;
