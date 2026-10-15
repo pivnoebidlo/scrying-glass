@@ -52,7 +52,8 @@
     }
     if (!r) return;
     let stale = false;
-    window.api.getCard(r).then((c) => {
+    // Копия: ссылка могла прийти реактивным прокси, а его через IPC не передать.
+    window.api.getCard({ scope: r.scope, id: r.id }).then((c) => {
       if (stale) return;
       card = c;
       loadedFor = r;

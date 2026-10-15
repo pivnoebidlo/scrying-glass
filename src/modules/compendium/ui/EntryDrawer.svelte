@@ -36,7 +36,7 @@
   let lastEntry: string[] | null = null;
   let lastCard: CardRef | null = null;
   // Запись открыли из статблока или листа — кнопка «назад» к той карточке.
-  let returnCard = $state<{ ref: CardRef; name: string } | null>(null);
+  let returnCard = $state.raw<{ ref: CardRef; name: string } | null>(null);
   $effect(() => {
     const e = entryPeek.names;
     const c = bestiary.peeked;
