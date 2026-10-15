@@ -1,7 +1,8 @@
 <!-- Правая панель: портреты под рукой (подборка) — щелчок выводит на экран и убирает, на экране может быть
      несколько; ниже — подписи тех, кто на экране. -->
 <script lang="ts">
-  import { X } from '@lucide/svelte';
+  import { Plus, X } from '@lucide/svelte';
+  import { currentTray, trayOwner } from '../../scenes/tray';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { assetUrl, thumb } from '../../../shared/vault';
@@ -11,6 +12,11 @@
 
   let { ms, app }: ModuleProps<'portraits'> = $props();
   onMount(connectCardNames);
+
+  // На экране, но не в подборке (осталось от прошлой сцены) — можно добавить.
+  const inTrayNow = (path: string) => currentTray(app.scenes, app.adventures).portraits.includes(path);
+  const addToTray = (path: string) =>
+    dispatch('scenes', 'trayAdd', { owner: $state.snapshot(trayOwner(app.scenes, app.adventures)), part: 'portraits', paths: [path] });
 </script>
 
 <Tray
@@ -21,6 +27,7 @@
   isOn={(p) => ms.onScreen.includes(p)}
   toggle={(path) => dispatch('portraits', 'toggle', { path })}
   hint="Персонажи под рукой: перетащите сюда портреты из вкладок или добавьте кнопкой."
+  showLoose={false}
 />
 
 {#if ms.onScreen.length}
@@ -37,6 +44,9 @@
           onchange={(e) => dispatch('portraits', 'rename', { path, name: e.currentTarget.value })}
           onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
         />
+        {#if !inTrayNow(path)}
+          <button class="icon-btn" title="Добавить в подборку" onclick={() => addToTray(path)}><Plus size={14} /></button>
+        {/if}
         <button class="icon-btn" title="Убрать с экрана" onclick={() => dispatch('portraits', 'toggle', { path })}>
           <X size={14} />
         </button>

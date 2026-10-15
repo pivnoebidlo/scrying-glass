@@ -7,7 +7,7 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { sortable } from '../../../renderer/lib/sortable';
   import type { AppState } from '../../../shared/types';
-  import { currentTray, shown, trayOwner, type TrayPart } from '../tray';
+  import { currentTray, trayOwner, type TrayPart } from '../tray';
 
   let {
     app,
@@ -40,7 +40,8 @@
 
   const owner = $derived(trayOwner(app.scenes, app.adventures));
   const tray = $derived(currentTray(app.scenes, app.adventures)[part]);
-  const items = $derived([...tray, ...shown(app)[part].filter((p) => !tray.includes(p))].filter((id) => caption(id) !== null));
+  // Только подборка: то, что играет или идёт вне её, видно в проигрывателе и в бою.
+  const items = $derived(tray.filter((id) => caption(id) !== null));
 
   let picking = $state(false);
   const add = (ids: string[]) => ids.length && dispatch('scenes', 'trayAdd', { owner: $state.snapshot(owner), part, paths: ids });
@@ -57,9 +58,7 @@
         <span class="name">{caption(id)}</span>
       </button>
       {@render extra?.(id)}
-      {#if tray.includes(id)}
-        <button class="remove" title="Убрать из подборки" onclick={() => remove(id)}><X size={11} /></button>
-      {/if}
+      <button class="remove" title="Убрать из подборки" onclick={() => remove(id)}><X size={11} /></button>
     </div>
   {/each}
   <button class="chip add" title="Добавить в подборку" onclick={() => (picking = true)}>

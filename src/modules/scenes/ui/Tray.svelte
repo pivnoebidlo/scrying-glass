@@ -24,6 +24,7 @@
     wide = false,
     caption = prettyName,
     hint,
+    showLoose = true,
     children,
   }: {
     app: AppState;
@@ -36,13 +37,17 @@
     wide?: boolean;
     caption?: (path: string) => string;
     hint: string;
+    // Строка «На экране: …» для показанного вне подборки (у блока может быть своя — тогда false).
+    showLoose?: boolean;
     children?: Snippet;
   } = $props();
 
   const owner = $derived(trayOwner(app.scenes, app.adventures));
   const tray = $derived(currentTray(app.scenes, app.adventures)[part]);
-  // И то, что на экране, хотя его нет в подборке (вывели до неё или убрали из подборки) — чтобы было чем убрать.
-  const items = $derived([...tray, ...shown(app)[part].filter((p) => !tray.includes(p))]);
+  const items = $derived(tray);
+  // На экране, но не в подборке (осталось от прошлой сцены, вывели до неё) — отдельной строкой, не плиткой: в подборке
+  // сцены этого нет.
+  const loose = $derived(showLoose ? shown(app)[part].filter((p) => !tray.includes(p)) : []);
   const whose = $derived(
     'scene' in owner
       ? `сцены «${app.scenes.scenes.find((x) => x.id === owner.scene)?.name ?? ''}»`
@@ -95,9 +100,7 @@
             {/if}
             {#if on}<i class="live" title="На экране"><Eye size={10} /></i>{/if}
           </button>
-          {#if tray.includes(path)}
-            <button class="remove" title="Убрать из подборки" onclick={() => remove(path)}><X size={10} /></button>
-          {/if}
+          <button class="remove" title="Убрать из подборки" onclick={() => remove(path)}><X size={10} /></button>
         </div>
       {/each}
       <button class="tile add" title={`Добавить в подборку ${whose}`} disabled={!app.vault.tree} onclick={() => (picking = true)}><Plus size={14} /></button>
@@ -108,6 +111,14 @@
       <button class="btn" title={`Добавить в подборку ${whose}`} disabled={!app.vault.tree} onclick={() => (picking = true)}><Plus size={13} /> Добавить</button>
     </div>
   {/if}
+  {#each loose as path (path)}
+    <div class="loose">
+      <span class="faint">На экране:</span>
+      <span class="loose-name" title={path}>{caption(path)}</span>
+      <button class="icon-btn" title="Добавить в подборку" onclick={() => add([path])}><Plus size={13} /></button>
+      <button class="icon-btn" title="Убрать с экрана" onclick={() => toggle(path)}><X size={13} /></button>
+    </div>
+  {/each}
   {@render children?.()}
 </div>
 
@@ -236,6 +247,19 @@
   .add:hover {
     border-color: var(--accent);
     color: var(--text-normal);
+  }
+  .loose {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+  }
+  .loose-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .empty {
     display: flex;
