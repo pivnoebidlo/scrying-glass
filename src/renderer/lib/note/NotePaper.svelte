@@ -323,9 +323,12 @@
     width: 100%;
     height: 100%;
   }
+  /* Поле текста — 9 и 10cqw от края листа. Часть его отдана внутреннему отступу: высокие буквы рукописных шрифтов
+     (краткая над «Й», завитки) и пляшущие буквы выходят за строку и иначе обрезались бы краем блока. */
   .content {
     position: absolute;
-    inset: 9cqw 10cqw;
+    inset: 5cqw 7cqw;
+    padding: 4cqw 3cqw;
     overflow: hidden;
     color: var(--ink);
     line-height: 1.35;
@@ -333,7 +336,7 @@
     hyphens: auto;
   }
   .content.scroll {
-    inset: 14cqw 12cqw;
+    inset: 10cqw 9cqw;
   }
   .content.center {
     text-align: center;
