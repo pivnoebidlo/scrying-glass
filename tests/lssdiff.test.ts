@@ -125,6 +125,10 @@ describe('таблица заклинаний LSS', () => {
     });
   });
 
+  it('ответ «Гримуара»: массив кругов, в каждом — массив заклинаний', () => {
+    expect(Object.keys(collectLssSpells([[light], [shield, own], []]))).toEqual([light._id, shield._id, own._id]);
+  });
+
   it('заклинания-карточки персонажа — списками по кругам; ненайденные — в предупреждении', () => {
     const table = collectLssSpells([light, shield]);
     const j = { data: JSON.stringify({ name: { value: 'Флей' }, spellsInfo: { base: { code: 'cha' } } }), edition: '2024', spells: { mode: 'cards', prepared: [shield._id, light._id, own._id] } };
