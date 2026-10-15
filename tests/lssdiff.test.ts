@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Dnd5eCharacter } from '../src/systems/dnd5e/character';
 import { allIds, characterDiff, isEmptyDiff, lineId, mergeCharacter } from '../src/systems/dnd5e/diff';
-import { fromLss } from '../src/systems/dnd5e/lss';
+import { collectLssSpells, fromLss } from '../src/systems/dnd5e/lss';
 
 const base: Dnd5eCharacter = {
   classes: [{ name: 'Плут', level: 3 }],
@@ -107,5 +107,31 @@ describe('экспорт LSS: заклинания-карточки', () => {
     expect(r.warnings).toHaveLength(1);
     expect(r.warnings[0]).toContain('(2)');
     expect(r.stats.spellcasting).toBeUndefined();
+  });
+});
+
+describe('таблица заклинаний LSS', () => {
+  // Как в ответе API LSS (формат Foundry): номер, «Русское [English]», круг в system.level.
+  const light = { _id: '65d3c173f3d820fa1add4919', name: 'Свет [Light]', type: 'spell', system: { level: 0, school: 'evo' }, slug: 'light' };
+  const shield = { _id: '698197c9a5dc6923c7028d88', name: 'Щит [Shield]', type: 'spell', system: { level: 1 } };
+  const own = { _id: '6acf1032edf22844ee79088e', name: 'Насмешка барда', type: 'spell', system: { level: 1 } };
+
+  it('находит заклинания на любой глубине, разбирает «Русское [English]», чужое пропускает', () => {
+    const t = collectLssSpells({ data: { items: [light, { list: [shield, own] }], user: { _id: '65d3c173f3d820fa1add4910', name: 'Мастер' } } });
+    expect(t).toEqual({
+      [light._id]: { name: 'Свет', en: 'Light', level: 0 },
+      [shield._id]: { name: 'Щит', en: 'Shield', level: 1 },
+      [own._id]: { name: 'Насмешка барда', level: 1 },
+    });
+  });
+
+  it('заклинания-карточки персонажа — списками по кругам; ненайденные — в предупреждении', () => {
+    const table = collectLssSpells([light, shield]);
+    const j = { data: JSON.stringify({ name: { value: 'Флей' }, spellsInfo: { base: { code: 'cha' } } }), edition: '2024', spells: { mode: 'cards', prepared: [shield._id, light._id, own._id] } };
+    const r = fromLss(j, table);
+    expect(r.stats.spellcasting?.spells).toEqual({ 0: 'Свет', 1: 'Щит' });
+    expect(r.warnings).toHaveLength(1);
+    expect(r.warnings[0]).toContain('1 из 3');
+    expect(fromLss(j, collectLssSpells([light, shield, own])).warnings).toEqual([]);
   });
 });

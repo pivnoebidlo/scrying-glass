@@ -26,7 +26,7 @@ import { createTable, isTablePath, listLibraryTables, readTable, seedLibraryTabl
 import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, readLss, updateFromLss, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, readLss, updateFromLss, lssSpellTable, importLssSpells, clearLssSpells, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import {
@@ -1038,6 +1038,19 @@ ipcMain.handle('cards:pickLss', async () => {
   return file ? { file, lss: lssPreview(file) } : null;
 });
 ipcMain.handle('cards:readLss', (_event, file: string) => lssPreview(file));
+// Таблица заклинаний LSS (номер → название) для заклинаний-карточек: сколько загружено, загрузить, очистить.
+ipcMain.handle('lssSpells:count', () => Object.keys(lssSpellTable()).length);
+ipcMain.handle('lssSpells:import', async () => {
+  const win = getControlWindow();
+  const opts = {
+    title: 'Заклинания Long Story Short',
+    properties: ['openFile' as const, 'multiSelections' as const],
+    filters: [{ name: 'JSON', extensions: ['json', 'txt'] }],
+  };
+  const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+  return res.canceled || !res.filePaths.length ? null : importLssSpells(res.filePaths);
+});
+ipcMain.handle('lssSpells:clear', () => clearLssSpells());
 ipcMain.handle('cards:updateFromLss', (_event, { ref, file, merged }: { ref: CardRef; file: string; merged?: { name: string; system: string; stats: unknown } }) =>
   updateFromLss(ref, file, merged)
 );

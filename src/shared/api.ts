@@ -63,6 +63,11 @@ export interface Api {
   pickLss(): Promise<{ file: string; lss: LssPreview } | null>;
   // Прочитать экспорт LSS по пути (для совпадений импорта).
   readLss(file: string): Promise<LssPreview>;
+  // Таблица заклинаний LSS (номер → название) для заклинаний-карточек: сколько загружено, загрузить файлы
+  // (диалог; null — отменили), очистить.
+  lssSpellCount(): Promise<number>;
+  importLssSpells(): Promise<{ before: number; total: number; errors: string[] } | null>;
+  clearLssSpells(): Promise<void>;
   // Обновить карточку персонажа из экспорта LSS (прежняя версия — в корзину); merged — итог, собранный из
   // выбранных мастером изменений (нет — всё из файла).
   updateFromLss(ref: CardRef, file: string, merged?: { name: string; system: string; stats: unknown }): Promise<CardRef | null>;

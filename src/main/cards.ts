@@ -19,7 +19,7 @@ import type { Card, CardRef, CardScope, CardSummary, LssMatch } from '../shared/
 import { cardAsset, defaultSide, refKey } from '../shared/cards';
 import { folderRole, roleFolders, roleNames, type VaultFolder } from '../shared/vault';
 import { systemOf } from '../systems';
-import { fromLss, isLssExport, type LssImport } from '../systems/dnd5e/lss';
+import { collectLssSpells, fromLss, isLssExport, type LssImport, type LssSpellTable } from '../systems/dnd5e/lss';
 import { freeName, writeJsonAtomic } from './files';
 import { discard } from './trash';
 
@@ -643,11 +643,45 @@ function readImport(file: string): Bundle {
   throw new Error('Это не файл карточек Scrying Glass');
 }
 
+// Таблица заклинаний LSS (номер → название) — <библиотека>/lss-spells.json. Собирает мастер из ответов API LSS
+// (см. collectLssSpells); в репозиторий приложения она не входит.
+const lssSpellsFile = () => (libraryRoot ? path.join(libraryRoot, 'lss-spells.json') : null);
+export function lssSpellTable(): LssSpellTable {
+  const file = lssSpellsFile();
+  try {
+    return file ? (JSON.parse(fs.readFileSync(file, 'utf8')) as LssSpellTable) : {};
+  } catch {
+    return {};
+  }
+}
+// Добавить заклинания из файлов. Сколько было, сколько стало; файлы без заклинаний — в errors.
+export function importLssSpells(list: string[]): { before: number; total: number; errors: string[] } {
+  const table = lssSpellTable();
+  const before = Object.keys(table).length;
+  const errors: string[] = [];
+  for (const file of list) {
+    try {
+      const found = collectLssSpells(JSON.parse(fs.readFileSync(file, 'utf8')));
+      if (Object.keys(found).length) Object.assign(table, found);
+      else errors.push(`${path.basename(file)}: заклинаний LSS не нашлось`);
+    } catch (e) {
+      errors.push(`${path.basename(file)}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+  const file = lssSpellsFile();
+  if (file) writeJsonAtomic(file, table);
+  return { before, total: Object.keys(table).length, errors };
+}
+export function clearLssSpells() {
+  const file = lssSpellsFile();
+  if (file) fs.rmSync(file, { force: true });
+}
+
 // Экспорт персонажа из Long Story Short (JSON-файл) — для предпросмотра перед обновлением карточки.
 export function readLss(file: string): LssImport {
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (!isLssExport(raw)) throw new Error('Это не экспорт персонажа из Long Story Short');
-  return fromLss(raw);
+  return fromLss(raw, lssSpellTable());
 }
 
 // Карточка, которую этот экспорт LSS, скорее всего, обновляет: в этом месте — с тем же id в LSS, а без него —
@@ -743,7 +777,7 @@ export async function importCards(
     try {
       const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (isLssExport(raw)) {
-        const r = fromLss(raw);
+        const r = fromLss(raw, lssSpellTable());
         const ref = newLss ? null : lssMatch(r, to, dir);
         if (ref) matches.push({ file, ref });
         else {

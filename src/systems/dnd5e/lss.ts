@@ -80,7 +80,8 @@ type LssExport = { data: string; edition?: string; spells?: { mode?: string; pre
 export const isLssExport = (j: unknown): j is LssExport =>
   !!j && typeof j === 'object' && (j as { jsonType?: string }).jsonType === 'character' && typeof (j as { data?: unknown }).data === 'string';
 
-export function fromLss(j: LssExport): LssImport {
+// table — таблица заклинаний LSS (номер → название), для заклинаний-карточек.
+export function fromLss(j: LssExport, table: LssSpellTable = {}): LssImport {
   const d = JSON.parse(j.data);
   const info = d.info ?? {};
   const stats = d.stats ?? {};
@@ -110,12 +111,15 @@ export function fromLss(j: LssExport): LssImport {
     const m = /^slots-(\d)$/.exec(key);
     if (m && num(v)) slots[m[1]!] = num(v)!;
   }
-  const spells: Record<string, string> = {};
+  let spells: Record<string, string> = {};
   for (const [key, v] of Object.entries((d.text ?? {}) as Record<string, Val>)) {
     const m = /^spells-level-(\d)$/.exec(key);
     const value = m ? text(v) : '';
     if (m && value) spells[m[1]!] = value;
   }
+  // Списков текстом нет, а книга — карточками: названия по номерам из таблицы.
+  const cards = Object.keys(spells).length ? { spells: {}, warnings: [] } : cardSpells(j, table);
+  if (!Object.keys(spells).length) spells = cards.spells;
   const base = d.spellsInfo?.base?.code as Ability | undefined;
   const spellcasting =
     base || Object.keys(spells).length
@@ -176,15 +180,63 @@ export function fromLss(j: LssExport): LssImport {
     stats: character,
     lssId: avatarUrl ? (/\/avatar\/([0-9a-f]{24})/.exec(avatarUrl)?.[1] ?? null) : null,
     avatarUrl,
-    warnings: spellWarning(j, Object.keys(spells).length > 0),
+    warnings: cards.warnings,
   };
 }
 
-function spellWarning(j: LssExport, hasText: boolean): string[] {
-  const ids = new Set([...(j.spells?.prepared ?? []), ...(j.spells?.book ?? [])].filter((x) => typeof x === 'string'));
-  if (!ids.size || hasText) return [];
-  return [
-    `Заклинания (${ids.size}) в LSS ведутся карточками — в экспорте только их номера, без названий, поэтому в карточку они не попали. ` +
-      'Переключите книгу заклинаний персонажа в LSS на текст и экспортируйте заново — или впишите заклинания в карточку вручную.',
-  ];
+// ---------- Заклинания-карточки ----------
+// В режиме «карточки» лист LSS хранит только номера заклинаний из базы LSS (id MongoDB, 24 шестнадцатеричных
+// символа). Их названия мастер берёт из своей таблицы: сохраняет ответы API LSS (инструменты разработчика браузера)
+// и загружает их в настройках «Карточки» — collectLssSpells находит заклинания в любом таком JSON.
+
+export interface LssSpell {
+  name: string;
+  // Английское название (в LSS — «Свет [Light]»).
+  en?: string;
+  level: number;
+}
+export type LssSpellTable = Record<string, LssSpell>;
+
+const LSS_ID = /^[0-9a-f]{24}$/;
+
+// Заклинания LSS в произвольном JSON: объекты с _id, name и кругом (system.level или level), на любой глубине.
+export function collectLssSpells(json: unknown, out: LssSpellTable = {}): LssSpellTable {
+  const walk = (v: unknown) => {
+    if (Array.isArray(v)) return v.forEach(walk);
+    if (!v || typeof v !== 'object') return;
+    const o = v as { _id?: unknown; name?: unknown; type?: unknown; level?: unknown; system?: { level?: unknown } };
+    const level = typeof o.system?.level === 'number' ? o.system.level : typeof o.level === 'number' ? o.level : null;
+    if (typeof o._id === 'string' && LSS_ID.test(o._id) && typeof o.name === 'string' && level !== null && (o.type === undefined || o.type === 'spell')) {
+      const m = /^(.*?)\s*\[([^\]]+)\]\s*$/.exec(o.name.trim());
+      out[o._id] = { name: (m ? m[1]! : o.name).trim(), ...(m ? { en: m[2]!.trim() } : {}), level };
+      return;
+    }
+    Object.values(v).forEach(walk);
+  };
+  walk(json);
+  return out;
+}
+
+const spellIds = (j: LssExport) => [...new Set([...(j.spells?.prepared ?? []), ...(j.spells?.book ?? [])].filter((x): x is string => typeof x === 'string'))];
+
+// Списки заклинаний по кругам из номеров (по таблице) и предупреждение о тех, что не нашлись.
+function cardSpells(j: LssExport, table: LssSpellTable): { spells: Record<string, string>; warnings: string[] } {
+  const ids = spellIds(j);
+  const byLevel: Record<string, string[]> = {};
+  const missing = ids.filter((id) => !table[id]);
+  for (const id of ids) {
+    const s = table[id];
+    if (s) (byLevel[String(s.level)] ??= []).push(s.name);
+  }
+  const spells = Object.fromEntries(Object.entries(byLevel).map(([l, names]) => [l, names.sort((a, b) => a.localeCompare(b, 'ru')).join(', ')]));
+  if (!missing.length) return { spells, warnings: [] };
+  const how = 'Загрузите заклинания LSS в настройках «Карточки» (ответы API из инструментов разработчика браузера) или переключите книгу заклинаний персонажа в LSS на текст и экспортируйте заново.';
+  return {
+    spells,
+    warnings: [
+      missing.length === ids.length
+        ? `Заклинания (${ids.length}) в LSS ведутся карточками — в экспорте только их номера, без названий, поэтому в карточку они не попали. ${how}`
+        : `Не нашлось заклинаний: ${missing.length} из ${ids.length} — их номеров нет в загруженной таблице заклинаний LSS. ${how}`,
+    ],
+  };
 }

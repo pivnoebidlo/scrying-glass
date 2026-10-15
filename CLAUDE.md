@@ -94,7 +94,9 @@ Electron-приложение для мастера D&D: окно управле
   TipTap/ProseMirror), повторный импорт и «Обновить из LSS…» у карточки
   обновляют её через окно «Что изменилось» (`bestiary/ui/LssUpdate.svelte`, разница листов — `systems/dnd5e/diff.ts`; как слияние в git — галочки у
   изменений и строк списков, итог — `mergeCharacter`, уходит в `updateFromLss(…, merged)`; заклинания-карточки LSS
-  в экспорте — только id, `fromLss` даёт `warnings`):
+  в экспорте — только id: названия — из таблицы мастера `<библиотека>/lss-spells.json` (`collectLssSpells` находит
+  заклинания в любом сохранённом ответе API LSS, IPC `lssSpells:*`, раздел в настройках «Карточки»; в репозиторий
+  её не кладём — это данные LSS), ненайденные — в `warnings` `fromLss`):
   `importCards` не трогает персонажа, у которого есть карточка (`lssMatch`: `links.lss` — id LSS есть только в адресе
   аватарки, иначе то же имя в той же папке), а возвращает `matches`; `updateFromLss` (IPC `cards:updateFromLss`,
   `cards:pickLss`, `cards:readLss`) пишет новый лист, прежний файл — в корзину. Редактор листа —
