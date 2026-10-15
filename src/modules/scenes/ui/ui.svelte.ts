@@ -5,6 +5,27 @@ import { capture, suggestName } from '../apply';
 
 export const ui = $state({ selected: null as string | null });
 
+// Новая пустая сцена: ничего не меняет на экране (все части выключены), подборка пустая. Включается сразу —
+// в правой панели её подборка, можно накидывать. Открывается в редакторе.
+export async function createEmpty() {
+  const app = store.state;
+  const none = { path: null };
+  const s = await dispatch('scenes', 'create', {
+    name: `Сцена ${app.scenes.scenes.length + 1}`,
+    content: {
+      background: { path: null, fit: app.scene.fit },
+      map: none,
+      portraits: { paths: [] },
+      handout: none,
+      music: { playlist: null, shuffle: app.music.shuffle },
+      ambience: { loops: [] },
+    },
+    adventure: app.adventures.current,
+    include: { background: false, map: false, portraits: false, handout: false, music: false, ambience: false },
+  });
+  ui.selected = s.scenes.scenes.at(-1)?.id ?? null;
+}
+
 // Название новой сцены по тому, что на экране и в подборке.
 export function suggestCurrent(): string {
   const app = store.state;

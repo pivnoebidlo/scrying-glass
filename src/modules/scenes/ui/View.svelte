@@ -6,7 +6,7 @@
   import { activate, capture, describe, missing, PART_TITLES } from '../apply';
   import { PARTS, scenesFor, type Part } from '../types';
   import { shownAdventures } from '../../../shared/adventures';
-  import { saveCurrent, ui } from './ui.svelte';
+  import { createEmpty, saveCurrent, ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'scenes'> = $props();
 
@@ -19,6 +19,10 @@
     if (!sc) return;
     const c = capture(app);
     dispatch('scenes', 'setContent', { id: sc.id, content: part ? { [part]: c[part] } : c });
+    // Взяли часть с экрана — значит, она сцене нужна (у пустой сцены все части выключены). «Взять текущее» целиком
+    // отметки не трогает (в «Бой!» может быть нужна только музыка), разве что выключено всё — как у пустой сцены.
+    const on = part ? [part] : PARTS.every((p) => !sc.include[p]) ? PARTS : [];
+    for (const p of on) if (!sc.include[p]) dispatch('scenes', 'setInclude', { id: sc.id, part: p, value: true });
   }
 
   function remove() {
@@ -92,7 +96,10 @@
         картинка таверны, хозяин таверны портретом, музыка таверны и гул голосов, — и сохраните. На игре сцена включается
         одной кнопкой на панели справа или клавишами ⌘1…⌘9.
       </p>
-      <button class="btn primary" onclick={() => saveCurrent()}>Сохранить текущее как сцену</button>
+      <div class="buttons">
+        <button class="btn primary" onclick={() => saveCurrent()}>Сохранить текущее как сцену</button>
+        <button class="btn" onclick={createEmpty}>Создать пустую</button>
+      </div>
     </div>
   {/if}
 </div>
@@ -172,5 +179,10 @@
     max-width: 480px;
     margin: 40px auto;
     text-align: center;
+  }
+  .buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
   }
 </style>

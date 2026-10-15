@@ -1,11 +1,11 @@
 <!-- Боковая панель: сцены по порядку. Порядок меняется перетаскиванием. -->
 <script lang="ts">
-  import { Clapperboard, GripVertical, Play, Plus } from '@lucide/svelte';
+  import { Clapperboard, FilePlus, GripVertical, Play, Plus } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { activate } from '../apply';
-  import { saveCurrent, ui } from './ui.svelte';
+  import { createEmpty, saveCurrent, ui } from './ui.svelte';
   import { scenesFor } from '../types';
 
   let { ms, app }: ModuleProps<'scenes'> = $props();
@@ -64,7 +64,8 @@
 </div>
 
 <div class="actions">
-  <button class="btn" onclick={() => saveCurrent()}><Plus size={14} /> Сохранить текущее</button>
+  <button class="btn" title="Сцена из того, что сейчас на экране, и подборки" onclick={() => saveCurrent()}><Plus size={14} /> Сохранить текущее</button>
+  <button class="btn" title="Пустая сцена: при включении ничего не меняет, подборку можно накидать потом" onclick={createEmpty}><FilePlus size={14} /> Пустая</button>
 </div>
 
 <style>
@@ -141,6 +142,9 @@
     line-height: 1.5;
   }
   .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     padding: 10px 12px;
   }
   .actions .btn {

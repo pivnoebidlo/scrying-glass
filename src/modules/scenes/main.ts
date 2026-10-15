@@ -50,8 +50,9 @@ export default defineModule({
 
   actions: {
     // tray — подборка, из которой собрана сцена (то, что накидано в правую панель); к ней добавляется показанное.
-    create(s, { name, content, adventure, tray }: { name: string; content: SceneContent; adventure?: string | null; tray?: Tray }) {
-      const scene: Scene = { id: randomUUID(), name, adventure: adventure ?? null, include: { ...ALL }, ...content, tray: merge(tray ?? emptyTray(), trayOf(content)) };
+    // include — какие части сцена меняет (пустая сцена — никакие: при включении меняется только подборка).
+    create(s, { name, content, adventure, tray, include }: { name: string; content: SceneContent; adventure?: string | null; tray?: Tray; include?: Partial<Record<Part, boolean>> }) {
+      const scene: Scene = { id: randomUUID(), name, adventure: adventure ?? null, include: { ...ALL, ...include }, ...content, tray: merge(tray ?? emptyTray(), trayOf(content)) };
       return { ...s, scenes: [...s.scenes, scene], active: scene.id };
     },
 
