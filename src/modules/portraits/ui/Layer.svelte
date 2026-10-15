@@ -59,6 +59,11 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
+    /* Чёрная обводка, чтобы портрет не сливался с фоном. drop-shadow идёт по контуру картинки (у PNG с прозрачностью —
+       по фигуре), а не по рамке img, которая из-за contain шире картинки. */
+    --o: 0.22cqmin;
+    filter: drop-shadow(var(--o) 0 0 #000) drop-shadow(calc(-1 * var(--o)) 0 0 #000) drop-shadow(0 var(--o) 0 #000)
+      drop-shadow(0 calc(-1 * var(--o)) 0 #000) drop-shadow(0 0 1cqmin rgba(0, 0, 0, 0.5));
   }
   .caption {
     flex: none;
