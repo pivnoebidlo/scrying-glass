@@ -63,6 +63,34 @@ export function textKind(role: FolderRole, sub: string, fallbackName: string) {
       if (target !== abs) fs.renameSync(abs, target);
       return rel.slice(0, rel.lastIndexOf('/') + 1) + name;
     },
+    // Перенести файл или папку rel в папку folder той же роли (журнал: заметки по подпапкам). Новый путь или null.
+    move(resolve: Resolve, rel: string, folder: string): string | null {
+      const abs = resolve(rel);
+      const dir = isFolder(folder) ? resolve(folder) : null;
+      if (!abs || !dir || !fs.existsSync(abs) || !(isPath(rel) || isFolder(rel))) return null;
+      // Папку — не внутрь самой себя.
+      if (dir === abs || dir.startsWith(abs + path.sep)) return null;
+      const isDir = fs.statSync(abs).isDirectory();
+      const base = path.basename(abs);
+      let name = base;
+      if (isDir) for (let i = 2; fs.existsSync(path.join(dir, name)); i++) name = `${base} (${i})`;
+      else name = free(dir, base.replace(TEXT, ''), abs);
+      const target = path.join(dir, name);
+      if (target === abs) return rel;
+      fs.mkdirSync(dir, { recursive: true });
+      fs.renameSync(abs, target);
+      return `${folder}/${name}`;
+    },
+    // Новая папка внутри папки своей роли. Путь или null.
+    mkdir(resolve: Resolve, folder: string, title: string): string | null {
+      const dir = isFolder(folder) ? resolve(folder) : null;
+      if (!dir) return null;
+      const base = safe(title);
+      let name = base;
+      for (let i = 2; fs.existsSync(path.join(dir, name)); i++) name = `${base} (${i})`;
+      fs.mkdirSync(path.join(dir, name), { recursive: true });
+      return `${folder}/${name}`;
+    },
     // Все файлы этого вида в библиотеке: путь «library:<sub>/…» и текст.
     listLibrary(library: string | null): { path: string; text: string }[] {
       if (!library) return [];

@@ -17,6 +17,7 @@
     { role: 'music', title: 'Музыка', desc: 'Музыка и атмосфера.' },
     { role: 'tables', title: 'Таблицы', desc: 'Таблицы случайностей и генераторы (Markdown-файлы).' },
     { role: 'compendium', title: 'Справочник', desc: 'Заклинания, предметы, черты, правила, заметки (Markdown-файлы).' },
+    { role: 'journal', title: 'Журнал', desc: 'Заметки мастера к приключению: план, текст для зачитывания, итоги сессий (Markdown-файлы).' },
   ];
   const titleOf = (role: FolderRole) => ROLES.find((r) => r.role === role)!.title;
 

@@ -1,7 +1,7 @@
-<!-- Общий поиск ⌘K (Ctrl+K): записи справочника и карточки (монстры, NPC, персонажи) из любой вкладки.
-     Enter — в выдвижной панели, ⌘Enter — во вкладке; стрелки — выбор, Esc — закрыть. -->
+<!-- Общий поиск ⌘K (Ctrl+K): записи справочника, карточки (монстры, NPC, персонажи) и заметки журнала из любой
+     вкладки. Enter — в выдвижной панели (заметка — всегда во вкладке), ⌘Enter — во вкладке; стрелки — выбор, Esc — закрыть. -->
 <script lang="ts">
-  import { BookOpen, Search, Skull } from '@lucide/svelte';
+  import { BookOpen, NotebookPen, Search, Skull } from '@lucide/svelte';
   import { tick } from 'svelte';
   import { peekEntryAt } from '../../../renderer/lib/entry/peek.svelte';
   import { typeDef } from '../../../renderer/lib/entry/types.svelte';
@@ -12,8 +12,10 @@
   import { openEntry } from './ui.svelte';
   import { inCurrentFamily, visibleIn } from '../../../shared/adventures';
   import { store } from '../../../renderer/lib/store.svelte';
+  import { journal, loadPages, preview, searchPages, type PageItem } from '../../journal/ui/store.svelte';
+  import { openPage } from '../../journal/ui/ui.svelte';
 
-  type Hit = { kind: 'entry'; e: EntryItem; score: number } | { kind: 'card'; c: CardSummary; score: number };
+  type Hit = { kind: 'entry'; e: EntryItem; score: number } | { kind: 'card'; c: CardSummary; score: number } | { kind: 'page'; p: PageItem; score: number };
 
   let open = $state(false);
   let query = $state('');
@@ -39,9 +41,16 @@
       .filter((c) => inCurrentFamily(store.state.adventures, c.system) && (c.ref.scope !== 'vault' || c.folder === undefined || visibleIn(store.state.adventures, c.folder)))
       .map((c) => ({ kind: 'card' as const, c, score: nameScore(c.name, q) }))
       .filter((h) => h.score >= 0);
-    // При равном совпадении: свои записи и карточки — раньше встроенных, английские карточки — последними.
-    const rank = (h: Hit) => h.score * 10 + (h.kind === 'entry' ? (isBuiltinEntry(h.e.path) ? 1 : 0) : (h.c.ref.scope === 'srd' ? 1 : 0) + (h.c.lang === 'ru' ? 0 : 2));
-    return [...entries, ...cards].sort((a, b) => rank(a) - rank(b)).slice(0, LIMIT);
+    void journal.pages;
+    // Заметка, найденная только по тексту, — как запись по тексту.
+    const pages: Hit[] = searchPages(query).map((p) => {
+      const s = nameScore(p.title, q);
+      return { kind: 'page' as const, p, score: s < 0 ? 3 : s };
+    });
+    // При равном совпадении: заметки, свои записи и карточки — раньше встроенных, английские карточки — последними.
+    const rank = (h: Hit) =>
+      h.score * 10 + (h.kind === 'page' ? 0 : h.kind === 'entry' ? (isBuiltinEntry(h.e.path) ? 1 : 0) : (h.c.ref.scope === 'srd' ? 1 : 0) + (h.c.lang === 'ru' ? 0 : 2));
+    return [...pages, ...entries, ...cards].sort((a, b) => rank(a) - rank(b)).slice(0, LIMIT);
   });
 
   $effect(() => {
@@ -53,6 +62,7 @@
     open = true;
     query = '';
     void connectCards();
+    void loadPages();
     await tick();
     input?.focus();
   }
@@ -60,7 +70,8 @@
   function choose(h: Hit | undefined, inTab: boolean) {
     if (!h) return;
     open = false;
-    if (h.kind === 'entry') {
+    if (h.kind === 'page') openPage(h.p.path);
+    else if (h.kind === 'entry') {
       if (inTab) openEntry(h.e.path);
       else peekEntryAt(h.e.path, h.e.entry.title);
     } else if (inTab) bestiary.openInBestiary(h.c.ref);
@@ -113,14 +124,18 @@
     <div class="palette" onclick={(e) => e.stopPropagation()}>
       <label class="field">
         <Search size={16} />
-        <input bind:this={input} bind:value={query} {onkeydown} placeholder="Заклинание, предмет, состояние, монстр, NPC…" />
+        <input bind:this={input} bind:value={query} {onkeydown} placeholder="Заклинание, предмет, монстр, NPC, заметка…" />
       </label>
       {#if hits.length}
         <ul bind:this={list}>
-          {#each hits as h, i (h.kind === 'entry' ? 'e:' + h.e.path : 'c:' + h.c.ref.scope + h.c.ref.id)}
+          {#each hits as h, i (h.kind === 'entry' ? 'e:' + h.e.path : h.kind === 'page' ? 'p:' + h.p.path : 'c:' + h.c.ref.scope + h.c.ref.id)}
             <li>
               <button class:active={i === index} onmousemove={() => (index = i)} onclick={(e) => choose(h, e.metaKey || e.ctrlKey)}>
-                {#if h.kind === 'entry'}
+                {#if h.kind === 'page'}
+                  <NotebookPen size={14} />
+                  <span class="t">{h.p.title}</span>
+                  <span class="s">Журнал · {preview(h.p)}</span>
+                {:else if h.kind === 'entry'}
                   <BookOpen size={14} />
                   <span class="t">{h.e.entry.title}</span>
                   <span class="s">{entrySubtitle(h.e.entry, typeDef(h.e.entry.type))} · {h.e.group}</span>

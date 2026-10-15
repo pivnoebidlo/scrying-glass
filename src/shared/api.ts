@@ -99,6 +99,14 @@ export interface Api {
   createEntry(folder: string, title: string, text: string): Promise<string | null>;
   renameEntry(path: string, title: string): Promise<string | null>;
   onCompendiumChanged(cb: () => void): void;
+  // Журнал (shared/journal.ts): Markdown-заметки в папках журнала хранилища. Удаление — действие vault/trash.
+  readPage(path: string): Promise<string | null>;
+  writePage(path: string, text: string): Promise<boolean>;
+  createPage(folder: string, title: string, text: string): Promise<string | null>;
+  createPageFolder(folder: string, title: string): Promise<string | null>;
+  // Новое название = новое имя файла; перенос — в другую папку журнала. Новый путь или null.
+  renamePage(path: string, title: string): Promise<string | null>;
+  movePage(path: string, folder: string): Promise<string | null>;
   // Таблицы случайностей (shared/tables.ts): .md / .txt в папках таблиц хранилища или в библиотеке
   // (пути «library:tables/…» — общие для всех кампаний).
   readTable(path: string): Promise<string | null>;

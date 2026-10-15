@@ -24,6 +24,7 @@ import { canThumb, pruneThumbs, thumbnail } from './thumbs';
 import { createNote, readNote, renameNote, writeNote } from './notes';
 import { createTable, isTablePath, listLibraryTables, readTable, seedLibraryTables, tableResolver, watchLibraryTables, writeTable } from './tables';
 import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
+import { pages } from './journal';
 import type { Note } from '../shared/notes';
 import {
   cardsOf, readLss, updateFromLss, lssSpellTable, importLssSpells, clearLssSpells, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
@@ -372,6 +373,33 @@ ipcMain.handle('compendium:rename', async (_event, { path: rel, title }: { path:
   return next;
 });
 
+// Журнал: заметки в папках журнала хранилища. Переименование и перенос — ещё и закреплённая заметка (journal/move).
+ipcMain.handle('journal:read', (_event, rel: string) => pages.read(resolveInVault, rel));
+ipcMain.handle('journal:write', async (_event, { path: rel, text }: { path: string; text: string }) => {
+  const ok = pages.write(resolveInVault, rel, text);
+  if (ok) await afterNoteWrite();
+  return ok;
+});
+ipcMain.handle('journal:create', async (_event, { folder, title, text }: { folder: string; title: string; text: string }) => {
+  const rel = pages.create(resolveInVault, folder, title, text);
+  if (rel) await afterNoteWrite();
+  return rel;
+});
+ipcMain.handle('journal:mkdir', async (_event, { folder, title }: { folder: string; title: string }) => {
+  const rel = pages.mkdir(resolveInVault, folder, title);
+  if (rel) await afterNoteWrite();
+  return rel;
+});
+const afterPageMove = async (from: string, to: string | null) => {
+  if (to && to !== from) {
+    await runAction('journal', 'move', { from, to });
+    await afterNoteWrite();
+  }
+  return to;
+};
+ipcMain.handle('journal:rename', (_event, { path: rel, title }: { path: string; title: string }) => afterPageMove(rel, pages.rename(resolveInVault, rel, title)));
+ipcMain.handle('journal:move', (_event, { path: rel, folder }: { path: string; folder: string }) => afterPageMove(rel, pages.move(resolveInVault, rel, folder)));
+
 // Файл библиотеки (таблица, запись справочника) — в корзину библиотеки, с подтверждением (файлы хранилища удаляет
 // действие vault/trash).
 ipcMain.handle('tables:trash', async (_event, rel: string) => {
@@ -403,7 +431,7 @@ function appVaultFiles(): string[] {
   const out: string[] = [];
   if (!vaultRoot) return out;
   if (fs.existsSync(vaultStateFile())) out.push(`${DATA_DIR}/state.json`);
-  if (vaultTree) out.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'table' || f.kind === 'entry').map((f) => f.path));
+  if (vaultTree) out.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'table' || f.kind === 'entry' || f.kind === 'page').map((f) => f.path));
   out.push(...listCards().filter((c) => c.ref.scope === 'vault' && c.file).map((c) => c.file!));
   return out;
 }

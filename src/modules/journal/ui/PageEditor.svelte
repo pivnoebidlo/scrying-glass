@@ -1,0 +1,96 @@
+<!-- Правка заметки журнала: Markdown-текст, сохраняется сам (через полсекунды после последней правки и при выходе). -->
+<script lang="ts">
+  import { onDestroy, untrack } from 'svelte';
+  import { journal, type PageItem } from './store.svelte';
+  import { ui } from './ui.svelte';
+
+  let { page }: { page: PageItem } = $props();
+
+  let text = $state(untrack(() => page.text));
+  let saved = untrack(() => page.text);
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let area = $state<HTMLTextAreaElement>();
+
+  // Сохранить сейчас (перед переименованием заметки).
+  export function flush() {
+    return save();
+  }
+
+  async function save() {
+    if (timer) clearTimeout(timer);
+    timer = null;
+    if (text === saved) return;
+    const path = page.path;
+    saved = text;
+    journal.pages = journal.pages.map((p) => (p.path === path ? { ...p, text: saved } : p));
+    await window.api.writePage(path, saved);
+  }
+
+  function oninput() {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(save, 500);
+  }
+
+  // Tab в тексте — отступ (вложенный список), а не переход к следующему полю.
+  function onkeydown(e: KeyboardEvent) {
+    if (e.key !== 'Tab' || !area) return;
+    e.preventDefault();
+    const { selectionStart: a, selectionEnd: b } = area;
+    const start = text.lastIndexOf('\n', a - 1) + 1;
+    if (e.shiftKey) {
+      const cut = text.slice(start).match(/^( {1,2}|\t)/)?.[0].length ?? 0;
+      text = text.slice(0, start) + text.slice(start + cut);
+      queueMicrotask(() => area?.setSelectionRange(Math.max(start, a - cut), Math.max(start, b - cut)));
+    } else {
+      text = text.slice(0, start) + '  ' + text.slice(start);
+      queueMicrotask(() => area?.setSelectionRange(a + 2, b + 2));
+    }
+    oninput();
+  }
+
+  // У новой заметки фокус — в названии (View), у остальных — сразу в тексте.
+  const focusText = !ui.fresh;
+  $effect(() => {
+    if (focusText) area?.focus();
+  });
+  onDestroy(() => void save());
+</script>
+
+<div class="editor">
+  <textarea
+    class="journal-text"
+    bind:this={area}
+    bind:value={text}
+    {oninput}
+    {onkeydown}
+    onblur={save}
+    spellcheck="true"
+    placeholder={'Пишите как в Obsidian.\n\n## Подзаголовок\n> Текст, который нужно зачитать игрокам\n- [ ] Задача с флажком\n{1d20} — бросок, [[Название]] — ссылка на заметку, запись справочника или карточку'}
+  ></textarea>
+  <p class="faint hint">
+    «&gt; » — текст для зачитывания · «- [ ] » — задача · {'{1d20}'} — бросок · [[Название]] — ссылка · ⌘E — к просмотру
+  </p>
+</div>
+
+<style>
+  .editor {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 100%;
+  }
+  textarea {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    padding: 12px 14px;
+    resize: none;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .hint {
+    margin: 0;
+    font-size: 12px;
+  }
+</style>
