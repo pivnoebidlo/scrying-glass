@@ -10,7 +10,7 @@
   import { statsEditor, statsView } from '../../../systems/ui';
   import { isCharacter } from '../../../systems/dnd5e/character';
   import { bestiary, type Draft } from './cards.svelte';
-  import ImagePicker from './ImagePicker.svelte';
+  import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
   import { markdown } from '../../../renderer/lib/markdown';
 
   let { app, draft }: { app: AppState; draft: Draft } = $props();
@@ -257,7 +257,7 @@
 </div>
 
 {#if picking && app.vault.tree}
-  <ImagePicker tree={app.vault.tree} onpick={(p) => addImage(p)} onclose={() => (picking = false)} />
+  <ImagePicker tree={app.vault.tree} onpick={([p]) => addImage(p)} onclose={() => (picking = false)} />
 {/if}
 
 <style>

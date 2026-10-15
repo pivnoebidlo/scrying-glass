@@ -278,11 +278,29 @@ function runAction(id: string, name: string, payload: unknown): Promise<AppState
   const fn = mod?.actions[name];
   if (!mod || !fn) return Promise.resolve(state);
   return enqueue(id, async () => {
+    const before = { ...stateById };
     stateById[id] = await fn(stateById[id], payload || {}, ctx);
     if (mod.persist) saveVault();
     broadcastState();
+    if (stateById[id] !== before[id]) reactTo(id, before);
     return state;
   });
+}
+
+// Хуки afterAction других модулей — в их очередях, чтобы не разойтись с их собственными действиями.
+function reactTo(id: string, before: Record<string, unknown>) {
+  const after = { ...stateById };
+  for (const mod of Object.values(modules)) {
+    const hook = mod.afterAction;
+    if (!hook || mod.id === id) continue;
+    void enqueue(mod.id, async () => {
+      const next = hook(stateById[mod.id], before, after, ctx);
+      if (next === stateById[mod.id]) return;
+      stateById[mod.id] = next;
+      if (mod.persist) saveVault();
+      broadcastState();
+    });
+  }
 }
 
 ipcMain.handle('action', (_event, { module: id, name, payload }: { module: string; name: string; payload: unknown }) => runAction(id, name, payload));
@@ -544,6 +562,8 @@ interface AdventureData {
   maps: AnyRec;
   order: AnyRec;
   names: AnyRec;
+  // Подборка правой панели приключения (у удалённых до 0.20 нет).
+  tray?: AnyRec;
   // Ролевая система приключения (у удалённых до 0.18 нет).
   system?: string;
 }
@@ -573,7 +593,7 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
   });
   if (save.canceled || !save.filePath) return null;
 
-  const s = state as unknown as AnyRec & { scenes: { scenes: AnyRec[] }; maps: { maps: Record<string, AnyRec> }; initiative: { encounters: AnyRec[] }; order: { groups: Record<string, string[]> }; portraits: { names: Record<string, string> } };
+  const s = state as unknown as AnyRec & { scenes: { scenes: AnyRec[]; trays?: AnyRec }; maps: { maps: Record<string, AnyRec> }; initiative: { encounters: AnyRec[] }; order: { groups: Record<string, string[]> }; portraits: { names: Record<string, string> } };
   const pick = <T,>(o: Record<string, T>, keep: (k: string) => boolean) => Object.fromEntries(Object.entries(o).filter(([k]) => keep(k)));
   const slices: PackSlices = {
     scenes: s.scenes.scenes.filter((x) => x['adventure'] === adventure),
@@ -581,6 +601,7 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
     encounters: s.initiative.encounters.filter((x) => x['adventure'] === adventure),
     order: pick(s.order.groups, (k) => inAdventure(adventure, k) || inAdventure(`monsters:${adventure}`, k)),
     names: pick(s.portraits.names, (k) => inAdventure(adventure, k)),
+    tray: s.scenes.trays?.[adventure],
   };
   // Общие карточки, на которые ссылаются заготовки и метки карт приключения.
   const refs = new Set<string>();
@@ -654,6 +675,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     maps: drop(st['maps']!['maps'] as AnyRec, (k) => inAdventure(name, k)),
     order: drop(st['order']!['groups'] as AnyRec, mine),
     names: drop(st['portraits']!['names'] as AnyRec, (k) => inAdventure(name, k)),
+    tray: (st['scenes']!['trays'] as AnyRec | undefined)?.[name] as AnyRec | undefined,
     system: state.adventures.systems?.[name],
   };
   try {
@@ -666,7 +688,11 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     enqueue(id, async () => {
       stateById[id] = fn(stateById[id] as AnyRec);
     });
-  await merge('scenes', (st) => ({ ...st, scenes: (st['scenes'] as AnyRec[]).filter((x) => x['adventure'] !== name) }));
+  await merge('scenes', (st) => ({
+    ...st,
+    scenes: (st['scenes'] as AnyRec[]).filter((x) => x['adventure'] !== name),
+    trays: drop((st['trays'] as AnyRec | undefined) ?? {}, (k) => k !== name),
+  }));
   await merge('initiative', (st) => ({ ...st, encounters: (st['encounters'] as AnyRec[]).filter((x) => x['adventure'] !== name) }));
   await merge('maps', (st) => ({ ...st, maps: drop(st['maps'] as AnyRec, (k) => !inAdventure(name, k)) }));
   await merge('order', (st) => ({ ...st, groups: drop(st['groups'] as AnyRec, (k) => !mine(k)) }));
@@ -732,7 +758,11 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
         stateById[mod] = fn(stateById[mod] as AnyRec);
       });
     const addList = (list: AnyRec[], more: AnyRec[]) => [...list, ...more.filter((x) => !list.some((y) => y['id'] === x['id']))];
-    await merge('scenes', (st) => ({ ...st, scenes: addList(st['scenes'] as AnyRec[], data.scenes) }));
+    await merge('scenes', (st) => ({
+      ...st,
+      scenes: addList(st['scenes'] as AnyRec[], data.scenes),
+      ...(data.tray ? { trays: { ...(st['trays'] as AnyRec | undefined), [main.to]: data.tray } } : {}),
+    }));
     await merge('initiative', (st) => ({ ...st, encounters: addList(st['encounters'] as AnyRec[], data.encounters) }));
     await merge('maps', (st) => ({ ...st, maps: { ...data.maps, ...(st['maps'] as AnyRec) } }));
     await merge('order', (st) => ({ ...st, groups: { ...data.order, ...(st['groups'] as AnyRec) } }));
@@ -861,7 +891,11 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
       enqueue(id, async () => {
         stateById[id] = fn(stateById[id] as AnyRec);
       });
-    await merge('scenes', (s) => ({ ...s, scenes: [...(s['scenes'] as AnyRec[]), ...scenes] }));
+    await merge('scenes', (s) => ({
+      ...s,
+      scenes: [...(s['scenes'] as AnyRec[]), ...scenes],
+      ...(sl.tray ? { trays: { ...(s['trays'] as AnyRec | undefined), [name]: sl.tray } } : {}),
+    }));
     await merge('maps', (s) => ({ ...s, maps: { ...(s['maps'] as AnyRec), ...sl.maps } }));
     await merge('initiative', (s) => ({ ...s, encounters: [...(s['encounters'] as AnyRec[]), ...encounters] }));
     await merge('order', (s) => ({ ...s, groups: { ...(s['groups'] as AnyRec), ...sl.order } }));

@@ -108,7 +108,7 @@
       {#if !collapsed[g.key]}
         <div class="grid" style:--thumb="{thumbs.portraits}px">
           {#each g.items as f (f.path)}
-            <div use:sortable={{ group: g.key, id: f.path, ids: g.items.map((x) => x.path), disabled: !!ui.search.trim() }}>
+            <div use:sortable={{ group: g.key, id: f.path, ids: g.items.map((x) => x.path), disabled: !!ui.search.trim(), file: f.path }}>
               <ImageCard path={f.path} primary="portrait">
                 <Caption path={f.path} />
                 <CardBar path={f.path} name={caption(ms, f.path)} />

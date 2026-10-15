@@ -39,6 +39,8 @@ export interface ModuleDef<Id extends string, S, A extends Record<string, Action
   init?(state: S, ctx: ModuleContext): S;
   // Необязательный хук: файлы в хранилище изменились (дерево уже перечитано, ctx.vault.tree новое).
   onTreeChange?(state: S, ctx: ModuleContext): S;
+  // Необязательный хук: прошло действие другого модуля (состояние всех модулей до и после него).
+  afterAction?(state: S, before: Readonly<Record<string, unknown>>, after: Readonly<Record<string, unknown>>, ctx: ModuleContext): S;
   actions: A;
 }
 

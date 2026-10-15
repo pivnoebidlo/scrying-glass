@@ -2,6 +2,7 @@
 // блок в правой панели.
 import { Scroll } from '@lucide/svelte';
 import { defineControl } from '../../renderer/lib/contrib';
+import { inTray } from '../scenes/tray';
 import { dispatch } from '../../renderer/lib/store.svelte';
 import View from './ui/View.svelte';
 import Sidebar from './ui/Sidebar.svelte';
@@ -16,7 +17,7 @@ export default defineControl({
   view: View,
   sidebar: Sidebar,
   screen: OnScreen,
-  screenEmpty: (app) => (app.handouts.current ? null : 'нет'),
+  screenEmpty: (app) => (app.handouts.current || inTray(app, 'handout') ? null : 'нет'),
   imageActions: [
     {
       id: 'handout',

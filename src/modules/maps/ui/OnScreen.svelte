@@ -1,41 +1,48 @@
-<!-- Правая панель: какая карта у игроков. -->
+<!-- Правая панель: карты под рукой (подборка) — щелчок выводит карту игрокам и убирает; у текущей — редактор и обзор. -->
 <script lang="ts">
-  import { Maximize, Pencil, X } from '@lucide/svelte';
+  import { Maximize, Pencil } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { vaultUrl, thumb } from '../../../shared/vault';
+  import Tray from '../../scenes/ui/Tray.svelte';
   import { mapName } from '../library';
   import { FULL_VIEW } from '../types';
   import { ui } from './ui.svelte';
 
-  let { ms }: ModuleProps<'maps'> = $props();
+  let { ms, app }: ModuleProps<'maps'> = $props();
+
+  function toggle(path: string) {
+    if (ms.current === path) return dispatch('maps', 'clear');
+    ui.selected = path;
+    return dispatch('maps', 'show', { path });
+  }
 </script>
 
-{#if ms.current}
-  {@const path = ms.current}
-  <div class="row">
-    <img src={thumb(vaultUrl(path), 80)} alt="" />
-    <span class="name" title={path}>{mapName(path)}</span>
-    <button class="icon-btn" title="Открыть в редакторе" onclick={() => { ui.selected = path; openTab('maps'); }}><Pencil size={14} /></button>
-    <button class="icon-btn" title="Игроки видят всю карту" onclick={() => dispatch('maps', 'setView', { path, view: FULL_VIEW })}><Maximize size={14} /></button>
-    <button class="icon-btn" title="Убрать карту" onclick={() => dispatch('maps', 'clear')}><X size={14} /></button>
-  </div>
-{:else}
-  <div class="faint">Нет. Откройте карту в «Картах» и нажмите «Показать игрокам».</div>
-{/if}
+<Tray
+  {app}
+  part="map"
+  prefer="maps"
+  wide
+  caption={mapName}
+  isOn={(p) => ms.current === p}
+  {toggle}
+  hint="Карты под рукой: перетащите сюда карты из списка или добавьте кнопкой."
+>
+  {#if ms.current}
+    {@const path = ms.current}
+    <div class="row">
+      <span class="name" title={path}>{mapName(path)}</span>
+      <button class="icon-btn" title="Открыть в редакторе" onclick={() => { ui.selected = path; openTab('maps'); }}><Pencil size={14} /></button>
+      <button class="icon-btn" title="Игроки видят всю карту" onclick={() => dispatch('maps', 'setView', { path, view: FULL_VIEW })}><Maximize size={14} /></button>
+    </div>
+  {/if}
+</Tray>
 
 <style>
   .row {
     display: flex;
     align-items: center;
     gap: 6px;
-  }
-  img {
-    width: 48px;
-    height: 32px;
-    border-radius: var(--radius-s);
-    object-fit: cover;
   }
   .name {
     flex: 1;

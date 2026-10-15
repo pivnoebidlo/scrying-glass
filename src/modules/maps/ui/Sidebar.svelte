@@ -8,6 +8,7 @@
   import { mapGroups, mapName } from '../library';
   import { ui } from './ui.svelte';
   import PasteButton from '../../../renderer/lib/PasteButton.svelte';
+  import { sortable } from '../../../renderer/lib/sortable';
 
   let { ms, app }: ModuleProps<'maps'> = $props();
   const groups = $derived(app.vault.tree ? mapGroups(app.vault.tree, app.vault.name, ms, app.adventures) : []);
@@ -24,7 +25,8 @@
   {#each groups as g (g.key)}
     <div class="group faint" title={g.key}>{g.title}</div>
     {#each g.items as p (p)}
-      <div class="item" class:active={ui.selected === p} class:shown={ms.current === p}>
+      <!-- Перетаскивается в подборку правой панели. -->
+      <div class="item" class:active={ui.selected === p} class:shown={ms.current === p} use:sortable={{ group: '', id: p, ids: [], disabled: true, file: p }}>
         <button class="main" title={p} onclick={() => select(p)}>
           <Map size={14} />
           <span class="name">{mapName(p)}</span>

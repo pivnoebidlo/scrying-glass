@@ -20,6 +20,8 @@ export interface PackSlices {
   encounters: unknown[];
   order: Record<string, string[]>;
   names: Record<string, string>;
+  // Подборка правой панели приключения (без включённой сцены; у сцен — своя, внутри сцены).
+  tray?: unknown;
 }
 
 export interface PackManifest {
@@ -95,7 +97,7 @@ export async function readPack(file: string, tmp: string): Promise<ReadPack> {
     .map((n) => ({ id: path.basename(n, '.json'), json: json(n) }));
   return {
     manifest,
-    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {} },
+    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray },
     dir: tmp,
     cards,
   };

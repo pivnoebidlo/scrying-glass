@@ -1,5 +1,6 @@
 import type { AmbientLoop } from '../music/types';
 import type { Fit } from '../scene/types';
+import type { Tray } from './tray';
 import { adventureHidden, type AdventuresState } from '../../shared/adventures';
 
 // Части экрана, которые сцена может задавать. Выключенная часть при включении сцены не меняется.
@@ -20,9 +21,11 @@ export interface Scene {
   handout: { path: string | null };
   music: { playlist: string | null; shuffle: boolean };
   ambience: { loops: AmbientLoop[] };
+  // Подборка правой панели, пока сцена включена (scenes/tray.ts).
+  tray?: Tray;
 }
 
-export type SceneContent = Omit<Scene, 'id' | 'name' | 'include'>;
+export type SceneContent = Omit<Scene, 'id' | 'name' | 'include' | 'tray'>;
 
 // Сцены, которые видны при текущем приключении: его собственные и общие. Без приключения — все, кроме скрытых
 // приключений (их система отключена).
@@ -35,4 +38,6 @@ export interface ScenesState {
   active: string | null;
   // Менять сцены через короткое затемнение.
   throughBlack: boolean;
+  // Подборки правой панели без включённой сцены — по приключению (ключ — папка, '' — всё хранилище).
+  trays?: Record<string, Tray>;
 }

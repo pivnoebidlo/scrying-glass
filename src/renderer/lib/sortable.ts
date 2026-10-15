@@ -13,12 +13,18 @@ export interface SortableOpts {
   disabled?: boolean;
   // Список строк, а не сетка: «до/после» — по вертикали.
   vertical?: boolean;
+  // Файл плитки: его можно перетащить в подборку правой панели (и при disabled — без перестановки).
+  file?: string;
 }
 
 // Что тащим сейчас (одно на окно).
 let dragging: { group: string; id: string } | null = null;
 
 const MIME = 'application/x-sg-tile';
+
+// Какой файл тащат (в dragover данные перетаскивания не прочитать, а принимать ли — зависит от вида файла).
+let draggingFile: string | null = null;
+export const draggedFile = () => draggingFile;
 
 // Без настроек (undefined) — ничего не делает: так компонент может принимать сортировку необязательным пропом.
 export const sortable: Action<HTMLElement, SortableOpts | undefined> = (node, initial) => {
@@ -33,18 +39,25 @@ export const sortable: Action<HTMLElement, SortableOpts | undefined> = (node, in
   const accepts = () => !o.disabled && dragging !== null && dragging.group === o.group && dragging.id !== o.id;
 
   // В полях ввода (подпись портрета) мышь выделяет текст, а не тащит плитку.
+  const canDrag = () => !o.disabled || !!o.file;
   const onpointerdown = (e: PointerEvent) => {
-    node.draggable = !o.disabled && !(e.target as HTMLElement).closest('input, textarea, select');
+    node.draggable = canDrag() && !(e.target as HTMLElement).closest('input, textarea, select');
   };
   const ondragstart = (e: DragEvent) => {
+    if (!canDrag()) return;
+    if (o.file) {
+      draggingFile = o.file;
+      e.dataTransfer?.setData('text/plain', o.file);
+    }
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copyMove';
     if (o.disabled) return;
     dragging = { group: o.group, id: o.id };
     e.dataTransfer?.setData(MIME, o.id);
-    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
     node.classList.add('sort-dragging');
   };
   const ondragend = () => {
     dragging = null;
+    draggingFile = null;
     node.classList.remove('sort-dragging');
   };
   const ondragover = (e: DragEvent) => {
@@ -74,12 +87,12 @@ export const sortable: Action<HTMLElement, SortableOpts | undefined> = (node, in
   node.addEventListener('dragover', ondragover);
   node.addEventListener('dragleave', clear);
   node.addEventListener('drop', ondrop);
-  node.draggable = !o.disabled;
+  node.draggable = canDrag();
 
   return {
     update(next) {
       o = next ?? off;
-      node.draggable = !o.disabled;
+      node.draggable = canDrag();
     },
     destroy() {
       node.removeEventListener('pointerdown', onpointerdown);

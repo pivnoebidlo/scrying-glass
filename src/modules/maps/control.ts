@@ -1,6 +1,7 @@
 // Карты в окне управления: список, редактор тумана и обзора, кнопка «картой» на картинках.
 import { Map } from '@lucide/svelte';
 import { defineControl } from '../../renderer/lib/contrib';
+import { inTray } from '../scenes/tray';
 import { dispatch } from '../../renderer/lib/store.svelte';
 import Editor from './ui/Editor.svelte';
 import Sidebar from './ui/Sidebar.svelte';
@@ -16,7 +17,7 @@ export default defineControl({
   view: Editor,
   sidebar: Sidebar,
   screen: OnScreen,
-  screenEmpty: (app) => (app.maps.current ? null : 'нет'),
+  screenEmpty: (app) => (app.maps.current || inTray(app, 'map') ? null : 'нет'),
   settings: Settings,
   imageActions: [
     {

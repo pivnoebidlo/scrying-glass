@@ -1,20 +1,33 @@
 // Сцены: сохранённые наборы того, что видят и слышат игроки. Здесь только хранение;
 // включает сцену окно управления, через обычные действия модулей.
 import { randomUUID } from 'node:crypto';
-import { defineModule } from '../../shared/module';
+import { defineModule, type ModuleContext } from '../../shared/module';
+import { allFiles, isLibraryAsset } from '../../shared/vault';
+import { BUILTIN } from '../../shared/compendium';
+import type { AdventuresState } from '../../shared/adventures';
 import type { Part, Scene, SceneContent, ScenesState } from './types';
+import { addShown, addTo, editTray, pruneTrays, removeFrom, trayOf, trayOwner, type ScreenNow, type TrayOwner, type TrayPart } from './tray';
 
 const initialState: ScenesState = { scenes: [], active: null, throughBlack: false };
 
 const ALL: Record<Part, boolean> = { background: true, map: true, portraits: true, handout: true, music: true, ambience: true };
 
 // Сцены до появления раздатки: часть «Раздатка» включена и пуста — при смене сцены записка с экрана уходит.
+// Сцены до подборок: подборка — из содержимого сцены.
 function upgrade(s: ScenesState): ScenesState {
-  if (s.scenes.every((x) => x.handout && x.include.handout !== undefined)) return s;
-  return {
-    ...s,
-    scenes: s.scenes.map((x) => ({ ...x, handout: x.handout ?? { path: null }, include: { ...ALL, ...x.include } })),
-  };
+  if (s.scenes.some((x) => !x.handout || x.include.handout === undefined)) {
+    s = { ...s, scenes: s.scenes.map((x) => ({ ...x, handout: x.handout ?? { path: null }, include: { ...ALL, ...x.include } })) };
+  }
+  if (s.scenes.some((x) => !x.tray)) s = { ...s, scenes: s.scenes.map((x) => (x.tray ? x : { ...x, tray: trayOf(x) })) };
+  return s;
+}
+
+// Из подборок — файлы, которых больше нет. Картинки библиотеки и записи справочника вне хранилища не проверяются.
+function prune(s: ScenesState, ctx: ModuleContext): ScenesState {
+  const tree = ctx.vault.tree;
+  if (!tree) return s;
+  const exists = new Set(allFiles(tree).map((f) => f.path));
+  return pruneTrays(s, (p) => exists.has(p) || isLibraryAsset(p) || p.startsWith(BUILTIN));
 }
 
 export default defineModule({
@@ -22,11 +35,19 @@ export default defineModule({
   persist: true,
   initialState,
 
-  init: upgrade,
+  init: (s, ctx) => prune(upgrade(s), ctx),
+  onTreeChange: prune,
+
+  // Что вывели на экран (в любом модуле) — в текущую подборку правой панели.
+  afterAction(s, before, after) {
+    const app = after as unknown as ScreenNow & { adventures: AdventuresState };
+    const owner = trayOwner(s, app.adventures);
+    return editTray(s, owner, (t) => addShown(t, before as unknown as ScreenNow, app));
+  },
 
   actions: {
     create(s, { name, content, adventure }: { name: string; content: SceneContent; adventure?: string | null }) {
-      const scene: Scene = { id: randomUUID(), name, adventure: adventure ?? null, include: { ...ALL }, ...content };
+      const scene: Scene = { id: randomUUID(), name, adventure: adventure ?? null, include: { ...ALL }, ...content, tray: trayOf(content) };
       return { ...s, scenes: [...s.scenes, scene], active: scene.id };
     },
 
@@ -65,6 +86,15 @@ export default defineModule({
 
     markActive(s, { id }: { id: string | null }) {
       return { ...s, active: id };
+    },
+
+    // Подборка правой панели: добавить (перетаскиванием, «+») и убрать.
+    trayAdd(s, { owner, part, paths }: { owner: TrayOwner; part: TrayPart; paths: string[] }) {
+      return editTray(s, owner, (t) => addTo(t, part, paths));
+    },
+
+    trayRemove(s, { owner, part, path }: { owner: TrayOwner; part: TrayPart; path: string }) {
+      return editTray(s, owner, (t) => removeFrom(t, part, path));
     },
 
     setThroughBlack(s, { value }: { value: boolean }) {

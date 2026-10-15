@@ -172,7 +172,7 @@
       </p>
       <div class="grid" style:--thumb="{thumbs.files}px">
         {#each images as f (f.path)}
-          <div use:sortable={{ group: folder.path, id: f.path, ids: images.map((x) => x.path) }}>
+          <div use:sortable={{ group: folder.path, id: f.path, ids: images.map((x) => x.path), file: f.path }}>
             {#if f.kind === 'note'}
               <NoteCard path={f.path} />
             {:else}

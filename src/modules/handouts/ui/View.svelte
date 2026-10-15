@@ -77,7 +77,7 @@
       {#if !collapsed[g.key]}
         <div class="grid" style:--thumb="{thumbs.handouts}px">
           {#each g.items as f (f.path)}
-            <div use:sortable={{ group: g.key, id: f.path, ids: g.items.map((x) => x.path), disabled: !!ui.search.trim() }}>
+            <div use:sortable={{ group: g.key, id: f.path, ids: g.items.map((x) => x.path), disabled: !!ui.search.trim(), file: f.path }}>
               {#if f.kind === 'note'}
                 <NoteCard path={f.path} />
               {:else}

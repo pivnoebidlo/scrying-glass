@@ -1,4 +1,5 @@
-<!-- Правая панель: кто сейчас на экране. -->
+<!-- Правая панель: портреты под рукой (подборка) — щелчок выводит на экран и убирает, на экране может быть
+     несколько; ниже — подписи тех, кто на экране. -->
 <script lang="ts">
   import { X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -6,14 +7,23 @@
   import { assetUrl, thumb } from '../../../shared/vault';
   import { onMount } from 'svelte';
   import { autoCaption, connectCardNames } from './cardNames.svelte';
+  import Tray from '../../scenes/ui/Tray.svelte';
 
-  let { ms }: ModuleProps<'portraits'> = $props();
+  let { ms, app }: ModuleProps<'portraits'> = $props();
   onMount(connectCardNames);
 </script>
 
-{#if ms.onScreen.length === 0}
-  <div class="faint">Никого нет. Нажмите на портрет, чтобы показать его игрокам.</div>
-{:else}
+<Tray
+  {app}
+  part="portraits"
+  prefer="characters"
+  caption={(p) => ms.names[p] ?? autoCaption(p)}
+  isOn={(p) => ms.onScreen.includes(p)}
+  toggle={(path) => dispatch('portraits', 'toggle', { path })}
+  hint="Персонажи под рукой: перетащите сюда портреты из вкладок или добавьте кнопкой."
+/>
+
+{#if ms.onScreen.length}
   <ul>
     {#each ms.onScreen as path (path)}
       <li>
@@ -38,7 +48,7 @@
 
 <style>
   ul {
-    margin: 0;
+    margin: 8px 0 0;
     padding: 0;
     list-style: none;
   }

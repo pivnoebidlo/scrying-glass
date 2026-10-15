@@ -2,6 +2,7 @@
 // блок в панели экрана игроков, настройки.
 import { Maximize, Wallpaper } from '@lucide/svelte';
 import { defineControl } from '../../renderer/lib/contrib';
+import { inTray } from '../scenes/tray';
 import { dispatch } from '../../renderer/lib/store.svelte';
 import OnScreen from './ui/OnScreen.svelte';
 import View from './ui/View.svelte';
@@ -17,7 +18,7 @@ export default defineControl({
   view: View,
   sidebar: Sidebar,
   screen: OnScreen,
-  screenEmpty: (app) => (app.scene.background ? null : 'нет'),
+  screenEmpty: (app) => (app.scene.background || inTray(app, 'background') ? null : 'нет'),
   settings: Settings,
   imageActions: [
     {

@@ -1,46 +1,30 @@
-<!-- Правая панель: текущий фон. -->
+<!-- Правая панель: фоны под рукой (подборка) — щелчок выводит на экран и убирает; размещение текущего. -->
 <script lang="ts">
-  import { X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { prettyName, vaultUrl, thumb } from '../../../shared/vault';
+  import Tray from '../../scenes/ui/Tray.svelte';
 
-  let { ms }: ModuleProps<'scene'> = $props();
+  let { ms, app }: ModuleProps<'scene'> = $props();
 </script>
 
-{#if ms.background}
-  <div class="row">
-    <img src={thumb(vaultUrl(ms.background), 80)} alt="" />
-    <span class="name" title={ms.background}>{prettyName(ms.background)}</span>
-    <button class="icon-btn" title="Убрать фон" onclick={() => dispatch('scene', 'clear')}><X size={14} /></button>
-  </div>
-  <div class="seg" role="radiogroup" aria-label="Размещение">
-    <button class:active={ms.fit === 'contain'} onclick={() => dispatch('scene', 'setFit', { fit: 'contain' })}>Вписать</button>
-    <button class:active={ms.fit === 'cover'} onclick={() => dispatch('scene', 'setFit', { fit: 'cover' })}>Заполнить</button>
-  </div>
-{:else}
-  <div class="faint">Нет. Наведите на картинку и нажмите «на весь экран».</div>
-{/if}
+<Tray
+  {app}
+  part="background"
+  prefer="backgrounds"
+  wide
+  isOn={(p) => ms.background === p}
+  toggle={(p) => (ms.background === p ? dispatch('scene', 'clear') : dispatch('scene', 'show', { path: p }))}
+  hint="Фоны под рукой: перетащите сюда картинки из вкладок или добавьте кнопкой."
+>
+  {#if ms.background}
+    <div class="seg" role="radiogroup" aria-label="Размещение">
+      <button class:active={ms.fit === 'contain'} onclick={() => dispatch('scene', 'setFit', { fit: 'contain' })}>Вписать</button>
+      <button class:active={ms.fit === 'cover'} onclick={() => dispatch('scene', 'setFit', { fit: 'cover' })}>Заполнить</button>
+    </div>
+  {/if}
+</Tray>
 
 <style>
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  img {
-    width: 48px;
-    height: 32px;
-    border-radius: var(--radius-s);
-    object-fit: cover;
-  }
-  .name {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
   .seg {
     display: flex;
     padding: 2px;

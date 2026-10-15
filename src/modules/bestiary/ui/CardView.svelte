@@ -4,7 +4,7 @@
   import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
   import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Pencil, RefreshCw, RotateCcw, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
-  import ImagePicker from './ImagePicker.svelte';
+  import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
   import type { AppState } from '../../../shared/types';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
@@ -251,7 +251,7 @@
 </div>
 {#if picking && app.vault.tree && summary}
   {@const target = summary.ref}
-  <ImagePicker tree={app.vault.tree} onpick={(p) => ((picking = false), bestiary.addPortrait(target, p))} onclose={() => (picking = false)} />
+  <ImagePicker tree={app.vault.tree} onpick={([p]) => ((picking = false), bestiary.addPortrait(target, p!))} onclose={() => (picking = false)} />
 {/if}
 
 <style>

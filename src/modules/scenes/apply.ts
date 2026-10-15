@@ -55,6 +55,8 @@ export async function activate(app: AppState, sc: Scene) {
     await wait(450);
   }
 
+  // Сначала — какая сцена включена: показанное ею попадает в её подборку правой панели.
+  await dispatch('scenes', 'markActive', { id: sc.id });
   const jobs: Promise<unknown>[] = [];
   if (on('background')) jobs.push(dispatch('scene', 'set', { path: ok(sc.background.path), fit: sc.background.fit }));
   if (on('map')) {
@@ -66,7 +68,6 @@ export async function activate(app: AppState, sc: Scene) {
   if (on('ambience')) jobs.push(dispatch('music', 'setAmbience', { loops: sc.ambience.loops.filter((l) => exists.has(l.path)) }));
   if (on('music')) jobs.push(applyMusic(app, sc.music));
   await Promise.all(jobs);
-  await dispatch('scenes', 'markActive', { id: sc.id });
 
   if (black) {
     await wait(150);
