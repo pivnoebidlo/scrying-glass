@@ -1,6 +1,6 @@
 <!-- Правая панель: что играет, управление музыкой и атмосферой. -->
 <script lang="ts">
-  import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume2, Wind } from '@lucide/svelte';
+  import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume2, Wind, X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -105,7 +105,10 @@
 
 {#if track}
   <div class="now">
-    <div class="title" title={track}>{trackName(track)}</div>
+    <div class="title-row">
+      <div class="title" title={track}>{trackName(track)}</div>
+      <button class="icon-btn" title="Убрать из проигрывателя" onclick={() => dispatch('music', 'clear')}><X size={13} /></button>
+    </div>
     <div class="faint sub">{playlistTitle(app.vault.tree, app.vault.name, ms.playlist)} · {ms.index + 1} из {ms.queue.length}</div>
   </div>
 
@@ -177,6 +180,15 @@
 {/if}
 
 <style>
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .title-row .title {
+    flex: 1;
+    min-width: 0;
+  }
   .amb-tray {
     margin-top: 12px;
     padding-top: 8px;

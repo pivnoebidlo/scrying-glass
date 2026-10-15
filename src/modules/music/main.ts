@@ -121,6 +121,11 @@ export default defineModule({
       return { ...s, playing: false };
     },
 
+    // Убрать из проигрывателя: очереди нет, ничего не играет (например, остался трек из другой сцены).
+    clear(s) {
+      return { ...s, playlist: null, queue: [], index: 0, playing: false };
+    },
+
     next(s) {
       return advance(s, false);
     },
