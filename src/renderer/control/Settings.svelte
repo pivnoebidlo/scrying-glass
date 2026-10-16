@@ -1,13 +1,17 @@
-<!-- Окно настроек: общие разделы + раздел каждого модуля. -->
+<!-- Settings window: the General section (interface language) + a section of every module that has settings. -->
 <script lang="ts">
-  import { X } from '@lucide/svelte';
+  import { Globe, X } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
-  import { store } from '../lib/store.svelte';
+  import { dispatch, store } from '../lib/store.svelte';
+  import { t } from '../lib/i18n.svelte';
+  import { LANGS, type LangSetting } from '../../shared/i18n';
   import { workspace } from './workspace.svelte';
 
+  const GENERAL = 'general';
   const moduleSections = controlContributions.filter((c) => c.settings);
-  // Если раздел не задан или пропал, показываем первый.
-  const current = $derived(moduleSections.find((c) => c.id === workspace.settingsSection) ?? moduleSections[0]);
+  // A section that is not set or gone — the first one.
+  const general = $derived(workspace.settingsSection === GENERAL || !workspace.settingsSection);
+  const current = $derived(general ? null : (moduleSections.find((c) => c.id === workspace.settingsSection) ?? null));
 
   const close = () => (workspace.settingsOpen = false);
 
@@ -20,9 +24,13 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="backdrop" onclick={(e) => e.target === e.currentTarget && close()}>
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Настройки">
+  <div class="modal" role="dialog" aria-modal="true" aria-label={t('app.settings')}>
     <nav class="nav">
-      <div class="pane-title">Настройки</div>
+      <div class="pane-title">{t('app.settings')}</div>
+      <button class="nav-item" class:active={general || !current} onclick={() => (workspace.settingsSection = GENERAL)}>
+        <Globe size={14} />
+        {t('settings.general')}
+      </button>
       {#each moduleSections as c (c.id)}
         <button class="nav-item" class:active={current?.id === c.id} onclick={() => (workspace.settingsSection = c.id)}>
           <c.icon size={14} />
@@ -32,9 +40,24 @@
     </nav>
 
     <section class="content">
-      <button class="icon-btn close" title="Закрыть (Esc)" onclick={close}><X size={16} /></button>
+      <button class="icon-btn close" title={t('app.closeEsc')} onclick={close}><X size={16} /></button>
 
-      {#if current?.settings}
+      {#if general || !current}
+        <h2>{t('settings.general')}</h2>
+        <div class="setting">
+          <div class="info">
+            <div class="name">{t('settings.language')}</div>
+            <div class="desc">{t('settings.languageDesc')}</div>
+          </div>
+          <select
+            value={store.state.vault.language}
+            onchange={(e) => dispatch('vault', 'setLanguage', { language: e.currentTarget.value as LangSetting })}
+          >
+            <option value="auto">{t('settings.languageAuto', { lang: LANGS[store.state.vault.lang] })}</option>
+            {#each Object.entries(LANGS) as [id, name] (id)}<option value={id}>{name}</option>{/each}
+          </select>
+        </div>
+      {:else if current?.settings}
         <h2>{current.title}</h2>
         <current.settings ms={store.state[current.id]} app={store.state} />
       {/if}

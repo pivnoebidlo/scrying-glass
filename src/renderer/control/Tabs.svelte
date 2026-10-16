@@ -5,6 +5,7 @@
   import { controlContributions } from '../lib/registry';
   import { store } from '../lib/store.svelte';
   import { workspace } from './workspace.svelte';
+  import { t } from '../lib/i18n.svelte';
 
   const find = (id: string) => controlContributions.find((x) => x.id === id);
   const active = $derived(workspace.active ? find(workspace.active) : undefined);
@@ -38,7 +39,7 @@
             <c.icon size={14} />
             <span class="tab-title">{c.title}</span>
           </button>
-          <button class="tab-close icon-btn" title="Закрыть" onclick={() => workspace.closeTab(id)}>
+          <button class="tab-close icon-btn" title={t('app.close')} onclick={() => workspace.closeTab(id)}>
             <X size={13} />
           </button>
         </div>
@@ -52,7 +53,7 @@
         <active.view ms={store.state[active.id]} app={store.state} />
       {/key}
     {:else}
-      <div class="placeholder faint">Выберите модуль на панели слева</div>
+      <div class="placeholder faint">{t('app.pickModule')}</div>
     {/if}
   </div>
 </main>

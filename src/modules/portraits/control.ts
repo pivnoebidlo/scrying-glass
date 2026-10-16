@@ -1,5 +1,6 @@
 // Персонажи (портреты) в окне управления.
 import { User, Users } from '@lucide/svelte';
+import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import { inTray } from '../scenes/tray';
 import { dispatch } from '../../renderer/lib/store.svelte';
@@ -10,20 +11,26 @@ import Settings from './ui/Settings.svelte';
 
 export default defineControl({
   id: 'portraits',
-  title: 'Персонажи',
+  get title() {
+    return t('module.portraits');
+  },
   icon: Users,
   order: 10,
   view: View,
   sidebar: Sidebar,
   screen: OnScreen,
-  screenEmpty: (app) => (app.portraits.onScreen.length || inTray(app, 'portraits') ? null : 'никого'),
+  screenEmpty: (app) => (app.portraits.onScreen.length || inTray(app, 'portraits') ? null : t('empty.nobody')),
   settings: Settings,
   imageActions: [
     {
       id: 'portrait',
-      title: 'Показать портретом',
-      tip: { off: 'Портретом', on: 'Убрать портрет' },
-      badge: 'портрет',
+      get title() {
+        return t('action.portrait');
+      },
+      get tip() {
+        return { off: t('action.portrait.off'), on: t('action.portrait.on') };
+      },
+      badge: () => t('badge.portrait'),
       icon: User,
       active: (app, path) => app.portraits.onScreen.includes(path),
       toggle: (_app, path) => dispatch('portraits', 'toggle', { path }),

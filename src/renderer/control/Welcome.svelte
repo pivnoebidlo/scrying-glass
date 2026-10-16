@@ -2,6 +2,7 @@
 <script lang="ts">
   import { FolderOpen, X } from '@lucide/svelte';
   import { dispatch, store } from '../lib/store.svelte';
+  import { t } from '../lib/i18n.svelte';
 
   const recent = $derived(store.state.vault.recent);
   const name = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() ?? p;
@@ -11,16 +12,13 @@
   <div class="card">
     <div class="logo">🔮</div>
     <h1>Scrying Glass</h1>
-    <p class="muted">
-      Выберите папку хранилища: в ней лежат ваши приключения, персонажи, карты и музыка. Подойдёт и пустая папка, и та,
-      где материалы уже есть. Файлы не копируются и не изменяются.
-    </p>
+    <p class="muted">{t('welcome.text')}</p>
     <button class="btn primary big" onclick={() => dispatch('vault', 'choose')}>
-      <FolderOpen size={16} /> Открыть папку…
+      <FolderOpen size={16} /> {t('welcome.open')}
     </button>
 
     {#if recent.length}
-      <div class="pane-title">Недавние</div>
+      <div class="pane-title">{t('welcome.recent')}</div>
       <ul>
         {#each recent as r (r)}
           <li>
@@ -28,7 +26,7 @@
               <span class="name">{name(r)}</span>
               <span class="path faint">{r}</span>
             </button>
-            <button class="icon-btn" title="Убрать из списка" onclick={() => dispatch('vault', 'forget', { root: r })}>
+            <button class="icon-btn" title={t('welcome.forget')} onclick={() => dispatch('vault', 'forget', { root: r })}>
               <X size={14} />
             </button>
           </li>

@@ -1,5 +1,6 @@
 // Карты в окне управления: список, редактор тумана и обзора, кнопка «картой» на картинках.
 import { Map } from '@lucide/svelte';
+import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import { inTray } from '../scenes/tray';
 import { dispatch } from '../../renderer/lib/store.svelte';
@@ -11,20 +12,26 @@ import { ui } from './ui/ui.svelte';
 
 export default defineControl({
   id: 'maps',
-  title: 'Карты',
+  get title() {
+    return t('module.maps');
+  },
   icon: Map,
   order: 15,
   view: Editor,
   sidebar: Sidebar,
   screen: OnScreen,
-  screenEmpty: (app) => (app.maps.current || inTray(app, 'map') ? null : 'нет'),
+  screenEmpty: (app) => (app.maps.current || inTray(app, 'map') ? null : t('empty.none')),
   settings: Settings,
   imageActions: [
     {
       id: 'map',
-      title: 'Показать картой (с туманом войны)',
-      tip: { off: 'Картой', on: 'Убрать карту' },
-      badge: 'карта',
+      get title() {
+        return t('action.map');
+      },
+      get tip() {
+        return { off: t('action.map.off'), on: t('action.map.on') };
+      },
+      badge: () => t('badge.map'),
       icon: Map,
       active: (app, path) => app.maps.current === path,
       toggle: (app, path) => {

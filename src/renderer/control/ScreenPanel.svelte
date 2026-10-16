@@ -6,6 +6,7 @@
   import { controlContributions } from '../lib/registry';
   import { dispatch, store } from '../lib/store.svelte';
   import { workspace } from './workspace.svelte';
+  import { t } from '../lib/i18n.svelte';
 
   const display = $derived(workspace.display);
   const ratio = $derived(display ? `${display.width} / ${display.height}` : '16 / 9');
@@ -27,7 +28,7 @@
 </script>
 
 <aside class="panel">
-  <div class="pane-title">Экран игроков</div>
+  <div class="pane-title">{t('screen.title')}</div>
 
   <div class="section">
     <div class="preview" style:aspect-ratio={ratio} class:closed={!store.displayOpen}>
@@ -35,7 +36,7 @@
         <Stage app={store.state} />
       </div>
       {#if !store.displayOpen}
-        <div class="closed-label">экран закрыт</div>
+        <div class="closed-label">{t('screen.closed')}</div>
       {/if}
     </div>
 
@@ -43,7 +44,7 @@
       value={display ? String(display.id) : ''}
       onchange={(e) => (workspace.displayId = Number(e.currentTarget.value))}
       disabled={store.displayOpen}
-      title={store.displayOpen ? 'Закройте экран, чтобы выбрать другой' : ''}
+      title={store.displayOpen ? t('screen.closeToPick') : ''}
     >
       {#each store.displays as d (d.id)}
         <option value={String(d.id)}>{d.label}</option>
@@ -53,16 +54,16 @@
     <div class="row">
       <button class="btn" class:primary={!store.displayOpen} onclick={toggleDisplay} disabled={!display}>
         {#if store.displayOpen}
-          <MonitorOff size={14} /> Закрыть
+          <MonitorOff size={14} /> {t('screen.closeScreen')}
         {:else}
-          <Monitor size={14} /> Открыть
+          <Monitor size={14} /> {t('screen.open')}
         {/if}
       </button>
       <button class="btn" class:active={store.state.core.blackout} onclick={() => dispatch('core', 'toggleBlackout')}>
         {#if store.state.core.blackout}
-          <Sun size={14} /> Вернуть
+          <Sun size={14} /> {t('screen.restore')}
         {:else}
-          <Moon size={14} /> Погасить
+          <Moon size={14} /> {t('screen.blackout')}
         {/if}
       </button>
     </div>
@@ -75,13 +76,13 @@
       <button
         class="pane-title block-title"
         class:empty={empty !== null}
-        title={open ? 'Свернуть' : 'Развернуть'}
+        title={open ? t('app.collapse') : t('app.expand')}
         onclick={() => toggleBlock(c.id, empty !== null)}
       >
         {#if open}<ChevronDown size={12} />{:else}<ChevronRight size={12} />{/if}
         <span>{c.title}</span>
         {#if empty !== null && !open}<span class="summary">· {empty}</span>{/if}
-        {#if empty === null && !open}<span class="dot" title="Что-то есть на экране"></span>{/if}
+        {#if empty === null && !open}<span class="dot" title={t('app.somethingOnScreen')}></span>{/if}
       </button>
       {#if open}
         <div class="section">

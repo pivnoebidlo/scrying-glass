@@ -1,5 +1,6 @@
 // Инициатива в окне управления: таблица боя, блок «чей ход» и кнопка «в инициативу» на картинках.
 import { Swords, UserPlus } from '@lucide/svelte';
+import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import { inTray } from '../scenes/tray';
 import { dispatch } from '../../renderer/lib/store.svelte';
@@ -14,7 +15,9 @@ import Settings from './ui/Settings.svelte';
 
 export default defineControl({
   id: 'initiative',
-  title: 'Инициатива',
+  get title() {
+    return t('module.initiative');
+  },
   icon: Swords,
   order: 25,
   view: View,
@@ -25,16 +28,20 @@ export default defineControl({
     app.initiative.combatants.some((c) => c.id === app.initiative.turn) || inTray(app, 'encounters')
       ? null
       : app.initiative.combatants.length
-        ? `бой не идёт (${app.initiative.combatants.length})`
-        : 'бой не идёт',
+        ? t('empty.noFightN', { count: app.initiative.combatants.length })
+        : t('empty.noFight'),
   imageActions: [
     {
       id: 'initiative',
-      title: 'Добавить в инициативу',
-      tip: { off: 'В бой', on: 'Убрать из боя' },
+      get title() {
+        return t('action.initiative');
+      },
+      get tip() {
+        return { off: t('action.initiative.off'), on: t('action.initiative.on') };
+      },
       badge: (app, path) => {
         const n = app.initiative.combatants.filter((c) => c.portrait === path).length;
-        return n > 1 ? `в бою ×${n}` : 'в бою';
+        return n > 1 ? t('badge.inFightN', { count: n }) : t('badge.inFight');
       },
       icon: UserPlus,
       active: (app, path) => app.initiative.combatants.some((c) => c.portrait === path),

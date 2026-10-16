@@ -3,6 +3,7 @@
   import { Settings } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
   import { workspace } from './workspace.svelte';
+  import { t } from '../lib/i18n.svelte';
 
   // В полосе только модули, у которых есть вкладка или боковая панель.
   const items = controlContributions.filter((c) => c.view || c.sidebar);
@@ -20,7 +21,7 @@
     </button>
   {/each}
   <div class="spacer"></div>
-  <button class="icon-btn" title="Настройки (⌘,)" onclick={() => workspace.openSettings()}>
+  <button class="icon-btn" title={t('app.settingsHotkey')} onclick={() => workspace.openSettings()}>
     <Settings size={18} />
   </button>
 </nav>

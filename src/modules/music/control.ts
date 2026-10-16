@@ -1,5 +1,6 @@
 // Музыка в окне управления: плейлисты, проигрыватель, кнопки у треков.
 import { Music, Play, Wind } from '@lucide/svelte';
+import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import { inTray } from '../scenes/tray';
 import { dispatch } from '../../renderer/lib/store.svelte';
@@ -12,20 +13,24 @@ import Settings from './ui/Settings.svelte';
 
 export default defineControl({
   id: 'music',
-  title: 'Музыка',
+  get title() {
+    return t('module.music');
+  },
   icon: Music,
   order: 20,
   view: View,
   sidebar: Sidebar,
   screen: MiniPlayer,
-  screenEmpty: (app) => (app.music.queue[app.music.index] || app.music.ambience.length || inTray(app, 'music') || inTray(app, 'ambience') ? null : 'тишина'),
+  screenEmpty: (app) => (app.music.queue[app.music.index] || app.music.ambience.length || inTray(app, 'music') || inTray(app, 'ambience') ? null : t('empty.silence')),
   settings: Settings,
   background: Player,
   audioActions: [
     {
       id: 'play',
-      title: 'Играть (вместе с остальными треками папки)',
-      badge: 'играет',
+      get title() {
+        return t('action.play');
+      },
+      badge: () => t('badge.playing'),
       icon: Play,
       active: (app, path) => app.music.playing && app.music.queue[app.music.index] === path,
       toggle: (app, path) =>
@@ -35,8 +40,10 @@ export default defineControl({
     },
     {
       id: 'ambient',
-      title: 'Атмосфера: зациклить поверх музыки',
-      badge: 'атмосфера',
+      get title() {
+        return t('action.ambience');
+      },
+      badge: () => t('badge.ambience'),
       icon: Wind,
       active: (app, path) => app.music.ambience.some((a) => a.path === path),
       toggle: (_app, path) => dispatch('music', 'toggleAmbient', { path }),

@@ -1,3 +1,4 @@
+import type { LangSetting } from './i18n/core';
 // Описание модуля со стороны ядра: состояние, действия, хуки.
 import type { BrowserWindow, Dialog } from 'electron';
 import type { RoleNames, VaultFolder, VaultState } from './vault';
@@ -18,6 +19,8 @@ export interface VaultAccess {
   setRoles(roles: Partial<RoleNames> | null): VaultState;
   // Отключённые ролевые системы. Сохраняются в настройках приложения.
   setSystemsOff(list: string[]): VaultState;
+  // Interface language (app settings).
+  setLanguage(language: LangSetting): VaultState;
 }
 
 // Контекст, который получают действия и хуки модулей.

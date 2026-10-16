@@ -7,6 +7,7 @@
   import { closeLightbox, lightbox } from './view-image.svelte';
   import { imageActions } from './registry';
   import { store } from './store.svelte';
+  import { t } from './i18n.svelte';
 
   const path = $derived(lightbox.items[lightbox.index] ?? null);
   const app = $derived(store.state);
@@ -35,10 +36,10 @@
   <div class="lightbox" onclick={closeLightbox}>
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
     <img src={assetUrl(path)} alt={name} onclick={(e) => e.stopPropagation()} />
-    <button class="close icon-btn" title="Закрыть (Esc)" onclick={closeLightbox}><X size={20} /></button>
+    <button class="close icon-btn" title={t('app.closeEsc')} onclick={closeLightbox}><X size={20} /></button>
     {#if lightbox.items.length > 1}
-      <button class="nav prev icon-btn" title="Предыдущая (←)" onclick={(e) => (e.stopPropagation(), step(-1))}><ChevronLeft size={28} /></button>
-      <button class="nav next icon-btn" title="Следующая (→)" onclick={(e) => (e.stopPropagation(), step(1))}><ChevronRight size={28} /></button>
+      <button class="nav prev icon-btn" title={t('view.prev')} onclick={(e) => (e.stopPropagation(), step(-1))}><ChevronLeft size={28} /></button>
+      <button class="nav next icon-btn" title={t('view.next')} onclick={(e) => (e.stopPropagation(), step(1))}><ChevronRight size={28} /></button>
     {/if}
     <div class="bar" onclick={(e) => e.stopPropagation()}>
       <span class="name" title={path}>{name}</span>
@@ -47,7 +48,7 @@
         {@const on = a.active(app, path)}
         <button class="btn" class:primary={on} onclick={() => a.toggle(app, path)}>
           <a.icon size={14} />
-          {on ? badgeOf(a, app, path) + ': убрать' : a.title}
+          {on ? t('action.remove', { what: badgeOf(a, app, path) }) : a.title}
         </button>
       {/each}
     </div>

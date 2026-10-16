@@ -5,6 +5,7 @@ import * as fs from 'node:fs';
 import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
+import { isLang, resolveLang, setLang, type Lang, type LangSetting } from '../shared/i18n';
 import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
 import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
@@ -64,6 +65,8 @@ interface AppSettings {
   trash?: TrashSettings;
   // Отключённые ролевые системы (systems/index.ts).
   systemsOff?: string[];
+  // Interface language: 'auto' (OS language, else English) or a language.
+  language?: LangSetting;
 }
 const RECENT_MAX = 10;
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -97,7 +100,14 @@ function vaultState(): VaultState {
     recent: settings.recent,
     roles: setRoleNames(settings.roles),
     systemsOff: setSystemsOff(settings.systemsOff),
+    language: settings.language ?? 'auto',
+    lang: interfaceLang(),
   };
+}
+
+// The language the interface is in right now (the setting resolved against the OS languages).
+function interfaceLang(): Lang {
+  return setLang(resolveLang(settings.language, app.getPreferredSystemLanguages()));
 }
 
 function resolveInVault(rel: string): string | null {
@@ -230,6 +240,13 @@ function setRoles(roles: Partial<RoleNames> | null): VaultState {
   return vaultRoot ? rescanVault() : vaultState();
 }
 
+// Interface language: saved in settings; windows switch on the next state broadcast.
+function setLanguageSetting(language: LangSetting): VaultState {
+  settings = { ...settings, language: language === 'auto' || isLang(language) ? language : 'auto' };
+  writeJsonAtomic(settingsFile(), settings);
+  return vaultState();
+}
+
 // Отключить ненужные ролевые системы (все сразу нельзя — setSystemsOff оставит хотя бы одну).
 function setSystemsOffSetting(list: string[]): VaultState {
   settings = { ...settings, systemsOff: setSystemsOff(list) };
@@ -254,6 +271,7 @@ const vault: VaultAccess = {
   forget: forgetVault,
   setRoles,
   setSystemsOff: setSystemsOffSetting,
+  setLanguage: setLanguageSetting,
 };
 
 const ctx: ModuleContext = {

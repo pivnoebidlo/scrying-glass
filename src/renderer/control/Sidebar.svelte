@@ -3,6 +3,7 @@
   import { controlContributions } from '../lib/registry';
   import { store } from '../lib/store.svelte';
   import { listNav } from '../lib/listnav';
+  import { t } from '../lib/i18n.svelte';
   import { workspace } from './workspace.svelte';
 
   const c = $derived(controlContributions.find((x) => x.id === workspace.sidebar));
@@ -19,7 +20,7 @@
       {#if c.sidebar}
         <c.sidebar ms={store.state[c.id]} app={store.state} />
       {:else}
-        <p class="faint empty">У этого модуля нет боковой панели.</p>
+        <p class="faint empty">{t('app.noSidebar')}</p>
       {/if}
     </div>
   {/if}

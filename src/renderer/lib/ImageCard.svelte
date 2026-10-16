@@ -10,6 +10,7 @@
   import { Trash2 } from '@lucide/svelte';
   import { badgeOf } from './contrib';
   import { viewImage } from './view-image.svelte';
+  import { t } from './i18n.svelte';
 
   let {
     path,
@@ -27,7 +28,7 @@
 
 <div class="card" class:on={active.length > 0}>
   <div class="pic">
-    <button class="thumb" data-view={path} title="Двойной щелчок — рассмотреть крупно" ondblclick={(e) => viewImage(path, e.currentTarget)}>
+    <button class="thumb" data-view={path} title={t('view.zoom')} ondblclick={(e) => viewImage(path, e.currentTarget)}>
       <img src={thumb(vaultUrl(path), 480)} alt="" loading="lazy" style:aspect-ratio={aspect} />
     </button>
 
@@ -40,13 +41,13 @@
         {@const on = a.active(app, path)}
         <button class="action" class:on aria-label={a.title} onclick={() => a.toggle(app, path)}>
           <a.icon size={13} />
-          <span class="tip">{a.tip ? (on ? a.tip.on : a.tip.off) : on ? `${a.title}: убрать` : a.title}</span>
+          <span class="tip">{a.tip ? (on ? a.tip.on : a.tip.off) : on ? t('action.remove', { what: a.title }) : a.title}</span>
         </button>
       {/each}
       {#if trash}
-        <button class="action trash" aria-label="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
+        <button class="action trash" aria-label={t('action.toTrashLong')} onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
           <Trash2 size={13} />
-          <span class="tip">В корзину</span>
+          <span class="tip">{t('action.toTrash')}</span>
         </button>
       {/if}
     </div>

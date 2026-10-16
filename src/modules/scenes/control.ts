@@ -1,5 +1,6 @@
 // Сцены в окне управления: список, редактор, кнопки на панели экрана игроков, горячие клавиши.
 import { Clapperboard } from '@lucide/svelte';
+import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import Sidebar from './ui/Sidebar.svelte';
 import View from './ui/View.svelte';
@@ -9,7 +10,9 @@ import Hotkeys from './ui/Hotkeys.svelte';
 
 export default defineControl({
   id: 'scenes',
-  title: 'Сцены',
+  get title() {
+    return t('module.scenes');
+  },
   icon: Clapperboard,
   // Первым на панели экрана игроков: сцены — главное, что нажимают на игре.
   order: 1,

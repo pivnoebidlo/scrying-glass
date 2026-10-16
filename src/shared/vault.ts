@@ -1,3 +1,4 @@
+import type { Lang, LangSetting } from './i18n/core';
 // Хранилище: папка на диске, внутри которой лежит всё (приключения, главы, персонажи, карты, музыка).
 // Здесь только типы и чистые функции: модуль используется и ядром, и окнами.
 
@@ -33,6 +34,9 @@ export interface VaultState {
   roles: RoleNames;
   // Отключённые в настройках ролевые системы (id).
   systemsOff: string[];
+  // Interface language: the setting ('auto' or a language) and what it resolved to.
+  language: LangSetting;
+  lang: Lang;
 }
 
 // Назначение папки угадывается по названию. Это подсказка, а не требование.

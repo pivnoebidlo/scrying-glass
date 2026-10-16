@@ -4,6 +4,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { shell, type OpenDialogOptions } from 'electron';
 import { defineModule, type ModuleContext } from '../../shared/module';
+import type { LangSetting } from '../../shared/i18n/core';
 import { AUDIO_EXT, DEFAULT_ROLES, IMAGE_EXT, type RoleNames, type VaultState } from '../../shared/vault';
 import { clipboardImage, freeName } from '../../main/files';
 import { listCards } from '../../main/cards';
@@ -12,7 +13,7 @@ import { deleteWords, discard, trashSettings } from '../../main/trash';
 const openDialog = (ctx: ModuleContext, opts: OpenDialogOptions) =>
   ctx.controlWindow ? ctx.dialog.showOpenDialog(ctx.controlWindow, opts) : ctx.dialog.showOpenDialog(opts);
 
-const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [] };
+const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [], language: 'auto', lang: 'en' };
 
 export default defineModule({
   id: 'vault',
@@ -51,6 +52,11 @@ export default defineModule({
     // Отключённые ролевые системы (настройки приложения).
     setSystemsOff(_s, { list }: { list: string[] }, ctx) {
       return ctx.vault.setSystemsOff(list);
+    },
+
+    // Interface language (app settings): 'auto' or a language.
+    setLanguage(_s, { language }: { language: LangSetting }, ctx) {
+      return ctx.vault.setLanguage(language);
     },
 
     // Скопировать файлы в папку хранилища. Существующие файлы не перезаписываются.

@@ -3,6 +3,7 @@ import type { DisplayInfo } from '../../shared/api';
 import type { AppState } from '../../shared/types';
 import { setRoleNames } from '../../shared/vault';
 import { setSystemsOff } from '../../systems';
+import { applyLang } from './i18n.svelte';
 
 class Store {
   // Снимок состояния ядра. Целиком заменяется при каждом изменении, поэтому без глубокой реактивности.
@@ -22,6 +23,7 @@ export async function connect(opts: { displays?: boolean } = {}) {
   const apply = (s: AppState) => {
     setRoleNames(s.vault.roles);
     setSystemsOff(s.vault.systemsOff);
+    applyLang(s.vault.lang);
     store.state = s;
   };
   window.api.onState(apply);

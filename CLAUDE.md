@@ -5,9 +5,27 @@ Electron-приложение для мастера D&D: окно управле
 
 ## Общение и стиль
 - Пользователь говорит по-русски, обращаться на «ты».
-- Комментарии в коде, тексты интерфейса, README и сообщения коммитов — по-русски.
-- Сообщения коммитов: заголовок + список изменений, в конце строка `Co-Authored-By` (см. git log).
-- Интерфейс в духе Obsidian. Тексты интерфейса — на «вы»/безличные, как сейчас.
+- Since 0.27.0 the project is going multilingual (decided 2026-10-16):
+  - commit messages — in English (title + list of changes + the `Co-Authored-By` line, see git log);
+  - code comments — in English for new and changed code (old Russian comments are not rewritten en masse);
+  - interface text — never hard-coded: `t('key')` (see «Локализация» below); English and Russian are written
+    together; Russian UI text — на «вы»/безличные, English — plain and short;
+  - README — Russian for now (to be split into English README + README.ru.md later).
+- Интерфейс в духе Obsidian.
+
+## Локализация
+- Core — `src/shared/i18n/core.ts`: languages `LANGS` (en, ru), `resolveLang` ('auto' → OS language if we have it,
+  else **English**), plural forms through `Intl.PluralRules` (`{ one, few, many, other }`, picked by `params.count`),
+  `{placeholders}`. Messages: `src/shared/i18n/app.ts` (shell, module titles, tile actions, badges) — `en` is the
+  source of truth, `ru: Messages<typeof en>` (a missing key fails the type check); merged in `shared/i18n/index.ts`
+  (`tr(lang, key, params)`, non-reactive `t` for the main process and plain code).
+- Windows: `t` from `renderer/lib/i18n.svelte.ts` (reactive `locale.lang`, set by `store.svelte.ts` from
+  `vault.lang`). Module titles and file actions in `control.ts` are getters (`get title() { return t(…) }`).
+- Setting: `settings.language` in settings.json ('auto' | lang), action `vault/setLanguage`, state `vault.language`
+  (setting) and `vault.lang` (resolved); section «General / Общие» in the settings window (`Settings.svelte`).
+- Migration plan: 1) foundation + shell (done); 2) modules one by one — strings into `t()`, a module may keep its
+  messages next to it and add them to `shared/i18n/index.ts`; 3) built-in content in English (compendium SRD en,
+  random tables, Fate SRD; the bestiary is already bilingual); 4) README in English + README.ru.md.
 
 ## Команды
     npm run dev        # разработка (окна перезагружаются при сохранении)

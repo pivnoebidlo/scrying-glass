@@ -1,5 +1,6 @@
 // Бестиарий в окне управления: список с поиском слева, статблок во вкладке.
 import { Skull } from '@lucide/svelte';
+import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import View from './ui/View.svelte';
 import Sidebar from './ui/Sidebar.svelte';
@@ -9,7 +10,9 @@ import Background from './ui/Background.svelte';
 export default defineControl({
   id: 'bestiary',
   // Вкладка — «Карточки»: в ней монстры, NPC и персонажи партии (модуль по-прежнему bestiary).
-  title: 'Карточки',
+  get title() {
+    return t('module.bestiary');
+  },
   icon: Skull,
   order: 24,
   view: View,

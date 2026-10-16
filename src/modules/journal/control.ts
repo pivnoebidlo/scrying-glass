@@ -1,5 +1,6 @@
 // Журнал в окне управления: вкладка с заметками, список слева, закреплённая заметка — в правой панели.
 import { NotebookPen } from '@lucide/svelte';
+import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import { allFiles } from '../../shared/vault';
 import type { AppState } from '../../shared/types';
@@ -15,12 +16,14 @@ export function pinnedPage(app: AppState): string | null {
 
 export default defineControl({
   id: 'journal',
-  title: 'Журнал',
+  get title() {
+    return t('module.journal');
+  },
   icon: NotebookPen,
   // Рядом с «Инструментами»: подготовка к игре; блок в правой панели — внизу, под всем, что видят игроки.
   order: 28,
   view: View,
   sidebar: Sidebar,
   screen: OnScreen,
-  screenEmpty: (app) => (pinnedPage(app) ? null : 'нет закреплённой заметки'),
+  screenEmpty: (app) => (pinnedPage(app) ? null : t('empty.noPinned')),
 });
