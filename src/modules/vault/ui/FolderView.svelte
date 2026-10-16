@@ -9,7 +9,7 @@
   import { audioActions } from '../../../renderer/lib/registry';
   import { store } from '../../../renderer/lib/store.svelte';
   import { trackName } from '../../../shared/vault';
-  import { folderIcon, ui } from './ui.svelte';
+  import { folderIcon, followAdventure, ui } from './ui.svelte';
   import CardRow from './CardRow.svelte';
   import TrashView from './TrashView.svelte';
   import NoteCard from '../../tools/ui/NoteCard.svelte';
@@ -84,6 +84,7 @@
 
   function go(path: string) {
     ui.folder = path;
+    followAdventure(path);
     // Раскрываем ветку в дереве, чтобы было видно, где мы.
     const parts = path.split('/');
     for (let i = 1; i < parts.length; i++) ui.expanded[parts.slice(0, i).join('/')] = true;
@@ -118,10 +119,8 @@
         </button>
       {/if}
       {#if topLevel && isAdventure}
-        <span class="badge-adv"><Map size={12} /> приключение</span>
-        {#if app.adventures.current !== folder.path}
-          <button class="btn primary" onclick={() => dispatch('adventures', 'select', { path: folder.path })}>Открыть приключение</button>
-        {/if}
+        <!-- Приключение открывается само, когда выбрана его папка в дереве. -->
+        <span class="badge-adv" title="Выбрано в дереве — значит, открыто"><Map size={12} /> приключение</span>
         <button
           class="btn"
           title="Папка останется как есть, её содержимое станет общим для всех приключений"

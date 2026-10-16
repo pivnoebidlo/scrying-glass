@@ -3,6 +3,7 @@
 import { folderRole, type FolderRole } from '../../../shared/vault';
 import { BookOpen, Dices, Folder, Map, Music, NotebookPen, Scroll, Shield, Skull, Users, Wallpaper } from '@lucide/svelte';
 import type { Component } from 'svelte';
+import { dispatch, store } from '../../../renderer/lib/store.svelte';
 
 const KEY = 'sg.files';
 
@@ -26,6 +27,14 @@ $effect.root(() => {
     }
   });
 });
+
+// Открыли папку приключения или папку внутри него — это приключение становится текущим (как выбор в
+// переключателе). Корень и общие папки текущее приключение не меняют.
+export function followAdventure(path: string) {
+  const top = path.split('/')[0]!;
+  const adv = store.state.adventures;
+  if (path && adv.list.includes(top) && adv.current !== top) dispatch('adventures', 'select', { path: top });
+}
 
 export const ROLE_ICONS: Record<FolderRole, Component> = {
   characters: Users, party: Shield, maps: Map, music: Music, backgrounds: Wallpaper, handouts: Scroll, bestiary: Skull, tables: Dices, compendium: BookOpen, journal: NotebookPen,

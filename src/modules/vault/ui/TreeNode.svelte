@@ -22,6 +22,7 @@
 
 <button
   class="row"
+  data-path={folder.path}
   class:active={!ui.trash && ui.folder === folder.path}
   style:padding-left="{8 + depth * 14}px"
   title={folder.path}

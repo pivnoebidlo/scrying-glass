@@ -1,10 +1,14 @@
-<!-- Боковая панель: дерево папок хранилища. -->
+<!-- Боковая панель: дерево папок хранилища. Как в файловом менеджере: ↑ ↓ — соседняя папка, → — раскрыть или войти,
+     ← — свернуть или к родителю. Выбранная папка приключения (или папка внутри него) сразу открывает это приключение;
+     общие папки и корень текущее приключение не меняют. -->
 <script lang="ts">
   import { Library, Trash2 } from '@lucide/svelte';
+  import { tick } from 'svelte';
+  import type { VaultFolder } from '../../../shared/vault';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
   import TreeNode from './TreeNode.svelte';
-  import { ui } from './ui.svelte';
+  import { followAdventure, ui } from './ui.svelte';
   import { adventureHidden } from '../../../shared/adventures';
   import { loadTrash, trashCount } from './trash.svelte';
 
@@ -18,6 +22,43 @@
     ui.folder = path;
     ui.trash = false;
     openTab('vault');
+    followAdventure(path);
+  }
+
+  // Папки в том порядке, как они видны (корень, затем раскрытые ветки), — для стрелок.
+  function visible(): { folder: VaultFolder | null; path: string; parent: string | null }[] {
+    const out: { folder: VaultFolder | null; path: string; parent: string | null }[] = [{ folder: null, path: '', parent: null }];
+    const add = (f: VaultFolder, parent: string) => {
+      out.push({ folder: f, path: f.path, parent });
+      if (ui.expanded[f.path]) for (const sub of f.folders) add(sub, f.path);
+    };
+    for (const f of folders) add(f, '');
+    return out;
+  }
+
+  let tree = $state<HTMLElement>();
+  async function go(path: string) {
+    select(path);
+    await tick();
+    tree?.querySelector<HTMLElement>(`[data-path="${CSS.escape(path)}"]`)?.focus();
+  }
+
+  function onkeydown(e: KeyboardEvent) {
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key) || e.metaKey || e.ctrlKey || e.altKey) return;
+    const list = visible();
+    const i = list.findIndex((x) => x.path === ui.folder);
+    const here = list[i];
+    e.preventDefault();
+    if (!here) return void go('');
+    if (e.key === 'ArrowUp' && i > 0) go(list[i - 1]!.path);
+    else if (e.key === 'ArrowDown' && i < list.length - 1) go(list[i + 1]!.path);
+    else if (e.key === 'ArrowRight' && here.folder?.folders.length) {
+      if (!ui.expanded[here.path]) ui.expanded[here.path] = true;
+      else go(here.folder.folders[0]!.path);
+    } else if (e.key === 'ArrowLeft') {
+      if (here.folder && ui.expanded[here.path]) ui.expanded[here.path] = false;
+      else if (here.parent !== null) go(here.parent);
+    }
   }
 
   // Корзина своя у каждого хранилища: другое открыли — перечитываем.
@@ -29,8 +70,9 @@
 </script>
 
 {#if ms.tree}
-  <div class="tree">
-    <button class="row root" class:active={!ui.trash && ui.folder === ''} title={ms.root} onclick={() => select('')}>
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div class="tree" bind:this={tree} {onkeydown}>
+    <button class="row root" data-path="" class:active={!ui.trash && ui.folder === ''} title={ms.root} onclick={() => select('')}>
       <Library size={14} />
       <span class="name">{ms.name}</span>
     </button>
