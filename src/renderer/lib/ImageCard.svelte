@@ -26,28 +26,30 @@
 </script>
 
 <div class="card" class:on={active.length > 0}>
-  <button class="thumb" data-view={path} title="Двойной щелчок — рассмотреть крупно" ondblclick={(e) => viewImage(path, e.currentTarget)}>
-    <img src={thumb(vaultUrl(path), 480)} alt="" loading="lazy" style:aspect-ratio={aspect} />
-  </button>
+  <div class="pic">
+    <button class="thumb" data-view={path} title="Двойной щелчок — рассмотреть крупно" ondblclick={(e) => viewImage(path, e.currentTarget)}>
+      <img src={thumb(vaultUrl(path), 480)} alt="" loading="lazy" style:aspect-ratio={aspect} />
+    </button>
 
-  <div class="badges">
-    {#each active as a (a.id)}<span class="badge">{badgeOf(a, app, path)}</span>{/each}
-  </div>
+    <div class="badges">
+      {#each active as a (a.id)}<span class="badge">{badgeOf(a, app, path)}</span>{/each}
+    </div>
 
-  <div class="actions">
-    {#each actions as a (a.id)}
-      {@const on = a.active(app, path)}
-      <button class="action" class:on aria-label={a.title} onclick={() => a.toggle(app, path)}>
-        <a.icon size={13} />
-        <span class="tip">{on ? `${a.title}: убрать` : a.title}</span>
-      </button>
-    {/each}
-    {#if trash}
-      <button class="action trash" aria-label="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
-        <Trash2 size={13} />
-        <span class="tip">Переместить в корзину</span>
-      </button>
-    {/if}
+    <div class="actions">
+      {#each actions as a (a.id)}
+        {@const on = a.active(app, path)}
+        <button class="action" class:on aria-label={a.title} onclick={() => a.toggle(app, path)}>
+          <a.icon size={13} />
+          <span class="tip">{a.tip ? (on ? a.tip.on : a.tip.off) : on ? `${a.title}: убрать` : a.title}</span>
+        </button>
+      {/each}
+      {#if trash}
+        <button class="action trash" aria-label="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
+          <Trash2 size={13} />
+          <span class="tip">В корзину</span>
+        </button>
+      {/if}
+    </div>
   </div>
 
   {@render children?.()}
@@ -59,17 +61,26 @@
     border: 2px solid transparent;
     border-radius: var(--radius-m);
     background: var(--bg-secondary);
-    overflow: hidden;
+  }
+  /* Подпись кнопки может выйти за плитку — поверх соседних. */
+  .card:hover {
+    z-index: 5;
   }
   .card.on {
     border-color: var(--accent);
   }
+  .pic {
+    position: relative;
+  }
+  /* Картинка скруглена сама: у плитки нет overflow: hidden, иначе подписи кнопок обрезались бы её краем. */
   .thumb {
     display: block;
     width: 100%;
     padding: 0;
     border: 0;
+    border-radius: calc(var(--radius-m) - 2px) calc(var(--radius-m) - 2px) 0 0;
     background: none;
+    overflow: hidden;
     cursor: zoom-in;
   }
   img {
@@ -103,7 +114,11 @@
     top: 6px;
     display: flex;
     flex-direction: column;
+    flex-wrap: wrap;
+    align-content: flex-start;
     gap: 4px;
+    /* На маленькой плитке кнопки не помещаются в высоту картинки — уходят во второй столбик. */
+    max-height: calc(100% - 12px);
     opacity: 0;
     transition: opacity 0.12s ease;
   }
@@ -146,10 +161,7 @@
     background: rgba(0, 0, 0, 0.85);
     color: #fff;
     font-size: 11px;
-    line-height: 1.3;
-    /* Карточка обрезает всё, что за её краем: длинная подпись переносится. */
-    width: max-content;
-    max-width: 170px;
+    white-space: nowrap;
     transform: translateY(-50%);
     opacity: 0;
     pointer-events: none;

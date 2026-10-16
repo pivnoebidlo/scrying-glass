@@ -24,6 +24,7 @@ export default defineControl({
     {
       id: 'background',
       title: 'Показать на весь экран',
+      tip: { off: 'Фоном', on: 'Убрать фон' },
       badge: 'фон',
       icon: Maximize,
       active: (app, path) => app.scene.background === path,

@@ -23,6 +23,7 @@ export default defineControl({
     {
       id: 'map',
       title: 'Показать картой (с туманом войны)',
+      tip: { off: 'Картой', on: 'Убрать карту' },
       badge: 'карта',
       icon: Map,
       active: (app, path) => app.maps.current === path,

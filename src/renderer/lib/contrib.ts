@@ -46,6 +46,8 @@ export interface FileAction {
   id: string;
   // Подсказка на кнопке: «Показать портретом».
   title: string;
+  // Короткая подпись кнопки на плитке (видна при наведении): выключено — «Портретом», включено — «Убрать портрет».
+  tip?: { off: string; on: string };
   // Метка, когда действие включено: «портрет» (или своя для картинки: «в бою ×3»).
   badge: string | ((app: AppState, path: string) => string);
   icon: Component;

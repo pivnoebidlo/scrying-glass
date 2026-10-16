@@ -22,6 +22,7 @@ export default defineControl({
     {
       id: 'portrait',
       title: 'Показать портретом',
+      tip: { off: 'Портретом', on: 'Убрать портрет' },
       badge: 'портрет',
       icon: User,
       active: (app, path) => app.portraits.onScreen.includes(path),

@@ -42,12 +42,15 @@
 </div>
 
 <style>
+  /* Без overflow: hidden — подписи кнопок выходят за плитку (лист скруглён сам). */
   .card {
     position: relative;
-    overflow: hidden;
     border: 1px solid var(--border);
     border-radius: var(--radius-m);
     background: var(--bg-secondary);
+  }
+  .card:hover {
+    z-index: 5;
   }
   .card.on {
     border-color: var(--accent);
@@ -61,6 +64,8 @@
     border: 0;
     background: #17130f;
     cursor: zoom-in;
+    border-radius: var(--radius-m) var(--radius-m) 0 0;
+    overflow: hidden;
   }
   .badge {
     position: absolute;

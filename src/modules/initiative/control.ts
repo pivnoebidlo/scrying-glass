@@ -31,6 +31,7 @@ export default defineControl({
     {
       id: 'initiative',
       title: 'Добавить в инициативу',
+      tip: { off: 'В бой', on: 'Убрать из боя' },
       badge: (app, path) => {
         const n = app.initiative.combatants.filter((c) => c.portrait === path).length;
         return n > 1 ? `в бою ×${n}` : 'в бою';

@@ -22,6 +22,7 @@ export default defineControl({
     {
       id: 'handout',
       title: 'Показать раздаткой (поверх всего)',
+      tip: { off: 'Раздаткой', on: 'Убрать раздатку' },
       badge: 'раздатка',
       icon: Scroll,
       active: (app, path) => app.handouts.current === path,
