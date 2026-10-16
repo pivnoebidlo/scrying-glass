@@ -11,13 +11,13 @@
 </script>
 
 <div class="list">
-  <button class="item" class:active={ui.group === 'all'} onclick={() => (ui.group = 'all')}>
+  <button class="item" data-nav class:active={ui.group === 'all'} onclick={() => (ui.group = 'all')}>
     <Images size={14} />
     <span class="name">Все фоны</span>
     <span class="count">{total}</span>
   </button>
   {#each groups as g (g.key)}
-    <button class="item" class:active={ui.group === g.key} title={g.key} onclick={() => (ui.group = g.key)}>
+    <button class="item" data-nav class:active={ui.group === g.key} title={g.key} onclick={() => (ui.group = g.key)}>
       <Wallpaper size={14} />
       <span class="name">{g.title}</span>
       <span class="count">{g.items.length}</span>

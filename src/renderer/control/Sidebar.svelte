@@ -1,7 +1,8 @@
-<!-- Левая боковая панель выбранного модуля. -->
+<!-- Левая боковая панель выбранного модуля. Стрелки в её списках — listNav (пункты помечает модуль). -->
 <script lang="ts">
   import { controlContributions } from '../lib/registry';
   import { store } from '../lib/store.svelte';
+  import { listNav } from '../lib/listnav';
   import { workspace } from './workspace.svelte';
 
   const c = $derived(controlContributions.find((x) => x.id === workspace.sidebar));
@@ -14,7 +15,7 @@
   {/each}
   {#if c}
     <div class="pane-title">{c.title}</div>
-    <div class="body">
+    <div class="body" use:listNav>
       {#if c.sidebar}
         <c.sidebar ms={store.state[c.id]} app={store.state} />
       {:else}

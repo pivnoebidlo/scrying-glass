@@ -130,7 +130,7 @@
 
 <div class="list">
   {#each bestiary.visible.slice(0, limit) as c (c.ref.scope + ':' + c.ref.id)}
-    <button class="item" class:active={sameRef(c.ref, bestiary.selected)} onclick={() => bestiary.select(c.ref)}>
+    <button class="item" data-nav class:active={sameRef(c.ref, bestiary.selected)} onclick={() => bestiary.select(c.ref)}>
       <span class="name"
         >{c.name}{#if editions.length > 1 && !editions.some((s) => s.id === f.system)}<span class="tag">{c.system.replace(/^dnd5e-/, '')}</span>{/if}{#if f.lang === 'all'}<span
             class="tag">{c.lang}</span

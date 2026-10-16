@@ -15,7 +15,7 @@
 <div class="list">
   {#each list as p (p.path)}
     <div class="item" class:active={ui.selected === p.path} class:playing={ms.playlist === p.path && ms.playing}>
-      <button class="main" title={p.path} onclick={() => { ui.selected = p.path; openTab('music'); }}>
+      <button class="main" data-nav title={p.path} onclick={() => { ui.selected = p.path; openTab('music'); }}>
         <ListMusic size={14} />
         <span class="name">{p.title}</span>
         <span class="count">{p.count}</span>

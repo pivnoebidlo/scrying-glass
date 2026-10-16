@@ -16,20 +16,20 @@
 </script>
 
 <div class="list">
-  <button class="item" class:active={ui.group === 'all'} onclick={() => (ui.group = 'all')}>
+  <button class="item" data-nav class:active={ui.group === 'all'} onclick={() => (ui.group = 'all')}>
     <Images size={14} />
     <span class="name">Все персонажи</span>
     <span class="count">{total}</span>
   </button>
   {#each groups as g (g.key)}
-    <button class="item" class:active={ui.group === g.key} title={g.key} onclick={() => (ui.group = g.key)}>
+    <button class="item" data-nav class:active={ui.group === g.key} title={g.key} onclick={() => (ui.group = g.key)}>
       <Users size={14} />
       <span class="name">{g.title}</span>
       <span class="count">{g.items.length}</span>
     </button>
   {/each}
   {#each monsters as g (g.key)}
-    <button class="item" class:active={ui.group === g.key} onclick={() => (ui.group = g.key)}>
+    <button class="item" data-nav class:active={ui.group === g.key} onclick={() => (ui.group = g.key)}>
       <Skull size={14} />
       <span class="name">{g.title}</span>
       <span class="count">{g.items.length}</span>

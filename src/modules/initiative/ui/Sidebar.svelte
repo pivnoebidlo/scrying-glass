@@ -27,7 +27,7 @@
 </script>
 
 <div class="list">
-  <button class="item" class:active={ui.encounter === null} onclick={() => (ui.encounter = null)}>
+  <button class="item" data-nav class:active={ui.encounter === null} onclick={() => (ui.encounter = null)}>
     <Swords size={14} />
     <span class="name">Текущий бой</span>
     <span class="count">{running ? `раунд ${ms.round}` : ms.combatants.length || ''}</span>
@@ -38,7 +38,7 @@
     <button class="icon-btn" title="Новая заготовка боя" onclick={create}><Plus size={14} /></button>
   </div>
   {#each list as e (e.id)}
-    <button class="item" class:active={ui.encounter === e.id} onclick={() => (ui.encounter = e.id)}>
+    <button class="item" data-nav class:active={ui.encounter === e.id} onclick={() => (ui.encounter = e.id)}>
       <Sword size={14} />
       <span class="name">{e.name}</span>
       <span class="count">{e.combatants.length}</span>

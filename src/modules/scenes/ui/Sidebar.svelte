@@ -39,7 +39,7 @@
       ondrop={() => drop(i)}
     >
       <span class="grip faint"><GripVertical size={12} /></span>
-      <button class="main" onclick={() => { ui.selected = sc.id; openTab('scenes'); }}>
+      <button class="main" data-nav onclick={() => { ui.selected = sc.id; openTab('scenes'); }}>
         <span class="num faint">{i < 9 ? i + 1 : ''}</span>
         <span class="name">{sc.name}</span>
       </button>

@@ -54,7 +54,7 @@
             }}
           />
         {:else}
-          <button class="main" title="{p}. Двойной щелчок — переименовать" onclick={() => select(p)} ondblclick={() => (renaming = p)}>
+          <button class="main" data-nav title="{p}. Двойной щелчок — переименовать" onclick={() => select(p)} ondblclick={() => (renaming = p)}>
             <Map size={14} />
             <span class="name">{mapName(p)}</span>
           </button>

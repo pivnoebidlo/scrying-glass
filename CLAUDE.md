@@ -59,6 +59,9 @@ Electron-приложение для мастера D&D: окно управле
   название (`bestiary.rename`), иначе файл (`portraits/ui/rename.ts`); `portraits.names` (ручные подписи) больше не
   пополняются, старые показываются и стираются при переименовании. `prettyName` не трогает регистр имени, где уже
   есть заглавные.
+  Стрелки в списках боковой панели — действие `listNav` (`lib/listnav.ts`) на всей панели: модуль только помечает
+  пункты `data-nav` (+ `data-depth` в деревьях, `aria-expanded` у папок; ↑ ↓ выбирают щелчком, папку — только
+  наводят). Дерево «Файлов» обрабатывает стрелки само (`Tree.svelte`, пункты без `data-nav`).
 - `src/modules/<имя>/`:
   - `main.ts` — `defineModule`: состояние, действия, хуки `init` / `onTreeChange`, `persist`.
   - `control.ts` — `defineControl`: иконка, `view`, `sidebar`, `screen` (блок в правой панели) и `screenEmpty`

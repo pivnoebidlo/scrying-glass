@@ -107,7 +107,7 @@
       ondragleave={() => over === f.path && (over = null)}
       ondrop={(e) => drop(e, f.path)}
     >
-      <button class="name" onclick={() => toggle(f.path)}>
+      <button class="name" data-nav data-depth={depth - 1} aria-expanded={open} onclick={() => toggle(f.path)}>
         {#if open}<ChevronDown size={14} />{:else}<ChevronRight size={14} />{/if}
         <Folder size={14} />
         <span class="t">{f.name}</span>
@@ -137,6 +137,8 @@
     {#each files as file (file.path)}
       <button
         class="row page"
+        data-nav
+        data-depth={depth}
         class:active={ui.open === file.path}
         style:--d={depth}
         title={textOf(file.path) ? preview(textOf(file.path)!) : file.path}
@@ -163,7 +165,7 @@
     <ul class="results">
       {#each found as p (p.path)}
         <li>
-          <button class:active={ui.open === p.path} onclick={() => openPage(p.path)}>
+          <button data-nav class:active={ui.open === p.path} onclick={() => openPage(p.path)}>
             <span class="t">{p.title}</span>
             <span class="s">{preview(p) || 'пусто'}</span>
           </button>

@@ -100,7 +100,7 @@
   <ul class="list">
     {#each shown.slice(0, 500) as e (e.path)}
       <li>
-        <button class:active={ui.open === e.path} title={e.path} onclick={() => openEntry(e.path)}>
+        <button data-nav class:active={ui.open === e.path} title={e.path} onclick={() => openEntry(e.path)}>
           <span class="t">{e.entry.title}</span>
           <span class="s">{entrySubtitle(e.entry, typeDef(e.entry.type))} · {e.group}</span>
         </button>
