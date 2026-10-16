@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { assetUrl, folderRole, prettyName, renamePath, roleFolders, roleNames, safeFileName, setRoleNames, thumb } from '../src/shared/vault';
 import { missingFolders, placeTitle, visibleIn, type AdventuresState } from '../src/shared/adventures';
 import { tree } from './helpers';
+import { setLang } from '../src/shared/i18n';
 
 afterEach(() => setRoleNames(null));
 
@@ -57,7 +58,10 @@ describe('приключения', () => {
   it('подписи групп', () => {
     expect(placeTitle(adv, 'Страд/Глава 1/maps', 'V')).toBe('Глава 1 / maps');
     expect(placeTitle(adv, 'Страд', 'V')).toBe('Страд');
+    expect(placeTitle(adv, 'maps', 'V')).toBe('Shared / maps');
+    setLang('ru');
     expect(placeTitle(adv, 'maps', 'V')).toBe('Общее / maps');
+    setLang('en');
     expect(placeTitle({ ...adv, current: null }, '', 'V')).toBe('V');
   });
 });

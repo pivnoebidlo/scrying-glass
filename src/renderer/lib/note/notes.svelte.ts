@@ -1,5 +1,6 @@
 // Записки в окне управления: содержимое читается из файла по требованию и перечитывается, когда ядро
 // перечитало хранилище (записку сохранили здесь или поправили снаружи).
+import { t } from '../i18n.svelte';
 import { NOTE_SUFFIX, newNote, type Note } from '../../../shared/notes';
 import { roleNames, type VaultFolder } from '../../../shared/vault';
 import { roleFolderHere, type AdventuresState } from '../../../shared/adventures';
@@ -22,7 +23,7 @@ export function notesFolder(tree: VaultFolder | null, adv: AdventuresState): str
   return adv.current ? `${adv.current}/${name}` : name;
 }
 
-export async function createNote(tree: VaultFolder | null, adv: AdventuresState, title = 'Новая записка', note: Note = newNote()) {
+export async function createNote(tree: VaultFolder | null, adv: AdventuresState, title = t('lib.newNote'), note: Note = newNote()) {
   return window.api.createNote(notesFolder(tree, adv), title, note);
 }
 

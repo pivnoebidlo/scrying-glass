@@ -5,6 +5,7 @@
 // data-link="…"> (щелчок обрабатывает тот, кто показывает).
 // Для журнала (opts): задачи «- [ ]» / «- [x]» — флажки <input data-task="номер задачи по порядку"> (переключает
 // toggleTask из shared/journal.ts), {2d6+3} — кнопка броска <button class="dice" data-dice="…">.
+import { t } from '../../../shared/i18n';
 import { parseDice } from '../../../shared/dice';
 import { TASK } from '../../../shared/journal';
 import { escape } from '../markdown';
@@ -18,7 +19,7 @@ function inline(s: string, opts: MarkupOpts = {}): string {
   let out = escape(s);
   if (opts.dice)
     out = out.replace(/\{([^{}]+)\}/g, (all, body: string) =>
-      /^\s*\d*\s*[dдкk]\s*\d+/iu.test(body) && parseDice(body) ? `<button type="button" class="dice" data-dice="${body.trim()}" title="Бросить">${body.trim()}</button>` : all
+      /^\s*\d*\s*[dдкk]\s*\d+/iu.test(body) && parseDice(body) ? `<button type="button" class="dice" data-dice="${body.trim()}" title="${t('lib.roll')}">${body.trim()}</button>` : all
     );
   return out
     .replace(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g, (_all, name: string, label?: string) => `<a class="wikilink" data-link="${name.trim()}">${(label ?? name).trim()}</a>`)

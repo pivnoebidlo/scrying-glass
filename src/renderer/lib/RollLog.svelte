@@ -1,5 +1,6 @@
 <!-- Журнал бросков мастера: всплывает при броске, новые снизу. Игрокам не виден. -->
 <script lang="ts">
+  import { t } from './i18n.svelte';
   import { Dices, Trash2, X } from '@lucide/svelte';
   import { diceText } from '../../shared/dice';
   import { rolls, type RollEntry } from './rolls.svelte';
@@ -18,18 +19,20 @@
 
   const signed = (n: number) => (n >= 0 ? `+ ${n}` : `− ${-n}`);
   const d20Note = (e: RollEntry) =>
-    e.d20 ? `к20: ${e.d20.rolls.join(' | ')}${e.d20.mode === 'advantage' ? ' (преим.)' : e.d20.mode === 'disadvantage' ? ' (помеха)' : ''} ${signed(e.d20.bonus)}` : '';
+    e.d20
+      ? `${t('lib.d20')}: ${e.d20.rolls.join(' | ')}${e.d20.mode === 'advantage' ? ` (${t('lib.adv')})` : e.d20.mode === 'disadvantage' ? ` (${t('lib.dis')})` : ''} ${signed(e.d20.bonus)}`
+      : '';
   const crit = (e: RollEntry) => !!e.attack && e.d20?.natural === 20;
   const fumble = (e: RollEntry) => !!e.attack && e.d20?.natural === 1;
 </script>
 
 {#if rolls.open && rolls.list.length}
-  <section class="log" aria-label="Броски">
+  <section class="log" aria-label={t('lib.rolls')}>
     <header>
       <Dices size={14} />
-      <span class="title">Броски</span>
-      <button class="icon-btn" title="Очистить" onclick={() => rolls.clear()}><Trash2 size={13} /></button>
-      <button class="icon-btn" title="Скрыть (журнал откроется при следующем броске)" onclick={() => (rolls.open = false)}><X size={14} /></button>
+      <span class="title">{t('lib.rolls')}</span>
+      <button class="icon-btn" title={t('lib.clear')} onclick={() => rolls.clear()}><Trash2 size={13} /></button>
+      <button class="icon-btn" title={t('lib.hideLog')} onclick={() => (rolls.open = false)}><X size={14} /></button>
     </header>
     <ol bind:this={list}>
       {#each rolls.list as e (e.id)}
@@ -41,7 +44,7 @@
                 >{e.d20.total}</span
               >
               <span class="note">{d20Note(e)}</span>
-              {#if crit(e)}<span class="tag crit">крит!</span>{:else if fumble(e)}<span class="tag fumble">промах</span>{/if}
+              {#if crit(e)}<span class="tag crit">{t('lib.crit')}</span>{:else if fumble(e)}<span class="tag fumble">{t('lib.miss')}</span>{/if}
             </div>
           {/if}
           {#if e.fate}
@@ -54,7 +57,7 @@
             <div class="line dmg">
               <span class="total">{d.total}</span>
               <span class="note">
-                {e.d20 ? 'урон ' : ''}{diceText(d.expr)}{d.crit ? ' ×2 кубов' : ''}: {d.rolls.map((r) => r.join(', ')).join(' | ')}
+                {e.d20 ? t('lib.damage') + ' ' : ''}{diceText(d.expr)}{d.crit ? ' ' + t('lib.doubleDice') : ''}: {d.rolls.map((r) => r.join(', ')).join(' | ')}
               </span>
             </div>
           {/each}

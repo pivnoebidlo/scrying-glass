@@ -35,7 +35,7 @@ describe('журнал: заметки', () => {
 
   it('броски {кубы} — кнопки, остальное в фигурных скобках — как есть', () => {
     const html = entryHtml('Урон {2d6+3}, {не кубы}', { dice: true });
-    expect(html).toContain('<button type="button" class="dice" data-dice="2d6+3" title="Бросить">2d6+3</button>');
+    expect(html).toContain('<button type="button" class="dice" data-dice="2d6+3" title="Roll">2d6+3</button>');
     expect(html).toContain('{не кубы}');
     expect(entryHtml('{1d20}')).toBe('<p>{1d20}</p>');
   });

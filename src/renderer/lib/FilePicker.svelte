@@ -1,6 +1,7 @@
 <!-- Выбор файлов из хранилища (картинки, записки): сначала папки нужной роли, поиск по имени и пути. multi — можно
      отметить несколько и добавить разом. Файлы текущего приключения и общие. -->
 <script lang="ts">
+  import { t } from './i18n.svelte';
   import { Check, ScrollText, Search, X } from '@lucide/svelte';
   import { allFiles, folderRole, vaultUrl, type FileKind, type FolderRole, type VaultFolder, thumb, prettyName } from '../../shared/vault';
   import { visibleIn } from '../../shared/adventures';
@@ -50,19 +51,19 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="backdrop" onclick={(e) => e.target === e.currentTarget && onclose()}>
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Файлы из хранилища">
+  <div class="modal" role="dialog" aria-modal="true" aria-label={t('lib.vaultFiles')}>
     <header>
       <label class="search">
         <Search size={13} />
         <!-- svelte-ignore a11y_autofocus -->
-        <input type="text" placeholder="Поиск по имени файла или папке" bind:value={search} autofocus />
+        <input type="text" placeholder={t('lib.searchFiles')} bind:value={search} autofocus />
       </label>
-      <button class="icon-btn" title="Закрыть (Esc)" onclick={onclose}><X size={16} /></button>
+      <button class="icon-btn" title={t('app.closeEsc')} onclick={onclose}><X size={16} /></button>
     </header>
     <div class="grid">
       {#each visible as f (f.path)}
         {@const on = chosen.includes(f.path) || skip.includes(f.path)}
-        <button class="item" class:on class:skip={skip.includes(f.path)} title={skip.includes(f.path) ? `${f.path} — уже добавлено` : f.path} onclick={() => pick(f.path)}>
+        <button class="item" class:on class:skip={skip.includes(f.path)} title={skip.includes(f.path) ? t('lib.alreadyAddedPath', { path: f.path }) : f.path} onclick={() => pick(f.path)}>
           {#if f.kind === 'image'}
             <img src={thumb(vaultUrl(f.path), 200)} alt="" loading="lazy" />
           {:else}
@@ -72,14 +73,14 @@
           {#if on}<i class="mark"><Check size={12} /></i>{/if}
         </button>
       {:else}
-        <p class="faint">В хранилище нет подходящих файлов.</p>
+        <p class="faint">{t('lib.noFiles')}</p>
       {/each}
     </div>
     {#if multi}
       <footer>
-        <span class="faint">{chosen.length ? `Выбрано: ${chosen.length}` : 'Отметьте файлы щелчком'}</span>
-        <button class="btn" onclick={onclose}>Отмена</button>
-        <button class="btn primary" disabled={!chosen.length} onclick={() => onpick($state.snapshot(chosen))}>Добавить</button>
+        <span class="faint">{chosen.length ? t('lib.selected', { count: chosen.length }) : t('lib.clickFiles')}</span>
+        <button class="btn" onclick={onclose}>{t('lib.cancel')}</button>
+        <button class="btn primary" disabled={!chosen.length} onclick={() => onpick($state.snapshot(chosen))}>{t('lib.add')}</button>
       </footer>
     {/if}
   </div>

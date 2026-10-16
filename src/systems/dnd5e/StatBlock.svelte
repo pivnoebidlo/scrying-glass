@@ -4,7 +4,7 @@
   import { escape, markdown } from '../../renderer/lib/markdown';
   import { spellLinks } from '../../renderer/lib/entry/links';
   import { Dices } from '@lucide/svelte';
-  import { modeOf, rolls, ROLL_HINT } from '../../renderer/lib/rolls.svelte';
+  import { modeOf, rolls, rollHint } from '../../renderer/lib/rolls.svelte';
   import { spellBlock } from './spells';
   import { ABILITIES, crText, dict, initiativeOf, mod, signed, sizeText, type Block, type Dnd5eStats, type SpeedKind } from './stats';
 
@@ -76,7 +76,7 @@
     <div><dt>{t.speedLabel}</dt><dd>{speed}</dd></div>
     {#if card.system === 'dnd5e-2024' || s.initiative !== undefined}
       <div><dt>{t.initiative}</dt><dd>
-        <button class="roll" title="Бросить инициативу. {ROLL_HINT}" onclick={(e) => check(e, 'Инициатива', initiativeOf(s))}>{signed(initiativeOf(s))}</button>
+        <button class="roll" title="Бросить инициативу. {rollHint()}" onclick={(e) => check(e, 'Инициатива', initiativeOf(s))}>{signed(initiativeOf(s))}</button>
         ({10 + initiativeOf(s)})
       </dd></div>
     {/if}
@@ -93,7 +93,7 @@
         <th>{t.mod}</th>
         {#each ABILITIES as a (a)}
           {@const what = `Проверка ${ru.abilities[a]}`}
-          <td><button class="roll" title="{what}. {ROLL_HINT}" onclick={(e) => check(e, what, mod(s.abilities[a]))}>{signed(mod(s.abilities[a]))}</button></td>
+          <td><button class="roll" title="{what}. {rollHint()}" onclick={(e) => check(e, what, mod(s.abilities[a]))}>{signed(mod(s.abilities[a]))}</button></td>
         {/each}
       </tr>
       <tr>
@@ -102,7 +102,7 @@
           {@const what = `Спасбросок ${ru.abilities[a]}`}
           {@const bonus = s.saves[a] ?? mod(s.abilities[a])}
           <td class:prof={s.saves[a] !== undefined}>
-            <button class="roll" title="{what}. {ROLL_HINT}" onclick={(e) => check(e, what, bonus)}>{signed(bonus)}</button>
+            <button class="roll" title="{what}. {rollHint()}" onclick={(e) => check(e, what, bonus)}>{signed(bonus)}</button>
           </td>
         {/each}
       </tr>
@@ -114,7 +114,7 @@
     {#if s.skills.length}
       <div><dt>{t.skillsLabel}</dt><dd>
           {#each s.skills as x, i (i)}{#if i > 0},{' '}{/if}{term(t.skills, x.skill)}
-            <button class="roll" title="{term(ru.skills, x.skill)}. {ROLL_HINT}" onclick={(e) => check(e, term(ru.skills, x.skill), x.bonus)}>{signed(x.bonus)}</button
+            <button class="roll" title="{term(ru.skills, x.skill)}. {rollHint()}" onclick={(e) => check(e, term(ru.skills, x.skill), x.bonus)}>{signed(x.bonus)}</button
             >{/each}
         </dd></div>
     {/if}
@@ -144,7 +144,7 @@
         {#if b.attack}
           {@const atk = b.attack}
           <div class="rolls">
-            <button class="roll-btn" title="Атака и урон. {ROLL_HINT}" onclick={(e) => rolls.attack(card.name, b.name, atk.bonus, atk.damage, modeOf(e))}>
+            <button class="roll-btn" title="Атака и урон. {rollHint()}" onclick={(e) => rolls.attack(card.name, b.name, atk.bonus, atk.damage, modeOf(e))}>
               <Dices size={13} /> Атака {signed(atk.bonus)}
             </button>
             {#each atk.damage as d, j (j)}

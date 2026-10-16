@@ -1,6 +1,7 @@
 // Приключения: папки первого уровня хранилища, которые пользователь отметил (или создал кнопкой).
 // Вкладки показывают текущее приключение и «общее» — всё, что лежит вне приключений. Вкладка «Файлы»
 // по-прежнему показывает хранилище целиком. Только типы и чистые функции: используются ядром и окнами.
+import { t } from './i18n';
 import { basename, folderRole, roleNames, type FolderRole, type VaultFolder } from './vault';
 import { DEFAULT_SYSTEM, defaultSystem, familyOf, isEnabled } from '../systems';
 
@@ -70,7 +71,7 @@ export function visibleIn(adv: AdventuresState, path: string): boolean {
 export function placeTitle(adv: AdventuresState, dir: string, vaultName: string): string {
   if (adv.current === null) return dir ? dir.split('/').join(' / ') : vaultName;
   const a = adventureOf(adv, dir);
-  if (a === null) return dir ? `Общее / ${dir.split('/').join(' / ')}` : 'Общее';
+  if (a === null) return dir ? `${t('place.shared')} / ${dir.split('/').join(' / ')}` : t('place.shared');
   if (dir === a) return basename(a);
   return dir.slice(a.length + 1).split('/').join(' / ');
 }

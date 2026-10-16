@@ -1,5 +1,6 @@
 <!-- Ползунок размера миниатюр для панели над сеткой картинок. -->
 <script lang="ts">
+  import { t } from './i18n.svelte';
   import { Image } from '@lucide/svelte';
   import Slider from './Slider.svelte';
   import { THUMB_LIMITS, thumbs, type ThumbGrid } from './thumbs.svelte';
@@ -8,7 +9,7 @@
   const lim = $derived(THUMB_LIMITS[grid]);
 </script>
 
-<div class="size" title="Размер миниатюр (двойной щелчок — по умолчанию)" ondblclick={() => (thumbs[grid] = lim.def)} role="group">
+<div class="size" title={t('lib.thumbSize')} ondblclick={() => (thumbs[grid] = lim.def)} role="group">
   <Image size={12} />
   <div class="slider">
     <Slider value={thumbs[grid]} min={lim.min} max={lim.max} step={10} oninput={(v) => (thumbs[grid] = v)} />

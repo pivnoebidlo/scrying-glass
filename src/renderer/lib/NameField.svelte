@@ -2,11 +2,12 @@
      Enter или уход с поля — переименовать, Esc — отменить. Что значит «переименовать» (файл, карточку), решает
      onrename; без него поле только показывает название. -->
 <script lang="ts">
+  import { t } from './i18n.svelte';
   import { Pencil } from '@lucide/svelte';
 
   let {
     value,
-    title = 'Переименовать',
+    title = t('lib.rename'),
     onrename,
   }: { value: string; title?: string; onrename?: (name: string) => unknown } = $props();
 

@@ -2,6 +2,7 @@
      текущего приключения (без приключения — в корне хранилища). ⌘V делает то же, пока кнопка на экране и фокус
      не в поле ввода; hotkey={false} — без сочетания (если кнопка не во вкладке, а в боковой панели). -->
 <script lang="ts">
+  import { t } from './i18n.svelte';
   import { ClipboardPaste } from '@lucide/svelte';
   import type { AppState } from '../../shared/types';
   import type { FolderRole } from '../../shared/vault';
@@ -13,10 +14,10 @@
   const target = $derived(app.vault.tree ? roleFolderHere(app.vault.tree, app.adventures, role) : null);
   const title = $derived(
     target
-      ? `Вставить картинку из буфера обмена в папку «${target.path.split('/').join(' / ')}»${hotkey ? ' (⌘V)' : ''}`
+      ? t('lib.pasteInto', { folder: target.path.split('/').join(' / ') }) + (hotkey ? ' (⌘V)' : '')
       : app.adventures.current
-        ? 'В приключении нет папки для этого (она создаётся при открытии хранилища)'
-        : 'Выберите приключение: картинка попадёт в его папку'
+        ? t('lib.noFolder')
+        : t('lib.pickAdventure')
   );
 
   const paste = () => target && dispatch('vault', 'pasteImage', { folder: target.path });
@@ -36,5 +37,5 @@
 {#if compact}
   <button class="icon-btn" {title} disabled={!target} onclick={paste}><ClipboardPaste size={14} /></button>
 {:else}
-  <button class="btn" {title} disabled={!target} onclick={paste}><ClipboardPaste size={14} /> Вставить</button>
+  <button class="btn" {title} disabled={!target} onclick={paste}><ClipboardPaste size={14} /> {t('lib.paste')}</button>
 {/if}

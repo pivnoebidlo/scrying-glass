@@ -1,5 +1,6 @@
 <!-- Названия папок роли для подсказок: «<code>maps</code> или <code>карты</code>» — те, что сейчас в настройках. -->
 <script lang="ts">
+  import { t } from './i18n.svelte';
   import type { FolderRole } from '../../shared/vault';
   import { store } from './store.svelte';
 
@@ -7,7 +8,7 @@
   const names = $derived(store.state.vault.roles[role].slice(0, max));
 </script>
 
-{#each names as name, i (name)}{#if i > 0}{i === names.length - 1 ? ' или ' : ', '}{/if}<code>{name}</code>{/each}
+{#each names as name, i (name)}{#if i > 0}{i === names.length - 1 ? t('lib.or') : ', '}{/if}<code>{name}</code>{/each}
 
 <style>
   code {

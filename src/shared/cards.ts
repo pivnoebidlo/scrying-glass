@@ -1,5 +1,6 @@
 // Карточки: монстры, NPC, персонажи. Общая обёртка одинакова для любой ролевой системы,
 // блок stats описывает система (src/systems/<система>/). Только типы и чистые функции.
+import { t } from './i18n';
 import { assetUrl, libraryAsset } from './vault';
 
 
@@ -8,7 +9,21 @@ export type CardKind = 'monster' | 'npc' | 'character';
 // На чьей стороне существо в бою (для трекера инициативы). Её можно поменять при добавлении и в самом бою.
 export type CardSide = 'party' | 'ally' | 'neutral' | 'enemy';
 // Подписи сторон (обводка на экране игроков: партия — золотая, союзник — синяя, нейтрал — серая, противник — красная).
-export const SIDE_TITLES: Record<CardSide, string> = { party: 'Партия', ally: 'Союзник', neutral: 'Нейтрал', enemy: 'Противник' };
+// Side titles in the interface language (getters: read at the moment of use).
+export const SIDE_TITLES: Record<CardSide, string> = {
+  get party() {
+    return t('side.party');
+  },
+  get ally() {
+    return t('side.ally');
+  },
+  get neutral() {
+    return t('side.neutral');
+  },
+  get enemy() {
+    return t('side.enemy');
+  },
+};
 // Если в карточке не указано: персонажи игроков — партия, NPC — союзники, монстры — противники.
 export const defaultSide = (kind: CardKind): CardSide => (kind === 'monster' ? 'enemy' : kind === 'character' ? 'party' : 'ally');
 

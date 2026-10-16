@@ -2,6 +2,7 @@
      (onlink — щелчок по [[ссылке]]) и экрана игроков (players: вписывается в экран, размеры от экрана, без меток
      и источника). -->
 <script lang="ts">
+  import { t } from '../i18n.svelte';
   import '../note/fonts.css';
   import { COMMON_FIELDS, entrySubtitle, fieldText, type Entry } from '../../../shared/compendium';
   import { typeDef } from './types.svelte';
@@ -61,7 +62,7 @@
   <header>
     <h1>{entry.title}</h1>
     <div class="sub">{entrySubtitle(entry, def)}</div>
-    {#if aliases.length && !players}<div class="aka">Также: {aliases.join(', ')}</div>{/if}
+    {#if aliases.length && !players}<div class="aka">{t('lib.alsoKnown', { names: aliases.join(', ') })}</div>{/if}
   </header>
   {#if rows.length}
     <dl>
