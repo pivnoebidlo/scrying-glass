@@ -7,6 +7,7 @@
   import Settings from './Settings.svelte';
   import Welcome from './Welcome.svelte';
   import RollLog from '../lib/RollLog.svelte';
+  import Lightbox from '../lib/Lightbox.svelte';
   import { dispatch, store } from '../lib/store.svelte';
   import { controlContributions } from '../lib/registry';
 
@@ -49,6 +50,7 @@
   {/each}
 
   <RollLog />
+  <Lightbox />
 
   {#if workspace.settingsOpen}
     <Settings />

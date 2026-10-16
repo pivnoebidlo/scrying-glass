@@ -5,7 +5,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
   import { noteGroups } from './library';
-  import { ui } from './ui.svelte';
+  import { pickTool, ui } from './ui.svelte';
   import { currentSystem } from '../../../shared/adventures';
   import { isDnd } from '../../../systems';
 
@@ -16,23 +16,23 @@
 </script>
 
 <div class="list">
-  <button class="item" class:active={ui.tool === 'notes' && !ui.note} onclick={() => ((ui.tool = 'notes'), (ui.note = null))}>
+  <button class="item" class:active={ui.tool === 'notes' && !ui.note} onclick={() => pickTool('notes')}>
     <ScrollText size={14} />
     <span class="name">Записки</span>
     <span class="count">{notes.length}</span>
   </button>
-  {#each ui.tool === 'notes' ? notes : [] as f (f.path)}
+  {#each ui.tool === 'notes' && ui.folded !== 'notes' ? notes : [] as f (f.path)}
     <button class="item sub" class:active={ui.note === f.path} title={f.path} onclick={() => ((ui.tool = 'notes'), (ui.note = f.path))}>
       <FileText size={13} />
       <span class="name">{noteTitle(f.path)}</span>
     </button>
   {/each}
-  <button class="item" class:active={ui.tool === 'tables' && !ui.table} onclick={() => ((ui.tool = 'tables'), (ui.table = null))}>
+  <button class="item" class:active={ui.tool === 'tables' && !ui.table} onclick={() => pickTool('tables')}>
     <Dices size={14} />
     <span class="name">Таблицы случайностей</span>
     <span class="count">{tables.vault.length + tables.library.length || ''}</span>
   </button>
-  {#if ui.tool === 'tables'}
+  {#if ui.tool === 'tables' && ui.folded !== 'tables'}
     {#each [...tables.vault, ...tables.library] as t (t.id)}
       <button class="item sub" class:active={ui.table === t.id} title={t.path} onclick={() => (ui.table = t.id)}>
         <Table2 size={13} />
@@ -41,18 +41,18 @@
     {/each}
   {/if}
   {#if dnd}
-    <button class="item" class:active={ui.tool === 'difficulty'} onclick={() => (ui.tool = 'difficulty')}>
+    <button class="item" class:active={ui.tool === 'difficulty'} onclick={() => pickTool('difficulty')}>
       <Gauge size={14} />
       <span class="name">Сложность боя</span>
     </button>
   {/if}
-  <button class="item" class:active={ui.tool === 'timer'} onclick={() => (ui.tool = 'timer')}>
+  <button class="item" class:active={ui.tool === 'timer'} onclick={() => pickTool('timer')}>
     <Hourglass size={14} />
     <span class="name">Таймер</span>
     {#if app.timer.active}<span class="count">идёт</span>{/if}
   </button>
   {#if dnd}
-    <button class="item" class:active={ui.tool === 'pointbuy'} onclick={() => (ui.tool = 'pointbuy')}>
+    <button class="item" class:active={ui.tool === 'pointbuy'} onclick={() => pickTool('pointbuy')}>
       <Calculator size={14} />
       <span class="name">Покупка характеристик</span>
     </button>

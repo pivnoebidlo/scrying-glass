@@ -35,6 +35,8 @@
     border-radius: var(--radius-s);
     background: transparent;
     padding: 5px 8px;
+    /* Своя подпись — тем же цветом, что и подпись по умолчанию (у рамки поля он приглушённый). */
+    color: var(--text-normal);
     font-size: 12px;
   }
   /* Подпись по умолчанию — как обычный текст, а не как подсказка. */

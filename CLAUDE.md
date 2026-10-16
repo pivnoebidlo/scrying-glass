@@ -48,6 +48,11 @@ Electron-приложение для мастера D&D: окно управле
 - `src/renderer/control/` — оболочка окна управления (полоса модулей, боковая панель, вкладки, правая панель
   «Экран игроков», настройки ⌘,). `src/renderer/display/` — окно игроков. `src/renderer/lib/` — общее:
   `store.svelte.ts`, `Stage.svelte` (сцена игроков, она же превью), `ImageCard`, `Slider`, `contrib.ts`, `nav.ts`.
+  Плитки картинок и записок по щелчку игрокам ничего не показывают (только кнопки на плитке; подписи кнопок — свои
+  `.tip`, сразу при наведении); двойной щелчок по картинке — просмотр крупно у мастера: `viewImage(путь, плитка)` из
+  `lib/view-image.svelte.ts` (соседние — элементы `data-view` той же сетки), окно — `Lightbox.svelte` в `App.svelte`
+  (← →, Esc, те же `imageActions`). Двойной щелчок по записке — редактор. Подборка правой панели по щелчку
+  по-прежнему показывает.
 - `src/modules/<имя>/`:
   - `main.ts` — `defineModule`: состояние, действия, хуки `init` / `onTreeChange`, `persist`.
   - `control.ts` — `defineControl`: иконка, `view`, `sidebar`, `screen` (блок в правой панели) и `screenEmpty`

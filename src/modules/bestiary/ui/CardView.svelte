@@ -3,7 +3,7 @@
 <script lang="ts">
   import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
-  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Pencil, RefreshCw, RotateCcw, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, Pencil, RefreshCw, RotateCcw, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
   import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
   import type { AppState } from '../../../shared/types';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -12,6 +12,7 @@
   import { isDnd, systemOf } from '../../../systems';
   import { statsView } from '../../../systems/ui';
   import { markdown } from '../../../renderer/lib/markdown';
+  import { viewImage } from '../../../renderer/lib/view-image.svelte';
   import { bestiary } from './cards.svelte';
   import { addToInitiative } from './combat';
   import { folderLabel } from './places';
@@ -109,125 +110,127 @@
   {#if card && summary && Stats}
     {@const cref = summary.ref}
     <header>
-      <div class="title">
+      <div class="names">
+        <h1>{card.name}</h1>
+        <div class="info faint">{info}</div>
+        <div class="manage">
+          {#if cref.scope === 'srd'}
+            <button class="btn" title="Правка сохранится в библиотеку и заменит встроенную карточку везде: в боях, на картах, в поиске" onclick={() => bestiary.edit(cref)}
+              ><Pencil size={13} /> Править</button
+            >
+            <button class="btn" title="Отдельная карточка на основе этой — в библиотеке или папке приключения" onclick={() => bestiary.copy(cref)}
+              ><Copy size={13} /> Сделать копию…</button
+            >
+            {#if summary.edited}
+              <button class="btn" title="Удалить правку (файл — в корзину) и показывать карточку, как в SRD" onclick={() => bestiary.revert(cref)}
+                ><RotateCcw size={13} /> Вернуть как в SRD</button
+              >
+            {/if}
+          {:else}
+            <button class="btn" onclick={() => bestiary.edit(cref)}><Pencil size={13} /> Править</button>
+            <button class="btn" title="Новая карточка на основе этой — в библиотеке или папке приключения" onclick={() => bestiary.copy(cref)}
+              ><Copy size={13} /> Сделать копию…</button
+            >
+            <button class="btn" title="Переложить карточку в библиотеку или в папку другого приключения, без копии" onclick={() => bestiary.move(cref)}
+              ><ArrowRightLeft size={13} /> Перенести…</button
+            >
+            {#if summary.kind === 'character' && isDnd(summary.system)}
+              <button
+                class="btn"
+                title="Игрок переделал персонажа в Long Story Short: выберите новый экспорт (JSON) — будет видно, что изменилось, и карточка обновится"
+                onclick={async () => (lssStatus = (await bestiary.updateFromLss(cref)) ?? '')}
+                ><RefreshCw size={13} /> Обновить из LSS…</button
+              >
+            {/if}
+            <button class="icon-btn" title="Удалить карточку" onclick={() => bestiary.remove(cref)}><Trash2 size={14} /></button>
+          {/if}
+          <button
+            class="icon-btn"
+            title="Экспорт в файл (все языки, с портретами) — чтобы поделиться"
+            onclick={() => window.api.exportCards({ refs: versions.map((v) => v.ref), name: summary.name })}
+          ><Upload size={14} /></button>
+        </div>
+        {#if lssStatus}<div class="lss-status faint">{lssStatus}</div>{/if}
+        <div class="actions">
+          <div class="langs">
+            {#each versions as v (v.ref.scope + v.ref.id)}
+              <button
+                class="chip"
+                class:active={sameRef(v.ref, summary.ref)}
+                title="{v.name} · {where(v)}"
+                onclick={() => onselect(v.ref)}
+              >
+                {langName(v.lang)}{#if versions.filter((x) => x.lang === v.lang).length > 1}<span class="where">
+                    · {where(v)}</span
+                  >{/if}
+              </button>
+            {/each}
+            <select
+              class="add-lang"
+              value=""
+              title={cref.scope === 'srd' ? 'Перевод встроенной карточки сохранится в библиотеку' : 'Перевести на другой язык'}
+              onchange={(e) => {
+                const l = e.currentTarget.value;
+                e.currentTarget.value = '';
+                if (l) bestiary.translate(cref, l);
+              }}
+            >
+              <option value="">+ язык</option>
+              {#each missingLangs as l (l)}<option value={l}>{langName(l)}</option>{/each}
+            </select>
+          </div>
+          <div class="spacer"></div>
+          <!-- Персонаж игрока в бою один и с хитами по листу. -->
+          {#if summary.kind !== 'character'}
+            {#if isDnd(summary.system)}<label class="hp" title={summary.combat.hpFormula ? `Бросить ${summary.combat.hpFormula} для каждого` : 'Нет формулы хитов'}>
+              <input type="checkbox" bind:checked={rollHp} disabled={!summary.combat.hpFormula} /> случайные хиты
+            </label>{/if}
+            <input class="count" type="number" min="1" max="20" bind:value={count} title="Сколько добавить" />
+          {/if}
+          <select class="side" value={side ?? summary.side} onchange={(e) => (side = e.currentTarget.value as CardSide)} title="На чьей стороне в бою">
+            <option value="enemy">противник</option>
+            <option value="ally">союзник</option>
+            <option value="neutral">нейтрал</option>
+            <option value="party">партия</option>
+          </select>
+          <button class="btn primary" onclick={toInitiative}><Swords size={14} /> В инициативу</button>
+        </div>
+      </div>
+      <!-- Портреты — под шапкой одной полосой: сколько бы их ни было, шапка на месте, лишние прокручиваются. -->
+      <div class="strip">
         <div class="portraits">
           {#each card.portraits as p, i (p)}
             {@const asset = cardAsset(cref.scope, p)}
             {@const onScreen = app.portraits.onScreen.includes(asset)}
             <div class="portrait" class:main={i === 0} class:on={onScreen}>
-              <button
-                class="pic"
-                title={onScreen ? 'Убрать с экрана игроков' : 'Показать игрокам'}
-                onclick={() => togglePortrait(asset)}
-              ><img src={thumb(cardImageUrl(cref.scope, p), 240)} alt="" /></button>
+              <button class="pic" data-view={asset} title="Двойной щелчок — рассмотреть крупно" ondblclick={(e) => viewImage(asset, e.currentTarget)}
+                ><img src={thumb(cardImageUrl(cref.scope, p), 240)} alt="" /></button
+              >
               <div class="p-actions">
+                <button class="icon-btn" class:on={onScreen} title={onScreen ? 'Убрать с экрана игроков' : 'Показать игрокам'} onclick={() => togglePortrait(asset)}
+                  ><Monitor size={12} /></button
+                >
                 {#if i > 0}<button class="icon-btn" title="Сделать основным" onclick={() => bestiary.makeMainPortrait(cref, p)}><Star size={12} /></button>{/if}
                 <button class="icon-btn" title="Убрать портрет" onclick={() => bestiary.removePortrait(cref, p)}><X size={12} /></button>
               </div>
             </div>
           {/each}
-          <div class="add-portrait" class:main={!card.portraits.length}>
-            <button
-              class="add-btn"
-              title={cref.scope === 'srd' ? 'Портрет встроенной карточки хранится в библиотеке, он общий для всех её языков' : 'Добавить портрет'}
-              onclick={() => (portraitMenu = !portraitMenu)}><ImagePlus size={16} /></button
-            >
-            {#if portraitMenu}
-              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-              <div class="menu-backdrop" onclick={() => (portraitMenu = false)}></div>
-              <div class="menu">
-                <button disabled={!app.vault.tree} onclick={() => ((portraitMenu = false), (picking = true))}><FolderOpen size={13} /> Из хранилища</button>
-                <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(cref, undefined, true))}><ClipboardPaste size={13} /> Из буфера</button>
-                <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(cref))}><HardDrive size={13} /> С диска…</button>
-              </div>
-            {/if}
-          </div>
         </div>
-        <div class="names">
-          <h1>{card.name}</h1>
-          <div class="info faint">{info}</div>
-          <div class="manage">
-            {#if cref.scope === 'srd'}
-              <button class="btn" title="Правка сохранится в библиотеку и заменит встроенную карточку везде: в боях, на картах, в поиске" onclick={() => bestiary.edit(cref)}
-                ><Pencil size={13} /> Править</button
-              >
-              <button class="btn" title="Отдельная карточка на основе этой — в библиотеке или папке приключения" onclick={() => bestiary.copy(cref)}
-                ><Copy size={13} /> Сделать копию…</button
-              >
-              {#if summary.edited}
-                <button class="btn" title="Удалить правку (файл — в корзину) и показывать карточку, как в SRD" onclick={() => bestiary.revert(cref)}
-                  ><RotateCcw size={13} /> Вернуть как в SRD</button
-                >
-              {/if}
-            {:else}
-              <button class="btn" onclick={() => bestiary.edit(cref)}><Pencil size={13} /> Править</button>
-              <button class="btn" title="Новая карточка на основе этой — в библиотеке или папке приключения" onclick={() => bestiary.copy(cref)}
-                ><Copy size={13} /> Сделать копию…</button
-              >
-              <button class="btn" title="Переложить карточку в библиотеку или в папку другого приключения, без копии" onclick={() => bestiary.move(cref)}
-                ><ArrowRightLeft size={13} /> Перенести…</button
-              >
-              {#if summary.kind === 'character' && isDnd(summary.system)}
-                <button
-                  class="btn"
-                  title="Игрок переделал персонажа в Long Story Short: выберите новый экспорт (JSON) — будет видно, что изменилось, и карточка обновится"
-                  onclick={async () => (lssStatus = (await bestiary.updateFromLss(cref)) ?? '')}
-                  ><RefreshCw size={13} /> Обновить из LSS…</button
-                >
-              {/if}
-              <button class="icon-btn" title="Удалить карточку" onclick={() => bestiary.remove(cref)}><Trash2 size={14} /></button>
-            {/if}
-            <button
-              class="icon-btn"
-              title="Экспорт в файл (все языки, с портретами) — чтобы поделиться"
-              onclick={() => window.api.exportCards({ refs: versions.map((v) => v.ref), name: summary.name })}
-            ><Upload size={14} /></button>
-          </div>
-          {#if lssStatus}<div class="lss-status faint">{lssStatus}</div>{/if}
-          <div class="actions">
-            <div class="langs">
-              {#each versions as v (v.ref.scope + v.ref.id)}
-                <button
-                  class="chip"
-                  class:active={sameRef(v.ref, summary.ref)}
-                  title="{v.name} · {where(v)}"
-                  onclick={() => onselect(v.ref)}
-                >
-                  {langName(v.lang)}{#if versions.filter((x) => x.lang === v.lang).length > 1}<span class="where">
-                      · {where(v)}</span
-                    >{/if}
-                </button>
-              {/each}
-              <select
-                class="add-lang"
-                value=""
-                title={cref.scope === 'srd' ? 'Перевод встроенной карточки сохранится в библиотеку' : 'Перевести на другой язык'}
-                onchange={(e) => {
-                  const l = e.currentTarget.value;
-                  e.currentTarget.value = '';
-                  if (l) bestiary.translate(cref, l);
-                }}
-              >
-                <option value="">+ язык</option>
-                {#each missingLangs as l (l)}<option value={l}>{langName(l)}</option>{/each}
-              </select>
+        <div class="add-portrait" class:main={!card.portraits.length}>
+          <button
+            class="add-btn"
+            title={cref.scope === 'srd' ? 'Портрет встроенной карточки хранится в библиотеке, он общий для всех её языков' : 'Добавить портрет'}
+            onclick={() => (portraitMenu = !portraitMenu)}><ImagePlus size={16} /></button
+          >
+          {#if portraitMenu}
+            <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+            <div class="menu-backdrop" onclick={() => (portraitMenu = false)}></div>
+            <div class="menu">
+              <button disabled={!app.vault.tree} onclick={() => ((portraitMenu = false), (picking = true))}><FolderOpen size={13} /> Из хранилища</button>
+              <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(cref, undefined, true))}><ClipboardPaste size={13} /> Из буфера</button>
+              <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(cref))}><HardDrive size={13} /> С диска…</button>
             </div>
-            <div class="spacer"></div>
-            <!-- Персонаж игрока в бою один и с хитами по листу. -->
-            {#if summary.kind !== 'character'}
-              {#if isDnd(summary.system)}<label class="hp" title={summary.combat.hpFormula ? `Бросить ${summary.combat.hpFormula} для каждого` : 'Нет формулы хитов'}>
-                <input type="checkbox" bind:checked={rollHp} disabled={!summary.combat.hpFormula} /> случайные хиты
-              </label>{/if}
-              <input class="count" type="number" min="1" max="20" bind:value={count} title="Сколько добавить" />
-            {/if}
-            <select class="side" value={side ?? summary.side} onchange={(e) => (side = e.currentTarget.value as CardSide)} title="На чьей стороне в бою">
-              <option value="enemy">противник</option>
-              <option value="ally">союзник</option>
-              <option value="neutral">нейтрал</option>
-              <option value="party">партия</option>
-            </select>
-            <button class="btn primary" onclick={toInitiative}><Swords size={14} /> В инициативу</button>
-          </div>
+          {/if}
         </div>
       </div>
     </header>
@@ -274,18 +277,23 @@
   .compact h1 {
     font-size: 20px;
   }
-  .title {
+  .strip {
     display: flex;
-    gap: 16px;
-    margin-bottom: 14px;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 12px 0 14px;
   }
   .portraits {
     display: flex;
+    min-width: 0;
+    padding-bottom: 4px;
+    overflow-x: auto;
     align-items: flex-start;
     gap: 6px;
   }
   .portrait {
     position: relative;
+    flex: none;
     width: 52px;
     border: 2px solid transparent;
     border-radius: var(--radius-m);
@@ -315,6 +323,7 @@
     object-fit: cover;
   }
   .p-actions {
+    flex-direction: column;
     position: absolute;
     top: 2px;
     right: 2px;
@@ -329,6 +338,9 @@
     height: 20px;
     background: rgba(0, 0, 0, 0.6);
     color: #fff;
+  }
+  .p-actions .icon-btn.on {
+    background: var(--accent);
   }
   .add-portrait {
     position: relative;
@@ -358,8 +370,8 @@
   }
   .menu {
     position: absolute;
-    top: 0;
-    left: calc(100% + 4px);
+    top: calc(100% + 4px);
+    left: 0;
     z-index: 10;
     display: flex;
     flex-direction: column;

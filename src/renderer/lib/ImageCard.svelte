@@ -1,5 +1,7 @@
 <!-- Карточка картинки из хранилища. Кнопки — действия модулей (портрет, на весь экран, …) и «в корзину»
-     (trash={false} — без неё), клик по картинке выполняет основное действие. Нижняя часть карточки — на усмотрение того, кто её показывает. -->
+     (trash={false} — без неё); у кнопки при наведении сразу видна подпись. Щелчок по картинке ничего не выводит
+     игрокам (так бывало случайно), двойной — открывает её крупно (Lightbox). primary — какое действие главное: оно
+     первым в окне просмотра. Нижняя часть карточки — на усмотрение того, кто её показывает. -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { vaultUrl, thumb } from '../../shared/vault';
@@ -7,6 +9,7 @@
   import { dispatch, store } from './store.svelte';
   import { Trash2 } from '@lucide/svelte';
   import { badgeOf } from './contrib';
+  import { viewImage } from './view-image.svelte';
 
   let {
     path,
@@ -17,35 +20,32 @@
   }: { path: string; primary: string; aspect?: string; trash?: boolean; children?: Snippet } = $props();
 
   const app = $derived(store.state);
-  const main = $derived(imageActions.find((a) => a.id === primary) ?? imageActions[0]);
+  // Главное действие — первым в столбике кнопок.
+  const actions = $derived([...imageActions].sort((a, b) => Number(b.id === primary) - Number(a.id === primary)));
   const active = $derived(imageActions.filter((a) => a.active(app, path)));
 </script>
 
 <div class="card" class:on={active.length > 0}>
-  {#if main}
-    <button
-      class="thumb"
-      title={main.active(app, path) ? 'Убрать с экрана' : main.title}
-      onclick={() => main.toggle(app, path)}
-    >
-      <img src={thumb(vaultUrl(path), 480)} alt="" loading="lazy" style:aspect-ratio={aspect} />
-    </button>
-  {/if}
+  <button class="thumb" data-view={path} title="Двойной щелчок — рассмотреть крупно" ondblclick={(e) => viewImage(path, e.currentTarget)}>
+    <img src={thumb(vaultUrl(path), 480)} alt="" loading="lazy" style:aspect-ratio={aspect} />
+  </button>
 
   <div class="badges">
     {#each active as a (a.id)}<span class="badge">{badgeOf(a, app, path)}</span>{/each}
   </div>
 
   <div class="actions">
-    {#each imageActions as a (a.id)}
+    {#each actions as a (a.id)}
       {@const on = a.active(app, path)}
-      <button class="action" class:on title={on ? `${a.title}: убрать` : a.title} onclick={() => a.toggle(app, path)}>
+      <button class="action" class:on aria-label={a.title} onclick={() => a.toggle(app, path)}>
         <a.icon size={13} />
+        <span class="tip">{on ? `${a.title}: убрать` : a.title}</span>
       </button>
     {/each}
     {#if trash}
-      <button class="action trash" title="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
+      <button class="action trash" aria-label="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
         <Trash2 size={13} />
+        <span class="tip">Переместить в корзину</span>
       </button>
     {/if}
   </div>
@@ -70,7 +70,7 @@
     padding: 0;
     border: 0;
     background: none;
-    cursor: pointer;
+    cursor: zoom-in;
   }
   img {
     display: block;
@@ -111,6 +111,7 @@
     opacity: 1;
   }
   .action {
+    position: relative;
     display: grid;
     place-items: center;
     width: 24px;
@@ -133,5 +134,28 @@
   }
   .action.on {
     background: var(--accent);
+  }
+  /* Подпись кнопки — сразу при наведении (системная всплывает с задержкой и часто не успевает). */
+  .tip {
+    position: absolute;
+    left: calc(100% + 6px);
+    top: 50%;
+    z-index: 2;
+    padding: 2px 8px;
+    border-radius: var(--radius-s);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    font-size: 11px;
+    line-height: 1.3;
+    /* Карточка обрезает всё, что за её краем: длинная подпись переносится. */
+    width: max-content;
+    max-width: 170px;
+    transform: translateY(-50%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.08s ease;
+  }
+  .action:hover .tip {
+    opacity: 1;
   }
 </style>
