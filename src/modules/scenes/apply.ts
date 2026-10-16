@@ -1,4 +1,5 @@
 // Снимок экрана в сцену и включение сцены. Работает в окне управления через обычные действия модулей.
+import { t } from '../../renderer/lib/i18n.svelte';
 import { dispatch } from '../../renderer/lib/store.svelte';
 import type { AppState } from '../../shared/types';
 import { allFiles, fileKind, isLibraryAsset, prettyName, trackName } from '../../shared/vault';
@@ -24,7 +25,7 @@ export function capture(app: AppState): SceneContent {
 export function suggestName(c: SceneContent, count: number, tray?: Tray): string {
   const first = c.map.path ?? c.background.path ?? c.portraits.paths[0] ?? tray?.map[0] ?? tray?.background[0];
   if (first) return prettyName(first);
-  return `Сцена ${count + 1}`;
+  return t('scenes.defaultName', { n: count + 1 });
 }
 
 // Файлы сцены, которых больше нет в хранилище.
@@ -90,29 +91,22 @@ async function applyMusic(app: AppState, m: Scene['music']) {
 export function describe(app: AppState, sc: Scene, part: Part): string {
   switch (part) {
     case 'background':
-      return sc.background.path ? `${prettyName(sc.background.path)} · ${sc.background.fit === 'cover' ? 'заполнить' : 'вписать'}` : 'без фона';
+      return sc.background.path ? `${prettyName(sc.background.path)} · ${sc.background.fit === 'cover' ? t('scenes.fill') : t('scenes.fit')}` : t('scenes.noBackground');
     case 'map':
-      return sc.map.path ? prettyName(sc.map.path) : 'без карты';
+      return sc.map.path ? prettyName(sc.map.path) : t('scenes.noMap');
     case 'portraits':
       return sc.portraits.paths.length
         ? sc.portraits.paths.map((p) => app.portraits.names[p] ?? prettyName(p)).join(', ')
-        : 'никого';
+        : t('scenes.nobody');
     case 'handout':
-      return sc.handout.path ? prettyName(sc.handout.path) : 'без раздатки';
+      return sc.handout.path ? prettyName(sc.handout.path) : t('scenes.noHandout');
     case 'music':
       return sc.music.playlist !== null
-        ? `${playlistTitle(app.vault.tree, app.vault.name, sc.music.playlist)}${sc.music.shuffle ? ' · вперемешку' : ''}`
-        : 'тишина';
+        ? `${playlistTitle(app.vault.tree, app.vault.name, sc.music.playlist)}${sc.music.shuffle ? ' · ' + t('scenes.shuffled') : ''}`
+        : t('scenes.silence');
     case 'ambience':
-      return sc.ambience.loops.length ? sc.ambience.loops.map((l) => trackName(l.path)).join(', ') : 'без атмосферы';
+      return sc.ambience.loops.length ? sc.ambience.loops.map((l) => trackName(l.path)).join(', ') : t('scenes.noAmbience');
   }
 }
 
-export const PART_TITLES: Record<Part, string> = {
-  background: 'Фон',
-  map: 'Карта',
-  portraits: 'Портреты',
-  handout: 'Раздатка',
-  music: 'Музыка',
-  ambience: 'Атмосфера',
-};
+export const partTitle = (p: Part) => t(`scenes.part.${p}`);

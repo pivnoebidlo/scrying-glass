@@ -1,6 +1,7 @@
 // Монстры приключения для вкладки «Персонажи»: карточки из папок бестиария (monsters) текущего приключения
 // и общих, сгруппированные по месту. Карточки из папок персонажей и партии сюда не входят: они показаны
 // при своих портретах. Ключ группы начинается с «monsters:», чтобы не путать с папками портретов.
+import { t } from '../../../renderer/lib/i18n.svelte';
 import type { CardSummary } from '../../../shared/cards';
 import { placeOrder, placeTitle, visibleIn, type AdventuresState } from '../../../shared/adventures';
 import { basename, dirname, folderRole } from '../../../shared/vault';
@@ -29,7 +30,7 @@ export function monsterGroups(all: CardSummary[], adv: AdventuresState, vaultNam
     if (c.folder === undefined) continue;
     const key = 'monsters:' + c.folder;
     const dir = dirname(c.folder);
-    if (!groups.has(key)) groups.set(key, { key, title: `${placeTitle(adv, dir, vaultName)} · монстры`, order: placeOrder(adv, dir), items: [] });
+    if (!groups.has(key)) groups.set(key, { key, title: `${placeTitle(adv, dir, vaultName)} · ${t('portraits.monsters')}`, order: placeOrder(adv, dir), items: [] });
     groups.get(key)!.items.push(c);
   }
   for (const g of groups.values()) g.items.sort((a, b) => collator.compare(a.name, b.name));

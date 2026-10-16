@@ -1,5 +1,6 @@
 <!-- Боковая панель «Раздатки»: папки раздаточных материалов из хранилища. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Images, Scroll } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { imageGroups } from '../../portraits/library';
@@ -22,7 +23,7 @@
 <div class="list">
   <button class="item" data-nav class:active={ui.group === 'all'} onclick={() => (ui.group = 'all')}>
     <Images size={14} />
-    <span class="name">Вся раздатка</span>
+    <span class="name">{t('handouts.all')}</span>
     <span class="count">{total}</span>
   </button>
   {#each groups as g (g.key)}

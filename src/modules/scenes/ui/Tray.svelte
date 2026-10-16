@@ -3,6 +3,7 @@
      и кнопкой «+»; крестик убирает из подборки (с экрана — нет). Чья подборка — trayOwner: включённой сцены или
      приключения. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { BookOpen, Eye, Plus, ScrollText, X } from '@lucide/svelte';
   import type { Snippet } from 'svelte';
   import FilePicker from '../../../renderer/lib/FilePicker.svelte';
@@ -50,10 +51,10 @@
   const loose = $derived(showLoose ? shown(app)[part].filter((p) => !tray.includes(p)) : []);
   const whose = $derived(
     'scene' in owner
-      ? `сцены «${app.scenes.scenes.find((x) => x.id === owner.scene)?.name ?? ''}»`
+      ? t('scenes.ownerScene', { name: app.scenes.scenes.find((x) => x.id === owner.scene)?.name ?? '' })
       : owner.adventure
-        ? `приключения «${owner.adventure}»`
-        : 'всего хранилища'
+        ? t('scenes.ownerAdventure', { name: owner.adventure })
+        : t('scenes.ownerVault')
   );
   const kindOf = $derived(new Map(app.vault.tree ? allFiles(app.vault.tree).map((f) => [f.path, f.kind]) : []));
 
@@ -90,7 +91,7 @@
       {#each items as path (path)}
         {@const on = isOn(path)}
         <div class="tile" class:on use:sortable={{ group: `tray:${part}`, id: path, ids: tray, disabled: !tray.includes(path), onmove: reorder }}>
-          <button class="pick" title={`${caption(path)} — ${on ? 'убрать с экрана' : 'показать игрокам'}`} onclick={() => toggle(path)}>
+          <button class="pick" title={t('scenes.pickHint', { caption: caption(path), action: on ? t('scenes.removeFromScreen') : t('scenes.showToPlayers') })} onclick={() => toggle(path)}>
             {#if isNotePath(path)}
               <span class="doc"><ScrollText size={18} /><b>{caption(path)}</b></span>
             {:else if isEntry(path)}
@@ -98,25 +99,25 @@
             {:else}
               <img src={thumb(assetUrl(path), 128)} alt="" loading="lazy" />
             {/if}
-            {#if on}<i class="live" title="На экране"><Eye size={10} /></i>{/if}
+            {#if on}<i class="live" title={t('scenes.onScreen')}><Eye size={10} /></i>{/if}
           </button>
-          <button class="remove" title="Убрать из подборки" onclick={() => remove(path)}><X size={10} /></button>
+          <button class="remove" title={t('scenes.removeFromTray')} onclick={() => remove(path)}><X size={10} /></button>
         </div>
       {/each}
-      <button class="tile add" title={`Добавить в подборку ${whose}`} disabled={!app.vault.tree} onclick={() => (picking = true)}><Plus size={14} /></button>
+      <button class="tile add" title={t('scenes.addToTrayOf', { whose })} disabled={!app.vault.tree} onclick={() => (picking = true)}><Plus size={14} /></button>
     </div>
   {:else}
     <div class="empty">
       <span class="faint">{hint}</span>
-      <button class="btn" title={`Добавить в подборку ${whose}`} disabled={!app.vault.tree} onclick={() => (picking = true)}><Plus size={13} /> Добавить</button>
+      <button class="btn" title={t('scenes.addToTrayOf', { whose })} disabled={!app.vault.tree} onclick={() => (picking = true)}><Plus size={13} /> {t('scenes.add')}</button>
     </div>
   {/if}
   {#each loose as path (path)}
     <div class="loose">
-      <span class="faint">На экране:</span>
+      <span class="faint">{t('scenes.onScreenLabel')}</span>
       <span class="loose-name" title={path}>{caption(path)}</span>
-      <button class="icon-btn" title="Добавить в подборку" onclick={() => add([path])}><Plus size={13} /></button>
-      <button class="icon-btn" title="Убрать с экрана" onclick={() => toggle(path)}><X size={13} /></button>
+      <button class="icon-btn" title={t('scenes.addToTray')} onclick={() => add([path])}><Plus size={13} /></button>
+      <button class="icon-btn" title={t('scenes.removeFromScreenBtn')} onclick={() => toggle(path)}><X size={13} /></button>
     </div>
   {/each}
   {@render children?.()}

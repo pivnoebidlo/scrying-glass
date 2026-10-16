@@ -1,5 +1,6 @@
 <!-- Вкладка «Файлы»: содержимое выбранной папки хранилища. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronRight, ClipboardPaste, Download, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
   import { badgeOf, type ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -107,39 +108,39 @@
       </nav>
       <div class="spacer"></div>
       {#if cardFolder}
-        <button class="btn" title="Новая карточка в этой папке" onclick={() => bestiary.create({ scope: 'vault', folder: folder.path })}>
-          <FilePlus size={14} /> Новая карточка
+        <button class="btn" title={t('vault.newCardHere')} onclick={() => bestiary.create({ scope: 'vault', folder: folder.path })}>
+          <FilePlus size={14} /> {t('vault.newCard')}
         </button>
         <button
           class="btn"
-          title="Карточки Scrying Glass или персонаж из Long Story Short (экспорт листа в JSON) — в эту папку"
+          title={t('vault.importCardsHint')}
           onclick={() => bestiary.importFiles({ scope: 'vault', folder: folder.path })}
         >
-          <Download size={14} /> Импорт карточек…
+          <Download size={14} /> {t('vault.importCards')}
         </button>
       {/if}
       {#if topLevel && isAdventure}
         <!-- Приключение открывается само, когда выбрана его папка в дереве. -->
-        <span class="badge-adv" title="Выбрано в дереве — значит, открыто"><Map size={12} /> приключение</span>
+        <span class="badge-adv" title={t('vault.adventureBadgeHint')}><Map size={12} /> {t('vault.adventureBadge')}</span>
         <button
           class="btn"
-          title="Папка останется как есть, её содержимое станет общим для всех приключений"
-          onclick={() => dispatch('adventures', 'unmark', { path: folder.path })}>Больше не приключение</button
+          title={t('vault.unmarkHint')}
+          onclick={() => dispatch('adventures', 'unmark', { path: folder.path })}>{t('vault.unmark')}</button
         >
       {:else if topLevel}
         <button
           class="btn"
-          title="Вкладки будут показывать содержимое этой папки отдельно; недостающие папки characters, monsters, backgrounds, maps, music появятся сами"
-          onclick={() => dispatch('adventures', 'mark', { path: folder.path })}><Map size={14} /> Сделать приключением</button
+          title={t('vault.markHint')}
+          onclick={() => dispatch('adventures', 'mark', { path: folder.path })}><Map size={14} /> {t('vault.mark')}</button
         >
       {/if}
-      <button class="btn" title="Вставить картинку из буфера обмена (⌘V)" onclick={() => dispatch('vault', 'pasteImage', { folder: folder.path })}>
-        <ClipboardPaste size={14} /> Вставить
+      <button class="btn" title={t('vault.pasteHint')} onclick={() => dispatch('vault', 'pasteImage', { folder: folder.path })}>
+        <ClipboardPaste size={14} /> {t('vault.paste')}
       </button>
       <button class="btn" onclick={() => dispatch('vault', 'importFiles', { folder: folder.path })}>
-        <FilePlus size={14} /> Добавить файлы…
+        <FilePlus size={14} /> {t('vault.addFiles')}
       </button>
-      <button class="icon-btn" title="Показать в Finder" onclick={() => dispatch('vault', 'reveal', { folder: folder.path })}>
+      <button class="icon-btn" title={t('vault.reveal')} onclick={() => dispatch('vault', 'reveal', { folder: folder.path })}>
         <FolderOpen size={16} />
       </button>
     </header>
@@ -157,7 +158,7 @@
     {/if}
 
     {#if cards.length}
-      <h3>Карточки <span class="faint">{cards.length}</span></h3>
+      <h3>{t('vault.cards')} <span class="faint">{cards.length}</span></h3>
       <ul class="cards">
         {#each cards as c (c.ref.id)}
           <CardRow card={c} sort={{ group: cardsGroup, id: c.ref.id, ids: cards.map((x) => x.ref.id), vertical: true }} />
@@ -167,12 +168,11 @@
 
     {#if images.length}
       <div class="images-head">
-        <h3>{images.some((f) => f.kind === 'note') ? 'Картинки и записки' : 'Картинки'} <span class="faint">{images.length}</span></h3>
+        <h3>{images.some((f) => f.kind === 'note') ? t('vault.imagesAndNotes') : t('vault.images')} <span class="faint">{images.length}</span></h3>
         <ThumbSize grid="files" />
       </div>
       <p class="faint hint">
-        Показать игрокам — кнопками при наведении, двойной щелчок — рассмотреть крупно. Название под плиткой можно
-        поправить — файл переименуется. Порядок меняется перетаскиванием.
+        {t('vault.imagesHint')}
       </p>
       <div class="grid" style:--thumb="{thumbs.files}px">
         {#each images as f (f.path)}
@@ -181,7 +181,7 @@
               <NoteCard path={f.path} />
             {:else}
               <ImageCard path={f.path} {primary} aspect={role === 'characters' || role === 'party' || role === 'handouts' ? '3 / 4' : '4 / 3'}>
-                <NameField value={f.name} title="Переименовать файл" onrename={(name) => window.api.renameFile(f.path, withoutExt(name, f.name))} />
+                <NameField value={f.name} title={t('vault.renameFile')} onrename={(name) => window.api.renameFile(f.path, withoutExt(name, f.name))} />
               </ImageCard>
             {/if}
           </div>
@@ -190,7 +190,7 @@
     {/if}
 
     {#if audio.length}
-      <h3>Музыка <span class="faint">{audio.length}</span></h3>
+      <h3>{t('vault.music')} <span class="faint">{audio.length}</span></h3>
       <ul class="audio">
         {#each audio as f (f.path)}
           {@const on = audioActions.filter((a) => a.active(store.state, f.path))}
@@ -203,7 +203,7 @@
                 <a.icon size={14} />
               </button>
             {/each}
-            <button class="icon-btn trash" title="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [f.path] })}>
+            <button class="icon-btn trash" title={t('vault.toTrash')} onclick={() => dispatch('vault', 'trash', { paths: [f.path] })}>
               <Trash2 size={14} />
             </button>
           </li>
@@ -212,7 +212,7 @@
     {/if}
 
     {#if !folder.folders.length && !folder.files.length && !cards.length}
-      <div class="empty faint">Папка пуста. Добавьте файлы кнопкой выше или через Finder.</div>
+      <div class="empty faint">{t('vault.emptyFolder')}</div>
     {/if}
   </div>
 {/if}

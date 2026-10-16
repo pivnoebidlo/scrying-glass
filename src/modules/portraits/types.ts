@@ -20,11 +20,10 @@ export interface NamePlate {
   font: NoteFont | '';
 }
 
-export const PLATE_STYLES = { shadow: 'Тень', ribbon: 'Лента', scroll: 'Свиток', plaque: 'Табличка' } as const;
+// Titles — portraits.plate.<style> in the dictionary.
+export const PLATE_STYLES = { shadow: true, ribbon: true, scroll: true, plaque: true } as const;
 export type PlateStyle = keyof typeof PLATE_STYLES;
 
-// Что значит цвет у каждого стиля — подпись в настройках.
-export const PLATE_COLOR_TITLE: Record<PlateStyle, string> = { shadow: 'Цвет текста', ribbon: 'Цвет ленты', scroll: 'Цвет чернил', plaque: 'Цвет таблички' };
 
 // Цвет по умолчанию для стиля (когда его выбирают впервые).
 export const PLATE_DEFAULT_COLOR: Record<PlateStyle, string> = { shadow: '#ffffff', ribbon: '#8e1a16', scroll: '#3b2412', plaque: '#2b2118' };

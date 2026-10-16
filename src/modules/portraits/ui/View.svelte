@@ -2,6 +2,7 @@
      карточка NPC или лист персонажа (лежит рядом в той же папке): статблок и кнопка «в инициативу». Ниже — монстры
      приключения (карточки из его папок бестиария), чтобы накидывать их в бой отсюда же. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -75,13 +76,13 @@
   <header class="toolbar">
     <label class="search">
       <Search size={14} />
-      <input type="text" placeholder="Поиск по имени" bind:value={ui.search} />
+      <input type="text" placeholder={t('common.searchByName')} bind:value={ui.search} />
     </label>
     <PasteButton {app} role="characters" />
     <button
       class="btn"
-      title="Персонаж игрока из Long Story Short (экспорт листа в JSON) или файл карточек Scrying Glass. Повторный импорт того же персонажа обновляет его лист"
-      onclick={importCharacter}><Download size={14} /> Импорт персонажа…</button
+      title={t('portraits.importHint')}
+      onclick={importCharacter}><Download size={14} /> {t('portraits.import')}</button
     >
     {#if status}<span class="status">{status}</span>{/if}
     <div class="spacer"></div>
@@ -90,14 +91,13 @@
 
   {#if groups.length === 0 && monsters.length === 0}
     <div class="empty">
-      <p>В хранилище пока нет папок с персонажами.</p>
+      <p>{t('portraits.none')}</p>
       <p class="faint">
-        Создайте папку <RoleFolderNames role="characters" /> в приключении или главе, и картинки из неё
-        появятся здесь. Картинку из любой другой папки можно показать игрокам через «Файлы».
+        {t('common.createFolder')} <RoleFolderNames role="characters" /> {t('common.inAdventure')} {t('portraits.anyOther')}
       </p>
     </div>
   {:else if visible.length === 0 && visibleMonsters.length === 0}
-    <div class="empty faint">Ничего не найдено.</div>
+    <div class="empty faint">{t('common.nothingFound')}</div>
   {/if}
 
   {#each visible as g (g.key)}

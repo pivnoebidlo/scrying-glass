@@ -1,5 +1,6 @@
 <!-- Боковая панель: папки персонажей из хранилища. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Images, Skull, Users } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
@@ -18,7 +19,7 @@
 <div class="list">
   <button class="item" data-nav class:active={ui.group === 'all'} onclick={() => (ui.group = 'all')}>
     <Images size={14} />
-    <span class="name">Все персонажи</span>
+    <span class="name">{t('portraits.all')}</span>
     <span class="count">{total}</span>
   </button>
   {#each groups as g (g.key)}

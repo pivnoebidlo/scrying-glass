@@ -1,6 +1,7 @@
 <!-- Вкладка «Фоны»: картинки из папок backgrounds / фоны / локации, сгруппированные по приключениям.
      Показать игрокам — кнопками на плитке; название под картинкой правится (файл переименуется). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -37,7 +38,7 @@
   <header class="toolbar">
     <label class="search">
       <Search size={14} />
-      <input type="text" placeholder="Поиск по названию" bind:value={ui.search} />
+      <input type="text" placeholder={t('common.searchByTitle')} bind:value={ui.search} />
     </label>
     <PasteButton {app} role="backgrounds" />
     <div class="spacer"></div>
@@ -46,14 +47,13 @@
 
   {#if groups.length === 0}
     <div class="empty">
-      <p>В хранилище пока нет папок с фонами.</p>
+      <p>{t('scene.none')}</p>
       <p class="faint">
-        Создайте папку <RoleFolderNames role="backgrounds" /> в приключении или главе, и
-        картинки из неё появятся здесь. Картинку из любой другой папки можно показать фоном через «Файлы».
+        {t('common.createFolder')} <RoleFolderNames role="backgrounds" /> {t('common.inAdventure')} {t('scene.anyOther')}
       </p>
     </div>
   {:else if visible.length === 0}
-    <div class="empty faint">Ничего не найдено.</div>
+    <div class="empty faint">{t('common.nothingFound')}</div>
   {/if}
 
   {#each visible as g (g.key)}
@@ -66,7 +66,7 @@
           {#each g.items as f (f.path)}
             <div use:sortable={{ group: g.key, id: f.path, ids: g.items.map((x) => x.path), disabled: !!ui.search.trim(), file: f.path }}>
               <ImageCard path={f.path} primary="background" aspect="16 / 9">
-                <NameField value={prettyName(f.path)} title="Переименовать файл" onrename={(name) => window.api.renameFile(f.path, name)} />
+                <NameField value={prettyName(f.path)} title={t('common.renameFile')} onrename={(name) => window.api.renameFile(f.path, name)} />
               </ImageCard>
             </div>
           {/each}

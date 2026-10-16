@@ -1,10 +1,11 @@
 <!-- Раздел настроек «Портреты»: подписи на экране игроков (показывать ли, вид подложки, цвет, шрифт) с образцом. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { NOTE_FONTS, type NoteFont } from '../../../shared/notes';
-  import { DEFAULT_PLATE, PLATE_COLOR_TITLE, PLATE_COLORS, PLATE_DEFAULT_COLOR, PLATE_STYLES, type NamePlate as Plate, type PlateStyle } from '../types';
+  import { DEFAULT_PLATE, PLATE_COLORS, PLATE_DEFAULT_COLOR, PLATE_STYLES, type NamePlate as Plate, type PlateStyle } from '../types';
   import NamePlate from './NamePlate.svelte';
 
   let { ms }: ModuleProps<'portraits'> = $props();
@@ -18,8 +19,8 @@
 
 <div class="setting">
   <div class="info">
-    <div class="name">Подписи на экране игроков</div>
-    <div class="desc">Показывать имя под каждым портретом.</div>
+    <div class="name">{t('portraits.captionsTitle')}</div>
+    <div class="desc">{t('portraits.captionsDesc')}</div>
   </div>
   <input type="checkbox" checked={ms.showNames} onchange={(e) => dispatch('portraits', 'setShowNames', { value: e.currentTarget.checked })} />
 </div>
@@ -27,29 +28,29 @@
 {#if ms.showNames}
   <div class="plate-settings">
     <div class="sample">
-      <NamePlate name="Староста Гилберт" {plate} />
+      <NamePlate name={t('portraits.sampleName')} {plate} />
     </div>
     <div class="row">
-      <span class="label">Подложка</span>
+      <span class="label">{t('portraits.plateLabel')}</span>
       <div class="styles">
-        {#each Object.entries(PLATE_STYLES) as [id, title] (id)}
-          <button class="btn" class:primary={plate.style === id} onclick={() => setStyle(id as PlateStyle)}>{title}</button>
+        {#each Object.keys(PLATE_STYLES) as id (id)}
+          <button class="btn" class:primary={plate.style === id} onclick={() => setStyle(id as PlateStyle)}>{t(`portraits.plate.${id as PlateStyle}`)}</button>
         {/each}
       </div>
     </div>
     <div class="row">
-      <span class="label">{PLATE_COLOR_TITLE[plate.style]}</span>
+      <span class="label">{t(`portraits.plateColor.${plate.style}`)}</span>
       <div class="colors">
         {#each PLATE_COLORS as c (c)}
           <button class="swatch" class:on={plate.color.toLowerCase() === c} style:background={c} title={c} aria-label={c} onclick={() => set({ color: c })}></button>
         {/each}
-        <input type="color" value={plate.color} title="Свой цвет" onchange={(e) => set({ color: e.currentTarget.value })} />
+        <input type="color" value={plate.color} title={t('common.customColor')} onchange={(e) => set({ color: e.currentTarget.value })} />
       </div>
     </div>
     <label class="row">
-      <span class="label">Шрифт</span>
+      <span class="label">{t('portraits.font')}</span>
       <select value={plate.font} onchange={(e) => set({ font: e.currentTarget.value as NoteFont | '' })}>
-        <option value="">Обычный (Georgia)</option>
+        <option value="">{t('portraits.fontDefault')}</option>
         {#each groups as g (g)}
           <optgroup label={g}>
             {#each Object.entries(NOTE_FONTS).filter(([, f]) => f.group === g) as [id, f] (id)}<option value={id}>{f.title}</option>{/each}
@@ -62,22 +63,14 @@
 
 <div class="setting">
   <div class="info">
-    <div class="name">Откуда берутся портреты</div>
+    <div class="name">{t('portraits.sourceTitle')}</div>
     <div class="desc">
-      Из всех папок <RoleFolderNames role="characters" /> в хранилище, на любой глубине: в приключении, в главе кампании,
-      во вложенных папках. Подпись — название карточки, у которой эта картинка стоит портретом, иначе имя файла
-      (<code>староста_гилберт.jpg</code> → «Староста Гилберт»). Поправить её можно прямо под плиткой во вкладке
-      «Персонажи»: переименуется карточка или файл.
+      {t('portraits.sourceBefore')} <RoleFolderNames role="characters" /> {t('portraits.sourceAfter')}
     </div>
   </div>
 </div>
 
 <style>
-  code {
-    padding: 1px 4px;
-    border-radius: 3px;
-    background: var(--bg-active);
-  }
   .plate-settings {
     display: flex;
     flex-direction: column;

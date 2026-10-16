@@ -2,6 +2,7 @@
      Показать игрокам поверх всего — кнопками на плитке; название под картинкой правится (файл переименуется). Записки (сделанные
      в «Инструментах») лежат в тех же папках и стоят в том же порядке, что и картинки. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { FilePlus2, Search } from '@lucide/svelte';
   import { allFiles, findFolder } from '../../../shared/vault';
@@ -50,24 +51,23 @@
   <header class="toolbar">
     <label class="search">
       <Search size={14} />
-      <input type="text" placeholder="Поиск по названию" bind:value={ui.search} />
+      <input type="text" placeholder={t('common.searchByTitle')} bind:value={ui.search} />
     </label>
     <PasteButton {app} role="handouts" />
-    <button class="btn" title="Письмо, приказ, объявление — текст на пергаменте (редактор в «Инструментах»)" onclick={newNote}><FilePlus2 size={14} /> Новая записка</button>
+    <button class="btn" title={t('handouts.newNoteHint')} onclick={newNote}><FilePlus2 size={14} /> {t('handouts.newNote')}</button>
     <div class="spacer"></div>
     <ThumbSize grid="handouts" />
   </header>
 
   {#if groups.length === 0}
     <div class="empty">
-      <p>В хранилище пока нет папок с раздаточными материалами.</p>
+      <p>{t('handouts.none')}</p>
       <p class="faint">
-        Создайте папку <RoleFolderNames role="handouts" /> в приключении или главе, и
-        картинки из неё появятся здесь. Любую другую картинку можно показать раздаткой через «Файлы».
+        {t('common.createFolder')} <RoleFolderNames role="handouts" /> {t('common.inAdventure')} {t('handouts.anyOther')}
       </p>
     </div>
   {:else if visible.length === 0}
-    <div class="empty faint">Ничего не найдено.</div>
+    <div class="empty faint">{t('common.nothingFound')}</div>
   {/if}
 
   {#each visible as g (g.key)}
@@ -83,7 +83,7 @@
                 <NoteCard path={f.path} />
               {:else}
                 <ImageCard path={f.path} primary="handout" aspect="3 / 4">
-                  <NameField value={prettyName(f.path)} title="Переименовать файл" onrename={(name) => window.api.renameFile(f.path, name)} />
+                  <NameField value={prettyName(f.path)} title={t('common.renameFile')} onrename={(name) => window.api.renameFile(f.path, name)} />
                 </ImageCard>
               {/if}
             </div>

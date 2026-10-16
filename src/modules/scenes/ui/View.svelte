@@ -1,9 +1,10 @@
 <!-- Вкладка «Сцены»: редактор выбранной сцены. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { AlertTriangle, Play, RefreshCw, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { activate, capture, describe, missing, PART_TITLES } from '../apply';
+  import { activate, capture, describe, missing, partTitle } from '../apply';
   import { PARTS, scenesFor, type Part } from '../types';
   import { shownAdventures } from '../../../shared/adventures';
   import { createEmpty, saveCurrent, ui } from './ui.svelte';
@@ -26,7 +27,7 @@
   }
 
   function remove() {
-    if (sc && confirm(`Удалить сцену «${sc.name}»? Файлы в хранилище не затрагиваются.`)) dispatch('scenes', 'remove', { id: sc.id });
+    if (sc && confirm(t('scenes.confirmDelete', { name: sc.name }))) dispatch('scenes', 'remove', { id: sc.id });
   }
 </script>
 
@@ -39,29 +40,28 @@
         value={sc.name}
         onchange={(e) => dispatch('scenes', 'rename', { id: sc.id, name: e.currentTarget.value.trim() || sc.name })}
       />
-      <button class="btn primary" onclick={() => activate(app, sc)}><Play size={14} /> Включить</button>
-      <button class="btn" title="Заменить все части сцены тем, что сейчас на экране" onclick={() => takeCurrent()}>
-        <RefreshCw size={14} /> Взять текущее
+      <button class="btn primary" onclick={() => activate(app, sc)}><Play size={14} /> {t('scenes.switchOn')}</button>
+      <button class="btn" title={t('scenes.takeAllHint')} onclick={() => takeCurrent()}>
+        <RefreshCw size={14} /> {t('scenes.takeAll')}
       </button>
-      <button class="icon-btn" title="Удалить сцену" onclick={remove}><Trash2 size={15} /></button>
+      <button class="icon-btn" title={t('scenes.delete')} onclick={remove}><Trash2 size={15} /></button>
     </header>
 
     {#if app.adventures.list.length}
       <label class="adventure">
-        <span class="faint">Приключение</span>
+        <span class="faint">{t('scenes.adventure')}</span>
         <select
           value={sc.adventure ?? ''}
           onchange={(e) => dispatch('scenes', 'setAdventure', { id: sc.id, adventure: e.currentTarget.value || null })}
         >
-          <option value="">Общая — видна во всех приключениях</option>
+          <option value="">{t('scenes.shared')}</option>
           {#each shownAdventures(app.adventures) as a (a)}<option value={a}>{a}</option>{/each}
         </select>
       </label>
     {/if}
 
     <p class="faint hint">
-      Отмеченные части меняются при включении сцены, остальные остаются как есть. Например, сцена «Бой!» может включать
-      только музыку.
+      {t('scenes.partsHint')}
     </p>
 
     {#each PARTS as part (part)}
@@ -72,10 +72,10 @@
             checked={sc.include[part]}
             onchange={(e) => dispatch('scenes', 'setInclude', { id: sc.id, part, value: e.currentTarget.checked })}
           />
-          <span class="name">{PART_TITLES[part]}</span>
+          <span class="name">{partTitle(part)}</span>
         </label>
         <span class="value" title={describe(app, sc, part)}>{describe(app, sc, part)}</span>
-        <button class="icon-btn" title="Взять то, что сейчас на экране" onclick={() => takeCurrent(part)}><RefreshCw size={14} /></button>
+        <button class="icon-btn" title={t('scenes.takePart')} onclick={() => takeCurrent(part)}><RefreshCw size={14} /></button>
       </div>
     {/each}
 
@@ -83,22 +83,20 @@
       <div class="lost">
         <AlertTriangle size={14} />
         <div>
-          Этих файлов больше нет в хранилище, при включении сцены они будут пропущены:
+          {t('scenes.missing')}
           <ul>{#each lost as p (p)}<li>{p}</li>{/each}</ul>
         </div>
       </div>
     {/if}
   {:else}
     <div class="empty">
-      <p>Сцен пока нет.</p>
+      <p>{t('scenes.none')}</p>
       <p class="faint">
-        Сцена запоминает фон, карту, портреты, раздатку, музыку и атмосферу. Настройте экран игроков как нужно — например, «Таверна»:
-        картинка таверны, хозяин таверны портретом, музыка таверны и гул голосов, — и сохраните. На игре сцена включается
-        одной кнопкой на панели справа или клавишами ⌘1…⌘9.
+        {t('scenes.intro')}
       </p>
       <div class="buttons">
-        <button class="btn primary" onclick={() => saveCurrent()}>Сохранить текущее как сцену</button>
-        <button class="btn" onclick={createEmpty}>Создать пустую</button>
+        <button class="btn primary" onclick={() => saveCurrent()}>{t('scenes.saveAsScene')}</button>
+        <button class="btn" onclick={createEmpty}>{t('scenes.createEmpty')}</button>
       </div>
     </div>
   {/if}

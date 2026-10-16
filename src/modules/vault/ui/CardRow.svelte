@@ -1,6 +1,7 @@
 <!-- Карточка (монстр, NPC, персонаж игрока) в списке «Файлов»: портрет, название, вид и тип; открыть, перенести,
      удалить вместе с её картинками. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
   import { ArrowRightLeft, ScrollText, Skull, Trash2, User, Users } from '@lucide/svelte';
   import { cardImageUrl, type CardSummary } from '../../../shared/cards';
@@ -9,12 +10,12 @@
 
   let { card, sort }: { card: CardSummary; sort?: SortableOpts } = $props();
 
-  const KIND: Record<string, string> = { monster: 'монстр', npc: 'NPC', character: 'персонаж игрока' };
+  const KIND: Record<string, () => string> = { monster: () => t('vault.kind.monster'), npc: () => t('vault.kind.npc'), character: () => t('vault.kind.character') };
   const Icon = $derived(card.kind === 'monster' ? Skull : card.kind === 'character' ? Users : User);
 </script>
 
 <li class="card" use:sortable={sort}>
-  <button class="main" title="Открыть карточку" onclick={() => bestiary.show(card.ref)}>
+  <button class="main" title={t('vault.openCard')} onclick={() => bestiary.show(card.ref)}>
     {#if card.portrait}
       <img src={thumb(cardImageUrl(card.ref.scope, card.portrait), 160)} alt="" loading="lazy" />
     {:else}
@@ -22,13 +23,13 @@
     {/if}
     <span class="text">
       <span class="name">{card.name}</span>
-      <span class="sub">{KIND[card.kind] ?? card.kind} · {card.subtitle}</span>
+      <span class="sub">{KIND[card.kind]?.() ?? card.kind} · {card.subtitle}</span>
     </span>
     <span class="file faint">{card.file?.split('/').pop()}</span>
   </button>
-  <button class="icon-btn" title="Открыть карточку" onclick={() => bestiary.show(card.ref)}><ScrollText size={14} /></button>
-  <button class="icon-btn" title="Перенести в другую папку или в библиотеку" onclick={() => bestiary.move(card.ref)}><ArrowRightLeft size={14} /></button>
-  <button class="icon-btn trash" title="Удалить карточку (с её картинками — по выбору)" onclick={() => bestiary.remove(card.ref)}><Trash2 size={14} /></button>
+  <button class="icon-btn" title={t('vault.openCard')} onclick={() => bestiary.show(card.ref)}><ScrollText size={14} /></button>
+  <button class="icon-btn" title={t('vault.moveCard')} onclick={() => bestiary.move(card.ref)}><ArrowRightLeft size={14} /></button>
+  <button class="icon-btn trash" title={t('vault.deleteCard')} onclick={() => bestiary.remove(card.ref)}><Trash2 size={14} /></button>
 </li>
 
 <style>

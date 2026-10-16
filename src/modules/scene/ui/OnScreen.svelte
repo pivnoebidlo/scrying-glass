@@ -1,5 +1,6 @@
 <!-- Правая панель: фоны под рукой (подборка) — щелчок выводит на экран и убирает; размещение текущего. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import Tray from '../../scenes/ui/Tray.svelte';
@@ -14,12 +15,12 @@
   wide
   isOn={(p) => ms.background === p}
   toggle={(p) => (ms.background === p ? dispatch('scene', 'clear') : dispatch('scene', 'show', { path: p }))}
-  hint="Фоны под рукой: перетащите сюда картинки из вкладок или добавьте кнопкой."
+  hint={t('scene.trayHint')}
 >
   {#if ms.background}
-    <div class="seg" role="radiogroup" aria-label="Размещение">
-      <button class:active={ms.fit === 'contain'} onclick={() => dispatch('scene', 'setFit', { fit: 'contain' })}>Вписать</button>
-      <button class:active={ms.fit === 'cover'} onclick={() => dispatch('scene', 'setFit', { fit: 'cover' })}>Заполнить</button>
+    <div class="seg" role="radiogroup" aria-label={t('scene.placement')}>
+      <button class:active={ms.fit === 'contain'} onclick={() => dispatch('scene', 'setFit', { fit: 'contain' })}>{t('scene.fit')}</button>
+      <button class:active={ms.fit === 'cover'} onclick={() => dispatch('scene', 'setFit', { fit: 'cover' })}>{t('scene.fill')}</button>
     </div>
   {/if}
 </Tray>

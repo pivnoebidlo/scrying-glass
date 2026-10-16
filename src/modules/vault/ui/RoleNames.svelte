@@ -1,5 +1,7 @@
 <!-- Настройка «Назначение папок»: по каким названиям папка считается портретами, картами и т. д. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
+  import type { Key } from '../../../shared/i18n';
   import { X } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { DEFAULT_ROLES, roleName, type FolderRole, type RoleNames, type VaultState } from '../../../shared/vault';
@@ -7,19 +9,12 @@
 
   let { ms }: { ms: VaultState } = $props();
 
-  const ROLES: { role: FolderRole; title: string; desc: string }[] = [
-    { role: 'characters', title: 'Персонажи', desc: 'Портреты и карточки NPC.' },
-    { role: 'party', title: 'Партия', desc: 'Персонажи игроков: портреты и листы.' },
-    { role: 'bestiary', title: 'Бестиарий', desc: 'Карточки монстров и картинки к ним.' },
-    { role: 'backgrounds', title: 'Фоны', desc: 'Картинки во весь экран.' },
-    { role: 'handouts', title: 'Раздатка', desc: 'Записки, письма, улики.' },
-    { role: 'maps', title: 'Карты', desc: 'Карты с туманом войны.' },
-    { role: 'music', title: 'Музыка', desc: 'Музыка и атмосфера.' },
-    { role: 'tables', title: 'Таблицы', desc: 'Таблицы случайностей и генераторы (Markdown-файлы).' },
-    { role: 'compendium', title: 'Справочник', desc: 'Заклинания, предметы, черты, правила, заметки (Markdown-файлы).' },
-    { role: 'journal', title: 'Журнал', desc: 'Заметки мастера к приключению: план, текст для зачитывания, итоги сессий (Markdown-файлы).' },
+  const ROLES: { role: FolderRole }[] = [
+    { role: 'characters' }, { role: 'party' }, { role: 'bestiary' }, { role: 'backgrounds' }, { role: 'handouts' },
+    { role: 'maps' }, { role: 'music' }, { role: 'tables' }, { role: 'compendium' }, { role: 'journal' },
   ];
-  const titleOf = (role: FolderRole) => ROLES.find((r) => r.role === role)!.title;
+  const titleOf = (role: FolderRole) => t(`vault.role.${role}` as Key);
+  const descOf = (role: FolderRole) => t(`vault.role.${role}.desc` as Key);
 
   const same = (a: string[], b: string[]) => a.length === b.length && a.every((x, i) => x === b[i]);
   const customized = $derived(ROLES.some(({ role }) => !same(ms.roles[role], DEFAULT_ROLES[role])));
@@ -39,10 +34,10 @@
     const name = roleName(drafts[role] ?? '');
     errors[role] = '';
     if (!name) return;
-    if (/[/\\]/.test(name)) return void (errors[role] = 'Название папки не может содержать «/».');
+    if (/[/\\]/.test(name)) return void (errors[role] = t('vault.roles.noSlash'));
     const other = ROLES.find((r) => ms.roles[r.role].includes(name));
     if (other) {
-      errors[role] = other.role === role ? `«${name}» уже есть.` : `«${name}» уже означает «${titleOf(other.role)}».`;
+      errors[role] = other.role === role ? t('vault.roles.exists', { name }) : t('vault.roles.taken', { name, role: titleOf(other.role) });
       return;
     }
     drafts[role] = '';
@@ -53,23 +48,21 @@
   const makeMain = (role: FolderRole, name: string) => save(role, [name, ...ms.roles[role].filter((n) => n !== name)]);
 </script>
 
-<h3>Назначение папок</h3>
+<h3>{t('vault.roles.title')}</h3>
 <div class="intro">
-  Папка с одним из этих названий (на любой глубине, регистр не важен) попадает в свою вкладку. Первое название —
-  основное: так приложение называет папки, которые создаёт само (стандартные папки приключения, новая папка
-  бестиария). Чтобы сделать название основным, нажмите на него.
+  {t('vault.roles.desc')}
   {#if customized}
-    <button class="btn reset" onclick={() => dispatch('vault', 'setRoles', { roles: null })}>Вернуть по умолчанию</button>
+    <button class="btn reset" onclick={() => dispatch('vault', 'setRoles', { roles: null })}>{t('vault.roles.reset')}</button>
   {/if}
 </div>
 
-{#each ROLES as { role, title, desc } (role)}
+{#each ROLES as { role } (role)}
   {@const Icon = ROLE_ICONS[role]}
   {@const names = ms.roles[role]}
   <div class="setting role">
     <div class="info">
-      <div class="name"><Icon size={14} /> {title}</div>
-      <div class="desc">{desc}</div>
+      <div class="name"><Icon size={14} /> {titleOf(role)}</div>
+      <div class="desc">{descOf(role)}</div>
     </div>
     <div class="names">
       <div class="chips">
@@ -77,18 +70,18 @@
           <span class="chip" class:main={i === 0}>
             <button
               class="label"
-              title={i === 0 ? 'Основное название' : 'Сделать основным'}
+              title={i === 0 ? t('vault.roles.main') : t('vault.roles.makeMain')}
               disabled={i === 0}
               onclick={() => makeMain(role, name)}>{name}</button
             >
             {#if names.length > 1}
-              <button class="x" title="Убрать" onclick={() => remove(role, name)}><X size={11} /></button>
+              <button class="x" title={t('vault.roles.remove')} onclick={() => remove(role, name)}><X size={11} /></button>
             {/if}
           </span>
         {/each}
         <input
           type="text"
-          placeholder="Добавить…"
+          placeholder={t('vault.roles.add')}
           bind:value={drafts[role]}
           onkeydown={(e) => e.key === 'Enter' && add(role)}
           onblur={() => add(role)}

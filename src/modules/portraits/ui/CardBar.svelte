@@ -1,6 +1,7 @@
 <!-- Под портретом во вкладке «Персонажи»: карточка NPC (статблок, в инициативу) или кнопка её создать.
      Карточка привязана к портрету, если эта картинка — её основной портрет. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { FilePlus, ScrollText, Swords } from '@lucide/svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
@@ -20,14 +21,14 @@
 
 <div class="bar">
   {#if card}
-    <button class="card" title="Открыть статблок" onclick={() => bestiary.show(card.ref)}>
+    <button class="card" title={t('common.openStatblock')} onclick={() => bestiary.show(card.ref)}>
       <ScrollText size={12} />
       <span class="sub">{card.subtitle}</span>
     </button>
-    <button class="icon-btn" title="В инициативу ({SIDE_TITLES[card.side].toLowerCase()})" onclick={fight}><Swords size={13} /></button>
+    <button class="icon-btn" title={t('portraits.toInitiativeSide', { side: SIDE_TITLES[card.side].toLowerCase() })} onclick={fight}><Swords size={13} /></button>
   {:else}
-    <button class="create" title="Статблок, описание и заметки для этого персонажа" onclick={() => bestiary.createFor(path, name)}>
-      <FilePlus size={12} /> Создать карточку
+    <button class="create" title={t('portraits.createCardHint')} onclick={() => bestiary.createFor(path, name)}>
+      <FilePlus size={12} /> {t('portraits.createCard')}
     </button>
   {/if}
 </div>

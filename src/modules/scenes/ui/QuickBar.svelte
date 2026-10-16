@@ -1,6 +1,7 @@
 <!-- Правая панель: сцены одной кнопкой (⌘1…⌘9 — первые девять). «+» — сохранить текущее (сначала имя), двойной
      щелчок по сцене — переименовать. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Plus, X } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -46,12 +47,12 @@
 <div class="scenes">
   {#each list as sc, i (sc.id)}
     {#if editing === sc.id}
-      {@render field('Название сцены')}
+      {@render field(t('scenes.nameField'))}
     {:else}
     <div class="scene" class:live={ms.active === sc.id}>
       <button
         class="main"
-        title={`${sc.name}${i < 9 ? ` (${mod}${i + 1})` : ''} — двойной щелчок: переименовать`}
+        title={t('scenes.renameHint', { name: `${sc.name}${i < 9 ? ` (${mod}${i + 1})` : ''}` })}
         onclick={() => activate(app, sc)}
         ondblclick={() => startRename(sc.id, sc.name)}
       >
@@ -60,16 +61,16 @@
       </button>
       {#if ms.active === sc.id}
         <!-- Экран не меняется: в панели снова подборка приключения (например, чтобы собрать следующую сцену). -->
-        <button class="leave" title="Выйти из сцены: на экране всё остаётся, в панели — подборка приключения" onclick={() => dispatch('scenes', 'markActive', { id: null })}><X size={11} /></button>
+        <button class="leave" title={t('scenes.leave')} onclick={() => dispatch('scenes', 'markActive', { id: null })}><X size={11} /></button>
       {/if}
     </div>
     {/if}
   {/each}
   {#if editing === 'new'}
-    {@render field('Название новой сцены')}
+    {@render field(t('scenes.newNameField'))}
   {:else}
-    <button class="scene add" title="Сохранить то, что на экране, и подборку новой сценой" onclick={startNew}>
-      <Plus size={13} />{#if !list.length}<span class="name">Сохранить текущее</span>{/if}
+    <button class="scene add" title={t('scenes.saveNewHint')} onclick={startNew}>
+      <Plus size={13} />{#if !list.length}<span class="name">{t('scenes.saveCurrent')}</span>{/if}
     </button>
   {/if}
 </div>

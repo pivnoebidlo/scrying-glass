@@ -1,4 +1,5 @@
 // Сцена, открытая в редакторе.
+import { t } from '../../../renderer/lib/i18n.svelte';
 import { currentTray } from '../tray';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import { capture, suggestName } from '../apply';
@@ -11,7 +12,7 @@ export async function createEmpty() {
   const app = store.state;
   const none = { path: null };
   const s = await dispatch('scenes', 'create', {
-    name: `Сцена ${app.scenes.scenes.length + 1}`,
+    name: t('scenes.defaultName', { n: app.scenes.scenes.length + 1 }),
     content: {
       background: { path: null, fit: app.scene.fit },
       map: none,

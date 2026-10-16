@@ -1,6 +1,7 @@
 <!-- Корзина приложения (main/trash.ts): удалённые файлы, карточки, записи и приключения хранилища и библиотеки.
      Вернуть на прежнее место, удалить насовсем, очистить. -->
 <script lang="ts">
+  import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { BookOpen, Dices, File, Folder, FolderOpen, Image, Map, Music, RotateCcw, Skull, Trash2, X } from '@lucide/svelte';
   import type { Component } from 'svelte';
   import { AUDIO_EXT, IMAGE_EXT, thumb } from '../../../shared/vault';
@@ -31,12 +32,12 @@
     if (ext(p) === '.md') return BookOpen;
     return File;
   }
-  const KIND: Record<string, string> = { adventure: 'приключение', card: 'карточка', folder: 'папка' };
+  const KIND: Record<string, () => string> = { adventure: () => t('vault.trash.kind.adventure'), card: () => t('vault.trash.kind.card'), folder: () => t('vault.trash.kind.folder') };
   // Откуда: папка главного пути (у библиотеки — с пометкой).
   function from(it: TrashItem) {
     const p = it.paths[0] ?? '';
     const dir = p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '';
-    if (it.place === 'library') return dir ? `библиотека / ${dir}` : 'библиотека';
+    if (it.place === 'library') return dir ? `${t('vault.trash.library')} / ${dir}` : t('vault.trash.library');
     return dir || vaultName;
   }
   // Миниатюра удалённой картинки — прямо из .trash.
@@ -47,48 +48,47 @@
   const yesterday = new Date(Date.now() - 864e5).toDateString();
   function when(ms: number) {
     const d = new Date(ms);
-    const time = d.toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
-    if (d.toDateString() === today) return `сегодня, ${time}`;
-    if (d.toDateString() === yesterday) return `вчера, ${time}`;
-    return d.toLocaleDateString('ru', { day: 'numeric', month: 'long', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }) + `, ${time}`;
+    const time = d.toLocaleTimeString(locale.lang, { hour: '2-digit', minute: '2-digit' });
+    if (d.toDateString() === today) return t('vault.trash.today', { time });
+    if (d.toDateString() === yesterday) return t('vault.trash.yesterday', { time });
+    return d.toLocaleDateString(locale.lang, { day: 'numeric', month: 'long', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }) + `, ${time}`;
   }
-  const size = (b: number) => (b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} КБ` : `${(b / 1024 / 1024).toFixed(1)} МБ`);
+  const size = (b: number) => (b < 1024 * 1024 ? t('vault.trash.kb', { n: Math.max(1, Math.round(b / 1024)) }) : t('vault.trash.mb', { n: (b / 1024 / 1024).toFixed(1) }));
   const total = $derived([...trash.vault, ...trash.library].reduce((s, it) => s + it.size, 0));
 
   async function restore(it: TrashItem) {
     const res = await window.api.restoreTrash(it.place, it.id);
     if (!res) return;
-    const where = res.path.includes('/') ? res.path.slice(0, res.path.lastIndexOf('/')).replace(/^library:/, 'библиотека / ') : res.path.startsWith('library:') ? 'библиотека' : vaultName;
-    say(res.kind === 'adventure' ? `Приключение «${res.path}» возвращено вместе со сценами и заготовками боёв.` : `«${res.title}» — снова в «${where}».`);
+    const where = res.path.includes('/') ? res.path.slice(0, res.path.lastIndexOf('/')).replace(/^library:/, t('vault.trash.library') + ' / ') : res.path.startsWith('library:') ? t('vault.trash.library') : vaultName;
+    say(res.kind === 'adventure' ? t('vault.trash.adventureBack', { name: res.path }) : t('vault.trash.back', { title: res.title, where }));
   }
 
   const groups = $derived(
     [
-      { place: 'vault' as TrashPlace, title: `Хранилище «${vaultName}»`, items: trash.vault },
-      { place: 'library' as TrashPlace, title: 'Библиотека — общая для всех кампаний', items: trash.library },
+      { place: 'vault' as TrashPlace, title: t('vault.trash.vaultGroup', { name: vaultName }), items: trash.vault },
+      { place: 'library' as TrashPlace, title: t('vault.trash.libraryGroup'), items: trash.library },
     ].filter((g) => g.items.length)
   );
 </script>
 
 <div class="view">
   <header class="toolbar">
-    <h2><Trash2 size={16} /> Корзина</h2>
+    <h2><Trash2 size={16} /> {t('vault.trash.title')}</h2>
     {#if trashCount()}<span class="faint">{trashCount()} · {size(total)}</span>{/if}
     <div class="spacer"></div>
-    <button class="btn" disabled={!trashCount()} onclick={() => window.api.emptyTrash()}><Trash2 size={14} /> Очистить корзину</button>
-    <button class="icon-btn" title="Показать папку корзины хранилища в Finder" onclick={() => window.api.revealTrash('vault')}><FolderOpen size={16} /></button>
-    <button class="icon-btn" title="Закрыть корзину" onclick={() => (ui.trash = false)}><X size={16} /></button>
+    <button class="btn" disabled={!trashCount()} onclick={() => window.api.emptyTrash()}><Trash2 size={14} /> {t('vault.trash.empty')}</button>
+    <button class="icon-btn" title={t('vault.trash.revealHint')} onclick={() => window.api.revealTrash('vault')}><FolderOpen size={16} /></button>
+    <button class="icon-btn" title={t('vault.trash.close')} onclick={() => (ui.trash = false)}><X size={16} /></button>
   </header>
 
   <p class="faint hint">
-    Удалённое в приложении лежит здесь, пока корзину не очистят: в скрытой папке <code>.trash</code> хранилища (или библиотеки — для
-    общих таблиц, записей и карточек). Приключение возвращается вместе со сценами, заготовками боёв и разметкой карт.
+    {t('vault.trash.about')}
     {#if !trash.settings.keep}
-      <strong>Сейчас корзина выключена: удалённое стирается сразу.</strong>
+      <strong>{t('vault.trash.off')}</strong>
     {:else if trash.settings.days}
-      Удалённое стирается насовсем {daysTitle(trash.settings.days).toLowerCase()}.
+      {t('vault.trash.autoPrune', { when: daysTitle(trash.settings.days).toLowerCase() })}
     {/if}
-    Изменить — в настройках, раздел «Файлы».
+    {t('vault.trash.changeIn')}
   </p>
   {#if message}<p class="message">{message}</p>{/if}
 
@@ -104,16 +104,16 @@
             <span class="thumb"><Icon size={16} /></span>
           {/if}
           <div class="info">
-            <div class="title">{it.title}{#if KIND[it.kind]} <span class="faint kind">{KIND[it.kind]}</span>{/if}</div>
+            <div class="title">{it.title}{#if KIND[it.kind]} <span class="faint kind">{KIND[it.kind]?.()}</span>{/if}</div>
             <div class="faint sub">{from(it)} · {when(it.deleted)} · {size(it.size)}</div>
           </div>
-          <button class="btn" title="Вернуть на прежнее место" onclick={() => restore(it)}><RotateCcw size={14} /> Вернуть</button>
-          <button class="icon-btn danger" title="Удалить навсегда" onclick={() => window.api.purgeTrash(it.place, it.id, it.title)}><X size={16} /></button>
+          <button class="btn" title={t('vault.trash.restoreHint')} onclick={() => restore(it)}><RotateCcw size={14} /> {t('vault.trash.restore')}</button>
+          <button class="icon-btn danger" title={t('vault.trash.purge')} onclick={() => window.api.purgeTrash(it.place, it.id, it.title)}><X size={16} /></button>
         </li>
       {/each}
     </ul>
   {:else}
-    <div class="empty faint">Корзина пуста.</div>
+    <div class="empty faint">{t('vault.trash.isEmpty')}</div>
   {/each}
 </div>
 

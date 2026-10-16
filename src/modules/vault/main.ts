@@ -1,5 +1,6 @@
 // Хранилище: какая папка открыта и что в ней лежит. Само открытие, сканирование и наблюдение за
 // изменениями делает ядро (ctx.vault), модуль только даёт окнам к этому доступ.
+import { t } from '../../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { shell, type OpenDialogOptions } from 'electron';
@@ -24,8 +25,8 @@ export default defineModule({
     // Выбрать папку хранилища в диалоге. Подойдёт любая, в том числе пустая.
     async choose(s, _: void, ctx) {
       const res = await openDialog(ctx, {
-        title: 'Выберите папку хранилища',
-        buttonLabel: 'Открыть',
+        title: t('vault.dlg.choose'),
+        buttonLabel: t('vault.dlg.open'),
         properties: ['openDirectory', 'createDirectory'],
       });
       if (res.canceled || !res.filePaths[0]) return s;
@@ -64,10 +65,10 @@ export default defineModule({
       const dir = ctx.vault.resolve(folder);
       if (!dir) return s;
       const res = await openDialog(ctx, {
-        title: 'Добавить файлы в хранилище',
+        title: t('vault.dlg.addFiles'),
         properties: ['openFile', 'multiSelections'],
         filters: [
-          { name: 'Картинки и музыка', extensions: [...IMAGE_EXT, ...AUDIO_EXT].map((e) => e.slice(1)) },
+          { name: t('vault.dlg.imagesAndMusic'), extensions: [...IMAGE_EXT, ...AUDIO_EXT].map((e) => e.slice(1)) },
         ],
       });
       if (res.canceled) return s;
@@ -85,8 +86,8 @@ export default defineModule({
       if (!img) {
         const opts = {
           type: 'info' as const,
-          message: 'В буфере обмена нет картинки',
-          detail: 'Скопируйте картинку (в браузере — «Копировать изображение») или файл картинки в Finder и попробуйте снова.',
+          message: t('vault.dlg.noImage'),
+          detail: t('vault.dlg.noImageDetail'),
         };
         if (ctx.controlWindow) await ctx.dialog.showMessageBox(ctx.controlWindow, opts);
         else await ctx.dialog.showMessageBox(opts);
@@ -106,15 +107,15 @@ export default defineModule({
       // Картинка может быть портретом карточки: сама карточка при этом останется (её удаляют из карточки).
       const owners = [...new Set(listCards().filter((c) => c.ref.scope === 'vault' && files.some((f) => c.images.includes(f.rel))).map((c) => c.name))];
       const ownersNote = owners.length
-        ? `Это портрет карточки ${owners.map((n) => `«${n}»`).join(', ')}: карточка останется, но без этой картинки. Чтобы удалить саму карточку, удалите её в разделе «Карточки».\n\n`
+        ? t('vault.dlg.portraitOf', { cards: owners.map((n) => `«${n}»`).join(', ') })
         : '';
       const words = deleteWords();
-      const what = files.length === 1 ? `«${names[0]}»` : `файлов: ${files.length}`;
+      const what = files.length === 1 ? `«${names[0]}»` : t('vault.dlg.files', { count: files.length });
       const opts = {
         type: 'warning' as const,
-        message: trashSettings().keep ? `Переместить в корзину ${what}?` : `Удалить ${what} насовсем?`,
+        message: trashSettings().keep ? t('vault.dlg.moveToTrash', { what }) : t('vault.dlg.deleteForever', { what }),
         detail: (files.length > 1 ? names.join('\n') + '\n\n' : '') + ownersNote + words.how,
-        buttons: [words.button, 'Отмена'],
+        buttons: [words.button, t('vault.dlg.cancel')],
         defaultId: 0,
         cancelId: 1,
       };

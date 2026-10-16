@@ -2,6 +2,7 @@
      ← — свернуть или к родителю. Выбранная папка приключения (или папка внутри него) сразу открывает это приключение;
      общие папки и корень текущее приключение не меняют. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Library, Trash2 } from '@lucide/svelte';
   import { tick } from 'svelte';
   import type { VaultFolder } from '../../../shared/vault';
@@ -80,16 +81,16 @@
       <TreeNode folder={f} depth={0} {select} />
     {/each}
     {#if hidden}
-      <p class="faint hint" title="Их ролевая система отключена в настройках («Приключения» → «Ролевые системы»)">
-        Скрыто приключений: {hidden} — система отключена
+      <p class="faint hint" title={t('vault.hiddenAdventuresHint')}>
+        {t('vault.hiddenAdventures', { count: hidden })}
       </p>
     {/if}
     {#if ms.tree.folders.length === 0}
-      <p class="faint hint">Папок пока нет. Создайте их в Finder — они появятся здесь сами.</p>
+      <p class="faint hint">{t('vault.noFolders')}</p>
     {/if}
-    <button class="row bin" class:active={ui.trash} title="Удалённые файлы, карточки, записи и приключения" onclick={() => ((ui.trash = true), openTab('vault'))}>
+    <button class="row bin" class:active={ui.trash} title={t('vault.trashHint')} onclick={() => ((ui.trash = true), openTab('vault'))}>
       <Trash2 size={14} />
-      <span class="name">Корзина</span>
+      <span class="name">{t('vault.trash')}</span>
       {#if trashCount()}<span class="faint count">{trashCount()}</span>{/if}
     </button>
   </div>

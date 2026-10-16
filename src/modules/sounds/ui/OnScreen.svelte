@@ -1,6 +1,7 @@
 <!-- Правая панель: звуки под рукой (подборка) — щелчок играет один раз поверх музыки (рычаг — гром), громкость и
      «остановить все». -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { AudioLines, Square, Volume2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
@@ -19,8 +20,8 @@
     const tree = app.vault.tree;
     const own = (tree ? allFiles(tree, 'audio') : [])
       .filter((f) => visibleIn(app.adventures, f.path))
-      .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')), group: 'В хранилище' }));
-    return [...builtin.sfx.map((p) => ({ id: p, title: trackName(p), group: 'Встроенные' })), ...own];
+      .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')), group: t('common.inVault') }));
+    return [...builtin.sfx.map((p) => ({ id: p, title: trackName(p), group: t('common.builtin') })), ...own];
   }
 </script>
 
@@ -32,19 +33,19 @@
   {options}
   caption={trackName}
   iconOf={() => AudioLines}
-  pickTitle="Звуки"
-  hint="Звуки под рукой: дёрнули рычаг — гром. Щелчок играет один раз поверх музыки."
+  pickTitle={t('sounds.pickTitle')}
+  hint={t('sounds.trayHint')}
 />
 
 <div class="row">
   <Volume2 size={14} class="faint" />
   <Slider
     value={sfx.volume ?? ms.volume}
-    title="Громкость звуков"
+    title={t('sounds.volume')}
     oninput={(v) => (sfx.volume = v)}
     onchange={(v) => dispatch('sounds', 'setVolume', { value: v }).then(() => (sfx.volume = null))}
   />
-  <button class="icon-btn" title="Остановить все звуки" disabled={!sfx.playing.length} onclick={() => dispatch('sounds', 'stop')}>
+  <button class="icon-btn" title={t('sounds.stopAll')} disabled={!sfx.playing.length} onclick={() => dispatch('sounds', 'stop')}>
     <Square size={13} />
   </button>
 </div>

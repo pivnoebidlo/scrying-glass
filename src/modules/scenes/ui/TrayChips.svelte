@@ -1,6 +1,7 @@
 <!-- Подборка без картинок (музыка, бои): строки-кнопки. Щелчок включает (что именно — toggle блока), включённое —
      с подсветкой; крестик убирает из подборки. «+» — выбор из списка (options). Пополняется и само (scenes/tray.ts). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Plus, X } from '@lucide/svelte';
   import type { Component, Snippet } from 'svelte';
   import ListPicker, { type PickOption } from '../../../renderer/lib/ListPicker.svelte';
@@ -58,11 +59,11 @@
         <span class="name">{caption(id)}</span>
       </button>
       {@render extra?.(id)}
-      <button class="remove" title="Убрать из подборки" onclick={() => remove(id)}><X size={11} /></button>
+      <button class="remove" title={t('scenes.removeFromTray')} onclick={() => remove(id)}><X size={11} /></button>
     </div>
   {/each}
-  <button class="chip add" title="Добавить в подборку" onclick={() => (picking = true)}>
-    <Plus size={13} />{#if !items.length}<span class="name">Добавить</span>{/if}
+  <button class="chip add" title={t('scenes.addToTray')} onclick={() => (picking = true)}>
+    <Plus size={13} />{#if !items.length}<span class="name">{t('scenes.add')}</span>{/if}
   </button>
 </div>
 {#if !items.length}<div class="faint hint">{hint}</div>{/if}

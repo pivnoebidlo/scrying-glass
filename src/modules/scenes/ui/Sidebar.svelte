@@ -1,5 +1,6 @@
 <!-- Боковая панель: сцены по порядку. Порядок меняется перетаскиванием. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Clapperboard, FilePlus, GripVertical, Play, Plus } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
@@ -43,7 +44,7 @@
         <span class="num faint">{i < 9 ? i + 1 : ''}</span>
         <span class="name">{sc.name}</span>
       </button>
-      <button class="icon-btn play" title="Включить сцену" onclick={() => activate(app, sc)}><Play size={13} /></button>
+      <button class="icon-btn play" title={t('scenes.activate')} onclick={() => activate(app, sc)}><Play size={13} /></button>
     </div>
   {/each}
   {#if list.length}
@@ -57,15 +58,14 @@
     ></div>
   {:else}
     <p class="faint hint">
-      <Clapperboard size={12} /> Сцена — это набор фона, карты, портретов, музыки и атмосферы. Настройте экран игроков и
-      сохраните его сценой, чтобы потом включать одной кнопкой.
+      <Clapperboard size={12} /> {t('scenes.about')}
     </p>
   {/if}
 </div>
 
 <div class="actions">
-  <button class="btn" title="Сцена из того, что сейчас на экране, и подборки" onclick={() => saveCurrent()}><Plus size={14} /> Сохранить текущее</button>
-  <button class="btn" title="Пустая сцена: при включении ничего не меняет, подборку можно накидать потом" onclick={createEmpty}><FilePlus size={14} /> Пустая</button>
+  <button class="btn" title={t('scenes.saveCurrentHint')} onclick={() => saveCurrent()}><Plus size={14} /> {t('scenes.saveCurrent')}</button>
+  <button class="btn" title={t('scenes.emptyHint')} onclick={createEmpty}><FilePlus size={14} /> {t('scenes.empty')}</button>
 </div>
 
 <style>

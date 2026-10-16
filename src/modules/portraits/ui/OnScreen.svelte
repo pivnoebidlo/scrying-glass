@@ -1,6 +1,7 @@
 <!-- Правая панель: портреты под рукой (подборка) — щелчок выводит на экран и убирает, на экране может быть
      несколько; ниже — подписи тех, кто на экране. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Plus, X } from '@lucide/svelte';
   import { currentTray, trayOwner } from '../../scenes/tray';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -27,7 +28,7 @@
   caption={(p) => caption(ms, p)}
   isOn={(p) => ms.onScreen.includes(p)}
   toggle={(path) => dispatch('portraits', 'toggle', { path })}
-  hint="Персонажи под рукой: перетащите сюда портреты из вкладок или добавьте кнопкой."
+  hint={t('portraits.trayHint')}
   showLoose={false}
 />
 
@@ -39,7 +40,7 @@
         <input
           class="name"
           type="text"
-          title="Название на экране игроков. Правка переименовывает карточку, если она есть, иначе файл"
+          title={t('portraits.screenNameHint')}
           value={caption(ms, path)}
           readonly={!canRename(path)}
           onchange={(e) => {
@@ -50,15 +51,15 @@
           onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
         />
         {#if !inTrayNow(path)}
-          <button class="icon-btn" title="Добавить в подборку" onclick={() => addToTray(path)}><Plus size={14} /></button>
+          <button class="icon-btn" title={t('common.addToTray')} onclick={() => addToTray(path)}><Plus size={14} /></button>
         {/if}
-        <button class="icon-btn" title="Убрать с экрана" onclick={() => dispatch('portraits', 'toggle', { path })}>
+        <button class="icon-btn" title={t('common.removeFromScreen')} onclick={() => dispatch('portraits', 'toggle', { path })}>
           <X size={14} />
         </button>
       </li>
     {/each}
   </ul>
-  <button class="btn" onclick={() => dispatch('portraits', 'clearScreen')}>Убрать всех</button>
+  <button class="btn" onclick={() => dispatch('portraits', 'clearScreen')}>{t('portraits.clear')}</button>
 {/if}
 
 <style>

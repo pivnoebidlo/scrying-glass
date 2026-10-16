@@ -1,6 +1,7 @@
 <!-- Название портрета под плиткой: оно же подпись на экране игроков. Правка переименовывает карточку, если она у
      картинки есть, иначе файл (rename.ts). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import NameField from '../../../renderer/lib/NameField.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import { caption } from './cardNames.svelte';
@@ -11,6 +12,6 @@
 
 <NameField
   value={caption(store.state.portraits, path)}
-  title="Переименовать: карточку, если она есть, иначе файл. Это же название видят игроки"
+  title={t('portraits.renameHint')}
   onrename={canRename(path) ? (name) => renamePortrait(path, name) : undefined}
 />

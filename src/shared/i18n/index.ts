@@ -3,11 +3,17 @@
 // The current language is set by the main process (from settings) and by the windows (from the state).
 import { FALLBACK, format, type Lang, type Params } from './core';
 import * as app from './app';
+import * as vault from '../../modules/vault/i18n';
+import * as scenes from '../../modules/scenes/i18n';
+import * as scene from '../../modules/scene/i18n';
+import * as handouts from '../../modules/handouts/i18n';
+import * as portraits from '../../modules/portraits/i18n';
+import * as sounds from '../../modules/sounds/i18n';
 
 export * from './core';
 
-export const en = { ...app.en };
-const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru } };
+export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en };
+const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru } };
 
 export type Key = keyof typeof en;
 

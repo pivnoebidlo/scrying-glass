@@ -1,6 +1,7 @@
 <!-- Правая панель: раздатка под рукой (подборка) — картинки, записки, записи справочника. Щелчок выводит игрокам
      (поверх всего), ещё щелчок — убирает. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Pencil } from '@lucide/svelte';
   import { editNote } from '../../tools/ui/ui.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -31,13 +32,13 @@
   {caption}
   isOn={(p) => ms.current === p}
   {toggle}
-  hint="Записки, улики и записи справочника под рукой: перетащите их сюда или добавьте кнопкой."
+  hint={t('handouts.trayHint')}
 >
   {#if ms.current && isNotePath(ms.current)}
     {@const p = ms.current}
     <div class="row">
       <span class="name" title={p}>{noteTitle(p)}</span>
-      <button class="icon-btn" title="Править записку" onclick={() => editNote(p)}><Pencil size={14} /></button>
+      <button class="icon-btn" title={t('handouts.editNote')} onclick={() => editNote(p)}><Pencil size={14} /></button>
     </div>
   {/if}
 </Tray>

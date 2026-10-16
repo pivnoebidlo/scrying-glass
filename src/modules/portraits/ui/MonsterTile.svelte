@@ -2,6 +2,7 @@
      в инициативу; без «в корзину» — портрет принадлежит карточке), название, «в бой» с количеством и статблок.
      Монстр без портрета — с заглушкой. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ScrollText, Skull, Swords } from '@lucide/svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { store } from '../../../renderer/lib/store.svelte';
@@ -26,15 +27,15 @@
 {#snippet below()}
   <NameField
     value={card.name}
-    title="Переименовать карточку"
+    title={t('portraits.renameCard')}
     onrename={card.ref.scope === 'srd' ? undefined : (name) => bestiary.rename(card.ref, name)}
   />
   <div class="bar">
-    <button class="sub" title="Открыть статблок" onclick={() => bestiary.show(card.ref)}>
+    <button class="sub" title={t('common.openStatblock')} onclick={() => bestiary.show(card.ref)}>
       <ScrollText size={12} /><span>{card.subtitle}</span>
     </button>
-    <input class="count" type="number" min="1" max="20" bind:value={count} title="Сколько добавить в бой" />
-    <button class="icon-btn" title="В инициативу" onclick={fight}><Swords size={13} /></button>
+    <input class="count" type="number" min="1" max="20" bind:value={count} title={t('portraits.howMany')} />
+    <button class="icon-btn" title={t('common.toInitiative')} onclick={fight}><Swords size={13} /></button>
   </div>
 {/snippet}
 
@@ -42,8 +43,8 @@
   <ImageCard path={asset} primary="portrait" trash={false}>{@render below()}</ImageCard>
 {:else}
   <div class="tile">
-    <button class="thumb empty" title="Открыть статблок (портрета нет)" onclick={() => bestiary.show(card.ref)}><Skull size={32} /></button>
-    {#if inFight}<div class="badges"><span class="badge">в бою{inFight > 1 ? ` ×${inFight}` : ''}</span></div>{/if}
+    <button class="thumb empty" title={t('portraits.openNoPortrait')} onclick={() => bestiary.show(card.ref)}><Skull size={32} /></button>
+    {#if inFight}<div class="badges"><span class="badge">{inFight > 1 ? t('badge.inFightN', { count: inFight }) : t('badge.inFight')}</span></div>{/if}
     {@render below()}
   </div>
 {/if}
