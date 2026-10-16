@@ -5,7 +5,8 @@
   import { NOTE_FONTS } from '../../../shared/notes';
   import type { NamePlate } from '../types';
 
-  let { name, plate }: { name: string; plate: NamePlate } = $props();
+  // stretch — подложка во всю ширину (под портретом — по ширине картинки), иначе по размеру имени.
+  let { name, plate, stretch = false }: { name: string; plate: NamePlate; stretch?: boolean } = $props();
 
   // Светлый ли цвет: от этого — цвет текста на ленте и табличке.
   function light(hex: string) {
@@ -20,7 +21,7 @@
   );
 </script>
 
-<div class="wrap {plate.style}">
+<div class="wrap {plate.style}" class:stretch>
   <span class="plate" style:--c={plate.color} style:--ink={ink} style:font-family={family}><span class="text">{name}</span></span>
 </div>
 
@@ -38,9 +39,16 @@
     line-height: 1.2;
     text-align: center;
   }
-  /* Обрезка длинного имени — у текста, чтобы украшения подложки (валики свитка) не срезались. */
+  .stretch .plate {
+    flex: 1;
+  }
+  /* Обрезка длинного имени — у текста, чтобы украшения подложки (валики свитка) не срезались. Поля сверху и
+     снизу — для высоких букв рукописных шрифтов («Небрежный почерк»), которые выходят за строку: без них край
+     блока срезал бы их; отрицательный отступ возвращает высоту строки как была. */
   .text {
     display: block;
+    margin: -0.25em 0;
+    padding: 0.25em 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
