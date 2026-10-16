@@ -6,6 +6,8 @@
   import { onMount } from 'svelte';
   import { caption } from '../library';
   import { connectCardNames } from './cardNames.svelte';
+  import NamePlate from './NamePlate.svelte';
+  import { DEFAULT_PLATE } from '../types';
 
   let { ms }: ModuleProps<'portraits'> = $props();
 
@@ -26,7 +28,7 @@
     <div class="portrait" in:scale={{ start: 0.96, duration: 400 }} out:fade={{ duration: 250 }}>
       <div class="frame"><img src={assetUrl(path)} alt="" /></div>
       {#if ms.showNames && name}
-        <div class="caption">{name}</div>
+        <div class="caption"><NamePlate {name} plate={ms.plate ?? DEFAULT_PLATE} /></div>
       {/if}
     </div>
   {/each}
@@ -65,16 +67,10 @@
     filter: drop-shadow(var(--o) 0 0 #000) drop-shadow(calc(-1 * var(--o)) 0 0 #000) drop-shadow(0 var(--o) 0 #000)
       drop-shadow(0 calc(-1 * var(--o)) 0 #000) drop-shadow(0 0 1cqmin rgba(0, 0, 0, 0.5));
   }
+  /* Вид подписи — NamePlate; здесь только размер (от числа портретов) и место под картинкой. */
   .caption {
     flex: none;
     padding-top: 1cqmin;
-    color: #fff;
-    font-family: Georgia, serif;
     font-size: var(--cap);
-    line-height: 1.2;
-    max-height: 2.4em;
-    overflow: hidden;
-    text-align: center;
-    text-shadow: 0 0 0.5em #000;
   }
 </style>

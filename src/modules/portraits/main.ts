@@ -1,7 +1,8 @@
 // Портреты на экране игроков. Сами картинки лежат в хранилище, здесь только то, что на экране, и подписи.
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { allFiles, isLibraryAsset } from '../../shared/vault';
-import type { PortraitsState } from './types';
+import { DEFAULT_PLATE, PLATE_STYLES, type NamePlate, type PortraitsState } from './types';
+import { NOTE_FONTS } from '../../shared/notes';
 
 // Убирает с экрана картинки, которых больше нет в хранилище. Картинки библиотеки не проверяются: она не
 // часть хранилища, а пропавший файл просто не покажется.
@@ -13,7 +14,7 @@ function prune(s: PortraitsState, ctx: ModuleContext): PortraitsState {
   return onScreen.length === s.onScreen.length ? s : { ...s, onScreen };
 }
 
-const initialState: PortraitsState = { onScreen: [], names: {}, showNames: true };
+const initialState: PortraitsState = { onScreen: [], names: {}, showNames: true, plate: DEFAULT_PLATE };
 
 export default defineModule({
   id: 'portraits',
@@ -48,6 +49,15 @@ export default defineModule({
 
     setShowNames(s, { value }: { value: boolean }) {
       return { ...s, showNames: value };
+    },
+
+    // Вид подписи у игроков; неизвестные значения не принимаются.
+    setPlate(s, plate: Partial<NamePlate>) {
+      const next = { ...s.plate, ...plate };
+      if (!(next.style in PLATE_STYLES)) next.style = s.plate.style;
+      if (!/^#[0-9a-f]{6}$/i.test(next.color)) next.color = s.plate.color;
+      if (next.font && !(next.font in NOTE_FONTS)) next.font = s.plate.font;
+      return { ...s, plate: next };
     },
   },
 });
