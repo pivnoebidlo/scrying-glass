@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { entrySubtitle, keyFrom, parseCustomTypes, parseEntry, serializeEntry, type BuiltinBook } from '../src/shared/compendium';
+import { castingKind, entrySubtitle, keyFrom, NO_SPELL_FILTER, spellFilterOn, spellMatches, type SpellFilter, parseCustomTypes, parseEntry, serializeEntry, type BuiltinBook } from '../src/shared/compendium';
 
 describe('записи справочника', () => {
   it('шапка: строки, числа, да/нет, списки в обоих видах; без шапки — заметка', () => {
@@ -101,5 +101,34 @@ describe('свои типы записей', () => {
     expect(entrySubtitle(e, deity)).toBe('Божество, Хаотично-доброе, Война, Кузня');
     expect(entrySubtitle({ ...e, fields: {} }, deity)).toBe('Божество');
     expect(serializeEntry(e, deity)).toBe('---\ntype: deity\nalignment: Хаотично-доброе\ndomains:\n  - Война\n  - Кузня\nsymbol: Молот\n---\n\nТекст\n');
+  });
+});
+
+describe('фильтр заклинаний', () => {
+  const fireball = { level: 3, school: 'Воплощение', classes: ['Чародей', 'Волшебник'], casting_time: 'Действие' };
+  const shield = { level: 1, school: 'Ограждение', classes: ['Чародей', 'Волшебник'], casting_time: 'Реакция, которую вы совершаете…' };
+  const detect = { level: 1, school: 'Прорицание', classes: 'Бард, Жрец', casting_time: 'Действие', ritual: true, concentration: true };
+
+  it('время накладывания', () => {
+    expect(castingKind('Бонусное действие')).toBe('bonus');
+    expect(castingKind('1 минута')).toBe('long');
+    expect(castingKind('Action')).toBe('action');
+    expect(castingKind(undefined)).toBeNull();
+  });
+
+  it('признаки: внутри — любое, между — все', () => {
+    const f = (p: Partial<SpellFilter>) => ({ ...NO_SPELL_FILTER, ...p });
+    expect(spellMatches(fireball, NO_SPELL_FILTER)).toBe(true);
+    expect(spellMatches(fireball, f({ levels: [1, 3] }))).toBe(true);
+    expect(spellMatches(shield, f({ levels: [3] }))).toBe(false);
+    expect(spellMatches(detect, f({ classes: ['жрец'] }))).toBe(true);
+    expect(spellMatches(fireball, f({ classes: ['Жрец'] }))).toBe(false);
+    expect(spellMatches(shield, f({ times: ['reaction'], schools: ['Ограждение'] }))).toBe(true);
+    expect(spellMatches(fireball, f({ times: ['reaction'] }))).toBe(false);
+    expect(spellMatches(detect, f({ ritual: 'yes', concentration: 'yes' }))).toBe(true);
+    expect(spellMatches(fireball, f({ ritual: 'yes' }))).toBe(false);
+    expect(spellMatches(fireball, f({ concentration: 'no' }))).toBe(true);
+    expect(spellFilterOn(NO_SPELL_FILTER)).toBe(false);
+    expect(spellFilterOn(f({ ritual: 'yes' }))).toBe(true);
   });
 });

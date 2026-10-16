@@ -3,7 +3,8 @@
   import { Plus, Search, Shapes } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
-  import { blankEntry, entrySubtitle, serializeEntry } from '../../../shared/compendium';
+  import { blankEntry, entrySubtitle, levelTitle, serializeEntry, spellMatches } from '../../../shared/compendium';
+  import SpellFilters from './SpellFilters.svelte';
   import { customTypes, typeDef } from '../../../renderer/lib/entry/types.svelte';
   import { LIBRARY } from '../../../shared/vault';
   import { allEntries, book, editionNow, editionsHere, entriesFolder, loadEntries, search, setEdition, srd, srdHere, typesHere, type Edition } from './store.svelte';
@@ -33,7 +34,16 @@
     const ids = [...new Set([...typesHere().map((t) => t.id), ...counts.keys()])];
     return ids.map((id) => ({ id, title: typeDef(id).plural, n: counts.get(id) ?? 0 }));
   });
-  const shown = $derived(search(ui.type === 'all' ? all : all.filter((e) => e.entry.type === ui.type), ui.query));
+  // Заклинания: свой фильтр и порядок по уровням (при поиске — по совпадению, как обычно).
+  const spellsHere = $derived(ui.type === 'spell' ? all.filter((e) => e.entry.type === 'spell') : []);
+  const levelOf = (e: (typeof all)[number]) => Number(e.entry.fields['level'] ?? 99);
+  const shown = $derived.by(() => {
+    if (ui.type !== 'spell') return search(ui.type === 'all' ? all : all.filter((e) => e.entry.type === ui.type), ui.query);
+    const list = search(spellsHere.filter((e) => spellMatches(e.entry.fields, ui.spells)), ui.query);
+    return ui.byLevel && !ui.query.trim() ? [...list].sort((a, b) => levelOf(a) - levelOf(b)) : list;
+  });
+  // Заголовок уровня перед первым заклинанием этого уровня.
+  const headed = $derived(ui.type === 'spell' && ui.byLevel && !ui.query.trim());
 
   // Новая запись: тип и место.
   let creating = $state(false);
@@ -96,9 +106,14 @@
     {/each}
   </div>
 
-  <div class="count faint">{shown.length} из {all.length}</div>
+  {#if ui.type === 'spell'}<SpellFilters spells={spellsHere.map((e) => e.entry.fields)} />{/if}
+
+  <div class="count faint">{shown.length} из {ui.type === 'spell' ? spellsHere.length : all.length}</div>
   <ul class="list">
-    {#each shown.slice(0, 500) as e (e.path)}
+    {#each shown.slice(0, 500) as e, i (e.path)}
+      {#if headed && (i === 0 || levelOf(shown[i - 1]!) !== levelOf(e))}
+        <li class="level">{levelOf(e) === 99 ? 'Без уровня' : levelTitle(levelOf(e))}</li>
+      {/if}
       <li>
         <button data-nav class:active={ui.open === e.path} title={e.path} onclick={() => openEntry(e.path)}>
           <span class="t">{e.entry.title}</span>
@@ -227,5 +242,13 @@
   }
   .empty {
     font-size: 13px;
+  }
+  .level {
+    padding: 8px 8px 2px;
+    color: var(--text-faint);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 </style>

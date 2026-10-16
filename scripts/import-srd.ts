@@ -62,6 +62,9 @@ interface DbBlock {
   attack_bonus?: number;
   damage?: { damage_dice?: string }[];
   usage?: { type: string; times?: number; min_value?: number; rest_types?: string[] };
+  // В базе 2024 у колдовства — список заклинаний отдельно, а в desc только вступление («…casts one of the
+  // following spells…:»).
+  spellcasting?: { spells?: { name: string; notes?: string; usage?: { type?: string; times?: number } }[] };
 }
 
 interface DbMonster {
@@ -110,8 +113,23 @@ function usageText(u: DbBlock['usage']): string | undefined {
   return undefined;
 }
 
+// Списки колдовства 2024, как в книге: «- **At Will:** *Detect Magic*, *Light*», «- **1/Day Each:** *Fly*».
+// Только там, где desc обрывается на двоеточии — в остальных блоках заклинания названы прямо в тексте.
+function spellLines(b: DbBlock): string {
+  const spells = b.spellcasting?.spells ?? [];
+  if (!spells.length || !b.desc.trim().endsWith(':')) return '';
+  const groups = new Map<string, string[]>();
+  const sorted = [...spells].sort((x, y) => (y.usage?.type === 'per day' ? y.usage.times ?? 1 : 99) - (x.usage?.type === 'per day' ? x.usage.times ?? 1 : 99));
+  for (const s of sorted) {
+    const key = s.usage?.type === 'per day' ? `${s.usage.times ?? 1}/Day` : 'At Will';
+    groups.set(key, [...(groups.get(key) ?? []), `*${s.name}*${s.notes ? ` (${s.notes[0]!.toLowerCase()}${s.notes.slice(1)})` : ''}`]);
+  }
+  return [...groups].map(([k, list]) => `- **${k}${k !== 'At Will' && list.length > 1 ? ' Each' : ''}:** ${list.join(', ')}`).join('\n');
+}
+
 function enBlock(b: DbBlock): Block {
-  const out: Block = { name: b.name, text: b.desc.trim() };
+  const lines = spellLines(b);
+  const out: Block = { name: b.name, text: b.desc.trim() + (lines ? '\n\n' + lines : '') };
   const uses = usageText(b.usage);
   if (uses) {
     out.uses = uses;
