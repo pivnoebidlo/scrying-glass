@@ -99,6 +99,9 @@ export interface Api {
   createEntry(folder: string, title: string, text: string): Promise<string | null>;
   renameEntry(path: string, title: string): Promise<string | null>;
   onCompendiumChanged(cb: () => void): void;
+  // Переименовать файл хранилища (картинку, трек): name — без расширения. Ссылки в состоянии и в портретах карточек
+  // поправит ядро. Новый путь или null.
+  renameFile(path: string, name: string): Promise<string | null>;
   // Журнал (shared/journal.ts): Markdown-заметки в папках журнала хранилища. Удаление — действие vault/trash.
   readPage(path: string): Promise<string | null>;
   writePage(path: string, text: string): Promise<boolean>;

@@ -5,6 +5,7 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { findFolder, folderRole } from '../../../shared/vault';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
+  import NameField from '../../../renderer/lib/NameField.svelte';
   import { audioActions } from '../../../renderer/lib/registry';
   import { store } from '../../../renderer/lib/store.svelte';
   import { trackName } from '../../../shared/vault';
@@ -60,13 +61,17 @@
   const cardFolder = $derived(
     !!folder?.path && folder.path.split('/').some((p) => ['bestiary', 'characters', 'party'].includes(folderRole(p) ?? ''))
   );
+  // Имя ввели вместе с расширением (как оно и показано) — расширение ядро допишет само.
+  const withoutExt = (name: string, file: string) => {
+    const ext = file.slice(file.lastIndexOf('.'));
+    return file.includes('.') && name.toLowerCase().endsWith(ext.toLowerCase()) ? name.slice(0, -ext.length) : name;
+  };
   const audio = $derived(folder?.files.filter((f) => f.kind === 'audio') ?? []);
-  // Что делает клик по картинке: в папках персонажей — портрет, в папках карт — карта, в остальных — на весь экран.
+  // Главная кнопка плитки (первая): в папках персонажей — портрет, в папках карт — карта, в остальных — на весь экран.
   const role = $derived(folder ? folderRole(folder.name) : null);
   const primary = $derived(
     role === 'characters' || role === 'party' ? 'portrait' : role === 'maps' ? 'map' : role === 'handouts' ? 'handout' : 'background'
   );
-  const PRIMARY_HINT: Record<string, string> = { portrait: 'портретом', map: 'картой', background: 'на весь экран', handout: 'раздаткой' };
 
   // ⌘V во вкладке «Файлы» — вставить картинку из буфера в открытую папку (если фокус не в поле ввода).
   function onkeydown(e: KeyboardEvent) {
@@ -167,8 +172,8 @@
         <ThumbSize grid="files" />
       </div>
       <p class="faint hint">
-        Нажмите на картинку, чтобы показать её игрокам {PRIMARY_HINT[primary]}. Другие варианты — в
-        кнопках при наведении. Порядок можно менять перетаскиванием.
+        Показать игрокам — кнопками при наведении, двойной щелчок — рассмотреть крупно. Название под плиткой можно
+        поправить — файл переименуется. Порядок меняется перетаскиванием.
       </p>
       <div class="grid" style:--thumb="{thumbs.files}px">
         {#each images as f (f.path)}
@@ -177,7 +182,7 @@
               <NoteCard path={f.path} />
             {:else}
               <ImageCard path={f.path} {primary} aspect={role === 'characters' || role === 'party' || role === 'handouts' ? '3 / 4' : '4 / 3'}>
-                <div class="file-name" title={f.name}>{f.name}</div>
+                <NameField value={f.name} title="Переименовать файл" onrename={(name) => window.api.renameFile(f.path, withoutExt(name, f.name))} />
               </ImageCard>
             {/if}
           </div>
@@ -323,15 +328,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--thumb), 1fr));
     gap: 12px;
-  }
-  .file-name {
-    padding: 6px 8px;
-    border-top: 1px solid var(--border);
-    color: var(--text-muted);
-    font-size: 12px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   .audio {
     margin: 0;

@@ -423,6 +423,12 @@ class Bestiary {
     if (c) await this.writePortraits(ref, [p, ...c.portraits.filter((x) => x !== p)]);
   }
 
+  // Новое название своей карточки (с плитки — без редактора). Файл карточки не переименовывается.
+  async rename(ref: CardRef, name: string) {
+    const c = ref.scope === 'srd' ? null : await window.api.getCard(ref);
+    if (c && name.trim()) await window.api.saveCard(ref.scope, { ...c, name: name.trim() });
+  }
+
   // Удаление спрашивает ядро: заодно предлагает удалить картинки, которые есть только у этой карточки.
   async remove(ref: CardRef) {
     if (!(await window.api.deleteCard(ref))) return;

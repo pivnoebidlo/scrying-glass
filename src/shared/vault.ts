@@ -97,6 +97,26 @@ export function fileKind(name: string): FileKind | null {
 export const basename = (p: string) => p.slice(p.lastIndexOf('/') + 1);
 export const dirname = (p: string) => (p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '');
 
+// Файл переименовали: путь from -> to во всём состоянии (строки целиком и ключи объектов — сцены, подборки,
+// разметка карт, порядок плиток, на экране). Прочие строки (названия, тексты) не трогаются.
+export function renamePath<T>(value: T, from: string, to: string): T {
+  const walk = (v: unknown): unknown => {
+    if (typeof v === 'string') return v === from ? to : v;
+    if (Array.isArray(v)) return v.map(walk);
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k === from ? to : k, walk(x)]));
+    return v;
+  };
+  return walk(value) as T;
+}
+
+// Имя файла из названия, которое ввёл пользователь: без запрещённых символов и пробелов по краям.
+export const safeFileName = (name: string) =>
+  name
+    .replace(/[/\\:*?"<>|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 120);
+
 function extname(name: string) {
   const i = name.lastIndexOf('.');
   return i > 0 ? name.slice(i).toLowerCase() : '';
@@ -145,15 +165,18 @@ export function allFiles(folder: VaultFolder, kind?: FileKind): VaultFile[] {
   return out;
 }
 
-// «Глава 1/characters/староста_гилберт.jpg» -> «Староста Гилберт»
+// «Глава 1/characters/староста_гилберт.jpg» -> «Староста Гилберт». Имя, где уже есть заглавные буквы («Таверна
+// Сытый гусь.png» — так его назвал мастер), остаётся как написано.
 export function prettyName(path: string): string {
   const file = basename(path);
   const i = file.lastIndexOf('.');
-  return (i > 0 ? file.slice(0, i) : file)
+  const name = (i > 0 ? file.slice(0, i) : file)
     .normalize('NFC')
     .replace(/_+/g, ' ')
     .replace(/\s+/g, ' ')
-    .trim()
+    .trim();
+  if (name !== name.toLowerCase()) return name;
+  return name
     .split(' ')
     .map((w) => (w ? w[0]!.toUpperCase() + w.slice(1) : w))
     .join(' ');

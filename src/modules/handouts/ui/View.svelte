@@ -1,5 +1,5 @@
 <!-- Вкладка «Раздатка»: записки, улики и письма из папок handouts / раздатка / улики, сгруппированные по приключениям.
-     Клик по картинке или записке показывает её игрокам поверх всего, повторный — убирает. Записки (сделанные
+     Показать игрокам поверх всего — кнопками на плитке; название под картинкой правится (файл переименуется). Записки (сделанные
      в «Инструментах») лежат в тех же папках и стоят в том же порядке, что и картинки. -->
 <script lang="ts">
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
@@ -11,6 +11,7 @@
   import { noteTitle } from '../../../shared/notes';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
+  import NameField from '../../../renderer/lib/NameField.svelte';
   import PasteButton from '../../../renderer/lib/PasteButton.svelte';
   import { prettyName } from '../../../shared/vault';
   import { imageGroups } from '../../portraits/library';
@@ -82,7 +83,7 @@
                 <NoteCard path={f.path} />
               {:else}
                 <ImageCard path={f.path} primary="handout" aspect="3 / 4">
-                  <div class="caption" title={f.path}>{prettyName(f.path)}</div>
+                  <NameField value={prettyName(f.path)} title="Переименовать файл" onrename={(name) => window.api.renameFile(f.path, name)} />
                 </ImageCard>
               {/if}
             </div>
@@ -146,14 +147,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--thumb), 1fr));
     gap: 12px;
-  }
-  .caption {
-    padding: 6px 8px;
-    border-top: 1px solid var(--border);
-    overflow: hidden;
-    font-size: 12px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   .empty {
     max-width: 460px;

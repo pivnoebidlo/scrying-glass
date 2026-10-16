@@ -1,10 +1,11 @@
 <!-- Вкладка «Фоны»: картинки из папок backgrounds / фоны / локации, сгруппированные по приключениям.
-     Клик по картинке показывает её игрокам на весь экран. -->
+     Показать игрокам — кнопками на плитке; название под картинкой правится (файл переименуется). -->
 <script lang="ts">
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Search } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
+  import NameField from '../../../renderer/lib/NameField.svelte';
   import PasteButton from '../../../renderer/lib/PasteButton.svelte';
   import { prettyName } from '../../../shared/vault';
   import { imageGroups } from '../../portraits/library';
@@ -65,7 +66,7 @@
           {#each g.items as f (f.path)}
             <div use:sortable={{ group: g.key, id: f.path, ids: g.items.map((x) => x.path), disabled: !!ui.search.trim(), file: f.path }}>
               <ImageCard path={f.path} primary="background" aspect="16 / 9">
-                <div class="caption" title={f.path}>{prettyName(f.path)}</div>
+                <NameField value={prettyName(f.path)} title="Переименовать файл" onrename={(name) => window.api.renameFile(f.path, name)} />
               </ImageCard>
             </div>
           {/each}
@@ -128,14 +129,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--thumb), 1fr));
     gap: 12px;
-  }
-  .caption {
-    padding: 6px 8px;
-    border-top: 1px solid var(--border);
-    overflow: hidden;
-    font-size: 12px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   .empty {
     max-width: 460px;

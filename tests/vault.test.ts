@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { assetUrl, folderRole, prettyName, roleFolders, roleNames, setRoleNames, thumb } from '../src/shared/vault';
+import { assetUrl, folderRole, prettyName, renamePath, roleFolders, roleNames, safeFileName, setRoleNames, thumb } from '../src/shared/vault';
 import { missingFolders, placeTitle, visibleIn, type AdventuresState } from '../src/shared/adventures';
 import { tree } from './helpers';
 
@@ -40,6 +40,7 @@ describe('адреса картинок', () => {
 
   it('подпись картинки по имени файла', () => {
     expect(prettyName('Глава 1/characters/староста_гилберт.jpg')).toBe('Староста Гилберт');
+    expect(prettyName('backgrounds/Таверна Сытый гусь.png')).toBe('Таверна Сытый гусь');
   });
 });
 
@@ -58,5 +59,30 @@ describe('приключения', () => {
     expect(placeTitle(adv, 'Страд', 'V')).toBe('Страд');
     expect(placeTitle(adv, 'maps', 'V')).toBe('Общее / maps');
     expect(placeTitle({ ...adv, current: null }, '', 'V')).toBe('V');
+  });
+});
+
+describe('переименование файла', () => {
+  it('путь меняется в строках и ключах целиком, похожие строки не трогаются', () => {
+    const state = {
+      onScreen: ['a/фон.png', 'a/фон.png.bak'],
+      maps: { 'a/фон.png': { fog: [] }, 'a/другая.png': {} },
+      groups: { a: ['a/фон.png', 'a/x.png'] },
+      name: 'a/фон.png — подпись',
+      n: 3,
+      none: null,
+    };
+    expect(renamePath(state, 'a/фон.png', 'a/Таверна.png')).toEqual({
+      onScreen: ['a/Таверна.png', 'a/фон.png.bak'],
+      maps: { 'a/Таверна.png': { fog: [] }, 'a/другая.png': {} },
+      groups: { a: ['a/Таверна.png', 'a/x.png'] },
+      name: 'a/фон.png — подпись',
+      n: 3,
+      none: null,
+    });
+  });
+
+  it('имя файла из введённого названия', () => {
+    expect(safeFileName('  Таверна: «Гусь» / ночь?  ')).toBe('Таверна «Гусь» ночь');
   });
 });

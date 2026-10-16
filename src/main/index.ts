@@ -5,14 +5,14 @@ import * as fs from 'node:fs';
 import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
-import { allFiles, LIBRARY, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
+import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
 import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
 import { BACKUP_EXT, backupSizes, placeFiles, readBackup, writeBackup } from './archive';
 import { randomUUID } from 'node:crypto';
 import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
-import { clipboardImage, isDir, readJson, writeJsonAtomic } from './files';
+import { clipboardImage, freeName, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { systemFor } from '../shared/adventures';
 import { setSystemsOff } from '../systems';
@@ -27,7 +27,7 @@ import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
 import { pages } from './journal';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, readLss, updateFromLss, lssSpellTable, importLssSpells, clearLssSpells, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, readLss, updateFromLss, lssSpellTable, importLssSpells, clearLssSpells, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
@@ -371,6 +371,27 @@ ipcMain.handle('compendium:rename', async (_event, { path: rel, title }: { path:
     await afterEntryWrite(next);
   }
   return next;
+});
+
+// Переименовать файл хранилища (картинку, трек) по команде пользователя. Ссылки на него поправляются сразу и
+// синхронно — в состоянии всех модулей и в портретах карточек, — до того как наблюдатель увидит пропажу старого
+// файла (иначе onTreeChange успел бы убрать его с экрана и из сцен). Новый путь или null.
+ipcMain.handle('vault:rename', (_event, { path: rel, name }: { path: string; name: string }) => {
+  const abs = resolveInVault(rel);
+  const base = safeFileName(name);
+  if (!abs || !base || !fs.existsSync(abs) || !fs.statSync(abs).isFile()) return null;
+  const dir = path.dirname(abs);
+  const ext = path.extname(abs);
+  // Только регистр букв: на macOS это тот же файл, свободное имя искать не нужно.
+  const file = (base + ext).toLowerCase() === path.basename(abs).toLowerCase() ? base + ext : freeName(dir, base + ext);
+  if (file === path.basename(abs)) return rel;
+  fs.renameSync(abs, path.join(dir, file));
+  const to = dirname(rel) ? `${dirname(rel)}/${file}` : file;
+  for (const mod of Object.values(modules)) stateById[mod.id] = renamePath(stateById[mod.id], rel, to);
+  saveVault();
+  renameVaultImage(rel, to);
+  rescanVault();
+  return to;
 });
 
 // Журнал: заметки в папках журнала хранилища. Переименование и перенос — ещё и закреплённая заметка (journal/move).

@@ -9,6 +9,7 @@
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import { addToInitiative } from '../../bestiary/ui/combat';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
+  import NameField from '../../../renderer/lib/NameField.svelte';
 
   let { card }: { card: CardSummary } = $props();
 
@@ -23,7 +24,11 @@
 </script>
 
 {#snippet below()}
-  <div class="name" title={card.name}>{card.name}</div>
+  <NameField
+    value={card.name}
+    title="Переименовать карточку"
+    onrename={card.ref.scope === 'srd' ? undefined : (name) => bestiary.rename(card.ref, name)}
+  />
   <div class="bar">
     <button class="sub" title="Открыть статблок" onclick={() => bestiary.show(card.ref)}>
       <ScrollText size={12} /><span>{card.subtitle}</span>
@@ -83,14 +88,6 @@
     background: var(--accent);
     color: #fff;
     font-size: 11px;
-  }
-  .name {
-    padding: 6px 8px 0;
-    overflow: hidden;
-    font-size: 12px;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   .bar {
     display: flex;

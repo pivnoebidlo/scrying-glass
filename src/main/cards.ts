@@ -385,6 +385,21 @@ function reload(scope: CardScope) {
   else if (scope === 'vault') loadVault();
 }
 
+// Картинку хранилища переименовали: поправить портреты своих карточек хранилища, где она есть.
+export function renameVaultImage(from: string, to: string) {
+  let touched = false;
+  for (const [key, file] of files) {
+    const card = cards.get(key);
+    if (!key.startsWith('vault:') || !card?.portraits.includes(from)) continue;
+    writeJsonAtomic(file, { ...card, portraits: card.portraits.map((p) => (p === from ? to : p)), format: 1 });
+    touched = true;
+  }
+  if (touched) {
+    reload('vault');
+    changed();
+  }
+}
+
 // Сохраняет карточку. Уже существующая (id есть в этом месте) пишется в свой файл, новая — в папку folder
 // (для хранилища; папка создаётся, если её нет). Возвращает ссылку на карточку.
 export function saveCard(scope: CardScope, card: Card, folder?: string): CardRef {

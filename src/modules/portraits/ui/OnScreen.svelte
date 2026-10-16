@@ -7,7 +7,8 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { assetUrl, thumb } from '../../../shared/vault';
   import { onMount } from 'svelte';
-  import { autoCaption, connectCardNames } from './cardNames.svelte';
+  import { caption, connectCardNames } from './cardNames.svelte';
+  import { canRename, renamePortrait } from './rename';
   import Tray from '../../scenes/ui/Tray.svelte';
 
   let { ms, app }: ModuleProps<'portraits'> = $props();
@@ -23,7 +24,7 @@
   {app}
   part="portraits"
   prefer="characters"
-  caption={(p) => ms.names[p] ?? autoCaption(p)}
+  caption={(p) => caption(ms, p)}
   isOn={(p) => ms.onScreen.includes(p)}
   toggle={(path) => dispatch('portraits', 'toggle', { path })}
   hint="Персонажи под рукой: перетащите сюда портреты из вкладок или добавьте кнопкой."
@@ -38,10 +39,14 @@
         <input
           class="name"
           type="text"
-          title="Подпись на экране игроков. Оставьте пустым — будет название карточки или имя файла"
-          placeholder={autoCaption(path)}
-          value={ms.names[path] ?? ''}
-          onchange={(e) => dispatch('portraits', 'rename', { path, name: e.currentTarget.value })}
+          title="Название на экране игроков. Правка переименовывает карточку, если она есть, иначе файл"
+          value={caption(ms, path)}
+          readonly={!canRename(path)}
+          onchange={(e) => {
+            const name = e.currentTarget.value.trim();
+            if (name && name !== caption(ms, path)) renamePortrait(path, name);
+            else e.currentTarget.value = caption(ms, path);
+          }}
           onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
         />
         {#if !inTrayNow(path)}
@@ -81,9 +86,6 @@
     border: 1px solid transparent;
     background: transparent;
     text-overflow: ellipsis;
-  }
-  .name::placeholder {
-    color: var(--text-normal);
   }
   .name:hover {
     border-color: var(--border);

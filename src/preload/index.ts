@@ -46,6 +46,7 @@ const api: Api = {
   createEntry: (folder, title, text) => ipcRenderer.invoke('compendium:create', { folder, title, text }),
   renameEntry: (path, title) => ipcRenderer.invoke('compendium:rename', { path, title }),
   onCompendiumChanged: (cb) => { ipcRenderer.on('compendium:changed', () => cb()); },
+  renameFile: (path, name) => ipcRenderer.invoke('vault:rename', { path, name }),
   readPage: (path) => ipcRenderer.invoke('journal:read', path),
   writePage: (path, text) => ipcRenderer.invoke('journal:write', { path, text }),
   createPage: (folder, title, text) => ipcRenderer.invoke('journal:create', { folder, title, text }),

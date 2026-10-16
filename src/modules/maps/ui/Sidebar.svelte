@@ -1,4 +1,4 @@
-<!-- Боковая панель: карты, сгруппированные по месту в хранилище. -->
+<!-- Боковая панель: карты, сгруппированные по месту в хранилище. Двойной щелчок по названию — переименовать файл. -->
 <script lang="ts">
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Eye, Map, Trash2 } from '@lucide/svelte';
@@ -17,6 +17,15 @@
     ui.selected = path;
     openTab('maps');
   }
+
+  // Переименование: какая карта сейчас правится (поле вместо названия).
+  let renaming = $state<string | null>(null);
+  async function rename(path: string, name: string) {
+    renaming = null;
+    if (!name.trim() || name.trim() === mapName(path)) return;
+    const next = await window.api.renameFile(path, name);
+    if (next && ui.selected === path) ui.selected = next;
+  }
 </script>
 
 <div class="list">
@@ -27,10 +36,29 @@
     {#each g.items as p (p)}
       <!-- Перетаскивается в подборку правой панели. -->
       <div class="item" class:active={ui.selected === p} class:shown={ms.current === p} use:sortable={{ group: '', id: p, ids: [], disabled: true, file: p }}>
-        <button class="main" title={p} onclick={() => select(p)}>
-          <Map size={14} />
-          <span class="name">{mapName(p)}</span>
-        </button>
+        {#if renaming === p}
+          <!-- svelte-ignore a11y_autofocus -->
+          <input
+            class="rename"
+            type="text"
+            value={mapName(p)}
+            autofocus
+            onfocus={(e) => e.currentTarget.select()}
+            onblur={(e) => rename(p, e.currentTarget.value)}
+            onkeydown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur();
+              else if (e.key === 'Escape') {
+                e.currentTarget.value = mapName(p);
+                renaming = null;
+              }
+            }}
+          />
+        {:else}
+          <button class="main" title="{p}. Двойной щелчок — переименовать" onclick={() => select(p)} ondblclick={() => (renaming = p)}>
+            <Map size={14} />
+            <span class="name">{mapName(p)}</span>
+          </button>
+        {/if}
         <button
           class="icon-btn show"
           class:active={ms.current === p}
@@ -105,6 +133,12 @@
   }
   .item.shown .main {
     color: var(--accent);
+  }
+  .rename {
+    flex: 1;
+    min-width: 0;
+    margin: 2px 4px;
+    padding: 3px 6px;
   }
   .name {
     flex: 1;
