@@ -28,6 +28,9 @@ let spells = new Map<string, string>();
 let pattern: RegExp | null = null;
 const listeners = new Set<() => void>();
 
+// Все известные названия заклинаний (подсказки в редакторе статблока).
+export const knownSpells = () => [...spells.values()].sort((a, b) => a.localeCompare(b, 'ru'));
+
 export function setSpellIndex(names: string[]) {
   const next = new Map<string, string>();
   for (const n of names) if (n.trim().length > 2) next.set(searchKey(n.trim()), n.trim());

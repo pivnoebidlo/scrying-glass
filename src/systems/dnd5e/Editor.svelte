@@ -3,12 +3,13 @@
   import { Calculator, Plus, X } from '@lucide/svelte';
   import BlockList from './BlockList.svelte';
   import TermList from './TermList.svelte';
+  import SpellEditor from './SpellEditor.svelte';
   import {
     ABILITIES, CRS, SENSES, SIZES, SKILL_ABILITY, SPEEDS, averageHp, crText, dict, mod, pbFor, signed, xpFor,
     type Ability, type Dnd5eStats, type SenseKind, type SpeedKind,
   } from './stats';
 
-  let { stats = $bindable() }: { stats: Dnd5eStats; system: string } = $props();
+  let { stats = $bindable(), system, lang = 'ru' }: { stats: Dnd5eStats; system: string; lang?: string } = $props();
 
   // Интерфейс редактора по-русски, независимо от языка карточки.
   const t = dict('ru');
@@ -220,6 +221,11 @@
     <label class="field small"><span>Опыт</span><input type="number" bind:value={stats.xp} /></label>
     <label class="field small"><span>Бонус мастерства</span><input type="number" bind:value={stats.pb} /></label>
   </div>
+</section>
+
+<section>
+  <h4>Колдовство</h4>
+  <SpellEditor bind:stats {system} {lang} />
 </section>
 
 <section>

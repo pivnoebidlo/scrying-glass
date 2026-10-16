@@ -5,6 +5,7 @@
   import { spellLinks } from '../../renderer/lib/entry/links';
   import { Dices } from '@lucide/svelte';
   import { modeOf, rolls, ROLL_HINT } from '../../renderer/lib/rolls.svelte';
+  import { spellBlock } from './spells';
   import { ABILITIES, crText, dict, initiativeOf, mod, signed, sizeText, type Block, type Dnd5eStats, type SpeedKind } from './stats';
 
   let { card }: { card: Card<Dnd5eStats> } = $props();
@@ -44,10 +45,13 @@
       .join('; ')
   );
 
+  // Колдовство — последним в особенностях или действиях, как в SRD.
+  const spells = $derived(s.spellcasting ? spellBlock(s, s.spellcasting, card.lang, card.system) : null);
+  const withSpells = (blocks: Block[], where: 'traits' | 'actions') => (spells && s.spellcasting?.where === where ? [...blocks, spells] : blocks);
   const sections = $derived(
     [
-      { title: t.traits, blocks: s.traits, intro: '' },
-      { title: t.actions, blocks: s.actions, intro: '' },
+      { title: t.traits, blocks: withSpells(s.traits, 'traits'), intro: '' },
+      { title: t.actions, blocks: withSpells(s.actions, 'actions'), intro: '' },
       { title: t.bonusActions, blocks: s.bonusActions, intro: '' },
       { title: t.reactions, blocks: s.reactions, intro: '' },
       { title: t.legendary, blocks: s.legendary?.actions ?? [], intro: s.legendary?.intro ?? '' },

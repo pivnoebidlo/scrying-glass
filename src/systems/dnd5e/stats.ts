@@ -2,6 +2,7 @@
 // Числа хранятся числами, названия из справочников — ключами ('stealth', 'fire', 'poisoned'),
 // подписи подставляются по языку карточки. Неизвестное значение показывается как есть.
 import type { CombatStats } from '../../shared/cards';
+import type { Spellcasting } from './spells';
 
 export const SYSTEMS = ['dnd5e-2014', 'dnd5e-2024'] as const;
 export type Dnd5eSystem = (typeof SYSTEMS)[number];
@@ -53,6 +54,8 @@ export interface Dnd5eStats {
   bonusActions: Block[];
   reactions: Block[];
   legendary?: { intro: string; actions: Block[] };
+  // Колдовство (spells.ts): показывается особенностью или действием.
+  spellcasting?: Spellcasting;
 }
 
 // ---------- Расчёты ----------

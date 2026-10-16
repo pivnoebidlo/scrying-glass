@@ -235,7 +235,7 @@
         ></textarea>
       </section>
 
-      <Editor bind:stats={card.stats} system={card.system} />
+      <Editor bind:stats={card.stats} system={card.system} lang={card.lang} />
 
       <section>
         <h4>Заметки мастера</h4>

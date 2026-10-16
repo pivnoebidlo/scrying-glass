@@ -17,7 +17,8 @@ import type { Combatant } from '../modules/initiative/types';
 import { familyOf } from '.';
 
 type StatsView = Component<{ card: Card<any> }>;
-type StatsEditor = Component<{ stats: any; system: string }, {}, 'stats'>;
+// lang — язык карточки (подписи, которые попадут в статблок, например название колдовства).
+type StatsEditor = Component<{ stats: any; system: string; lang?: string }, {}, 'stats'>;
 
 const views: Record<string, StatsView> = {
   'dnd5e-2014': Dnd5eStatBlock,
