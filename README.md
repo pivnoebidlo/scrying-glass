@@ -240,6 +240,14 @@ unpinned" keeps the pinned ones); "To journal" saves the tavern as a note of the
 as a read-aloud quote, rumors as tasks to tick off), "Copy" — the same text. Names come from the name generator's
 lists, including your own.
 
+**Telegram**: pictures, notes, compendium entries and messages can go to the players through your own bot. Create a
+bot with @BotFather (/newbot) and paste its token into ⌘, → Telegram (the token stays on this computer, encrypted; the
+app talks to Telegram directly, with no server of its own). Players write /start to the bot; for the group chat, add the
+bot to the group — chats appear in the settings turned off: turn on only your own and label whose player each one is.
+To send: the "Telegram" button on a picture tile, the paper-plane button of a note (sent as a picture, as the players
+see it) and of a compendium entry (as text), Tools → Message to the players — your own text. The send dialog asks
+whom: the group chat and/or players privately.
+
 **Timer** (Tools → Timer): an hourglass or digits on the player screen — top right, bottom right or large in the
 center, with a caption ("While the torch burns"). Presets from 30 seconds to 30 minutes or your own time. When time
 runs out, the timer flashes "Time's up!" and the GM hears a chime (on the music output device). Pause, ±1 minute,

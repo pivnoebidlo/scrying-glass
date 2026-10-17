@@ -280,6 +280,13 @@ Electron-приложение для мастера D&D: окно управле
   для приложения; по-русски черты и секреты — в настоящем времени, чтобы подходили любому полу; прилагательные
   названия — по родам), Markdown для журнала — `markdown.ts`, окно — `store.svelte.ts` (таверна и закреплённое —
   localStorage окна), имена — `fullBook` из генератора имён.
+  Telegram — модуль `modules/telegram` (без состояния): ядро `main/telegram.ts` (свой бот мастера, Bot API напрямую;
+  токен — `settings.telegram`, шифруется `safeStorage`; опрос `getUpdates` узнаёт чаты — /start игрока, бот в группе;
+  новый чат выключен, включает мастер; отправка — `sendPhoto` / `sendDocument` больше 10 МБ / `sendMessage` HTML),
+  IPC `telegram:*` (снимок части окна — `capturePage`: записка картинкой), чистые функции — `shared/telegram.ts`
+  (`markdownToTelegram`, `splitMessage`, `entryToTelegram`). Окно: `ui/tg.svelte.ts` (`sendToTelegram(job)`),
+  `SendDialog.svelte` (фон модуля), `Settings.svelte`, `Compose.svelte` (страница в «Инструментах»); кнопка на
+  картинках — `imageActions` с `visible` (новое поле `FileAction`); открыть раздел настроек — `openSettings` из nav.ts.
   Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Chime` —
   сигнал WebAudio на устройство вывода музыки); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
   окна только пересчитывают остаток по `setInterval`. Страница в «Инструментах» — `timer/ui/TimerTool.svelte`.

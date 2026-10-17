@@ -15,6 +15,7 @@
   import PointBuy from '../pointbuy/PointBuy.svelte';
   import NameGenerator from '../names/NameGenerator.svelte';
   import TavernGenerator from '../tavern/TavernGenerator.svelte';
+  import TelegramCompose from '../../telegram/ui/Compose.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
   import { isDnd } from '../../../systems';
@@ -39,6 +40,8 @@
   <NameGenerator />
 {:else if ui.tool === 'tavern'}
   <TavernGenerator />
+{:else if ui.tool === 'telegram'}
+  <TelegramCompose />
 {:else if ui.tool === 'difficulty' && dnd}
   <Calculator />
 {:else if ui.tool === 'timer'}

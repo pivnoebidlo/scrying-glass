@@ -44,7 +44,7 @@
     <div class="bar" onclick={(e) => e.stopPropagation()}>
       <span class="name" title={path}>{name}</span>
       {#if lightbox.items.length > 1}<span class="count">{lightbox.index + 1} / {lightbox.items.length}</span>{/if}
-      {#each imageActions as a (a.id)}
+      {#each imageActions.filter((a) => a.visible?.(app, path) ?? true) as a (a.id)}
         {@const on = a.active(app, path)}
         <button class="btn" class:primary={on} onclick={() => a.toggle(app, path)}>
           <a.icon size={14} />

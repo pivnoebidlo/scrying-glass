@@ -19,5 +19,6 @@ import compendium from './compendium/main';
 import fate from './fate/main';
 import sounds from './sounds/main';
 import journal from './journal/main';
+import telegram from './telegram/main';
 
-export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary, order, tools, timer, backup, compendium, fate, sounds, journal] as const;
+export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary, order, tools, timer, backup, compendium, fate, sounds, journal, telegram] as const;

@@ -53,6 +53,8 @@ export interface FileAction {
   icon: Component;
   active(app: AppState, path: string): boolean;
   toggle(app: AppState, path: string): void;
+  // Shown only when this is true (for example, Telegram — once a bot is set up). No function — always.
+  visible?(app: AppState, path: string): boolean;
 }
 
 export const badgeOf = (a: FileAction, app: AppState, path: string) => (typeof a.badge === 'string' ? a.badge : a.badge(app, path));

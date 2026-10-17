@@ -35,6 +35,7 @@ import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { importNameLists, listNameLists, namesDir } from './names';
 import { checkForUpdates } from './updates';
+import { forgetChat, initTelegram, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
@@ -73,6 +74,8 @@ interface AppSettings {
   language?: LangSetting;
   // Update check on launch (shared/updates.ts); no field — on.
   updates?: UpdateSettings;
+  // The GM's Telegram bot (main/telegram.ts): the token (encrypted) and the chats it knows.
+  telegram?: TgSettings;
 }
 const RECENT_MAX = 10;
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -495,6 +498,7 @@ function snapshotNow(reason: Reason, force = false) {
 setInterval(() => vaultRoot && snapshotNow('auto'), 30 * 60 * 1000);
 app.on('before-quit', () => {
   if (vaultRoot) snapshotNow('quit');
+  stopTelegram();
 });
 
 ipcMain.handle('backups:list', () => listSnapshots(backupsDir()));
@@ -1207,6 +1211,26 @@ ipcMain.handle('files:saveText', async (_event, { name, text }: { name: string; 
     return false;
   }
 });
+// Telegram: the bot's status and chats, the token, chats on/off and labels; sending text, a picture of the vault or
+// library, or a capture of a part of the control window (a note as the players see it).
+ipcMain.handle('telegram:status', () => tgStatus());
+ipcMain.handle('telegram:setToken', (_event, token: string | null) => setToken(token));
+ipcMain.handle('telegram:updateChat', (_event, { id, patch }: { id: number; patch: { enabled?: boolean; label?: string } }) => updateChat(id, patch));
+ipcMain.handle('telegram:forgetChat', (_event, id: number) => forgetChat(id));
+ipcMain.handle('telegram:sendText', (_event, { chats, html }: { chats: number[]; html: string }) => sendText(chats, html));
+ipcMain.handle('telegram:sendFile', (_event, { chats, path: rel, caption }: { chats: number[]; path: string; caption?: string }) => {
+  const file = rel.startsWith(LIBRARY) ? resolveInLibrary(rel.slice(LIBRARY.length)) : resolveInVault(rel);
+  if (!file || !fs.existsSync(file)) return { sent: 0, errors: [rel] };
+  return sendPicture(chats, { file }, caption);
+});
+ipcMain.handle('telegram:sendCapture', async (_event, { chats, rect, caption, name }: { chats: number[]; rect: Electron.Rectangle; caption?: string; name: string }) => {
+  const win = getControlWindow();
+  if (!win) return { sent: 0, errors: ['no window'] };
+  const r = { x: Math.max(0, Math.floor(rect.x)), y: Math.max(0, Math.floor(rect.y)), width: Math.ceil(rect.width), height: Math.ceil(rect.height) };
+  const png = (await win.webContents.capturePage(r)).toPNG();
+  return sendPicture(chats, { png, name }, caption);
+});
+
 // Updates: the setting, a check on demand, opening the release page (only the app's own releases).
 const updateSettings = (): UpdateSettings => ({ check: true, ...settings.updates });
 ipcMain.handle('updates:settings', () => updateSettings());
@@ -1288,6 +1312,14 @@ app.whenReady().then(async () => {
 
   // Последнее открытое хранилище открывается само; если его нет, окно покажет выбор хранилища.
   if (settings.vault && isDir(settings.vault)) await enqueue('vault', () => openVault(settings.vault));
+  initTelegram({
+    get: () => settings.telegram ?? {},
+    save: (next) => {
+      settings = { ...settings, telegram: next };
+      writeJsonAtomic(settingsFile(), settings);
+    },
+    changed: () => getControlWindow()?.webContents.send('telegram:changed'),
+  });
   // A little later: the window is up and the vault opened, the check doesn't slow the start.
   setTimeout(() => void checkUpdatesOnLaunch(), 5000);
 });

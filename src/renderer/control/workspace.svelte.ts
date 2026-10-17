@@ -111,7 +111,14 @@ class Workspace {
 }
 
 export const workspace = new Workspace();
-provideNav({ openTab: (id) => workspace.openTab(id), display: () => workspace.display });
+provideNav({
+  openTab: (id) => workspace.openTab(id),
+  display: () => workspace.display,
+  openSettings: (section) => {
+    workspace.settingsSection = section;
+    workspace.settingsOpen = true;
+  },
+});
 
 $effect.root(() => {
   $effect(() => workspace.save());

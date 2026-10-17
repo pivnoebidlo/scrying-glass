@@ -6,6 +6,7 @@ import type { Note } from './notes';
 import type { TrashItem, TrashKind, TrashPlace, TrashSettings } from './trash';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 import type { UpdateInfo, UpdateSettings } from './updates';
+import type { TgChat, TgStatus } from './telegram';
 
 // A built-in table to put into the library: id — the same in every language, names — its titles in all languages.
 export interface BuiltinTable {
@@ -142,6 +143,16 @@ export interface Api {
   appVersion(): Promise<string>;
   openRelease(url: string): Promise<void>;
   onUpdateAvailable(cb: (info: UpdateInfo) => void): void;
+  // Telegram (main/telegram.ts): status and chats, token, a chat on/off and its label; sending — text (Telegram HTML),
+  // a picture of the vault or library, a capture of a part of this window (in CSS pixels). Result: sent, errors.
+  telegramStatus(): Promise<TgStatus>;
+  setTelegramToken(token: string | null): Promise<TgStatus>;
+  updateTelegramChat(id: number, patch: Partial<Pick<TgChat, 'enabled' | 'label'>>): Promise<TgStatus>;
+  forgetTelegramChat(id: number): Promise<TgStatus>;
+  telegramSendText(chats: number[], html: string): Promise<{ sent: number; errors: string[] }>;
+  telegramSendFile(chats: number[], path: string, caption?: string): Promise<{ sent: number; errors: string[] }>;
+  telegramSendCapture(chats: number[], rect: { x: number; y: number; width: number; height: number }, name: string, caption?: string): Promise<{ sent: number; errors: string[] }>;
+  onTelegramChanged(cb: () => void): void;
   writeTable(path: string, text: string): Promise<boolean>;
   createTable(folder: string, title: string, text: string): Promise<string | null>;
   // Полная резервная копия одним файлом (.sgbackup, main/archive.ts): сколько весят библиотека и папка хранилища,

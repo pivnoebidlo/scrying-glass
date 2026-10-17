@@ -22,7 +22,7 @@
 
   const app = $derived(store.state);
   // Главное действие — первым в столбике кнопок.
-  const actions = $derived([...imageActions].sort((a, b) => Number(b.id === primary) - Number(a.id === primary)));
+  const actions = $derived([...imageActions].filter((a) => a.visible?.(app, path) ?? true).sort((a, b) => Number(b.id === primary) - Number(a.id === primary)));
   const active = $derived(imageActions.filter((a) => a.active(app, path)));
 </script>
 

@@ -2,7 +2,9 @@
      ничего не открыто — подсказка. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { ChevronLeft, ExternalLink, Eye, EyeOff, Pencil, RotateCcw, Trash2 } from '@lucide/svelte';
+  import { ChevronLeft, ExternalLink, Eye, EyeOff, Pencil, RotateCcw, Send, Trash2 } from '@lucide/svelte';
+  import { entryToTelegram } from '../../../shared/telegram';
+  import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
   import { forPlayers, typeDef } from '../../../renderer/lib/entry/types.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -96,6 +98,9 @@
       <button class="btn" class:primary={!shown} onclick={() => dispatch('handouts', 'toggleEntry', { path: item.path, entry: forPlayers($state.snapshot(item.entry) as Entry) })}>
         {#if shown}<EyeOff size={14} /> {t('cmpui.removeFromPlayers')}{:else}<Eye size={14} /> {t('cmpui.showToPlayers')}{/if}
       </button>
+      {#if tgReady()}
+        <button class="icon-btn" title={t('tg.entryHint')} onclick={() => sendToTelegram({ kind: 'text', title: item.entry.title, html: entryToTelegram($state.snapshot(item.entry) as Entry, typeDef(item.entry.type)) })}><Send size={15} /></button>
+      {/if}
       <button class="btn" onclick={() => (ui.editing = true)}><Pencil size={14} /> {t('cmpui.edit')}</button>
       <CopyToMenu title={t('cmpui.copyTo')} library onpick={copyTo} />
       {#if !builtin}
