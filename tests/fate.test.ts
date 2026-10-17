@@ -223,4 +223,12 @@ describe('встроенный справочник Fate', () => {
       expect([null, 'fate']).toContain(entryFamily(e));
     }
   });
+
+  it('английская книга: навыки из карточки, у каждой записи — русская пара', () => {
+    const en = JSON.parse(readFileSync(new URL('../resources/compendium/fate-core.en.json', import.meta.url), 'utf8')) as BuiltinBook;
+    expect(en.lang).toBe('en');
+    expect(en.entries.filter((e) => e.type === 'skill').map((e) => e.title).sort()).toEqual([...DEFAULT_SKILLS['en']!].sort());
+    expect(en.entries.length).toBe(book.entries.length);
+    for (const e of en.entries) expect(e.ru, e.title).toBeTruthy();
+  });
 });

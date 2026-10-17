@@ -34,8 +34,11 @@ Electron-приложение для мастера D&D: окно управле
   spellcasting text of a card (`spells.ts`). Tests that check Russian text call `setLang('ru')` in `beforeAll`.
 - Setting: `settings.language` in settings.json ('auto' | lang), action `vault/setLanguage`, state `vault.language`
   (setting) and `vault.lang` (resolved); section «General / Общие» in the settings window (`Settings.svelte`).
-- Migration plan: 1) foundation + shell (done); 2) modules, systems, main process (done); 3) built-in content in English (compendium SRD en,
-  random tables, Fate SRD; the bestiary is already bilingual); 4) README in English + README.ru.md.
+- Migration plan: 1) foundation + shell (done); 2) modules, systems, main process (done); 3) built-in content in English (done: compendium
+  SRD, random tables, Fate; the bestiary was bilingual already); 4) README in English + README.ru.md.
+- Built-in content by language: compendium books `resources/compendium/<system>.<lang>.json` (a window shows the
+  interface language, else English; `en` / `ru` — the title in the other language, found by search and [[links]]),
+  random tables `tools/tables/builtin/<lang>/` (seeded in the interface language; id — the English title).
 
 ## Команды
     npm run dev        # разработка (окна перезагружаются при сохранении)
@@ -45,7 +48,7 @@ Electron-приложение для мастера D&D: окно управле
     npm test           # тесты ядра (vitest, tests/*.test.ts): кубы, порядок, инициатива, карты, хранилище
     npm run import-srd # пересобрать встроенный бестиарий resources/srd/ из SRD (нужен интернет)
     npm run import-compendium # пересобрать встроенный справочник resources/compendium/ (нужен интернет)
-    npm run build-fate # встроенный справочник Fate: resources/compendium/fate-core.json из scripts/fate-core.md
+    npm run build-fate # встроенный справочник Fate: resources/compendium/fate-core.<lang>.json из scripts/fate-core.<lang>.md
     npm run dist       # установщик для своей системы в dist/ (настройки — electron-builder.yml)
     npm run icon       # build/icon.png из build/icon.svg (рисует Electron: ImageMagick не умеет градиенты SVG)
 
@@ -189,8 +192,8 @@ Electron-приложение для мастера D&D: окно управле
   любые; встроенный SRD — только в D&D, `srdHere`; типы — `typesHere`). Инструменты D&D (сложность боя, покупка
   характеристик) и плашка сложности — только в D&D. Система уходит в .sgpack (`manifest.system`) и в корзину с
   приключением.
-  Встроенный справочник Fate — `resources/compendium/fate-core.json` (`npm run build-fate` из `scripts/fate-core.md`,
-  тексты свои по Fate Core SRD, CC BY 3.0; тип `skill` — семейство fate); встроенные записи показываются по семейству
+  Встроенный справочник Fate — `resources/compendium/fate-core.<lang>.json` (`npm run build-fate` из
+  `scripts/fate-core.<lang>.md`, тексты свои по Fate Core SRD, CC BY 3.0; тип `skill` — семейство fate); встроенные записи показываются по семейству
   системы приключения (`editionShown` в store справочника), выбор редакции SRD — только у D&D.
   Fate Core: карточка — `systems/fate/stats.ts` (`FateStats`: `tier`, концепция, проблема, аспекты, навыки
   текстом с числом, трюки, восстановление; стресс и последствия — по правилам `stressOf` / `consequencesOf`, если не
@@ -254,7 +257,7 @@ Electron-приложение для мастера D&D: окно управле
   .md/.txt только внутри таких папок (`main/scan.ts`: прочие заметки Obsidian в дерево не попадают); ядро —
   `main/tables.ts` (IPC `tables:*`, пишет только в папки таблиц хранилища и в `<библиотека>/tables` — пути
   «library:tables/…», общие для всех кампаний; изменения там — событие `tables:changed`). Встроенные таблицы —
-  `tools/tables/builtin/*.md` (тексты написаны для приложения): окно при первом за запуск обращении кладёт в библиотеку
+  `tools/tables/builtin/<lang>/*.md` (тексты написаны для приложения): окно при первом за запуск обращении кладёт в библиотеку
   только новые (`seedLibraryTables`, список уже положенных — `tables/.builtin.json`; удалённую сами не возвращаем,
   кнопка «Вернуть встроенные» — `restore`). Окно — `tools/tables/store.svelte.ts` (при [[ссылках]] приключение важнее
   общего, общее — библиотеки), место для новой/копии — `tables/place.ts` + `ui/CopyToMenu.svelte`.
@@ -297,8 +300,8 @@ Electron-приложение для мастера D&D: окно управле
   Вид записи — `renderer/lib/entry/EntryCard.svelte` (у игроков — `players`, шрифт уменьшается до помещения),
   разметка — `entry/markup.ts`. Игрокам — через раздатку: `handouts/toggleEntry` кладёт запись целиком в
   `handouts.entry` (запись может лежать в библиотеке), `updateEntry` — после правки, `move` — после переименования.
-  Встроенные записи — `resources/compendium/<система>.json` (SRD 5.1 / 5.2.1 в переводе OmnisGM, собирает
-  `scripts/import-compendium.ts` из Markdown OmnisGM-Rules; статблоки существ внутри предметов остаются в тексте
+  Встроенные записи — `resources/compendium/<система>.<lang>.json` (SRD 5.1 / 5.2.1: английский оригинал и
+  перевод OmnisGM, собирает `scripts/import-compendium.ts` из Markdown OmnisGM-Rules; статблоки существ внутри предметов остаются в тексте
   предмета). Ядро отдаёт их целиком (`compendium:builtin`), пути «srd:<система>/<тип>/<название>». Сами файлы
   не меняются: «Править» сохраняет правку — запись библиотеки с полем `overrides: <система>/<тип>/<название>`
   (`OVERRIDES`, `overrideOf` в store), она заменяет встроенную в `allEntries` / `entryAt` и видна с её редакцией;
