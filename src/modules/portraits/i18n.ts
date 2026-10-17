@@ -39,6 +39,8 @@ export const en = {
   'portraits.import': 'Import character…',
   'portraits.none': 'There are no character folders in the vault yet.',
   'portraits.anyOther': 'A picture from any other folder can be shown to players from Files.',
+  'portraits.unknownOff': 'The players don’t know the name: show “???” instead',
+  'portraits.unknownOn': 'The players see “???” — click to show the name',
 };
 
 export const ru: Messages<typeof en> = {
@@ -79,4 +81,6 @@ export const ru: Messages<typeof en> = {
   'portraits.import': 'Импорт персонажа…',
   'portraits.none': 'В хранилище пока нет папок с персонажами.',
   'portraits.anyOther': 'Картинку из любой другой папки можно показать игрокам через «Файлы».',
+  'portraits.unknownOff': 'Игроки не знают имени: показывать «???»',
+  'portraits.unknownOn': 'Игроки видят «???» — щелчок, чтобы показать имя',
 };

@@ -42,7 +42,7 @@
 
 <div class="portraits" style:--cols={cols} style:--rows={rows} style:--cap="{cap}cqmin">
   {#each ms.onScreen as path (path)}
-    {@const name = caption(ms, path)}
+    {@const name = ms.unknown?.includes(path) ? '???' : caption(ms, path)}
     <div class="portrait" use:imageWidth in:scale={{ start: 0.96, duration: 400 }} out:fade={{ duration: 250 }}>
       <div class="frame"><img src={assetUrl(path)} alt="" /></div>
       {#if ms.showNames && name}

@@ -8,6 +8,8 @@ export interface PortraitsState {
   // Подписи прежних версий, заданные вручную (новые не заводятся: подпись — название карточки или имя файла).
   names: Record<string, string>;
   showNames: boolean;
+  // Portraits whose name the players don't know: their caption on the player screen is «???».
+  unknown: string[];
   // Как выглядит подпись у игроков.
   plate: NamePlate;
 }

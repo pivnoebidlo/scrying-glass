@@ -14,14 +14,15 @@ function prune(s: PortraitsState, ctx: ModuleContext): PortraitsState {
   return onScreen.length === s.onScreen.length ? s : { ...s, onScreen };
 }
 
-const initialState: PortraitsState = { onScreen: [], names: {}, showNames: true, plate: DEFAULT_PLATE };
+const initialState: PortraitsState = { onScreen: [], names: {}, showNames: true, unknown: [], plate: DEFAULT_PLATE };
 
 export default defineModule({
   id: 'portraits',
   persist: true,
   initialState,
 
-  init: prune,
+  // Older saves have no «unknown».
+  init: (s, ctx) => prune(s.unknown ? s : { ...s, unknown: [] }, ctx),
   onTreeChange: prune,
 
   actions: {
@@ -45,6 +46,12 @@ export default defineModule({
       if (name.trim()) names[path] = name.trim();
       else delete names[path];
       return { ...s, names };
+    },
+
+    // The players don't know this character's name (or now they do).
+    toggleUnknown(s, { path }: { path: string }) {
+      const list = s.unknown ?? [];
+      return { ...s, unknown: list.includes(path) ? list.filter((x) => x !== path) : [...list, path] };
     },
 
     setShowNames(s, { value }: { value: boolean }) {

@@ -2,7 +2,7 @@
      несколько; ниже — подписи тех, кто на экране. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Plus, X } from '@lucide/svelte';
+  import { CircleHelp, Plus, X } from '@lucide/svelte';
   import { currentTray, trayOwner } from '../../scenes/tray';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -50,6 +50,12 @@
           }}
           onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
         />
+        <button
+          class="icon-btn unknown"
+          class:on={ms.unknown?.includes(path)}
+          title={ms.unknown?.includes(path) ? t('portraits.unknownOn') : t('portraits.unknownOff')}
+          onclick={() => dispatch('portraits', 'toggleUnknown', { path })}
+        ><CircleHelp size={14} /></button>
         {#if !inTrayNow(path)}
           <button class="icon-btn" title={t('common.addToTray')} onclick={() => addToTray(path)}><Plus size={14} /></button>
         {/if}
@@ -63,6 +69,9 @@
 {/if}
 
 <style>
+  .unknown.on {
+    color: var(--accent);
+  }
   ul {
     margin: 8px 0 0;
     padding: 0;
