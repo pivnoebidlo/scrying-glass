@@ -10,7 +10,7 @@ Electron-приложение для мастера D&D: окно управле
   - code comments — in English for new and changed code (old Russian comments are not rewritten en masse);
   - interface text — never hard-coded: `t('key')` (see «Локализация» below); English and Russian are written
     together; Russian UI text — на «вы»/безличные, English — plain and short;
-  - README — Russian for now (to be split into English README + README.ru.md later).
+  - README — English `README.md` + Russian `README.ru.md`; a feature change updates both.
 - Интерфейс в духе Obsidian.
 
 ## Локализация
@@ -35,10 +35,11 @@ Electron-приложение для мастера D&D: окно управле
 - Setting: `settings.language` in settings.json ('auto' | lang), action `vault/setLanguage`, state `vault.language`
   (setting) and `vault.lang` (resolved); section «General / Общие» in the settings window (`Settings.svelte`).
 - Migration plan: 1) foundation + shell (done); 2) modules, systems, main process (done); 3) built-in content in English (done: compendium
-  SRD, random tables, Fate; the bestiary was bilingual already); 4) README in English + README.ru.md.
+  SRD, random tables, Fate; the bestiary was bilingual already); 4) README in English + README.ru.md (done).
 - Built-in content by language: compendium books `resources/compendium/<system>.<lang>.json` (a window shows the
   interface language, else English; `en` / `ru` — the title in the other language, found by search and [[links]]),
-  random tables `tools/tables/builtin/<lang>/` (seeded in the interface language; id — the English title).
+  random tables `tools/tables/builtin/<lang>/` (seeded in the interface language; id — the English title), built-in
+  sounds — the file name is the id, the title is `builtinSoundTitle` (`shared/sounds.ts`, keys `sounds.builtin.*`).
 
 ## Команды
     npm run dev        # разработка (окна перезагружаются при сохранении)

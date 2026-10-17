@@ -38,7 +38,7 @@ nsis:
 linux:
   category: Game
   maintainer: pivnoebidlo <dima@niktokro.me>
-  synopsis: Экран мастера для сессий D&D
+  synopsis: A game master screen for tabletop sessions
   target:
     - target: deb
       arch: [x64]
