@@ -1,6 +1,7 @@
 <!-- Карточка целиком: портреты, языки, управление, «в бой», статблок или лист, заметки. Показывается во вкладке
      бестиария и в выдвижной панели (CardDrawer). Сама загружает карточку по ссылке и перечитывает после изменений. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
   import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, Pencil, RefreshCw, RotateCcw, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
@@ -8,7 +9,7 @@
   import type { AppState } from '../../../shared/types';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
-  import { LANGUAGES, cardAsset, cardImageUrl, langName, sameRef, type Card, type CardRef, type CardSide, type CardSummary } from '../../../shared/cards';
+  import { LANGUAGES, SIDE_TITLES, cardAsset, cardImageUrl, langName, sameRef, type Card, type CardRef, type CardSide, type CardSummary } from '../../../shared/cards';
   import { isDnd, systemOf } from '../../../systems';
   import { statsView } from '../../../systems/ui';
   import { markdown } from '../../../renderer/lib/markdown';
@@ -18,6 +19,7 @@
   import { folderLabel } from './places';
 
   // Чем закончилось «Обновить из LSS…» (пропадает через несколько секунд).
+  const SIDES: CardSide[] = ['enemy', 'ally', 'neutral', 'party'];
   let lssStatus = $state('');
   $effect(() => {
     if (!lssStatus) return;
@@ -74,8 +76,8 @@
 
   // Где лежит карточка: «Встроенный SRD», «Библиотека», «Тыквенный фестиваль / monsters».
   function where(c: CardSummary): string {
-    if (c.ref.scope === 'srd') return c.edited ? 'Встроенный SRD, изменён' : 'Встроенный SRD';
-    if (c.ref.scope === 'library') return 'Библиотека';
+    if (c.ref.scope === 'srd') return c.edited ? t('best.srdEdited') : t('best.srdBuiltin');
+    if (c.ref.scope === 'library') return t('best.libraryShort');
     return folderLabel(app, c.folder);
   }
 
@@ -115,38 +117,38 @@
         <div class="info faint">{info}</div>
         <div class="manage">
           {#if cref.scope === 'srd'}
-            <button class="btn" title="Правка сохранится в библиотеку и заменит встроенную карточку везде: в боях, на картах, в поиске" onclick={() => bestiary.edit(cref)}
-              ><Pencil size={13} /> Править</button
+            <button class="btn" title={t('best.editSrdHint')} onclick={() => bestiary.edit(cref)}
+              ><Pencil size={13} /> {t('best.edit')}</button
             >
-            <button class="btn" title="Отдельная карточка на основе этой — в библиотеке или папке приключения" onclick={() => bestiary.copy(cref)}
-              ><Copy size={13} /> Сделать копию…</button
+            <button class="btn" title={t('best.copySrdHint')} onclick={() => bestiary.copy(cref)}
+              ><Copy size={13} /> {t('best.makeCopy')}</button
             >
             {#if summary.edited}
-              <button class="btn" title="Удалить правку (файл — в корзину) и показывать карточку, как в SRD" onclick={() => bestiary.revert(cref)}
-                ><RotateCcw size={13} /> Вернуть как в SRD</button
+              <button class="btn" title={t('best.revertHint')} onclick={() => bestiary.revert(cref)}
+                ><RotateCcw size={13} /> {t('best.revert')}</button
               >
             {/if}
           {:else}
-            <button class="btn" onclick={() => bestiary.edit(cref)}><Pencil size={13} /> Править</button>
-            <button class="btn" title="Новая карточка на основе этой — в библиотеке или папке приключения" onclick={() => bestiary.copy(cref)}
-              ><Copy size={13} /> Сделать копию…</button
+            <button class="btn" onclick={() => bestiary.edit(cref)}><Pencil size={13} /> {t('best.edit')}</button>
+            <button class="btn" title={t('best.copyHint')} onclick={() => bestiary.copy(cref)}
+              ><Copy size={13} /> {t('best.makeCopy')}</button
             >
-            <button class="btn" title="Переложить карточку в библиотеку или в папку другого приключения, без копии" onclick={() => bestiary.move(cref)}
-              ><ArrowRightLeft size={13} /> Перенести…</button
+            <button class="btn" title={t('best.moveHint')} onclick={() => bestiary.move(cref)}
+              ><ArrowRightLeft size={13} /> {t('best.move')}</button
             >
             {#if summary.kind === 'character' && isDnd(summary.system)}
               <button
                 class="btn"
-                title="Игрок переделал персонажа в Long Story Short: выберите новый экспорт (JSON) — будет видно, что изменилось, и карточка обновится"
+                title={t('best.lssHint')}
                 onclick={async () => (lssStatus = (await bestiary.updateFromLss(cref)) ?? '')}
-                ><RefreshCw size={13} /> Обновить из LSS…</button
+                ><RefreshCw size={13} /> {t('best.fromLss')}</button
               >
             {/if}
-            <button class="icon-btn" title="Удалить карточку" onclick={() => bestiary.remove(cref)}><Trash2 size={14} /></button>
+            <button class="icon-btn" title={t('best.delete')} onclick={() => bestiary.remove(cref)}><Trash2 size={14} /></button>
           {/if}
           <button
             class="icon-btn"
-            title="Экспорт в файл (все языки, с портретами) — чтобы поделиться"
+            title={t('best.exportHint')}
             onclick={() => window.api.exportCards({ refs: versions.map((v) => v.ref), name: summary.name })}
           ><Upload size={14} /></button>
         </div>
@@ -168,32 +170,29 @@
             <select
               class="add-lang"
               value=""
-              title={cref.scope === 'srd' ? 'Перевод встроенной карточки сохранится в библиотеку' : 'Перевести на другой язык'}
+              title={cref.scope === 'srd' ? t('best.translateSrd') : t('best.translate')}
               onchange={(e) => {
                 const l = e.currentTarget.value;
                 e.currentTarget.value = '';
                 if (l) bestiary.translate(cref, l);
               }}
             >
-              <option value="">+ язык</option>
+              <option value="">{t('best.addLang')}</option>
               {#each missingLangs as l (l)}<option value={l}>{langName(l)}</option>{/each}
             </select>
           </div>
           <div class="spacer"></div>
           <!-- Персонаж игрока в бою один и с хитами по листу. -->
           {#if summary.kind !== 'character'}
-            {#if isDnd(summary.system)}<label class="hp" title={summary.combat.hpFormula ? `Бросить ${summary.combat.hpFormula} для каждого` : 'Нет формулы хитов'}>
-              <input type="checkbox" bind:checked={rollHp} disabled={!summary.combat.hpFormula} /> случайные хиты
+            {#if isDnd(summary.system)}<label class="hp" title={summary.combat.hpFormula ? t('best.rollHp', { formula: summary.combat.hpFormula }) : t('best.noHpFormula')}>
+              <input type="checkbox" bind:checked={rollHp} disabled={!summary.combat.hpFormula} /> {t('best.randomHp')}
             </label>{/if}
-            <input class="count" type="number" min="1" max="20" bind:value={count} title="Сколько добавить" />
+            <input class="count" type="number" min="1" max="20" bind:value={count} title={t('best.howMany')} />
           {/if}
-          <select class="side" value={side ?? summary.side} onchange={(e) => (side = e.currentTarget.value as CardSide)} title="На чьей стороне в бою">
-            <option value="enemy">противник</option>
-            <option value="ally">союзник</option>
-            <option value="neutral">нейтрал</option>
-            <option value="party">партия</option>
+          <select class="side" value={side ?? summary.side} onchange={(e) => (side = e.currentTarget.value as CardSide)} title={t('best.sideIn')}>
+            {#each SIDES as s (s)}<option value={s}>{SIDE_TITLES[s].toLowerCase()}</option>{/each}
           </select>
-          <button class="btn primary" onclick={toInitiative}><Swords size={14} /> В инициативу</button>
+          <button class="btn primary" onclick={toInitiative}><Swords size={14} /> {t('best.toInitiative')}</button>
         </div>
       </div>
       <!-- Портреты — под шапкой одной полосой: сколько бы их ни было, шапка на месте, лишние прокручиваются. -->
@@ -203,15 +202,15 @@
             {@const asset = cardAsset(cref.scope, p)}
             {@const onScreen = app.portraits.onScreen.includes(asset)}
             <div class="portrait" class:main={i === 0} class:on={onScreen}>
-              <button class="pic" data-view={asset} title="Двойной щелчок — рассмотреть крупно" ondblclick={(e) => viewImage(asset, e.currentTarget)}
+              <button class="pic" data-view={asset} title={t('best.zoom')} ondblclick={(e) => viewImage(asset, e.currentTarget)}
                 ><img src={thumb(cardImageUrl(cref.scope, p), 240)} alt="" /></button
               >
               <div class="p-actions">
-                <button class="icon-btn" class:on={onScreen} title={onScreen ? 'Убрать с экрана игроков' : 'Показать игрокам'} onclick={() => togglePortrait(asset)}
+                <button class="icon-btn" class:on={onScreen} title={onScreen ? t('best.removeFromScreen') : t('best.showToPlayers')} onclick={() => togglePortrait(asset)}
                   ><Monitor size={12} /></button
                 >
-                {#if i > 0}<button class="icon-btn" title="Сделать основным" onclick={() => bestiary.makeMainPortrait(cref, p)}><Star size={12} /></button>{/if}
-                <button class="icon-btn" title="Убрать портрет" onclick={() => bestiary.removePortrait(cref, p)}><X size={12} /></button>
+                {#if i > 0}<button class="icon-btn" title={t('best.makeMain')} onclick={() => bestiary.makeMainPortrait(cref, p)}><Star size={12} /></button>{/if}
+                <button class="icon-btn" title={t('best.removePortrait')} onclick={() => bestiary.removePortrait(cref, p)}><X size={12} /></button>
               </div>
             </div>
           {/each}
@@ -219,16 +218,16 @@
         <div class="add-portrait" class:main={!card.portraits.length}>
           <button
             class="add-btn"
-            title={cref.scope === 'srd' ? 'Портрет встроенной карточки хранится в библиотеке, он общий для всех её языков' : 'Добавить портрет'}
+            title={cref.scope === 'srd' ? t('best.srdPortrait') : t('best.addPortrait')}
             onclick={() => (portraitMenu = !portraitMenu)}><ImagePlus size={16} /></button
           >
           {#if portraitMenu}
             <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
             <div class="menu-backdrop" onclick={() => (portraitMenu = false)}></div>
             <div class="menu">
-              <button disabled={!app.vault.tree} onclick={() => ((portraitMenu = false), (picking = true))}><FolderOpen size={13} /> Из хранилища</button>
-              <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(cref, undefined, true))}><ClipboardPaste size={13} /> Из буфера</button>
-              <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(cref))}><HardDrive size={13} /> С диска…</button>
+              <button disabled={!app.vault.tree} onclick={() => ((portraitMenu = false), (picking = true))}><FolderOpen size={13} /> {t('best.fromVault')}</button>
+              <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(cref, undefined, true))}><ClipboardPaste size={13} /> {t('best.fromClipboard')}</button>
+              <button onclick={() => ((portraitMenu = false), bestiary.addPortrait(cref))}><HardDrive size={13} /> {t('best.fromDisk')}</button>
             </div>
           {/if}
         </div>
@@ -242,13 +241,13 @@
     <Stats {card} />
 
     {#if card.notes}
-      <h3>Заметки</h3>
+      <h3>{t('best.notes')}</h3>
       <div class="notes">{@html markdown(card.notes)}</div>
     {/if}
   {:else if ref && sameRef(ref, loadedFor)}
-    <p class="faint placeholder">Карточка не найдена: её удалили или перенесли в другое место.</p>
+    <p class="faint placeholder">{t('best.notFound')}</p>
   {:else if ref}
-    <p class="faint placeholder">Загрузка…</p>
+    <p class="faint placeholder">{t('best.loading')}</p>
   {:else}
     <p class="faint placeholder">{empty}</p>
   {/if}

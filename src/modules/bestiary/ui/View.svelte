@@ -1,5 +1,6 @@
 <!-- Вкладка бестиария: редактор карточки или выбранная карточка. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { bestiary, connectCards } from './cards.svelte';
@@ -18,6 +19,6 @@
     {app}
     ref={bestiary.selected}
     onselect={(r) => bestiary.select(r)}
-    empty="Выберите существо в списке слева или создайте своё кнопкой «+»."
+    empty={t('best.empty')}
   />
 {/if}

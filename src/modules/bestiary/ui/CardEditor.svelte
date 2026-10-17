@@ -1,10 +1,11 @@
 <!-- Визуальный редактор карточки: общая часть (название, вид, система, язык, портреты, заметки)
      и характеристики от системы. Справа — как карточка будет выглядеть. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
   import { ClipboardPaste, FolderOpen, HardDrive, Save, Star, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
-  import { LANGUAGES, cardImageUrl, defaultSide, imageScope, langName, type CardKind, type CardSide } from '../../../shared/cards';
+  import { LANGUAGES, SIDE_TITLES, cardImageUrl, defaultSide, imageScope, langName, type CardKind, type CardSide } from '../../../shared/cards';
   import { folderLabel } from './places';
   import { familyOf, isDnd, systemOf, systems } from '../../../systems';
   import { statsEditor, statsView } from '../../../systems/ui';
@@ -17,9 +18,10 @@
 
   // «в библиотеке», «в Тыквенный фестиваль / monsters»
   const placeText = $derived(
-    draft.scope === 'srd' ? '— сохранится в библиотеку и заменит её везде' : draft.scope === 'library' ? 'в библиотеке' : `в папке ${folderLabel(app, draft.folder)}`
+    draft.scope === 'srd' ? t('best.place.srd') : draft.scope === 'library' ? t('best.place.library') : t('best.place.folder', { folder: folderLabel(app, draft.folder) })
   );
-  const KINDS: Record<CardKind, string> = { monster: 'Монстр', npc: 'NPC', character: 'Персонаж игрока' };
+  const SIDES: CardSide[] = ['party', 'ally', 'neutral', 'enemy'];
+  const KINDS: CardKind[] = ['monster', 'npc', 'character'];
 
   const card = $derived(draft.card);
   const Editor = $derived(statsEditor(card.system, card.stats));
@@ -34,7 +36,7 @@
   // Смена системы: характеристики другой системы несовместимы, начинаем с пустых (с подтверждением).
   function changeSystem(id: string) {
     const sameFamily = familyOf(id) === familyOf(card.system);
-    if (!sameFamily && !confirm('У другой системы другие характеристики. Начать их заново?')) return;
+    if (!sameFamily && !confirm(t('best.otherSystem'))) return;
     if (!sameFamily) card.stats = systemOf(id).blank(card.kind);
     card.system = id;
   }
@@ -45,7 +47,7 @@
     const sheet = kind === 'character';
     // У Fate один вид для всех — характеристики остаются.
     if (isDnd(card.system) && sheet !== isCharacter(card.stats)) {
-      if (!confirm(sheet ? 'У персонажа игрока вместо статблока — лист. Начать его заново?' : 'У монстра и NPC вместо листа — статблок. Начать его заново?')) {
+      if (!confirm(sheet ? t('best.toSheet') : t('best.toBlock'))) {
         select.value = card.kind;
         return;
       }
@@ -70,7 +72,7 @@
 
   async function save() {
     if (!card.name.trim()) {
-      error = 'Укажите название.';
+      error = t('best.needName');
       return;
     }
     saving = true;
@@ -78,7 +80,7 @@
     try {
       await bestiary.save();
     } catch (e) {
-      error = `Не удалось сохранить: ${String(e)}`;
+      error = t('best.saveFailed', { error: String(e) });
     } finally {
       saving = false;
     }
@@ -99,29 +101,29 @@
     <div class="title">
       {draft.original
         ? draft.scope === 'srd'
-          ? 'Правка встроенной карточки'
-          : 'Правка карточки'
+          ? t('best.editBuiltin')
+          : t('best.editCard')
         : card.origin?.relation === 'translation'
-          ? `Перевод на ${langName(card.lang)}`
+          ? t('best.translation', { lang: langName(card.lang) })
           : card.origin
-            ? 'Копия карточки'
-            : 'Новая карточка'} <span class="faint">{placeText}</span>
+            ? t('best.copyCard')
+            : t('best.newCard')} <span class="faint">{placeText}</span>
     </div>
     {#if error}<span class="error">{error}</span>{/if}
     <div class="spacer"></div>
-    <button class="btn" onclick={() => bestiary.cancel()}>Отмена</button>
-    <button class="btn primary" disabled={saving} onclick={save} title="⌘S"><Save size={14} /> Сохранить</button>
+    <button class="btn" onclick={() => bestiary.cancel()}>{t('best.cancel')}</button>
+    <button class="btn primary" disabled={saving} onclick={save} title="⌘S"><Save size={14} /> {t('best.save')}</button>
   </header>
 
   {#if bestiary.external}
     <div class="external">
       {#if bestiary.external === 'deleted'}
-        <span>Файл карточки удалили в другой программе. «Сохранить» создаст его заново.</span>
-        <button class="btn" onclick={() => bestiary.keepMine()}>Понятно</button>
+        <span>{t('best.extDeleted')}</span>
+        <button class="btn" onclick={() => bestiary.keepMine()}>{t('best.gotIt')}</button>
       {:else}
-        <span>Файл карточки изменили в другой программе.</span>
-        <button class="btn" onclick={() => bestiary.takeExternal()} title="Правки в редакторе пропадут">Загрузить новую версию</button>
-        <button class="btn" onclick={() => bestiary.keepMine()} title="При сохранении они заменят версию с диска">Оставить мои правки</button>
+        <span>{t('best.extChanged')}</span>
+        <button class="btn" onclick={() => bestiary.takeExternal()} title={t('best.loadNewHint')}>{t('best.loadNew')}</button>
+        <button class="btn" onclick={() => bestiary.keepMine()} title={t('best.keepHint')}>{t('best.keepMine')}</button>
       {/if}
     </div>
   {/if}
@@ -131,106 +133,103 @@
       <section>
         <div class="grid">
           <label class="field wide">
-            <span>Название</span>
+            <span>{t('best.name')}</span>
             <!-- svelte-ignore a11y_autofocus -->
-            <input class="name" type="text" placeholder="Вождь огров" bind:value={card.name} autofocus={!card.name} />
+            <input class="name" type="text" placeholder={t('best.namePh')} bind:value={card.name} autofocus={!card.name} />
           </label>
           <label class="field">
-            <span>Вид</span>
+            <span>{t('best.kind')}</span>
             <select value={card.kind} onchange={(e) => changeKind(e.currentTarget, e.currentTarget.value as CardKind)}>
-              {#each Object.entries(KINDS) as [k, l] (k)}<option value={k}>{l}</option>{/each}
+              {#each KINDS as k (k)}<option value={k}>{t(`best.kind.${k}`)}</option>{/each}
             </select>
           </label>
-          <label class="field" title="Кем существо попадает в трекер инициативы. В бою сторону можно поменять">
-            <span>Сторона в бою</span>
+          <label class="field" title={t('best.sideHint')}>
+            <span>{t('best.side')}</span>
             <select value={card.side ?? defaultSide(card.kind)} onchange={(e) => (card.side = e.currentTarget.value as CardSide)}>
-              <option value="party">Партия</option>
-              <option value="ally">Союзник</option>
-              <option value="neutral">Нейтрал</option>
-              <option value="enemy">Противник</option>
+              {#each SIDES as s (s)}<option value={s}>{SIDE_TITLES[s]}</option>{/each}
             </select>
           </label>
         </div>
         <div class="grid">
           <label class="field">
-            <span>Система</span>
+            <span>{t('best.system')}</span>
             <select value={card.system} onchange={(e) => changeSystem(e.currentTarget.value)}>
               {#each systems as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
               {#if !systems.some((s) => s.id === card.system)}<option value={card.system}>{card.system}</option>{/if}
             </select>
           </label>
           <label class="field">
-            <span>Язык</span>
+            <span>{t('best.lang')}</span>
             <select bind:value={card.lang}>
               {#each Object.entries(LANGUAGES) as [k, l] (k)}<option value={k}>{l}</option>{/each}
               {#if !LANGUAGES[card.lang]}<option value={card.lang}>{card.lang}</option>{/if}
             </select>
           </label>
           <label class="field wide">
-            <span>Теги, через запятую</span>
+            <span>{t('best.tags')}</span>
             <input
               type="text"
-              placeholder="гоблиноиды, Тыквенный фестиваль"
+              placeholder={t('best.tagsPh')}
               value={card.tags.join(', ')}
-              onchange={(e) => (card.tags = e.currentTarget.value.split(',').map((t) => t.trim()).filter(Boolean))}
+              onchange={(e) => (card.tags = e.currentTarget.value.split(',').map((s) => s.trim()).filter(Boolean))}
             />
           </label>
         </div>
         {#if card.origin?.relation === 'translation'}
           <div class="origin faint">
-            Это перевод: переведите название, описание и тексты действий. Числа скопированы из оригинала.
+            {t('best.isTranslation')}
           </div>
         {:else}
-          <div class="origin faint">Перевести карточку на другой язык можно после сохранения — кнопкой «+ язык».</div>
+          <div class="origin faint">{t('best.translateLater')}</div>
         {/if}
         {#if card.origin}
           <div class="origin faint">
-            На основе карточки <code>{card.origin.id}</code> —
+            {t('best.basedOn')} <code>{card.origin.id}</code> —
             <select bind:value={card.origin.relation}>
-              <option value="variant">вариант</option>
-              <option value="translation">перевод</option>
+              <option value="variant">{t('best.variant')}</option>
+              <option value="translation">{t('best.translationRel')}</option>
             </select>
-            <button type="button" class="icon-btn" title="Забыть связь с оригиналом" onclick={() => delete card.origin}><X size={13} /></button>
+            <button type="button" class="icon-btn" title={t('best.forgetOrigin')} onclick={() => delete card.origin}><X size={13} /></button>
           </div>
         {/if}
         {#if card.source}
           <div class="origin faint">
-            Источник: {card.source.title}{card.source.attribution ? ` (${card.source.attribution})` : ''}
-            {#if card.source.license}· {card.source.license}{/if} — указание авторства требует лицензия, оно сохранится в карточке.
+            {t('best.source', { source: card.source.title + (card.source.attribution ? ` (${card.source.attribution})` : '') })}
+            {#if card.source.license}· {card.source.license}{/if} {t('best.licenseNote')}
           </div>
         {/if}
       </section>
 
       <section>
-        <h4>Портреты</h4>
+        <h4>{t('best.portraits')}</h4>
         <div class="portraits">
           {#each card.portraits as p, i (p)}
             <div class="portrait" class:main={i === 0}>
               <img src={thumb(cardImageUrl(draft.scope, p), 160)} alt="" />
               <div class="p-actions">
-                {#if i > 0}<button type="button" class="icon-btn" title="Сделать основным" onclick={() => makeMain(i)}><Star size={13} /></button>{/if}
-                <button type="button" class="icon-btn" title="Убрать (файл останется)" onclick={() => card.portraits.splice(i, 1)}><X size={13} /></button>
+                {#if i > 0}<button type="button" class="icon-btn" title={t('best.makeMain')} onclick={() => makeMain(i)}><Star size={13} /></button>{/if}
+                <button type="button" class="icon-btn" title={t('best.removeKeepFile')} onclick={() => card.portraits.splice(i, 1)}><X size={13} /></button>
               </div>
             </div>
           {/each}
           <div class="p-add">
-            <button type="button" class="btn" disabled={!app.vault.tree} onclick={() => (picking = true)}><FolderOpen size={14} /> Из хранилища</button>
-            <button type="button" class="btn" onclick={() => addImage(undefined, true)}><ClipboardPaste size={14} /> Из буфера</button>
-            <button type="button" class="btn" onclick={() => addImage()}><HardDrive size={14} /> С диска…</button>
+            <button type="button" class="btn" disabled={!app.vault.tree} onclick={() => (picking = true)}><FolderOpen size={14} /> {t('best.fromVault')}</button>
+            <button type="button" class="btn" onclick={() => addImage(undefined, true)}><ClipboardPaste size={14} /> {t('best.fromClipboard')}</button>
+            <button type="button" class="btn" onclick={() => addImage()}><HardDrive size={14} /> {t('best.fromDisk')}</button>
             <span class="faint hint">
               {draft.scope !== 'vault'
-                ? 'Картинки копируются в папку библиотеки, чтобы карточка работала в любой кампании.'
-                : 'Картинки с диска копируются в папку карточки.'}
+                ? t('best.imgLibrary')
+                : t('best.imgVault')}
             </span>
           </div>
         </div>
       </section>
 
       <section>
-        <h4>Описание</h4>
+        <h4>{t('best.description')}</h4>
         <textarea
           rows="4"
-          placeholder="Как выглядит, чем живёт, что о нём рассказывают. *Курсив*, **жирный**, строки «- …» — список."
+          placeholder={t('best.descriptionPh')}
           bind:value={card.description}
         ></textarea>
       </section>
@@ -238,15 +237,15 @@
       <Editor bind:stats={card.stats} system={card.system} lang={card.lang} />
 
       <section>
-        <h4>Заметки мастера</h4>
-        <textarea rows="5" placeholder="Тактика, мотивы, связи. Игроки этого не видят." bind:value={card.notes}></textarea>
+        <h4>{t('best.gmNotes')}</h4>
+        <textarea rows="5" placeholder={t('best.gmNotesPh')} bind:value={card.notes}></textarea>
       </section>
     </form>
 
     <aside class="preview">
       <div class="pv-head">
         {#if card.portraits[0]}<img class="pv-portrait" src={cardImageUrl(draft.scope, card.portraits[0])} alt="" />{/if}
-        <h2>{card.name || 'Без названия'}</h2>
+        <h2>{card.name || t('best.untitled')}</h2>
       </div>
       {#if card.description?.trim()}<div class="pv-desc">{@html markdown(card.description)}</div>{/if}
       {#key card.system}

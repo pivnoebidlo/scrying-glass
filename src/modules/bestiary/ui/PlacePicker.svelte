@@ -1,11 +1,13 @@
 <!-- Окно «Где хранить?»: библиотека (для всех кампаний) или папка бестиария приключения в хранилище.
      Если подходящей папки ещё нет, её можно создать в любой папке хранилища. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { FolderPlus, Library, Skull, Users, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
   import { dirname, roleFolders, walk } from '../../../shared/vault';
   import { placeOrder, placeTitle, visibleIn } from '../../../shared/adventures';
   import { samePlace, type Place, type PlaceRequest } from './cards.svelte';
+  import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
 
   let { app, request }: { app: AppState; request: PlaceRequest } = $props();
 
@@ -38,7 +40,7 @@
       walk(app.vault.tree, (f) => {
         if (!visibleIn(adv, f.path)) return;
         if (!folders.some((b) => f.path === b.folder.path || f.path.startsWith(b.folder.path + '/'))) {
-          out.push({ path: f.path, title: f.path ? f.path.split('/').join(' / ') : `${app.vault.name} (корень)` });
+          out.push({ path: f.path, title: f.path ? f.path.split('/').join(' / ') : t('best.root', { vault: app.vault.name }) });
         }
       });
     }
@@ -60,7 +62,7 @@
   <div class="modal" role="dialog" aria-modal="true" aria-label={request.title}>
     <header>
       <h3>{request.title}</h3>
-      <button class="icon-btn" title="Отмена (Esc)" onclick={() => request.resolve(null)}><X size={16} /></button>
+      <button class="icon-btn" title={t('best.cancelEsc')} onclick={() => request.resolve(null)}><X size={16} /></button>
     </header>
 
     <div class="body">
@@ -68,34 +70,33 @@
         <button class="place" disabled={disabled({ scope: 'library' })} onclick={() => pick({ scope: 'library' })}>
           <Library size={16} />
           <span class="text">
-            <span class="name">Библиотека</span>
-            <span class="desc">Доступна во всех кампаниях</span>
+            <span class="name">{t('best.libraryShort')}</span>
+            <span class="desc">{t('best.libraryAll')}</span>
           </span>
         </button>
       {/if}
 
-      <div class="section">Хранилище «{app.vault.name}»</div>
+      <div class="section">{t('best.vaultNamed', { name: app.vault.name })}</div>
       {#each folders as f (f.folder.path)}
         {@const p = { scope: 'vault', folder: f.folder.path } as Place}
         <button class="place" disabled={disabled(p)} onclick={() => pick(p)}>
           {#if f.npc}<Users size={16} />{:else}<Skull size={16} />{/if}
           <span class="text">
-            <span class="name">{f.title} · {'party' in f ? 'партия' : f.npc ? 'персонажи' : 'монстры'}</span>
-            <span class="desc">{f.folder.path}{disabled(p) ? ' — карточка уже здесь' : ''}</span>
+            <span class="name">{f.title} · {'party' in f ? t('best.folderParty') : f.npc ? t('best.folderCharacters') : t('best.folderMonsters')}</span>
+            <span class="desc">{f.folder.path}{disabled(p) ? t('best.alreadyHere') : ''}</span>
           </span>
         </button>
       {:else}
         <p class="faint hint">
-          В хранилище пока нет папок для карточек. Их узнают по названию: <code>monsters</code>, <code>монстры</code>,
-          <code>bestiary</code>, <code>бестиарий</code>, <code>creatures</code>, <code>существа</code>.
+          {t('best.noFolders')} <RoleFolderNames role="bestiary" />.
         </p>
       {/each}
 
       <div class="new">
         <FolderPlus size={16} />
-        <span>Новая папка <code>{NEW_FOLDER}</code> в</span>
+        <span>{t('best.newFolder')} <code>{NEW_FOLDER}</code> {t('best.newFolderIn')}</span>
         <select bind:value={parent}>
-          <option value={null} disabled>выберите папку…</option>
+          <option value={null} disabled>{t('best.pickFolder')}</option>
           {#each parents as p (p.path)}<option value={p.path}>{p.title}</option>{/each}
         </select>
         <button

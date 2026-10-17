@@ -1,5 +1,6 @@
 // Бестиарий в окне управления: краткий список карточек из ядра, фильтры и выбранная карточка.
 // Фильтры запоминаются между запусками (в окне, не в хранилище).
+import { t } from '../../../renderer/lib/i18n.svelte';
 import type { Card, CardRef, CardScope, CardSummary, LssPreview } from '../../../shared/cards';
 import { defaultSide, imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
@@ -237,13 +238,13 @@ class Bestiary {
     try {
       picked = await window.api.pickLss();
     } catch (e) {
-      return `Не удалось прочитать файл: ${e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e)}`;
+      return t('best.readFailed', { error: e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e) });
     }
     if (!picked) return null;
     const choice = await this.askLss({ target: $state.snapshot(ref), current, lss: picked.lss, import: false });
     if (choice.kind !== 'update') return null;
     await window.api.updateFromLss($state.snapshot(ref), picked.file, choice.merged);
-    return `«${choice.merged?.name ?? picked.lss.name}» обновлён из LSS`;
+    return t('best.updatedLss', { name: choice.merged?.name ?? picked.lss.name });
   }
 
   // Система новой карточки: выбранная в фильтре (если она из семейства приключения), иначе — приключения.
@@ -256,7 +257,7 @@ class Bestiary {
   // Новая карточка: система и язык — из фильтров, если они выбраны.
   // place — куда (например, открытая во «Файлах» папка); без него спросим.
   async create(at?: Place) {
-    const place = at ?? (await this.choosePlace({ title: 'Где хранить новую карточку?', action: 'Создать', library: true }));
+    const place = at ?? (await this.choosePlace({ title: t('best.whereNew'), action: t('best.create'), library: true }));
     if (!place) return;
     const system = this.newSystem();
     const lang = this.filters.lang !== 'all' ? this.filters.lang : 'ru';
@@ -310,7 +311,7 @@ class Bestiary {
 
   // Копия: открывается в редакторе, файл появится при сохранении.
   async copy(ref: CardRef) {
-    const place = await this.choosePlace({ title: 'Куда положить копию?', action: 'Сделать копию', library: true });
+    const place = await this.choosePlace({ title: t('best.whereCopy'), action: t('best.makeCopy').replace('…', ''), library: true });
     if (!place) return;
     const c = await window.api.copyCardDraft(ref, place.scope, place.folder);
     if (c) this.open({ ...place, original: null, card: c.card, copied: c.copied });
@@ -319,7 +320,7 @@ class Bestiary {
   // Перенести карточку в другое место — без копии, ссылки на неё сохраняются.
   async move(ref: CardRef) {
     const exclude = placeOf(this.all.find((x) => sameRef(x.ref, ref)));
-    const place = await this.choosePlace({ title: 'Куда перенести карточку?', action: 'Перенести', library: true, exclude });
+    const place = await this.choosePlace({ title: t('best.whereMove'), action: t('best.move').replace('…', ''), library: true, exclude });
     if (!place) return;
     const saved = await window.api.moveCard(ref, place.scope, place.folder);
     if (saved && sameRef(ref, this.peeked)) this.peeked = saved;
@@ -385,7 +386,7 @@ class Bestiary {
   }
 
   cancel(): boolean {
-    if (this.dirty && !confirm('Закрыть редактор без сохранения?')) return false;
+    if (this.dirty && !confirm(t('best.closeUnsaved'))) return false;
     const d = this.draft;
     if (d?.copied.length) window.api.discardCardImages(imageScope(d.scope), $state.snapshot(d.copied));
     this.draft = null;
@@ -441,7 +442,7 @@ class Bestiary {
   async importFiles(place?: Place | null): Promise<string | null> {
     const files = await window.api.pickImportFiles();
     if (!files.length) return null;
-    place ??= await this.choosePlace({ title: 'Куда импортировать карточки?', action: 'Импортировать', library: true });
+    place ??= await this.choosePlace({ title: t('best.whereImport'), action: t('best.import'), library: true });
     if (!place) return null;
     const { count, errors, matches } = await window.api.importCards(files, place.scope, place.folder);
     // Персонажи LSS, у которых карточка уже есть: показать изменения и спросить — обновить или создать новую.
@@ -461,8 +462,8 @@ class Bestiary {
       }
     }
     return [
-      added || !updated.length ? `Импортировано карточек: ${added}` : '',
-      updated.length ? `Обновлены: ${updated.join(', ')}` : '',
+      added || !updated.length ? t('best.imported', { count: added }) : '',
+      updated.length ? t('best.updated', { list: updated.join(', ') }) : '',
       ...errors,
     ]
       .filter(Boolean)
@@ -471,11 +472,11 @@ class Bestiary {
 
   // Экспорт всех карточек библиотеки или папки бестиария.
   async exportPlace(vaultName: string, title: (folder: string) => string): Promise<string | null> {
-    const place = await this.choosePlace({ title: 'Какие карточки экспортировать?', action: 'Экспортировать', library: true });
+    const place = await this.choosePlace({ title: t('best.whichExport'), action: t('best.export'), library: true });
     if (!place) return null;
-    const name = place.scope === 'library' ? 'Библиотека карточек' : `Карточки — ${title(place.folder) || vaultName}`;
+    const name = place.scope === 'library' ? t('best.libraryFile') : t('best.cardsOf', { name: title(place.folder) || vaultName });
     const n = await window.api.exportCards({ scope: place.scope, folder: place.folder, name });
-    return n === null ? null : `Экспортировано карточек: ${n}`;
+    return n === null ? null : t('best.exported', { count: n });
   }
 }
 

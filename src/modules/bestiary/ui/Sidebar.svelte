@@ -1,5 +1,6 @@
 <!-- Боковая панель бестиария: поиск, фильтры и список карточек. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
   import { Download, FilePlus, Plus, Search, Upload } from '@lucide/svelte';
   import { langName, sameRef } from '../../../shared/cards';
@@ -76,18 +77,18 @@
   <div class="top">
     <label class="search">
       <Search size={13} />
-      <input type="text" placeholder="Поиск" bind:value={f.search} />
+      <input type="text" placeholder={t('best.search')} bind:value={f.search} />
     </label>
     <div class="new">
-      <button class="icon-btn" title="Новая карточка, импорт и экспорт" onclick={() => (menu = !menu)}><Plus size={16} /></button>
+      <button class="icon-btn" title={t('best.menuHint')} onclick={() => (menu = !menu)}><Plus size={16} /></button>
       {#if menu}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <div class="menu-backdrop" onclick={() => (menu = false)}></div>
         <div class="menu">
-          <button onclick={create}><FilePlus size={14} /> Новая карточка…</button>
+          <button onclick={create}><FilePlus size={14} /> {t('best.newCardMenu')}</button>
           <div class="sep"></div>
-          <button onclick={importCards}><Download size={14} /> Импорт из файла…</button>
-          <button onclick={exportCards}><Upload size={14} /> Экспорт в файл…</button>
+          <button onclick={importCards}><Download size={14} /> {t('best.importFile')}</button>
+          <button onclick={exportCards}><Upload size={14} /> {t('best.exportFile')}</button>
         </div>
       {/if}
     </div>
@@ -97,36 +98,36 @@
     <select
       value={editions.some((s) => s.id === f.system) ? f.system : 'all'}
       onchange={(e) => (f.system = e.currentTarget.value)}
-      title="Редакция. Система — у приключения (меню приключения над панелью)"
+      title={t('best.editionHint')}
     >
-      <option value="all">Все редакции</option>
+      <option value="all">{t('best.allEditions')}</option>
       {#each editions as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
     </select>
   {/if}
   <div class="row">
-    <select bind:value={f.kind} title="Монстры, NPC или персонажи игроков">
-      <option value="all">Все виды</option>
-      <option value="monster">Монстры</option>
+    <select bind:value={f.kind} title={t('best.kindHint')}>
+      <option value="all">{t('best.allKinds')}</option>
+      <option value="monster">{t('best.monsters')}</option>
       <option value="npc">NPC</option>
-      <option value="character">Партия</option>
+      <option value="character">{t('best.party')}</option>
     </select>
-    <select bind:value={f.lang} title="Какую версию показывать, если карточка переведена">
+    <select bind:value={f.lang} title={t('best.langHint')}>
       {#each bestiary.langs as l (l)}<option value={l}>{langName(l)}</option>{/each}
       {#if !bestiary.langs.includes(f.lang) && f.lang !== 'all'}<option value={f.lang}>{langName(f.lang)}</option>{/if}
-      <option value="all">Все версии</option>
+      <option value="all">{t('best.allVersions')}</option>
     </select>
   </div>
-  <select bind:value={f.scope} title="Где лежат карточки">
-    <option value="all">Везде</option>
+  <select bind:value={f.scope} title={t('best.scopeHint')}>
+    <option value="all">{t('best.everywhere')}</option>
     {#if isDnd(currentSystem(app.adventures)) || f.scope === 'srd'}<option value="srd">SRD</option>{/if}
-    <option value="library">Библиотека</option>
-    <option value="vault">Хранилище</option>
+    <option value="library">{t('best.libraryShort')}</option>
+    <option value="vault">{t('best.vault')}</option>
     {#each folders as fl (fl.folder.path)}<option value="vault:{fl.folder.path}">· {fl.title}</option>{/each}
   </select>
 </div>
 
 {#if status}<div class="status">{status}</div>{/if}
-<div class="count faint">{bestiary.visible.length} {bestiary.visible.length === inFamily ? '' : `из ${inFamily}`}</div>
+<div class="count faint">{bestiary.visible.length} {bestiary.visible.length === inFamily ? '' : t('best.ofTotal', { total: inFamily })}</div>
 
 <div class="list">
   {#each bestiary.visible.slice(0, limit) as c (c.ref.scope + ':' + c.ref.id)}
@@ -134,15 +135,15 @@
       <span class="name"
         >{c.name}{#if editions.length > 1 && !editions.some((s) => s.id === f.system)}<span class="tag">{c.system.replace(/^dnd5e-/, '')}</span>{/if}{#if f.lang === 'all'}<span
             class="tag">{c.lang}</span
-          >{/if}{#if c.edited}<span class="tag" title="Встроенная карточка, изменённая вами">изм.</span>{/if}</span
+          >{/if}{#if c.edited}<span class="tag" title={t('best.editedHint')}>{t('best.edited')}</span>{/if}</span
       >
       <span class="sub">{c.subtitle}{#if c.folder !== undefined && !f.scope.startsWith('vault:')} · {folderTitle(c.folder)}{/if}</span>
     </button>
   {:else}
-    <p class="faint empty">Ничего не нашлось.</p>
+    <p class="faint empty">{t('best.nothing')}</p>
   {/each}
   {#if bestiary.visible.length > limit}
-    <button class="btn more" onclick={() => (limit += PAGE)}>Показать ещё</button>
+    <button class="btn more" onclick={() => (limit += PAGE)}>{t('best.more')}</button>
   {/if}
 </div>
 

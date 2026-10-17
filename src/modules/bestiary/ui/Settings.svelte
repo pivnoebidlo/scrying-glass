@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Карточки»: где лежит библиотека карточек; таблица заклинаний Long Story Short. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
 
@@ -18,12 +19,12 @@
   async function loadLss() {
     const r = await window.api.importLssSpells();
     if (!r) return;
-    lssStatus = [`Добавлено заклинаний: ${r.total - r.before}, всего ${r.total}.`, ...r.errors].join(' ');
+    lssStatus = [t('best.lssAdded', { added: r.total - r.before, total: r.total }), ...r.errors].join(' ');
     await refreshLss();
   }
 
   async function clearLss() {
-    if (!confirm('Убрать загруженную таблицу заклинаний LSS?')) return;
+    if (!confirm(t('best.lssClear'))) return;
     await window.api.clearLssSpells();
     lssStatus = '';
     await refreshLss();
@@ -37,48 +38,41 @@
 
 <div class="setting">
   <div class="info">
-    <div class="name">Библиотека карточек</div>
+    <div class="name">{t('best.library')}</div>
     <div class="desc path" title={lib.path ?? ''}>{lib.path}</div>
     <div class="desc">
-      Общие для всех кампаний монстры и NPC с портретами. Папку можно положить в облако (iCloud, Dropbox) или в git,
-      чтобы библиотека была на всех компьютерах. При смене папки карточки из старой не переносятся.
+      {t('best.libraryAbout')}
     </div>
   </div>
-  <button class="btn" onclick={() => window.api.revealLibrary()}>Показать в Finder</button>
-  <button class="btn primary" onclick={() => choose()}>Выбрать папку…</button>
+  <button class="btn" onclick={() => window.api.revealLibrary()}>{t('best.reveal')}</button>
+  <button class="btn primary" onclick={() => choose()}>{t('best.chooseFolder')}</button>
 </div>
 {#if !lib.isDefault}
   <div class="setting">
-    <div class="info"><div class="desc">Сейчас выбрана своя папка.</div></div>
-    <button class="btn" onclick={() => choose(true)}>Вернуть папку по умолчанию</button>
+    <div class="info"><div class="desc">{t('best.customFolder')}</div></div>
+    <button class="btn" onclick={() => choose(true)}>{t('best.defaultFolder')}</button>
   </div>
 {/if}
 
 <div class="setting">
   <div class="info">
-    <div class="name">Встроенный бестиарий</div>
+    <div class="name">{t('best.builtin')}</div>
     <div class="desc">
-      Монстры из System Reference Document 5.1 и 5.2.1 © Wizards of the Coast, лицензия CC BY 4.0. Числовые данные —
-      проект 5e-bits/5e-database. Русский перевод — OmnisGM (rules.omnisgm.com), CC BY 4.0. Встроенные карточки
-      только для чтения: чтобы изменить, перевести или добавить портрет, сделайте копию в библиотеку или кампанию.
+      {t('best.builtinAbout')}
     </div>
   </div>
 </div>
 
 <div class="setting">
   <div class="info">
-    <div class="name">Заклинания Long Story Short</div>
+    <div class="name">{t('best.lssSpells')}</div>
     <div class="desc">
-      {lssSpells ? `Загружено заклинаний: ${lssSpells}.` : 'Таблица не загружена.'} Если книга заклинаний персонажа в LSS ведётся
-      карточками, в экспорте только номера заклинаний — названия приложение берёт отсюда. Как пополнить: войдите в LSS в
-      браузере, откройте «Гримуар» или лист персонажа, в инструментах разработчика (вкладка Network) сохраните ответы
-      запросов к api.longstoryshort.app с заклинаниями и загрузите эти файлы сюда — заклинания найдутся сами и добавятся к
-      уже загруженным. Таблица лежит в библиотеке (lss-spells.json).
+      {lssSpells ? t('best.lssLoaded', { count: lssSpells }) : t('best.lssNone')} {t('best.lssAbout')}
     </div>
     {#if lssStatus}<div class="desc status">{lssStatus}</div>{/if}
   </div>
-  {#if lssSpells}<button class="btn" onclick={clearLss}>Очистить</button>{/if}
-  <button class="btn primary" onclick={loadLss}>Загрузить файлы…</button>
+  {#if lssSpells}<button class="btn" onclick={clearLss}>{t('best.clear')}</button>{/if}
+  <button class="btn primary" onclick={loadLss}>{t('best.loadFiles')}</button>
 </div>
 
 <style>
