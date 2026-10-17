@@ -203,8 +203,8 @@ table is a plain Markdown file in a tables / random folder, easy to write in Obs
 on top, ×3 and ×5 — several at once, a click on an option in the list — pick it by hand.
 
 Where tables live: in an adventure, in the vault's shared tables folder or in the library — shared by all campaigns
-(`<library>/tables`, next to the shared cards). The 16 built-in tables in the interface language (human, elf, dwarf
-and halfling names, nicknames, appearance, personality, secret motives, a "Random NPC" generator, tavern names,
+(`<library>/tables`, next to the shared cards). The 15 built-in tables in the interface language (human, elf, dwarf
+and halfling names, nicknames, appearance, personality, secret motives, a "Random NPC" generator,
 rumors, weather, road encounters, what's in the pockets, trinkets) are put into the library as ordinary files on the
 first launch: they can be edited and extended. A deleted built-in table doesn't come back by itself — that's what
 "Restore built-in tables" is for. "New table" and "Copy to…" offer a place: the adventure, Shared or the library;
@@ -227,6 +227,15 @@ line; the file name says what's inside: `race_gender_kind.txt` (`human_man_names
 `dwarf_surnames.txt`; kinds — names, surnames, nicknames, epithets; race `any` — for all, or your own: `orc_man_names.txt`).
 "Load lists…" puts them into the library (`names/<lang>/`, the language by the letters), and they are added to the
 built-in ones; built-in or own lists can be turned off.
+
+**Tavern generator** (Tools → Tavern generator): type (tavern, inn, roadside inn, harbor dive, hidden den, wine house),
+wealth (squalid to aristocratic — prices follow the SRD food, drink and lodging table), crowd, lodging and wonders.
+The result: name and sign, a read-aloud description, the owner (name, trait, catchphrase, secret), staff, patrons
+with what they're doing and their secrets, a menu with prices, rooms and services, an event of the evening that uses
+the tavern's own people, rumors, a request and the tavern's secret. Any part can be rerolled or pinned ("Reroll
+unpinned" keeps the pinned ones); "To journal" saves the tavern as a note of the current adventure (the description
+as a read-aloud quote, rumors as tasks to tick off), "Copy" — the same text. Names come from the name generator's
+lists, including your own.
 
 **Timer** (Tools → Timer): an hourglass or digits on the player screen — top right, bottom right or large in the
 center, with a caption ("While the torch burns"). Presets from 30 seconds to 30 minutes or your own time. When time

@@ -91,6 +91,17 @@ export function book(): NameBook {
   if (opts.own) for (const l of names.own) if (l.lang === lang) add(l.file.split('/').pop()!, l.text);
   return b;
 }
+// Every list of a language (built-in and own), whatever the generator's options: for other generators (taverns).
+export function fullBook(lang: string): NameBook {
+  const b: NameBook = {};
+  const add = (file: string, text: string) => {
+    const id = parseListName(file);
+    if (id) addList(b, id, parseList(text));
+  };
+  for (const l of BUILTIN) if (l.lang === lang) add(l.file, l.text);
+  for (const l of names.own) if (l.lang === lang) add(l.file.split('/').pop()!, l.text);
+  return b;
+}
 export const ownCount = () => names.own.filter((l) => l.lang === langNow()).length;
 
 export async function loadOwn() {

@@ -26,7 +26,7 @@ const fileTitle = (p: string) => basename(p).replace(/\.(md|txt)$/i, '');
 // another language is the same table for seeding (switching the language does not add a second set).
 const RU_TO_ID: Record<string, string> = {
   'Слухи в таверне': 'Tavern Rumors', 'События в пути': 'Road Encounters', 'Что в карманах': "What's in the Pockets",
-  'Безделушки и находки': 'Trinkets and Finds', Погода: 'Weather', 'Названия таверн': 'Tavern Names',
+  'Безделушки и находки': 'Trinkets and Finds', Погода: 'Weather',
   'Фамилии и прозвища': 'Surnames and Nicknames', 'Имена людей (женские)': 'Human Names (Female)',
   'Имена людей (мужские)': 'Human Names (Male)', 'Черты характера': 'Personality Traits', 'Тайные мотивы': 'Secret Motives',
   'Имена полуросликов': 'Halfling Names', 'Имена эльфов': 'Elf Names', 'Имена дварфов': 'Dwarf Names', Внешность: 'Appearance',
