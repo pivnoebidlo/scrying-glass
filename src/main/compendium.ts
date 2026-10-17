@@ -9,8 +9,8 @@ import { textKind } from './textstore';
 
 export const entries = textKind('compendium', 'compendium', () => t('core.name.entry'));
 
-// Встроенный справочник (SRD в переводе OmnisGM) — resources/compendium/<система>.json, собирает
-// scripts/import-compendium.ts. Только чтение; читается один раз за запуск.
+// Built-in compendium — resources/compendium/<system>.<lang>.json (SRD — scripts/import-compendium.ts, Fate —
+// scripts/build-fate.ts). Read-only; read once per run, all languages (a window picks one).
 let builtin: BuiltinBook[] | null = null;
 export function builtinEntries(): BuiltinBook[] {
   if (builtin) return builtin;

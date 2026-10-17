@@ -211,7 +211,7 @@ describe('углы аспектов и жетонов', () => {
 });
 
 describe('встроенный справочник Fate', () => {
-  const book = JSON.parse(readFileSync(new URL('../resources/compendium/fate-core.json', import.meta.url), 'utf8')) as BuiltinBook;
+  const book = JSON.parse(readFileSync(new URL('../resources/compendium/fate-core.ru.json', import.meta.url), 'utf8')) as BuiltinBook;
 
   it('навыки — те же, что в карточке Fate; типы записей известны и привязаны к Fate или общие', () => {
     expect(book.system).toBe('fate-core');

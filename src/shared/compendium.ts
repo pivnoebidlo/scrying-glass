@@ -14,7 +14,7 @@
 //
 // Только типы, подписи и чистые функции: используются ядром и окнами.
 import { familyOf } from '../systems';
-import { t, type Key } from './i18n';
+import { getLang, t, type Key } from './i18n';
 
 export type FieldValue = string | number | boolean | string[];
 
@@ -38,15 +38,32 @@ export interface TypeDef {
   family?: string;
 }
 
-const SCHOOLS = ['Ограждение', 'Вызов', 'Прорицание', 'Очарование', 'Воплощение', 'Иллюзия', 'Некромантия', 'Преобразование'];
-const RARITIES = ['Обычный', 'Необычный', 'Редкий', 'Очень редкий', 'Легендарный', 'Артефакт'];
+// Choices of select fields: values written into entry files (so data, not labels), offered in the interface
+// language — the same words the built-in book of that language uses. Other languages get the English ones.
+const OPTIONS = {
+  ru: {
+    school: ['Ограждение', 'Вызов', 'Прорицание', 'Очарование', 'Воплощение', 'Иллюзия', 'Некромантия', 'Преобразование'],
+    rarity: ['Обычный', 'Необычный', 'Редкий', 'Очень редкий', 'Легендарный', 'Артефакт'],
+    itemCategory: ['Оружие', 'Доспех', 'Чудесный предмет', 'Зелье', 'Кольцо', 'Жезл', 'Посох', 'Волшебная палочка', 'Свиток', 'Снаряжение', 'Прочее'],
+    featCategory: ['Происхождение', 'Общая', 'Боевой стиль', 'Эпический дар'],
+  },
+  en: {
+    school: ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'],
+    rarity: ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'],
+    itemCategory: ['Weapon', 'Armor', 'Wondrous Item', 'Potion', 'Ring', 'Rod', 'Staff', 'Wand', 'Scroll', 'Equipment', 'Other'],
+    featCategory: ['Origin', 'General', 'Fighting Style', 'Epic Boon'],
+  },
+};
+const options = (k: keyof (typeof OPTIONS)['en']) => () => (getLang() === 'ru' ? OPTIONS.ru : OPTIONS.en)[k];
 
 // Field titles and hints come from the dictionary (cmp.field.<type>.<key>, cmp.hint.<type>.<key>): getters, so they
 // follow the interface language. Option values of select fields are data written into entry files — not translated.
-const field = (type: string, key: string, kind: FieldDef['kind'], extra: { options?: string[]; hint?: boolean } = {}): FieldDef => ({
+const field = (type: string, key: string, kind: FieldDef['kind'], extra: { options?: () => string[]; hint?: boolean } = {}): FieldDef => ({
   key,
   kind,
-  ...(extra.options ? { options: extra.options } : {}),
+  ...(extra.options ? { get options() {
+    return extra.options!();
+  } } : {}),
   get title() {
     return t(`cmp.field.${type}.${key}` as Key);
   },
@@ -82,7 +99,7 @@ export const TYPES: Record<string, TypeDef> = {
     'spell',
     [
       field('spell', 'level', 'number', { hint: true }),
-      field('spell', 'school', 'select', { options: SCHOOLS }),
+      field('spell', 'school', 'select', { options: options('school') }),
       field('spell', 'casting_time', 'text'),
       field('spell', 'range', 'text'),
       field('spell', 'components', 'text'),
@@ -96,8 +113,8 @@ export const TYPES: Record<string, TypeDef> = {
   item: type(
     'item',
     [
-      field('item', 'category', 'select', { options: ['Оружие', 'Доспех', 'Чудесный предмет', 'Зелье', 'Кольцо', 'Жезл', 'Посох', 'Волшебная палочка', 'Свиток', 'Снаряжение', 'Прочее'] }),
-      field('item', 'rarity', 'select', { options: RARITIES }),
+      field('item', 'category', 'select', { options: options('itemCategory') }),
+      field('item', 'rarity', 'select', { options: options('rarity') }),
       field('item', 'attunement', 'text', { hint: true }),
       field('item', 'cost', 'text'),
       field('item', 'weight', 'text'),
@@ -107,7 +124,7 @@ export const TYPES: Record<string, TypeDef> = {
   feat: type(
     'feat',
     [
-      field('feat', 'category', 'select', { options: ['Происхождение', 'Общая', 'Боевой стиль', 'Эпический дар'] }),
+      field('feat', 'category', 'select', { options: options('featCategory') }),
       field('feat', 'prerequisite', 'text'),
       field('feat', 'repeatable', 'bool'),
     ],
@@ -196,9 +213,12 @@ export interface Entry {
 // Встроенный справочник одной редакции (resources/compendium/<система>.json): записи с английским названием `en`.
 export interface BuiltinBook {
   system: string;
-  // translator — кто перевёл (нет — OmnisGM, как у SRD D&D).
+  // Language of the texts: a window shows the book in the interface language, or else the English one.
+  lang: string;
+  // translator — who translated it (none — the original).
   source: { title: string; attribution: string; url: string; license: string; translator?: string };
-  entries: (Entry & { en?: string })[];
+  // en — the English title of a translated entry, ru — the Russian title of an English one (found by both).
+  entries: (Entry & { en?: string; ru?: string })[];
 }
 // Путь встроенной записи: «srd:<система>/<тип>/<название>».
 export const BUILTIN = 'srd:';

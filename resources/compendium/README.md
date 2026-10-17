@@ -1,11 +1,12 @@
-# Встроенный справочник
+# Built-in compendium / Встроенный справочник
 
-`fate-core.json` (правила и навыки Fate Core) собирает `scripts/build-fate.ts` (`npm run build-fate`) из
-`scripts/fate-core.md` — тексты правятся там.
+Files are `<system>.<lang>.json`; the app shows the book in the interface language, or else the English one.
 
-Файлы `dnd5e-2014.json` и `dnd5e-2024.json` (заклинания, магические предметы, черты, состояния, глоссарий правил)
-собирает скрипт `scripts/import-compendium.ts` (`npm run import-compendium`). Руками их не править: изменения
-пропадут при следующей сборке.
+- `fate-core.<lang>.json` (Fate Core rules and skills) — built by `scripts/build-fate.ts` (`npm run build-fate`) from
+  `scripts/fate-core.<lang>.md`; the texts are edited there.
+- `dnd5e-2014.<lang>.json` and `dnd5e-2024.<lang>.json` (spells, magic items, feats, conditions, rules glossary) —
+  built by `scripts/import-compendium.ts` (`npm run import-compendium`) from the Markdown of OmnisGM-Rules (English
+  originals and the Russian translation). Do not edit them by hand: changes are lost on the next build.
 
 ## Авторство и лицензии
 
@@ -27,6 +28,6 @@ Evil Hat Productions, LLC, developed, authored, and edited by Leonard Balsera, B
 Macklin, Mike Olson, Clark Valentine, Amanda Valentine, Fred Hicks, and Rob Donoghue, and licensed for our use under
 the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
 
-Русский текст (`fate-core.json`) — пересказ и перевод Fate Core SRD (https://fate-srd.com/fate-core), сделанный для
+Русский текст (`fate-core.ru.json`) — пересказ и перевод Fate Core SRD (https://fate-srd.com/fate-core), сделанный для
 Scrying Glass; примеры трюков написаны заново. Подписи ступеней лестницы и названия навыков — свои (открытого
 русского перевода Fate Core нет).

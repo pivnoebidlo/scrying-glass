@@ -43,10 +43,10 @@ describe('разметка записи', () => {
 });
 
 describe('встроенный справочник', () => {
-  for (const system of ['dnd5e-2014', 'dnd5e-2024']) {
-    it(`${system}: у заклинаний и предметов есть поля, названия не повторяются`, async () => {
+  for (const file of ['dnd5e-2014.ru', 'dnd5e-2014.en', 'dnd5e-2024.ru', 'dnd5e-2024.en']) {
+    it(`${file}: у заклинаний и предметов есть поля, названия не повторяются`, async () => {
       const fs = await import('node:fs');
-      const book = JSON.parse(fs.readFileSync(`resources/compendium/${system}.json`, 'utf8')) as BuiltinBook;
+      const book = JSON.parse(fs.readFileSync(`resources/compendium/${file}.json`, 'utf8')) as BuiltinBook;
       const spells = book.entries.filter((e) => e.type === 'spell');
       expect(spells.length).toBeGreaterThan(300);
       for (const s of spells) {
@@ -60,6 +60,17 @@ describe('встроенный справочник', () => {
       expect(new Set(keys).size).toBe(keys.length);
     });
   }
+  it('английская книга: у записи есть русское название, у русской — английское', async () => {
+    const fs = await import('node:fs');
+    const read = (f: string) => JSON.parse(fs.readFileSync(`resources/compendium/${f}.json`, 'utf8')) as BuiltinBook;
+    const en = read('dnd5e-2024.en');
+    const ru = read('dnd5e-2024.ru');
+    expect(en.lang).toBe('en');
+    const fireball = en.entries.find((e) => e.title === 'Fireball')!;
+    expect(fireball.ru).toBe('Огненный шар');
+    expect(fireball.fields['school']).toBe('Evocation');
+    expect(ru.entries.find((e) => e.title === 'Огненный шар')!.en).toBe('Fireball');
+  });
 });
 
 describe('свои типы записей', () => {

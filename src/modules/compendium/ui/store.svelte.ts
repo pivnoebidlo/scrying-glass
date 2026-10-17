@@ -1,6 +1,6 @@
 // Записи справочника в окне управления: из папок справочника хранилища (приключение и общее) и из библиотеки (для
 // всех кампаний). Тексты читаются через ядро и перечитываются, когда файлы изменились (здесь или снаружи).
-import { t } from '../../../renderer/lib/i18n.svelte';
+import { locale, t } from '../../../renderer/lib/i18n.svelte';
 import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
 import { store } from '../../../renderer/lib/store.svelte';
 import { currentSystem, placeOrder, placeTitle, roleFolderHere, visibleIn } from '../../../shared/adventures';
@@ -18,6 +18,9 @@ export interface EntryItem {
   entry: Entry;
   // Английское название встроенной записи — тоже находится поиском и по [[ссылке]].
   en?: string;
+  // Built-in entry: the language of its book and, in an English book, the Russian title (also found).
+  lang?: string;
+  ru?: string;
 }
 
 export const libraryGroup = () => t('cmpui.library');
@@ -25,6 +28,8 @@ export const isLibraryEntry = (path: string) => path.startsWith(LIBRARY);
 export const isBuiltinEntry = (path: string) => path.startsWith(BUILTIN);
 
 export const book = $state({ vault: [] as EntryItem[], library: [] as EntryItem[], builtin: [] as EntryItem[], rev: 0, loaded: false });
+// Languages of the built-in books by system.
+let builtinLangs: Record<string, string[]> = {};
 
 // Какие встроенные записи показывать: редакция SRD, обе или никакие. Помнит окно (localStorage).
 export type Edition = 'dnd5e-2024' | 'dnd5e-2014' | 'all' | 'none';
@@ -67,25 +72,31 @@ export function setEdition(e: Edition) {
   }
 }
 
-let builtinLoaded = false;
+// Loaded for this interface language: group and source labels are taken at load time.
+let builtinLoaded = '';
 async function loadBuiltin() {
-  if (builtinLoaded) return;
-  builtinLoaded = true;
+  if (builtinLoaded === locale.lang) return;
+  builtinLoaded = locale.lang;
   const books = await window.api.listBuiltinEntries();
-  book.builtin = books.flatMap((b) =>
-    b.entries.map(({ en, ...e }) => ({
+  builtinLangs = {};
+  for (const b of books) (builtinLangs[b.system] ??= []).push(b.lang);
+  book.builtin = books.flatMap((b) => {
+    const source = b.source.translator ? t('cmpui.translatedBy', { source: b.source.title, by: b.source.translator }) : b.source.title;
+    return b.entries.map(({ en, ru, ...e }) => ({
       path: `${BUILTIN}${b.system}/${e.type}/${e.title}`,
       group: b.source.title,
       order: 3,
-      entry: { ...e, fields: { ...e.fields, source: t('cmpui.translatedBy', { source: b.source.title, by: b.source.translator ?? 'OmnisGM' }) } },
+      entry: { ...e, fields: { ...e.fields, source } },
       en,
-    }))
-  );
+      ru,
+      lang: b.lang,
+    }));
+  });
 }
 
 let hooked = false;
 let loadedFor = '';
-let libraryFor = -1;
+let libraryFor = '';
 
 export async function loadEntries() {
   connectNotes();
@@ -94,8 +105,8 @@ export async function loadEntries() {
     window.api.onCompendiumChanged(() => book.rev++);
   }
   void loadBuiltin();
-  if (libraryFor !== book.rev) {
-    libraryFor = book.rev;
+  if (libraryFor !== `${book.rev}|${locale.lang}`) {
+    libraryFor = `${book.rev}|${locale.lang}`;
     const list = await window.api.listLibraryEntries();
     book.library = list.map((f) => ({ path: f.path, group: libraryGroup(), order: 2, entry: parseEntry(f.text, entryTitle(f.path)) }));
   }
@@ -106,7 +117,7 @@ export async function loadEntries() {
         .filter((r) => visibleIn(app.adventures, r.folder.path))
         .flatMap((r) => allFiles(r.folder, 'entry').map((f) => ({ path: f.path, dir: dirname(r.folder.path) })))
     : [];
-  const key = notes.rev + '|' + files.map((f) => f.path).join('|');
+  const key = notes.rev + '|' + locale.lang + '|' + files.map((f) => f.path).join('|');
   if (key === loadedFor) return;
   loadedFor = key;
   const list = await Promise.all(
@@ -156,9 +167,14 @@ function ownShown(list: EntryItem[]): EntryItem[] {
     return [{ ...e, en: e.en ?? orig?.en, group: t('cmpui.editOf', { group: e.group, orig: orig?.group ?? 'SRD' }), order: 3 }];
   });
 }
+// Language of the built-in book shown for a system: the interface language if there is such a book, else English.
+const shownLang = (system: string) => {
+  const langs = builtinLangs[system] ?? [];
+  return langs.includes(locale.lang) ? locale.lang : langs.includes('en') ? 'en' : (langs[0] ?? '');
+};
 const builtinShown = () => {
   const replaced = new Set([...book.vault, ...book.library].map(overrideOf).filter(Boolean));
-  return book.builtin.filter((e) => editionShown(e.path) && !replaced.has(e.path));
+  return book.builtin.filter((e) => editionShown(e.path) && e.lang === shownLang(systemOfBuiltin(e.path)) && !replaced.has(e.path));
 };
 export const allEntries = () =>
   [...ownShown(book.vault), ...ownShown(book.library), ...builtinShown()].sort((a, b) => a.order - b.order || collator.compare(a.entry.title, b.entry.title));
@@ -170,7 +186,7 @@ export const allEntries = () =>
 // Другие названия записи: английское (у встроенной) и поле aliases.
 export const altNames = (e: EntryItem): string[] => {
   const a = e.entry.fields['aliases'];
-  return [...(e.en ? [e.en] : []), ...(Array.isArray(a) ? a : typeof a === 'string' && a ? [a] : [])];
+  return [...(e.en ? [e.en] : []), ...(e.ru ? [e.ru] : []), ...(Array.isArray(a) ? a : typeof a === 'string' && a ? [a] : [])];
 };
 
 export function resolveEntry(names: string | string[]): EntryItem | null {
