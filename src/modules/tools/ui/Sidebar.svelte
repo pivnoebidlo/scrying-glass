@@ -1,7 +1,7 @@
 <!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Calculator, Dices, FileText, Gauge, Hourglass, ScrollText, Table2 } from '@lucide/svelte';
+  import { Calculator, Dices, FileText, Gauge, Hourglass, ScrollText, Signature, Table2 } from '@lucide/svelte';
   import { tables } from '../tables/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
@@ -41,6 +41,10 @@
       </button>
     {/each}
   {/if}
+  <button class="item" data-nav class:active={ui.tool === 'names'} onclick={() => pickTool('names')}>
+    <Signature size={14} />
+    <span class="name">{t('tools.side.names')}</span>
+  </button>
   {#if dnd}
     <button class="item" data-nav class:active={ui.tool === 'difficulty'} onclick={() => pickTool('difficulty')}>
       <Gauge size={14} />

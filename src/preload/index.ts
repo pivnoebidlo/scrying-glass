@@ -32,6 +32,10 @@ const api: Api = {
   library: () => ipcRenderer.invoke('cards:library'),
   chooseLibrary: (reset) => ipcRenderer.invoke('cards:chooseLibrary', { reset }),
   revealLibrary: () => ipcRenderer.invoke('cards:revealLibrary'),
+  listNameLists: () => ipcRenderer.invoke('names:list'),
+  importNameLists: () => ipcRenderer.invoke('names:import'),
+  revealNameLists: () => ipcRenderer.invoke('names:reveal'),
+  saveTextFile: (name, text) => ipcRenderer.invoke('files:saveText', { name, text }),
 
   onVaultRescan: (cb) => { ipcRenderer.on('vault:rescanned', () => cb()); },
   readNote: (path) => ipcRenderer.invoke('notes:read', path),

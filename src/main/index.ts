@@ -33,6 +33,7 @@ import {
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
+import { importNameLists, listNameLists, namesDir } from './names';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
 } from './windows';
@@ -983,7 +984,7 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
 });
 
 // Небольшие данные инструментов, общие для всех кампаний: JSON-файлы в библиотеке (только из списка).
-const LIBRARY_DATA = new Set(['pointbuy.json', 'compendium-types.json']);
+const LIBRARY_DATA = new Set(['pointbuy.json', 'compendium-types.json', 'names.json']);
 ipcMain.handle('library:readData', (_event, name: string) => {
   const lib = libraryPath();
   return LIBRARY_DATA.has(name) && lib ? (readJson(path.join(lib, name)) ?? null) : null;
@@ -1173,6 +1174,35 @@ function noImageInClipboard() {
 
 const defaultLibrary = () => path.join(app.getPath('userData'), 'library');
 ipcMain.handle('cards:library', () => ({ path: libraryPath(), isDefault: !settings.library }));
+// The name generator's own lists (main/names.ts): list, load files (a dialog), open the folder.
+ipcMain.handle('names:list', () => listNameLists(libraryPath()));
+ipcMain.handle('names:import', async () => {
+  const win = getControlWindow();
+  const opts = { title: t('names.importTitle'), properties: ['openFile' as const, 'multiSelections' as const], filters: [{ name: t('names.filter'), extensions: ['txt'] }] };
+  const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+  return res.canceled || !res.filePaths.length ? null : importNameLists(libraryPath(), res.filePaths);
+});
+ipcMain.handle('names:reveal', async () => {
+  const lib = libraryPath();
+  if (!lib) return;
+  fs.mkdirSync(namesDir(lib), { recursive: true });
+  await shell.openPath(namesDir(lib));
+});
+// Save text into a file the GM picks (a dialog): name — the suggested file name with its extension.
+ipcMain.handle('files:saveText', async (_event, { name, text }: { name: string; text: string }) => {
+  const win = getControlWindow();
+  const ext = path.extname(name).slice(1) || 'txt';
+  const opts = { defaultPath: path.join(app.getPath('documents'), name), filters: [{ name: ext.toUpperCase(), extensions: [ext] }] };
+  const res = win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts);
+  if (res.canceled || !res.filePath) return false;
+  try {
+    fs.writeFileSync(res.filePath, text);
+    return true;
+  } catch (e) {
+    dialog.showErrorBox(t('core.saveFailed'), `${res.filePath}\n\n${String(e)}`);
+    return false;
+  }
+});
 ipcMain.handle('cards:revealLibrary', async () => {
   const dir = libraryPath();
   if (dir) {

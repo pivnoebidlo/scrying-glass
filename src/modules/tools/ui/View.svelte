@@ -13,6 +13,7 @@
   import Calculator from '../difficulty/Calculator.svelte';
   import TimerTool from '../../timer/ui/TimerTool.svelte';
   import PointBuy from '../pointbuy/PointBuy.svelte';
+  import NameGenerator from '../names/NameGenerator.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
   import { isDnd } from '../../../systems';
@@ -33,6 +34,8 @@
 
 {#if ui.tool === 'tables'}
   <TablesView />
+{:else if ui.tool === 'names'}
+  <NameGenerator />
 {:else if ui.tool === 'difficulty' && dnd}
   <Calculator />
 {:else if ui.tool === 'timer'}

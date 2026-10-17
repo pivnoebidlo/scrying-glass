@@ -2,4 +2,6 @@ node_modules/
 dist/
 out/
 /adventures/
+# The GM's own name lists taken from other sites: loaded into the app's library, never committed.
+/names/
 .DS_Store

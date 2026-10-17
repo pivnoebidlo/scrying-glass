@@ -217,6 +217,16 @@ characters (level from the sheet; a hero without a card is looked up by name); i
 party from the setting in the same badge. XP comes from the enemy cards; allies and neutrals don't count. Sketch an
 encounter and pick enemies in Tools → Encounter difficulty, and from there — straight "To an encounter".
 
+**Name generator** (Tools → Name generator): race (human, elf, dwarf, gnome, halfling, dragonborn, tiefling), gender,
+form — just a name or a name and surname, nickname — none, simple ("the Lame") or epic ("Bane of Giants"). Filters —
+length, sound (melodic, soft, harsh) and first letters; 1, 5, 10 or 20 names at once, Space — more. Each name has
+"Copy" and a "favorite" star; favorites (shared by all campaigns, in the library) and history export to TXT and CSV.
+The built-in lists are written for the app, in English and Russian. Your own lists are text files, one entry per
+line; the file name says what's inside: `race_gender_kind.txt` (`human_man_names.txt`, `elves_woman_nicknames.txt`,
+`dwarf_surnames.txt`; kinds — names, surnames, nicknames, epithets; race `any` — for all, or your own: `orc_man_names.txt`).
+"Load lists…" puts them into the library (`names/<lang>/`, the language by the letters), and they are added to the
+built-in ones; built-in or own lists can be turned off.
+
 **Timer** (Tools → Timer): an hourglass or digits on the player screen — top right, bottom right or large in the
 center, with a caption ("While the torch burns"). Presets from 30 seconds to 30 minutes or your own time. When time
 runs out, the timer flashes "Time's up!" and the GM hears a chime (on the music output device). Pause, ±1 minute,

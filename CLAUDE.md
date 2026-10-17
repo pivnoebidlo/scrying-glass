@@ -266,6 +266,12 @@ Electron-приложение для мастера D&D: окно управле
   (партия: из боя → приключения → `initiative.party` из настроек), опыт монстра — `CombatStats.xp`, уровень героя —
   `rank` карточки (`initiative/ui/heroes.ts`). Плашка — `initiative/ui/Difficulty.svelte` (в бою и заготовке),
   подробности — `DifficultyDetails.svelte`, калькулятор — `tools/difficulty/Calculator.svelte` (набросок — `calc.svelte.ts`).
+  Генератор имён: правила и генерация — `shared/names.ts` (`parseListName`: файл `раса_пол_вид.txt`, `generateNames`,
+  фильтры `lengthOf` / `soundOf`), страница — `tools/names/NameGenerator.svelte`, окно — `names/store.svelte.ts`
+  (настройки и история — localStorage окна, избранное — `<библиотека>/names.json`). Встроенные списки —
+  `tools/names/builtin/<lang>/*.txt` (написаны для приложения); свои — `<библиотека>/names/<lang>/` (`main/names.ts`, IPC
+  `names:*`), в репозиторий не кладём — это могут быть списки чужих сайтов (папка `/names/` в корне — в .gitignore).
+  Выгрузка TXT / CSV — общий IPC `files:saveText`.
   Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Chime` —
   сигнал WebAudio на устройство вывода музыки); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
   окна только пересчитывают остаток по `setInterval`. Страница в «Инструментах» — `timer/ui/TimerTool.svelte`.

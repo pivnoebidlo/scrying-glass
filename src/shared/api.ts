@@ -86,6 +86,13 @@ export interface Api {
   library(): Promise<{ path: string | null; isDefault: boolean }>;
   chooseLibrary(reset?: boolean): Promise<void>;
   revealLibrary(): Promise<void>;
+  // The name generator's own lists in <library>/names/<lang>/: all of them, load files (a dialog; null — cancelled),
+  // open the folder.
+  listNameLists(): Promise<{ file: string; lang: string; text: string }[]>;
+  importNameLists(): Promise<{ count: number; errors: string[] } | null>;
+  revealNameLists(): Promise<void>;
+  // Save text into a file the GM picks (name — the suggested name with an extension). false — cancelled or failed.
+  saveTextFile(name: string, text: string): Promise<boolean>;
 
   // Хранилище перечитано (файлы изменились — в приложении или снаружи).
   onVaultRescan(cb: () => void): void;
