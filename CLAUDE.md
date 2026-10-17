@@ -275,6 +275,9 @@ Electron-приложение для мастера D&D: окно управле
   `tools/names/builtin/<lang>/*.txt` (написаны для приложения); свои — `<библиотека>/names/<lang>/` (`main/names.ts`, IPC
   `names:*`), в репозиторий не кладём — это могут быть списки чужих сайтов (папка `/names/` в корне — в .gitignore).
   Выгрузка TXT / CSV — общий IPC `files:saveText`.
+  Генератор погоды: `tools/weather/` — модель `generate.ts` (климат по местности и сезону, дни связаны: температура
+  тянется к среднему, дождь затягивается; день — коды, слова — в словаре `weather.*`), текст `text.ts` (`daySummary`,
+  `dayFlavor`, `dayRules` — правила SRD только в D&D), страница `WeatherGenerator.svelte` (последняя погода — localStorage).
   Генератор NPC: `tools/npc/` — как таверны (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — занятия и черты берёт у
   таверн, `text.ts` — Markdown и карточка, `store.svelte.ts` — с историей); «Создать карточку» — `bestiary.create(place,
   prefill)`.

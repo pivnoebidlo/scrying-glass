@@ -26,7 +26,7 @@ const fileTitle = (p: string) => basename(p).replace(/\.(md|txt)$/i, '');
 // another language is the same table for seeding (switching the language does not add a second set).
 const RU_TO_ID: Record<string, string> = {
   'Слухи в таверне': 'Tavern Rumors', 'События в пути': 'Road Encounters', 'Что в карманах': "What's in the Pockets",
-  'Безделушки и находки': 'Trinkets and Finds', Погода: 'Weather',
+  'Безделушки и находки': 'Trinkets and Finds',
 }
 const ALL_BUILTIN = Object.entries(raw).map(([p, text]) => {
   const lang = p.split('/').at(-2)!;

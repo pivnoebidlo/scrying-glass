@@ -206,7 +206,7 @@ table is a plain Markdown file in a tables / random folder, easy to write in Obs
 on top, ×3 and ×5 — several at once, a click on an option in the list — pick it by hand.
 
 Where tables live: in an adventure, in the vault's shared tables folder or in the library — shared by all campaigns
-(`<library>/tables`, next to the shared cards). The 5 built-in tables in the interface language (rumors, weather, road encounters, what's in the pockets, trinkets) are put into the library as ordinary files on the
+(`<library>/tables`, next to the shared cards). The 4 built-in tables in the interface language (rumors, road encounters, what's in the pockets, trinkets) are put into the library as ordinary files on the
 first launch: they can be edited and extended. A deleted built-in table doesn't come back by itself — that's what
 "Restore built-in tables" is for. "New table" and "Copy to…" offer a place: the adventure, Shared or the library;
 [[links]] take the adventure's table first, then the shared one, then the library's. Any table can be deleted to
@@ -228,6 +228,13 @@ line; the file name says what's inside: `race_gender_kind.txt` (`human_man_names
 `dwarf_surnames.txt`; kinds — names, surnames, nicknames, epithets; race `any` — for all, or your own: `orc_man_names.txt`).
 "Load lists…" puts them into the library (`names/<lang>/`, the language by the letters), and they are added to the
 built-in ones; built-in or own lists can be turned off.
+
+**Weather generator** (Tools → Weather generator): terrain (forest, plains, city, coast, mountains, swamp, jungle,
+desert, arctic, underground), season and 1, 3 or 7 days → for each day the sky, rain or snow (sleet, sandstorm,
+thunderstorm), wind and temperature (°F and °C), a line to read aloud and, rarely, something unusual (northern lights,
+a waterspout, a mirage…). Days follow each other: rain tends to last, the temperature drifts. In D&D adventures — the
+SRD weather rules that apply (extreme cold and heat, strong wind, heavy precipitation, fog). Copy, to the journal, or
+straight to the players in Telegram (without the rules). The built-in "Weather" table is retired.
 
 **NPC generator** (Tools → NPC generator): race (or random), gender, importance (common to unique) → name, trade,
 appearance, character, manner of speech, what they want, what they hide and what they carry; important NPCs get a
