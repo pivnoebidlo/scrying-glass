@@ -206,9 +206,8 @@ table is a plain Markdown file in a tables / random folder, easy to write in Obs
 on top, ×3 and ×5 — several at once, a click on an option in the list — pick it by hand.
 
 Where tables live: in an adventure, in the vault's shared tables folder or in the library — shared by all campaigns
-(`<library>/tables`, next to the shared cards). The 2 built-in tables in the interface language (what's in the pockets, trinkets) are put into the library as ordinary files on the
-first launch: they can be edited and extended. A deleted built-in table doesn't come back by itself — that's what
-"Restore built-in tables" is for. "New table" and "Copy to…" offer a place: the adventure, Shared or the library;
+(`<library>/tables`, next to the shared cards). There are no built-in tables any more: the generators in Tools took
+their place (tables already put into the library stay there as ordinary files). "New table" and "Copy to…" offer a place: the adventure, Shared or the library;
 [[links]] take the adventure's table first, then the shared one, then the library's. Any table can be deleted to
 trash. Notes are copied to another adventure the same way.
 
@@ -228,6 +227,13 @@ line; the file name says what's inside: `race_gender_kind.txt` (`human_man_names
 `dwarf_surnames.txt`; kinds — names, surnames, nicknames, epithets; race `any` — for all, or your own: `orc_man_names.txt`).
 "Load lists…" puts them into the library (`names/<lang>/`, the language by the letters), and they are added to the
 built-in ones; built-in or own lists can be turned off.
+
+**Treasure** (Tools → Treasure): where (pockets, a stash or a chest, a lair hoard) and the heroes' level (1–4, 5–10,
+11–16, 17–20) → coins, gems and art, valuable things, pocket finds and trinkets; each part rerollable. In D&D
+adventures — magic items of the right rarity from the compendium (of the shown edition, your own items included; a
+click opens the entry, in the journal they are [[links]]) and prices with the total in gold; in other systems —
+curiosities and no prices. Copy, to the journal or to Telegram. It replaces the last built-in random tables ("What's
+in the Pockets", "Trinkets and Finds").
 
 **Random events** (Tools → Random events): terrain (as for the weather, the city and the underground included), day or
 night, danger (calm, tense, dangerous) and 1, 3 or 6 events → encounters, discoveries, obstacles, travellers, omens and

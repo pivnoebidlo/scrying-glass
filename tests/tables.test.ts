@@ -65,28 +65,6 @@ describe('броски по таблицам', () => {
   });
 });
 
-for (const lang of ['ru', 'en']) {
-  describe(`встроенные таблицы (${lang})`, () => {
-    const dir = path.join(__dirname, '../src/modules/tools/tables/builtin', lang);
-    const list = fs.readdirSync(dir).map((f) => parseTable(fs.readFileSync(path.join(dir, f), 'utf8'), f.replace(/\.md$/, '')));
-    const resolve = (n: string) => list.find((t) => tableKey(t.title) === tableKey(n)) ?? null;
-
-    it('в каждой есть варианты, название совпадает с именем файла', () => {
-      for (const t of list) expect(t.entries.length, t.title).toBeGreaterThan(3);
-      expect(fs.readdirSync(dir).map((f) => f.replace(/\.md$/, '')).sort()).toEqual(list.map((t) => t.title).sort());
-    });
-
-    it('все [[ссылки]] находят таблицу, после броска не остаётся скобок', () => {
-      for (const t of list) {
-        for (const e of t.entries) {
-          for (const m of e.text.matchAll(/\[\[([^\]|]+)/g)) expect(resolve(m[1]!), `${t.title}: ${m[1]}`).not.toBeNull();
-        }
-        for (let i = 0; i < 20; i++) expect(rollTable(t, { resolve })!.text, t.title).not.toMatch(/[[\]{}]/);
-      }
-    });
-  });
-}
-
 describe('таблицы в библиотеке', () => {
   it('встроенные кладутся один раз: удалённая сама не возвращается, «вернуть» — возвращает', () => {
     const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-lib-'));

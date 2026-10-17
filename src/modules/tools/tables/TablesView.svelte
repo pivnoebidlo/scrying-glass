@@ -9,7 +9,7 @@
   import { store } from '../../../renderer/lib/store.svelte';
   import { tableDie } from '../../../shared/tables';
   import { ui } from '../ui/ui.svelte';
-  import { loadTables, restoreBuiltins, tables, type TableItem } from './store.svelte';
+  import { hasBuiltins, loadTables, restoreBuiltins, tables, type TableItem } from './store.svelte';
   import TableView from './TableView.svelte';
 
   // Перечитываем, когда меняется дерево хранилища или ядро сообщило о новых файлах.
@@ -75,8 +75,10 @@
       </section>
     {/each}
     <footer class="foot">
-      <button class="btn" title={t('tools.tables.restoreHint')} onclick={restore}><RotateCcw size={14} /> {t('tools.tables.restore')}</button>
-      {#if restored}<span class="faint">{restored}</span>{/if}
+      {#if hasBuiltins}
+        <button class="btn" title={t('tools.tables.restoreHint')} onclick={restore}><RotateCcw size={14} /> {t('tools.tables.restore')}</button>
+        {#if restored}<span class="faint">{restored}</span>{/if}
+      {/if}
     </footer>
   </div>
 {/if}

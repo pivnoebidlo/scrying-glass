@@ -24,9 +24,8 @@ const fileTitle = (p: string) => basename(p).replace(/\.(md|txt)$/i, '');
 
 // Built-in tables by language (builtin/<lang>/<title>.md). A table's id is its English title: the same table in
 // another language is the same table for seeding (switching the language does not add a second set).
-const RU_TO_ID: Record<string, string> = {
-  'Что в карманах': "What's in the Pockets", 'Безделушки и находки': 'Trinkets and Finds',
-}
+// All of them are retired now — the generators in Tools took their place; the seeding stays for new ones.
+const RU_TO_ID: Record<string, string> = {};
 const ALL_BUILTIN = Object.entries(raw).map(([p, text]) => {
   const lang = p.split('/').at(-2)!;
   const name = fileTitle(p);
@@ -43,6 +42,7 @@ const builtinSet = () => {
     names: ALL_BUILTIN.filter((x) => x.id === b.id).map((x) => x.name),
   }));
 };
+export const hasBuiltins = ALL_BUILTIN.length > 0;
 export const libraryGroup = () => t('tools.tables.libraryGroup');
 
 export const tables = $state({ vault: [] as TableItem[], library: [] as TableItem[], loading: false, rev: 0 });
