@@ -112,3 +112,30 @@ export function pruneTrays(s: ScenesState, keep: (path: string) => boolean): Sce
   const trays = Object.fromEntries(Object.entries(s.trays ?? {}).map(([k, t]) => [k, clean(t)]));
   return changed ? { ...s, scenes, trays } : s;
 }
+
+// Switching scenes: what the previous scene put on the screen (its content or its tray) goes away, unless the new
+// scene has it too. Only for the parts the new scene doesn't change itself (a part it includes is set anyway).
+// Music and ambience keep playing — a playlist is not restarted. Returns what to change: null — clear the part,
+// a list — the portraits that stay; nothing — leave as is.
+export interface Leftovers {
+  background?: null;
+  map?: null;
+  handout?: null;
+  portraits?: string[];
+}
+export function leftovers(prev: Scene | undefined, next: Scene, screen: Tray): Leftovers {
+  if (!prev || prev.id === next.id) return {};
+  const ofPrev = merge(full(prev.tray), trayOf(prev));
+  const ofNext = merge(full(next.tray), trayOf(next));
+  const goes = (part: TrayPart, p: string) => ofPrev[part].includes(p) && !ofNext[part].includes(p);
+  const out: Leftovers = {};
+  for (const part of ['background', 'map', 'handout'] as const) {
+    const p = screen[part][0];
+    if (!next.include[part] && p && goes(part, p)) out[part] = null;
+  }
+  if (!next.include.portraits) {
+    const stay = screen.portraits.filter((p) => !goes('portraits', p));
+    if (stay.length !== screen.portraits.length) out.portraits = stay;
+  }
+  return out;
+}

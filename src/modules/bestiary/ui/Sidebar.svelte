@@ -111,9 +111,9 @@
       <option value="npc">NPC</option>
       <option value="character">{t('best.party')}</option>
     </select>
-    <select bind:value={f.lang} title={t('best.langHint')}>
+    <select value={bestiary.lang} onchange={(e) => (f.lang = e.currentTarget.value)} title={t('best.langHint')}>
       {#each bestiary.langs as l (l)}<option value={l}>{langName(l)}</option>{/each}
-      {#if !bestiary.langs.includes(f.lang) && f.lang !== 'all'}<option value={f.lang}>{langName(f.lang)}</option>{/if}
+      {#if !bestiary.langs.includes(bestiary.lang) && bestiary.lang !== 'all'}<option value={bestiary.lang}>{langName(bestiary.lang)}</option>{/if}
       <option value="all">{t('best.allVersions')}</option>
     </select>
   </div>
@@ -133,7 +133,7 @@
   {#each bestiary.visible.slice(0, limit) as c (c.ref.scope + ':' + c.ref.id)}
     <button class="item" data-nav class:active={sameRef(c.ref, bestiary.selected)} onclick={() => bestiary.select(c.ref)}>
       <span class="name"
-        >{c.name}{#if editions.length > 1 && !editions.some((s) => s.id === f.system)}<span class="tag">{c.system.replace(/^dnd5e-/, '')}</span>{/if}{#if f.lang === 'all'}<span
+        >{c.name}{#if editions.length > 1 && !editions.some((s) => s.id === f.system)}<span class="tag">{c.system.replace(/^dnd5e-/, '')}</span>{/if}{#if bestiary.lang === 'all'}<span
             class="tag">{c.lang}</span
           >{/if}{#if c.edited}<span class="tag" title={t('best.editedHint')}>{t('best.edited')}</span>{/if}</span
       >

@@ -1,5 +1,5 @@
-<!-- Правая панель: сцены одной кнопкой (⌘1…⌘9 — первые девять). «+» — сохранить текущее (сначала имя), двойной
-     щелчок по сцене — переименовать. -->
+<!-- Right panel: scenes as a vertical list, one click each (⌘1…⌘9 — the first nine, shown in the hint). The last row
+     saves the current screen as a scene (asks for a name first); double-click a scene to rename it. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Plus, X } from '@lucide/svelte';
@@ -56,7 +56,6 @@
         onclick={() => activate(app, sc)}
         ondblclick={() => startRename(sc.id, sc.name)}
       >
-        {#if i < 9}<span class="key">{i + 1}</span>{/if}
         <span class="name">{sc.name}</span>
       </button>
       {#if ms.active === sc.id}
@@ -70,7 +69,7 @@
     {@render field(t('scenes.newNameField'))}
   {:else}
     <button class="scene add" title={t('scenes.saveNewHint')} onclick={startNew}>
-      <Plus size={13} />{#if !list.length}<span class="name">{t('scenes.saveCurrent')}</span>{/if}
+      <Plus size={13} /><span class="name">{t('scenes.saveCurrent')}</span>
     </button>
   {/if}
 </div>
@@ -78,22 +77,23 @@
 <style>
   .scenes {
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+    flex-direction: column;
+    gap: 2px;
   }
   .scene {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 6px;
-    max-width: 100%;
-    padding: 4px 8px;
-    border: 1px solid var(--border);
+    padding: 5px 8px;
+    border: 1px solid transparent;
     border-radius: var(--radius-s);
-    background: var(--bg-hover);
+    background: none;
+    color: var(--text-normal);
+    text-align: left;
     cursor: pointer;
   }
   .scene:hover {
-    border-color: var(--accent);
+    background: var(--bg-hover);
   }
   .scene.live {
     border-color: var(--accent);
@@ -103,21 +103,24 @@
     padding: 0;
   }
   .main {
-    display: inline-flex;
+    display: flex;
+    flex: 1;
     align-items: center;
-    gap: 6px;
     min-width: 0;
-    padding: 4px 8px;
+    padding: 5px 8px;
     border: 0;
     background: none;
+    color: inherit;
+    text-align: left;
     cursor: pointer;
   }
   .leave {
     display: grid;
+    flex: none;
     place-items: center;
     width: 18px;
     height: 18px;
-    margin-right: 3px;
+    margin-right: 5px;
     padding: 0;
     border: 0;
     border-radius: 50%;
@@ -129,11 +132,6 @@
     color: var(--text-normal);
     background: var(--bg-hover);
   }
-  .key {
-    color: var(--text-faint);
-    font-size: 11px;
-    font-variant-numeric: tabular-nums;
-  }
   .name {
     min-width: 0;
     overflow: hidden;
@@ -141,14 +139,11 @@
     white-space: nowrap;
   }
   .field {
-    flex: 1 1 100%;
     padding: 4px 8px;
     border: 1px solid var(--accent);
     border-radius: var(--radius-s);
   }
   .add {
     color: var(--text-muted);
-    border-style: dashed;
-    background: none;
   }
 </style>

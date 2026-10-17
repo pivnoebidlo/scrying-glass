@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import scenes from '../src/modules/scenes/main';
-import { addShown, currentTray, emptyTray, trayOwner, type ScreenNow } from '../src/modules/scenes/tray';
+import { addShown, currentTray, emptyTray, leftovers, shown as shownOf, trayOwner, type ScreenNow } from '../src/modules/scenes/tray';
 import type { Scene, ScenesState } from '../src/modules/scenes/types';
 import type { AdventuresState } from '../src/shared/adventures';
 import { ctx, run, tree } from './helpers';
@@ -103,5 +103,33 @@ describe('подборка правой панели', () => {
     expect(next.scenes[0]!.tray).toEqual({ ...emptyTray(), background: ['Страд/backgrounds/замок.jpg'] });
     // Папки (плейлисты) остаются, бои — не пути, их очистка не трогает.
     expect(next.trays?.['Страд']).toMatchObject({ portraits: ['library:images/x.png'], music: ['Страд/music'], encounters: ['e1'] });
+  });
+});
+
+describe('переключение сцен', () => {
+  const none = { background: false, map: false, portraits: false, handout: false, music: false, ambience: false };
+  const empty = { ...content, background: { path: null, fit: 'cover' as const }, portraits: { paths: [] as string[] } };
+  const scene = (id: string, tray: Partial<ReturnType<typeof emptyTray>>, include = none, c = empty): Scene =>
+    ({ id, name: id, adventure: null, include, ...c, tray: { ...emptyTray(), ...tray } }) as Scene;
+
+  it('персонажи и раздатка прошлой сцены уходят с экрана, общие с новой — остаются, чужие — тоже', () => {
+    const tavern = scene('tavern', { portraits: ['bob.png', 'innkeeper.png'], handout: ['menu.png'], map: ['tavern.jpg'] });
+    const street = scene('street', { portraits: ['innkeeper.png'] });
+    const now = shownOf(screen({ portraits: ['bob.png', 'innkeeper.png', 'mine.png'], handout: 'menu.png', map: 'tavern.jpg' }));
+    expect(leftovers(tavern, street, now)).toEqual({ portraits: ['innkeeper.png', 'mine.png'], handout: null, map: null });
+  });
+
+  it('часть, которую новая сцена меняет сама, не трогается; без прошлой сцены — ничего', () => {
+    const tavern = scene('tavern', { portraits: ['bob.png'], map: ['tavern.jpg'] });
+    const fight = scene('fight', {}, { ...none, map: true, portraits: true });
+    const now = shownOf(screen({ portraits: ['bob.png'], map: 'tavern.jpg' }));
+    expect(leftovers(tavern, fight, now)).toEqual({});
+    expect(leftovers(undefined, fight, now)).toEqual({});
+    expect(leftovers(tavern, tavern, now)).toEqual({});
+  });
+
+  it('содержимое прошлой сцены (не только подборка) тоже её', () => {
+    const old = scene('old', {}, { ...none, portraits: true }, { ...empty, portraits: { paths: ['strahd.png'] } });
+    expect(leftovers(old, scene('next', {}), shownOf(screen({ portraits: ['strahd.png'] })))).toEqual({ portraits: [] });
   });
 });

@@ -5,7 +5,7 @@ import type { AppState } from '../../shared/types';
 import { allFiles, fileKind, isLibraryAsset, prettyName, trackName } from '../../shared/vault';
 import { playlistTitle } from '../music/ui/playlists';
 import type { Part, Scene, SceneContent } from './types';
-import type { Tray } from './tray';
+import { leftovers, shown, type Tray } from './tray';
 import { isBuiltinSound } from '../../shared/sounds';
 
 // Что сейчас видят и слышат игроки.
@@ -58,9 +58,16 @@ export async function activate(app: AppState, sc: Scene) {
     await wait(450);
   }
 
+  // What the previous scene showed and the new one doesn't change goes away (its portraits, handout…).
+  const gone = leftovers(app.scenes.scenes.find((x) => x.id === app.scenes.active), sc, shown(app));
+
   // Сначала — какая сцена включена: показанное ею попадает в её подборку правой панели.
   await dispatch('scenes', 'markActive', { id: sc.id });
   const jobs: Promise<unknown>[] = [];
+  if (gone.background === null) jobs.push(dispatch('scene', 'clear'));
+  if (gone.map === null) jobs.push(dispatch('maps', 'clear'));
+  if (gone.handout === null) jobs.push(dispatch('handouts', 'clear'));
+  if (gone.portraits) jobs.push(dispatch('portraits', 'setOnScreen', { paths: gone.portraits }));
   if (on('background')) jobs.push(dispatch('scene', 'set', { path: ok(sc.background.path), fit: sc.background.fit }));
   if (on('map')) {
     const p = ok(sc.map.path);

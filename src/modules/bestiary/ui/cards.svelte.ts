@@ -1,6 +1,6 @@
 // Бестиарий в окне управления: краткий список карточек из ядра, фильтры и выбранная карточка.
 // Фильтры запоминаются между запусками (в окне, не в хранилище).
-import { t } from '../../../renderer/lib/i18n.svelte';
+import { locale, t } from '../../../renderer/lib/i18n.svelte';
 import type { Card, CardRef, CardScope, CardSummary, LssPreview } from '../../../shared/cards';
 import { defaultSide, imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
@@ -111,7 +111,12 @@ class Bestiary {
   selected = $state.raw<CardRef | null>(null);
   // Карточка в выдвижной панели (CardDrawer): открывается откуда угодно, не уводя со своей вкладки.
   peeked = $state.raw<CardRef | null>(null);
-  filters = $state<Filters>({ search: '', system: 'all', lang: 'ru', scope: 'all', kind: 'all', ...load() });
+  // The search starts empty on every launch; other filters are remembered. lang '' — the interface language.
+  filters = $state<Filters>({ system: 'all', lang: '', scope: 'all', kind: 'all', ...load(), search: '' });
+  // Language of the cards shown: the chosen one, 'all' or the interface language.
+  get lang() {
+    return this.filters.lang || locale.lang;
+  }
   // Меняется при каждом обновлении карточек в ядре: выбранную надо перечитать.
   rev = $state(0);
   draft = $state<Draft | null>(null);
@@ -154,8 +159,8 @@ class Bestiary {
       if (!members.length) continue;
       // Ищем по всем версиям: «goblin» найдёт и «Гоблина».
       if (q && !group.some((c) => fold(c.name).includes(q))) continue;
-      if (f.lang === 'all') out.push(...members);
-      else out.push(members.find((c) => c.lang === f.lang) ?? members.find((c) => !c.origin) ?? members[0]!);
+      if (this.lang === 'all') out.push(...members);
+      else out.push(members.find((c) => c.lang === this.lang) ?? members.find((c) => !c.origin) ?? members[0]!);
     }
     return out.sort((a, b) => collator.compare(a.name, b.name));
   });
@@ -260,7 +265,7 @@ class Bestiary {
     const place = at ?? (await this.choosePlace({ title: t('best.whereNew'), action: t('best.create'), library: true }));
     if (!place) return;
     const system = this.newSystem();
-    const lang = this.filters.lang !== 'all' ? this.filters.lang : 'ru';
+    const lang = this.lang !== 'all' ? this.lang : locale.lang;
     // Вид — по папке: в папке персонажей — NPC, в папке партии — персонаж игрока, иначе монстр.
     const role = place.folder !== undefined ? place.folder.split('/').map(folderRole).filter(Boolean).at(-1) : null;
     const kind = role === 'characters' ? 'npc' : role === 'party' ? 'character' : 'monster';
@@ -276,7 +281,7 @@ class Bestiary {
   // игрока, в остальных — карточка NPC.
   createFor(portrait: string, name: string) {
     const system = this.newSystem();
-    const lang = this.filters.lang !== 'all' ? this.filters.lang : 'ru';
+    const lang = this.lang !== 'all' ? this.lang : locale.lang;
     const party = portrait.split('/').some((p) => folderRole(p) === 'party');
     const kind = party ? 'character' : 'npc';
     this.open({

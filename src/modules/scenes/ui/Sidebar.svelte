@@ -41,7 +41,6 @@
     >
       <span class="grip faint"><GripVertical size={12} /></span>
       <button class="main" data-nav onclick={() => { ui.selected = sc.id; openTab('scenes'); }}>
-        <span class="num faint">{i < 9 ? i + 1 : ''}</span>
         <span class="name">{sc.name}</span>
       </button>
       <button class="icon-btn play" title={t('scenes.activate')} onclick={() => activate(app, sc)}><Play size={13} /></button>
@@ -115,11 +114,6 @@
   .item:hover .main,
   .item.active .main {
     color: var(--text-normal);
-  }
-  .num {
-    width: 12px;
-    font-size: 11px;
-    font-variant-numeric: tabular-nums;
   }
   .name {
     flex: 1;
