@@ -19,12 +19,22 @@ Electron-приложение для мастера D&D: окно управле
   `{placeholders}`. Messages: `src/shared/i18n/app.ts` (shell, module titles, tile actions, badges) — `en` is the
   source of truth, `ru: Messages<typeof en>` (a missing key fails the type check); merged in `shared/i18n/index.ts`
   (`tr(lang, key, params)`, non-reactive `t` for the main process and plain code).
+- Dictionaries by part: `shared/i18n/app.ts`, `modules/<module>/i18n.ts` (key prefix — the module or a short form:
+  `adv.`, `init.`, `cmpui.`, `best.`…), `systems/i18n.ts` (`dnd.`, `fcore.`, `sys.`), `main/i18n.ts` (`core.` —
+  system dialogs, errors, default file names). New dictionary — import and spread into `en` / `ru` in
+  `shared/i18n/index.ts`.
 - Windows: `t` from `renderer/lib/i18n.svelte.ts` (reactive `locale.lang`, set by `store.svelte.ts` from
   `vault.lang`). Module titles and file actions in `control.ts` are getters (`get title() { return t(…) }`).
+  Shared code (`shared/`, `systems/`, module `main.ts`, anything the main process or tests import) uses the shared
+  `t` from `shared/i18n`; it is still reactive in the windows: `trackLang` makes it read `locale.lang`.
+- Label tables in shared code are getters, not values: `labels(keys, prefix)` (record of getters — abilities,
+  ladders, ratings), `get title()` in object literals. Never spread a getter (`...obj` evaluates it once).
+- What is not translated: data (names, folder names, entry files, select options of compendium fields, conditions
+  already set on a combatant), stat block labels (`systems/dnd5e/stats.ts` `dict(card.lang)` — the card language),
+  spellcasting text of a card (`spells.ts`). Tests that check Russian text call `setLang('ru')` in `beforeAll`.
 - Setting: `settings.language` in settings.json ('auto' | lang), action `vault/setLanguage`, state `vault.language`
   (setting) and `vault.lang` (resolved); section «General / Общие» in the settings window (`Settings.svelte`).
-- Migration plan: 1) foundation + shell (done); 2) modules one by one — strings into `t()`, a module may keep its
-  messages next to it and add them to `shared/i18n/index.ts`; 3) built-in content in English (compendium SRD en,
+- Migration plan: 1) foundation + shell (done); 2) modules, systems, main process (done); 3) built-in content in English (compendium SRD en,
   random tables, Fate SRD; the bestiary is already bilingual); 4) README in English + README.ru.md.
 
 ## Команды
