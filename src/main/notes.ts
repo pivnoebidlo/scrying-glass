@@ -1,5 +1,6 @@
 // Файлы записок (shared/notes.ts) в хранилище: прочитать, сохранить, создать, переименовать. Это файлы,
 // которые создаёт и правит само приложение (как карточки), — только «….note.json» и только внутри хранилища.
+import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { isNotePath, NOTE_SUFFIX, parseNote, type Note } from '../shared/notes';
@@ -29,7 +30,7 @@ export function writeNote(resolve: Resolve, rel: string, note: Note): boolean {
 }
 
 // Название файла из названия записки: без символов, запрещённых в именах файлов.
-const safe = (title: string) => title.replace(/[/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || 'Записка';
+const safe = (title: string) => title.replace(/[/\\:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || t('core.name.note');
 
 function freeNote(dir: string, title: string, except?: string): string {
   const base = safe(title);

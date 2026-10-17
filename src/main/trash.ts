@@ -4,6 +4,7 @@
 //   .trash/<id>/.meta.json      — что это, откуда и когда (TrashMeta)
 //   .trash/<id>/<путь как был>  — сами файлы и папки
 // Скрытые папки приложение не сканирует, резервные копии и экспорт их пропускают.
+import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { TRASH_DEFAULTS, type TrashItem, type TrashMeta, type TrashPlace, type TrashSettings } from '../shared/trash';
@@ -26,8 +27,8 @@ export function setTrashSettings(next: Partial<TrashSettings> | null | undefined
 // Подписи для подтверждения удаления: куда уйдёт и как вернуть (корзина выключена — насовсем).
 export const deleteWords = () =>
   settings.keep
-    ? { button: 'В корзину', how: 'Вернуть можно в разделе «Файлы» → «Корзина».' }
-    : { button: 'Удалить', how: 'Корзина выключена в настройках («Файлы»): удаление нельзя отменить.' };
+    ? { button: t('core.trash.button'), how: t('core.trash.how') }
+    : { button: t('core.delete'), how: t('core.trash.howOff') };
 
 // Путь внутри root (без выхода за его пределы и без пустого пути).
 function inside(root: string, rel: string): string | null {

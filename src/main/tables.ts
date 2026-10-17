@@ -1,19 +1,20 @@
 // Файлы таблиц случайностей (shared/tables.ts): в хранилище — .md / .txt только в папках таблиц (заметки
 // пользователя в других папках приложение не трогает), в библиотеке — <библиотека>/tables (общие для всех кампаний,
 // пути «library:tables/…»). Встроенные таблицы при первом запуске кладутся в библиотеку обычными файлами.
+import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { BrowserWindow } from 'electron';
 
 import { resolver, textKind } from './textstore';
 
-const kind = textKind('tables', 'tables', 'Таблица');
+const kind = textKind('tables', 'tables', () => t('core.name.table'));
 export const isTablePath = kind.isPath;
 export const tableResolver = resolver;
 export const readTable = kind.read;
 export const writeTable = kind.write;
 export const createTable = kind.create;
-const safe = (title: string) => title.replace(/[/\\:*?"<>|#^[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || 'Таблица';
+const safe = (title: string) => title.replace(/[/\\:*?"<>|#^[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || t('core.name.table');
 
 // ---------- Библиотека ----------
 

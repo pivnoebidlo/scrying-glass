@@ -82,7 +82,7 @@ describe('обновление персонажа из Long Story Short', () => 
     expect(brunos()).toHaveLength(1);
     const trash = listTrash(lib, 'library');
     expect(trash.length).toBe(before + 1);
-    expect(trash[0]!.title).toContain('до обновления');
+    expect(trash[0]!.title).toContain('before the LSS update');
   });
 
   it('«Создать новую» — импорт без сопоставления', async () => {

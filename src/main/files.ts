@@ -1,4 +1,5 @@
 // Чтение и запись JSON-файлов приложения.
+import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { clipboard, dialog } from 'electron';
@@ -39,8 +40,8 @@ export function readJson(file: string): unknown {
     fs.renameSync(file, backup);
     dialog.showMessageBoxSync({
       type: 'warning',
-      message: 'Файл данных повреждён, начинаем с чистого листа',
-      detail: `Старый файл сохранён как ${backup}\n\n${String(e)}`,
+      message: t('core.broken'),
+      detail: t('core.brokenDetail', { file: backup, error: String(e) }),
       buttons: ['OK'],
     });
     return undefined;
@@ -96,7 +97,7 @@ export async function clipboardImage(): Promise<{ name: string; data: Buffer } |
       const d = new Date();
       const pad = (n: number) => String(n).padStart(2, '0');
       const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}-${pad(d.getMinutes())}`;
-      return { name: `Картинка ${stamp}${IMAGE_MIME[mime]}`, data: Buffer.from(await blob.arrayBuffer()) };
+      return { name: `${t('core.name.image', { stamp })}${IMAGE_MIME[mime]}`, data: Buffer.from(await blob.arrayBuffer()) };
     }
   }
   return null;

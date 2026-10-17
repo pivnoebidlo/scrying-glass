@@ -1,6 +1,7 @@
 // Текстовые файлы (Markdown) одного вида — таблицы случайностей, записи справочника: в хранилище — только в папках
 // своей роли (заметки пользователя в других папках приложение не трогает), в библиотеке — <библиотека>/<sub>
 // (общие для всех кампаний, пути «library:<sub>/…»).
+import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { LIBRARY, folderRole, type FolderRole } from '../shared/vault';
@@ -13,12 +14,12 @@ export function resolver(vault: Resolve, library: Resolve): Resolve {
   return (rel) => (rel.startsWith(LIBRARY) ? library(rel.slice(LIBRARY.length)) : vault(rel));
 }
 
-export function textKind(role: FolderRole, sub: string, fallbackName: string) {
+export function textKind(role: FolderRole, sub: string, fallbackName: () => string) {
   const lib = LIBRARY + sub;
   const inRole = (rel: string) => rel.split('/').some((p) => folderRole(p) === role);
   const isPath = (rel: string) => TEXT.test(rel) && (rel.startsWith(LIBRARY) ? rel.startsWith(lib + '/') : inRole(rel.split('/').slice(0, -1).join('/')));
   const isFolder = (folder: string) => (folder.startsWith(LIBRARY) ? folder === lib || folder.startsWith(lib + '/') : inRole(folder));
-  const safe = (title: string) => title.replace(/[/\\:*?"<>|#^[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || fallbackName;
+  const safe = (title: string) => title.replace(/[/\\:*?"<>|#^[\]]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) || fallbackName();
   const free = (dir: string, title: string, except?: string) => {
     const base = safe(title);
     let name = base + '.md';

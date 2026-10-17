@@ -11,6 +11,7 @@
 // Пути картинок — от корня библиотеки или хранилища, через «/».
 // id карточки хранится в её файле; если его нет или он повторяется (файл скопировали руками), берётся
 // производный от пути — и записывается в файл при следующем сохранении.
+import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
@@ -53,14 +54,14 @@ function loadBuiltin() {
   try {
     list = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
   } catch {
-    console.error('Встроенный бестиарий не найден:', dir);
+    console.error('Built-in bestiary not found:', dir);
   }
   for (const f of list) {
     try {
       const data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) as Card[];
       for (const c of data) builtin.set(c.id, c);
     } catch (e) {
-      console.error('Не прочитался встроенный бестиарий', f, e);
+      console.error('Could not read the built-in bestiary', f, e);
     }
   }
 }
@@ -99,7 +100,7 @@ function loadSrdPortraits() {
   try {
     if (file && fs.existsSync(file)) srdPortraits = (JSON.parse(fs.readFileSync(file, 'utf8')) as { portraits?: Record<string, string[]> }).portraits ?? {};
   } catch (e) {
-    console.error('Не прочитаны портреты встроенных карточек', file, e);
+    console.error('Could not read built-in card portraits', file, e);
   }
   applySrd();
 }
@@ -156,7 +157,7 @@ function loadFiles(scope: CardScope, root: string, list: string[]) {
       cards.set(key, { ...c, id, portraits: c.portraits ?? [], tags: c.tags ?? [], notes: c.notes ?? '' });
       files.set(key, abs);
     } catch (e) {
-      console.error('Не прочитана карточка', abs, e);
+      console.error('Could not read a card', abs, e);
     }
   }
 }
@@ -180,7 +181,7 @@ export const isEditedSrd = (ref: CardRef) => ref.scope === 'srd' && overrides.ha
 // Сохранить правку встроенной карточки (в свой файл библиотеки или новый). Портреты — в srd.json.
 function saveSrdEdit(card: Card): CardRef {
   const orig = builtin.get(card.id);
-  if (!orig || !libraryRoot) throw new Error('Встроенная карточка не найдена');
+  if (!orig || !libraryRoot) throw new Error(t('core.builtinNotFound'));
   const ref: CardRef = { scope: 'srd', id: card.id };
   const prev = overrides.get(card.id);
   let file = prev?.file;
@@ -205,7 +206,7 @@ function saveSrdEdit(card: Card): CardRef {
 export function revertSrd(ref: CardRef): boolean {
   const o = ref.scope === 'srd' ? overrides.get(ref.id) : undefined;
   if (!o || !libraryRoot) return false;
-  discard(libraryRoot, [toRel(libraryRoot, o.file)], { title: `${o.card.name} (правка SRD)`, kind: 'card' });
+  discard(libraryRoot, [toRel(libraryRoot, o.file)], { title: t('core.srdEditTrash', { name: o.card.name }), kind: 'card' });
   loadLibrary();
   changed();
   return true;
@@ -366,7 +367,7 @@ function newId(scope: CardScope, name: string): string {
 
 // Имя файла новой карточки — её название: «Тыквенный ужас.json».
 const fileName = (dir: string, name: string) =>
-  freeName(dir, `${name.replace(/[/\\:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Карточка'}.json`);
+  freeName(dir, `${name.replace(/[/\\:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || t('core.name.card')}.json`);
 
 // Папка для новой карточки: в библиотеке — cards/, в хранилище — выбранная папка бестиария.
 function targetDir(scope: CardScope, folder?: string): string | null {
@@ -409,7 +410,7 @@ export function saveCard(scope: CardScope, card: Card, folder?: string): CardRef
   let file = existing;
   if (!file) {
     const dir = targetDir(scope, folder);
-    if (!dir) throw new Error('Не выбрана папка для карточки');
+    if (!dir) throw new Error(t('core.noCardFolder'));
     fs.mkdirSync(dir, { recursive: true });
     file = path.join(dir, fileName(dir, card.name));
   }
@@ -593,7 +594,7 @@ export function migrateHiddenCards(root: string, dataDir: string, tree: VaultFol
       writeJsonAtomic(path.join(dir, fileName(dir, c.name || id)), { ...c, id, portraits });
       fs.rmSync(file);
     } catch (e) {
-      console.error('Не перенесена карточка', file, e);
+      console.error('Could not move a card', file, e);
     }
   }
   for (const d of [oldDir, path.join(root, dataDir, 'images')]) {
@@ -655,7 +656,7 @@ function readImport(file: string): Bundle {
   if (typeof data.name === 'string' && data.stats !== undefined) {
     return { scryingGlass: 'cards', version: 1, cards: [{ ...(data as Card), portraits: [] }], images: {} };
   }
-  throw new Error('Это не файл карточек Scrying Glass');
+  throw new Error(t('core.notCards'));
 }
 
 // Таблица заклинаний LSS (номер → название) — <библиотека>/lss-spells.json. Собирает мастер из ответов API LSS
@@ -678,7 +679,7 @@ export function importLssSpells(list: string[]): { before: number; total: number
     try {
       const found = collectLssSpells(JSON.parse(fs.readFileSync(file, 'utf8')));
       if (Object.keys(found).length) Object.assign(table, found);
-      else errors.push(`${path.basename(file)}: заклинаний LSS не нашлось`);
+      else errors.push(t('core.noLssSpells', { file: path.basename(file) }));
     } catch (e) {
       errors.push(`${path.basename(file)}: ${e instanceof Error ? e.message : String(e)}`);
     }
@@ -695,7 +696,7 @@ export function clearLssSpells() {
 // Экспорт персонажа из Long Story Short (JSON-файл) — для предпросмотра перед обновлением карточки.
 export function readLss(file: string): LssImport {
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
-  if (!isLssExport(raw)) throw new Error('Это не экспорт персонажа из Long Story Short');
+  if (!isLssExport(raw)) throw new Error(t('core.notLss'));
   return fromLss(raw, lssSpellTable());
 }
 
@@ -734,7 +735,7 @@ export function updateFromLss(ref: CardRef, file: string, merged?: { name: strin
     ...(lss ? { links: { ...old.links, lss }, source: { title: 'Long Story Short', url: `https://longstoryshort.app/characters/digital/${lss}/` } } : {}),
   };
   const rel = path.relative(root, out).split(path.sep).join('/');
-  discard(root, [rel], { title: `${old.name} — до обновления из LSS`, kind: 'card' });
+  discard(root, [rel], { title: t('core.beforeLss', { name: old.name }), kind: 'card' });
   writeJsonAtomic(out, card);
   remember(ref.scope, out);
   reload(ref.scope);
@@ -750,7 +751,7 @@ async function importLss(r: LssImport, to: CardScope, dir: string, imgDir: { abs
       const res = await fetch(r.avatarUrl);
       if (res.ok) {
         fs.mkdirSync(imgDir.abs, { recursive: true });
-        const name = freeName(imgDir.abs, `${r.name.replace(/[/\\:*?"<>|]+/g, ' ').trim() || 'Портрет'}.jpg`);
+        const name = freeName(imgDir.abs, `${r.name.replace(/[/\\:*?"<>|]+/g, ' ').trim() || t('core.name.portrait')}.jpg`);
         fs.writeFileSync(path.join(imgDir.abs, name), Buffer.from(await res.arrayBuffer()));
         portraits.push(imgDir.rel ? `${imgDir.rel}/${name}` : name);
       }
@@ -784,7 +785,7 @@ export async function importCards(
   const dir = targetDir(to, folder);
   const imgDir = imagesDir(to, folder);
   const matches: LssMatch[] = [];
-  if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: ['Некуда импортировать'], matches };
+  if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: [t('core.nowhere')], matches };
   let count = 0;
   const errors: string[] = [];
   for (const file of list) {

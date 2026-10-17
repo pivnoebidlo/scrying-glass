@@ -1,4 +1,5 @@
 // Окна: управление и экран игроков.
+import { t } from '../shared/i18n';
 import { app, BrowserWindow, screen, type WebPreferences } from 'electron';
 import * as path from 'node:path';
 import type { DisplayInfo } from '../shared/api';
@@ -53,7 +54,7 @@ export function listDisplays(): DisplayInfo[] {
     primary: d.id === primaryId,
     width: d.size.width,
     height: d.size.height,
-    label: `Экран ${i + 1} (${d.size.width}×${d.size.height})${d.id === primaryId ? ' — основной' : ''}`,
+    label: t('core.screen', { n: i + 1, w: d.size.width, h: d.size.height }) + (d.id === primaryId ? t('core.primary') : ''),
   }));
 }
 
@@ -79,7 +80,7 @@ export function openDisplay(displayId: number) {
   const win = new BrowserWindow(
     fullscreen
       ? { x: b.x, y: b.y, width: b.width, height: b.height, frame: false, show: false, backgroundColor: '#000000', webPreferences: displayPrefs }
-      : { x: b.x + 100, y: b.y + 100, width: 960, height: 540, title: 'Scrying Glass — экран игроков (превью)', show: false, backgroundColor: '#000000', webPreferences: displayPrefs }
+      : { x: b.x + 100, y: b.y + 100, width: 960, height: 540, title: t('core.preview'), show: false, backgroundColor: '#000000', webPreferences: displayPrefs }
   );
   displayWindow = win;
 

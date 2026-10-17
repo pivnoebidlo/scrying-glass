@@ -5,7 +5,7 @@ import * as fs from 'node:fs';
 import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
-import { isLang, resolveLang, setLang, type Lang, type LangSetting } from '../shared/i18n';
+import { getLang, isLang, resolveLang, setLang, t, type Lang, type LangSetting } from '../shared/i18n';
 import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
 import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
@@ -128,7 +128,7 @@ function saveVault() {
 // Открывает хранилище (null — закрыть): загружает сохранённое состояние модулей и начинает следить за папкой.
 async function openVault(root: string | null): Promise<VaultState> {
   if (root && !isDir(root)) {
-    dialog.showErrorBox('Папка не найдена', `${root}\n\nВозможно, её переместили или переименовали.`);
+    dialog.showErrorBox(t('core.folderNotFound'), t('core.folderMoved', { root }));
     return vaultState();
   }
 
@@ -139,7 +139,7 @@ async function openVault(root: string | null): Promise<VaultState> {
       saved = data?.modules ?? {};
     } catch (e) {
       // Файл есть, но не читается. Не открываем: первое же сохранение его затёрло бы.
-      dialog.showErrorBox('Не удалось открыть хранилище', `${root}\n\n${String(e)}`);
+      dialog.showErrorBox(t('core.vaultFailed'), `${root}\n\n${String(e)}`);
       return vaultState();
     }
   }
@@ -448,9 +448,9 @@ ipcMain.handle('tables:trash', async (_event, rel: string) => {
   const words = deleteWords();
   const opts = {
     type: 'warning' as const,
-    message: trashSettings().keep ? `Переместить «${path.basename(abs)}» в корзину?` : `Удалить «${path.basename(abs)}» насовсем?`,
-    detail: `Этот файл — в общей библиотеке: он пропадёт во всех кампаниях. ${words.how}`,
-    buttons: [words.button, 'Отмена'],
+    message: trashSettings().keep ? t('core.trashFile', { name: path.basename(abs) }) : t('core.deleteFile', { name: path.basename(abs) }),
+    detail: t('core.libraryFile', { how: words.how }),
+    buttons: [words.button, t('core.cancel')],
     defaultId: 0,
     cancelId: 1,
   };
@@ -480,7 +480,7 @@ function snapshotNow(reason: Reason, force = false) {
     const vaultFiles = appVaultFiles();
     return createSnapshot({ dir: backupsDir(), vaultRoot, vaultFiles, library: libraryPath(), settingsFile: settingsFile() }, reason, force);
   } catch (e) {
-    console.error('Снимок не сделан', e);
+    console.error('Snapshot not made', e);
     return null;
   }
 }
@@ -498,7 +498,7 @@ ipcMain.handle('backups:chooseDir', async (_event, { reset }: { reset?: boolean 
   let dir: string | null = null;
   if (!reset) {
     const win = getControlWindow();
-    const opts = { title: 'Папка резервных копий', buttonLabel: 'Выбрать', properties: ['openDirectory' as const, 'createDirectory' as const] };
+    const opts = { title: t('core.backupsFolder'), buttonLabel: t('core.choose'), properties: ['openDirectory' as const, 'createDirectory' as const] };
     const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
     if (res.canceled || !res.filePaths[0]) return { path: backupsDir(), isDefault: !settings.backups };
     dir = res.filePaths[0];
@@ -532,12 +532,12 @@ ipcMain.handle('backups:restore', async (_event, { id, vault, library }: { id: s
   const toVault = vault && !!vaultRoot && meta.vault === vaultRoot;
   if (!toVault && !library) return 0;
   const win = getControlWindow();
-  const what = [toVault && `данные хранилища «${meta.vaultName}» (сцены, карты, заготовки, записки, таблицы, карточки)`, library && 'библиотеку (общие карточки, таблицы, свои расы)'].filter(Boolean).join(' и ');
+  const what = [toVault && t('core.restoreVault', { name: meta.vaultName }), library && t('core.restoreLibrary')].filter(Boolean).join(t('core.and'));
   const opts = {
     type: 'warning' as const,
-    message: `Восстановить ${what} из снимка ${new Date(meta.created).toLocaleString('ru')}?`,
-    detail: 'Перед этим приложение сохранит снимок нынешнего состояния — восстановление можно будет отменить тем же способом. Файлы, появившиеся после снимка, останутся.',
-    buttons: ['Восстановить', 'Отмена'],
+    message: t('core.restoreSnapshot', { what, when: new Date(meta.created).toLocaleString(getLang()) }),
+    detail: t('core.restoreSnapshotDetail'),
+    buttons: [t('core.restore'), t('core.cancel')],
     defaultId: 0,
     cancelId: 1,
   };
@@ -562,10 +562,10 @@ ipcMain.handle('archive:create', async (_event, { media }: { media: boolean }) =
   const win = getControlWindow();
   const day = new Date().toISOString().slice(0, 10);
   const save = await dialog.showSaveDialog(win!, {
-    title: 'Сохранить резервную копию',
+    title: t('core.saveBackup'),
     // По умолчанию — в папку резервных копий (если её выбрали, например, в облаке), иначе — в «Документы».
-    defaultPath: path.join(settings.backups || app.getPath('documents'), `Scrying Glass — ${vaultRoot ? path.basename(vaultRoot) : 'данные'} — ${day}.${BACKUP_EXT}`),
-    filters: [{ name: 'Резервная копия Scrying Glass', extensions: [BACKUP_EXT] }],
+    defaultPath: path.join(settings.backups || app.getPath('documents'), `Scrying Glass — ${vaultRoot ? path.basename(vaultRoot) : t('core.data')} — ${day}.${BACKUP_EXT}`),
+    filters: [{ name: t('core.backupFilter'), extensions: [BACKUP_EXT] }],
   });
   if (save.canceled || !save.filePath) return null;
   await writeBackup(save.filePath, backupSources(), {
@@ -579,8 +579,8 @@ ipcMain.handle('archive:create', async (_event, { media }: { media: boolean }) =
 ipcMain.handle('archive:restore', async () => {
   const win = getControlWindow();
   const pick = await dialog.showOpenDialog(win!, {
-    title: 'Восстановить из резервной копии',
-    filters: [{ name: 'Резервная копия Scrying Glass', extensions: [BACKUP_EXT] }],
+    title: t('core.restoreFromBackup'),
+    filters: [{ name: t('core.backupFilter'), extensions: [BACKUP_EXT] }],
     properties: ['openFile'],
   });
   const file = pick.filePaths[0];
@@ -588,12 +588,12 @@ ipcMain.handle('archive:restore', async () => {
   const tmp = path.join(app.getPath('userData'), `restore-${randomUUID().slice(0, 8)}`);
   try {
     const { manifest, settings: saved } = await readBackup(file, tmp);
-    const when = new Date(manifest.created).toLocaleString('ru');
-    const buttons = vaultRoot ? [`В текущее хранилище «${path.basename(vaultRoot)}»`, 'В другую папку…', 'Отмена'] : ['В папку…', 'Отмена'];
+    const when = new Date(manifest.created).toLocaleString(getLang());
+    const buttons = vaultRoot ? [t('core.intoCurrent', { name: path.basename(vaultRoot) }), t('core.intoOther'), t('core.cancel')] : [t('core.intoFolder'), t('core.cancel')];
     const ask = await dialog.showMessageBox(win!, {
       type: 'question',
-      message: `Восстановить копию «${manifest.vaultName || 'данные'}» от ${when}?`,
-      detail: `Файлы из копии заменят такие же в хранилище и библиотеке, остальные файлы останутся.${manifest.media ? '' : ' Картинок и музыки хранилища в этой копии нет.'} Перед восстановлением сохраняется снимок нынешнего состояния.`,
+      message: t('core.restoreCopy', { name: manifest.vaultName || t('core.data'), when }),
+      detail: t('core.restoreCopyDetail', { media: manifest.media ? '' : t('core.noMedia') }),
       buttons,
       defaultId: 0,
       cancelId: buttons.length - 1,
@@ -601,7 +601,7 @@ ipcMain.handle('archive:restore', async () => {
     let target: string | null = null;
     if (vaultRoot && ask.response === 0) target = vaultRoot;
     else if (ask.response === buttons.length - 2) {
-      const dir = await dialog.showOpenDialog(win!, { title: 'Папка для хранилища', buttonLabel: 'Восстановить сюда', properties: ['openDirectory', 'createDirectory'] });
+      const dir = await dialog.showOpenDialog(win!, { title: t('core.vaultFolder'), buttonLabel: t('core.restoreHere'), properties: ['openDirectory', 'createDirectory'] });
       target = dir.canceled ? null : (dir.filePaths[0] ?? null);
     }
     if (!target) return null;
@@ -643,23 +643,23 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
   if (!vaultRoot || !folder || !isDir(folder)) return null;
   const win = getControlWindow();
   const all = folderFiles(folder, true);
-  const mb = (n: number) => `${Math.round(n / 1024 / 1024)} МБ`;
+  const mb = (n: number) => t('core.mb', { n: Math.round(n / 1024 / 1024) });
   const musicSize = all.filter((f) => /\.(mp3|ogg|wav|flac|m4a)$/i.test(f.rel)).reduce((n, f) => n + f.size, 0);
   const ask = await (win ? dialog.showMessageBox(win, {
     type: 'question',
-    message: `Экспорт приключения «${adventure}»`,
-    detail: `В файл войдут папка приключения со всеми картинками, записками, таблицами и карточками, его сцены, карты (туман, метки, жетоны), заготовки боёв и общие карточки, на которые они ссылаются. Без музыки — ${mb(all.reduce((n, f) => n + f.size, 0) - musicSize)}.`,
-    checkboxLabel: musicSize ? `Вместе с музыкой (ещё ${mb(musicSize)})` : undefined,
+    message: t('core.exportAdventure', { name: adventure }),
+    detail: t('core.exportDetail', { size: mb(all.reduce((n, f) => n + f.size, 0) - musicSize) }),
+    checkboxLabel: musicSize ? t('core.withMusic', { size: mb(musicSize) }) : undefined,
     checkboxChecked: false,
-    buttons: ['Экспортировать…', 'Отмена'],
+    buttons: [t('core.export'), t('core.cancel')],
     defaultId: 0,
     cancelId: 1,
   }) : Promise.resolve({ response: 0, checkboxChecked: false }));
   if (ask.response !== 0) return null;
   const save = await dialog.showSaveDialog(win!, {
-    title: 'Сохранить приключение',
+    title: t('core.saveAdventure'),
     defaultPath: path.join(app.getPath('documents'), `${adventure.replace(/[/\\:*?"<>|]/g, '_')}.${PACK_EXT}`),
-    filters: [{ name: 'Приключение Scrying Glass', extensions: [PACK_EXT] }],
+    filters: [{ name: t('core.adventureFilter'), extensions: [PACK_EXT] }],
   });
   if (save.canceled || !save.filePath) return null;
 
@@ -723,12 +723,12 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
   const win = getControlWindow();
   const opts = {
     type: 'warning' as const,
-    message: `Удалить приключение «${name}»?`,
+    message: t('core.deleteAdventure', { name }),
     detail: [
-      `Папка приключения (файлов: ${files}) ${trashSettings().keep ? 'переместится в корзину' : 'удалится насовсем'}, из приложения уберутся сцены (${scenes}), заготовки боёв (${encounters}) и разметка карт (${maps}) этого приключения.`,
-      trashSettings().keep ? 'Вернуть всё вместе можно в разделе «Файлы» → «Корзина».' : 'Корзина выключена в настройках («Файлы»). Сцены и заготовки останутся только в снимке («Резервные копии»).',
+      t('core.deleteAdventureDetail', { files, where: trashSettings().keep ? t('core.toTrash') : t('core.forever'), scenes, encounters, maps }),
+      trashSettings().keep ? t('core.restoreAll') : t('core.trashOff'),
     ].join('\n\n'),
-    buttons: ['Удалить', 'Отмена'],
+    buttons: [t('core.delete'), t('core.cancel')],
     defaultId: 1,
     cancelId: 1,
   };
@@ -751,7 +751,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
   try {
     discard(vaultRoot, [name], { title: name, kind: 'adventure', data });
   } catch (e) {
-    dialog.showErrorBox('Не удалось удалить папку приключения', `${folder}\n\n${String(e)}`);
+    dialog.showErrorBox(t('core.deleteFolderFailed'), `${folder}\n\n${String(e)}`);
     return false;
   }
   const merge = (id: string, fn: (st: AnyRec) => AnyRec) =>
@@ -787,7 +787,7 @@ function pruneAll() {
     try {
       if (root) pruneTrash(root, days);
     } catch (e) {
-      console.error('Корзина не очистилась', e);
+      console.error('Trash not pruned', e);
     }
   }
 }
@@ -816,7 +816,7 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
   try {
     res = restoreFromTrash(root, id);
   } catch (e) {
-    dialog.showErrorBox('Не удалось вернуть из корзины', String(e));
+    dialog.showErrorBox(t('core.restoreFailed'), String(e));
     return null;
   }
   if (!res?.moved.length) return null;
@@ -861,8 +861,8 @@ async function confirmPurge(message: string) {
   const opts = {
     type: 'warning' as const,
     message,
-    detail: 'Это нельзя отменить.',
-    buttons: ['Удалить навсегда', 'Отмена'],
+    detail: t('core.cantUndo'),
+    buttons: [t('core.deleteForever'), t('core.cancel')],
     defaultId: 1,
     cancelId: 1,
   };
@@ -872,14 +872,14 @@ async function confirmPurge(message: string) {
 
 ipcMain.handle('trash:purge', async (_event, { place, id, title }: { place: TrashPlace; id: string; title: string }) => {
   const root = trashRoot(place);
-  if (!root || !(await confirmPurge(`Удалить «${title}» навсегда?`))) return false;
+  if (!root || !(await confirmPurge(t('core.purgeOne', { name: title })))) return false;
   return purgeTrash(root, id);
 });
 
 ipcMain.handle('trash:empty', async () => {
   const roots = [vaultRoot, libraryPath()].filter((r): r is string => !!r);
   const count = (vaultRoot ? listTrash(vaultRoot, 'vault').length : 0) + (libraryPath() ? listTrash(libraryPath()!, 'library').length : 0);
-  if (!count || !(await confirmPurge(`Очистить корзину? Удалится навсегда: ${count}.`))) return false;
+  if (!count || !(await confirmPurge(t('core.purgeAll', { count })))) return false;
   for (const r of roots) emptyTrash(r);
   return true;
 });
@@ -900,8 +900,8 @@ ipcMain.handle('packs:pick', async () => {
   if (!vaultRoot) return null;
   const win = getControlWindow();
   const pickFile = await dialog.showOpenDialog(win!, {
-    title: 'Импорт приключения',
-    filters: [{ name: 'Приключение Scrying Glass', extensions: [PACK_EXT] }],
+    title: t('core.importAdventure'),
+    filters: [{ name: t('core.adventureFilter'), extensions: [PACK_EXT] }],
     properties: ['openFile'],
   });
   const file = pickFile.filePaths[0];
@@ -921,7 +921,7 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
   if (!vaultRoot) return null;
   const root = vaultRoot;
   const target = cleanName(wanted);
-  if (!target || fs.existsSync(path.join(root, target))) throw new Error(`Название «${wanted}» занято или не годится для папки`);
+  if (!target || fs.existsSync(path.join(root, target))) throw new Error(t('core.nameTaken', { name: wanted }));
   const tmp = path.join(root, DATA_DIR, `import-${randomUUID().slice(0, 8)}`);
   try {
     const pack = await readPack(file, tmp);
@@ -1026,13 +1026,13 @@ ipcMain.handle('cards:delete', async (_event, ref: CardRef) => {
   const win = getControlWindow();
   const opts = {
     type: 'warning' as const,
-    message: `Удалить карточку «${card.name}»?`,
-    detail: trashSettings().keep ? `Карточка переместится в корзину. ${deleteWords().how}` : deleteWords().how,
-    buttons: ['Удалить', 'Отмена'],
+    message: t('core.deleteCard', { name: card.name }),
+    detail: trashSettings().keep ? t('core.cardToTrash', { how: deleteWords().how }) : deleteWords().how,
+    buttons: [t('core.delete'), t('core.cancel')],
     defaultId: 0,
     cancelId: 1,
     ...(images.length
-      ? { checkboxLabel: `Удалить и картинки этой карточки (${images.length}): ${images.map((p) => p.split('/').pop()).join(', ')}`, checkboxChecked: true }
+      ? { checkboxLabel: t('core.deleteImages', { count: images.length, list: images.map((p) => p.split('/').pop()).join(', ') }), checkboxChecked: true }
       : {}),
   };
   const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
@@ -1048,9 +1048,9 @@ ipcMain.handle('cards:revertSrd', async (_event, ref: CardRef) => {
   const words = deleteWords();
   const opts = {
     type: 'warning' as const,
-    message: `Вернуть «${card.name}» как в SRD?`,
-    detail: `Ваша правка удалится, везде будет встроенная карточка. Портреты останутся. ${words.how}`,
-    buttons: ['Вернуть как в SRD', 'Отмена'],
+    message: t('core.revertCard', { name: card.name }),
+    detail: t('core.revertDetail', { how: words.how }),
+    buttons: [t('core.revert'), t('core.cancel')],
     defaultId: 0,
     cancelId: 1,
   };
@@ -1082,9 +1082,9 @@ ipcMain.handle('cards:addImage', async (_event, { scope, vaultPath, folder, from
   }
   const win = getControlWindow();
   const opts = {
-    title: 'Картинка для карточки',
+    title: t('core.cardImage'),
     properties: ['openFile' as const],
-    filters: [{ name: 'Картинки', extensions: IMAGE_EXT.map((e) => e.slice(1)) }],
+    filters: [{ name: t('core.images'), extensions: IMAGE_EXT.map((e) => e.slice(1)) }],
   };
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
   const p = res.canceled || !res.filePaths[0] ? null : importCardImage(scope, { file: res.filePaths[0] }, folder);
@@ -1097,16 +1097,16 @@ ipcMain.handle('cards:export', async (_event, { refs, scope, folder, name }: { r
   if (!list.length) return null;
   const win = getControlWindow();
   const opts = {
-    title: 'Экспорт карточек',
+    title: t('core.exportCards'),
     defaultPath: path.join(app.getPath('documents'), `${name.replace(/[/\\:*?"<>|]/g, '_')}.json`),
-    filters: [{ name: 'Карточки Scrying Glass', extensions: ['json'] }],
+    filters: [{ name: t('core.cardsFilter'), extensions: ['json'] }],
   };
   const res = win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts);
   if (res.canceled || !res.filePath) return null;
   try {
     return exportCards(list, res.filePath);
   } catch (e) {
-    dialog.showErrorBox('Не удалось сохранить файл', `${res.filePath}\n\n${String(e)}`);
+    dialog.showErrorBox(t('core.saveFailed'), `${res.filePath}\n\n${String(e)}`);
     return null;
   }
 });
@@ -1115,9 +1115,9 @@ ipcMain.handle('cards:export', async (_event, { refs, scope, folder, name }: { r
 ipcMain.handle('cards:pickImport', async () => {
   const win = getControlWindow();
   const opts = {
-    title: 'Импорт карточек',
+    title: t('core.importCards'),
     properties: ['openFile' as const, 'multiSelections' as const],
-    filters: [{ name: 'Карточки Scrying Glass', extensions: ['json'] }],
+    filters: [{ name: t('core.cardsFilter'), extensions: ['json'] }],
   };
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
   return res.canceled ? [] : res.filePaths;
@@ -1133,9 +1133,9 @@ const lssPreview = (file: string) => {
 ipcMain.handle('cards:pickLss', async () => {
   const win = getControlWindow();
   const opts = {
-    title: 'Экспорт персонажа из Long Story Short',
+    title: t('core.lssExport'),
     properties: ['openFile' as const],
-    filters: [{ name: 'Персонаж LSS', extensions: ['json'] }],
+    filters: [{ name: t('core.lssFilter'), extensions: ['json'] }],
   };
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
   const file = res.canceled ? undefined : res.filePaths[0];
@@ -1147,7 +1147,7 @@ ipcMain.handle('lssSpells:count', () => Object.keys(lssSpellTable()).length);
 ipcMain.handle('lssSpells:import', async () => {
   const win = getControlWindow();
   const opts = {
-    title: 'Заклинания Long Story Short',
+    title: t('core.lssSpells'),
     properties: ['openFile' as const, 'multiSelections' as const],
     filters: [{ name: 'JSON', extensions: ['json', 'txt'] }],
   };
@@ -1163,8 +1163,8 @@ function noImageInClipboard() {
   const win = getControlWindow();
   const opts = {
     type: 'info' as const,
-    message: 'В буфере обмена нет картинки',
-    detail: 'Скопируйте картинку (в браузере — «Копировать изображение») или файл картинки в Finder и попробуйте снова.',
+    message: t('core.noImage'),
+    detail: t('core.noImageDetail'),
   };
   if (win) dialog.showMessageBox(win, opts);
   else dialog.showMessageBox(opts);
@@ -1184,7 +1184,7 @@ ipcMain.handle('cards:chooseLibrary', async (_event, { reset }: { reset?: boolea
   let dir: string | null = null;
   if (!reset) {
     const win = getControlWindow();
-    const opts = { title: 'Папка библиотеки карточек', buttonLabel: 'Выбрать', properties: ['openDirectory' as const, 'createDirectory' as const] };
+    const opts = { title: t('core.libraryFolder'), buttonLabel: t('core.choose'), properties: ['openDirectory' as const, 'createDirectory' as const] };
     const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
     if (res.canceled || !res.filePaths[0]) return;
     dir = res.filePaths[0];

@@ -7,6 +7,7 @@
 //   library/cards/<id>.json, library/<картинки> — общие карточки, на которые ссылаются заготовки и метки
 //
 // Пишется и читается потоком (zip.ts, fflate): большие картинки и музыка не держатся в памяти целиком.
+import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { AUDIO_EXT } from '../shared/vault';
@@ -78,7 +79,7 @@ export interface ReadPack {
 export async function packManifest(file: string): Promise<PackManifest> {
   const b = await readEntry(file, 'manifest.json');
   const m = b ? (JSON.parse(new TextDecoder().decode(b)) as PackManifest) : null;
-  if (m?.scryingGlass !== 'adventure' || typeof m.name !== 'string') throw new Error('Это не файл приключения Scrying Glass');
+  if (m?.scryingGlass !== 'adventure' || typeof m.name !== 'string') throw new Error(t('core.notAdventure'));
   return m;
 }
 
@@ -90,7 +91,7 @@ export async function readPack(file: string, tmp: string): Promise<ReadPack> {
     return b ? JSON.parse(new TextDecoder().decode(b)) : null;
   };
   const manifest = json('manifest.json') as PackManifest | null;
-  if (manifest?.scryingGlass !== 'adventure' || typeof manifest.name !== 'string') throw new Error('Это не файл приключения Scrying Glass');
+  if (manifest?.scryingGlass !== 'adventure' || typeof manifest.name !== 'string') throw new Error(t('core.notAdventure'));
   const slices = (json('state.json') ?? {}) as Partial<PackSlices>;
   const cards = [...small.keys()]
     .filter((n) => n.startsWith('library/cards/'))

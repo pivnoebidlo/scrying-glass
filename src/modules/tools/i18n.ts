@@ -269,6 +269,10 @@ export const en = {
   'notes.emblem.cross': "Cross",
   'notes.emblem.bird': "Bird",
   'notes.emblem.spade': "Spades",
+  'notes.fontGroup.hand': "Handwritten",
+  'notes.fontGroup.book': "Book",
+  'notes.fontGroup.special': "Special",
+  'notes.fontGroup.creepy': "Creepy",
 };
 
 export const ru: Messages<typeof en> = {
@@ -539,4 +543,8 @@ export const ru: Messages<typeof en> = {
   'notes.emblem.cross': "Крест",
   'notes.emblem.bird': "Птица",
   'notes.emblem.spade': "Пики",
+  'notes.fontGroup.hand': "Рукописные",
+  'notes.fontGroup.book': "Книжные",
+  'notes.fontGroup.special': "Особые",
+  'notes.fontGroup.creepy': "Жуткие",
 };

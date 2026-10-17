@@ -17,61 +17,99 @@ import { SEAL_EMBLEMS, type SealEmblem } from './emblems';
 export const NOTE_FONTS = {
   marck: { get title() {
     return t('notes.font.marck');
-  }, family: 'Marck Script', group: 'Рукописные' },
+  }, family: 'Marck Script', get group() {
+    return t('notes.fontGroup.hand');
+  } },
   badscript: { get title() {
     return t('notes.font.badscript');
-  }, family: 'Bad Script', group: 'Рукописные' },
+  }, family: 'Bad Script', get group() {
+    return t('notes.fontGroup.hand');
+  } },
   caveat: { get title() {
     return t('notes.font.caveat');
-  }, family: 'Caveat', group: 'Рукописные' },
+  }, family: 'Caveat', get group() {
+    return t('notes.fontGroup.hand');
+  } },
   greatvibes: { get title() {
     return t('notes.font.greatvibes');
-  }, family: 'Great Vibes', group: 'Рукописные' },
+  }, family: 'Great Vibes', get group() {
+    return t('notes.fontGroup.hand');
+  } },
   amatic: { get title() {
     return t('notes.font.amatic');
-  }, family: 'Amatic SC', group: 'Рукописные' },
+  }, family: 'Amatic SC', get group() {
+    return t('notes.fontGroup.hand');
+  } },
   neucha: { get title() {
     return t('notes.font.neucha');
-  }, family: 'Neucha', group: 'Рукописные' },
+  }, family: 'Neucha', get group() {
+    return t('notes.fontGroup.hand');
+  } },
   brush: { get title() {
     return t('notes.font.brush');
-  }, family: 'Comforter Brush', group: 'Рукописные' },
+  }, family: 'Comforter Brush', get group() {
+    return t('notes.fontGroup.hand');
+  } },
   cormorant: { get title() {
     return t('notes.font.cormorant');
-  }, family: 'Cormorant Garamond', group: 'Книжные' },
+  }, family: 'Cormorant Garamond', get group() {
+    return t('notes.fontGroup.book');
+  } },
   oldstandard: { get title() {
     return t('notes.font.oldstandard');
-  }, family: 'Old Standard TT', group: 'Книжные' },
+  }, family: 'Old Standard TT', get group() {
+    return t('notes.fontGroup.book');
+  } },
   kurale: { get title() {
     return t('notes.font.kurale');
-  }, family: 'Kurale', group: 'Книжные' },
+  }, family: 'Kurale', get group() {
+    return t('notes.fontGroup.book');
+  } },
   forum: { get title() {
     return t('notes.font.forum');
-  }, family: 'Forum', group: 'Книжные' },
+  }, family: 'Forum', get group() {
+    return t('notes.fontGroup.book');
+  } },
   yeseva: { get title() {
     return t('notes.font.yeseva');
-  }, family: 'Yeseva One', group: 'Книжные' },
+  }, family: 'Yeseva One', get group() {
+    return t('notes.fontGroup.book');
+  } },
   ruslan: { get title() {
     return t('notes.font.ruslan');
-  }, family: 'Ruslan Display', group: 'Особые' },
+  }, family: 'Ruslan Display', get group() {
+    return t('notes.fontGroup.special');
+  } },
   ponomar: { get title() {
     return t('notes.font.ponomar');
-  }, family: 'Ponomar', group: 'Особые' },
+  }, family: 'Ponomar', get group() {
+    return t('notes.fontGroup.special');
+  } },
   monomakh: { get title() {
     return t('notes.font.monomakh');
-  }, family: 'Monomakh', group: 'Особые' },
+  }, family: 'Monomakh', get group() {
+    return t('notes.fontGroup.special');
+  } },
   underdog: { get title() {
     return t('notes.font.underdog');
-  }, family: 'Underdog', group: 'Особые' },
+  }, family: 'Underdog', get group() {
+    return t('notes.fontGroup.special');
+  } },
   wetpaint: { get title() {
     return t('notes.font.wetpaint');
-  }, family: 'Rubik Wet Paint', group: 'Жуткие' },
+  }, family: 'Rubik Wet Paint', get group() {
+    return t('notes.fontGroup.creepy');
+  } },
   distressed: { get title() {
     return t('notes.font.distressed');
-  }, family: 'Rubik Distressed', group: 'Жуткие' },
+  }, family: 'Rubik Distressed', get group() {
+    return t('notes.fontGroup.creepy');
+  } },
   beastly: { get title() {
     return t('notes.font.beastly');
-  }, family: 'Rubik Beastly', group: 'Жуткие' },
+  }, family: 'Rubik Beastly', get group() {
+    return t('notes.fontGroup.creepy');
+  } },
 } as const;
 export type NoteFont = keyof typeof NOTE_FONTS;
 

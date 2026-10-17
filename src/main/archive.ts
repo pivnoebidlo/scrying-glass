@@ -3,6 +3,7 @@
 // и все картинки и музыка хранилища. Восстанавливается в то же или другое хранилище (например, на новом компьютере).
 //
 //   manifest.json, settings.json, library/…, vault/…
+import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { folderDirs, folderFiles, readZip, writeZip, type ZipEntry } from './zip';
@@ -62,7 +63,7 @@ export async function readBackup(file: string, tmp: string): Promise<{ manifest:
     return b ? JSON.parse(new TextDecoder().decode(b)) : null;
   };
   const manifest = json('manifest.json') as BackupManifest | null;
-  if (manifest?.scryingGlass !== 'backup') throw new Error('Это не резервная копия Scrying Glass');
+  if (manifest?.scryingGlass !== 'backup') throw new Error(t('core.notBackup'));
   return { manifest, settings: json('settings.json') };
 }
 

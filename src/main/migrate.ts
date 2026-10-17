@@ -1,5 +1,6 @@
 // Перенос данных из версий до хранилища (0.3): campaign.json в папке приложения.
 // Картинки, добавленные вручную, копируются в хранилище, подписи переносятся.
+import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { app, dialog, type BrowserWindow } from 'electron';
@@ -43,15 +44,15 @@ export async function migrateOldCampaign(
   }
 
   const lines = [];
-  if (manual.length) lines.push(`• картинки, добавленные вручную (${manual.length}): будут скопированы в «${MIGRATED_DIR}»`);
-  if (inVault.length) lines.push(`• подписи к картинкам из подключённых папок (${inVault.length})`);
-  if (outside.length) lines.push(`\nЭти папки лежат вне хранилища, их стоит перенести в него вручную:\n${outside.join('\n')}`);
+  if (manual.length) lines.push(t('core.mig.manual', { count: manual.length, dir: MIGRATED_DIR }));
+  if (inVault.length) lines.push(t('core.mig.captions', { count: inVault.length }));
+  if (outside.length) lines.push(t('core.mig.outside', { list: outside.join('\n') }));
 
   const opts = {
     type: 'question' as const,
-    message: 'Перенести портреты из прошлой версии?',
+    message: t('core.mig.ask'),
     detail: lines.join('\n'),
-    buttons: ['Перенести', 'Не сейчас', 'Больше не спрашивать'],
+    buttons: [t('core.mig.move'), t('core.mig.later'), t('core.mig.never')],
     defaultId: 0,
     cancelId: 1,
   };
@@ -68,7 +69,7 @@ export async function migrateOldCampaign(
     fs.mkdirSync(target, { recursive: true });
     for (const p of manual) {
       const src = path.join(dir, 'assets', path.basename(p.file!));
-      const fileName = freeName(target, (p.name || 'портрет') + path.extname(src).toLowerCase());
+      const fileName = freeName(target, (p.name || t('core.mig.portrait')) + path.extname(src).toLowerCase());
       fs.copyFileSync(src, path.join(target, fileName), fs.constants.COPYFILE_EXCL);
       const rel = `${MIGRATED_DIR}/${fileName}`;
       if (p.name !== prettyName(rel)) names[rel] = p.name;
