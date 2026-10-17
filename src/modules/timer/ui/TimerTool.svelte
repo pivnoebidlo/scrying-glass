@@ -1,6 +1,7 @@
 <!-- «Инструменты» → «Таймер»: запуск (заготовки времени или своё), подпись, вид на экране игроков. Идущим
      таймером управляют здесь же или в правой панели. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Play } from '@lucide/svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import type { TimerPosition, TimerStyle } from '../types';
@@ -13,28 +14,19 @@
   let minutes = $state(2);
   let seconds = $state(0);
 
-  const PRESETS = [
-    { t: '30 с', ms: 30_000 },
-    { t: '1 мин', ms: 60_000 },
-    { t: '2 мин', ms: 120_000 },
-    { t: '3 мин', ms: 180_000 },
-    { t: '5 мин', ms: 300_000 },
-    { t: '10 мин', ms: 600_000 },
-    { t: '15 мин', ms: 900_000 },
-    { t: '30 мин', ms: 1_800_000 },
-  ];
-  const LABELS = ['Пока горит факел', 'До обрушения потолка', 'Пока действует заклинание', 'До прихода стражи', 'Пока не догорит фитиль', 'На раздумья'];
-  const STYLES: [TimerStyle, string][] = [['hourglass', 'Песочные часы'], ['digits', 'Только цифры']];
-  const POSITIONS: [TimerPosition, string][] = [['top-right', 'Справа вверху'], ['bottom-right', 'Справа внизу'], ['center', 'По центру, крупно']];
+  const PRESETS = [30_000, 60_000, 120_000, 180_000, 300_000, 600_000, 900_000, 1_800_000];
+  const presetTitle = (ms: number) => (ms < 60_000 ? t('timer.s', { n: ms / 1000 }) : t('timer.min', { n: ms / 60_000 }));
+  const LABELS = [1, 2, 3, 4, 5, 6] as const;
+  const STYLES: TimerStyle[] = ['hourglass', 'digits'];
+  const POSITIONS: TimerPosition[] = ['top-right', 'bottom-right', 'center'];
 
   const start = (duration: number) => dispatch('timer', 'start', { duration, label });
 </script>
 
 <div class="view">
-  <header class="head"><h2>Таймер</h2></header>
+  <header class="head"><h2>{t('timer.title')}</h2></header>
   <p class="faint intro">
-    Песочные часы или цифры на экране игроков: «пока горит факел», «до обрушения потолка», время на раздумья.
-    Когда время выходит, часы вспыхивают, а у вас звучит сигнал.
+    {t('timer.about')}
   </p>
 
   {#if ms.active}
@@ -44,35 +36,35 @@
   {/if}
 
   <section>
-    <h3>{ms.active ? 'Запустить заново' : 'Запустить'}</h3>
+    <h3>{ms.active ? t('timer.restart') : t('timer.start')}</h3>
     <label class="field">
-      <span>Подпись (видят игроки, можно без неё)</span>
-      <input type="text" bind:value={label} list="timer-labels" placeholder="Пока горит факел" />
-      <datalist id="timer-labels">{#each LABELS as l (l)}<option value={l}></option>{/each}</datalist>
+      <span>{t('timer.labelField')}</span>
+      <input type="text" bind:value={label} list="timer-labels" placeholder={t('timer.label.1')} />
+      <datalist id="timer-labels">{#each LABELS as l (l)}<option value={t(`timer.label.${l}`)}></option>{/each}</datalist>
     </label>
     <div class="presets">
-      {#each PRESETS as p (p.ms)}<button class="btn" onclick={() => start(p.ms)}>{p.t}</button>{/each}
+      {#each PRESETS as p (p)}<button class="btn" onclick={() => start(p)}>{presetTitle(p)}</button>{/each}
     </div>
     <div class="custom">
-      <input type="number" min="0" max="999" bind:value={minutes} title="Минуты" /> мин
-      <input type="number" min="0" max="59" bind:value={seconds} title="Секунды" /> с
+      <input type="number" min="0" max="999" bind:value={minutes} title={t('timer.minutes')} /> {t('timer.minShort')}
+      <input type="number" min="0" max="59" bind:value={seconds} title={t('timer.seconds')} /> {t('timer.secShort')}
       <button class="btn primary" disabled={(minutes || 0) * 60 + (seconds || 0) < 1} onclick={() => start(((minutes || 0) * 60 + (seconds || 0)) * 1000)}>
-        <Play size={14} /> Запустить
+        <Play size={14} /> {t('timer.start')}
       </button>
     </div>
   </section>
 
   <section class="look">
     <div>
-      <h3>Как видят игроки</h3>
+      <h3>{t('timer.look')}</h3>
       <div class="seg">
-        {#each STYLES as [id, t] (id)}<button class:active={ms.style === id} onclick={() => dispatch('timer', 'setView', { style: id })}>{t}</button>{/each}
+        {#each STYLES as id (id)}<button class:active={ms.style === id} onclick={() => dispatch('timer', 'setView', { style: id })}>{t(`timer.style.${id}`)}</button>{/each}
       </div>
       <div class="seg">
-        {#each POSITIONS as [id, t] (id)}<button class:active={ms.position === id} onclick={() => dispatch('timer', 'setView', { position: id })}>{t}</button>{/each}
+        {#each POSITIONS as id (id)}<button class:active={ms.position === id} onclick={() => dispatch('timer', 'setView', { position: id })}>{t(`timer.pos.${id}`)}</button>{/each}
       </div>
-      <label class="check"><input type="checkbox" checked={ms.shown} onchange={(e) => dispatch('timer', 'setView', { shown: e.currentTarget.checked })} /> Показывать игрокам</label>
-      <label class="check"><input type="checkbox" checked={ms.sound} onchange={(e) => dispatch('timer', 'setView', { sound: e.currentTarget.checked })} /> Сигнал, когда время вышло (через устройство вывода музыки)</label>
+      <label class="check"><input type="checkbox" checked={ms.shown} onchange={(e) => dispatch('timer', 'setView', { shown: e.currentTarget.checked })} /> {t('timer.showToPlayers')}</label>
+      <label class="check"><input type="checkbox" checked={ms.sound} onchange={(e) => dispatch('timer', 'setView', { sound: e.currentTarget.checked })} /> {t('timer.sound')}</label>
     </div>
     {#if ms.style === 'hourglass'}<div class="sample"><Hourglass left={0.62} running /></div>{/if}
   </section>

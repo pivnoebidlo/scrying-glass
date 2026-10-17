@@ -1,6 +1,7 @@
 <!-- Управление идущим таймером: остаток, пауза/продолжить, ±1 минута, убрать. Общее для правой панели и страницы
      таймера в «Инструментах». -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Eye, EyeOff, Minus, Pause, Play, Plus, Square } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { clock, timeLeft, type TimerState } from '../types';
@@ -15,20 +16,20 @@
 </script>
 
 <div class="controls" class:big>
-  <div class="time" class:done class:paused={!running && !done}>{done ? 'Время вышло' : clock(left)}</div>
+  <div class="time" class:done class:paused={!running && !done}>{done ? t('timer.timeUp') : clock(left)}</div>
   {#if ms.label}<div class="label faint">{ms.label}</div>{/if}
   <div class="buttons">
     {#if running}
-      <button class="icon-btn" title="Пауза" onclick={() => dispatch('timer', 'pause')}><Pause size={15} /></button>
+      <button class="icon-btn" title={t('timer.pause')} onclick={() => dispatch('timer', 'pause')}><Pause size={15} /></button>
     {:else if !done}
-      <button class="icon-btn" title="Продолжить" onclick={() => dispatch('timer', 'resume')}><Play size={15} /></button>
+      <button class="icon-btn" title={t('timer.resume')} onclick={() => dispatch('timer', 'resume')}><Play size={15} /></button>
     {/if}
-    <button class="icon-btn" title="Убавить минуту" onclick={() => dispatch('timer', 'add', { ms: -60000 })}><Minus size={15} /></button>
-    <button class="icon-btn" title="Добавить минуту" onclick={() => dispatch('timer', 'add', { ms: 60000 })}><Plus size={15} /></button>
-    <button class="icon-btn" title={ms.shown ? 'Игроки видят таймер — спрятать' : 'Таймер только у вас — показать игрокам'} onclick={() => dispatch('timer', 'setView', { shown: !ms.shown })}>
+    <button class="icon-btn" title={t('timer.minusMinute')} onclick={() => dispatch('timer', 'add', { ms: -60000 })}><Minus size={15} /></button>
+    <button class="icon-btn" title={t('timer.plusMinute')} onclick={() => dispatch('timer', 'add', { ms: 60000 })}><Plus size={15} /></button>
+    <button class="icon-btn" title={ms.shown ? t('timer.shownHint') : t('timer.hiddenHint')} onclick={() => dispatch('timer', 'setView', { shown: !ms.shown })}>
       {#if ms.shown}<Eye size={15} />{:else}<EyeOff size={15} />{/if}
     </button>
-    <button class="icon-btn" title="Убрать таймер" onclick={() => dispatch('timer', 'stop')}><Square size={14} /></button>
+    <button class="icon-btn" title={t('timer.stop')} onclick={() => dispatch('timer', 'stop')}><Square size={14} /></button>
   </div>
 </div>
 

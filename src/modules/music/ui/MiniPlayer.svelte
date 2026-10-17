@@ -1,5 +1,6 @@
 <!-- Правая панель: что играет, управление музыкой и атмосферой. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume2, Wind, X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
@@ -49,8 +50,8 @@
     const tree = app.vault.tree;
     const own = (tree ? allFiles(tree, 'audio') : [])
       .filter((f) => visibleIn(app.adventures, f.path))
-      .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')), group: 'В хранилище' }));
-    return [...builtin.ambience.map((p) => ({ id: p, title: trackName(p), group: 'Встроенные' })), ...own];
+      .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')), group: t('common.inVault') }));
+    return [...builtin.ambience.map((p) => ({ id: p, title: trackName(p), group: t('common.builtin') })), ...own];
   }
 
   // Плейлист в подборке — по названию папки (папка music — по папке, где она лежит).
@@ -62,20 +63,16 @@
   function options() {
     const tree = app.vault.tree;
     if (!tree) return [];
-    const lists = playlists(tree, app.vault.name, app.adventures).map((p) => ({ id: p.path, title: p.title, sub: `треков: ${p.count}`, group: 'Плейлисты' }));
+    const lists = playlists(tree, app.vault.name, app.adventures).map((p) => ({ id: p.path, title: p.title, sub: t('music.tracksN', { count: p.count }), group: t('music.playlists') }));
     const tracks = allFiles(tree, 'audio')
       .filter((f) => visibleIn(app.adventures, f.path))
-      .map((f) => ({ id: f.path, title: trackName(f.path), sub: playlistTitle(tree, app.vault.name, f.path.slice(0, f.path.lastIndexOf('/'))), group: 'Треки' }));
+      .map((f) => ({ id: f.path, title: trackName(f.path), sub: playlistTitle(tree, app.vault.name, f.path.slice(0, f.path.lastIndexOf('/'))), group: t('music.tracks') }));
     return [...lists, ...tracks];
   }
 
   const track = $derived(ms.queue[ms.index]);
   const NEXT_REPEAT: Record<RepeatMode, RepeatMode> = { all: 'one', one: 'off', off: 'all' };
-  const REPEAT_TITLE: Record<RepeatMode, string> = {
-    all: 'Повтор: вся очередь',
-    one: 'Повтор: один трек',
-    off: 'Без повтора',
-  };
+  const repeatTitle = (r: RepeatMode) => t(`music.repeat.${r}`);
 </script>
 
 <TrayChips
@@ -86,15 +83,15 @@
   {options}
   caption={(id) => (isTrack(id) ? trackName(id) : folderTitle(id))}
   iconOf={(id) => (isTrack(id) ? Disc3 : FolderOpen)}
-  pickTitle="Плейлисты и треки"
-  hint="Музыка под рукой: тема локации, бой, погоня — щелчок переключает."
+  pickTitle={t('music.pickTitle')}
+  hint={t('music.trayHint')}
 >
   {#snippet extra(id: string)}
     {#if scene}
       <button
         class="star"
         class:main={main === id}
-        title={main === id ? `Основная музыка сцены «${scene.name}» — включается вместе с ней. Снять` : `Сделать основной музыкой сцены «${scene.name}»: включается вместе с ней`}
+        title={main === id ? t('music.mainOff', { name: scene.name }) : t('music.mainOn', { name: scene.name })}
         onclick={() => setMain(id)}
       >
         <Star size={11} />
@@ -107,26 +104,26 @@
   <div class="now">
     <div class="title-row">
       <div class="title" title={track}>{trackName(track)}</div>
-      <button class="icon-btn" title="Убрать из проигрывателя" onclick={() => dispatch('music', 'clear')}><X size={13} /></button>
+      <button class="icon-btn" title={t('music.removeFromPlayer')} onclick={() => dispatch('music', 'clear')}><X size={13} /></button>
     </div>
-    <div class="faint sub">{playlistTitle(app.vault.tree, app.vault.name, ms.playlist)} · {ms.index + 1} из {ms.queue.length}</div>
+    <div class="faint sub">{playlistTitle(app.vault.tree, app.vault.name, ms.playlist)} · {t('music.position', { n: ms.index + 1, total: ms.queue.length })}</div>
   </div>
 
   <div class="progress">
-    <Slider value={playback.time} max={playback.duration || 1} step={0.1} title="Перемотка" oninput={seek} />
+    <Slider value={playback.time} max={playback.duration || 1} step={0.1} title={t('music.seek')} oninput={seek} />
     <div class="times faint"><span>{formatTime(playback.time)}</span><span>{formatTime(playback.duration)}</span></div>
   </div>
 
   <div class="controls">
-    <button class="icon-btn" class:active={ms.shuffle} title={ms.shuffle ? 'Перемешано' : 'Перемешать'} onclick={() => dispatch('music', 'toggleShuffle')}>
+    <button class="icon-btn" class:active={ms.shuffle} title={ms.shuffle ? t('music.shuffled') : t('music.shuffle')} onclick={() => dispatch('music', 'toggleShuffle')}>
       <Shuffle size={15} />
     </button>
-    <button class="icon-btn" title="Предыдущий" onclick={() => dispatch('music', 'prev')}><SkipBack size={16} /></button>
-    <button class="play" title={ms.playing ? 'Пауза' : 'Играть'} onclick={() => dispatch('music', 'playPause')}>
+    <button class="icon-btn" title={t('music.prev')} onclick={() => dispatch('music', 'prev')}><SkipBack size={16} /></button>
+    <button class="play" title={ms.playing ? t('music.pause') : t('music.play')} onclick={() => dispatch('music', 'playPause')}>
       {#if ms.playing}<Pause size={18} />{:else}<Play size={18} />{/if}
     </button>
-    <button class="icon-btn" title="Следующий" onclick={() => dispatch('music', 'next')}><SkipForward size={16} /></button>
-    <button class="icon-btn" class:active={ms.repeat !== 'off'} title={REPEAT_TITLE[ms.repeat]} onclick={() => dispatch('music', 'setRepeat', { repeat: NEXT_REPEAT[ms.repeat] })}>
+    <button class="icon-btn" title={t('music.next')} onclick={() => dispatch('music', 'next')}><SkipForward size={16} /></button>
+    <button class="icon-btn" class:active={ms.repeat !== 'off'} title={repeatTitle(ms.repeat)} onclick={() => dispatch('music', 'setRepeat', { repeat: NEXT_REPEAT[ms.repeat] })}>
       {#if ms.repeat === 'one'}<Repeat1 size={15} />{:else}<Repeat size={15} />{/if}
     </button>
   </div>
@@ -135,17 +132,17 @@
     <Volume2 size={14} class="faint" />
     <Slider
       value={live.volume ?? ms.volume}
-      title="Громкость музыки"
+      title={t('music.volume')}
       oninput={(v) => (live.volume = v)}
       onchange={(v) => dispatch('music', 'setVolume', { value: v }).then(() => (live.volume = null))}
     />
   </div>
 {:else}
-  <div class="faint idle">Ничего не играет.</div>
+  <div class="faint idle">{t('music.idle')}</div>
 {/if}
 
 <div class="amb-tray">
-  <div class="faint label-row">Атмосфера</div>
+  <div class="faint label-row">{t('music.ambience')}</div>
   <TrayChips
     {app}
     part="ambience"
@@ -154,8 +151,8 @@
     options={audioOptions}
     caption={trackName}
     iconOf={() => Wind}
-    pickTitle="Звуки атмосферы"
-    hint="Дождь, таверна, лес — зацикленные звуки поверх музыки. Щелчок включает и выключает."
+    pickTitle={t('music.ambiencePick')}
+    hint={t('music.ambienceHint')}
   />
 </div>
 
@@ -164,15 +161,15 @@
     <button
       class="icon-btn"
       class:active={ms.ambiencePlaying}
-      title={ms.ambiencePlaying ? 'Приглушить атмосферу' : 'Включить атмосферу'}
+      title={ms.ambiencePlaying ? t('music.muteAmbience') : t('music.playAmbience')}
       onclick={() => dispatch('music', 'toggleAmbience')}
     >
       <Wind size={15} />
     </button>
-    <span class="label">Атмосфера · {ms.ambience.length}</span>
+    <span class="label">{t('music.ambienceN', { count: ms.ambience.length })}</span>
     <Slider
       value={live.ambienceVolume ?? ms.ambienceVolume}
-      title="Громкость атмосферы"
+      title={t('music.ambienceVolume')}
       oninput={(v) => (live.ambienceVolume = v)}
       onchange={(v) => dispatch('music', 'setAmbienceVolume', { value: v }).then(() => (live.ambienceVolume = null))}
     />

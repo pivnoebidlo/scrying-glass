@@ -1,6 +1,7 @@
 <!-- Выбор ролевой системы: группами по семействам (D&D 5e — две редакции, Fate). Отключённые в настройках не
      предлагаются; уже выбранная остаётся в списке, даже если её отключили. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { enabledSystems, FAMILIES, systems } from '../../../systems';
   import { store } from '../../../renderer/lib/store.svelte';
 
@@ -16,5 +17,5 @@
       {#each list.filter((s) => s.family === f.id) as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
     </optgroup>
   {/each}
-  {#if !known}<option {value}>{systems.find((s) => s.id === value)?.title ?? value}{systems.some((s) => s.id === value) ? ' (отключена)' : ''}</option>{/if}
+  {#if !known}<option {value}>{systems.find((s) => s.id === value)?.title ?? value}{systems.some((s) => s.id === value) ? t('adv.systemOff') : ''}</option>{/if}
 </select>

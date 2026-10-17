@@ -1,6 +1,7 @@
 <!-- Раздел настроек «Приключения»: какие ролевые системы нужны. Отключённые не предлагаются при выборе системы,
      их карточки и встроенные записи скрыты. Общие для всех хранилищ (settings.json приложения). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { FAMILIES, systems } from '../../../systems';
@@ -12,18 +13,14 @@
   const onCount = $derived(systems.length - off.size);
 
   // Что даёт система — строка под названием.
-  const ABOUT: Record<string, string> = {
-    'dnd5e-2024': 'Встроенные монстры и справочник SRD 5.2.1, сложность боя, покупка характеристик',
-    'dnd5e-2014': 'Встроенные монстры и справочник SRD 5.1, импорт из Long Story Short',
-    'fate-core': 'Аспекты, стресс и последствия в бою, кубы Fate',
-  };
+  const about = (id: string) => (['dnd5e-2024', 'dnd5e-2014', 'fate-core'].includes(id) ? t(`adv.about.${id as 'fate-core'}`) : '');
 
   // Приключения с этой системой (своей или унаследованной от хранилища) и само хранилище.
   const usedBy = (id: string) =>
     ms.list
       .filter((a) => systemFor(ms, a) === id)
-      .map((a) => `«${a}»${off.has(id) ? ' (скрыто)' : ''}`)
-      .concat(systemFor(ms, null) === id ? ['всё хранилище'] : []);
+      .map((a) => `«${a}»${off.has(id) ? t('adv.hidden') : ''}`)
+      .concat(systemFor(ms, null) === id ? [t('adv.wholeVault')] : []);
 
   function toggle(id: string, on: boolean) {
     const next = on ? [...off].filter((x) => x !== id) : [...off, id];
@@ -31,12 +28,9 @@
   }
 </script>
 
-<h3>Ролевые системы</h3>
+<h3>{t('adv.systems')}</h3>
 <p class="desc faint">
-  Ненужные системы можно отключить: их не будет при выборе системы приключения, их карточки и встроенные записи
-  справочника скроются, а приключения с такой системой пропадут из списка, вкладок и «Файлов» вместе со своими сценами
-  и заготовками боёв. Файлы при этом не меняются и не удаляются: включите систему — всё вернётся. Настройка общая для
-  всех хранилищ.
+  {t('adv.systemsDesc')}
 </p>
 
 {#each FAMILIES as f (f.id)}
@@ -47,15 +41,15 @@
       <div class="info">
         <div class="name">{s.title}</div>
         <div class="desc">
-          {ABOUT[s.id] ?? ''}
-          {#if used.length}<div class="used">Выбрана: {used.join(', ')}</div>{/if}
+          {about(s.id)}
+          {#if used.length}<div class="used">{t('adv.usedBy', { list: used.join(', ') })}</div>{/if}
         </div>
       </div>
       <input
         type="checkbox"
         checked={on}
         disabled={on && onCount <= 1}
-        title={on && onCount <= 1 ? 'Хотя бы одна система должна остаться' : ''}
+        title={on && onCount <= 1 ? t('adv.keepOne') : ''}
         onchange={(e) => toggle(s.id, e.currentTarget.checked)}
       />
     </label>

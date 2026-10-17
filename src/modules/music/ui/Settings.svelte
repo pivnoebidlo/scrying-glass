@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Музыка». -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
@@ -17,9 +18,9 @@
 
 <div class="setting">
   <div class="info">
-    <div class="name">Плавный переход между треками</div>
+    <div class="name">{t('music.crossfadeTitle')}</div>
     <div class="desc">
-      {seconds ? `Следующий трек начинается за ${seconds} с до конца текущего.` : 'Без перехода: треки идут встык.'}
+      {seconds ? t('music.crossfadeOn', { s: seconds }) : t('music.crossfadeOff')}
     </div>
   </div>
   <div class="slider">
@@ -36,33 +37,30 @@
 
 <div class="setting">
   <div class="info">
-    <div class="name">Устройство вывода</div>
-    <div class="desc">Куда идут музыка и атмосфера: например, колонки в комнате, а не наушники. Запоминается на этом компьютере.</div>
+    <div class="name">{t('music.outputTitle')}</div>
+    <div class="desc">{t('music.outputDesc')}</div>
   </div>
   <select value={output.sink} onchange={(e) => setSink(e.currentTarget.value)}>
-    <option value="">Как в системе</option>
+    <option value="">{t('music.outputSystem')}</option>
     {#each output.devices as d (d.id)}<option value={d.id}>{d.label}</option>{/each}
-    {#if missing}<option value={output.sink}>Отключённое устройство</option>{/if}
+    {#if missing}<option value={output.sink}>{t('music.outputMissing')}</option>{/if}
   </select>
 </div>
 
 <div class="setting">
   <div class="info">
-    <div class="name">Горячие клавиши</div>
+    <div class="name">{t('music.hotkeysTitle')}</div>
     <div class="desc">
-      {mod}P — пауза и продолжение, {mod}→ / {mod}← — следующий и предыдущий трек, {mod}↑ / {mod}↓ — громкость,
-      {mod}⇧A — атмосфера. {mod}B — погасить экран игроков, {mod}1…9 — сцены. Не работают, пока курсор в поле ввода.
+      {t('music.hotkeysDesc', { mod })}
     </div>
   </div>
 </div>
 
 <div class="setting">
   <div class="info">
-    <div class="name">Где брать музыку</div>
+    <div class="name">{t('music.sourceTitle')}</div>
     <div class="desc">
-      Плейлист — любая папка хранилища с аудиофайлами (mp3, ogg, m4a, wav, flac); папки
-      <RoleFolderNames role="music" /> подписываются по приключению или главе. Играть можно и отдельный трек из «Файлов». Звук идёт
-      через устройство вывода компьютера мастера, музыка продолжает играть, даже если экран игроков закрыт.
+      {t('music.sourceBefore')} <RoleFolderNames role="music" /> {t('music.sourceAfter')}
     </div>
   </div>
 </div>

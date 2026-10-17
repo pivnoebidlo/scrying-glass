@@ -1,5 +1,6 @@
 <!-- Боковая панель: плейлисты (папки с музыкой). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { ListMusic, Play } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -20,14 +21,13 @@
         <span class="name">{p.title}</span>
         <span class="count">{p.count}</span>
       </button>
-      <button class="icon-btn play" title="Играть" onclick={() => dispatch('music', 'playFolder', { folder: p.path })}>
+      <button class="icon-btn play" title={t('music.play')} onclick={() => dispatch('music', 'playFolder', { folder: p.path })}>
         <Play size={13} />
       </button>
     </div>
   {:else}
     <p class="faint hint">
-      Музыки пока нет. Положите аудиофайлы (mp3, ogg, m4a, wav, flac) в папку <RoleFolderNames role="music" /> —
-      она появится здесь.
+      {t('music.noMusicSide')} <RoleFolderNames role="music" /> {t('music.appearsHere')}
     </p>
   {/each}
 </div>

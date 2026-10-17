@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Резервные копии»: снимки данных приложения (делаются сами), восстановление из снимка. -->
 <script lang="ts">
+  import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { ArchiveRestore, Camera, FileArchive, FolderOpen, Upload } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import type { BackupInfo } from '../../../shared/api';
@@ -29,39 +30,33 @@
   let media = $state(false);
   let busy = $state('');
   async function saveFile() {
-    busy = 'Сохраняется копия…';
+    busy = t('backup.saving');
     try {
       const f = await window.api.saveFullBackup(media);
-      if (f) flash('Копия сохранена.');
+      if (f) flash(t('backup.saved'));
     } catch (e) {
-      flash(`Не удалось: ${String(e)}`);
+      flash(t('backup.failed', { error: String(e) }));
     } finally {
       busy = '';
     }
   }
   async function restoreFile() {
-    busy = 'Восстановление…';
+    busy = t('backup.restoring');
     try {
       const r = await window.api.restoreFullBackup();
-      if (r) flash(`Восстановлено файлов: ${r.files}, хранилище «${r.vault}» открыто.`);
+      if (r) flash(t('backup.restoredVault', { files: r.files, vault: r.vault }));
       await load();
     } catch (e) {
-      flash(`Не удалось: ${String(e)}`);
+      flash(t('backup.failed', { error: String(e) }));
     } finally {
       busy = '';
     }
   }
 
   const vaultRoot = $derived(app.vault.root);
-  const REASONS: Record<BackupInfo['reason'], string> = {
-    open: 'при открытии',
-    auto: 'автоматически',
-    quit: 'при выходе',
-    manual: 'вручную',
-    'before-restore': 'перед восстановлением',
-  };
-  const size = (b: number) => (b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} КБ` : `${(b / 1024 / 1024).toFixed(1)} МБ`);
-  const when = (t: number) => new Date(t).toLocaleString('ru', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  const reason = (r: BackupInfo['reason']) => t(`backup.reason.${r}`);
+  const size = (b: number) => (b < 1024 * 1024 ? t('backup.kb', { n: Math.max(1, Math.round(b / 1024)) }) : t('backup.mb', { n: (b / 1024 / 1024).toFixed(1) }));
+  const when = (t: number) => new Date(t).toLocaleString(locale.lang, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
   function flash(text: string) {
     status = text;
@@ -71,71 +66,65 @@
   async function create() {
     const s = await window.api.createBackup();
     await load();
-    flash(s ? 'Снимок сделан.' : 'Нечего сохранять.');
+    flash(s ? t('backup.snapshotDone') : t('backup.nothingToSave'));
   }
 
   async function restore(b: BackupInfo) {
     const n = await window.api.restoreBackup(b.id, { vault: parts.vault && b.vault === vaultRoot, library: parts.library });
     open = null;
     await load();
-    if (n) flash(`Восстановлено файлов: ${n}.`);
+    if (n) flash(t('backup.restoredN', { count: n }));
   }
 </script>
 
 <div class="setting">
   <div class="info">
-    <div class="name">Папка резервных копий</div>
+    <div class="name">{t('backup.dirTitle')}</div>
     <div class="desc">
-      Здесь лежат снимки; сюда же по умолчанию предлагается сохранять полную копию. Можно выбрать папку в облаке
-      (iCloud Drive, Яндекс Диск, Dropbox) — копии сами окажутся там. При смене папки снимки переезжают.
-      <div class="path" title={dir?.path}>{dir ? dir.path : '…'}{dir?.isDefault ? ' (по умолчанию)' : ''}</div>
+      {t('backup.dirDesc')}
+      <div class="path" title={dir?.path}>{dir ? dir.path : '…'}{dir?.isDefault ? t('backup.default') : ''}</div>
     </div>
   </div>
   <div class="dir-actions">
-    <button class="btn" onclick={() => chooseDir()}>Изменить…</button>
-    {#if dir && !dir.isDefault}<button class="btn" onclick={() => chooseDir(true)}>По умолчанию</button>{/if}
+    <button class="btn" onclick={() => chooseDir()}>{t('backup.change')}</button>
+    {#if dir && !dir.isDefault}<button class="btn" onclick={() => chooseDir(true)}>{t('backup.toDefault')}</button>{/if}
   </div>
 </div>
 
 <div class="setting">
   <div class="info">
-    <div class="name">Снимки данных</div>
+    <div class="name">{t('backup.snapshotsTitle')}</div>
     <div class="desc">
-      Приложение само сохраняет снимки всего, что создано в нём: сцены, туман и метки карт, жетоны, заготовки боёв,
-      записки, таблицы, карточки, библиотеку (без картинок) и настройки. Снимок делается при открытии хранилища, раз
-      в полчаса работы (если что-то изменилось) и при выходе. Хранятся последние 20 и по одному на день за месяц;
-      сделанные вручную — пока их не удалить. Картинки и музыка — ваши файлы: их берегите Time Machine или облаком.
+      {t('backup.snapshotsDesc')}
     </div>
   </div>
 </div>
 
 <div class="actions">
-  <button class="btn" onclick={create}><Camera size={14} /> Сделать снимок сейчас</button>
-  <button class="btn" onclick={() => window.api.revealBackups()}><FolderOpen size={14} /> Открыть папку снимков</button>
+  <button class="btn" onclick={create}><Camera size={14} /> {t('backup.snapshotNow')}</button>
+  <button class="btn" onclick={() => window.api.revealBackups()}><FolderOpen size={14} /> {t('backup.openSnapshots')}</button>
   {#if status}<span class="status">{status}</span>{/if}
 </div>
 
 <div class="setting">
   <div class="info">
-    <div class="name">Полная копия в файл</div>
+    <div class="name">{t('backup.fullTitle')}</div>
     <div class="desc">
-      Один файл (.sgbackup): настройки, вся библиотека (карточки с картинками, таблицы, свои расы) и данные хранилища —
-      сцены, карты, заготовки, записки, таблицы, карточки. Пригодится для переноса на новый компьютер или чтобы
-      положить копию в облако. Восстанавливается в это хранилище или в другую папку.
+      {t('backup.fullDesc')}
     </div>
   </div>
 </div>
 <label class="media">
   <input type="checkbox" bind:checked={media} />
-  Вместе с картинками и музыкой хранилища{sizes ? ` (≈ ${size(sizes.media)}; без них — библиотека ≈ ${size(sizes.library)})` : ''}
+  {t('backup.withMedia')}{sizes ? t('backup.sizes', { media: size(sizes.media), library: size(sizes.library) }) : ''}
 </label>
 <div class="actions">
-  <button class="btn" disabled={!!busy} onclick={saveFile}><FileArchive size={14} /> Сохранить копию…</button>
-  <button class="btn" disabled={!!busy} onclick={restoreFile}><Upload size={14} /> Восстановить из файла…</button>
+  <button class="btn" disabled={!!busy} onclick={saveFile}><FileArchive size={14} /> {t('backup.saveCopy')}</button>
+  <button class="btn" disabled={!!busy} onclick={restoreFile}><Upload size={14} /> {t('backup.restoreFile')}</button>
   {#if busy}<span class="status">{busy}</span>{/if}
 </div>
 
-<h4>Снимки</h4>
+<h4>{t('backup.snapshots')}</h4>
 {#if list.length}
   <ul class="list">
     {#each list as b (b.id)}
@@ -143,22 +132,22 @@
       <li class:other={!here}>
         <div class="row">
           <span class="when">{when(b.created)}</span>
-          <span class="faint">{REASONS[b.reason]} · {b.files} файл. · {size(b.bytes)}{here ? '' : ` · ${b.vaultName || 'без хранилища'}`}</span>
+          <span class="faint">{reason(b.reason)} · {t('backup.filesN', { count: b.files })} · {size(b.bytes)}{here ? '' : ` · ${b.vaultName || t('backup.noVault')}`}</span>
           <div class="spacer"></div>
-          <button class="btn small" onclick={() => (open = open === b.id ? null : b.id)}><ArchiveRestore size={13} /> Восстановить…</button>
+          <button class="btn small" onclick={() => (open = open === b.id ? null : b.id)}><ArchiveRestore size={13} /> {t('backup.restore')}</button>
         </div>
         {#if open === b.id}
           <div class="restore">
-            <label><input type="checkbox" bind:checked={parts.vault} disabled={!here} /> Данные хранилища{here ? '' : ' (снимок другого хранилища)'}</label>
-            <label><input type="checkbox" bind:checked={parts.library} /> Библиотека</label>
-            <button class="btn primary small" disabled={!(parts.vault && here) && !parts.library} onclick={() => restore(b)}>Восстановить</button>
+            <label><input type="checkbox" bind:checked={parts.vault} disabled={!here} /> {t('backup.vaultData')}{here ? '' : t('backup.otherVault')}</label>
+            <label><input type="checkbox" bind:checked={parts.library} /> {t('backup.library')}</label>
+            <button class="btn primary small" disabled={!(parts.vault && here) && !parts.library} onclick={() => restore(b)}>{t('backup.doRestore')}</button>
           </div>
         {/if}
       </li>
     {/each}
   </ul>
 {:else}
-  <p class="faint">Снимков пока нет.</p>
+  <p class="faint">{t('backup.none')}</p>
 {/if}
 
 <style>

@@ -1,6 +1,7 @@
 <!-- Над боковой панелью: текущее приключение, выбор другого и создание нового; экспорт и импорт приключения
      одним файлом (.sgpack). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Check, ChevronsUpDown, Download, Map, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
   import { currentSystem, roleFolderHere, shownAdventures, visibleIn } from '../../../shared/adventures';
   import SystemSelect from './SystemSelect.svelte';
@@ -21,7 +22,7 @@
   // Приключения отключённых систем скрыты (настройки «Приключения» → «Ролевые системы»).
   const list = $derived(shownAdventures(ms));
   const hidden = $derived(ms.list.length - list.length);
-  const title = $derived(ms.current ?? (list.length ? 'Всё хранилище' : app.vault.name));
+  const title = $derived(ms.current ?? (list.length ? t('adv.allVault') : app.vault.name));
 
   function select(path: string | null) {
     dispatch('adventures', 'select', { path });
@@ -39,12 +40,12 @@
   async function exportCurrent() {
     if (!ms.current) return;
     open = false;
-    busy = `Экспорт «${ms.current}»…`;
+    busy = t('adv.exporting', { name: ms.current ?? '' });
     try {
       const file = await window.api.exportAdventure(ms.current);
-      if (file) flash('Приключение сохранено в файл.');
+      if (file) flash(t('adv.exported'));
     } catch (e) {
-      flash(`Не удалось: ${String(e)}`);
+      flash(t('adv.failed', { error: String(e) }));
     } finally {
       busy = '';
     }
@@ -74,18 +75,18 @@
       }
       await runImport(p.file, p.name);
     } catch (e) {
-      flash(`Не удалось: ${String(e)}`);
+      flash(t('adv.failed', { error: String(e) }));
     }
   }
 
   async function runImport(file: string, name: string) {
     asking = null;
-    busy = 'Импорт приключения…';
+    busy = t('adv.importing');
     try {
       const r = await window.api.importAdventure(file, name);
-      if (r) flash(`Импортировано «${r.name}»: сцен ${r.scenes}, заготовок боёв ${r.encounters}${r.cards ? `, общих карточек ${r.cards}` : ''}.`);
+      if (r) flash(t('adv.imported', { name: r.name, scenes: r.scenes, encounters: r.encounters, cards: r.cards ? t('adv.importedCards', { count: r.cards }) : '' }));
     } catch (e) {
-      flash(`Не удалось: ${String(e)}`);
+      flash(t('adv.failed', { error: String(e) }));
     } finally {
       busy = '';
     }
@@ -95,7 +96,7 @@
     if (!ms.current) return;
     const name = ms.current;
     open = false;
-    if (await window.api.deleteAdventure(name)) flash(`Приключение «${name}» удалено. Вернуть — «Файлы» → «Корзина».`);
+    if (await window.api.deleteAdventure(name)) flash(t('adv.deleted', { name }));
   }
 
   // Персонажи игроков текущего приключения (или всего хранилища) — одним файлом карточек с портретами.
@@ -103,9 +104,9 @@
     open = false;
     await connectCards();
     const party = bestiary.all.filter((c) => c.kind === 'character' && c.ref.scope === 'vault' && c.folder !== undefined && visibleIn(ms, c.folder));
-    if (!party.length) return flash('Персонажей игроков здесь нет: их листы лежат в папках партии.');
-    const n = await window.api.exportCards({ refs: party.map((c) => $state.snapshot(c.ref)), name: `Партия — ${ms.current ?? app.vault.name}` });
-    if (n) flash(`Экспортировано персонажей: ${n}.`);
+    if (!party.length) return flash(t('adv.noParty'));
+    const n = await window.api.exportCards({ refs: party.map((c) => $state.snapshot(c.ref)), name: t('adv.partyFile', { name: ms.current ?? app.vault.name }) });
+    if (n) flash(t('adv.exportedChars', { count: n }));
   }
 
   // Карточки персонажей (файл экспорта или выгрузка Long Story Short) — в папку партии текущего приключения.
@@ -129,7 +130,7 @@
 </script>
 
 <div class="switcher">
-  <button class="current" title="Приключение: вкладки показывают его и общее содержимое хранилища" onclick={() => (open = !open)}>
+  <button class="current" title={t('adv.currentHint')} onclick={() => (open = !open)}>
     <Map size={14} />
     <span class="name">{title}</span>
     <ChevronsUpDown size={13} />
@@ -145,45 +146,45 @@
           {a}
         </button>
       {/each}
-      <button onclick={() => select(null)} title="Показывать содержимое всех приключений сразу">
+      <button onclick={() => select(null)} title={t('adv.allHint')}>
         <span class="mark">{#if ms.current === null}<Check size={13} />{/if}</span>
-        <span class="muted">Всё хранилище</span>
+        <span class="muted">{t('adv.allVault')}</span>
       </button>
-      {#if hidden}<p class="hint faint">Скрыто приключений: {hidden} — их система отключена в настройках.</p>{/if}
-      <label class="system" title={ms.current ? 'Ролевая система этого приключения: какие карточки, записи и инструменты показывать' : 'Ролевая система для всего хранилища и приключений без своей'}>
-        <span class="faint">Система</span>
+      {#if hidden}<p class="hint faint">{t('adv.hiddenN', { count: hidden })}</p>{/if}
+      <label class="system" title={ms.current ? t('adv.systemHintAdv') : t('adv.systemHintVault')}>
+        <span class="faint">{t('adv.system')}</span>
         <SystemSelect value={system} onchange={(v) => dispatch('adventures', 'setSystem', { path: ms.current, system: v })} />
       </label>
       <div class="sep"></div>
       {#if creating}
         <form class="create" onsubmit={(e) => (e.preventDefault(), create())}>
           <!-- svelte-ignore a11y_autofocus -->
-          <input type="text" placeholder="Название приключения" bind:value={name} autofocus />
-          <button class="btn primary" type="submit" disabled={!name.trim()}>Создать</button>
+          <input type="text" placeholder={t('adv.namePlaceholder')} bind:value={name} autofocus />
+          <button class="btn primary" type="submit" disabled={!name.trim()}>{t('adv.create')}</button>
         </form>
-        <label class="system"><span class="faint">Система</span><SystemSelect value={newSystem || system} onchange={(v) => (newSystem = v)} /></label>
-        <p class="hint faint">Появится папка с подпапками characters, monsters, backgrounds, maps, music.</p>
+        <label class="system"><span class="faint">{t('adv.system')}</span><SystemSelect value={newSystem || system} onchange={(v) => (newSystem = v)} /></label>
+        <p class="hint faint">{t('adv.foldersHint')}</p>
       {:else}
-        <button onclick={() => (creating = true)}><span class="mark"><Plus size={13} /></span> Создать приключение…</button>
+        <button onclick={() => (creating = true)}><span class="mark"><Plus size={13} /></span> {t('adv.createAdventure')}</button>
       {/if}
-      <p class="hint faint">Сделать приключением существующую папку можно во вкладке «Файлы».</p>
+      <p class="hint faint">{t('adv.markHint')}</p>
       <div class="sep"></div>
       {#if ms.current}
-        <button onclick={exportCurrent} title="Папка приключения, его сцены, карты, заготовки боёв и нужные общие карточки — одним файлом">
-          <span class="mark"><Download size={13} /></span> Экспорт «{ms.current}»…
+        <button onclick={exportCurrent} title={t('adv.exportHint')}>
+          <span class="mark"><Download size={13} /></span> {t('adv.export', { name: ms.current ?? '' })}
         </button>
       {/if}
-      <button onclick={importPack} title="Добавить приключение из файла .sgpack"><span class="mark"><Upload size={13} /></span> Импорт приключения…</button>
+      <button onclick={importPack} title={t('adv.importHint')}><span class="mark"><Upload size={13} /></span> {t('adv.import')}</button>
       <div class="sep"></div>
       {#if ms.current}
-        <button class="danger" onclick={remove} title="Папка — в корзину, сцены и заготовки приключения — из приложения">
-          <span class="mark"><Trash2 size={13} /></span> Удалить «{ms.current}»…
+        <button class="danger" onclick={remove} title={t('adv.deleteHint')}>
+          <span class="mark"><Trash2 size={13} /></span> {t('adv.delete', { name: ms.current ?? '' })}
         </button>
       {/if}
       <div class="sep"></div>
-      <button onclick={exportParty} title="Листы персонажей игроков с портретами — одним файлом"><span class="mark"><UsersRound size={13} /></span> Экспорт партии…</button>
-      <button onclick={importParty} title="Файл карточек или выгрузка Long Story Short — в папку партии приключения">
-        <span class="mark"><UserRoundPlus size={13} /></span> Импорт персонажей…
+      <button onclick={exportParty} title={t('adv.exportPartyHint')}><span class="mark"><UsersRound size={13} /></span> {t('adv.exportParty')}</button>
+      <button onclick={importParty} title={t('adv.importPartyHint')}>
+        <span class="mark"><UserRoundPlus size={13} /></span> {t('adv.importParty')}
       </button>
     </div>
   {/if}
@@ -195,14 +196,14 @@
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="modal-back" onclick={(e) => e.target === e.currentTarget && (asking = null)}>
     <form class="modal" onsubmit={(e) => (e.preventDefault(), nameFree && newName.trim() && runImport(a.file, newName))}>
-      <h3>Приключение «{a.name}» уже есть</h3>
-      <p class="faint">Как назвать импортируемое? Это будет название его папки в хранилище.</p>
+      <h3>{t('adv.exists', { name: a.name })}</h3>
+      <p class="faint">{t('adv.renameAsk')}</p>
       <!-- svelte-ignore a11y_autofocus -->
       <input type="text" bind:value={newName} autofocus />
-      {#if !nameFree && newName.trim()}<p class="warn">Такое название уже занято.</p>{/if}
+      {#if !nameFree && newName.trim()}<p class="warn">{t('adv.taken')}</p>{/if}
       <div class="row">
-        <button class="btn" type="button" onclick={() => (asking = null)}>Отмена</button>
-        <button class="btn primary" type="submit" disabled={!nameFree || !newName.trim()}>Импортировать</button>
+        <button class="btn" type="button" onclick={() => (asking = null)}>{t('adv.cancel')}</button>
+        <button class="btn primary" type="submit" disabled={!nameFree || !newName.trim()}>{t('adv.doImport')}</button>
       </div>
     </form>
   </div>

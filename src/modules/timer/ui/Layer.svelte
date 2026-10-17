@@ -1,5 +1,6 @@
 <!-- Экран игроков: таймер — песочные часы или цифры, в углу или крупно по центру. Время вышло — вспыхивает. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { fade } from 'svelte/transition';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { clock, timeLeft } from '../types';
@@ -24,7 +25,7 @@
     {#if ms.style === 'hourglass'}
       <div class="glass"><Hourglass left={ms.duration ? left / ms.duration : 0} running={ms.endsAt !== null} /></div>
     {/if}
-    <div class="digits" class:big={ms.style === 'digits'}>{done ? 'Время вышло!' : clock(left)}</div>
+    <div class="digits" class:big={ms.style === 'digits'}>{done ? t('timer.timeUpBang') : clock(left)}</div>
   </div>
 {/if}
 

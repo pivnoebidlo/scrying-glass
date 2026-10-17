@@ -1,5 +1,6 @@
 <!-- Вкладка «Музыка»: треки выбранного плейлиста и атмосфера. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Pause, Play, Shuffle, Trash2, Volume2, Wind, X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -40,36 +41,36 @@
     <header class="head">
       <div class="info">
         <h2>{current.title}</h2>
-        <div class="faint">{tracks.length} треков · {current.path || app.vault.name}</div>
+        <div class="faint">{t('music.tracksIn', { count: tracks.length, where: current.path || app.vault.name })}</div>
       </div>
       <button class="btn primary" onclick={() => dispatch('music', 'playFolder', { folder: current.path })}>
-        <Play size={14} /> Играть
+        <Play size={14} /> {t('music.play')}
       </button>
-      <button class="btn" onclick={shufflePlay}><Shuffle size={14} /> Вперемешку</button>
+      <button class="btn" onclick={shufflePlay}><Shuffle size={14} /> {t('music.shufflePlay')}</button>
     </header>
 
     <ol class="tracks">
-      {#each tracks as t, i (t.path)}
-        {@const isNow = t.path === nowPlaying}
+      {#each tracks as tr, i (tr.path)}
+        {@const isNow = tr.path === nowPlaying}
         <li class:now={isNow}>
-          <button class="track" onclick={() => playTrack(t.path)}>
+          <button class="track" onclick={() => playTrack(tr.path)}>
             <span class="num faint">
               {#if isNow && ms.playing}<Volume2 size={13} />{:else}{i + 1}{/if}
             </span>
-            <span class="name">{trackName(t.path)}</span>
+            <span class="name">{trackName(tr.path)}</span>
             <span class="state">
               {#if isNow && ms.playing}<Pause size={13} />{:else}<Play size={13} />{/if}
             </span>
           </button>
           <button
             class="icon-btn"
-            class:active={ms.ambience.some((a) => a.path === t.path)}
-            title="Добавить в атмосферу (зациклить поверх музыки)"
-            onclick={() => dispatch('music', 'toggleAmbient', { path: t.path })}
+            class:active={ms.ambience.some((a) => a.path === tr.path)}
+            title={t('music.addToAmbience')}
+            onclick={() => dispatch('music', 'toggleAmbient', { path: tr.path })}
           >
             <Wind size={14} />
           </button>
-          <button class="icon-btn trash" title="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [t.path] })}>
+          <button class="icon-btn trash" title={t('music.toTrash')} onclick={() => dispatch('vault', 'trash', { paths: [tr.path] })}>
             <Trash2 size={14} />
           </button>
         </li>
@@ -77,22 +78,22 @@
     </ol>
   {:else}
     <div class="empty faint">
-      <p>В хранилище пока нет музыки.</p>
-      <p>Положите аудиофайлы в папку <RoleFolderNames role="music" /> — в приключении или главе.</p>
+      <p>{t('music.none')}</p>
+      <p>{t('music.putAudio')} <RoleFolderNames role="music" /> {t('music.inAdventure')}</p>
     </div>
   {/if}
 
   <section class="ambience">
     <header class="head">
       <div class="info">
-        <h3>Атмосфера</h3>
-        <div class="faint">Зацикленные звуки поверх музыки: дождь, таверна, бой. Добавляются кнопкой <Wind size={11} /> у трека.</div>
+        <h3>{t('music.ambience')}</h3>
+        <div class="faint">{t('music.ambienceAbout')} <Wind size={11} /></div>
       </div>
       {#if ms.ambience.length}
         <button class="btn" onclick={() => dispatch('music', 'toggleAmbience')}>
-          {#if ms.ambiencePlaying}<Pause size={14} /> Приглушить{:else}<Play size={14} /> Включить{/if}
+          {#if ms.ambiencePlaying}<Pause size={14} /> {t('music.mute')}{:else}<Play size={14} /> {t('music.turnOn')}{/if}
         </button>
-        <button class="btn" onclick={() => dispatch('music', 'clearAmbience')}>Очистить</button>
+        <button class="btn" onclick={() => dispatch('music', 'clearAmbience')}>{t('music.clear')}</button>
       {/if}
     </header>
     {#each ms.ambience as a (a.path)}
@@ -100,11 +101,11 @@
         <span class="name" title={a.path}>{trackName(a.path)}</span>
         <Slider
           value={live.ambient[a.path] ?? a.volume}
-          title="Громкость"
+          title={t('music.volumeShort')}
           oninput={(v) => (live.ambient[a.path] = v)}
           onchange={(v) => dispatch('music', 'setAmbientVolume', { path: a.path, value: v }).then(() => delete live.ambient[a.path])}
         />
-        <button class="icon-btn" title="Убрать" onclick={() => dispatch('music', 'toggleAmbient', { path: a.path })}><X size={14} /></button>
+        <button class="icon-btn" title={t('music.remove')} onclick={() => dispatch('music', 'toggleAmbient', { path: a.path })}><X size={14} /></button>
       </div>
     {/each}
   </section>
