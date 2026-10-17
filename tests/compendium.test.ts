@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { setLang } from '../src/shared/i18n';
+
+// Subtitles are checked in Russian (the built-in compendium is Russian).
+beforeAll(() => setLang('ru'));
+afterAll(() => setLang('en'));
 import { castingKind, entrySubtitle, keyFrom, NO_SPELL_FILTER, spellFilterOn, spellMatches, type SpellFilter, parseCustomTypes, parseEntry, serializeEntry, type BuiltinBook } from '../src/shared/compendium';
 
 describe('записи справочника', () => {

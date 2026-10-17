@@ -1,6 +1,7 @@
 <!-- Редактор записи справочника: название (= имя файла), тип, поля типа, текст; справа — как будет выглядеть.
      Сохраняется по кнопке или ⌘S. Если запись у игроков, там она тоже обновится. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Save } from '@lucide/svelte';
   import { untrack } from 'svelte';
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
@@ -41,7 +42,7 @@
 
   async function save() {
     const title = draft.title.trim();
-    if (!title) return void (error = 'Укажите название.');
+    if (!title) return void (error = t('cmpui.needTitle'));
     saving = true;
     error = '';
     try {
@@ -50,7 +51,7 @@
         // Первая правка встроенной: своя запись в библиотеке, заменяющая её.
         const entry = { ...snap, title, fields: { ...snap.fields, [OVERRIDES]: item.path.slice(BUILTIN.length) } };
         const path = await window.api.createEntry(entriesFolder(LIBRARY), title, serializeEntry(entry, def));
-        if (!path) throw new Error('файл не записан');
+        if (!path) throw new Error(t('cmpui.notWritten'));
         if (store.state.handouts.current === item.path) {
           await dispatch('handouts', 'move', { from: item.path, to: path });
           await dispatch('handouts', 'updateEntry', { path, entry: forPlayers(entry) });
@@ -59,7 +60,7 @@
         return;
       }
       let path = item.path;
-      if (!(await window.api.writeEntry(path, serializeEntry({ ...snap, title }, def)))) throw new Error('файл не записан');
+      if (!(await window.api.writeEntry(path, serializeEntry({ ...snap, title }, def)))) throw new Error(t('cmpui.notWritten'));
       if (title !== item.entry.title) {
         const next = await window.api.renameEntry(path, title);
         if (next) path = next;
@@ -68,7 +69,7 @@
       ui.open = path;
       ui.editing = false;
     } catch (e) {
-      error = `Не удалось сохранить: ${String(e)}`;
+      error = t('cmpui.saveFailed', { error: String(e) });
     } finally {
       saving = false;
     }
@@ -86,16 +87,16 @@
 
 <div class="editor">
   <header class="bar">
-    <input class="title" type="text" bind:value={draft.title} placeholder="Название" />
-    <select bind:value={draft.type} title="Тип записи">
-      {#each typesHere() as t (t.id)}<option value={t.id}>{t.def.title}</option>{/each}
-      {#if !typesHere().some((t) => t.id === draft.type)}<option value={draft.type}>{draft.type}</option>{/if}
+    <input class="title" type="text" bind:value={draft.title} placeholder={t('cmpui.title')} />
+    <select bind:value={draft.type} title={t('cmpui.typeHint')}>
+      {#each typesHere() as ty (ty.id)}<option value={ty.id}>{ty.def.title}</option>{/each}
+      {#if !typesHere().some((ty) => ty.id === draft.type)}<option value={draft.type}>{draft.type}</option>{/if}
     </select>
-    {#if builtin}<span class="faint note" title="Правка ляжет в библиотеку (для всех кампаний) и заменит встроенную запись. Вернуть как было — «Вернуть как в SRD».">Правка встроенной записи</span>{/if}
+    {#if builtin}<span class="faint note" title={t('cmpui.builtinEditHint')}>{t('cmpui.builtinEdit')}</span>{/if}
     {#if error}<span class="error">{error}</span>{/if}
     <div class="spacer"></div>
-    <button class="btn" onclick={() => (ui.editing = false)}>Отмена</button>
-    <button class="btn primary" disabled={saving} onclick={save} title="⌘S"><Save size={14} /> Сохранить</button>
+    <button class="btn" onclick={() => (ui.editing = false)}>{t('cmpui.cancel')}</button>
+    <button class="btn primary" disabled={saving} onclick={save} title="⌘S"><Save size={14} /> {t('cmpui.save')}</button>
   </header>
 
   <div class="columns">
@@ -126,8 +127,8 @@
         {/each}
       </div>
       <label class="field">
-        <span>Текст</span>
-        <textarea rows="16" bind:value={draft.body} placeholder={'Описание. **Жирный**, *курсив*, «- » — список, «## » — подзаголовок, таблицы «| a | b |», [[Другая запись]].'}></textarea>
+        <span>{t('cmpui.text')}</span>
+        <textarea rows="16" bind:value={draft.body} placeholder={t('cmpui.textPh')}></textarea>
       </label>
     </form>
     <div class="preview">

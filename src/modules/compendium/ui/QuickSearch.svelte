@@ -1,6 +1,7 @@
 <!-- Общий поиск ⌘K (Ctrl+K): записи справочника, карточки (монстры, NPC, персонажи) и заметки журнала из любой
      вкладки. Enter — в выдвижной панели (заметка — всегда во вкладке), ⌘Enter — во вкладке; стрелки — выбор, Esc — закрыть. -->
 <script lang="ts">
+  import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { BookOpen, NotebookPen, Search, Skull } from '@lucide/svelte';
   import { tick } from 'svelte';
   import { peekEntryAt } from '../../../renderer/lib/entry/peek.svelte';
@@ -111,8 +112,8 @@
     list?.querySelector('.active')?.scrollIntoView({ block: 'nearest' });
   }
 
-  const LANGS: Record<string, string> = { ru: '', en: 'англ.' };
-  const cardWhere = (c: CardSummary) => [c.ref.scope === 'srd' ? (c.system === 'dnd5e-2014' ? 'SRD 5.1' : 'SRD 5.2.1') : c.ref.scope === 'library' ? 'Библиотека' : c.folder ?? 'Хранилище', LANGS[c.lang] ?? c.lang].filter(Boolean).join(', ');
+  const langNote = (l: string) => (l === locale.lang ? '' : l === 'en' ? t('cmpui.english') : l);
+  const cardWhere = (c: CardSummary) => [c.ref.scope === 'srd' ? (c.system === 'dnd5e-2014' ? 'SRD 5.1' : 'SRD 5.2.1') : c.ref.scope === 'library' ? t('cmpui.library') : c.folder ?? t('cmpui.vault'), langNote(c.lang)].filter(Boolean).join(', ');
 </script>
 
 <svelte:window onkeydown={onwindowkey} />
@@ -124,7 +125,7 @@
     <div class="palette" onclick={(e) => e.stopPropagation()}>
       <label class="field">
         <Search size={16} />
-        <input bind:this={input} bind:value={query} {onkeydown} placeholder="Заклинание, предмет, монстр, NPC, заметка…" />
+        <input bind:this={input} bind:value={query} {onkeydown} placeholder={t('cmpui.searchPh')} />
       </label>
       {#if hits.length}
         <ul bind:this={list}>
@@ -134,7 +135,7 @@
                 {#if h.kind === 'page'}
                   <NotebookPen size={14} />
                   <span class="t">{h.p.title}</span>
-                  <span class="s">Журнал · {preview(h.p)}</span>
+                  <span class="s">{t('cmpui.journal', { text: preview(h.p) })}</span>
                 {:else if h.kind === 'entry'}
                   <BookOpen size={14} />
                   <span class="t">{h.e.entry.title}</span>
@@ -149,9 +150,9 @@
           {/each}
         </ul>
       {:else if query.trim()}
-        <p class="faint hint">Ничего не нашлось.</p>
+        <p class="faint hint">{t('cmpui.nothing')}</p>
       {/if}
-      <p class="faint hint">Enter — открыть сбоку, ⌘Enter — во вкладке, Esc — закрыть</p>
+      <p class="faint hint">{t('cmpui.searchHint')}</p>
     </div>
   </div>
 {/if}

@@ -1,5 +1,6 @@
 // Записи справочника в окне управления: из папок справочника хранилища (приключение и общее) и из библиотеки (для
 // всех кампаний). Тексты читаются через ядро и перечитываются, когда файлы изменились (здесь или снаружи).
+import { t } from '../../../renderer/lib/i18n.svelte';
 import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
 import { store } from '../../../renderer/lib/store.svelte';
 import { currentSystem, placeOrder, placeTitle, roleFolderHere, visibleIn } from '../../../shared/adventures';
@@ -19,7 +20,7 @@ export interface EntryItem {
   en?: string;
 }
 
-export const LIBRARY_GROUP = 'Библиотека';
+export const libraryGroup = () => t('cmpui.library');
 export const isLibraryEntry = (path: string) => path.startsWith(LIBRARY);
 export const isBuiltinEntry = (path: string) => path.startsWith(BUILTIN);
 
@@ -30,8 +31,12 @@ export type Edition = 'dnd5e-2024' | 'dnd5e-2014' | 'all' | 'none';
 export const EDITIONS: { id: Edition; title: string }[] = [
   { id: 'dnd5e-2024', title: 'SRD 5.2.1 (2024)' },
   { id: 'dnd5e-2014', title: 'SRD 5.1 (2014)' },
-  { id: 'all', title: 'Обе редакции SRD' },
-  { id: 'none', title: 'Без SRD — только свои' },
+  { id: 'all', get title() {
+    return t('cmpui.bothEditions');
+  } },
+  { id: 'none', get title() {
+    return t('cmpui.noSrd');
+  } },
 ];
 const EDITION_KEY = 'compendium.edition';
 function savedEdition(): Edition {
@@ -72,7 +77,7 @@ async function loadBuiltin() {
       path: `${BUILTIN}${b.system}/${e.type}/${e.title}`,
       group: b.source.title,
       order: 3,
-      entry: { ...e, fields: { ...e.fields, source: `${b.source.title}, перевод ${b.source.translator ?? 'OmnisGM'}` } },
+      entry: { ...e, fields: { ...e.fields, source: t('cmpui.translatedBy', { source: b.source.title, by: b.source.translator ?? 'OmnisGM' }) } },
       en,
     }))
   );
@@ -92,7 +97,7 @@ export async function loadEntries() {
   if (libraryFor !== book.rev) {
     libraryFor = book.rev;
     const list = await window.api.listLibraryEntries();
-    book.library = list.map((f) => ({ path: f.path, group: LIBRARY_GROUP, order: 2, entry: parseEntry(f.text, entryTitle(f.path)) }));
+    book.library = list.map((f) => ({ path: f.path, group: libraryGroup(), order: 2, entry: parseEntry(f.text, entryTitle(f.path)) }));
   }
   const app = store.state;
   const tree = app.vault.tree;
@@ -148,7 +153,7 @@ function ownShown(list: EntryItem[]): EntryItem[] {
     if (!over) return [e];
     if (!editionShown(over)) return [];
     const orig = book.builtin.find((b) => b.path === over);
-    return [{ ...e, en: e.en ?? orig?.en, group: `${e.group} · правка ${orig?.group ?? 'SRD'}`, order: 3 }];
+    return [{ ...e, en: e.en ?? orig?.en, group: t('cmpui.editOf', { group: e.group, orig: orig?.group ?? 'SRD' }), order: 3 }];
   });
 }
 const builtinShown = () => {

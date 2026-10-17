@@ -1,5 +1,6 @@
 <!-- Боковая панель справочника: поиск, тип записей, список; «+» — новая запись (какого типа и где). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Plus, Search, Shapes } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
@@ -51,8 +52,8 @@
   let place = $state<string | null>(null);
   const places = $derived([
     ...(app.adventures.current ? [{ id: app.adventures.current as string | null, title: app.adventures.current }] : []),
-    { id: null, title: 'Общее (вне приключений)' },
-    { id: LIBRARY as string | null, title: 'Библиотека — для всех кампаний' },
+    { id: null, title: t('cmpui.shared') },
+    { id: LIBRARY as string | null, title: t('cmpui.libraryAll') },
   ]);
 
   function startCreate() {
@@ -63,7 +64,7 @@
 
   async function create() {
     const def = typeDef(newType);
-    const path = await window.api.createEntry(entriesFolder(place), `Новая запись (${def.title.toLowerCase()})`, serializeEntry(blankEntry(newType), def));
+    const path = await window.api.createEntry(entriesFolder(place), t('cmpui.newEntryName', { type: def.title.toLowerCase() }), serializeEntry(blankEntry(newType), def));
     creating = false;
     if (!path) return;
     openEntry(path);
@@ -75,44 +76,44 @@
   <div class="top">
     <label class="search">
       <Search size={14} />
-      <input type="text" placeholder="Поиск: название, метки, текст" bind:value={ui.query} />
+      <input type="text" placeholder={t('cmpui.searchSide')} bind:value={ui.query} />
     </label>
-    <button class="icon-btn" title="Новая запись" onclick={startCreate}><Plus size={16} /></button>
-    <button class="icon-btn" class:on={ui.page === 'types'} title="Типы записей: свои типы и их поля" onclick={() => (ui.page = ui.page === 'types' ? 'entry' : 'types')}><Shapes size={15} /></button>
+    <button class="icon-btn" title={t('cmpui.newEntry')} onclick={startCreate}><Plus size={16} /></button>
+    <button class="icon-btn" class:on={ui.page === 'types'} title={t('cmpui.typesHint')} onclick={() => (ui.page = ui.page === 'types' ? 'entry' : 'types')}><Shapes size={15} /></button>
   </div>
 
   {#if creating}
     <div class="create">
-      <label>Тип
-        <select bind:value={newType}>{#each typesHere() as t (t.id)}<option value={t.id}>{t.def.title}</option>{/each}</select>
+      <label>{t('cmpui.typeLabel')}
+        <select bind:value={newType}>{#each typesHere() as ty (ty.id)}<option value={ty.id}>{ty.def.title}</option>{/each}</select>
       </label>
-      <label>Где
+      <label>{t('cmpui.where')}
         <select bind:value={place}>{#each places as p (p.id ?? '')}<option value={p.id}>{p.title}</option>{/each}</select>
       </label>
-      <button class="btn primary" onclick={create}>Создать</button>
+      <button class="btn primary" onclick={create}>{t('cmpui.create')}</button>
     </div>
   {/if}
 
   {#if srdHere()}
-    <select class="edition" title="Встроенные записи (SRD в переводе OmnisGM)" value={edition} onchange={(e) => setEdition(e.currentTarget.value as Edition)}>
+    <select class="edition" title={t('cmpui.editionHint')} value={edition} onchange={(e) => setEdition(e.currentTarget.value as Edition)}>
       {#each editions as ed (ed.id)}<option value={ed.id}>{ed.title}</option>{/each}
     </select>
   {/if}
 
   <div class="types">
-    <button class:active={ui.type === 'all'} onclick={() => (ui.type = 'all')}>Все <span>{all.length}</span></button>
-    {#each types as t (t.id)}
-      <button class:active={ui.type === t.id} onclick={() => (ui.type = t.id)}>{t.title} <span>{t.n || ''}</span></button>
+    <button class:active={ui.type === 'all'} onclick={() => (ui.type = 'all')}>{t('cmpui.all')} <span>{all.length}</span></button>
+    {#each types as ty (ty.id)}
+      <button class:active={ui.type === ty.id} onclick={() => (ui.type = ty.id)}>{ty.title} <span>{ty.n || ''}</span></button>
     {/each}
   </div>
 
   {#if ui.type === 'spell'}<SpellFilters spells={spellsHere.map((e) => e.entry.fields)} />{/if}
 
-  <div class="count faint">{shown.length} из {ui.type === 'spell' ? spellsHere.length : all.length}</div>
+  <div class="count faint">{t('cmpui.countOf', { n: shown.length, total: ui.type === 'spell' ? spellsHere.length : all.length })}</div>
   <ul class="list">
     {#each shown.slice(0, 500) as e, i (e.path)}
       {#if headed && (i === 0 || levelOf(shown[i - 1]!) !== levelOf(e))}
-        <li class="level">{levelOf(e) === 99 ? 'Без уровня' : levelTitle(levelOf(e))}</li>
+        <li class="level">{levelOf(e) === 99 ? t('cmpui.noLevel') : levelTitle(levelOf(e))}</li>
       {/if}
       <li>
         <button data-nav class:active={ui.open === e.path} title={e.path} onclick={() => openEntry(e.path)}>
@@ -123,7 +124,7 @@
     {/each}
   </ul>
   {#if !all.length && book.loaded}
-    <p class="faint empty">Записей пока нет. «+» — новая запись: заклинание, предмет, черта, правило или заметка.</p>
+    <p class="faint empty">{t('cmpui.none')}</p>
   {/if}
 </div>
 

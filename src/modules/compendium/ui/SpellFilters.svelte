@@ -2,8 +2,9 @@
      ритуал. Внутри признака — любое из отмеченного, между признаками — всё сразу. Классы и школы — те, что есть
      среди заклинаний. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronDown, ChevronRight } from '@lucide/svelte';
-  import { CASTING_KINDS, NO_SPELL_FILTER, spellFilterOn, type CastingKind, type FieldValue } from '../../../shared/compendium';
+  import { CASTING_KINDS, castingTitle, levelTitle, NO_SPELL_FILTER, spellFilterOn, type CastingKind, type FieldValue } from '../../../shared/compendium';
   import { ui } from './ui.svelte';
 
   let { spells }: { spells: Record<string, FieldValue>[] } = $props();
@@ -20,59 +21,59 @@
     return list.includes(v) ? list.filter((x) => x !== v) : [...list, v];
   }
   const cycle = (v: 'any' | 'yes' | 'no') => (v === 'any' ? 'yes' : v === 'yes' ? 'no' : 'any');
-  const triTitle = { any: 'не важно', yes: 'да', no: 'нет' };
+  const triTitle = (v: 'any' | 'yes' | 'no') => t(`cmpui.${v}`);
 </script>
 
 <div class="filters">
   <div class="head">
     <button class="toggle" onclick={() => (ui.spellsOpen = !ui.spellsOpen)}>
       {#if ui.spellsOpen}<ChevronDown size={13} />{:else}<ChevronRight size={13} />{/if}
-      Фильтр{#if count}<span class="n">{count}</span>{/if}
+      {t('cmpui.filter')}{#if count}<span class="n">{count}</span>{/if}
     </button>
     <div class="spacer"></div>
-    {#if on}<button class="reset" onclick={() => (ui.spells = structuredClone(NO_SPELL_FILTER))}>Сбросить</button>{/if}
+    {#if on}<button class="reset" onclick={() => (ui.spells = structuredClone(NO_SPELL_FILTER))}>{t('cmpui.reset')}</button>{/if}
   </div>
   <div class="chips">
-    <button class:on={ui.byLevel} onclick={() => (ui.byLevel = true)}>По уровням</button>
-    <button class:on={!ui.byLevel} onclick={() => (ui.byLevel = false)}>По алфавиту</button>
+    <button class:on={ui.byLevel} onclick={() => (ui.byLevel = true)}>{t('cmpui.byLevel')}</button>
+    <button class:on={!ui.byLevel} onclick={() => (ui.byLevel = false)}>{t('cmpui.alpha')}</button>
   </div>
 
   {#if ui.spellsOpen}
     <div class="group">
-      <span class="label">Уровень</span>
+      <span class="label">{t('cmpui.level')}</span>
       <div class="chips">
         {#each [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as l (l)}
-          <button class:on={f.levels.includes(l)} title={l === 0 ? 'Заговоры' : `${l} уровень`} onclick={() => (ui.spells.levels = toggle(f.levels, l))}>{l === 0 ? 'Загов.' : l}</button>
+          <button class:on={f.levels.includes(l)} title={levelTitle(l)} onclick={() => (ui.spells.levels = toggle(f.levels, l))}>{l === 0 ? t('cmpui.cantripsShort') : l}</button>
         {/each}
       </div>
     </div>
     <div class="group">
-      <span class="label">Класс</span>
+      <span class="label">{t('cmpui.class')}</span>
       <div class="chips">
         {#each classes as c (c)}<button class:on={f.classes.includes(c)} onclick={() => (ui.spells.classes = toggle(f.classes, c))}>{c}</button>{/each}
       </div>
     </div>
     <div class="group">
-      <span class="label">Школа</span>
+      <span class="label">{t('cmpui.school')}</span>
       <div class="chips">
         {#each schools as s (s)}<button class:on={f.schools.includes(s)} onclick={() => (ui.spells.schools = toggle(f.schools, s))}>{s}</button>{/each}
       </div>
     </div>
     <div class="group">
-      <span class="label">Время</span>
+      <span class="label">{t('cmpui.time')}</span>
       <div class="chips">
-        {#each Object.entries(CASTING_KINDS) as [k, title] (k)}
-          <button class:on={f.times.includes(k as CastingKind)} onclick={() => (ui.spells.times = toggle(f.times, k as CastingKind))}>{title}</button>
+        {#each CASTING_KINDS as k (k)}
+          <button class:on={f.times.includes(k)} onclick={() => (ui.spells.times = toggle(f.times, k))}>{castingTitle(k)}</button>
         {/each}
       </div>
     </div>
     <div class="group">
       <div class="chips">
-        <button class:on={f.concentration !== 'any'} class:no={f.concentration === 'no'} title="Щелчок: да → нет → не важно" onclick={() => (ui.spells.concentration = cycle(f.concentration))}
-          >Концентрация: {triTitle[f.concentration]}</button
+        <button class:on={f.concentration !== 'any'} class:no={f.concentration === 'no'} title={t('cmpui.cycleHint')} onclick={() => (ui.spells.concentration = cycle(f.concentration))}
+          >{t('cmpui.concentration', { v: triTitle(f.concentration) })}</button
         >
-        <button class:on={f.ritual !== 'any'} class:no={f.ritual === 'no'} title="Щелчок: да → нет → не важно" onclick={() => (ui.spells.ritual = cycle(f.ritual))}
-          >Ритуал: {triTitle[f.ritual]}</button
+        <button class:on={f.ritual !== 'any'} class:no={f.ritual === 'no'} title={t('cmpui.cycleHint')} onclick={() => (ui.spells.ritual = cycle(f.ritual))}
+          >{t('cmpui.ritual', { v: triTitle(f.ritual) })}</button
         >
       </div>
     </div>

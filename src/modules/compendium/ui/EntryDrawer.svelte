@@ -2,6 +2,7 @@
      листах). Рисует выдвижную панель записи поверх любой вкладки, у правой панели (как панель карточки): её открывают
      заклинание в статблоке, состояние в трекере, ⌘K. Одновременно открыта одна из двух панелей. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { fly } from 'svelte/transition';
   import { BookOpen, ChevronLeft, Eye, EyeOff, X } from '@lucide/svelte';
   import type { CardRef } from '../../../shared/cards';
@@ -43,7 +44,7 @@
     if (e && e !== lastEntry) {
       if (c) {
         const ref = { scope: c.scope, id: c.id };
-        returnCard = { ref, name: bestiary.all.find((x) => x.ref.scope === ref.scope && x.ref.id === ref.id)?.name ?? 'Карточка' };
+        returnCard = { ref, name: bestiary.all.find((x) => x.ref.scope === ref.scope && x.ref.id === ref.id)?.name ?? t('cmpui.card') };
         bestiary.peeked = null;
       } else if (!lastEntry) returnCard = null;
     } else if (c && c !== lastCard) {
@@ -83,30 +84,30 @@
 <QuickSearch />
 
 {#if entryPeek.names}
-  <aside class="drawer" transition:fly={{ x: 40, duration: 180 }} aria-label="Запись справочника">
+  <aside class="drawer" transition:fly={{ x: 40, duration: 180 }} aria-label={t('cmpui.drawer')}>
     <header>
       {#if returnCard}
         {@const back = returnCard}
-        <button class="btn" title="Вернуться к карточке" onclick={() => (bestiary.peeked = back.ref)}><ChevronLeft size={14} /> {back.name}</button>
+        <button class="btn" title={t('cmpui.backToCard')} onclick={() => (bestiary.peeked = back.ref)}><ChevronLeft size={14} /> {back.name}</button>
       {/if}
       {#if item}
         {@const it = item}
-        <button class="btn" title="Открыть во вкладке «Справочник»" onclick={() => (openEntry(it.path), closeEntryPeek())}><BookOpen size={14} /> Во вкладке</button>
+        <button class="btn" title={t('cmpui.inTabHint')} onclick={() => (openEntry(it.path), closeEntryPeek())}><BookOpen size={14} /> {t('cmpui.inTab')}</button>
         <button class="btn" onclick={() => dispatch('handouts', 'toggleEntry', { path: it.path, entry: forPlayers($state.snapshot(it.entry) as Entry) })}>
-          {#if shown}<EyeOff size={14} /> Убрать у игроков{:else}<Eye size={14} /> Показать игрокам{/if}
+          {#if shown}<EyeOff size={14} /> {t('cmpui.removeFromPlayers')}{:else}<Eye size={14} /> {t('cmpui.showToPlayers')}{/if}
         </button>
         <span class="faint where">{it.en ? `${it.group} · ${it.en}` : it.group}</span>
       {/if}
       <div class="spacer"></div>
-      <button class="icon-btn" title="Закрыть (Esc)" onclick={closeEntryPeek}><X size={16} /></button>
+      <button class="icon-btn" title={t('cmpui.closeEsc')} onclick={closeEntryPeek}><X size={16} /></button>
     </header>
     <div class="body">
       {#if item}
         <EntryCard entry={item.entry} onlink={follow} />
       {:else if !book.builtin.length}
-        <p class="faint">Загрузка…</p>
+        <p class="faint">{t('cmpui.loading')}</p>
       {:else}
-        <p class="faint">«{entryPeek.names[0]}» в справочнике нет.</p>
+        <p class="faint">{t('cmpui.notFound', { name: entryPeek.names[0] ?? '' })}</p>
       {/if}
     </div>
   </aside>

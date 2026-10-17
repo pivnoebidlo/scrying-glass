@@ -1,6 +1,7 @@
 <!-- Вкладка «Справочник»: открытая запись (ссылки внутри ведут к другим записям или карточкам) или её редактор;
      ничего не открыто — подсказка. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronLeft, ExternalLink, Eye, EyeOff, Pencil, RotateCcw, Trash2 } from '@lucide/svelte';
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
   import { forPlayers, typeDef } from '../../../renderer/lib/entry/types.svelte';
@@ -49,7 +50,7 @@
     await connectCards();
     const card = bestiary.all.find((c) => c.name.toLowerCase() === name.trim().toLowerCase());
     if (card) return bestiary.show(card.ref);
-    flash(`«${name}» в справочнике нет.`);
+    flash(t('cmpui.notInCompendium', { name }));
   }
 
   function back() {
@@ -66,7 +67,7 @@
     const { [OVERRIDES]: _, ...fields } = entry.fields;
     const path = await window.api.createEntry(entriesFolder(place), item.entry.title, serializeEntry({ ...entry, fields }, typeDef(entry.type)));
     if (path && builtin) openEntry(path);
-    else if (path) flash('Копия сделана.');
+    else if (path) flash(t('cmpui.copied'));
   }
 
   async function trash() {
@@ -88,21 +89,21 @@
 {:else if item}
   <div class="view">
     <header class="bar">
-      <button class="icon-btn" title="Назад" disabled={!ui.back.length} onclick={back}><ChevronLeft size={16} /></button>
-      <span class="faint where" title={builtin ? 'Встроенная запись. «Править» сохранит правку в библиотеку, она заменит встроенную' : item.path}>{item.en ? `${item.group} · ${item.en}` : item.group}</span>
+      <button class="icon-btn" title={t('cmpui.back')} disabled={!ui.back.length} onclick={back}><ChevronLeft size={16} /></button>
+      <span class="faint where" title={builtin ? t('cmpui.builtinHint') : item.path}>{item.en ? `${item.group} · ${item.en}` : item.group}</span>
       {#if status}<span class="status">{status}</span>{/if}
       <div class="spacer"></div>
       <button class="btn" class:primary={!shown} onclick={() => dispatch('handouts', 'toggleEntry', { path: item.path, entry: forPlayers($state.snapshot(item.entry) as Entry) })}>
-        {#if shown}<EyeOff size={14} /> Убрать у игроков{:else}<Eye size={14} /> Показать игрокам{/if}
+        {#if shown}<EyeOff size={14} /> {t('cmpui.removeFromPlayers')}{:else}<Eye size={14} /> {t('cmpui.showToPlayers')}{/if}
       </button>
-      <button class="btn" onclick={() => (ui.editing = true)}><Pencil size={14} /> Править</button>
-      <CopyToMenu title="Скопировать в приключение, в общее или в библиотеку — отдельной записью" library onpick={copyTo} />
+      <button class="btn" onclick={() => (ui.editing = true)}><Pencil size={14} /> {t('cmpui.edit')}</button>
+      <CopyToMenu title={t('cmpui.copyTo')} library onpick={copyTo} />
       {#if !builtin}
-        <button class="icon-btn" title="Открыть файл в другой программе (например, в Obsidian)" onclick={() => window.api.openFile(item.path)}><ExternalLink size={15} /></button>
+        <button class="icon-btn" title={t('cmpui.openExternal')} onclick={() => window.api.openFile(item.path)}><ExternalLink size={15} /></button>
         {#if replaces}
-          <button class="btn" title="Удалить правку (файл — в корзину) и показывать встроенную запись, как в SRD" onclick={trash}><RotateCcw size={14} /> Вернуть как в SRD</button>
+          <button class="btn" title={t('cmpui.revertHint')} onclick={trash}><RotateCcw size={14} /> {t('cmpui.revertSrd')}</button>
         {:else}
-          <button class="icon-btn" title="Удалить запись в корзину" onclick={trash}><Trash2 size={15} /></button>
+          <button class="icon-btn" title={t('cmpui.toTrash')} onclick={trash}><Trash2 size={15} /></button>
         {/if}
       {/if}
     </header>
@@ -112,27 +113,20 @@
   </div>
 {:else}
   <div class="empty">
-    <h2>Справочник</h2>
+    <h2>{t('module.compendium')}</h2>
     <p class="faint">
-      Заклинания, предметы, черты, состояния, правила и заметки — всё, что нужно найти прямо на игре. Запись — обычный
-      Markdown-файл: в папке <RoleFolderNames role="compendium" /> приключения, в общей папке хранилища или в
-      библиотеке (для всех кампаний). Её удобно править и в Obsidian; поля — в «свойствах» в начале файла.
+      {t('cmpui.about1')} <RoleFolderNames role="compendium" /> {t('cmpui.about2')}
     </p>
     <p class="faint">
-      В тексте [[Название записи]] — ссылка на другую запись (или на карточку монстра). «Показать игрокам» выводит
-      запись на экран игроков, как раздатку. «+» в списке слева — новая запись.
+      {t('cmpui.about3')}
     </p>
     {#if hereFamily() === 'fate'}
       <p class="faint">
-        Встроенные правила и навыки — пересказ Fate Core SRD (Evil Hat Productions, CC BY 3.0) на русском, сделанный для
-        приложения. Встроенную запись можно править: правка ляжет в библиотеку и заменит её, «Вернуть как в SRD» —
-        убрать правку.
+        {t('cmpui.aboutFate')}
       </p>
     {:else}
       <p class="faint">
-        Встроенные заклинания, магические предметы, черты, состояния и правила — из SRD 5.1 и SRD 5.2.1 (Wizards of the
-        Coast, CC BY 4.0) в переводе OmnisGM (rules.omnisgm.com, CC BY 4.0). Редакция выбирается над списком. Встроенную
-        запись можно править: правка ляжет в библиотеку и заменит её, «Вернуть как в SRD» — убрать правку.
+        {t('cmpui.aboutDnd')}
       </p>
     {/if}
   </div>

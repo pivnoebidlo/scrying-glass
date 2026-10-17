@@ -14,6 +14,7 @@
 //
 // Только типы, подписи и чистые функции: используются ядром и окнами.
 import { familyOf } from '../systems';
+import { t, type Key } from './i18n';
 
 export type FieldValue = string | number | boolean | string[];
 
@@ -40,59 +41,82 @@ export interface TypeDef {
 const SCHOOLS = ['Ограждение', 'Вызов', 'Прорицание', 'Очарование', 'Воплощение', 'Иллюзия', 'Некромантия', 'Преобразование'];
 const RARITIES = ['Обычный', 'Необычный', 'Редкий', 'Очень редкий', 'Легендарный', 'Артефакт'];
 
+// Field titles and hints come from the dictionary (cmp.field.<type>.<key>, cmp.hint.<type>.<key>): getters, so they
+// follow the interface language. Option values of select fields are data written into entry files — not translated.
+const field = (type: string, key: string, kind: FieldDef['kind'], extra: { options?: string[]; hint?: boolean } = {}): FieldDef => ({
+  key,
+  kind,
+  ...(extra.options ? { options: extra.options } : {}),
+  get title() {
+    return t(`cmp.field.${type}.${key}` as Key);
+  },
+  get hint() {
+    return extra.hint ? t(`cmp.hint.${type}.${key}` as Key) : undefined;
+  },
+});
+
+// A built-in type: title and plural from the dictionary (cmp.type.<id>, cmp.plural.<id>).
+const type = (id: string, fields: FieldDef[], family?: string): TypeDef => ({
+  get title() {
+    return t(`cmp.type.${id}` as Key);
+  },
+  get plural() {
+    return t(`cmp.plural.${id}` as Key);
+  },
+  fields,
+  ...(family ? { family } : {}),
+});
+
 // Поля, которые есть у любой записи.
 export const COMMON_FIELDS: FieldDef[] = [
   // Как в Obsidian: запись находится и по ним — поиском, [[ссылкой]], в статблоке и листе («Чудотворство» = «Тауматургия»).
-  { key: 'aliases', title: 'Другие названия', kind: 'list', hint: 'через запятую: другой перевод, сокращение' },
-  { key: 'tags', title: 'Метки', kind: 'list', hint: 'через запятую' },
-  { key: 'source', title: 'Источник', kind: 'text', hint: 'SRD 5.2, «Книга игрока», свои правила…' },
+  field('common', 'aliases', 'list', { hint: true }),
+  field('common', 'tags', 'list', { hint: true }),
+  field('common', 'source', 'text', { hint: true }),
 ];
 
 // Типы записей: D&D 5e и общие («Заметка»). Тип, которого здесь нет (из другой системы или придуманный в
 // Obsidian), всё равно показывается — поля как «поле — значение».
 export const TYPES: Record<string, TypeDef> = {
-  spell: {
-    title: 'Заклинание',
-    plural: 'Заклинания',
-    fields: [
-      { key: 'level', title: 'Уровень', kind: 'number', hint: '0 — заговор' },
-      { key: 'school', title: 'Школа', kind: 'select', options: SCHOOLS },
-      { key: 'casting_time', title: 'Время накладывания', kind: 'text' },
-      { key: 'range', title: 'Дистанция', kind: 'text' },
-      { key: 'components', title: 'Компоненты', kind: 'text' },
-      { key: 'duration', title: 'Длительность', kind: 'text' },
-      { key: 'concentration', title: 'Концентрация', kind: 'bool' },
-      { key: 'ritual', title: 'Ритуал', kind: 'bool' },
-      { key: 'classes', title: 'Классы', kind: 'list', hint: 'через запятую' },
+  spell: type(
+    'spell',
+    [
+      field('spell', 'level', 'number', { hint: true }),
+      field('spell', 'school', 'select', { options: SCHOOLS }),
+      field('spell', 'casting_time', 'text'),
+      field('spell', 'range', 'text'),
+      field('spell', 'components', 'text'),
+      field('spell', 'duration', 'text'),
+      field('spell', 'concentration', 'bool'),
+      field('spell', 'ritual', 'bool'),
+      field('spell', 'classes', 'list', { hint: true }),
     ],
-    family: 'dnd5e',
-  },
-  item: {
-    title: 'Предмет',
-    plural: 'Предметы',
-    fields: [
-      { key: 'category', title: 'Вид', kind: 'select', options: ['Оружие', 'Доспех', 'Чудесный предмет', 'Зелье', 'Кольцо', 'Жезл', 'Посох', 'Волшебная палочка', 'Свиток', 'Снаряжение', 'Прочее'] },
-      { key: 'rarity', title: 'Редкость', kind: 'select', options: RARITIES },
-      { key: 'attunement', title: 'Настройка', kind: 'text', hint: 'пусто — не требуется; «да» или «жрецом»' },
-      { key: 'cost', title: 'Цена', kind: 'text' },
-      { key: 'weight', title: 'Вес', kind: 'text' },
+    'dnd5e'
+  ),
+  item: type(
+    'item',
+    [
+      field('item', 'category', 'select', { options: ['Оружие', 'Доспех', 'Чудесный предмет', 'Зелье', 'Кольцо', 'Жезл', 'Посох', 'Волшебная палочка', 'Свиток', 'Снаряжение', 'Прочее'] }),
+      field('item', 'rarity', 'select', { options: RARITIES }),
+      field('item', 'attunement', 'text', { hint: true }),
+      field('item', 'cost', 'text'),
+      field('item', 'weight', 'text'),
     ],
-    family: 'dnd5e',
-  },
-  feat: {
-    title: 'Черта',
-    plural: 'Черты',
-    fields: [
-      { key: 'category', title: 'Категория', kind: 'select', options: ['Происхождение', 'Общая', 'Боевой стиль', 'Эпический дар'] },
-      { key: 'prerequisite', title: 'Требование', kind: 'text' },
-      { key: 'repeatable', title: 'Можно брать повторно', kind: 'bool' },
+    'dnd5e'
+  ),
+  feat: type(
+    'feat',
+    [
+      field('feat', 'category', 'select', { options: ['Происхождение', 'Общая', 'Боевой стиль', 'Эпический дар'] }),
+      field('feat', 'prerequisite', 'text'),
+      field('feat', 'repeatable', 'bool'),
     ],
-    family: 'dnd5e',
-  },
-  condition: { title: 'Состояние', plural: 'Состояния', fields: [], family: 'dnd5e' },
-  skill: { title: 'Навык', plural: 'Навыки', fields: [], family: 'fate' },
-  rule: { title: 'Правило', plural: 'Правила', fields: [{ key: 'category', title: 'Раздел', kind: 'text', hint: 'бой, отдых, путешествие…' }] },
-  note: { title: 'Заметка', plural: 'Заметки', fields: [] },
+    'dnd5e'
+  ),
+  condition: type('condition', [], 'dnd5e'),
+  skill: type('skill', [], 'fate'),
+  rule: type('rule', [field('rule', 'category', 'text', { hint: true })]),
+  note: type('note', []),
 };
 
 // Поле шапки с системой записи.
@@ -105,7 +129,7 @@ export function entryFamily(e: Entry, def: TypeDef | undefined = TYPES[e.type]):
   return def?.family ?? null;
 }
 
-export const typeOf = (t: string): TypeDef => TYPES[t] ?? { title: t || 'Запись', plural: t || 'Записи', fields: [] };
+export const typeOf = (id: string): TypeDef => TYPES[id] ?? { title: id || t('cmp.entry'), plural: id || t('cmp.entries'), fields: [] };
 
 // ---------- Свои типы ----------
 // Описывает пользователь (окно «Типы записей»), хранятся в библиотеке — compendium-types.json, общие для всех кампаний.
@@ -259,13 +283,13 @@ export function entrySubtitle(e: Entry, def: TypeDef = e.def ?? typeOf(e.type)):
   switch (e.type) {
     case 'spell': {
       const lvl = typeof f['level'] === 'number' ? f['level'] : null;
-      const head = lvl === 0 ? 'Заговор' : lvl !== null ? `${lvl} уровень` : 'Заклинание';
-      return [head, low(f['school']), f['ritual'] ? 'ритуал' : '', f['concentration'] ? 'концентрация' : ''].filter(Boolean).join(', ');
+      const head = lvl === 0 ? t('cmp.sub.cantrip') : lvl !== null ? t('cmp.sub.level', { n: lvl }) : t('cmp.type.spell');
+      return [head, low(f['school']), f['ritual'] ? t('cmp.sub.ritual') : '', f['concentration'] ? t('cmp.sub.concentration') : ''].filter(Boolean).join(', ');
     }
     case 'item':
-      return [f['category'] || 'Предмет', low(f['rarity']), f['attunement'] ? `требует настройки${f['attunement'] === 'да' || f['attunement'] === true ? '' : ` (${f['attunement']})`}` : ''].filter(Boolean).join(', ');
+      return [f['category'] || t('cmp.type.item'), low(f['rarity']), f['attunement'] ? t('cmp.sub.attunement') + (f['attunement'] === 'да' || f['attunement'] === 'yes' || f['attunement'] === true ? '' : ` (${f['attunement']})`) : ''].filter(Boolean).join(', ');
     case 'feat':
-      return [f['category'] ? `Черта: ${low(f['category'])}` : 'Черта', f['prerequisite'] ? `требует: ${f['prerequisite']}` : ''].filter(Boolean).join(', ');
+      return [f['category'] ? t('cmp.sub.featOf', { category: low(f['category']) }) : t('cmp.type.feat'), f['prerequisite'] ? t('cmp.sub.requires', { what: String(f['prerequisite']) }) : ''].filter(Boolean).join(', ');
     default: {
       // Свой тип: название типа и поля, отмеченные «в строке под названием».
       const marked = def.fields.filter((d) => d.subtitle && f[d.key] !== undefined && f[d.key] !== '' && f[d.key] !== false);
@@ -278,7 +302,7 @@ export function entrySubtitle(e: Entry, def: TypeDef = e.def ?? typeOf(e.type)):
 // Значение поля для показа.
 export function fieldText(v: FieldValue): string {
   if (Array.isArray(v)) return v.join(', ');
-  if (typeof v === 'boolean') return v ? 'да' : 'нет';
+  if (typeof v === 'boolean') return v ? t('cmp.yes') : t('cmp.no');
   return String(v);
 }
 
@@ -290,7 +314,8 @@ export const searchKey = (s: string) => s.toLowerCase().replace(/ё/g, 'е');
 // ---------- Фильтр заклинаний (как на dnd.su): уровень, класс, школа, время накладывания, концентрация, ритуал ----------
 
 export type CastingKind = 'action' | 'bonus' | 'reaction' | 'long';
-export const CASTING_KINDS: Record<CastingKind, string> = { action: 'Действие', bonus: 'Бонусное', reaction: 'Реакция', long: 'Дольше' };
+export const castingTitle = (k: CastingKind) => t(`cmp.casting.${k}`);
+export const CASTING_KINDS: CastingKind[] = ['action', 'bonus', 'reaction', 'long'];
 
 // «Бонусное действие» -> bonus, «1 минута» -> long. Пусто — неизвестно.
 export function castingKind(v: FieldValue | undefined): CastingKind | null {
@@ -336,4 +361,4 @@ export function spellMatches(fields: Record<string, FieldValue>, f: SpellFilter)
 }
 
 // Подпись уровня: «Заговоры», «1 уровень».
-export const levelTitle = (level: number) => (level === 0 ? 'Заговоры' : `${level} уровень`);
+export const levelTitle = (level: number) => (level === 0 ? t('cmp.sub.cantrips') : t('cmp.sub.level', { n: level }));
