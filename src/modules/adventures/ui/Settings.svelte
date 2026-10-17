@@ -19,7 +19,7 @@
   const usedBy = (id: string) =>
     ms.list
       .filter((a) => systemFor(ms, a) === id)
-      .map((a) => `«${a}»${off.has(id) ? t('adv.hidden') : ''}`)
+      .map((a) => `${t('common.quote', { text: a })}${off.has(id) ? t('adv.hidden') : ''}`)
       .concat(systemFor(ms, null) === id ? [t('adv.wholeVault')] : []);
 
   function toggle(id: string, on: boolean) {

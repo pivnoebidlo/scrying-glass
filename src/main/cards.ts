@@ -799,7 +799,7 @@ export async function importCards(
         else {
           await importLss(r, to, dir, imgDir);
           count++;
-          errors.push(...r.warnings.map((w) => `«${r.name}»: ${w}`));
+          errors.push(...r.warnings.map((w) => `${t('common.quote', { text: r.name })}: ${w}`));
         }
         continue;
       }

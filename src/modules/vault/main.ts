@@ -107,10 +107,10 @@ export default defineModule({
       // Картинка может быть портретом карточки: сама карточка при этом останется (её удаляют из карточки).
       const owners = [...new Set(listCards().filter((c) => c.ref.scope === 'vault' && files.some((f) => c.images.includes(f.rel))).map((c) => c.name))];
       const ownersNote = owners.length
-        ? t('vault.dlg.portraitOf', { cards: owners.map((n) => `«${n}»`).join(', ') })
+        ? t('vault.dlg.portraitOf', { cards: owners.map((n) => t('common.quote', { text: n })).join(', ') })
         : '';
       const words = deleteWords();
-      const what = files.length === 1 ? `«${names[0]}»` : t('vault.dlg.files', { count: files.length });
+      const what = files.length === 1 ? t('common.quote', { text: names[0]! }) : t('vault.dlg.files', { count: files.length });
       const opts = {
         type: 'warning' as const,
         message: trashSettings().keep ? t('vault.dlg.moveToTrash', { what }) : t('vault.dlg.deleteForever', { what }),

@@ -429,7 +429,7 @@
 
   function removePin(p: Pin) {
     if (!path) return;
-    if ((p.title || p.note) && !confirm(t('maps.confirmDeletePin', { name: p.title ? ` «${p.title}»` : '' }))) return;
+    if ((p.title || p.note) && !confirm(t('maps.confirmDeletePin', { name: p.title ? ` ${t('common.quote', { text: p.title })}` : '' }))) return;
     if (ui.pin === p.id) ui.pin = null;
     dispatch('maps', 'removePin', { path, id: p.id });
   }
