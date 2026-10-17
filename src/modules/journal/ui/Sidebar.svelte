@@ -1,6 +1,7 @@
 <!-- Боковая панель журнала: поиск и дерево заметок — папки журнала приключения и общие, с подпапками. Заметки
      переставляются перетаскиванием внутри папки, перетаскивание на папку — перенос в неё. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronDown, ChevronRight, FilePlus, Folder, FolderPlus, Search, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
@@ -36,7 +37,7 @@
   const groups = $derived(app.order.groups);
 
   async function newPage(folder: string) {
-    const path = await window.api.createPage(folder, 'Новая заметка', '');
+    const path = await window.api.createPage(folder, t('journal.newNoteName'), '');
     if (!path) return;
     openPage(path, true);
     ui.fresh = true;
@@ -113,9 +114,9 @@
         <span class="t">{f.name}</span>
       </button>
       <span class="tools">
-        <button class="icon-btn" title="Новая заметка в этой папке" onclick={() => newPage(f.path)}><FilePlus size={14} /></button>
-        <button class="icon-btn" title="Новая папка внутри" onclick={() => startFolder(f.path)}><FolderPlus size={14} /></button>
-        <button class="icon-btn" title="Удалить папку с заметками в корзину" onclick={() => dispatch('vault', 'trash', { paths: [f.path] })}><Trash2 size={14} /></button>
+        <button class="icon-btn" title={t('journal.newNoteHere')} onclick={() => newPage(f.path)}><FilePlus size={14} /></button>
+        <button class="icon-btn" title={t('journal.newSubfolder')} onclick={() => startFolder(f.path)}><FolderPlus size={14} /></button>
+        <button class="icon-btn" title={t('journal.deleteFolder')} onclick={() => dispatch('vault', 'trash', { paths: [f.path] })}><Trash2 size={14} /></button>
       </span>
     </div>
   {/if}
@@ -126,7 +127,7 @@
         class="new-folder"
         style:--d={depth}
         type="text"
-        placeholder="Название папки"
+        placeholder={t('journal.folderName')}
         autofocus
         bind:value={folderName}
         onkeydown={(e) => (e.key === 'Enter' ? makeFolder() : e.key === 'Escape' && (naming = null))}
@@ -155,19 +156,19 @@
   <div class="top">
     <label class="search">
       <Search size={14} />
-      <input type="text" placeholder="Поиск по заметкам" bind:value={ui.query} />
+      <input type="text" placeholder={t('journal.search')} bind:value={ui.query} />
     </label>
-    <button class="icon-btn" title="Новая заметка" onclick={() => newPage(home)}><FilePlus size={16} /></button>
+    <button class="icon-btn" title={t('journal.newNote')} onclick={() => newPage(home)}><FilePlus size={16} /></button>
   </div>
 
   {#if found}
-    <div class="count faint">Найдено: {found.length}</div>
+    <div class="count faint">{t('journal.found', { count: found.length })}</div>
     <ul class="results">
       {#each found as p (p.path)}
         <li>
           <button data-nav class:active={ui.open === p.path} onclick={() => openPage(p.path)}>
             <span class="t">{p.title}</span>
-            <span class="s">{preview(p) || 'пусто'}</span>
+            <span class="s">{preview(p) || t('journal.emptyShort')}</span>
           </button>
         </li>
       {/each}
@@ -187,8 +188,8 @@
         >
           <span class="t">{r.title}</span>
           <span class="tools">
-            <button class="icon-btn" title="Новая заметка" onclick={() => newPage(r.folder.path)}><FilePlus size={14} /></button>
-            <button class="icon-btn" title="Новая папка" onclick={() => startFolder(r.folder.path)}><FolderPlus size={14} /></button>
+            <button class="icon-btn" title={t('journal.newNote')} onclick={() => newPage(r.folder.path)}><FilePlus size={14} /></button>
+            <button class="icon-btn" title={t('journal.newFolder')} onclick={() => startFolder(r.folder.path)}><FolderPlus size={14} /></button>
           </span>
         </div>
         <div role="tree">{@render folderNode(r.folder, 0)}</div>
@@ -196,7 +197,7 @@
     {/each}
     {#if !journal.pages.length && journal.loaded}
       <p class="faint empty">
-        Заметок пока нет. «+» — новая заметка: план сессии, текст для зачитывания, итоги игры, идеи.
+        {t('journal.none')}
       </p>
     {/if}
   {/if}

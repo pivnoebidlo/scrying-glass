@@ -1,5 +1,6 @@
 <!-- Блок «Журнал» в правой панели: закреплённая заметка приключения под рукой на игре (видит только мастер). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Maximize2, PinOff } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
@@ -28,8 +29,8 @@
   <div class="pinned">
     <div class="head">
       <span class="t" title={page.path}>{page.title}</span>
-      <button class="icon-btn" title="Открыть во вкладке «Журнал»" onclick={() => openPage(page.path)}><Maximize2 size={13} /></button>
-      <button class="icon-btn" title="Открепить" onclick={() => dispatch('journal', 'pin', { adventure: adv, path: null })}><PinOff size={13} /></button>
+      <button class="icon-btn" title={t('journal.openInTab')} onclick={() => openPage(page.path)}><Maximize2 size={13} /></button>
+      <button class="icon-btn" title={t('journal.unpin')} onclick={() => dispatch('journal', 'pin', { adventure: adv, path: null })}><PinOff size={13} /></button>
     </div>
     <div class="body"><PageBody {page} compact /></div>
   </div>

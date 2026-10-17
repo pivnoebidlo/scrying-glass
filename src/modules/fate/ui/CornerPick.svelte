@@ -1,17 +1,18 @@
 <!-- Выбор угла экрана игроков: схема 2×2, закрашен выбранный угол. -->
 <script lang="ts">
-  import { CORNERS, CORNER_TITLES, type Corner } from '../types';
+  import { t } from '../../../renderer/lib/i18n.svelte';
+  import { CORNERS, type Corner } from '../types';
 
   let { value, what, onpick }: { value: Corner; what: string; onpick: (c: Corner) => void } = $props();
 </script>
 
-<span class="pick" role="radiogroup" aria-label="Где на экране игроков: {what}">
+<span class="pick" role="radiogroup" aria-label={t('fate.where', { what })}>
   {#each CORNERS as c (c)}
     <button
       role="radio"
       aria-checked={c === value}
       class:on={c === value}
-      title="{what} — {CORNER_TITLES[c]}"
+      title={t('fate.cornerHint', { what, corner: t(`fate.corner.${c}`) })}
       onclick={() => onpick(c)}
     ></button>
   {/each}

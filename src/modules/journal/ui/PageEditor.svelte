@@ -1,5 +1,6 @@
 <!-- Правка заметки журнала: Markdown-текст, сохраняется сам (через полсекунды после последней правки и при выходе). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { onDestroy, untrack } from 'svelte';
   import { journal, type PageItem } from './store.svelte';
   import { ui } from './ui.svelte';
@@ -65,10 +66,10 @@
     {onkeydown}
     onblur={save}
     spellcheck="true"
-    placeholder={'Пишите как в Obsidian.\n\n## Подзаголовок\n> Текст, который нужно зачитать игрокам\n- [ ] Задача с флажком\n{1d20} — бросок, [[Название]] — ссылка на заметку, запись справочника или карточку'}
+    placeholder={t('journal.editorPlaceholder')}
   ></textarea>
   <p class="faint hint">
-    «&gt; » — текст для зачитывания · «- [ ] » — задача · {'{1d20}'} — бросок · [[Название]] — ссылка · ⌘E — к просмотру
+    {t('journal.editorHint')}
   </p>
 </div>
 

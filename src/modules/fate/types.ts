@@ -34,12 +34,6 @@ export interface FateState {
 
 export type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 export const CORNERS: Corner[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
-export const CORNER_TITLES: Record<Corner, string> = {
-  'top-left': 'слева вверху',
-  'top-right': 'справа вверху',
-  'bottom-left': 'слева внизу',
-  'bottom-right': 'справа внизу',
-};
 
 export const MAX_POINTS = 20;
 export const MAX_INVOKES = 9;

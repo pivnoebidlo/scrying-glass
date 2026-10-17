@@ -2,6 +2,7 @@
      (открывается во вкладке), иначе запись справочника или карточка в выдвижной панели; {1d20} — бросок в журнал
      бросков; флажок задачи сразу пишется в файл. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import '../../../renderer/lib/note/fonts.css';
   import { entryHtml } from '../../../renderer/lib/entry/markup';
   import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
@@ -43,7 +44,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="page-body" class:compact {onclick}>
-  {#if html}{@html html}{:else}<p class="faint empty">Пусто. «Править» — написать заметку.</p>{/if}
+  {#if html}{@html html}{:else}<p class="faint empty">{t('journal.empty')}</p>{/if}
 </div>
 
 <style>

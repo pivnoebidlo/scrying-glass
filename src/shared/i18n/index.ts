@@ -14,11 +14,13 @@ import * as music from '../../modules/music/i18n';
 import * as adventures from '../../modules/adventures/i18n';
 import * as backup from '../../modules/backup/i18n';
 import * as timer from '../../modules/timer/i18n';
+import * as fate from '../../modules/fate/i18n';
+import * as journal from '../../modules/journal/i18n';
 
 export * from './core';
 
-export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en, ...maps.en, ...music.en, ...adventures.en, ...backup.en, ...timer.en };
-const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru, ...maps.ru, ...music.ru, ...adventures.ru, ...backup.ru, ...timer.ru } };
+export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en, ...maps.en, ...music.en, ...adventures.en, ...backup.en, ...timer.en, ...fate.en, ...journal.en };
+const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru, ...maps.ru, ...music.ru, ...adventures.ru, ...backup.ru, ...timer.ru, ...fate.ru, ...journal.ru } };
 
 export type Key = keyof typeof en;
 

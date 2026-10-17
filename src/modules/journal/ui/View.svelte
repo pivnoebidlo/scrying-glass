@@ -1,5 +1,6 @@
 <!-- Вкладка «Журнал»: открытая заметка — в оформленном виде или в правке (⌘E); ничего не открыто — подсказка. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronLeft, Eye, ExternalLink, Pencil, Pin, PinOff, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
@@ -82,29 +83,29 @@
 {#if page}
   <div class="view">
     <header class="bar">
-      <button class="icon-btn" title="Назад" disabled={!ui.back.length} onclick={back}><ChevronLeft size={16} /></button>
+      <button class="icon-btn" title={t('journal.back')} disabled={!ui.back.length} onclick={back}><ChevronLeft size={16} /></button>
       <input
         class="title"
         type="text"
         bind:this={titleInput}
         bind:value={title}
-        title="Название — это имя файла"
+        title={t('journal.titleHint')}
         onchange={rename}
         onkeydown={(e) => e.key === 'Enter' && (e.currentTarget.blur(), document.querySelector<HTMLTextAreaElement>('.journal-text')?.focus())}
       />
       <button class="btn" class:primary={!ui.editing} title="⌘E" onclick={() => (ui.editing = !ui.editing)}>
-        {#if ui.editing}<Eye size={14} /> Просмотр{:else}<Pencil size={14} /> Править{/if}
+        {#if ui.editing}<Eye size={14} /> {t('journal.preview')}{:else}<Pencil size={14} /> {t('journal.edit')}{/if}
       </button>
       <button
         class="icon-btn"
         class:on={pinned}
-        title={pinned ? 'Открепить из правой панели' : 'Закрепить в правой панели: заметка будет под рукой на игре'}
+        title={pinned ? t('journal.unpinHint') : t('journal.pinHint')}
         onclick={() => dispatch('journal', 'pin', { adventure: adv, path: pinned ? null : page.path })}
       >
         {#if pinned}<PinOff size={15} />{:else}<Pin size={15} />{/if}
       </button>
-      <button class="icon-btn" title="Открыть файл в другой программе (например, в Obsidian)" onclick={() => window.api.openFile(page.path)}><ExternalLink size={15} /></button>
-      <button class="icon-btn" title="Удалить заметку в корзину" onclick={trash}><Trash2 size={15} /></button>
+      <button class="icon-btn" title={t('journal.openExternal')} onclick={() => window.api.openFile(page.path)}><ExternalLink size={15} /></button>
+      <button class="icon-btn" title={t('journal.deleteNote')} onclick={trash}><Trash2 size={15} /></button>
     </header>
     <div class="page" class:editing={ui.editing}>
       {#if ui.editing}
@@ -116,16 +117,12 @@
   </div>
 {:else}
   <div class="empty">
-    <h2>Журнал</h2>
+    <h2>{t('journal.title')}</h2>
     <p class="faint">
-      Заметки мастера к приключению: план сессии, текст, который нужно зачитать игрокам, итоги игры, идеи по сюжету.
-      Заметка — обычный Markdown-файл в папке <RoleFolderNames role="journal" /> приключения (или в общей папке
-      хранилища), её удобно править и в Obsidian. Раскладывайте заметки по папкам — «Сессии», «Локации», «Идеи».
+      {t('journal.about1')} <RoleFolderNames role="journal" /> {t('journal.about2')}
     </p>
     <p class="faint">
-      Цитата «&gt; » — текст для зачитывания, «- [ ] » — задача с флажком, {'{1d20}'} — бросок по щелчку,
-      [[Название]] — ссылка на другую заметку, запись справочника или карточку. Заметку можно закрепить в правой панели,
-      чтобы она была под рукой на игре. «+» в списке слева — новая заметка.
+      {t('journal.about3')}
     </p>
   </div>
 {/if}
