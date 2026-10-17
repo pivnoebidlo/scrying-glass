@@ -1,0 +1,27 @@
+# Dwarf Names
+
+- Borin
+- Tordek
+- Grimnir
+- Baldur
+- Durin
+- Helga Ironbrow
+- Fargrim
+- Torbek
+- Brunna
+- Ulfgar
+- Kildrak
+- Morgram
+- Dagny
+- Eitri
+- Gundar
+- Rothgar
+- Sigrun
+- Thrain
+- Wulfric
+- Ogmir
+- Hjalmar
+- Ingrid
+- Brakka
+- Harbek
+- Tordis

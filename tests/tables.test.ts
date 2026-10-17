@@ -65,39 +65,44 @@ describe('броски по таблицам', () => {
   });
 });
 
-describe('встроенные таблицы', () => {
-  const dir = path.join(__dirname, '../src/modules/tools/tables/builtin');
-  const list = fs.readdirSync(dir).map((f) => parseTable(fs.readFileSync(path.join(dir, f), 'utf8'), f.replace(/\.md$/, '')));
-  const resolve = (n: string) => list.find((t) => tableKey(t.title) === tableKey(n)) ?? null;
+for (const lang of ['ru', 'en']) {
+  describe(`встроенные таблицы (${lang})`, () => {
+    const dir = path.join(__dirname, '../src/modules/tools/tables/builtin', lang);
+    const list = fs.readdirSync(dir).map((f) => parseTable(fs.readFileSync(path.join(dir, f), 'utf8'), f.replace(/\.md$/, '')));
+    const resolve = (n: string) => list.find((t) => tableKey(t.title) === tableKey(n)) ?? null;
 
-  it('в каждой есть варианты, название совпадает с именем файла', () => {
-    for (const t of list) expect(t.entries.length, t.title).toBeGreaterThan(3);
-    expect(fs.readdirSync(dir).map((f) => f.replace(/\.md$/, '')).sort()).toEqual(list.map((t) => t.title).sort());
-  });
+    it('в каждой есть варианты, название совпадает с именем файла', () => {
+      for (const t of list) expect(t.entries.length, t.title).toBeGreaterThan(3);
+      expect(fs.readdirSync(dir).map((f) => f.replace(/\.md$/, '')).sort()).toEqual(list.map((t) => t.title).sort());
+    });
 
-  it('все [[ссылки]] находят таблицу, после броска не остаётся скобок', () => {
-    for (const t of list) {
-      for (const e of t.entries) {
-        for (const m of e.text.matchAll(/\[\[([^\]|]+)/g)) expect(resolve(m[1]!), `${t.title}: ${m[1]}`).not.toBeNull();
+    it('все [[ссылки]] находят таблицу, после броска не остаётся скобок', () => {
+      for (const t of list) {
+        for (const e of t.entries) {
+          for (const m of e.text.matchAll(/\[\[([^\]|]+)/g)) expect(resolve(m[1]!), `${t.title}: ${m[1]}`).not.toBeNull();
+        }
+        for (let i = 0; i < 20; i++) expect(rollTable(t, { resolve })!.text, t.title).not.toMatch(/[[\]{}]/);
       }
-      for (let i = 0; i < 20; i++) expect(rollTable(t, { resolve })!.text, t.title).not.toMatch(/[[\]{}]/);
-    }
+    });
   });
-});
+}
 
 describe('таблицы в библиотеке', () => {
   it('встроенные кладутся один раз: удалённая сама не возвращается, «вернуть» — возвращает', () => {
     const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-lib-'));
     try {
-      const files = [{ name: 'Погода', text: '- ясно' }, { name: 'Слухи', text: '- слух' }];
+      const table = (id: string, name: string, text: string) => ({ id, name, text, names: [name] });
+      const files = [table('Weather', 'Погода', '- ясно'), table('Rumors', 'Слухи', '- слух')];
       expect(seedLibraryTables(lib, files)).toBe(2);
       fs.rmSync(path.join(lib, 'tables', 'Погода.md'));
       expect(seedLibraryTables(lib, files)).toBe(0);
       expect(listLibraryTables(lib).map((t) => t.path)).toEqual(['library:tables/Слухи.md']);
       // Новая встроенная таблица в следующей версии приложения — кладётся.
-      expect(seedLibraryTables(lib, [...files, { name: 'Имена', text: '- Борин' }])).toBe(1);
+      expect(seedLibraryTables(lib, [...files, table('Names', 'Имена', '- Борин')])).toBe(1);
       expect(seedLibraryTables(lib, files, true)).toBe(1);
       expect(fs.existsSync(path.join(lib, 'tables', 'Погода.md'))).toBe(true);
+      // The same tables in another language are already seeded (by id): no second set.
+      expect(seedLibraryTables(lib, [{ id: 'Weather', name: 'Weather', text: '- clear', names: ['Weather', 'Погода'] }])).toBe(0);
     } finally {
       fs.rmSync(lib, { recursive: true, force: true });
     }

@@ -6,6 +6,14 @@ import type { Note } from './notes';
 import type { TrashItem, TrashKind, TrashPlace, TrashSettings } from './trash';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 
+// A built-in table to put into the library: id — the same in every language, names — its titles in all languages.
+export interface BuiltinTable {
+  id: string;
+  name: string;
+  text: string;
+  names: string[];
+}
+
 export interface DisplayInfo {
   id: number;
   primary: boolean;
@@ -115,7 +123,7 @@ export interface Api {
   readTable(path: string): Promise<string | null>;
   listLibraryTables(): Promise<{ path: string; text: string }[]>;
   // Встроенные таблицы — в библиотеку (только новые; restore — и удалённые). Сколько файлов записано.
-  seedLibraryTables(files: { name: string; text: string }[], restore?: boolean): Promise<number>;
+  seedLibraryTables(files: BuiltinTable[], restore?: boolean): Promise<number>;
   // Таблица или запись библиотеки — в корзину (спросит подтверждение). true — удалена.
   trashLibraryTable(path: string): Promise<boolean>;
   onTablesChanged(cb: () => void): void;

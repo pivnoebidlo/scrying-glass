@@ -6,6 +6,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { BrowserWindow } from 'electron';
 
+import type { BuiltinTable } from '../shared/api';
 import { resolver, textKind } from './textstore';
 
 const kind = textKind('tables', 'tables', () => t('core.name.table'));
@@ -25,8 +26,8 @@ const seededFile = (library: string) => path.join(libDir(library), '.builtin.jso
 export const listLibraryTables = (library: string | null) => kind.listLibrary(library);
 
 // Положить встроенные таблицы в библиотеку: новые (каких ещё не клали) или, с restore, все, которых нет на диске.
-// Возвращает, сколько файлов записано.
-export function seedLibraryTables(library: string | null, files: { name: string; text: string }[], restore = false): number {
+// Возвращает, сколько файлов записано. A table counts as seeded by its id or any of its names (in any language).
+export function seedLibraryTables(library: string | null, files: BuiltinTable[], restore = false): number {
   if (!library) return 0;
   const dir = libDir(library);
   fs.mkdirSync(dir, { recursive: true });
@@ -39,11 +40,11 @@ export function seedLibraryTables(library: string | null, files: { name: string;
   let n = 0;
   for (const f of files) {
     const file = path.join(dir, safe(f.name) + '.md');
-    if ((!restore && seeded.includes(f.name)) || fs.existsSync(file)) continue;
+    if ((!restore && [f.id, ...f.names].some((n) => seeded.includes(n))) || fs.existsSync(file)) continue;
     fs.writeFileSync(file, f.text);
     n++;
   }
-  const all = [...new Set([...seeded, ...files.map((f) => f.name)])];
+  const all = [...new Set([...seeded, ...files.map((f) => f.id)])];
   fs.writeFileSync(seededFile(library), JSON.stringify({ seeded: all }, null, 2));
   return n;
 }

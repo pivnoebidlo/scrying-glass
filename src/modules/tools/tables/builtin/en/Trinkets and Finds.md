@@ -1,0 +1,22 @@
+# Trinkets and Finds
+
+- A glass eye that sometimes blinks
+- A music box without a tune
+- A compass that points not north but to the nearest water
+- A quill that writes without ink — but only the truth
+- A tiny cage with a dried moth inside
+- A coin with the same face on both sides
+- A bell that rings before rain
+- A six-fingered glove
+- A pebble that is always warm to the touch
+- A key to a door that no longer exists
+- An hourglass whose sand falls upward
+- A doll with stitched eyes
+- A hand mirror whose reflection lags a little behind
+- A candle that burns with a green flame
+- A bone flute
+- A star chart with one star too many
+- A chess piece: a black queen carved from ivory
+- A ring that won't come off on the night of the full moon
+- A pouch of seeds from an unknown plant
+- A letter addressed to whoever finds it

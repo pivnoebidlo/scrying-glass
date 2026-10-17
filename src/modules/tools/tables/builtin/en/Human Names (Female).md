@@ -1,0 +1,32 @@
+# Human Names (Female)
+
+- Agatha
+- Beatrice
+- Veronica
+- Gertrude
+- Darina
+- Eloise
+- Joan
+- Zelda
+- Irma
+- Katharina
+- Liona
+- Magda
+- Nell
+- Ottilie
+- Pauline
+- Rosa
+- Sabine
+- Theresa
+- Ursula
+- Frieda
+- Helga
+- Hedwig
+- Annika
+- Brigitte
+- Clara
+- Mirra
+- Odelia
+- Renata
+- Svetlana
+- Emma

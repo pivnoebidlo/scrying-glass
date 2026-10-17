@@ -1,0 +1,32 @@
+# Human Names (Male)
+
+- Aldric
+- Bertrand
+- Walter
+- Garrett
+- Dietmar
+- Edwin
+- Gerard
+- Sigmund
+- Ignatius
+- Casimir
+- Lambert
+- Martin
+- Norbert
+- Oswald
+- Peter
+- Roland
+- Simon
+- Tybalt
+- Ulrich
+- Frederick
+- Hugo
+- Yaroslav
+- Bram
+- Christoph
+- Leo
+- Mateusz
+- Orson
+- Reynard
+- Stefan
+- Thomas

@@ -1,7 +1,7 @@
 // Таблицы случайностей в окне управления: таблицы хранилища (Markdown в папках таблиц) и библиотеки (общие для всех
 // кампаний). Встроенные таблицы (написаны для приложения, лежат рядом) при первом запуске кладутся в библиотеку
 // обычными файлами — их можно править и дополнять. Тексты читаются через ядро и перечитываются при изменениях.
-import { t } from '../../../renderer/lib/i18n.svelte';
+import { locale, t } from '../../../renderer/lib/i18n.svelte';
 import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
 import { store } from '../../../renderer/lib/store.svelte';
 import { placeOrder, placeTitle, visibleIn } from '../../../shared/adventures';
@@ -19,10 +19,35 @@ export interface TableItem {
   text: string;
 }
 
-const raw = import.meta.glob('./builtin/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const raw = import.meta.glob('./builtin/*/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const fileTitle = (p: string) => basename(p).replace(/\.(md|txt)$/i, '');
 
-const BUILTIN = Object.entries(raw).map(([p, text]) => ({ name: fileTitle(p), text }));
+// Built-in tables by language (builtin/<lang>/<title>.md). A table's id is its English title: the same table in
+// another language is the same table for seeding (switching the language does not add a second set).
+const RU_TO_ID: Record<string, string> = {
+  'Слухи в таверне': 'Tavern Rumors', 'События в пути': 'Road Encounters', 'Что в карманах': "What's in the Pockets",
+  'Безделушки и находки': 'Trinkets and Finds', Погода: 'Weather', 'Названия таверн': 'Tavern Names',
+  'Фамилии и прозвища': 'Surnames and Nicknames', 'Имена людей (женские)': 'Human Names (Female)',
+  'Имена людей (мужские)': 'Human Names (Male)', 'Черты характера': 'Personality Traits', 'Тайные мотивы': 'Secret Motives',
+  'Имена полуросликов': 'Halfling Names', 'Имена эльфов': 'Elf Names', 'Имена дварфов': 'Dwarf Names', Внешность: 'Appearance',
+  'Случайный NPC': 'Random NPC',
+};
+const ALL_BUILTIN = Object.entries(raw).map(([p, text]) => {
+  const lang = p.split('/').at(-2)!;
+  const name = fileTitle(p);
+  return { lang, name, text, id: lang === 'ru' ? (RU_TO_ID[name] ?? name) : name };
+});
+// The set to put into the library: in the interface language, or else English. names — the table's names in all
+// languages (older libraries remember seeded tables by their Russian names).
+const builtinSet = () => {
+  const lang = ALL_BUILTIN.some((b) => b.lang === locale.lang) ? locale.lang : 'en';
+  return ALL_BUILTIN.filter((b) => b.lang === lang).map((b) => ({
+    id: b.id,
+    name: b.name,
+    text: b.text,
+    names: ALL_BUILTIN.filter((x) => x.id === b.id).map((x) => x.name),
+  }));
+};
 export const libraryGroup = () => t('tools.tables.libraryGroup');
 
 export const tables = $state({ vault: [] as TableItem[], library: [] as TableItem[], loading: false, rev: 0 });
@@ -32,7 +57,7 @@ let seeded: Promise<unknown> | null = null;
 
 // Вернуть встроенные таблицы, которых нет в библиотеке (удалённые). Сколько вернулось.
 export async function restoreBuiltins() {
-  const n = await window.api.seedLibraryTables(BUILTIN, true);
+  const n = await window.api.seedLibraryTables(builtinSet(), true);
   tables.rev++;
   return n;
 }
@@ -54,7 +79,7 @@ export async function loadTables() {
     hooked = true;
     window.api.onTablesChanged(() => tables.rev++);
   }
-  seeded ??= window.api.seedLibraryTables(BUILTIN);
+  seeded ??= window.api.seedLibraryTables(builtinSet());
   await seeded;
   if (libraryFor !== tables.rev) {
     libraryFor = tables.rev;

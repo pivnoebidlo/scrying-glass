@@ -1,0 +1,27 @@
+# Elf Names
+
+- Aelin
+- Tirendel
+- Liarë
+- Finarion
+- Elenwë
+- Galathil
+- Issildor
+- Mirwen
+- Naeril
+- Saelrin
+- Tauriel
+- Erwalen
+- Lanessa
+- Celebrin
+- Aerwin
+- Ithirel
+- Nimloeth
+- Arawen
+- Silverin
+- Eloruin
+- Faelar
+- Inyara
+- Lorendil
+- Taelis
+- Vaelin

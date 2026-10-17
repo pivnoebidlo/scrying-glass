@@ -1,0 +1,27 @@
+# Appearance
+
+- A scar across the whole cheek
+- Grey hair, though quite young
+- Eyes of different colors
+- Huge hands with bitten nails
+- Spotless clothes — out of place here
+- A badly set broken nose
+- A snake tattoo on the neck
+- Squints all the time
+- Jingles with many bracelets
+- Missing two front teeth
+- Very tall and stooped
+- Smells of herbs and smoke
+- Wears someone else's clothes, clearly too big
+- Freckles and red braids
+- Bald, with a neat little beard
+- Wears an eye patch — over the good eye, it seems
+- Ink-stained fingers
+- A hand-shaped burn on the arm
+- An earring with a large cloudy stone
+- A very quiet voice — you have to lean in
+- Laughs too loudly
+- A heavy limp and a carved cane
+- The perfect posture of a soldier
+- Boots that are always wet
+- Lips constantly whispering something soundless

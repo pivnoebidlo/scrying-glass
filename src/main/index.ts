@@ -24,6 +24,7 @@ import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
 import { createNote, readNote, renameNote, writeNote } from './notes';
 import { createTable, isTablePath, listLibraryTables, readTable, seedLibraryTables, tableResolver, watchLibraryTables, writeTable } from './tables';
+import type { BuiltinTable } from '../shared/api';
 import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
 import { pages } from './journal';
 import type { Note } from '../shared/notes';
@@ -351,7 +352,7 @@ const afterTableWrite = async (rel: string) => {
 };
 ipcMain.handle('tables:read', (_event, rel: string) => readTable(resolveTable, rel));
 ipcMain.handle('tables:listLibrary', () => listLibraryTables(libraryTables()));
-ipcMain.handle('tables:seed', (_event, { files, restore }: { files: { name: string; text: string }[]; restore?: boolean }) =>
+ipcMain.handle('tables:seed', (_event, { files, restore }: { files: BuiltinTable[]; restore?: boolean }) =>
   seedLibraryTables(libraryTables(), files, restore)
 );
 ipcMain.handle('tables:write', async (_event, { path: rel, text }: { path: string; text: string }) => {

@@ -1,0 +1,27 @@
+# Personality Traits
+
+- Suspects each and every one
+- Tells the same story over and over, changing the ending a little
+- Haggles even over what they give away for free
+- Terrified of dogs
+- Incredibly curious, asks question after question
+- Talks about themselves in the third person
+- Polite to the point of being sickly sweet
+- Always eating
+- Takes offence at any joke
+- Believes in every omen
+- Argues for the sake of arguing
+- Remembers everyone by name, even passers-by
+- Brags about knowing nobles
+- Constantly apologizes
+- Hates magic and mages
+- Dreams of going to sea
+- Collects buttons and shows them to everyone
+- Wants the heroes to like them, whatever it takes
+- Speaks in riddles, even when there's no need
+- Secretly writes poetry and is embarrassed by it
+- Can't lie: blushes
+- Laughs at the worst possible moments
+- Greedy but honest
+- Kind but terribly lazy
+- Loves gossip

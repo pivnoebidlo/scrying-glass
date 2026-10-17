@@ -1,0 +1,27 @@
+# What's in the Pockets
+
+- {1d6} copper and a button
+- An apple core
+- A note: "Don't trust Martha"
+- Dice — one of them clearly loaded
+- A dried rose
+- A key without a tag
+- A piece of chalk
+- A little wooden horse
+- A locket with a portrait of a stranger
+- A map of the area with a cross by the river
+- {2d6} silver coins of foreign mint
+- A vial of cloudy liquid
+- An IOU in the name of one of the heroes
+- An arrowhead wrapped in a rag
+- A ferry ticket
+- A handful of dried mushrooms — better not try them
+- A deck of cards missing the queen of spades
+- A wax seal with a coat of arms
+- A child's drawing: a house and three figures
+- A whistle only dogs can hear
+- A broken blade with runes on it
+- A shopping list written backwards
+- A tooth — definitely not human
+- A blank sheet of parchment that smells of lemon
+- Nothing — someone turned these pockets out before you
