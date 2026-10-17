@@ -46,8 +46,9 @@
       disabled={store.displayOpen}
       title={store.displayOpen ? t('screen.closeToPick') : ''}
     >
-      {#each store.displays as d (d.id)}
-        <option value={String(d.id)}>{d.label}</option>
+      {#each store.displays as d, i (d.id)}
+        <!-- The label is built here, not in the core: it follows the interface language. -->
+        <option value={String(d.id)}>{t('core.screen', { n: i + 1, w: d.width, h: d.height })}{d.primary ? t('core.primary') : ''}</option>
       {/each}
     </select>
 
