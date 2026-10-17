@@ -28,3 +28,23 @@ describe('i18n', () => {
     expect(tr('ru', 'badge.inFightN', { count: 3 })).toBe('в бою ×3');
   });
 });
+
+describe('встроенные звуки', () => {
+  it('подпись — на языке интерфейса, имя файла — идентификатор; каждый файл в resources/sounds подписан', async () => {
+    const fs = await import('node:fs');
+    const { trackName } = await import('../src/shared/vault');
+    const { setLang } = await import('../src/shared/i18n');
+    setLang('en');
+    expect(trackName('sound:sfx/Гром.ogg')).toBe('Thunder');
+    expect(trackName('music/01_дорога.mp3')).toBe('Дорога');
+    setLang('ru');
+    expect(trackName('sound:ambience/Дождь.m4a')).toBe('Дождь');
+    setLang('en');
+    for (const dir of ['sfx', 'ambience']) {
+      for (const f of fs.readdirSync(`resources/sounds/${dir}`)) {
+        if (!/\.(ogg|m4a|mp3|wav)$/.test(f)) continue;
+        expect(trackName(`sound:${dir}/${f.normalize('NFC')}`), f).toMatch(/^[A-Z][a-z ]+$/);
+      }
+    }
+  });
+});

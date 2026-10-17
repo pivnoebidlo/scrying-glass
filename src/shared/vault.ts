@@ -1,4 +1,5 @@
 import type { Lang, LangSetting } from './i18n/core';
+import { builtinSoundTitle } from './sounds';
 // Хранилище: папка на диске, внутри которой лежит всё (приключения, главы, персонажи, карты, музыка).
 // Здесь только типы и чистые функции: модуль используется и ядром, и окнами.
 
@@ -188,6 +189,8 @@ export function prettyName(path: string): string {
 
 // Название трека: «01_дорога_в_баровию.mp3» -> «Дорога в баровию». Номер в начале нужен только для порядка.
 export function trackName(path: string): string {
+  const builtin = builtinSoundTitle(path);
+  if (builtin) return builtin;
   const file = basename(path);
   const i = file.lastIndexOf('.');
   const name = (i > 0 ? file.slice(0, i) : file)
