@@ -206,7 +206,7 @@ table is a plain Markdown file in a tables / random folder, easy to write in Obs
 on top, ×3 and ×5 — several at once, a click on an option in the list — pick it by hand.
 
 Where tables live: in an adventure, in the vault's shared tables folder or in the library — shared by all campaigns
-(`<library>/tables`, next to the shared cards). The 4 built-in tables in the interface language (rumors, road encounters, what's in the pockets, trinkets) are put into the library as ordinary files on the
+(`<library>/tables`, next to the shared cards). The 2 built-in tables in the interface language (what's in the pockets, trinkets) are put into the library as ordinary files on the
 first launch: they can be edited and extended. A deleted built-in table doesn't come back by itself — that's what
 "Restore built-in tables" is for. "New table" and "Copy to…" offer a place: the adventure, Shared or the library;
 [[links]] take the adventure's table first, then the shared one, then the library's. Any table can be deleted to
@@ -228,6 +228,13 @@ line; the file name says what's inside: `race_gender_kind.txt` (`human_man_names
 `dwarf_surnames.txt`; kinds — names, surnames, nicknames, epithets; race `any` — for all, or your own: `orc_man_names.txt`).
 "Load lists…" puts them into the library (`names/<lang>/`, the language by the letters), and they are added to the
 built-in ones; built-in or own lists can be turned off.
+
+**Random events** (Tools → Random events): terrain (as for the weather, the city and the underground included), day or
+night, danger (calm, tense, dangerous) and 1, 3 or 6 events → encounters, discoveries, obstacles, travellers, omens and
+rumors (from the tavern generator), each event rerollable. Creatures in the text are links: a click opens the SRD card
+on the side (in the journal they stay [[links]]). In D&D adventures an obstacle shows its check (skill and DC); on a
+dangerous road an event can come with a complication. Copy or to the journal. The built-in "Road Encounters" and
+"Tavern Rumors" tables are retired.
 
 **Weather generator** (Tools → Weather generator): terrain (forest, plains, city, coast, mountains, swamp, jungle,
 desert, arctic, underground), season and 1, 3 or 7 days → for each day the sky, rain or snow (sleet, sandstorm,

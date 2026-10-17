@@ -1,7 +1,7 @@
 <!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Beer, Calculator, CloudSun, UserRound, Dices, FileText, Gauge, Hourglass, ScrollText, Send, Signature, Table2 } from '@lucide/svelte';
+  import { Beer, Calculator, CloudSun, Signpost, UserRound, Dices, FileText, Gauge, Hourglass, ScrollText, Send, Signature, Table2 } from '@lucide/svelte';
   import { tables } from '../tables/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
@@ -56,6 +56,10 @@
   <button class="item" data-nav class:active={ui.tool === 'weather'} onclick={() => pickTool('weather')}>
     <CloudSun size={14} />
     <span class="name">{t('tools.side.weather')}</span>
+  </button>
+  <button class="item" data-nav class:active={ui.tool === 'events'} onclick={() => pickTool('events')}>
+    <Signpost size={14} />
+    <span class="name">{t('tools.side.events')}</span>
   </button>
   <button class="item" data-nav class:active={ui.tool === 'telegram'} onclick={() => pickTool('telegram')}>
     <Send size={14} />

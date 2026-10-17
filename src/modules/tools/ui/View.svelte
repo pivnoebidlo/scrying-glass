@@ -17,6 +17,7 @@
   import TavernGenerator from '../tavern/TavernGenerator.svelte';
   import NpcGenerator from '../npc/NpcGenerator.svelte';
   import WeatherGenerator from '../weather/WeatherGenerator.svelte';
+  import EventsGenerator from '../events/EventsGenerator.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
@@ -40,6 +41,8 @@
   <TablesView />
 {:else if ui.tool === 'names'}
   <NameGenerator />
+{:else if ui.tool === 'events'}
+  <EventsGenerator />
 {:else if ui.tool === 'weather'}
   <WeatherGenerator />
 {:else if ui.tool === 'npc'}

@@ -25,8 +25,7 @@ const fileTitle = (p: string) => basename(p).replace(/\.(md|txt)$/i, '');
 // Built-in tables by language (builtin/<lang>/<title>.md). A table's id is its English title: the same table in
 // another language is the same table for seeding (switching the language does not add a second set).
 const RU_TO_ID: Record<string, string> = {
-  'Слухи в таверне': 'Tavern Rumors', 'События в пути': 'Road Encounters', 'Что в карманах': "What's in the Pockets",
-  'Безделушки и находки': 'Trinkets and Finds',
+  'Что в карманах': "What's in the Pockets", 'Безделушки и находки': 'Trinkets and Finds',
 }
 const ALL_BUILTIN = Object.entries(raw).map(([p, text]) => {
   const lang = p.split('/').at(-2)!;
