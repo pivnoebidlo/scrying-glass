@@ -95,7 +95,6 @@
   // Выбранный в палитре вид: щелчок по листу ставит такой след (пока вид не снят — Esc или ещё щелчок по нему).
   let tool = $state<NoteMarkKind | null>(null);
   let selected = $state<string | null>(null);
-  let paperEl = $state<HTMLElement | null>(null);
   const mark = $derived(note?.marks.find((m) => m.id === selected) ?? null);
 
   const markGroups = Object.entries(NOTE_MARKS).reduce<Record<string, NoteMarkKind[]>>((acc, [id, k]) => {
@@ -182,13 +181,7 @@
     <div class="spacer"></div>
     <CopyToMenu title={t('tools.note.copyTo')} onpick={copyTo} />
     {#if tgReady() && note}
-      <button class="icon-btn" title={t('tg.noteHint')} onclick={() => {
-        // No selection outline in the picture: the note as the players see it.
-        selected = null;
-        tool = null;
-        const paper = paperEl?.querySelector('.sheet') as HTMLElement | null;
-        if (paper ?? paperEl) sendToTelegram({ kind: 'capture', element: (paper ?? paperEl)!, title });
-      }}><Send size={15} /></button>
+      <button class="icon-btn" title={t('tg.noteHint')} onclick={() => sendToTelegram({ kind: 'note', path, title })}><Send size={15} /></button>
     {/if}
     <button class="btn" class:primary={!shown} disabled={!note} onclick={() => dispatch('handouts', 'toggle', { path })}>
       {#if shown}<EyeOff size={14} /> {t('tools.note.removeFromPlayers')}{:else}<Eye size={14} /> {t('tools.note.showToPlayers')}{/if}
@@ -376,7 +369,7 @@
       </form>
 
       <div class="preview">
-        <div class="paper" bind:this={paperEl} {onwheel}><NotePaper note={note} shadow bind:overflow edit={{ selected, placing: !!tool, onpick }} /></div>
+        <div class="paper" {onwheel}><NotePaper note={note} shadow bind:overflow edit={{ selected, placing: !!tool, onpick }} /></div>
         {#if overflow}
           <p class="warn"><TriangleAlert size={14} /> {t('tools.note.overflow')}</p>
         {/if}

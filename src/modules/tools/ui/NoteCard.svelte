@@ -2,7 +2,8 @@
      сразу при наведении). Щелчок по листу игрокам ничего не показывает, двойной — открывает записку в редакторе. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Pencil, Scroll, Trash2 } from '@lucide/svelte';
+  import { Pencil, Scroll, Send, Trash2 } from '@lucide/svelte';
+  import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
   import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
   import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
@@ -36,6 +37,11 @@
     <button class="act" aria-label={t('tools.card.show')} class:active={shown} onclick={() => dispatch('handouts', 'toggle', { path })}
       ><Scroll size={14} /><span class="tip">{shown ? t('tools.card.removeFromScreen') : t('tools.card.show')}</span></button
     >
+    {#if tgReady()}
+      <button class="act" aria-label={t('tg.noteHint')} onclick={() => sendToTelegram({ kind: 'note', path, title: noteTitle(path) })}
+        ><Send size={14} /><span class="tip">{t('tg.sendShort')}</span></button
+      >
+    {/if}
     <button class="act" aria-label={t('tools.card.edit')} onclick={() => (onopen ? onopen() : editNote(path))}><Pencil size={14} /><span class="tip">{t('tools.card.edit')}</span></button>
     <button class="act" aria-label={t('tools.card.toTrash')} onclick={trash}><Trash2 size={14} /><span class="tip">{t('tools.card.toTrash')}</span></button>
   </div>

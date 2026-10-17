@@ -244,8 +244,9 @@ lists, including your own.
 bot with @BotFather (/newbot) and paste its token into ⌘, → Telegram (the token stays on this computer, encrypted; the
 app talks to Telegram directly, with no server of its own). Players write /start to the bot; for the group chat, add the
 bot to the group — chats appear in the settings turned off: turn on only your own and label whose player each one is.
-To send: the "Telegram" button on a picture tile, the paper-plane button of a note (sent as a picture, as the players
-see it) and of a compendium entry (as text), Tools → Message to the players — your own text. The send dialog asks
+To send: the "Telegram" button on a picture or note tile (a note goes as a large picture, as the players see it), the
+paper plane in the note editor and on a compendium entry (as text), the paper plane in the Handouts block of the right
+panel — what the players see right now, Tools → Message to the players — your own text. The send dialog asks
 whom: the group chat and/or players privately.
 
 **Timer** (Tools → Timer): an hourglass or digits on the player screen — top right, bottom right or large in the

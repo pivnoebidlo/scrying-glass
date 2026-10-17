@@ -2,7 +2,10 @@
      (поверх всего), ещё щелчок — убирает. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Pencil } from '@lucide/svelte';
+  import { Pencil, Send } from '@lucide/svelte';
+  import { entryToTelegram } from '../../../shared/telegram';
+  import { typeDef } from '../../../renderer/lib/entry/types.svelte';
+  import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
   import { editNote } from '../../tools/ui/ui.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -16,6 +19,14 @@
   let { ms, app }: ModuleProps<'handouts'> = $props();
 
   const caption = (p: string) => (isNotePath(p) ? noteTitle(p) : (entryAt(p)?.entry.title ?? prettyName(p)));
+
+  // What the players see now goes to Telegram: a picture as it is, a note as a picture, an entry as text.
+  function send(path: string) {
+    if (isNotePath(path)) return sendToTelegram({ kind: 'note', path, title: noteTitle(path) });
+    const e = entryAt(path)?.entry ?? (ms.entry ? ($state.snapshot(ms.entry) as Entry) : null);
+    if (e && /\.md$|^srd:/i.test(path)) return sendToTelegram({ kind: 'text', title: e.title, html: entryToTelegram(e, e.def ?? typeDef(e.type)) });
+    sendToTelegram({ kind: 'file', path, title: prettyName(path) });
+  }
 
   function toggle(path: string) {
     const e = !isNotePath(path) && /\.md$|^srd:/i.test(path) ? entryAt(path) : undefined;
@@ -34,11 +45,12 @@
   {toggle}
   hint={t('handouts.trayHint')}
 >
-  {#if ms.current && isNotePath(ms.current)}
+  {#if ms.current && (isNotePath(ms.current) || tgReady())}
     {@const p = ms.current}
     <div class="row">
-      <span class="name" title={p}>{noteTitle(p)}</span>
-      <button class="icon-btn" title={t('handouts.editNote')} onclick={() => editNote(p)}><Pencil size={14} /></button>
+      <span class="name" title={p}>{caption(p)}</span>
+      {#if tgReady()}<button class="icon-btn" title={t('tg.sendShown')} onclick={() => send(p)}><Send size={14} /></button>{/if}
+      {#if isNotePath(p)}<button class="icon-btn" title={t('handouts.editNote')} onclick={() => editNote(p)}><Pencil size={14} /></button>{/if}
     </div>
   {/if}
 </Tray>

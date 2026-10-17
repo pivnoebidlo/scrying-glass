@@ -15,11 +15,12 @@ export async function loadTg() {
   tg.status = await window.api.telegramStatus();
 }
 
-// What to send: a picture of the vault or library, text (Telegram HTML) or a capture of an element of this window.
+// What to send: a picture of the vault or library, text (Telegram HTML) or a note — as a picture, the way the players
+// see it (the dialog draws it large for a moment and captures it).
 export type SendJob =
   | { kind: 'file'; path: string; title: string }
   | { kind: 'text'; title: string; html: string }
-  | { kind: 'capture'; element: HTMLElement; title: string };
+  | { kind: 'note'; path: string; title: string };
 
 export const sending = $state({ job: null as SendJob | null });
 export const sendToTelegram = (job: SendJob) => (sending.job = job);

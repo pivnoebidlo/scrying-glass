@@ -39,6 +39,7 @@ export const en = {
   'tg.composeAbout': "A message straight from the app: the group chat or players privately.",
   'tg.noteHint': "Send the note to Telegram as a picture, as the players see it",
   'tg.entryHint': "Send the entry to Telegram as text",
+  'tg.sendShown': 'Send what the players see to Telegram',
 };
 
 export const ru: Messages<typeof en> = {
@@ -79,4 +80,5 @@ export const ru: Messages<typeof en> = {
   'tg.composeAbout': "Сообщение прямо из приложения: в общий чат или игрокам лично.",
   'tg.noteHint': "Отправить записку в Telegram картинкой, как её видят игроки",
   'tg.entryHint': "Отправить запись в Telegram текстом",
+  'tg.sendShown': 'Отправить в Telegram то, что видят игроки',
 };

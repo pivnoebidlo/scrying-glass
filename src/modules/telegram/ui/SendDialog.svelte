@@ -1,6 +1,6 @@
 <!-- "Send to Telegram": recipients (the chats turned on in the settings), an optional caption for a picture, Send.
-     Lives all the time (the module's background component), opens on sendToTelegram(). A capture is taken after the
-     dialog closes, so the dialog itself is not in the picture. -->
+     Lives all the time (the module's background component), opens on sendToTelegram(). A note is drawn large over the
+     window for a moment (the dialog hidden) and captured — a picture as the players see it. -->
 <script lang="ts">
   import { onMount, tick } from 'svelte';
   import { Send, X } from '@lucide/svelte';
@@ -8,6 +8,8 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openSettings } from '../../../renderer/lib/nav';
   import { chatName, titleHtml } from '../../../shared/telegram';
+  import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
+  import type { Note } from '../../../shared/notes';
   import { enabledChats, lastSelected, loadTg, rememberSelected, sending, tg, tgReady } from './tg.svelte';
 
   // Standard module props; nothing here uses them.
@@ -54,19 +56,32 @@
     let r: { sent: number; errors: string[] };
     if (j.kind === 'file') r = await window.api.telegramSendFile($state.snapshot(selected), j.path, cap);
     else if (j.kind === 'text') r = await window.api.telegramSendText($state.snapshot(selected), j.html);
-    else {
-      // The dialog goes away first; the element is brought into view and captured as the players see it.
-      sending.job = null;
-      await tick();
-      j.element.scrollIntoView({ block: 'nearest' });
-      await new Promise((res) => setTimeout(res, 250));
-      const b = j.element.getBoundingClientRect();
-      r = await window.api.telegramSendCapture($state.snapshot(selected), { x: b.x, y: b.y, width: b.width, height: b.height }, `${j.title}.png`, cap);
-      sending.job = j;
-    }
+    else r = await sendNote(j.path, j.title, cap);
     busy = false;
     result = [r.sent ? t('tg.sent', { count: r.sent }) : '', ...r.errors].filter(Boolean).join(' ');
     if (r.sent && !r.errors.length) setTimeout(() => sending.job === j && close(), 1200);
+  }
+
+  // A note: drawn large over the window (the dialog hidden; the sheet fits the box keeping its shape), captured, removed.
+  let shooting = $state.raw<Note | null>(null);
+  let page = $state<HTMLElement | null>(null);
+  const frame = () => new Promise((res) => setTimeout(res, 120));
+  async function sendNote(path: string, title: string, cap?: string) {
+    const note = await window.api.readNote(path);
+    if (!note) return { sent: 0, errors: [title] };
+    const j = sending.job;
+    sending.job = null;
+    shooting = note;
+    await tick();
+    await document.fonts.ready;
+    await frame();
+    await frame();
+    const sheet = page?.querySelector('.sheet') as HTMLElement | null;
+    const b = (sheet ?? page)!.getBoundingClientRect();
+    const r = await window.api.telegramSendCapture($state.snapshot(selected), { x: b.x, y: b.y, width: b.width, height: b.height }, `${title}.png`, cap);
+    shooting = null;
+    sending.job = j;
+    return r;
   }
 
   function onkeydown(e: KeyboardEvent) {
@@ -75,6 +90,10 @@
 </script>
 
 <svelte:window {onkeydown} />
+
+{#if shooting}
+  <div class="shoot"><div class="page" bind:this={page}><NotePaper note={shooting} /></div></div>
+{/if}
 
 {#if job}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -125,6 +144,18 @@
     display: grid;
     place-items: center;
     background: rgba(0, 0, 0, 0.5);
+  }
+  .shoot {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: grid;
+    place-items: center;
+    background: #111;
+  }
+  .page {
+    width: min(900px, 94vw);
+    height: calc(100vh - 24px);
   }
   .modal {
     width: min(440px, 92vw);
