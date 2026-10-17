@@ -1,5 +1,6 @@
 <!-- Боковая панель инициативы: текущий бой и заготовки боёв текущего приключения (и общие). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Plus, Swords, Sword } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -29,13 +30,13 @@
 <div class="list">
   <button class="item" data-nav class:active={ui.encounter === null} onclick={() => (ui.encounter = null)}>
     <Swords size={14} />
-    <span class="name">Текущий бой</span>
-    <span class="count">{running ? `раунд ${ms.round}` : ms.combatants.length || ''}</span>
+    <span class="name">{t('init.currentFight')}</span>
+    <span class="count">{running ? t('init.roundShort', { n: ms.round }) : ms.combatants.length || ''}</span>
   </button>
 
   <div class="section">
-    <span>Заготовки</span>
-    <button class="icon-btn" title="Новая заготовка боя" onclick={create}><Plus size={14} /></button>
+    <span>{t('init.prepared')}</span>
+    <button class="icon-btn" title={t('init.newEncounter')} onclick={create}><Plus size={14} /></button>
   </div>
   {#each list as e (e.id)}
     <button class="item" data-nav class:active={ui.encounter === e.id} onclick={() => (ui.encounter = e.id)}>
@@ -45,8 +46,7 @@
     </button>
   {:else}
     <p class="hint faint">
-      Подготовьте бой заранее: «+», добавьте противников, а когда бой случится — «В бой». Текущий бой можно сохранить
-      как заготовку кнопкой в его заголовке.
+      {t('init.sidebarHint')}
     </p>
   {/each}
 </div>

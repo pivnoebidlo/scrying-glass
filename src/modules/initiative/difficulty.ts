@@ -1,5 +1,6 @@
 // Сложность боя или заготовки: кто герои и какого они уровня, сколько опыта у противников. Чистые функции —
 // карточки и партию приключения подставляет окно (ui/Difficulty.svelte).
+import { t } from '../../shared/i18n';
 import { partyBudget, rate, type Budget, type Rating } from '../../systems/dnd5e/difficulty';
 import type { Combatant } from './types';
 
@@ -42,7 +43,7 @@ export function analyze(
       ? inFight
       : partyFrom === 'adventure'
         ? adventureParty
-        : Array.from({ length: fallback.size }, (_, i) => ({ name: `Герой ${i + 1}`, level: fallback.level }));
+        : Array.from({ length: fallback.size }, (_, i) => ({ name: t('init.hero', { n: i + 1 }), level: fallback.level }));
   const levels = heroes.map((h) => h.level ?? fallback.level);
 
   let xp = 0;

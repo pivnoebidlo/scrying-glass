@@ -2,6 +2,7 @@
      (монстры, NPC, партия), библиотеки и SRD: выбор подсказки добавляет существо с его числами (хиты и КД, стресс)
      и картинками. Без подсказки — участник «вручную» с числами из полей; какие поля — решает система приключения. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
   import { Plus, Shield, Skull, User, Users } from '@lucide/svelte';
   import { onMount } from 'svelte';
@@ -45,7 +46,7 @@
     const n = count();
     await addToInitiative(c, { count: n, encounter });
     form = { ...form, name: '', count: '1' };
-    flash(`Добавлено: ${c.name}${n > 1 ? ` ×${n}` : ''}`);
+    flash(t('init.added', { name: `${c.name}${n > 1 ? ` ×${n}` : ''}` }));
   }
 
   async function addManual() {
@@ -70,7 +71,7 @@
 
   async function party() {
     const n = await addParty(encounter);
-    flash(n ? `Партия: добавлено ${n}` : 'Вся партия уже здесь');
+    flash(n ? t('init.partyAdded', { count: n }) : t('init.partyHere'));
   }
 
   function onkeydown(e: KeyboardEvent) {
@@ -86,7 +87,7 @@
   const KIND_ICON = { monster: Skull, npc: User, character: Users } as const;
   // Где лежит и какая редакция: «SRD 2014», «библиотека 2024» — две «Крысы» из разных редакций различимы.
   const where = (c: CardSummary) =>
-    [c.ref.scope === 'srd' ? 'SRD' : c.ref.scope === 'library' ? 'библиотека' : '', c.system.match(/\d{4}/)?.[0] ?? ''].filter(Boolean).join(' ');
+    [c.ref.scope === 'srd' ? 'SRD' : c.ref.scope === 'library' ? t('init.library') : '', c.system.match(/\d{4}/)?.[0] ?? ''].filter(Boolean).join(' ');
 </script>
 
 <form class="add" onsubmit={(e) => { e.preventDefault(); addManual(); }}>
@@ -94,8 +95,8 @@
     <input
       class="f-name"
       type="text"
-      placeholder="Имя или поиск: гоблин, Гилберт…"
-      title="Начните вводить — появятся карточки приключения, библиотеки и SRD. ↑↓ и Enter — выбрать, Esc — ввести вручную"
+      placeholder={t('init.quickPlaceholder')}
+      title={t('init.quickHint')}
       bind:value={form.name}
       onfocus={() => (focused = true)}
       onblur={() => setTimeout(() => (focused = false), 150)}
@@ -120,19 +121,19 @@
       </ul>
     {/if}
   </div>
-  <select bind:value={form.side} title="Сторона для участника, введённого вручную (у карточки — своя)">
-    {#each Object.entries(SIDES) as [v, t] (v)}<option value={v}>{t}</option>{/each}
+  <select bind:value={form.side} title={t('init.manualSide')}>
+    {#each Object.entries(SIDES) as [v, title] (v)}<option value={v}>{title}</option>{/each}
   </select>
   {#if !encounter}
-    <input class="f-num" type="text" inputmode="numeric" placeholder={tracker.init.label} title="{tracker.init.title} (можно задать потом)" bind:value={form.init} />
+    <input class="f-num" type="text" inputmode="numeric" placeholder={tracker.init.label} title={t('init.laterHint', { title: tracker.init.title })} bind:value={form.init} />
   {/if}
   <input class="f-num" type="text" inputmode="numeric" placeholder={tracker.bonus.label} title={tracker.bonus.title} bind:value={form.bonus} />
   {#each tracker.fields as f (f.key)}
     <input class="f-num" type="text" inputmode="numeric" placeholder={f.label} title={f.title} bind:value={values[f.key]} />
   {/each}
-  <input class="f-num" type="text" inputmode="numeric" placeholder="×1" title="Сколько таких добавить (Гоблин 1, Гоблин 2, …)" bind:value={form.count} />
-  <button class="btn" type="submit" disabled={!form.name.trim()} title="Добавить с введённым именем и числами"><Plus size={14} /> Добавить</button>
-  <button class="btn" type="button" title="Персонажи игроков текущего приключения, которых здесь ещё нет" onclick={party}><Shield size={14} /> Партия</button>
+  <input class="f-num" type="text" inputmode="numeric" placeholder="×1" title={t('init.countHint')} bind:value={form.count} />
+  <button class="btn" type="submit" disabled={!form.name.trim()} title={t('init.addHint')}><Plus size={14} /> {t('init.add')}</button>
+  <button class="btn" type="button" title={t('init.partyHint')} onclick={party}><Shield size={14} /> {t('init.party')}</button>
   {#if status}<span class="status faint">{status}</span>{/if}
 </form>
 

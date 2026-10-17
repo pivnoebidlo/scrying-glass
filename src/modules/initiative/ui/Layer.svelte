@@ -2,6 +2,7 @@
      союзник синий, нейтрал серый, противник красный), портрет краснеет по мере ранений (настройка), побеждённые
      остаются серыми. Спрятанных (засада) не видно. Размер и подписи — в настройках «Инициативы». -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { fade, fly } from 'svelte/transition';
   import { flip } from 'svelte/animate';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -21,7 +22,7 @@
 
 {#if shown}
   <div class="bar {d.position ?? 'top'}" style:--s={d.size} transition:fade|global={{ duration: 300 }}>
-    <div class="round">Раунд {ms.round}</div>
+    <div class="round">{t('init.round', { n: ms.round })}</div>
     <div class="list">
       {#each visible as c (c.id)}
         <div class="c {c.side}" class:turn={c.id === ms.turn} class:down={down(c)} animate:flip={{ duration: 300 }} in:fly|global={{ y: -10, duration: 250 }}>

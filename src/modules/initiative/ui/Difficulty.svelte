@@ -1,6 +1,7 @@
 <!-- Сложность боя или заготовки: плашка «Умеренная · 1 100 / 1 500 ОО», по щелчку — подробности: партия, шкала
      бюджета, противники без опыта. Герои — из боя, а если их там нет — персонажи игроков приключения. -->
 <script lang="ts">
+  import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { Gauge } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { store } from '../../../renderer/lib/store.svelte';
@@ -20,7 +21,7 @@
   const hasEnemies = $derived(list.some((c) => c.side === 'enemy'));
 
   let open = $state(false);
-  const fmt = (n: number) => n.toLocaleString('ru');
+  const fmt = (n: number) => n.toLocaleString(locale.lang);
   // Следующий порог, до которого ещё есть запас (для подписи «1 100 / 1 500»).
   const next = $derived(a.xp <= a.budget.low ? a.budget.low : a.xp <= a.budget.moderate ? a.budget.moderate : a.budget.high);
 </script>
@@ -29,10 +30,10 @@
 
 {#if hasEnemies}
   <div class="difficulty">
-    <button class="badge {a.rating}" title="Сложность боя по правилам 2024 года — подробности" onclick={() => (open = !open)}>
+    <button class="badge {a.rating}" title={t('init.difficultyHint')} onclick={() => (open = !open)}>
       <Gauge size={14} />
       <span class="r">{RATING_TITLES[a.rating]}</span>
-      <span class="x">{fmt(a.xp)} / {fmt(next)} ОО{a.unknown.length ? ' + ?' : ''}</span>
+      <span class="x">{fmt(a.xp)} / {fmt(next)} {t('init.xp')}{a.unknown.length ? ' + ?' : ''}</span>
     </button>
 
     {#if open}

@@ -1,6 +1,7 @@
 <!-- Заготовка боя: участники, подготовленные заранее. «В бой» добавляет их к текущему бою (партия, которая уже
      там, остаётся), заготовка при этом сохраняется — бой можно повторить. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Eye, EyeOff, Heart, HeartOff, ScrollText, Swords, Trash2, X } from '@lucide/svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
@@ -29,7 +30,7 @@
   }
 
   function remove() {
-    if (confirm(`Удалить заготовку «${e.name}»?`)) {
+    if (confirm(t('init.deleteEncounter', { name: e.name }))) {
       ui.encounter = null;
       dispatch('initiative', 'deleteEncounter', { id: e.id });
     }
@@ -38,21 +39,21 @@
 
 <div class="view">
   <header class="head">
-    <input class="title" type="text" value={e.name} title="Название заготовки" onchange={(ev) => dispatch('initiative', 'renameEncounter', { id: e.id, name: ev.currentTarget.value })} />
+    <input class="title" type="text" value={e.name} title={t('init.encounterName')} onchange={(ev) => dispatch('initiative', 'renameEncounter', { id: e.id, name: ev.currentTarget.value })} />
     {#if adventures.length}
       <select
-        title="К какому приключению относится (заготовки видны в своём приключении)"
+        title={t('init.adventureHint')}
         value={e.adventure ?? ''}
         onchange={(ev) => dispatch('initiative', 'setEncounterAdventure', { id: e.id, adventure: ev.currentTarget.value || null })}
       >
-        <option value="">Общая</option>
+        <option value="">{t('init.shared')}</option>
         {#each adventures as a (a)}<option value={a}>{a}</option>{/each}
       </select>
     {/if}
     <div class="spacer"></div>
     {#if isDnd(system)}<Difficulty list={e.combatants} />{/if}
-    <button class="btn primary" disabled={!e.combatants.length} title="Добавить участников к текущему бою" onclick={start}><Swords size={14} /> В бой</button>
-    <button class="icon-btn" title="Удалить заготовку" onclick={remove}><Trash2 size={15} /></button>
+    <button class="btn primary" disabled={!e.combatants.length} title={t('init.startHint')} onclick={start}><Swords size={14} /> {t('init.toFight')}</button>
+    <button class="icon-btn" title={t('init.deleteEnc')} onclick={remove}><Trash2 size={15} /></button>
   </header>
 
   {#if e.combatants.length}
@@ -60,7 +61,7 @@
       <thead>
         <tr>
           <th></th>
-          <th>Имя</th>
+          <th>{t('init.name')}</th>
           <th class="c-num" title={tracker.bonus.title}>{tracker.bonus.label}</th>
           {#each tracker.fields as f (f.key)}<th class="c-num" title={f.title}>{f.label}</th>{/each}
           <th></th>
@@ -72,8 +73,8 @@
             <td><AvatarPick {c} encounter={e.id} /></td>
             <td class="c-name">
               <input class="name" type="text" value={c.name} onchange={(ev) => update(c, { name: ev.currentTarget.value.trim() || c.name })} />
-              <select class="side-select faint" value={c.side} title="Сторона" onchange={(ev) => update(c, { side: ev.currentTarget.value as Side })}>
-                {#each Object.entries(SIDES) as [v, t] (v)}<option value={v}>{t}</option>{/each}
+              <select class="side-select faint" value={c.side} title={t('init.side')} onchange={(ev) => update(c, { side: ev.currentTarget.value as Side })}>
+                {#each Object.entries(SIDES) as [v, title] (v)}<option value={v}>{title}</option>{/each}
               </select>
             </td>
             <td class="c-num">
@@ -93,27 +94,27 @@
             <td class="c-act">
               {#if c.card}
                 {@const ref = c.card}
-                <button class="icon-btn" title="Статблок" onclick={() => bestiary.show(ref)}><ScrollText size={14} /></button>
+                <button class="icon-btn" title={t('init.statblock')} onclick={() => bestiary.show(ref)}><ScrollText size={14} /></button>
               {/if}
               <button
                 class="icon-btn"
                 class:off={c.hideWounds}
-                title={c.hideWounds ? 'Игроки не будут видеть его ранения — показывать' : 'Не показывать игрокам его ранения (портрет не краснеет)'}
+                title={c.hideWounds ? t('init.woundsHiddenEnc') : t('init.hideWounds')}
                 onclick={() => update(c, { hideWounds: !c.hideWounds })}
               >
                 {#if c.hideWounds}<HeartOff size={14} />{:else}<Heart size={14} />{/if}
               </button>
-              <button class="icon-btn" title={c.hidden ? 'Появится спрятанным от игроков — показать' : 'Спрятать от игроков (засада)'} onclick={() => update(c, { hidden: !c.hidden })}>
+              <button class="icon-btn" title={c.hidden ? t('init.hiddenEnc') : t('init.hideAmbush')} onclick={() => update(c, { hidden: !c.hidden })}>
                 {#if c.hidden}<EyeOff size={14} />{:else}<Eye size={14} />{/if}
               </button>
-              <button class="icon-btn" title="Убрать из заготовки" onclick={() => dispatch('initiative', 'remove', { id: c.id, encounter: e.id })}><X size={14} /></button>
+              <button class="icon-btn" title={t('init.removeFromEnc')} onclick={() => dispatch('initiative', 'remove', { id: c.id, encounter: e.id })}><X size={14} /></button>
             </td>
           </tr>
         {/each}
       </tbody>
     </table>
   {:else}
-    <p class="faint empty">Заготовка пуста. Начните вводить имя ниже — появятся подходящие карточки.</p>
+    <p class="faint empty">{t('init.encEmpty')}</p>
   {/if}
 
   <QuickAdd encounter={e.id} />

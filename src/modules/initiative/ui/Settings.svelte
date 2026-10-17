@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Инициатива»: как выглядит полоса очерёдности на экране игроков. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -15,8 +16,8 @@
 
 <div class="setting">
   <div class="info">
-    <div class="name">Размер портретов</div>
-    <div class="desc">Полоса очерёдности на экране игроков: портреты и подписи. Сейчас — ×{size.toFixed(1)}.</div>
+    <div class="name">{t('init.portraitSize')}</div>
+    <div class="desc">{t('init.portraitSizeDesc', { n: size.toFixed(1) })}</div>
   </div>
   <div class="slider">
     <Slider value={size} min={0.8} max={3} step={0.1} oninput={(v) => (size = v)} onchange={(v) => dispatch('initiative', 'setDisplay', { size: v })} />
@@ -25,31 +26,30 @@
 
 <div class="setting">
   <div class="info">
-    <div class="name">Где полоса</div>
-    <div class="desc">Её можно быстро переставить и кнопками в заголовке вкладки «Инициатива».</div>
+    <div class="name">{t('init.stripPos')}</div>
+    <div class="desc">{t('init.stripPosDesc')}</div>
   </div>
   <select value={d.position ?? 'top'} onchange={(e) => dispatch('initiative', 'setDisplay', { position: e.currentTarget.value as StripPosition })}>
-    <option value="top">Сверху</option>
-    <option value="bottom">Снизу</option>
-    <option value="left">Слева</option>
-    <option value="right">Справа</option>
+    <option value="top">{t('init.top')}</option>
+    <option value="bottom">{t('init.bottom')}</option>
+    <option value="left">{t('init.left')}</option>
+    <option value="right">{t('init.right')}</option>
   </select>
 </div>
 
 <div class="setting">
   <div class="info">
-    <div class="name">Имена под портретами</div>
-    <div class="desc">Длинные имена переносятся на вторую строку.</div>
+    <div class="name">{t('init.names')}</div>
+    <div class="desc">{t('init.namesDesc')}</div>
   </div>
   <input type="checkbox" checked={d.names} onchange={(e) => dispatch('initiative', 'setDisplay', { names: e.currentTarget.checked })} />
 </div>
 
 <div class="setting">
   <div class="info">
-    <div class="name">Ранения на портретах</div>
+    <div class="name">{t('init.wounds')}</div>
     <div class="desc">
-      Портрет краснеет по мере потери хитов — так игроки видят, насколько ранен противник (числа не показываются).
-      Побеждённые остаются на полосе серыми. Для отдельного участника ранения можно скрыть кнопкой с сердцем в трекере.
+      {t('init.woundsDesc')}
     </div>
   </div>
   <input type="checkbox" checked={d.wounds} onchange={(e) => dispatch('initiative', 'setDisplay', { wounds: e.currentTarget.checked })} />
@@ -57,11 +57,10 @@
 
 <div class="setting">
   <div class="info">
-    <div class="name">Цвет обводки</div>
+    <div class="name">{t('init.ringColor')}</div>
     <div class="desc">
-      <span class="sw" style:--c="#e8b94a"></span> партия · <span class="sw" style:--c="#4f8de8"></span> союзник ·
-      <span class="sw" style:--c="#9aa0a8"></span> нейтрал · <span class="sw" style:--c="#e04545"></span> противник. Чей ход —
-      портрет крупнее и светится.
+      <span class="sw" style:--c="#e8b94a"></span> {t('init.ringParty')} · <span class="sw" style:--c="#4f8de8"></span> {t('init.ringAlly')} ·
+      <span class="sw" style:--c="#9aa0a8"></span> {t('init.ringNeutral')} · <span class="sw" style:--c="#e04545"></span> {t('init.ringEnemy')}. {t('init.ringTurn')}
     </div>
   </div>
 </div>

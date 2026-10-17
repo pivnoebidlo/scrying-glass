@@ -1,6 +1,7 @@
 <!-- Портрет участника в таблице боя. Если у его карточки несколько картинок, по нажатию можно выбрать другую:
      четыре разбойника — четыре разных лица. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { sameRef } from '../../../shared/cards';
   import { assetUrl, thumb } from '../../../shared/vault';
@@ -38,7 +39,7 @@
 
 {#if images.length > 1}
   <span class="wrap" bind:this={root}>
-    <button class="pick" title="Выбрать другую картинку карточки" onclick={() => (open = !open)}><Avatar {c} /></button>
+    <button class="pick" title={t('init.otherImage')} onclick={() => (open = !open)}><Avatar {c} /></button>
     {#if open}
       <div class="menu">
         {#each images as p (p)}

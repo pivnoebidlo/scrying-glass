@@ -1,5 +1,6 @@
 <!-- Правая панель: заготовки боёв под рукой (подборка) и чей ход. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronLeft, ChevronRight } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
@@ -20,7 +21,7 @@
     openTab('initiative');
   }
   const here = $derived(ms.encounters.filter((e) => !e.adventure || app.adventures.current === null || e.adventure === app.adventures.current));
-  const options = () => here.map((e) => ({ id: e.id, title: e.name, sub: `участников: ${e.combatants.length}${e.adventure && app.adventures.current === null ? ` · ${e.adventure}` : ''}` }));
+  const options = () => here.map((e) => ({ id: e.id, title: e.name, sub: t('init.participants', { count: e.combatants.length }) + (e.adventure && app.adventures.current === null ? ` · ${e.adventure}` : '') }));
   const list = $derived(ordered(ms.combatants));
   const i = $derived(list.findIndex((c) => c.id === ms.turn));
   const current = $derived(list[i]);
@@ -36,8 +37,8 @@
   {options}
   caption={(id) => ms.encounters.find((e) => e.id === id)?.name ?? null}
   iconOf={() => Swords}
-  pickTitle="Заготовки боёв"
-  hint="Бои под рукой: крысы или гоблины — щелчок добавляет участников в бой."
+  pickTitle={t('init.encounters')}
+  hint={t('init.trayHint')}
 />
 
 {#if current}
@@ -45,15 +46,15 @@
     <Avatar c={current} size="32px" />
     <div class="who">
       <div class="name">{current.name}</div>
-      <div class="faint sub">Раунд {ms.round}{next ? ` · дальше ${next.name}` : ''}</div>
+      <div class="faint sub">{t('init.round', { n: ms.round })}{next ? ` · ${t('init.next', { name: next.name })}` : ''}</div>
     </div>
-    <button class="icon-btn" title="Предыдущий ход" onclick={() => dispatch('initiative', 'prev')}><ChevronLeft size={16} /></button>
-    <button class="btn primary" title="Следующий ход" onclick={() => dispatch('initiative', 'next')}><ChevronRight size={16} /></button>
+    <button class="icon-btn" title={t('init.prevTurn')} onclick={() => dispatch('initiative', 'prev')}><ChevronLeft size={16} /></button>
+    <button class="btn primary" title={t('init.nextTurn')} onclick={() => dispatch('initiative', 'next')}><ChevronRight size={16} /></button>
   </div>
 {:else}
   <div class="faint turn">
-    Бой не идёт.
-    {#if list.length}<button class="link" onclick={() => openTab('initiative')}>Участников: {list.length}</button>{/if}
+    {t('init.noFight')}
+    {#if list.length}<button class="link" onclick={() => openTab('initiative')}>{t('init.participantsN', { count: list.length })}</button>{/if}
   </div>
 {/if}
 

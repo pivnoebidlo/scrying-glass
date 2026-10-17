@@ -1,5 +1,6 @@
 <!-- Вкладка «Инициатива»: таблица участников боя для мастера. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronLeft, ChevronRight, Dices, Save, Eye, EyeOff, Heart, HeartOff, ScrollText, Square, Swords, Trash2, X } from '@lucide/svelte';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -51,7 +52,7 @@
   }
 
   function clearEnemies() {
-    if (confirm('Убрать всех противников и союзников? Партия останется, её инициатива и состояния сбросятся.')) {
+    if (confirm(t('init.clearConfirm'))) {
       dispatch('initiative', 'clearEnemies');
     }
   }
@@ -63,14 +64,14 @@
 <div class="view">
   <header class="head">
     <div class="round">
-      {#if running}<span class="label faint">Раунд</span> <span class="n">{ms.round}</span>{:else}<span class="faint">Бой не начат</span>{/if}
+      {#if running}<span class="label faint">{t('init.roundLabel')}</span> <span class="n">{ms.round}</span>{:else}<span class="faint">{t('init.notStarted')}</span>{/if}
     </div>
     {#if running}
-      <button class="btn" title="Предыдущий ход" onclick={() => dispatch('initiative', 'prev')}><ChevronLeft size={14} /></button>
-      <button class="btn primary" onclick={() => dispatch('initiative', 'next')}>Следующий ход <ChevronRight size={14} /></button>
-      <button class="btn" onclick={() => dispatch('initiative', 'end')}><Square size={13} /> Закончить</button>
+      <button class="btn" title={t('init.prevTurn')} onclick={() => dispatch('initiative', 'prev')}><ChevronLeft size={14} /></button>
+      <button class="btn primary" onclick={() => dispatch('initiative', 'next')}>{t('init.nextTurnBtn')} <ChevronRight size={14} /></button>
+      <button class="btn" onclick={() => dispatch('initiative', 'end')}><Square size={13} /> {t('init.end')}</button>
     {:else}
-      <button class="btn primary" disabled={!list.length} onclick={() => dispatch('initiative', 'start')}><Swords size={14} /> Начать бой</button>
+      <button class="btn primary" disabled={!list.length} onclick={() => dispatch('initiative', 'start')}><Swords size={14} /> {t('init.startFight')}</button>
     {/if}
     <div class="spacer"></div>
     {#if isDnd(system)}<Difficulty list={ms.combatants} />{/if}
@@ -78,14 +79,14 @@
       <Dices size={14} /> {tracker.roll.label}
     </button>
     <StripControls d={ms.display} />
-    <label class="show" title="Полоса очерёдности на экране игроков">
+    <label class="show" title={t('init.stripHint')}>
       <input type="checkbox" checked={ms.showToPlayers} onchange={(e) => dispatch('initiative', 'setShowToPlayers', { value: e.currentTarget.checked })} />
-      игрокам
+      {t('init.toPlayers')}
     </label>
-    <button class="icon-btn" title="Сохранить противников и союзников как заготовку боя" disabled={!ms.combatants.some((c) => c.side !== 'party')} onclick={saveAsEncounter}
+    <button class="icon-btn" title={t('init.saveAsEnc')} disabled={!ms.combatants.some((c) => c.side !== 'party')} onclick={saveAsEncounter}
       ><Save size={15} /></button
     >
-    <button class="icon-btn" title="Убрать противников и союзников" onclick={clearEnemies}><Trash2 size={15} /></button>
+    <button class="icon-btn" title={t('init.clearEnemies')} onclick={clearEnemies}><Trash2 size={15} /></button>
   </header>
 
   {#if list.length}
@@ -94,7 +95,7 @@
         <tr>
           <th class="c-init" title={tracker.init.title}>{tracker.init.label}</th>
           <th></th>
-          <th>Имя</th>
+          <th>{t('init.name')}</th>
           <Cells head />
           <th>{tracker.conditions.label}</th>
           <th></th>
@@ -111,8 +112,8 @@
               <input class="name" type="text" value={c.name} onchange={(e) => update(c, { name: e.currentTarget.value.trim() || c.name })} />
               <span class="side faint">
                 <!-- Сторону можно поменять прямо в бою: союзник, на которого напали, становится противником. -->
-                <select class="side-select" value={c.side} title="Сторона" onchange={(e) => update(c, { side: e.currentTarget.value as Side })}>
-                  {#each Object.entries(SIDES) as [v, t] (v)}<option value={v}>{t}</option>{/each}
+                <select class="side-select" value={c.side} title={t('init.side')} onchange={(e) => update(c, { side: e.currentTarget.value as Side })}>
+                  {#each Object.entries(SIDES) as [v, title] (v)}<option value={v}>{title}</option>{/each}
                 </select>{c.bonus ? ` · ${tracker.bonus.short} ${c.bonus > 0 ? '+' : ''}${c.bonus}` : ''}
               </span>
             </td>
@@ -122,19 +123,19 @@
                 {@const entry = tracker.conditions.entry}
                 <span class="chip">
                   {#if entry}
-                    <button class="cond" title="Что это значит — открыть в справочнике" onclick={() => peekEntry(entry(cond))}>{cond}</button>
+                    <button class="cond" title={t('init.condHint')} onclick={() => peekEntry(entry(cond))}>{cond}</button>
                   {:else}
                     <span>{cond}</span>
                   {/if}
-                  <button class="off" title="Снять" onclick={() => dispatch('initiative', 'toggleCondition', { id: c.id, condition: cond })}><X size={10} /></button>
+                  <button class="off" title={t('init.condOff')} onclick={() => dispatch('initiative', 'toggleCondition', { id: c.id, condition: cond })}><X size={10} /></button>
                 </span>
               {/each}
               {#if tracker.conditions.free}
                 <input
                   class="add-aspect"
                   type="text"
-                  placeholder="+ аспект"
-                  title="Аспект на участнике («В огне», «Прижат к стене»): Enter — добавить"
+                  placeholder={t('init.aspect')}
+                  title={t('init.aspectHint')}
                   onkeydown={(e) => e.key === 'Enter' && addAspect(c, e.currentTarget)}
                   onblur={(e) => addAspect(c, e.currentTarget)}
                 />
@@ -142,7 +143,7 @@
                 <select
                   class="add-cond"
                   value=""
-                  title="Добавить состояние"
+                  title={t('init.addCondition')}
                   onchange={(e) => {
                     const v = e.currentTarget.value;
                     if (v) dispatch('initiative', 'toggleCondition', { id: c.id, condition: v });
@@ -157,22 +158,22 @@
             <td class="c-act">
               {#if c.card}
                 {@const ref = c.card}
-                <button class="icon-btn" title="Статблок" onclick={() => bestiary.show(ref)}><ScrollText size={14} /></button>
+                <button class="icon-btn" title={t('init.statblock')} onclick={() => bestiary.show(ref)}><ScrollText size={14} /></button>
               {/if}
               {#if ms.display.wounds}
                 <button
                   class="icon-btn"
                   class:off={c.hideWounds}
-                  title={c.hideWounds ? 'Игроки не видят его ранения — показывать' : 'Не показывать игрокам его ранения (портрет не краснеет)'}
+                  title={c.hideWounds ? t('init.woundsHidden') : t('init.hideWounds')}
                   onclick={() => update(c, { hideWounds: !c.hideWounds })}
                 >
                   {#if c.hideWounds}<HeartOff size={14} />{:else}<Heart size={14} />{/if}
                 </button>
               {/if}
-              <button class="icon-btn" title={c.hidden ? 'Спрятан от игроков — показать' : 'Спрятать от игроков'} onclick={() => update(c, { hidden: !c.hidden })}>
+              <button class="icon-btn" title={c.hidden ? t('init.hidden') : t('init.hide')} onclick={() => update(c, { hidden: !c.hidden })}>
                 {#if c.hidden}<EyeOff size={14} />{:else}<Eye size={14} />{/if}
               </button>
-              <button class="icon-btn" title="Убрать из боя" onclick={() => dispatch('initiative', 'remove', { id: c.id })}><X size={14} /></button>
+              <button class="icon-btn" title={t('init.removeFromFight')} onclick={() => dispatch('initiative', 'remove', { id: c.id })}><X size={14} /></button>
             </td>
           </tr>
         {/each}
@@ -180,7 +181,7 @@
     </table>
   {:else}
     <p class="faint empty">
-      Участников пока нет. Начните вводить имя ниже — появятся подходящие карточки; «Партия» добавит героев приключения. Заранее подготовленный бой — в боковой панели.
+      {t('init.empty')}
     </p>
   {/if}
 

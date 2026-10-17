@@ -1,4 +1,5 @@
 // Трекер инициативы: участники боя, очерёдность ходов, раунды, хиты, состояния.
+import { t } from '../../shared/i18n';
 import { randomUUID } from 'node:crypto';
 import { defineModule } from '../../shared/module';
 import { defeated, ordered, refreshed } from './order';
@@ -67,7 +68,7 @@ export default defineModule({
     add(s, { c, encounter }: { c: Partial<Omit<Combatant, 'id'>>; encounter?: string }) {
       const full: Combatant = {
         id: randomUUID(),
-        name: c.name?.trim() || 'Без имени',
+        name: c.name?.trim() || t('init.noName'),
         init: c.init ?? null,
         bonus: c.bonus ?? 0,
         hp: c.hp ?? c.maxHp ?? null,
@@ -173,7 +174,7 @@ export default defineModule({
     // Новая заготовка (id даёт окно, чтобы сразу её открыть); fromFight — сразу с участниками текущего боя (кроме партии): «сохранить бой как заготовку».
     createEncounter(s, { id, name, adventure, fromFight }: { id: string; name: string; adventure: string | null; fromFight?: boolean }) {
       const combatants = fromFight ? s.combatants.filter((c) => c.side !== 'party').map(fresh) : [];
-      const e: Encounter = { id, name: name.trim() || 'Новый бой', adventure, combatants };
+      const e: Encounter = { id, name: name.trim() || t('init.newFight'), adventure, combatants };
       return { ...s, encounters: [...s.encounters, e] };
     },
 
