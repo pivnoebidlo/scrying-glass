@@ -1,4 +1,4 @@
-<!-- Settings window: the General section (interface language) + a section of every module that has settings. -->
+<!-- Settings window: the General section (interface language, updates) + a section of every module that has settings. -->
 <script lang="ts">
   import { Globe, X } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
@@ -6,6 +6,24 @@
   import { t } from '../lib/i18n.svelte';
   import { LANGS, type LangSetting } from '../../shared/i18n';
   import { workspace } from './workspace.svelte';
+  import { onMount } from 'svelte';
+  import type { UpdateInfo, UpdateSettings } from '../../shared/updates';
+
+  // Updates: the setting and the result of «Check now».
+  let updates = $state<UpdateSettings>({ check: true });
+  let version = $state('');
+  let checking = $state(false);
+  let found = $state<UpdateInfo | null>(null);
+  onMount(async () => {
+    updates = await window.api.updateSettings();
+    version = await window.api.appVersion();
+  });
+  async function checkNow() {
+    checking = true;
+    found = await window.api.checkForUpdates();
+    version = found.current;
+    checking = false;
+  }
 
   const GENERAL = 'general';
   const moduleSections = controlContributions.filter((c) => c.settings);
@@ -56,6 +74,23 @@
             <option value="auto">{t('settings.languageAuto', { lang: LANGS[store.state.vault.lang] })}</option>
             {#each Object.entries(LANGS) as [id, name] (id)}<option value={id}>{name}</option>{/each}
           </select>
+        </div>
+        <div class="setting">
+          <div class="info">
+            <div class="name">{t('updates.title')}</div>
+            <div class="desc">{t('updates.desc', { version })}</div>
+            {#if checking}<div class="desc">{t('updates.checking')}</div>
+            {:else if found}
+              <div class="desc status">
+                {#if found.latest === null}{t('updates.failed')}
+                {:else if found.newer}{t('updates.newer', { version: found.latest })}
+                  <button class="link" onclick={() => found && window.api.openRelease(found.url)}>{t('updates.download')}</button>
+                {:else}{t('updates.upToDate')}{/if}
+              </div>
+            {/if}
+          </div>
+          <label class="check"><input type="checkbox" checked={updates.check} onchange={async (e) => (updates = await window.api.setUpdateSettings({ check: e.currentTarget.checked }))} /> {t('updates.onLaunch')}</label>
+          <button class="btn" disabled={checking} onclick={checkNow}>{t('updates.checkNow')}</button>
         </div>
       {:else if current?.settings}
         <h2>{current.title}</h2>
@@ -157,5 +192,21 @@
     margin: 24px 0 4px;
     font-size: 14px;
     font-weight: 600;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .status {
+    color: var(--text-normal);
+  }
+  .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    cursor: pointer;
   }
 </style>

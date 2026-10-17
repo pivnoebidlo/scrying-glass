@@ -32,6 +32,9 @@ Electron-приложение для мастера D&D: окно управле
 - What is not translated: data (names, folder names, entry files, select options of compendium fields, conditions
   already set on a combatant), stat block labels (`systems/dnd5e/stats.ts` `dict(card.lang)` — the card language),
   spellcasting text of a card (`spells.ts`). Tests that check Russian text call `setLang('ru')` in `beforeAll`.
+- Updates: `main/updates.ts` (GitHub `/releases/latest`), compare — `shared/updates.ts` (`isNewer`); setting
+  `settings.updates` (`check`, `skip`), IPC `updates:*`; on launch (5 s later) — event `updates:available` →
+  `renderer/control/UpdateBanner.svelte`; the General settings section has the switch and «Check now».
 - Setting: `settings.language` in settings.json ('auto' | lang), action `vault/setLanguage`, state `vault.language`
   (setting) and `vault.lang` (resolved); section «General / Общие» in the settings window (`Settings.svelte`).
 - Migration plan: 1) foundation + shell (done); 2) modules, systems, main process (done); 3) built-in content in English (done: compendium

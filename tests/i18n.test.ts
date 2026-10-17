@@ -48,3 +48,17 @@ describe('встроенные звуки', () => {
     }
   });
 });
+
+describe('проверка обновлений', () => {
+  it('сравнение версий', async () => {
+    const { isNewer, isReleaseUrl } = await import('../src/shared/updates');
+    expect(isNewer('v0.30.0', '0.29.0')).toBe(true);
+    expect(isNewer('0.29.1', '0.29.0')).toBe(true);
+    expect(isNewer('1.0.0', '0.99.9')).toBe(true);
+    expect(isNewer('0.29.0', '0.29.0')).toBe(false);
+    expect(isNewer('0.28.9', '0.29.0')).toBe(false);
+    expect(isNewer('v0.30.0-beta', '0.29.0')).toBe(true);
+    expect(isReleaseUrl('https://github.com/pivnoebidlo/scrying-glass/releases/tag/v0.30.0')).toBe(true);
+    expect(isReleaseUrl('https://evil.example/releases')).toBe(false);
+  });
+});

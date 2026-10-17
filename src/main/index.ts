@@ -34,6 +34,8 @@ import {
 import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { importNameLists, listNameLists, namesDir } from './names';
+import { checkForUpdates } from './updates';
+import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
 } from './windows';
@@ -69,6 +71,8 @@ interface AppSettings {
   systemsOff?: string[];
   // Interface language: 'auto' (OS language, else English) or a language.
   language?: LangSetting;
+  // Update check on launch (shared/updates.ts); no field — on.
+  updates?: UpdateSettings;
 }
 const RECENT_MAX = 10;
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -1203,6 +1207,25 @@ ipcMain.handle('files:saveText', async (_event, { name, text }: { name: string; 
     return false;
   }
 });
+// Updates: the setting, a check on demand, opening the release page (only the app's own releases).
+const updateSettings = (): UpdateSettings => ({ check: true, ...settings.updates });
+ipcMain.handle('updates:settings', () => updateSettings());
+ipcMain.handle('updates:setSettings', (_event, next: Partial<UpdateSettings>) => {
+  settings = { ...settings, updates: { ...updateSettings(), ...next } };
+  writeJsonAtomic(settingsFile(), settings);
+  return updateSettings();
+});
+ipcMain.handle('updates:check', () => checkForUpdates());
+ipcMain.handle('app:version', () => app.getVersion());
+ipcMain.handle('updates:open', (_event, url: string) => (isReleaseUrl(url) ? shell.openExternal(url) : undefined));
+// On launch (if on): a newer version that the GM hasn't skipped — the control window shows a banner.
+async function checkUpdatesOnLaunch() {
+  const s = updateSettings();
+  if (!s.check) return;
+  const info = await checkForUpdates();
+  if (info.newer && info.latest !== s.skip) getControlWindow()?.webContents.send('updates:available', info);
+}
+
 ipcMain.handle('cards:revealLibrary', async () => {
   const dir = libraryPath();
   if (dir) {
@@ -1265,6 +1288,8 @@ app.whenReady().then(async () => {
 
   // Последнее открытое хранилище открывается само; если его нет, окно покажет выбор хранилища.
   if (settings.vault && isDir(settings.vault)) await enqueue('vault', () => openVault(settings.vault));
+  // A little later: the window is up and the vault opened, the check doesn't slow the start.
+  setTimeout(() => void checkUpdatesOnLaunch(), 5000);
 });
 
 app.on('window-all-closed', () => app.quit());

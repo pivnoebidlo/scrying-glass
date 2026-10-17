@@ -5,6 +5,7 @@ import type { BuiltinBook } from './compendium';
 import type { Note } from './notes';
 import type { TrashItem, TrashKind, TrashPlace, TrashSettings } from './trash';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
+import type { UpdateInfo, UpdateSettings } from './updates';
 
 // A built-in table to put into the library: id — the same in every language, names — its titles in all languages.
 export interface BuiltinTable {
@@ -134,6 +135,13 @@ export interface Api {
   // Таблица или запись библиотеки — в корзину (спросит подтверждение). true — удалена.
   trashLibraryTable(path: string): Promise<boolean>;
   onTablesChanged(cb: () => void): void;
+  // Updates (shared/updates.ts): the setting, a check now, open a release page, a newer version found on launch.
+  updateSettings(): Promise<UpdateSettings>;
+  setUpdateSettings(next: Partial<UpdateSettings>): Promise<UpdateSettings>;
+  checkForUpdates(): Promise<UpdateInfo>;
+  appVersion(): Promise<string>;
+  openRelease(url: string): Promise<void>;
+  onUpdateAvailable(cb: (info: UpdateInfo) => void): void;
   writeTable(path: string, text: string): Promise<boolean>;
   createTable(folder: string, title: string, text: string): Promise<string | null>;
   // Полная резервная копия одним файлом (.sgbackup, main/archive.ts): сколько весят библиотека и папка хранилища,

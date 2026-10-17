@@ -6,6 +6,9 @@ A game master's screen for tabletop sessions (D&D 5e and Fate Core). The GM has 
 second monitor with portraits, backgrounds, maps with fog of war, handouts and the initiative tracker. On top of
 that: music and ambience, scenes, a compendium, a GM journal and a bestiary with character sheets.
 
+On launch the app checks whether a new version is out (it asks GitHub and sends nothing else): if so, a banner at the
+top of the window offers "Download" / "Skip this version". Turn it off in ⌘, → General → Updates, where "Check now" is too.
+
 The interface is in English and Russian (⌘, → General → Language; by default — the system language if there is a
 translation for it, otherwise English). The language switches at once, without a restart. The built-in compendium,
 random tables and the Fate compendium exist in both languages and follow the interface language.
