@@ -1,5 +1,6 @@
 <!-- Таблицы случайностей: список (свои — из папок таблиц, и встроенные) или открытая таблица. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { RotateCcw } from '@lucide/svelte';
   import CopyToMenu from '../ui/CopyToMenu.svelte';
   import { tablesFolder } from './place';
@@ -30,17 +31,17 @@
     return [...m];
   });
 
-  const TEMPLATE = '# Новая таблица\n\nПояснение (необязательно).\n\n- Первый вариант\n- Второй вариант\n- 2× Вариант, который выпадает вдвое чаще\n';
+  const template = () => t('tools.tables.template');
 
   async function create(place: string | null) {
-    const path = await window.api.createTable(tablesFolder(place), 'Новая таблица', TEMPLATE);
+    const path = await window.api.createTable(tablesFolder(place), t('tools.tables.newName'), template());
     if (path) ui.table = path;
   }
 
   let restored = $state('');
   async function restore() {
     const n = await restoreBuiltins();
-    restored = n ? `Вернулось таблиц: ${n}` : 'Все встроенные таблицы на месте';
+    restored = n ? t('tools.tables.restored', { count: n }) : t('tools.tables.allThere');
     setTimeout(() => (restored = ''), 3000);
   }
 </script>
@@ -48,36 +49,33 @@
 {#if open}
   {#key open.id}<TableView item={open} />{/key}
 {:else if ui.table && tables.loading}
-  <p class="faint pad">Загрузка…</p>
+  <p class="faint pad">{t('tools.tables.loading')}</p>
 {:else}
   <div class="view">
     <header class="head">
-      <h2>Таблицы случайностей</h2>
+      <h2>{t('tools.tables.title')}</h2>
       <div class="spacer"></div>
-      <CopyToMenu label="Новая таблица" title="Где создать: в приключении, в общем или в библиотеке (для всех кампаний)" library primary onpick={create} />
+      <CopyToMenu label={t('tools.tables.newName')} title={t('tools.tables.newHint')} library primary onpick={create} />
     </header>
     <p class="faint intro">
-      Слухи, погода, события в пути, имена. Своя таблица — обычный Markdown-файл в папке <RoleFolderNames role="tables" />:
-      её удобно писать и в Obsidian. Строки списка — варианты, «1-4:» — диапазоны, [[Другая таблица]] — бросок по
-      другой таблице, {'{2d6}'} — кубы, {'{меч|топор}'} — один из вариантов. Таблицы библиотеки общие для всех
-      кампаний; встроенные таблицы лежат там же — их можно дополнять своими вариантами.
+      {t('tools.tables.about1')} <RoleFolderNames role="tables" />{t('tools.tables.about2')}
     </p>
     {#each groups as [g, list] (g)}
       <section>
         <h3>{g} <span class="faint">{list.length}</span></h3>
         <div class="grid">
-          {#each list as t (t.id)}
-            {@const die = tableDie(t.table)}
-            <button class="card" onclick={() => (ui.table = t.id)}>
-              <span class="t">{t.table.title}</span>
-              <span class="faint s">{t.table.entries.length} вар.{die ? ` · d${die}` : ''}</span>
+          {#each list as tb (tb.id)}
+            {@const die = tableDie(tb.table)}
+            <button class="card" onclick={() => (ui.table = tb.id)}>
+              <span class="t">{tb.table.title}</span>
+              <span class="faint s">{t('tools.tables.options', { count: tb.table.entries.length })}{die ? ` · d${die}` : ''}</span>
             </button>
           {/each}
         </div>
       </section>
     {/each}
     <footer class="foot">
-      <button class="btn" title="Положить в библиотеку встроенные таблицы, которые были удалены" onclick={restore}><RotateCcw size={14} /> Вернуть встроенные таблицы</button>
+      <button class="btn" title={t('tools.tables.restoreHint')} onclick={restore}><RotateCcw size={14} /> {t('tools.tables.restore')}</button>
       {#if restored}<span class="faint">{restored}</span>{/if}
     </footer>
   </div>

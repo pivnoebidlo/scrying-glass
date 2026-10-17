@@ -1,5 +1,6 @@
 <!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Calculator, Dices, FileText, Gauge, Hourglass, ScrollText, Table2 } from '@lucide/svelte';
   import { tables } from '../tables/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -18,7 +19,7 @@
 <div class="list">
   <button class="item" data-nav class:active={ui.tool === 'notes' && !ui.note} onclick={() => pickTool('notes')}>
     <ScrollText size={14} />
-    <span class="name">Записки</span>
+    <span class="name">{t('tools.side.notes')}</span>
     <span class="count">{notes.length}</span>
   </button>
   {#each ui.tool === 'notes' && ui.folded !== 'notes' ? notes : [] as f (f.path)}
@@ -29,35 +30,35 @@
   {/each}
   <button class="item" data-nav class:active={ui.tool === 'tables' && !ui.table} onclick={() => pickTool('tables')}>
     <Dices size={14} />
-    <span class="name">Таблицы случайностей</span>
+    <span class="name">{t('tools.side.tables')}</span>
     <span class="count">{tables.vault.length + tables.library.length || ''}</span>
   </button>
   {#if ui.tool === 'tables' && ui.folded !== 'tables'}
-    {#each [...tables.vault, ...tables.library] as t (t.id)}
-      <button class="item sub" data-nav data-depth="1" class:active={ui.table === t.id} title={t.path} onclick={() => (ui.table = t.id)}>
+    {#each [...tables.vault, ...tables.library] as tb (tb.id)}
+      <button class="item sub" data-nav data-depth="1" class:active={ui.table === tb.id} title={tb.path} onclick={() => (ui.table = tb.id)}>
         <Table2 size={13} />
-        <span class="name">{t.table.title}</span>
+        <span class="name">{tb.table.title}</span>
       </button>
     {/each}
   {/if}
   {#if dnd}
     <button class="item" data-nav class:active={ui.tool === 'difficulty'} onclick={() => pickTool('difficulty')}>
       <Gauge size={14} />
-      <span class="name">Сложность боя</span>
+      <span class="name">{t('tools.side.difficulty')}</span>
     </button>
   {/if}
   <button class="item" data-nav class:active={ui.tool === 'timer'} onclick={() => pickTool('timer')}>
     <Hourglass size={14} />
-    <span class="name">Таймер</span>
-    {#if app.timer.active}<span class="count">идёт</span>{/if}
+    <span class="name">{t('tools.side.timer')}</span>
+    {#if app.timer.active}<span class="count">{t('tools.side.running')}</span>{/if}
   </button>
   {#if dnd}
     <button class="item" data-nav class:active={ui.tool === 'pointbuy'} onclick={() => pickTool('pointbuy')}>
       <Calculator size={14} />
-      <span class="name">Покупка характеристик</span>
+      <span class="name">{t('tools.side.pointbuy')}</span>
     </button>
   {/if}
-  <p class="faint more">Здесь появятся и другие инструменты мастера.</p>
+  <p class="faint more">{t('tools.side.more')}</p>
 </div>
 
 <style>

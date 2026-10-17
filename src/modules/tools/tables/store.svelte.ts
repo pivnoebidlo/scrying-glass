@@ -1,6 +1,7 @@
 // Таблицы случайностей в окне управления: таблицы хранилища (Markdown в папках таблиц) и библиотеки (общие для всех
 // кампаний). Встроенные таблицы (написаны для приложения, лежат рядом) при первом запуске кладутся в библиотеку
 // обычными файлами — их можно править и дополнять. Тексты читаются через ядро и перечитываются при изменениях.
+import { t } from '../../../renderer/lib/i18n.svelte';
 import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
 import { store } from '../../../renderer/lib/store.svelte';
 import { placeOrder, placeTitle, visibleIn } from '../../../shared/adventures';
@@ -22,7 +23,7 @@ const raw = import.meta.glob('./builtin/*.md', { query: '?raw', import: 'default
 const fileTitle = (p: string) => basename(p).replace(/\.(md|txt)$/i, '');
 
 const BUILTIN = Object.entries(raw).map(([p, text]) => ({ name: fileTitle(p), text }));
-export const LIBRARY_GROUP = 'Библиотека · для всех кампаний';
+export const libraryGroup = () => t('tools.tables.libraryGroup');
 
 export const tables = $state({ vault: [] as TableItem[], library: [] as TableItem[], loading: false, rev: 0 });
 
@@ -39,7 +40,7 @@ export async function restoreBuiltins() {
 async function loadLibrary() {
   const list = await window.api.listLibraryTables();
   tables.library = list
-    .map((f) => ({ id: f.path, path: f.path, group: LIBRARY_GROUP, order: 2, table: parseTable(f.text, fileTitle(f.path)), text: f.text }))
+    .map((f) => ({ id: f.path, path: f.path, group: libraryGroup(), order: 2, table: parseTable(f.text, fileTitle(f.path)), text: f.text }))
     .sort((a, b) => a.table.title.localeCompare(b.table.title, 'ru'));
 }
 

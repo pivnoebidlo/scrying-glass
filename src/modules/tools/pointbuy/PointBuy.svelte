@@ -1,6 +1,7 @@
 <!-- «Инструменты» → «Покупка характеристик»: 27 очков, от 8 до 15 до бонусов (правила SRD). Бонусы — предыстории
      (2024), расы SRD (2014) или свои. «Проверить персонажа» берёт итоговые значения из листа и подбирает бонусы. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronDown, ChevronRight, Minus, Plus, RotateCcw, UserCheck } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { store } from '../../../renderer/lib/store.svelte';
@@ -52,10 +53,10 @@
   // Правильно ли распределены бонусы для выбранного режима.
   const bonusNote = $derived.by(() => {
     const vals = ABILITIES.map((a) => bonus[a]).filter(Boolean).sort().join();
-    if (pb.mode === '2024') return vals === '1,2' || vals === '1,1,1' ? '' : 'Предыстория даёт +2 и +1 к разным характеристикам или +1 к трём.';
+    if (pb.mode === '2024') return vals === '1,2' || vals === '1,1,1' ? '' : t('tools.pb.bg2024');
     if (race?.choose?.count) {
       const picked = ABILITIES.filter((a) => !race.choose!.except.includes(a) && pb.bonus[a] > 0).length;
-      return picked === race.choose.count ? '' : `Выберите ещё +1 к ${race.choose.count - picked} характеристик${race.choose.count - picked === 1 ? 'е' : 'ам'}.`;
+      return picked === race.choose.count ? '' : t('tools.pb.chooseMore', { count: race.choose.count - picked });
     }
     return '';
   });
@@ -109,57 +110,56 @@
     pb.base = res.base;
     if (!race || race.choose?.count) pb.bonus = race ? { ...zero(), ...Object.fromEntries(ABILITIES.map((a) => [a, res.bonus[a] - (race.fixed[a] ?? 0)])) } : res.bonus;
     const bonusText = ABILITIES.filter((a) => res.bonus[a]).map((a) => `+${res.bonus[a]} ${ABILITY_TITLES[a].toLowerCase()}`).join(', ');
-    const extraNote = level > 1 && ABILITIES.every((a) => !pb.extra[a]) ? ` Персонаж ${level} уровня: увеличения характеристик с уровнями и черт впишите в «Прочее».` : '';
+    const extraNote = level > 1 && ABILITIES.every((a) => !pb.extra[a]) ? t('tools.pb.levelNote', { level }) : '';
     pb.checked = res.problems.length
       ? { name: card.name, level, ok: false, verdict: `${res.problems.map((p) => p.text).join('; ')}.${extraNote}` }
       : {
           name: card.name,
           level,
           ok: true,
-          verdict: `законно: ${res.spent} из ${pb.rules.budget} очков${isStandardArray(res.base) ? ' (стандартный набор)' : ''}${bonusText ? `, бонусы ${bonusText}` : ''}.`,
+          verdict: t('tools.pb.legal', { spent: res.spent, budget: pb.rules.budget, standard: isStandardArray(res.base) ? t('tools.pb.standard') : '', bonuses: bonusText ? t('tools.pb.bonuses', { list: bonusText }) : '' }),
         };
   }
 </script>
 
 <div class="view">
   <header class="head">
-    <h2>Покупка характеристик</h2>
+    <h2>{t('tools.pb.title')}</h2>
     <div class="spacer"></div>
-    <span class="points" class:over={left < 0} class:exact={left === 0}>Потрачено {used} / {pb.rules.budget}</span>
+    <span class="points" class:over={left < 0} class:exact={left === 0}>{t('tools.pb.spent', { used, budget: pb.rules.budget })}</span>
   </header>
   <p class="faint intro">
-    Каждая характеристика от {pb.rules.min} до {pb.rules.max} до бонусов, {pb.rules.budget} очков: 8–13 стоят по очку за ступень,
-    14 и 15 — по два. Бонусы — от предыстории (правила 2024 года) или от расы (2014).
+    {t('tools.pb.rules', { min: pb.rules.min, max: pb.rules.max, budget: pb.rules.budget })}
   </p>
 
   <div class="bar">
-    <label>Бонусы
+    <label>{t('tools.pb.bonusesLabel')}
       <select value={pb.mode} onchange={(e) => (e.currentTarget.value === 'race' ? pickRace(pb.race) : ((pb.mode = e.currentTarget.value as '2024' | 'custom'), (pb.bonus = zero()), (pb.checked = null)))}>
-        <option value="2024">Предыстория (2024): +2/+1 или +1/+1/+1</option>
-        <option value="race">Раса (2014)</option>
-        <option value="custom">Свои бонусы</option>
+        <option value="2024">{t('tools.pb.mode2024')}</option>
+        <option value="race">{t('tools.pb.modeRace')}</option>
+        <option value="custom">{t('tools.pb.modeCustom')}</option>
       </select>
     </label>
     {#if pb.mode === 'race'}
-      <select value={pb.race} title="Раса" onchange={(e) => pickRace(e.currentTarget.value)}>
+      <select value={pb.race} title={t('tools.pb.race')} onchange={(e) => pickRace(e.currentTarget.value)}>
         <optgroup label="SRD">{#each races.filter((r) => !r.own) as r (r.id)}<option value={r.id}>{r.title}</option>{/each}</optgroup>
         {#if races.some((r) => r.own)}
-          <optgroup label="Свои">{#each races.filter((r) => r.own) as r (r.id)}<option value={r.id}>{r.title}</option>{/each}</optgroup>
+          <optgroup label={t('tools.pb.own')}>{#each races.filter((r) => r.own) as r (r.id)}<option value={r.id}>{r.title}</option>{/each}</optgroup>
         {/if}
       </select>
       {#if raceDef?.subraces.length}
-        <select value={pb.sub ?? ''} title="Подраса" onchange={(e) => pickRace(pb.race, e.currentTarget.value)}>
+        <select value={pb.sub ?? ''} title={t('tools.pb.subrace')} onchange={(e) => pickRace(pb.race, e.currentTarget.value)}>
           {#each raceDef.subraces as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
         </select>
       {/if}
     {/if}
-    <button class="btn" onclick={standard}>Стандартный набор</button>
-    <button class="btn" onclick={reset}><RotateCcw size={14} /> Сбросить</button>
+    <button class="btn" onclick={standard}>{t('tools.pb.standardArray')}</button>
+    <button class="btn" onclick={reset}><RotateCcw size={14} /> {t('tools.pb.reset')}</button>
   </div>
 
   <table>
     <thead>
-      <tr><th>Характеристика</th><th class="c">База</th><th class="c">Цена</th><th class="c">Бонус</th><th class="c" title="Увеличения с уровнями, черты и прочее">Прочее</th><th class="c">Итог</th><th class="c">Мод.</th></tr>
+      <tr><th>{t('tools.pb.ability')}</th><th class="c">{t('tools.pb.base')}</th><th class="c">{t('tools.pb.cost')}</th><th class="c">{t('tools.pb.bonus')}</th><th class="c" title={t('tools.pb.otherHint')}>{t('tools.pb.other')}</th><th class="c">{t('tools.pb.total')}</th><th class="c">{t('tools.pb.mod')}</th></tr>
     </thead>
     <tbody>
       {#each ABILITIES as a (a)}
@@ -195,32 +195,31 @@
 
   {#if bonusNote}<p class="warn">{bonusNote}</p>{/if}
   {#each problems.filter((p) => !p.ability) as p (p.text)}<p class="warn">{p.text}.</p>{/each}
-  {#if left > 0 && !problems.length}<p class="faint">Осталось очков: {left}.</p>{/if}
+  {#if left > 0 && !problems.length}<p class="faint">{t('tools.pb.left', { count: left })}</p>{/if}
 
   <section class="own">
     <button class="toggle" onclick={() => (editRaces = !editRaces)}>
       {#if editRaces}<ChevronDown size={14} />{:else}<ChevronRight size={14} />{/if}
-      Свои расы и подрасы{custom.races.length + custom.subraces.length ? ` (${custom.races.length + custom.subraces.length})` : ''}
+      {t('tools.pb.customRaces')}{custom.races.length + custom.subraces.length ? ` (${custom.races.length + custom.subraces.length})` : ''}
     </button>
     {#if editRaces}<RaceEditor onpick={pickRace} />{/if}
   </section>
 
   <section class="check">
-    <h3>Проверить персонажа</h3>
+    <h3>{t('tools.pb.check')}</h3>
     <div class="bar">
       <select bind:value={pickRef}>
-        <option value="">Выберите персонажа игрока…</option>
+        <option value="">{t('tools.pb.pickHero')}</option>
         {#each heroes as h (refKey(h.ref))}<option value={refKey(h.ref)}>{h.name} — {h.subtitle}</option>{/each}
       </select>
-      <button class="btn primary" disabled={!pickRef} onclick={check}><UserCheck size={14} /> Проверить</button>
+      <button class="btn primary" disabled={!pickRef} onclick={check}><UserCheck size={14} /> {t('tools.pb.doCheck')}</button>
     </div>
-    {#if !heroes.length}<p class="faint">Персонажей игроков пока нет: их листы — в «Карточках» (папки партии, импорт из Long Story Short).</p>{/if}
+    {#if !heroes.length}<p class="faint">{t('tools.pb.noHeroes')}</p>{/if}
     <p class="faint">
-      Итоговые значения берутся из листа, бонусы подбираются сами для выбранного вида бонусов. У персонажа выше 1 уровня
-      сначала впишите в «Прочее» увеличения характеристик и черты.
+      {t('tools.pb.checkHint')}
     </p>
     {#if pb.checked}
-      <p class="verdict" class:ok={pb.checked.ok}><b>{pb.checked.name}</b> ({pb.checked.level} ур.): {pb.checked.verdict}</p>
+      <p class="verdict" class:ok={pb.checked.ok}><b>{pb.checked.name}</b> ({t('tools.pb.lvl', { n: pb.checked.level })}): {pb.checked.verdict}</p>
     {/if}
   </section>
 </div>

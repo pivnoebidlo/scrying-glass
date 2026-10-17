@@ -2,6 +2,7 @@
      Таблицу можно править здесь же, открыть в другой программе (Obsidian), удалить в корзину или скопировать
      в приключение, в общие таблицы хранилища или в библиотеку (для всех кампаний). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronLeft, Copy, Dices, ExternalLink, Pencil, Trash2 } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { inline } from '../../../renderer/lib/markdown';
@@ -42,7 +43,7 @@
     // Видно здесь — открываем копию; иначе — сообщаем, куда легла.
     if (visibleHere(place)) ui.table = path;
     else {
-      status = `Копия — в «${place}»: её видно, когда это приключение выбрано.`;
+      status = t('tools.tables.copyIn', { place: place ?? t('place.shared') });
       setTimeout(() => (status = ''), 4000);
     }
   }
@@ -77,13 +78,13 @@
 
 <div class="view">
   <header class="head">
-    <button class="icon-btn" title="Ко всем таблицам" onclick={() => (ui.table = null)}><ChevronLeft size={16} /></button>
+    <button class="icon-btn" title={t('tools.tables.back')} onclick={() => (ui.table = null)}><ChevronLeft size={16} /></button>
     <h2>{item.table.title}</h2>
-    <span class="faint meta" title={item.path}>{isLibraryTable(item.path) ? 'библиотека, для всех кампаний' : item.path} · {item.table.entries.length} вар.{die ? ` · d${die}` : ''}</span>
-    <button class="btn" onclick={() => ((draft = item.text), (editing = !editing))}><Pencil size={14} /> {editing ? 'Не править' : 'Править'}</button>
-    <CopyToMenu title="Скопировать в приключение, в общие таблицы хранилища или в библиотеку" library onpick={copyTo} />
-    <button class="icon-btn" title="Открыть файл в другой программе (например, в Obsidian)" onclick={() => window.api.openFile(item.path)}><ExternalLink size={15} /></button>
-    <button class="icon-btn" title="Удалить таблицу в корзину" onclick={trash}><Trash2 size={15} /></button>
+    <span class="faint meta" title={item.path}>{isLibraryTable(item.path) ? t('tools.tables.libraryAll') : item.path} · {t('tools.tables.options', { count: item.table.entries.length })}{die ? ` · d${die}` : ''}</span>
+    <button class="btn" onclick={() => ((draft = item.text), (editing = !editing))}><Pencil size={14} /> {editing ? t('tools.tables.stopEdit') : t('tools.tables.edit')}</button>
+    <CopyToMenu title={t('tools.tables.copyTo')} library onpick={copyTo} />
+    <button class="icon-btn" title={t('tools.tables.openExternal')} onclick={() => window.api.openFile(item.path)}><ExternalLink size={15} /></button>
+    <button class="icon-btn" title={t('tools.tables.delete')} onclick={trash}><Trash2 size={15} /></button>
   </header>
   {#if item.table.description}<p class="faint about">{item.table.description}</p>{/if}
   {#if status}<p class="status">{status}</p>{/if}
@@ -91,26 +92,25 @@
   {#if editing}
     <textarea rows="18" bind:value={draft}></textarea>
     <p class="faint help">
-      Строка «- » — вариант, «3× » — втрое чаще, «1-4:» — диапазон, «# » — название. В тексте: [[Другая таблица]],
-      {'{2d6}'}, {'{меч|топор|лук}'}.
+      {t('tools.tables.syntax')}
     </p>
     <div class="row">
-      <button class="btn primary" onclick={save}>Сохранить</button>
-      <button class="btn" onclick={() => (editing = false)}>Отмена</button>
+      <button class="btn primary" onclick={save}>{t('tools.tables.save')}</button>
+      <button class="btn" onclick={() => (editing = false)}>{t('tools.tables.cancel')}</button>
     </div>
   {:else}
     <div class="row">
-      <button class="btn primary big" disabled={!item.table.entries.length} title="Бросить (пробел)" onclick={() => roll(item)}><Dices size={16} /> Бросить</button>
+      <button class="btn primary big" disabled={!item.table.entries.length} title={t('tools.tables.rollHint')} onclick={() => roll(item)}><Dices size={16} /> {t('tools.tables.roll')}</button>
       <button class="btn" disabled={!item.table.entries.length} onclick={() => roll(item, 3)}>×3</button>
       <button class="btn" disabled={!item.table.entries.length} onclick={() => roll(item, 5)}>×5</button>
       {#if results.length}
         <div class="spacer"></div>
-        <button class="icon-btn" title="Очистить результаты этой таблицы" onclick={() => history.splice(0, history.length, ...history.filter((h) => h.table !== item.id))}><Trash2 size={14} /></button>
+        <button class="icon-btn" title={t('tools.tables.clearResults')} onclick={() => history.splice(0, history.length, ...history.filter((h) => h.table !== item.id))}><Trash2 size={14} /></button>
       {/if}
     </div>
 
     {#if !item.table.entries.length}
-      <p class="faint">В таблице нет вариантов: строки должны начинаться с «- » или с номера («1-4:»).</p>
+      <p class="faint">{t('tools.tables.noOptions')}</p>
     {/if}
 
     <ul class="results">
@@ -119,17 +119,17 @@
           {#if h.roll.number !== null}<span class="num">{h.roll.number}</span>{/if}
           <!-- Текст экранирован в inline(). -->
           <span class="text">{@html inline(h.roll.text)}</span>
-          <button class="icon-btn" title={copied === h.id ? 'Скопировано' : 'Копировать'} onclick={() => copy(h.id, h.roll.text)}><Copy size={13} /></button>
+          <button class="icon-btn" title={copied === h.id ? t('tools.tables.copied') : t('tools.tables.copy')} onclick={() => copy(h.id, h.roll.text)}><Copy size={13} /></button>
         </li>
       {/each}
     </ul>
 
-    <button class="all faint" onclick={() => (showAll = !showAll)}>{showAll ? '▾' : '▸'} Все варианты ({item.table.entries.length})</button>
+    <button class="all faint" onclick={() => (showAll = !showAll)}>{showAll ? '▾' : '▸'} {t('tools.tables.allOptions', { count: item.table.entries.length })}</button>
     {#if showAll}
       <ol class="entries">
         {#each item.table.entries as e, i (i)}
           <li>
-            <button title="Выбрать этот вариант" onclick={() => pick(item, i)}>
+            <button title={t('tools.tables.pick')} onclick={() => pick(item, i)}>
               <span class="r faint">{range(e) || (e.weight > 1 ? `${e.weight}×` : '')}</span>
               <span>{e.text}</span>
             </button>

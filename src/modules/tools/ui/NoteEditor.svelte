@@ -1,6 +1,7 @@
 <!-- Редактор записки: слева текст и оформление, справа лист, как его увидят игроки. Сохраняется само
      (через полсекунды после правки); если записка у игроков, она обновляется у них тоже. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { AlignCenter, AlignJustify, AlignLeft, ArrowUpToLine, ChevronLeft, Dices, Eraser, Eye, EyeOff, Trash2, TriangleAlert } from '@lucide/svelte';
   import { onDestroy, untrack } from 'svelte';
   import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
@@ -78,7 +79,7 @@
     if (!copy) return;
     if (target === app.adventures.current || app.adventures.current === null) ui.note = copy;
     else {
-      status = `Копия — в «${target ?? 'Общее'}»`;
+      status = t('tools.note.copyIn', { place: target ?? t('place.shared') });
       setTimeout(() => (status = ''), 4000);
     }
   }
@@ -172,72 +173,72 @@
 
 <div class="editor">
   <header class="bar">
-    <button class="icon-btn" title="Ко всем запискам" onclick={() => (ui.note = null)}><ChevronLeft size={16} /></button>
-    <input class="title" type="text" bind:value={title} title="Название записки (и имя файла)" onchange={rename} onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
-    <span class="faint status">{missing ? '' : saved ? 'сохранено' : 'сохраняется…'}</span>
+    <button class="icon-btn" title={t('tools.note.back')} onclick={() => (ui.note = null)}><ChevronLeft size={16} /></button>
+    <input class="title" type="text" bind:value={title} title={t('tools.note.titleHint')} onchange={rename} onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
+    <span class="faint status">{missing ? '' : saved ? t('tools.note.saved') : t('tools.note.saving')}</span>
     {#if status}<span class="copied">{status}</span>{/if}
     <div class="spacer"></div>
-    <CopyToMenu title="Скопировать записку в раздатку другого приключения" onpick={copyTo} />
+    <CopyToMenu title={t('tools.note.copyTo')} onpick={copyTo} />
     <button class="btn" class:primary={!shown} disabled={!note} onclick={() => dispatch('handouts', 'toggle', { path })}>
-      {#if shown}<EyeOff size={14} /> Убрать у игроков{:else}<Eye size={14} /> Показать игрокам{/if}
+      {#if shown}<EyeOff size={14} /> {t('tools.note.removeFromPlayers')}{:else}<Eye size={14} /> {t('tools.note.showToPlayers')}{/if}
     </button>
   </header>
 
   {#if missing}
-    <p class="faint empty">Не удалось прочитать записку: файла нет или он повреждён.</p>
+    <p class="faint empty">{t('tools.note.cantRead')}</p>
   {:else if note}
     <div class="columns">
       <form class="form" onsubmit={(e) => e.preventDefault()}>
         <label class="field">
-          <span>Текст</span>
-          <textarea rows="12" bind:value={note.text} placeholder={'# Письмо\n\nДорогой друг, *спешу сообщить*…\n\n---\n\nПустая строка — новый абзац.'}></textarea>
-          <small class="faint">«# » — заголовок, «## » — подзаголовок, *курсив*, **жирный**, «- » — список, «---» — украшение.</small>
+          <span>{t('tools.note.text')}</span>
+          <textarea rows="12" bind:value={note.text} placeholder={t('tools.note.textPlaceholder')}></textarea>
+          <small class="faint">{t('tools.note.textHint')}</small>
         </label>
 
         <div class="row">
           <label class="field grow">
-            <span>Шрифт</span>
+            <span>{t('tools.note.font')}</span>
             <select bind:value={note.font}>
               {#each Object.entries(fontGroups) as [g, list] (g)}
-                <optgroup label={g}>{#each list as [id, t] (id)}<option value={id}>{t}</option>{/each}</optgroup>
+                <optgroup label={g}>{#each list as [id, title] (id)}<option value={id}>{title}</option>{/each}</optgroup>
               {/each}
             </select>
           </label>
           <div class="field">
-            <span>Выравнивание</span>
+            <span>{t('tools.note.align')}</span>
             <div class="seg">
-              <button type="button" class:active={note.align === 'left'} title="По левому краю" onclick={() => (note!.align = 'left')}><AlignLeft size={14} /></button>
-              <button type="button" class:active={note.align === 'center'} title="По центру" onclick={() => (note!.align = 'center')}><AlignCenter size={14} /></button>
-              <button type="button" class:active={note.align === 'justify'} title="По ширине" onclick={() => (note!.align = 'justify')}><AlignJustify size={14} /></button>
+              <button type="button" class:active={note.align === 'left'} title={t('tools.note.left')} onclick={() => (note!.align = 'left')}><AlignLeft size={14} /></button>
+              <button type="button" class:active={note.align === 'center'} title={t('tools.note.center')} onclick={() => (note!.align = 'center')}><AlignCenter size={14} /></button>
+              <button type="button" class:active={note.align === 'justify'} title={t('tools.note.justify')} onclick={() => (note!.align = 'justify')}><AlignJustify size={14} /></button>
             </div>
           </div>
         </div>
 
         <div class="field">
-          <span>Размер текста</span>
+          <span>{t('tools.note.size')}</span>
           <div class="size"><Slider value={note.size} min={2} max={10} step={0.1} oninput={(v) => (note!.size = v)} /><span class="faint">{note.size.toFixed(1)}</span></div>
         </div>
 
         <div class="field">
-          <span title="Буквы пляшут: дрожащая рука, спешка, безумие">Неровность почерка</span>
+          <span title={t('tools.note.shakyHint')}>{t('tools.note.shaky')}</span>
           <div class="size"><Slider value={note.shaky} min={0} max={1} step={0.01} oninput={(v) => (note!.shaky = v)} /><span class="faint">{Math.round(note.shaky * 100)}</span></div>
         </div>
 
         <div class="row">
           <label class="field grow">
-            <span>Бумага</span>
+            <span>{t('tools.note.paper')}</span>
             <select value={note.paper} onchange={(e) => (note!.paper = e.currentTarget.value as Paper)}>
-              {#each Object.entries(NOTE_PAPERS) as [id, t] (id)}<option value={id}>{t}</option>{/each}
+              {#each Object.entries(NOTE_PAPERS) as [id, title] (id)}<option value={id}>{title}</option>{/each}
             </select>
           </label>
           <label class="field grow">
-            <span>Край</span>
+            <span>{t('tools.note.edge')}</span>
             <select value={note.edge} onchange={(e) => (note!.edge = e.currentTarget.value as NoteEdge)}>
-              {#each Object.entries(NOTE_EDGES) as [id, t] (id)}<option value={id}>{t}</option>{/each}
+              {#each Object.entries(NOTE_EDGES) as [id, title] (id)}<option value={id}>{title}</option>{/each}
             </select>
           </label>
           <label class="field grow">
-            <span>Форма</span>
+            <span>{t('tools.note.shape')}</span>
             <select value={note.shape} onchange={(e) => (note!.shape = e.currentTarget.value as NoteShape)}>
               {#each Object.entries(NOTE_SHAPES) as [id, s] (id)}<option value={id}>{s.title}</option>{/each}
             </select>
@@ -246,33 +247,33 @@
 
         <div class="row">
           <label class="field grow">
-            <span>Чернила</span>
+            <span>{t('tools.note.ink')}</span>
             <select value={note.ink} onchange={(e) => (note!.ink = e.currentTarget.value as NoteInk)}>
               {#each Object.entries(NOTE_INKS) as [id, i] (id)}<option value={id}>{i.title}</option>{/each}
             </select>
           </label>
           <label class="field grow">
-            <span>Состояние</span>
+            <span>{t('tools.note.state')}</span>
             <select value={note.crease} onchange={(e) => (note!.crease = e.currentTarget.value as NoteCrease)}>
-              {#each Object.entries(NOTE_CREASES) as [id, t] (id)}<option value={id}>{t}</option>{/each}
+              {#each Object.entries(NOTE_CREASES) as [id, title] (id)}<option value={id}>{title}</option>{/each}
             </select>
           </label>
           <div class="field">
-            <span>Пятна и края</span>
-            <button type="button" class="btn" title="Другие пятна и другой рисунок края" onclick={() => (note!.seed = Math.floor(Math.random() * 10000))}><Dices size={14} /> Перемешать</button>
+            <span>{t('tools.note.stains')}</span>
+            <button type="button" class="btn" title={t('tools.note.reshuffleHint')} onclick={() => (note!.seed = Math.floor(Math.random() * 10000))}><Dices size={14} /> {t('tools.note.reshuffle')}</button>
           </div>
         </div>
 
         <div class="row">
           <label class="field grow">
-            <span>Подпись</span>
-            <input type="text" bind:value={note.signature} placeholder="Ваш друг, Гилберт" />
+            <span>{t('tools.note.signature')}</span>
+            <input type="text" bind:value={note.signature} placeholder={t('tools.note.signaturePlaceholder')} />
           </label>
           <label class="field">
-            <span>Шрифт подписи</span>
+            <span>{t('tools.note.signatureFont')}</span>
             <select bind:value={note.signatureFont}>
               {#each Object.entries(fontGroups) as [g, list] (g)}
-                <optgroup label={g}>{#each list as [id, t] (id)}<option value={id}>{t}</option>{/each}</optgroup>
+                <optgroup label={g}>{#each list as [id, title] (id)}<option value={id}>{title}</option>{/each}</optgroup>
               {/each}
             </select>
           </label>
@@ -281,15 +282,15 @@
 
         <section class="marks">
           <div class="marks-head">
-            <span>Следы</span>
+            <span>{t('tools.note.marks')}</span>
             {#if note.marks.length}
-              <button type="button" class="link" title="Убрать с листа все следы" onclick={() => ((note!.marks = []), (selected = null))}><Eraser size={12} /> Убрать все</button>
+              <button type="button" class="link" title={t('tools.note.clearMarksHint')} onclick={() => ((note!.marks = []), (selected = null))}><Eraser size={12} /> {t('tools.note.clearMarks')}</button>
             {/if}
           </div>
           {#each Object.entries(markGroups) as [g, kinds] (g)}
             <div class="palette" aria-label={g}>
               {#each kinds as k (k)}
-                <button type="button" class:active={tool === k} title={tool === k ? 'Хватит ставить (Esc)' : `${NOTE_MARKS[k].title}: щёлкните по листу`} onclick={() => ((tool = tool === k ? null : k), (selected = null))}>
+                <button type="button" class:active={tool === k} title={tool === k ? t('tools.note.stopPlacing') : t('tools.note.placeHint', { mark: NOTE_MARKS[k].title })} onclick={() => ((tool = tool === k ? null : k), (selected = null))}>
                   <svg viewBox="-110 -110 220 220" aria-hidden="true">{@html icon(k)}</svg>
                   <span>{NOTE_MARKS[k].title}</span>
                 </button>
@@ -297,8 +298,8 @@
             </div>
           {/each}
           <small class="faint">
-            {#if tool}Щёлкайте по листу, чтобы поставить «{NOTE_MARKS[tool].title.toLowerCase()}». Esc — хватит.
-            {:else}Выберите след и щёлкните по листу. Поставленный след можно перетащить; колёсико — размер, Shift + колёсико — поворот, Delete — убрать.{/if}
+            {#if tool}{t('tools.note.placing', { mark: NOTE_MARKS[tool].title.toLowerCase() })}
+            {:else}{t('tools.note.markHelp')}{/if}
           </small>
 
           {#if mark}
@@ -307,34 +308,34 @@
               <div class="sel-head">
                 <strong>{NOTE_MARKS[mark.kind].title}</strong>
                 <div class="spacer"></div>
-                <button type="button" class="icon-btn" title="Другой рисунок" onclick={() => (mark!.seed = Math.floor(Math.random() * 1e6))}><Dices size={14} /></button>
-                <button type="button" class="icon-btn" title="Поверх остальных следов" onclick={toTop}><ArrowUpToLine size={14} /></button>
-                <button type="button" class="icon-btn" title="Убрать след (Delete)" onclick={removeMark}><Trash2 size={14} /></button>
+                <button type="button" class="icon-btn" title={t('tools.note.otherPattern')} onclick={() => (mark!.seed = Math.floor(Math.random() * 1e6))}><Dices size={14} /></button>
+                <button type="button" class="icon-btn" title={t('tools.note.toTop')} onclick={toTop}><ArrowUpToLine size={14} /></button>
+                <button type="button" class="icon-btn" title={t('tools.note.removeMark')} onclick={removeMark}><Trash2 size={14} /></button>
               </div>
               {#if tints.length > 1}
                 <label class="field">
-                  <span>Цвет</span>
+                  <span>{t('tools.note.color')}</span>
                   <select value={markTint(mark)} onchange={(e) => (mark!.tint = e.currentTarget.value as NoteTint)}>
-                    {#each tints as t (t)}<option value={t}>{NOTE_TINTS[t].title}</option>{/each}
+                    {#each tints as tint (tint)}<option value={tint}>{NOTE_TINTS[tint].title}</option>{/each}
                   </select>
                 </label>
               {/if}
               {#if mark.kind === 'seal' || mark.kind === 'stamp'}
                 {@const kind = mark.kind}
                 <label class="field">
-                  <span>{kind === 'seal' ? 'Буква (если нет знака)' : 'Надпись по кругу'}</span>
+                  <span>{kind === 'seal' ? t('tools.note.sealLetter') : t('tools.note.stampText')}</span>
                   <input
                     type="text"
                     maxlength={SEAL_TEXT_MAX[kind]}
                     value={mark.text ?? ''}
-                    placeholder={kind === 'seal' ? 'Г' : 'Королевская канцелярия'}
+                    placeholder={kind === 'seal' ? t('tools.note.sealLetterPh') : t('notes.defaultStamp')}
                     oninput={(e) => (mark!.text = e.currentTarget.value)}
                   />
                 </label>
                 <div class="field">
-                  <span>Знак</span>
+                  <span>{t('tools.note.emblem')}</span>
                   <div class="emblems">
-                    <button type="button" class:active={!mark.emblem} title="Без знака" onclick={() => (mark!.emblem = undefined)}>—</button>
+                    <button type="button" class:active={!mark.emblem} title={t('tools.note.noEmblem')} onclick={() => (mark!.emblem = undefined)}>—</button>
                     {#each emblems as [id, e] (id)}
                       <button type="button" class:active={mark.emblem === id} title={e.title} onclick={() => (mark!.emblem = id)}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{#each e.paths as d (d)}<path {d} />{/each}</svg>
@@ -343,19 +344,19 @@
                   </div>
                 </div>
                 {#if kind === 'seal'}
-                  <label class="check"><input type="checkbox" checked={!!mark.broken} onchange={(e) => (mark!.broken = e.currentTarget.checked || undefined)} /> Сломана — письмо вскрыто</label>
+                  <label class="check"><input type="checkbox" checked={!!mark.broken} onchange={(e) => (mark!.broken = e.currentTarget.checked || undefined)} /> {t('tools.note.broken')}</label>
                 {/if}
               {/if}
               <div class="field">
-                <span>Размер</span>
+                <span>{t('tools.note.markSize')}</span>
                 <div class="size"><Slider value={mark.size} min={MARK_SIZE.min} max={MARK_SIZE.max} step={0.005} oninput={(v) => (mark!.size = v)} /><span class="faint">{Math.round(mark.size * 100)}</span></div>
               </div>
               <div class="field">
-                <span>Поворот</span>
+                <span>{t('tools.note.rotation')}</span>
                 <div class="size"><Slider value={mark.angle} min={0} max={360} step={1} oninput={(v) => (mark!.angle = v)} /><span class="faint">{Math.round(mark.angle)}°</span></div>
               </div>
               <div class="field">
-                <span>Насыщенность</span>
+                <span>{t('tools.note.strength')}</span>
                 <div class="size"><Slider value={mark.opacity} min={0.1} max={1} step={0.01} oninput={(v) => (mark!.opacity = v)} /><span class="faint">{Math.round(mark.opacity * 100)}</span></div>
               </div>
             </div>
@@ -366,7 +367,7 @@
       <div class="preview">
         <div class="paper" {onwheel}><NotePaper note={note} shadow bind:overflow edit={{ selected, placing: !!tool, onpick }} /></div>
         {#if overflow}
-          <p class="warn"><TriangleAlert size={14} /> Текст не помещается на лист: уменьшите размер текста, сократите текст или выберите форму побольше.</p>
+          <p class="warn"><TriangleAlert size={14} /> {t('tools.note.overflow')}</p>
         {/if}
       </div>
     </div>

@@ -1,13 +1,14 @@
 <!-- Кнопка с выбором места: приключения, «Общее» (вне приключений) и, если library, библиотека — общая для всех
      кампаний (место — LIBRARY). Одно-единственное место выбирается сразу, без списка. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { FilePlus2 } from '@lucide/svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import { LIBRARY } from '../../../shared/vault';
   import { shownAdventures } from '../../../shared/adventures';
 
   let {
-    label = 'Копия в…',
+    label = t('tools.copy.label'),
     title,
     library = false,
     primary = false,
@@ -16,8 +17,8 @@
 
   const places = $derived([
     ...shownAdventures(store.state.adventures).map((a) => ({ id: a as string | null, title: a })),
-    { id: null, title: 'Общее (вне приключений)' },
-    ...(library ? [{ id: LIBRARY as string | null, title: 'Библиотека — для всех кампаний' }] : []),
+    { id: null, title: t('tools.copy.shared') },
+    ...(library ? [{ id: LIBRARY as string | null, title: t('tools.copy.library') }] : []),
   ]);
   let open = $state(false);
 
@@ -34,7 +35,7 @@
   {#if open}
     <ul class="menu" role="menu">
       {#each places as p (p.id ?? '')}
-        <li><button role="menuitem" onclick={() => pick(p.id)}>{p.title}{p.id === store.state.adventures.current ? ' · текущее' : ''}</button></li>
+        <li><button role="menuitem" onclick={() => pick(p.id)}>{p.title}{p.id === store.state.adventures.current ? t('tools.copy.current') : ''}</button></li>
       {/each}
     </ul>
   {/if}

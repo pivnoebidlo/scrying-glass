@@ -1,6 +1,7 @@
 <!-- Плитка записки: лист в миниатюре, название, кнопки «показать игрокам», «править», «в корзину» (подпись кнопки —
      сразу при наведении). Щелчок по листу игрокам ничего не показывает, двойной — открывает записку в редакторе. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Pencil, Scroll, Trash2 } from '@lucide/svelte';
   import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
   import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
@@ -27,16 +28,16 @@
 </script>
 
 <div class="card" class:on={shown}>
-  <button class="thumb" title="Двойной щелчок — открыть в редакторе" ondblclick={() => (onopen ? onopen() : editNote(path))}>
+  <button class="thumb" title={t('tools.card.zoom')} ondblclick={() => (onopen ? onopen() : editNote(path))}>
     {#if note}<NotePaper {note} />{/if}
   </button>
-  {#if shown}<span class="badge">раздатка</span>{/if}
+  {#if shown}<span class="badge">{t('tools.card.handout')}</span>{/if}
   <div class="actions">
-    <button class="act" aria-label="Показать игрокам" class:active={shown} onclick={() => dispatch('handouts', 'toggle', { path })}
-      ><Scroll size={14} /><span class="tip">{shown ? 'Убрать с экрана' : 'Показать игрокам'}</span></button
+    <button class="act" aria-label={t('tools.card.show')} class:active={shown} onclick={() => dispatch('handouts', 'toggle', { path })}
+      ><Scroll size={14} /><span class="tip">{shown ? t('tools.card.removeFromScreen') : t('tools.card.show')}</span></button
     >
-    <button class="act" aria-label="Править" onclick={() => (onopen ? onopen() : editNote(path))}><Pencil size={14} /><span class="tip">Править</span></button>
-    <button class="act" aria-label="В корзину" onclick={trash}><Trash2 size={14} /><span class="tip">В корзину</span></button>
+    <button class="act" aria-label={t('tools.card.edit')} onclick={() => (onopen ? onopen() : editNote(path))}><Pencil size={14} /><span class="tip">{t('tools.card.edit')}</span></button>
+    <button class="act" aria-label={t('tools.card.toTrash')} onclick={trash}><Trash2 size={14} /><span class="tip">{t('tools.card.toTrash')}</span></button>
   </div>
   <div class="caption" title={path}>{noteTitle(path)}</div>
 </div>

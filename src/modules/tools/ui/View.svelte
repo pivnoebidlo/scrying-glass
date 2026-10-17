@@ -1,5 +1,6 @@
 <!-- Вкладка «Инструменты»: открытый инструмент. Записки — список записок приключения или редактор одной. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { FilePlus2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
@@ -43,13 +44,12 @@
 {:else}
   <div class="view">
     <header class="head">
-      <h2>Записки</h2>
+      <h2>{t('tools.notes.title')}</h2>
       <div class="spacer"></div>
-      <button class="btn primary" onclick={create}><FilePlus2 size={14} /> Новая записка</button>
+      <button class="btn primary" onclick={create}><FilePlus2 size={14} /> {t('tools.notes.new')}</button>
     </header>
     <p class="faint intro">
-      Письма, приказы, объявления и дневники — текст на пергаменте или старой бумаге. Записка сохраняется в папку
-      <RoleFolderNames role="handouts" /> приключения и показывается игрокам из «Раздатки», как картинки.
+      {t('tools.notes.about1')} <RoleFolderNames role="handouts" /> {t('tools.notes.about2')}
     </p>
 
     {#each groups as g (g.key)}
@@ -60,7 +60,7 @@
         </div>
       </section>
     {:else}
-      <p class="faint empty">Записок пока нет. «Новая записка» создаст первую.</p>
+      <p class="faint empty">{t('tools.notes.none')}</p>
     {/each}
   </div>
 {/if}

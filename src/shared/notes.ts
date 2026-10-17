@@ -10,106 +10,288 @@ export const noteTitle = (path: string) => {
   return name.slice(0, name.length - NOTE_SUFFIX.length);
 };
 
+import { t } from './i18n';
 import { SEAL_EMBLEMS, type SealEmblem } from './emblems';
 
 // Шрифты лежат внутри приложения (renderer/lib/note/fonts, лицензия OFL), все с кириллицей.
 export const NOTE_FONTS = {
-  marck: { title: 'Письмо от руки', family: 'Marck Script', group: 'Рукописные' },
-  badscript: { title: 'Небрежный почерк', family: 'Bad Script', group: 'Рукописные' },
-  caveat: { title: 'Быстрая записка', family: 'Caveat', group: 'Рукописные' },
-  greatvibes: { title: 'Каллиграфия', family: 'Great Vibes', group: 'Рукописные' },
-  amatic: { title: 'Узкий от руки', family: 'Amatic SC', group: 'Рукописные' },
-  neucha: { title: 'Простой почерк', family: 'Neucha', group: 'Рукописные' },
-  brush: { title: 'Кистью', family: 'Comforter Brush', group: 'Рукописные' },
-  cormorant: { title: 'Книжный', family: 'Cormorant Garamond', group: 'Книжные' },
-  oldstandard: { title: 'Старая книга', family: 'Old Standard TT', group: 'Книжные' },
-  kurale: { title: 'Старинный книжный', family: 'Kurale', group: 'Книжные' },
-  forum: { title: 'Высеченный', family: 'Forum', group: 'Книжные' },
-  yeseva: { title: 'Вывеска', family: 'Yeseva One', group: 'Книжные' },
-  ruslan: { title: 'Старорусский', family: 'Ruslan Display', group: 'Особые' },
-  ponomar: { title: 'Древняя рукопись', family: 'Ponomar', group: 'Особые' },
-  monomakh: { title: 'Летопись', family: 'Monomakh', group: 'Особые' },
-  underdog: { title: 'Грубый', family: 'Underdog', group: 'Особые' },
-  wetpaint: { title: 'Потёки (кровью на стене)', family: 'Rubik Wet Paint', group: 'Жуткие' },
-  distressed: { title: 'Истёртый', family: 'Rubik Distressed', group: 'Жуткие' },
-  beastly: { title: 'Чудовищный', family: 'Rubik Beastly', group: 'Жуткие' },
+  marck: { get title() {
+    return t('notes.font.marck');
+  }, family: 'Marck Script', group: 'Рукописные' },
+  badscript: { get title() {
+    return t('notes.font.badscript');
+  }, family: 'Bad Script', group: 'Рукописные' },
+  caveat: { get title() {
+    return t('notes.font.caveat');
+  }, family: 'Caveat', group: 'Рукописные' },
+  greatvibes: { get title() {
+    return t('notes.font.greatvibes');
+  }, family: 'Great Vibes', group: 'Рукописные' },
+  amatic: { get title() {
+    return t('notes.font.amatic');
+  }, family: 'Amatic SC', group: 'Рукописные' },
+  neucha: { get title() {
+    return t('notes.font.neucha');
+  }, family: 'Neucha', group: 'Рукописные' },
+  brush: { get title() {
+    return t('notes.font.brush');
+  }, family: 'Comforter Brush', group: 'Рукописные' },
+  cormorant: { get title() {
+    return t('notes.font.cormorant');
+  }, family: 'Cormorant Garamond', group: 'Книжные' },
+  oldstandard: { get title() {
+    return t('notes.font.oldstandard');
+  }, family: 'Old Standard TT', group: 'Книжные' },
+  kurale: { get title() {
+    return t('notes.font.kurale');
+  }, family: 'Kurale', group: 'Книжные' },
+  forum: { get title() {
+    return t('notes.font.forum');
+  }, family: 'Forum', group: 'Книжные' },
+  yeseva: { get title() {
+    return t('notes.font.yeseva');
+  }, family: 'Yeseva One', group: 'Книжные' },
+  ruslan: { get title() {
+    return t('notes.font.ruslan');
+  }, family: 'Ruslan Display', group: 'Особые' },
+  ponomar: { get title() {
+    return t('notes.font.ponomar');
+  }, family: 'Ponomar', group: 'Особые' },
+  monomakh: { get title() {
+    return t('notes.font.monomakh');
+  }, family: 'Monomakh', group: 'Особые' },
+  underdog: { get title() {
+    return t('notes.font.underdog');
+  }, family: 'Underdog', group: 'Особые' },
+  wetpaint: { get title() {
+    return t('notes.font.wetpaint');
+  }, family: 'Rubik Wet Paint', group: 'Жуткие' },
+  distressed: { get title() {
+    return t('notes.font.distressed');
+  }, family: 'Rubik Distressed', group: 'Жуткие' },
+  beastly: { get title() {
+    return t('notes.font.beastly');
+  }, family: 'Rubik Beastly', group: 'Жуткие' },
 } as const;
 export type NoteFont = keyof typeof NOTE_FONTS;
 
 export const NOTE_PAPERS = {
-  parchment: 'Пергамент',
-  paper: 'Старая бумага',
-  vellum: 'Светлая бумага',
-  dark: 'Тёмная кожа',
+  get parchment() {
+    return t('notes.paper.parchment');
+  },
+  get paper() {
+    return t('notes.paper.paper');
+  },
+  get vellum() {
+    return t('notes.paper.vellum');
+  },
+  get dark() {
+    return t('notes.paper.dark');
+  },
 } as const;
 export type NotePaper = keyof typeof NOTE_PAPERS;
 
-export const NOTE_EDGES = { straight: 'Ровный', torn: 'Рваный', burnt: 'Обгоревший' } as const;
+export const NOTE_EDGES = {
+  get straight() {
+    return t('notes.edge.straight');
+  },
+  get torn() {
+    return t('notes.edge.torn');
+  },
+  get burnt() {
+    return t('notes.edge.burnt');
+  },
+} as const;
 export type NoteEdge = keyof typeof NOTE_EDGES;
 
 // Пропорции листа (ширина / высота).
 export const NOTE_SHAPES = {
-  portrait: { title: 'Лист', aspect: 3 / 4 },
-  landscape: { title: 'Записка', aspect: 4 / 3 },
-  scroll: { title: 'Свиток', aspect: 9 / 16 },
+  portrait: { get title() {
+    return t('notes.shape.portrait');
+  }, aspect: 3 / 4 },
+  landscape: { get title() {
+    return t('notes.shape.landscape');
+  }, aspect: 4 / 3 },
+  scroll: { get title() {
+    return t('notes.shape.scroll');
+  }, aspect: 9 / 16 },
 } as const;
 export type NoteShape = keyof typeof NOTE_SHAPES;
 
 export const NOTE_INKS = {
-  auto: { title: 'Как у бумаги', color: '' },
-  brown: { title: 'Коричневые', color: '#3b2412' },
-  black: { title: 'Чёрные', color: '#17120e' },
-  red: { title: 'Красные', color: '#7a1a12' },
-  blue: { title: 'Синие', color: '#1d2b55' },
-  gold: { title: 'Золотые', color: '#c9a24a' },
-  blood: { title: 'Кровь', color: '#6a0505' },
-  green: { title: 'Зелёные', color: '#1f4a2a' },
-  violet: { title: 'Фиолетовые', color: '#3e1f5c' },
-  faded: { title: 'Выцветшие', color: '#7a6850' },
-  white: { title: 'Белые', color: '#efe6d2' },
+  auto: { get title() {
+    return t('notes.ink.auto');
+  }, color: '' },
+  brown: { get title() {
+    return t('notes.ink.brown');
+  }, color: '#3b2412' },
+  black: { get title() {
+    return t('notes.ink.black');
+  }, color: '#17120e' },
+  red: { get title() {
+    return t('notes.ink.red');
+  }, color: '#7a1a12' },
+  blue: { get title() {
+    return t('notes.ink.blue');
+  }, color: '#1d2b55' },
+  gold: { get title() {
+    return t('notes.ink.gold');
+  }, color: '#c9a24a' },
+  blood: { get title() {
+    return t('notes.ink.blood');
+  }, color: '#6a0505' },
+  green: { get title() {
+    return t('notes.ink.green');
+  }, color: '#1f4a2a' },
+  violet: { get title() {
+    return t('notes.ink.violet');
+  }, color: '#3e1f5c' },
+  faded: { get title() {
+    return t('notes.ink.faded');
+  }, color: '#7a6850' },
+  white: { get title() {
+    return t('notes.ink.white');
+  }, color: '#efe6d2' },
 } as const;
 export type NoteInk = keyof typeof NOTE_INKS;
 
 // Состояние бумаги: складки и помятость поверх всего листа.
-export const NOTE_CREASES = { none: 'Гладкая', folded: 'Сложена вчетверо', crumpled: 'Помята', crushed: 'Скомкана' } as const;
+export const NOTE_CREASES = {
+  get none() {
+    return t('notes.crease.none');
+  },
+  get folded() {
+    return t('notes.crease.folded');
+  },
+  get crumpled() {
+    return t('notes.crease.crumpled');
+  },
+  get crushed() {
+    return t('notes.crease.crushed');
+  },
+} as const;
 export type NoteCrease = keyof typeof NOTE_CREASES;
 
 // Цвета следов. Не у каждого вида следа все цвета: какие можно — `tints` в NOTE_MARKS.
 export const NOTE_TINTS = {
-  blood: { title: 'Свежая кровь', color: '#7a0b0b' },
-  driedBlood: { title: 'Засохшая кровь', color: '#4a1a0c' },
-  ink: { title: 'Чернила', color: '#15100c' },
-  soot: { title: 'Сажа', color: '#2b2622' },
-  mud: { title: 'Грязь', color: '#4a3a22' },
-  wine: { title: 'Вино', color: '#5a0f2e' },
-  coffee: { title: 'Чай или кофе', color: '#6b4220' },
-  slime: { title: 'Слизь', color: '#3f5a12' },
-  candle: { title: 'Свечной воск', color: '#cdb98e' },
-  redWax: { title: 'Красный сургуч', color: '#8e1a16' },
-  blackWax: { title: 'Чёрный сургуч', color: '#2a2522' },
-  greenWax: { title: 'Зелёный сургуч', color: '#2f5d3a' },
-  blueWax: { title: 'Синий сургуч', color: '#26407a' },
-  goldWax: { title: 'Золотой сургуч', color: '#b08a2e' },
-  redInk: { title: 'Красные чернила', color: '#9a1d1d' },
-  blueInk: { title: 'Синие чернила', color: '#22357a' },
+  blood: { get title() {
+    return t('notes.tint.blood');
+  }, color: '#7a0b0b' },
+  driedBlood: { get title() {
+    return t('notes.tint.driedBlood');
+  }, color: '#4a1a0c' },
+  ink: { get title() {
+    return t('notes.tint.ink');
+  }, color: '#15100c' },
+  soot: { get title() {
+    return t('notes.tint.soot');
+  }, color: '#2b2622' },
+  mud: { get title() {
+    return t('notes.tint.mud');
+  }, color: '#4a3a22' },
+  wine: { get title() {
+    return t('notes.tint.wine');
+  }, color: '#5a0f2e' },
+  coffee: { get title() {
+    return t('notes.tint.coffee');
+  }, color: '#6b4220' },
+  slime: { get title() {
+    return t('notes.tint.slime');
+  }, color: '#3f5a12' },
+  candle: { get title() {
+    return t('notes.tint.candle');
+  }, color: '#cdb98e' },
+  redWax: { get title() {
+    return t('notes.tint.redWax');
+  }, color: '#8e1a16' },
+  blackWax: { get title() {
+    return t('notes.tint.blackWax');
+  }, color: '#2a2522' },
+  greenWax: { get title() {
+    return t('notes.tint.greenWax');
+  }, color: '#2f5d3a' },
+  blueWax: { get title() {
+    return t('notes.tint.blueWax');
+  }, color: '#26407a' },
+  goldWax: { get title() {
+    return t('notes.tint.goldWax');
+  }, color: '#b08a2e' },
+  redInk: { get title() {
+    return t('notes.tint.redInk');
+  }, color: '#9a1d1d' },
+  blueInk: { get title() {
+    return t('notes.tint.blueInk');
+  }, color: '#22357a' },
 } as const;
 export type NoteTint = keyof typeof NOTE_TINTS;
 
 // Виды следов: подпись, группа в палитре, размер по умолчанию (доля ширины листа), цвета (первый — по умолчанию).
 export const NOTE_MARKS = {
-  splatter: { title: 'Брызги', group: 'Пятна', size: 0.28, tints: ['blood', 'driedBlood', 'ink', 'mud', 'wine', 'slime'] },
-  drops: { title: 'Капли', group: 'Пятна', size: 0.2, tints: ['blood', 'driedBlood', 'ink', 'wine', 'slime'] },
-  smear: { title: 'Мазок', group: 'Пятна', size: 0.4, tints: ['blood', 'driedBlood', 'soot', 'mud', 'ink'] },
-  blot: { title: 'Клякса', group: 'Пятна', size: 0.14, tints: ['ink', 'blood', 'driedBlood'] },
-  fingerprint: { title: 'Отпечаток пальца', group: 'Отпечатки', size: 0.1, tints: ['blood', 'driedBlood', 'soot', 'mud', 'ink'] },
-  ring: { title: 'След от кружки', group: 'Отпечатки', size: 0.3, tints: ['coffee', 'wine'] },
-  water: { title: 'Разводы воды', group: 'Отпечатки', size: 0.45, tints: [] },
-  wax: { title: 'Капли воска', group: 'Отпечатки', size: 0.14, tints: ['candle', 'redWax', 'blackWax'] },
-  scorch: { title: 'Подпалина', group: 'Повреждения', size: 0.3, tints: [] },
-  hole: { title: 'Прожжённая дыра', group: 'Повреждения', size: 0.16, tints: [] },
-  claws: { title: 'Следы когтей', group: 'Повреждения', size: 0.35, tints: [] },
-  seal: { title: 'Сургучная печать', group: 'Печати', size: 0.17, tints: ['redWax', 'blackWax', 'greenWax', 'blueWax', 'goldWax'] },
-  stamp: { title: 'Штамп', group: 'Печати', size: 0.26, tints: ['redInk', 'blueInk', 'ink'] },
+  splatter: { get title() {
+    return t('notes.mark.splatter');
+  }, get group() {
+    return t('notes.group.stains');
+  }, size: 0.28, tints: ['blood', 'driedBlood', 'ink', 'mud', 'wine', 'slime'] },
+  drops: { get title() {
+    return t('notes.mark.drops');
+  }, get group() {
+    return t('notes.group.stains');
+  }, size: 0.2, tints: ['blood', 'driedBlood', 'ink', 'wine', 'slime'] },
+  smear: { get title() {
+    return t('notes.mark.smear');
+  }, get group() {
+    return t('notes.group.stains');
+  }, size: 0.4, tints: ['blood', 'driedBlood', 'soot', 'mud', 'ink'] },
+  blot: { get title() {
+    return t('notes.mark.blot');
+  }, get group() {
+    return t('notes.group.stains');
+  }, size: 0.14, tints: ['ink', 'blood', 'driedBlood'] },
+  fingerprint: { get title() {
+    return t('notes.mark.fingerprint');
+  }, get group() {
+    return t('notes.group.prints');
+  }, size: 0.1, tints: ['blood', 'driedBlood', 'soot', 'mud', 'ink'] },
+  ring: { get title() {
+    return t('notes.mark.ring');
+  }, get group() {
+    return t('notes.group.prints');
+  }, size: 0.3, tints: ['coffee', 'wine'] },
+  water: { get title() {
+    return t('notes.mark.water');
+  }, get group() {
+    return t('notes.group.prints');
+  }, size: 0.45, tints: [] },
+  wax: { get title() {
+    return t('notes.mark.wax');
+  }, get group() {
+    return t('notes.group.prints');
+  }, size: 0.14, tints: ['candle', 'redWax', 'blackWax'] },
+  scorch: { get title() {
+    return t('notes.mark.scorch');
+  }, get group() {
+    return t('notes.group.damage');
+  }, size: 0.3, tints: [] },
+  hole: { get title() {
+    return t('notes.mark.hole');
+  }, get group() {
+    return t('notes.group.damage');
+  }, size: 0.16, tints: [] },
+  claws: { get title() {
+    return t('notes.mark.claws');
+  }, get group() {
+    return t('notes.group.damage');
+  }, size: 0.35, tints: [] },
+  seal: { get title() {
+    return t('notes.mark.seal');
+  }, get group() {
+    return t('notes.group.seals');
+  }, size: 0.17, tints: ['redWax', 'blackWax', 'greenWax', 'blueWax', 'goldWax'] },
+  stamp: { get title() {
+    return t('notes.mark.stamp');
+  }, get group() {
+    return t('notes.group.seals');
+  }, size: 0.26, tints: ['redInk', 'blueInk', 'ink'] },
 } as const satisfies Record<string, { title: string; group: string; size: number; tints: readonly NoteTint[] }>;
 export type NoteMarkKind = keyof typeof NOTE_MARKS;
 
@@ -148,7 +330,7 @@ export function newMark(kind: NoteMarkKind, x: number, y: number): NoteMark {
     angle: Math.round(Math.random() * 360),
     opacity: 1,
     seed: Math.floor(Math.random() * 1e6),
-    ...(kind === 'seal' ? { emblem: 'crown' as const } : kind === 'stamp' ? { emblem: 'crown' as const, text: 'Королевская канцелярия' } : {}),
+    ...(kind === 'seal' ? { emblem: 'crown' as const } : kind === 'stamp' ? { emblem: 'crown' as const, text: t('notes.defaultStamp') } : {}),
   };
 }
 

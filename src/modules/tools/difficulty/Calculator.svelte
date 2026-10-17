@@ -1,6 +1,7 @@
 <!-- Калькулятор сложности боя: набросать противников из карточек (с количеством), увидеть сложность для партии
      приключения (или своей) и сохранить набросок заготовкой боя. Набросок живёт, пока открыто окно. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Minus, Plus, Swords, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { openTab } from '../../../renderer/lib/nav';
@@ -49,20 +50,19 @@
 
 <div class="view">
   <header class="head">
-    <h2>Сложность боя</h2>
+    <h2>{t('tools.calc.title')}</h2>
     <div class="spacer"></div>
-    <button class="btn primary" disabled={!rows.length || saving} title="Сохранить противников как заготовку боя в «Инициативе»" onclick={save}>
-      <Swords size={14} /> В заготовку боя
+    <button class="btn primary" disabled={!rows.length || saving} title={t('tools.calc.saveHint')} onclick={save}>
+      <Swords size={14} /> {t('tools.calc.save')}
     </button>
   </header>
   <p class="faint intro">
-    Наберите противников — сложность посчитается для партии приключения. Та же оценка видна в «Инициативе» у текущего
-    боя и у каждой заготовки.
+    {t('tools.calc.about')}
   </p>
 
   <div class="cols">
     <section class="enemies">
-      <CardSearch placeholder="Добавить противника: гоблин, огр…" onpick={add} />
+      <CardSearch placeholder={t('tools.calc.add')} onpick={add} />
       {#if rows.length}
         <ul>
           {#each calc.rows as r, i (refKey(r.ref))}
@@ -70,33 +70,33 @@
             <li>
               {#if card?.portrait}<img src={thumb(cardImageUrl(card.ref.scope, card.portrait), 32)} alt="" />{:else}<span class="noimg"></span>{/if}
               <span class="name">
-                {card?.name ?? 'карточки больше нет'}
+                {card?.name ?? t('tools.calc.cardGone')}
                 <span class="faint sub">{card?.subtitle ?? ''}</span>
               </span>
-              <span class="faint xp">{fmt(card?.combat.xp ?? 0)} ОО</span>
+              <span class="faint xp">{t('tools.calc.xp', { n: fmt(card?.combat.xp ?? 0) })}</span>
               <div class="count">
-                <button class="icon-btn" title="Меньше" onclick={() => (r.count > 1 ? r.count-- : calc.rows.splice(i, 1))}><Minus size={13} /></button>
+                <button class="icon-btn" title={t('tools.calc.less')} onclick={() => (r.count > 1 ? r.count-- : calc.rows.splice(i, 1))}><Minus size={13} /></button>
                 <span>{r.count}</span>
-                <button class="icon-btn" title="Больше" onclick={() => r.count < 30 && r.count++}><Plus size={13} /></button>
+                <button class="icon-btn" title={t('tools.calc.more')} onclick={() => r.count < 30 && r.count++}><Plus size={13} /></button>
               </div>
-              <button class="icon-btn" title="Убрать" onclick={() => calc.rows.splice(i, 1)}><X size={13} /></button>
+              <button class="icon-btn" title={t('tools.calc.remove')} onclick={() => calc.rows.splice(i, 1)}><X size={13} /></button>
             </li>
           {/each}
         </ul>
-        <button class="btn clear" onclick={() => calc.rows.splice(0)}>Очистить</button>
+        <button class="btn clear" onclick={() => calc.rows.splice(0)}>{t('tools.calc.clear')}</button>
       {:else}
-        <p class="faint">Противников пока нет.</p>
+        <p class="faint">{t('tools.calc.none')}</p>
       {/if}
     </section>
 
     <section class="result">
       <div class="rating {a.rating}">
         <span class="r">{RATING_TITLES[a.rating]}</span>
-        <span class="faint">{fmt(a.xp)} ОО на {a.levels.length} {a.levels.length === 1 ? 'героя' : 'героев'}</span>
+        <span class="faint">{t('tools.calc.forHeroes', { xp: fmt(a.xp), count: a.levels.length })}</span>
       </div>
       <label class="own">
         <input type="checkbox" bind:checked={calc.ownParty} />
-        Своя партия вместо персонажей приключения
+        {t('tools.calc.ownParty')}
       </label>
       <DifficultyDetails {a} />
     </section>
