@@ -1,17 +1,7 @@
-// Лестница Fate: числа результатов и их названия. Подписи свои (открытого русского перевода Fate Core нет).
-export const LADDER: Record<number, string> = {
-  8: 'Легендарно',
-  7: 'Эпично',
-  6: 'Фантастично',
-  5: 'Превосходно',
-  4: 'Отлично',
-  3: 'Хорошо',
-  2: 'Неплохо',
-  1: 'Средне',
-  0: 'Посредственно',
-  [-1]: 'Плохо',
-  [-2]: 'Ужасно',
-};
+// The Fate ladder: result numbers and their names (Russian names are our own: there is no open Russian Fate Core).
+import { labels } from '../../shared/i18n';
+
+export const LADDER: Record<number, string> = labels([8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2], 'fcore.ladder');
 
 export const signed = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0');
 

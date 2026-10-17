@@ -20,22 +20,35 @@ import * as initiative from '../../modules/initiative/i18n';
 import * as tools from '../../modules/tools/i18n';
 import * as compendium from '../../modules/compendium/i18n';
 import * as bestiary from '../../modules/bestiary/i18n';
+import * as systems from '../../systems/i18n';
 
 export * from './core';
 
-export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en, ...maps.en, ...music.en, ...adventures.en, ...backup.en, ...timer.en, ...fate.en, ...journal.en, ...initiative.en, ...tools.en, ...compendium.en, ...bestiary.en };
-const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru, ...maps.ru, ...music.ru, ...adventures.ru, ...backup.ru, ...timer.ru, ...fate.ru, ...journal.ru, ...initiative.ru, ...tools.ru, ...compendium.ru, ...bestiary.ru } };
+export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en, ...maps.en, ...music.en, ...adventures.en, ...backup.en, ...timer.en, ...fate.en, ...journal.en, ...initiative.en, ...tools.en, ...compendium.en, ...bestiary.en, ...systems.en };
+const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru, ...maps.ru, ...music.ru, ...adventures.ru, ...backup.ru, ...timer.ru, ...fate.ru, ...journal.ru, ...initiative.ru, ...tools.ru, ...compendium.ru, ...bestiary.ru, ...systems.ru } };
 
 export type Key = keyof typeof en;
 
+// Called on every read of the current language. A window sets it to read its reactive locale, so text from shared
+// code (labels, type titles) re-renders when the language changes; in the main process it does nothing.
+let track = () => {};
+export const trackLang = (f: () => void) => (track = f);
+
 let current: Lang = FALLBACK;
 export const setLang = (lang: Lang) => (current = lang);
-export const getLang = () => current;
+export const getLang = () => (track(), current);
 
 export function tr(lang: Lang, key: Key, params?: Params): string {
   const msg = (dicts[lang]?.[key] ?? en[key] ?? key) as Parameters<typeof format>[1];
   return format(lang, msg, params);
 }
 
-// Non-reactive: for the main process and plain code. Svelte components use t from renderer/lib/i18n.svelte.ts.
-export const t = (key: Key, params?: Params) => tr(current, key, params);
+// For the main process and plain code. Svelte components use t from renderer/lib/i18n.svelte.ts.
+export const t = (key: Key, params?: Params) => (track(), tr(current, key, params));
+
+// A record whose values are dictionary messages `<prefix>.<key>`: getters, so they follow the current language.
+export function labels<K extends string | number>(keys: readonly K[], prefix: string): Record<K, string> {
+  const out = {} as Record<K, string>;
+  for (const k of keys) Object.defineProperty(out, k, { enumerable: true, get: () => t(`${prefix}.${k}` as Key) });
+  return out;
+}

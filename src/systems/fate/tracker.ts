@@ -3,13 +3,14 @@
 import type { CombatStats } from '../../shared/cards';
 import type { Combatant, Consequence, StressTrack } from '../../modules/initiative/types';
 import type { TrackerDef } from '../tracker';
+import { labels, t } from '../../shared/i18n';
 
-export const TRACKS: Record<string, string> = { physical: 'Физический', mental: 'Ментальный' };
+export const TRACKS: Record<string, string> = labels(['physical', 'mental'], 'fcore.track');
 export const trackTitle = (id: string) => TRACKS[id] ?? id;
 
 // Последствия по порядку: лёгкое, среднее, тяжёлое и второе лёгкое (при Превосходной Выносливости или Воле).
 export const CONSEQUENCE_SHIFTS = [2, 4, 6, 2];
-export const CONSEQUENCE_TITLES: Record<number, string> = { 2: 'Лёгкое', 4: 'Среднее', 6: 'Тяжёлое' };
+export const CONSEQUENCE_TITLES: Record<number, string> = labels([2, 4, 6], 'fcore.cons');
 
 // Обычный персонаж: по две клетки стресса и три последствия.
 const DEFAULT = { physical: 2, mental: 2, consequences: 3 };
@@ -28,30 +29,66 @@ function withTrack(list: StressTrack[] | undefined, id: string, n: number): Stre
 export const consequences = (n: number, old: Consequence[] = []): Consequence[] =>
   CONSEQUENCE_SHIFTS.slice(0, Math.max(0, Math.min(CONSEQUENCE_SHIFTS.length, Math.round(n)))).map((shift, i) => ({ shift, text: old[i]?.text ?? '' }));
 
-const track = (id: 'physical' | 'mental', label: string, title: string) => ({
+const track = (id: 'physical' | 'mental', label: () => string, title: () => string) => ({
   key: id,
-  label,
-  title: `${title} — клеток (пусто — ${DEFAULT[id]})`,
+  get label() {
+    return label();
+  },
+  get title() {
+    return t('fcore.tr.boxes', { title: title(), n: DEFAULT[id] });
+  },
   get: (c: Combatant) => c.stress?.find((t) => t.id === id)?.boxes.length ?? null,
   set: (v: number | null, c?: Combatant) => ({ stress: withTrack(c?.stress, id, v ?? DEFAULT[id]) }),
 });
 
 export const fateTracker: TrackerDef = {
-  init: { label: 'Очер.', title: 'Очерёдность: значение навыка, кто выше — ходит раньше' },
-  bonus: { label: 'Навык', short: 'навык', title: 'Внимательность (в ментальном конфликте — Эмпатия): кто выше, ходит раньше' },
+  // Labels are getters: they follow the interface language.
+  init: {
+    get label() {
+      return t('fcore.tr.init');
+    },
+    get title() {
+      return t('fcore.tr.initTitle');
+    },
+  },
+  bonus: {
+    get label() {
+      return t('fcore.tr.bonus');
+    },
+    get short() {
+      return t('fcore.tr.bonusShort');
+    },
+    get title() {
+      return t('fcore.tr.bonusTitle');
+    },
+  },
   roll: {
-    label: 'Очерёдность NPC',
-    title: 'Поставить противникам и союзникам без очерёдности значение их навыка (в Fate очерёдность не бросают)',
+    get label() {
+      return t('fcore.tr.roll');
+    },
+    get title() {
+      return t('fcore.tr.rollTitle');
+    },
     value: (b) => b,
   },
-  conditions: { label: 'Аспекты', list: [], free: true },
+  conditions: {
+    get label() {
+      return t('fcore.aspects');
+    },
+    list: [],
+    free: true,
+  },
   fields: [
-    track('physical', 'Физ.', 'Физический стресс'),
-    track('mental', 'Мент.', 'Ментальный стресс'),
+    track('physical', () => t('fcore.tr.phys'), () => t('fcore.tr.physTitle')),
+    track('mental', () => t('fcore.tr.ment'), () => t('fcore.tr.mentTitle')),
     {
       key: 'consequences',
-      label: 'Посл.',
-      title: `Сколько последствий: лёгкое, среднее, тяжёлое (у безымянных NPC — 0; пусто — ${DEFAULT.consequences})`,
+      get label() {
+        return t('fcore.tr.cons');
+      },
+      get title() {
+        return t('fcore.tr.consTitle', { n: DEFAULT.consequences });
+      },
       get: (c) => c.consequences?.length ?? null,
       set: (v, c) => ({ consequences: consequences(v ?? DEFAULT.consequences, c?.consequences) }),
     },

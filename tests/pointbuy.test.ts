@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, describe, expect, it } from 'vitest';
+import { setLang } from '../src/shared/i18n';
+
+// Labels are checked in Russian.
+beforeAll(() => setLang('ru'));
+afterAll(() => setLang('en'));
 import { bonusOptions, checkFinal, combine, costOf, isStandardArray, problemsOf, RACES_2014, spent, STANDARD_RULES, zero, type Scores } from '../src/systems/dnd5e/pointbuy';
 
 const race = (id: string, sub?: string) => {

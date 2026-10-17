@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, describe, expect, it } from 'vitest';
+import { setLang } from '../src/shared/i18n';
+
+// Labels are checked in Russian.
+beforeAll(() => setLang('ru'));
+afterAll(() => setLang('en'));
 import type { Dnd5eCharacter } from '../src/systems/dnd5e/character';
 import { allIds, characterDiff, isEmptyDiff, lineId, mergeCharacter } from '../src/systems/dnd5e/diff';
 import { collectLssSpells, fromLss } from '../src/systems/dnd5e/lss';

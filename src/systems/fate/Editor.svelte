@@ -1,6 +1,7 @@
 <!-- Редактор карточки Fate Core. Стресс и последствия по умолчанию считаются по правилам (из Телосложения, Воли и
      важности NPC); их можно задать вручную. -->
 <script lang="ts">
+  import { t } from '../../renderer/lib/i18n.svelte';
   import { Plus, X } from '@lucide/svelte';
   import { consequencesOf, DEFAULT_SKILLS, stepTitle, stressOf, TIERS, type FateStats, type FateTier } from './stats';
   import { CONSEQUENCE_SHIFTS, CONSEQUENCE_TITLES, trackTitle } from './tracker';
@@ -49,91 +50,91 @@
 <section>
   <div class="grid">
     <label class="field">
-      <span>Важность</span>
-      <select value={stats.tier} onchange={(e) => (stats.tier = e.currentTarget.value as FateTier)} title="Для NPC: от неё зависят стресс и последствия по правилам">
-        {#each Object.entries(TIERS) as [k, t] (k)}<option value={k}>{t}</option>{/each}
+      <span>{t('fcore.ed.tier')}</span>
+      <select value={stats.tier} onchange={(e) => (stats.tier = e.currentTarget.value as FateTier)} title={t('fcore.ed.tierHint')}>
+        {#each Object.entries(TIERS) as [k, title] (k)}<option value={k}>{title}</option>{/each}
       </select>
     </label>
     <label class="field">
-      <span>Восстановление</span>
+      <span>{t('fcore.refresh')}</span>
       <input type="number" min="0" placeholder="—" value={stats.refresh ?? ''} onchange={(e) => (stats.refresh = num(e.currentTarget.value))} />
     </label>
     <label class="field">
-      <span>Навык очерёдности</span>
-      <input type="text" list="fate-skills" placeholder="Внимательность" bind:value={stats.initiativeSkill} />
+      <span>{t('fcore.ed.initSkill')}</span>
+      <input type="text" list="fate-skills" placeholder={t('fcore.ed.initSkillPh')} bind:value={stats.initiativeSkill} />
     </label>
   </div>
 </section>
 
 <section>
-  <h4>Аспекты</h4>
+  <h4>{t('fcore.aspects')}</h4>
   <div class="rows">
-    <label class="row"><span class="lbl">Концепция</span><input type="text" placeholder="Рыцарь-изгнанник с проклятым мечом" bind:value={stats.highConcept} /></label>
-    <label class="row"><span class="lbl">Проблема</span><input type="text" placeholder="Долг чести перед Королевой воронов" bind:value={stats.trouble} /></label>
+    <label class="row"><span class="lbl">{t('fcore.concept')}</span><input type="text" placeholder={t('fcore.ed.conceptPh')} bind:value={stats.highConcept} /></label>
+    <label class="row"><span class="lbl">{t('fcore.trouble')}</span><input type="text" placeholder={t('fcore.ed.troublePh')} bind:value={stats.trouble} /></label>
     {#each stats.aspects as _, i (i)}
       <div class="row">
-        <span class="lbl">Аспект</span>
+        <span class="lbl">{t('fcore.ed.aspect')}</span>
         <span class="pair">
           <input type="text" bind:value={stats.aspects[i]} />
-          <button type="button" class="icon-btn" title="Убрать" onclick={() => stats.aspects.splice(i, 1)}><X size={14} /></button>
+          <button type="button" class="icon-btn" title={t('fcore.remove')} onclick={() => stats.aspects.splice(i, 1)}><X size={14} /></button>
         </span>
       </div>
     {/each}
   </div>
-  <button type="button" class="btn add" onclick={() => stats.aspects.push('')}><Plus size={14} /> Аспект</button>
+  <button type="button" class="btn add" onclick={() => stats.aspects.push('')}><Plus size={14} /> {t('fcore.ed.aspect')}</button>
 </section>
 
 <section>
-  <h4>Навыки</h4>
+  <h4>{t('fcore.skills')}</h4>
   <div class="skills">
     {#each stats.skills as x, i (i)}
       <div class="skill">
-        <input type="text" list="fate-skills" placeholder="Навык" bind:value={x.name} />
+        <input type="text" list="fate-skills" placeholder={t('fcore.ed.skill')} bind:value={x.name} />
         <select value={x.rating} onchange={(e) => (x.rating = Number(e.currentTarget.value))}>
           {#each RATINGS as r (r)}<option value={r}>{stepTitle(r)}</option>{/each}
         </select>
-        <button type="button" class="icon-btn" title="Убрать" onclick={() => stats.skills.splice(i, 1)}><X size={14} /></button>
+        <button type="button" class="icon-btn" title={t('fcore.remove')} onclick={() => stats.skills.splice(i, 1)}><X size={14} /></button>
       </div>
     {/each}
   </div>
-  <button type="button" class="btn add" onclick={addSkill}><Plus size={14} /> Навык</button>
+  <button type="button" class="btn add" onclick={addSkill}><Plus size={14} /> {t('fcore.ed.skill')}</button>
 </section>
 
 <section>
-  <h4>Трюки</h4>
-  {#each stats.stunts as t, i (i)}
+  <h4>{t('fcore.stunts')}</h4>
+  {#each stats.stunts as st, i (i)}
     <div class="stunt">
       <span class="pair">
-        <input type="text" placeholder="Название трюка" bind:value={t.name} />
-        <button type="button" class="icon-btn" title="Убрать" onclick={() => stats.stunts.splice(i, 1)}><X size={14} /></button>
+        <input type="text" placeholder={t('fcore.ed.stuntPh')} bind:value={st.name} />
+        <button type="button" class="icon-btn" title={t('fcore.remove')} onclick={() => stats.stunts.splice(i, 1)}><X size={14} /></button>
       </span>
-      <textarea rows="2" placeholder="Что даёт: +2 к Атлетике, когда…" bind:value={t.text}></textarea>
+      <textarea rows="2" placeholder={t('fcore.ed.stuntTextPh')} bind:value={st.text}></textarea>
     </div>
   {/each}
-  <button type="button" class="btn add" onclick={() => stats.stunts.push({ name: '', text: '' })}><Plus size={14} /> Трюк</button>
+  <button type="button" class="btn add" onclick={() => stats.stunts.push({ name: '', text: '' })}><Plus size={14} /> {t('fcore.ed.stunt')}</button>
 </section>
 
 <section>
-  <h4>Стресс и последствия</h4>
+  <h4>{t('fcore.stressCons')}</h4>
   <label class="check">
     <input type="checkbox" checked={!manual} onchange={(e) => setManual(!e.currentTarget.checked)} />
-    по правилам — из Телосложения и Воли, у NPC — по важности
+    {t('fcore.ed.byRules')}
   </label>
   <div class="grid">
-    {#each stressOf(stats) as t (t.id)}
+    {#each stressOf(stats) as tr (tr.id)}
       <label class="field">
-        <span>{trackTitle(t.id)}, клеток</span>
-        <input type="number" min="0" max="10" value={t.boxes} disabled={!manual} onchange={(e) => setBoxes(t.id, e.currentTarget.value)} />
+        <span>{t('fcore.ed.boxes', { track: trackTitle(tr.id) })}</span>
+        <input type="number" min="0" max="10" value={tr.boxes} disabled={!manual} onchange={(e) => setBoxes(tr.id, e.currentTarget.value)} />
       </label>
     {/each}
-    {#if manual && !stressOf(stats).some((t) => t.id === 'mental')}
-      <button type="button" class="btn" onclick={() => setBoxes('mental', '2')}><Plus size={14} /> Ментальный</button>
+    {#if manual && !stressOf(stats).some((tr) => tr.id === 'mental')}
+      <button type="button" class="btn" onclick={() => setBoxes('mental', '2')}><Plus size={14} /> {t('fcore.ed.mental')}</button>
     {/if}
     <label class="field wide">
-      <span>Последствия</span>
+      <span>{t('fcore.consequences')}</span>
       <select value={consequencesOf(stats).length} disabled={!manual} onchange={(e) => setConsequences(e.currentTarget.value)}>
         {#each { length: CONSEQUENCE_SHIFTS.length + 1 } as _, n (n)}
-          <option value={n}>{n ? CONSEQUENCE_SHIFTS.slice(0, n).map((x) => `${(CONSEQUENCE_TITLES[x] ?? '').toLowerCase()} ${x}`).join(', ') : 'нет'}</option>
+          <option value={n}>{n ? CONSEQUENCE_SHIFTS.slice(0, n).map((x) => `${(CONSEQUENCE_TITLES[x] ?? '').toLowerCase()} ${x}`).join(', ') : t('fcore.none')}</option>
         {/each}
       </select>
     </label>

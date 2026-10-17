@@ -1,6 +1,7 @@
 // Сложность боя по правилам D&D 2024 (SRD 5.2.1, «Combat Encounters», CC BY 4.0): у каждого героя бюджет опыта
 // по уровню на низкую, умеренную и высокую сложность; бюджет партии — сумма. Опыт противников складывается без
 // множителей (как в правилах 2024). Для партий 2014 года — та же оценка, только ориентир.
+import { labels } from '../../shared/i18n';
 
 // Уровень -> [низкая, умеренная, высокая].
 const BUDGET: [number, number, number][] = [
@@ -31,13 +32,7 @@ export function partyBudget(levels: number[]): Budget {
 // это «смертельно опасно» на усмотрение мастера).
 export type Rating = 'trivial' | 'low' | 'moderate' | 'high' | 'beyond';
 
-export const RATING_TITLES: Record<Rating, string> = {
-  trivial: 'Пустяковая',
-  low: 'Низкая',
-  moderate: 'Умеренная',
-  high: 'Высокая',
-  beyond: 'Сверх высокой',
-};
+export const RATING_TITLES = labels<Rating>(['trivial', 'low', 'moderate', 'high', 'beyond'], 'dnd.rating');
 
 export function rate(xp: number, b: Budget): Rating {
   if (xp > b.high) return 'beyond';

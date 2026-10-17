@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, afterAll, describe, expect, it } from 'vitest';
+import { setLang } from '../src/shared/i18n';
+
+// Labels are checked in Russian.
+beforeAll(() => setLang('ru'));
+afterAll(() => setLang('en'));
 import { readFileSync } from 'node:fs';
 import { entryFamily, TYPES, type BuiltinBook } from '../src/shared/compendium';
 import initiative from '../src/modules/initiative/main';

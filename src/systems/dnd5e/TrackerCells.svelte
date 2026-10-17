@@ -1,5 +1,6 @@
 <!-- Трекер инициативы, D&D: ячейки строки участника — хиты, урон и лечение, КД (head — заголовки столбцов). -->
 <script lang="ts">
+  import { t } from '../../renderer/lib/i18n.svelte';
   import { dispatch } from '../../renderer/lib/store.svelte';
   import type { Combatant } from '../../modules/initiative/types';
 
@@ -19,9 +20,9 @@
 </script>
 
 {#if head}
-  <th class="c-hp">Хиты</th>
-  <th class="c-dmg" title="«7» или «-7» — урон, «+5» — лечение, Enter — применить">±</th>
-  <th class="c-ac" title="Класс доспеха">КД</th>
+  <th class="c-hp">{t('dnd.hp')}</th>
+  <th class="c-dmg" title={t('dnd.tr.dmgHint')}>±</th>
+  <th class="c-ac" title={t('dnd.armorClass')}>{t('dnd.ac')}</th>
 {:else if c}
   <td class="c-hp">
     {#if c.maxHp !== null}
@@ -30,11 +31,11 @@
         type="text"
         inputmode="numeric"
         value={c.maxHp}
-        title="Максимум хитов"
+        title={t('dnd.maxHp')}
         onchange={(e) => update(c, { maxHp: num(e.currentTarget.value), hp: Math.min(c.hp ?? 0, num(e.currentTarget.value) ?? Infinity) })}
       />
     {:else}
-      <input class="max" type="text" inputmode="numeric" placeholder="—" title="Максимум хитов" onchange={(e) => update(c, { maxHp: num(e.currentTarget.value), hp: num(e.currentTarget.value) })} />
+      <input class="max" type="text" inputmode="numeric" placeholder="—" title={t('dnd.maxHp')} onchange={(e) => update(c, { maxHp: num(e.currentTarget.value), hp: num(e.currentTarget.value) })} />
     {/if}
   </td>
   <td class="c-dmg">

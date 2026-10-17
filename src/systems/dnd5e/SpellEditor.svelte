@@ -2,6 +2,8 @@
      заклинаний. Названия подсказываются из справочника. Колдовство, записанное текстом особенности или действия
      (как в SRD), можно перенести сюда одной кнопкой. -->
 <script lang="ts">
+  import { t } from '../../renderer/lib/i18n.svelte';
+  import { labels } from '../../shared/i18n';
   import { Plus, Wand2, X } from '@lucide/svelte';
   import { knownSpells } from '../../renderer/lib/entry/peek.svelte';
   import { ABILITIES, type Ability, type Dnd5eStats } from './stats';
@@ -12,8 +14,8 @@
 
   let { stats = $bindable(), system, lang }: { stats: Dnd5eStats; system: string; lang: string } = $props();
 
-  const ABILITY_NAMES: Record<Ability, string> = { str: 'Сила', dex: 'Ловкость', con: 'Телосложение', int: 'Интеллект', wis: 'Мудрость', cha: 'Харизма' };
-  const KIND_NAMES: Record<SpellGroup['kind'], string> = { cantrips: 'Заговоры', will: 'По желанию', day: 'N раз в день', level: 'Уровень с ячейками' };
+  const ABILITY_NAMES = labels<Ability>(ABILITIES, 'dnd.ability');
+  const KIND_NAMES = labels<SpellGroup['kind']>(['cantrips', 'will', 'day', 'level'], 'dnd.sg');
   const suggestions = knownSpells();
 
   const num = (v: string) => {
@@ -64,31 +66,31 @@
   {@const sc = stats.spellcasting}
   <div class="grid">
     <label class="field wide">
-      <span>Название</span>
+      <span>{t('dnd.sp.name')}</span>
       <input type="text" placeholder={defaultSpellName(lang, system)} bind:value={sc.name} />
     </label>
     <label class="field">
-      <span>Где показывать</span>
+      <span>{t('dnd.sp.where')}</span>
       <select bind:value={sc.where}>
-        <option value="traits">в особенностях</option>
-        <option value="actions">в действиях</option>
+        <option value="traits">{t('dnd.sp.inTraits')}</option>
+        <option value="actions">{t('dnd.sp.inActions')}</option>
       </select>
     </label>
     <label class="field">
-      <span>Характеристика</span>
+      <span>{t('dnd.ce.ability')}</span>
       <select bind:value={sc.ability}>{#each ABILITIES as a (a)}<option value={a}>{ABILITY_NAMES[a]}</option>{/each}</select>
     </label>
-    <label class="field small" title="Пусто — 8 + бонус мастерства + модификатор характеристики">
-      <span>СЛ спасброска</span>
+    <label class="field small" title={t('dnd.sp.dcHint')}>
+      <span>{t('dnd.ce.dc')}</span>
       <input type="number" placeholder={String(spellDc(stats, { ...sc, dc: undefined }))} value={sc.dc ?? ''} onchange={(e) => (sc.dc = num(e.currentTarget.value))} />
     </label>
-    <label class="field small" title="Пусто — бонус мастерства + модификатор характеристики">
-      <span>Атака</span>
+    <label class="field small" title={t('dnd.sp.atkHint')}>
+      <span>{t('dnd.sp.attack')}</span>
       <input type="number" placeholder={String(spellAttack(stats, { ...sc, attack: undefined }))} value={sc.attack ?? ''} onchange={(e) => (sc.attack = num(e.currentTarget.value))} />
     </label>
     <label class="field wide">
-      <span>Примечание</span>
-      <input type="text" placeholder="Не требует материальных компонентов." bind:value={sc.note} />
+      <span>{t('dnd.sp.note')}</span>
+      <input type="text" placeholder={t('dnd.sp.notePh')} bind:value={sc.note} />
     </label>
   </div>
 
@@ -100,25 +102,25 @@
             {#each GROUP_KINDS as k (k)}<option value={k}>{KIND_NAMES[k]}</option>{/each}
           </select>
           {#if g.kind === 'day'}
-            <label class="inline"><input type="number" min="1" bind:value={g.times} /> раз в день</label>
-            <label class="inline"><input type="checkbox" bind:checked={g.each} /> каждое</label>
+            <label class="inline"><input type="number" min="1" bind:value={g.times} /> {t('dnd.sp.perDay')}</label>
+            <label class="inline"><input type="checkbox" bind:checked={g.each} /> {t('dnd.sp.each')}</label>
           {:else if g.kind === 'level'}
-            <label class="inline"><input type="number" min="1" max="9" bind:value={g.level} /> уровень</label>
-            <label class="inline" title="Пусто — без ячеек"
-              ><input type="number" min="0" value={g.slots ?? ''} onchange={(e) => (g.slots = num(e.currentTarget.value) || undefined)} /> ячеек</label
+            <label class="inline"><input type="number" min="1" max="9" bind:value={g.level} /> {t('dnd.sp.level')}</label>
+            <label class="inline" title={t('dnd.sp.slotsHint')}
+              ><input type="number" min="0" value={g.slots ?? ''} onchange={(e) => (g.slots = num(e.currentTarget.value) || undefined)} /> {t('dnd.ce.slots')}</label
             >
           {/if}
           <span class="faint preview">{groupLabel(g, lang)}</span>
-          <button type="button" class="icon-btn" title="Убрать группу" onclick={() => sc.groups.splice(i, 1)}><X size={14} /></button>
+          <button type="button" class="icon-btn" title={t('dnd.sp.removeGroup')} onclick={() => sc.groups.splice(i, 1)}><X size={14} /></button>
         </div>
         <div class="spells">
           {#each g.spells as s, j (s)}
-            <span class="chip">{s}<button type="button" title="Убрать" onclick={() => g.spells.splice(j, 1)}><X size={11} /></button></span>
+            <span class="chip">{s}<button type="button" title={t('dnd.remove')} onclick={() => g.spells.splice(j, 1)}><X size={11} /></button></span>
           {/each}
           <input
             type="text"
             list="dnd-spells"
-            placeholder="Заклинание (Enter — добавить)"
+            placeholder={t('dnd.sp.spellPh')}
             onkeydown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
@@ -132,18 +134,18 @@
     {/each}
   </div>
   <div class="buttons">
-    <button type="button" class="btn" onclick={addGroup}><Plus size={14} /> Группа заклинаний</button>
-    <button type="button" class="btn danger" onclick={() => delete stats.spellcasting}>Убрать колдовство</button>
+    <button type="button" class="btn" onclick={addGroup}><Plus size={14} /> {t('dnd.sp.addGroup')}</button>
+    <button type="button" class="btn danger" onclick={() => delete stats.spellcasting}>{t('dnd.sp.remove')}</button>
   </div>
 {:else}
   <div class="buttons">
-    <button type="button" class="btn" onclick={() => (stats.spellcasting = newSpellcasting(stats, system))}><Wand2 size={14} /> Добавить колдовство</button>
+    <button type="button" class="btn" onclick={() => (stats.spellcasting = newSpellcasting(stats, system))}><Wand2 size={14} /> {t('dnd.sp.add')}</button>
     {#if written}
       <button
         type="button"
         class="btn"
-        title="Разобрать текст «{written.block.name}» на характеристику и группы заклинаний; сам текст уберётся"
-        onclick={takeWritten}>Перенести из «{written.block.name}»</button
+        title={t('dnd.sp.takeHint', { name: written.block.name })}
+        onclick={takeWritten}>{t('dnd.sp.take', { name: written.block.name })}</button
       >
     {/if}
   </div>

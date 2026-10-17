@@ -1,6 +1,7 @@
 <!-- Трекер инициативы, Fate: ячейки строки участника — дорожки стресса, последствия и «выведен из боя»
      (head — заголовки столбцов). Клетка N поглощает N сдвигов; последствие — аспект, его текст пишется в ячейку. -->
 <script lang="ts">
+  import { t } from '../../renderer/lib/i18n.svelte';
   import { Ban } from '@lucide/svelte';
   import { dispatch } from '../../renderer/lib/store.svelte';
   import type { Combatant } from '../../modules/initiative/types';
@@ -18,27 +19,27 @@
 </script>
 
 {#if head}
-  <th class="c-stress" title="Клетка N поглощает N сдвигов; щелчок — отметить или снять">Стресс</th>
-  <th class="c-cons" title="Последствие — аспект на сколько-то сдвигов: 2 — лёгкое, 4 — среднее, 6 — тяжёлое">Последствия</th>
+  <th class="c-stress" title={t('fcore.tc.stressHint')}>{t('fcore.tc.stress')}</th>
+  <th class="c-cons" title={t('fcore.tc.consHint')}>{t('fcore.consequences')}</th>
 {:else if c}
   {@const it = c}
   <td class="c-stress">
     <div class="stress-row">
       <div>
-        {#each c.stress ?? [] as t (t.id)}
-          <div class="track" title="{trackTitle(t.id)} стресс">
-            <span class="tl faint">{trackTitle(t.id).slice(0, 1)}</span>
-            {#each t.boxes as on, i (i)}
-              <button class="box" class:on onclick={() => dispatch('initiative', 'toggleStress', { id: it.id, track: t.id, box: i })}>{i + 1}</button>
+        {#each c.stress ?? [] as tr (tr.id)}
+          <div class="track" title={t('fcore.tc.trackStress', { track: trackTitle(tr.id) })}>
+            <span class="tl faint">{trackTitle(tr.id).slice(0, 1)}</span>
+            {#each tr.boxes as on, i (i)}
+              <button class="box" class:on onclick={() => dispatch('initiative', 'toggleStress', { id: it.id, track: tr.id, box: i })}>{i + 1}</button>
             {/each}
-            {#if !t.boxes.length}<span class="faint none">нет</span>{/if}
+            {#if !tr.boxes.length}<span class="faint none">{t('fcore.none')}</span>{/if}
           </div>
         {:else}
-          <button class="link faint" title="Физический и ментальный стресс по две клетки, три последствия" onclick={() => addTracks(it)}>+ стресс</button>
+          <button class="link faint" title={t('fcore.tc.addStressHint')} onclick={() => addTracks(it)}>{t('fcore.tc.addStress')}</button>
         {/each}
       </div>
       <!-- Выведен из боя: пропускает ход, у игроков серый. -->
-      <button class="icon-btn out" class:on={c.out} title={c.out ? 'Выведен из боя — вернуть' : 'Вывести из боя (пропускает ход, у игроков — серый)'} onclick={() => update(it, { out: !it.out })}>
+      <button class="icon-btn out" class:on={c.out} title={c.out ? t('fcore.tc.outBack') : t('fcore.tc.outHint')} onclick={() => update(it, { out: !it.out })}>
         <Ban size={14} />
       </button>
     </div>
@@ -51,7 +52,7 @@
         class:filled={!!q.text}
         value={q.text}
         placeholder="{q.shift} · {(CONSEQUENCE_TITLES[q.shift] ?? '').toLowerCase()}"
-        title="{CONSEQUENCE_TITLES[q.shift] ?? 'Последствие'} последствие: поглощает {q.shift} сдвигов. Текст — его аспект, пусто — ячейка свободна"
+        title={t('fcore.tc.consTitle', { title: CONSEQUENCE_TITLES[q.shift] ?? t('fcore.consequence'), n: q.shift })}
         onchange={(e) => dispatch('initiative', 'setConsequence', { id: it.id, index: i, text: e.currentTarget.value })}
       />
     {/each}

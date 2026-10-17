@@ -1,5 +1,6 @@
 <!-- Статблок D&D 5e. Подписи — на языке карточки, числа и справочные значения переводятся здесь. -->
 <script lang="ts">
+  import { locale, t } from '../../renderer/lib/i18n.svelte';
   import type { Card } from '../../shared/cards';
   import { escape, markdown } from '../../renderer/lib/markdown';
   import { spellLinks } from '../../renderer/lib/entry/links';
@@ -11,11 +12,12 @@
   let { card }: { card: Card<Dnd5eStats> } = $props();
 
   // Броски кнопками: подписи в журнале — по-русски, как весь интерфейс.
-  const ru = dict('ru');
+  // Roll labels go to the GM's roll log: in the interface language.
+  const ui = $derived(dict(locale.lang));
   const check = (e: MouseEvent, what: string, bonus: number) => rolls.check(card.name, what, bonus, modeOf(e));
 
   const s = $derived(card.stats);
-  const t = $derived(dict(card.lang));
+  const lb = $derived(dict(card.lang));
 
 
   // Значение из справочника по ключу; неизвестное — как есть.
@@ -26,8 +28,8 @@
     for (const k of ['walk', 'burrow', 'climb', 'fly', 'swim'] as SpeedKind[]) {
       const v = s.speed[k];
       if (v === undefined) continue;
-      const label = t.speed[k];
-      parts.push(`${label ? label + ' ' : ''}${v} ${t.feet}${k === 'fly' && s.speed.hover ? ` (${t.hover})` : ''}`);
+      const label = lb.speed[k];
+      parts.push(`${label ? label + ' ' : ''}${v} ${lb.feet}${k === 'fly' && s.speed.hover ? ` (${lb.hover})` : ''}`);
     }
     return parts.join(', ');
   });
@@ -35,12 +37,12 @@
   const senses = $derived.by(() => {
     const parts = (['blindsight', 'darkvision', 'tremorsense', 'truesight'] as const)
       .filter((k) => s.senses[k] !== undefined)
-      .map((k) => `${t.senses[k]} ${s.senses[k]} ${t.feet}`);
-    return [parts.join(', '), `${t.passive} ${s.senses.passivePerception}`].filter(Boolean).join('; ');
+      .map((k) => `${lb.senses[k]} ${s.senses[k]} ${lb.feet}`);
+    return [parts.join(', '), `${lb.passive} ${s.senses.passivePerception}`].filter(Boolean).join('; ');
   });
 
   const immunities = $derived(
-    [s.immunities.map((x) => term(t.damage, x)).join(', '), s.conditionImmunities.map((x) => term(t.conditions, x)).join(', ')]
+    [s.immunities.map((x) => term(lb.damage, x)).join(', '), s.conditionImmunities.map((x) => term(lb.conditions, x)).join(', ')]
       .filter(Boolean)
       .join('; ')
   );
@@ -50,11 +52,11 @@
   const withSpells = (blocks: Block[], where: 'traits' | 'actions') => (spells && s.spellcasting?.where === where ? [...blocks, spells] : blocks);
   const sections = $derived(
     [
-      { title: t.traits, blocks: withSpells(s.traits, 'traits'), intro: '' },
-      { title: t.actions, blocks: withSpells(s.actions, 'actions'), intro: '' },
-      { title: t.bonusActions, blocks: s.bonusActions, intro: '' },
-      { title: t.reactions, blocks: s.reactions, intro: '' },
-      { title: t.legendary, blocks: s.legendary?.actions ?? [], intro: s.legendary?.intro ?? '' },
+      { title: lb.traits, blocks: withSpells(s.traits, 'traits'), intro: '' },
+      { title: lb.actions, blocks: withSpells(s.actions, 'actions'), intro: '' },
+      { title: lb.bonusActions, blocks: s.bonusActions, intro: '' },
+      { title: lb.reactions, blocks: s.reactions, intro: '' },
+      { title: lb.legendary, blocks: s.legendary?.actions ?? [], intro: s.legendary?.intro ?? '' },
     ].filter((x) => x.blocks.length || x.intro)
   );
 
@@ -71,12 +73,12 @@
 
   <div class="rule"></div>
   <dl class="top">
-    <div><dt>{t.ac}</dt><dd>{s.ac}{s.acNote ? ` (${s.acNote})` : ''}</dd></div>
-    <div><dt>{t.hp}</dt><dd>{s.hp}{s.hpFormula ? ` (${s.hpFormula})` : ''}</dd></div>
-    <div><dt>{t.speedLabel}</dt><dd>{speed}</dd></div>
+    <div><dt>{lb.ac}</dt><dd>{s.ac}{s.acNote ? ` (${s.acNote})` : ''}</dd></div>
+    <div><dt>{lb.hp}</dt><dd>{s.hp}{s.hpFormula ? ` (${s.hpFormula})` : ''}</dd></div>
+    <div><dt>{lb.speedLabel}</dt><dd>{speed}</dd></div>
     {#if card.system === 'dnd5e-2024' || s.initiative !== undefined}
-      <div><dt>{t.initiative}</dt><dd>
-        <button class="roll" title="Бросить инициативу. {rollHint()}" onclick={(e) => check(e, 'Инициатива', initiativeOf(s))}>{signed(initiativeOf(s))}</button>
+      <div><dt>{lb.initiative}</dt><dd>
+        <button class="roll" title={t('dnd.rollInit', { hint: rollHint() })} onclick={(e) => check(e, t('dnd.initiative'), initiativeOf(s))}>{signed(initiativeOf(s))}</button>
         ({10 + initiativeOf(s)})
       </dd></div>
     {/if}
@@ -85,21 +87,21 @@
   <div class="rule"></div>
   <table class="abilities">
     <thead>
-      <tr><th></th>{#each ABILITIES as a (a)}<th>{t.abilities[a]}</th>{/each}</tr>
+      <tr><th></th>{#each ABILITIES as a (a)}<th>{lb.abilities[a]}</th>{/each}</tr>
     </thead>
     <tbody>
       <tr><th></th>{#each ABILITIES as a (a)}<td class="score">{s.abilities[a]}</td>{/each}</tr>
       <tr>
-        <th>{t.mod}</th>
+        <th>{lb.mod}</th>
         {#each ABILITIES as a (a)}
-          {@const what = `Проверка ${ru.abilities[a]}`}
+          {@const what = t('dnd.check', { ability: ui.abilities[a] })}
           <td><button class="roll" title="{what}. {rollHint()}" onclick={(e) => check(e, what, mod(s.abilities[a]))}>{signed(mod(s.abilities[a]))}</button></td>
         {/each}
       </tr>
       <tr>
-        <th>{t.save}</th>
+        <th>{lb.save}</th>
         {#each ABILITIES as a (a)}
-          {@const what = `Спасбросок ${ru.abilities[a]}`}
+          {@const what = t('dnd.saveOf', { ability: ui.abilities[a] })}
           {@const bonus = s.saves[a] ?? mod(s.abilities[a])}
           <td class:prof={s.saves[a] !== undefined}>
             <button class="roll" title="{what}. {rollHint()}" onclick={(e) => check(e, what, bonus)}>{signed(bonus)}</button>
@@ -112,27 +114,27 @@
   <div class="rule"></div>
   <dl class="props">
     {#if s.skills.length}
-      <div><dt>{t.skillsLabel}</dt><dd>
-          {#each s.skills as x, i (i)}{#if i > 0},{' '}{/if}{term(t.skills, x.skill)}
-            <button class="roll" title="{term(ru.skills, x.skill)}. {rollHint()}" onclick={(e) => check(e, term(ru.skills, x.skill), x.bonus)}>{signed(x.bonus)}</button
+      <div><dt>{lb.skillsLabel}</dt><dd>
+          {#each s.skills as x, i (i)}{#if i > 0},{' '}{/if}{term(lb.skills, x.skill)}
+            <button class="roll" title="{term(ui.skills, x.skill)}. {rollHint()}" onclick={(e) => check(e, term(ui.skills, x.skill), x.bonus)}>{signed(x.bonus)}</button
             >{/each}
         </dd></div>
     {/if}
     {#if s.vulnerabilities.length}
-      <div><dt>{t.vulnerabilities}</dt><dd>{s.vulnerabilities.map((x) => term(t.damage, x)).join(', ')}</dd></div>
+      <div><dt>{lb.vulnerabilities}</dt><dd>{s.vulnerabilities.map((x) => term(lb.damage, x)).join(', ')}</dd></div>
     {/if}
     {#if s.resistances.length}
-      <div><dt>{t.resistances}</dt><dd>{s.resistances.map((x) => term(t.damage, x)).join(', ')}</dd></div>
+      <div><dt>{lb.resistances}</dt><dd>{s.resistances.map((x) => term(lb.damage, x)).join(', ')}</dd></div>
     {/if}
     {#if immunities}
-      <div><dt>{t.immunities}</dt><dd>{immunities}</dd></div>
+      <div><dt>{lb.immunities}</dt><dd>{immunities}</dd></div>
     {/if}
     {#if s.gear}
-      <div><dt>{t.gear}</dt><dd>{s.gear}</dd></div>
+      <div><dt>{lb.gear}</dt><dd>{s.gear}</dd></div>
     {/if}
-    <div><dt>{t.sensesLabel}</dt><dd>{senses}</dd></div>
-    <div><dt>{t.languages}</dt><dd>{s.languages || '—'}</dd></div>
-    <div><dt>{t.cr}</dt><dd>{crText(s.cr)} ({t.xp} {s.xp.toLocaleString(card.lang)}; {t.pb} {signed(s.pb)})</dd></div>
+    <div><dt>{lb.sensesLabel}</dt><dd>{senses}</dd></div>
+    <div><dt>{lb.languages}</dt><dd>{s.languages || '—'}</dd></div>
+    <div><dt>{lb.cr}</dt><dd>{crText(s.cr)} ({lb.xp} {s.xp.toLocaleString(card.lang)}; {lb.pb} {signed(s.pb)})</dd></div>
   </dl>
 
   {#each sections as sec (sec.title)}
@@ -144,11 +146,11 @@
         {#if b.attack}
           {@const atk = b.attack}
           <div class="rolls">
-            <button class="roll-btn" title="Атака и урон. {rollHint()}" onclick={(e) => rolls.attack(card.name, b.name, atk.bonus, atk.damage, modeOf(e))}>
-              <Dices size={13} /> Атака {signed(atk.bonus)}
+            <button class="roll-btn" title={t('dnd.attackHint', { hint: rollHint() })} onclick={(e) => rolls.attack(card.name, b.name, atk.bonus, atk.damage, modeOf(e))}>
+              <Dices size={13} /> {t('dnd.attackBtn', { bonus: signed(atk.bonus) })}
             </button>
             {#each atk.damage as d, j (j)}
-              <button class="roll-btn" title="Только урон. Shift — критический (кубы ×2)" onclick={(e) => rolls.damage(card.name, b.name, d, e.shiftKey)}>{d}</button>
+              <button class="roll-btn" title={t('dnd.damageHint')} onclick={(e) => rolls.damage(card.name, b.name, d, e.shiftKey)}>{d}</button>
             {/each}
           </div>
         {/if}

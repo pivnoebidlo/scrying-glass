@@ -1,5 +1,6 @@
 <!-- Характеристики карточки неизвестной системы: «поле — значение», чтобы данные не потерялись. -->
 <script lang="ts">
+  import { t } from '../renderer/lib/i18n.svelte';
   import type { Card } from '../shared/cards';
 
   let { card }: { card: Card } = $props();
@@ -10,7 +11,7 @@
   );
 </script>
 
-<p class="faint">Система «{card.system}» приложению не знакома, характеристики показаны как есть.</p>
+<p class="faint">{t('sys.genericStats', { system: card.system })}</p>
 <dl>
   {#each entries as [k, v] (k)}
     <dt>{k}</dt>

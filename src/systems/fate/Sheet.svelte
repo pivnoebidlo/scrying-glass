@@ -1,6 +1,7 @@
 <!-- Карточка Fate Core: аспекты, пирамида навыков (щелчок — бросок 4dF + навык), трюки, стресс и последствия.
      Один вид для персонажей игроков и NPC. -->
 <script lang="ts">
+  import { t } from '../../renderer/lib/i18n.svelte';
   import { Dices } from '@lucide/svelte';
   import type { Card } from '../../shared/cards';
   import { escape, markdown } from '../../renderer/lib/markdown';
@@ -15,7 +16,7 @@
   const stress = $derived(stressOf(s));
   const consequences = $derived(consequencesOf(s));
   const meta = $derived(
-    [card.kind === 'character' ? '' : TIERS[s.tier], s.refresh !== null && s.refresh !== undefined ? `Восстановление ${s.refresh}` : ''].filter(Boolean).join(' · ')
+    [card.kind === 'character' ? '' : TIERS[s.tier], s.refresh !== null && s.refresh !== undefined ? t('fcore.sh.refreshN', { n: s.refresh }) : ''].filter(Boolean).join(' · ')
   );
 
   // Название трюка — в начале первого абзаца: «Мастер побега. +2 к Атлетике, когда…»
@@ -32,58 +33,58 @@
   {#if meta}<p class="meta">{meta}</p>{/if}
 
   {#if s.highConcept || s.trouble || s.aspects.length}
-    <h3>Аспекты</h3>
+    <h3>{t('fcore.aspects')}</h3>
     <dl class="aspects">
-      {#if s.highConcept}<div><dt>Концепция</dt><dd>{s.highConcept}</dd></div>{/if}
-      {#if s.trouble}<div><dt>Проблема</dt><dd>{s.trouble}</dd></div>{/if}
+      {#if s.highConcept}<div><dt>{t('fcore.concept')}</dt><dd>{s.highConcept}</dd></div>{/if}
+      {#if s.trouble}<div><dt>{t('fcore.trouble')}</dt><dd>{s.trouble}</dd></div>{/if}
       {#each s.aspects.filter((a) => a.trim()) as a, i (i)}<div><dt></dt><dd>{a}</dd></div>{/each}
     </dl>
   {/if}
 
-  <h3>Навыки</h3>
+  <h3>{t('fcore.skills')}</h3>
   {#if steps.length}
     <dl class="skills">
       {#each steps as [rating, list] (rating)}
         <div>
           <dt>{stepTitle(rating)}</dt>
           <dd>
-            {#each list as x, i (i)}{#if i > 0},{' '}{/if}<button class="roll" title="Бросить 4dF {signed(rating)}" onclick={() => roll(x.name, rating)}>{x.name}</button>{/each}
+            {#each list as x, i (i)}{#if i > 0},{' '}{/if}<button class="roll" title={t('fcore.sh.rollHint', { rating: signed(rating) })} onclick={() => roll(x.name, rating)}>{x.name}</button>{/each}
           </dd>
         </div>
       {/each}
     </dl>
   {/if}
   <div class="rolls">
-    <button class="roll-btn" title="Без навыка: 4dF + 0 (Посредственно)" onclick={() => roll('Без навыка', 0)}><Dices size={13} /> 4dF</button>
+    <button class="roll-btn" title={t('fcore.sh.noSkillHint')} onclick={() => roll(t('fcore.sh.noSkill'), 0)}><Dices size={13} /> 4dF</button>
   </div>
 
   {#if s.stunts.length}
-    <h3>Трюки</h3>
-    {#each s.stunts as t, i (i)}
+    <h3>{t('fcore.stunts')}</h3>
+    {#each s.stunts as st, i (i)}
       <div class="text stunt">
-        {@html stuntHtml(t)}
+        {@html stuntHtml(st)}
       </div>
     {/each}
   {/if}
 
-  <h3>Стресс и последствия</h3>
+  <h3>{t('fcore.stressCons')}</h3>
   <div class="tracks">
-    {#each stress as t (t.id)}
+    {#each stress as tr (tr.id)}
       <div class="track">
-        <span class="label">{trackTitle(t.id)}</span>
-        {#each { length: t.boxes } as _, i (i)}<span class="box">{i + 1}</span>{/each}
-        {#if !t.boxes}<span class="faint">выбывает от первого удара</span>{/if}
+        <span class="label">{trackTitle(tr.id)}</span>
+        {#each { length: tr.boxes } as _, i (i)}<span class="box">{i + 1}</span>{/each}
+        {#if !tr.boxes}<span class="faint">{t('fcore.sh.outFirst')}</span>{/if}
       </div>
     {/each}
   </div>
   {#if consequences.length}
     <div class="cons">
       {#each consequences as shift, i (i)}
-        <span class="con"><b>{shift}</b> {(CONSEQUENCE_TITLES[shift] ?? 'Последствие').toLowerCase()}</span>
+        <span class="con"><b>{shift}</b> {(CONSEQUENCE_TITLES[shift] ?? t('fcore.consequence')).toLowerCase()}</span>
       {/each}
     </div>
   {:else}
-    <p class="faint small">Последствий нет: стресс кончился — выбывает.</p>
+    <p class="faint small">{t('fcore.sh.noCons')}</p>
   {/if}
 </article>
 

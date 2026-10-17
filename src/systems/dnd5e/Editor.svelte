@@ -1,5 +1,7 @@
 <!-- Редактор статблока D&D 5e. Подписи интерфейса — по-русски, справочные значения хранятся ключами. -->
 <script lang="ts">
+  import { locale, t } from '../../renderer/lib/i18n.svelte';
+  import { labels } from '../../shared/i18n';
   import { Calculator, Plus, X } from '@lucide/svelte';
   import BlockList from './BlockList.svelte';
   import TermList from './TermList.svelte';
@@ -11,19 +13,13 @@
 
   let { stats = $bindable(), system, lang = 'ru' }: { stats: Dnd5eStats; system: string; lang?: string } = $props();
 
-  // Интерфейс редактора по-русски, независимо от языка карточки.
-  const t = dict('ru');
-  const ABILITY_NAMES: Record<Ability, string> = {
-    str: 'Сила', dex: 'Ловкость', con: 'Телосложение', int: 'Интеллект', wis: 'Мудрость', cha: 'Харизма',
-  };
-  const SPEED_NAMES: Record<SpeedKind, string> = { walk: 'Ходьба', fly: 'Полёт', swim: 'Плавание', climb: 'Лазание', burrow: 'Копание' };
-  const SENSE_NAMES: Record<SenseKind, string> = {
-    darkvision: 'Тёмное зрение', blindsight: 'Слепое зрение', tremorsense: 'Чувство вибрации', truesight: 'Истинное зрение',
-  };
-  const ALIGNMENTS = [
-    'законно-добрый', 'нейтрально-добрый', 'хаотично-добрый', 'законно-нейтральный', 'нейтральный',
-    'хаотично-нейтральный', 'законно-злой', 'нейтрально-злой', 'хаотично-злой', 'без мировоззрения', 'любое мировоззрение',
-  ];
+  // The editor speaks the interface language, whatever the card language.
+  const lb = $derived(dict(locale.lang));
+  const ABILITY_NAMES = labels<Ability>(ABILITIES, 'dnd.ability');
+  const SPEED_NAMES = labels<SpeedKind>(SPEEDS, 'dnd.speed');
+  const SENSE_NAMES = labels<SenseKind>(SENSES, 'dnd.sense');
+  // Suggestions only: the alignment is free text of the card.
+  const alignments = $derived([...t('dnd.alignments').split('|'), ...t('dnd.alignmentsExtra').split('|')]);
 
   // Число из поля или undefined, если поле пустое.
   const num = (v: string) => {
@@ -63,58 +59,58 @@
   const autoPassive = $derived(10 + (stats.skills.find((s) => s.skill === 'perception')?.bonus ?? mod(stats.abilities.wis)));
 </script>
 
-<datalist id="dnd-alignments">{#each ALIGNMENTS as a (a)}<option value={a}></option>{/each}</datalist>
+<datalist id="dnd-alignments">{#each alignments as a (a)}<option value={a}></option>{/each}</datalist>
 
 <section>
-  <h4>Основное</h4>
+  <h4>{t('dnd.ed.basics')}</h4>
   <div class="grid">
     <label class="field size">
-      <span>Размер</span>
+      <span>{t('dnd.size')}</span>
       <span class="pair">
         <select value={stats.size[0]} onchange={(e) => (stats.size = [e.currentTarget.value as never, ...stats.size.slice(1)])}>
-          {#each SIZES as s (s)}<option value={s}>{t.sizes[s]}</option>{/each}
+          {#each SIZES as s (s)}<option value={s}>{lb.sizes[s]}</option>{/each}
         </select>
         <select
           value={stats.size[1] ?? ''}
-          title="Второй размер: «Средний или Маленький»"
+          title={t('dnd.ed.size2Hint')}
           onchange={(e) => (stats.size = e.currentTarget.value ? [stats.size[0]!, e.currentTarget.value as never] : [stats.size[0]!])}
         >
           <option value="">—</option>
-          {#each SIZES as s (s)}<option value={s}>или {(t.sizes[s] ?? s).toLowerCase()}</option>{/each}
+          {#each SIZES as s (s)}<option value={s}>{t('dnd.ed.orSize', { size: (lb.sizes[s] ?? s).toLowerCase() })}</option>{/each}
         </select>
       </span>
     </label>
-    <label class="field wide"><span>Тип</span><input type="text" placeholder="Гуманоид (гоблиноид)" bind:value={stats.type} /></label>
+    <label class="field wide"><span>{t('dnd.ed.type')}</span><input type="text" placeholder={t('dnd.ed.typePh')} bind:value={stats.type} /></label>
     <label class="field wide">
-      <span>Мировоззрение</span><input type="text" list="dnd-alignments" placeholder="хаотично-злой" bind:value={stats.alignment} />
+      <span>{t('dnd.alignment')}</span><input type="text" list="dnd-alignments" placeholder={t('dnd.ed.alignmentPh')} bind:value={stats.alignment} />
     </label>
   </div>
 </section>
 
 <section>
-  <h4>Защита и движение</h4>
+  <h4>{t('dnd.ed.defense')}</h4>
   <div class="grid">
-    <label class="field"><span>КД</span><input type="number" bind:value={stats.ac} /></label>
-    <label class="field wide"><span>Доспех</span><input type="text" placeholder="природный доспех" bind:value={stats.acNote} /></label>
-    <label class="field"><span>Хиты</span><input type="number" bind:value={stats.hp} /></label>
+    <label class="field"><span>{t('dnd.ac')}</span><input type="number" bind:value={stats.ac} /></label>
+    <label class="field wide"><span>{t('dnd.ed.armor')}</span><input type="text" placeholder={t('dnd.ed.armorPh')} bind:value={stats.acNote} /></label>
+    <label class="field"><span>{t('dnd.hp')}</span><input type="number" bind:value={stats.hp} /></label>
     <label class="field">
-      <span>Формула хитов</span>
+      <span>{t('dnd.ed.hpFormula')}</span>
       <span class="pair">
         <input type="text" placeholder="3d6+3" bind:value={stats.hpFormula} />
         <button
           type="button"
           class="icon-btn"
-          title="Посчитать средние хиты по формуле"
+          title={t('dnd.ed.avgHint')}
           disabled={averageHp(stats.hpFormula ?? '') === null}
           onclick={() => (stats.hp = averageHp(stats.hpFormula ?? '') ?? stats.hp)}
         ><Calculator size={14} /></button>
       </span>
     </label>
     <label class="field">
-      <span>Инициатива</span>
+      <span>{t('dnd.initiative')}</span>
       <input
         type="text"
-        placeholder="{signed(mod(stats.abilities.dex))} (ЛОВ)"
+        placeholder="{signed(mod(stats.abilities.dex))} ({lb.abilities.dex})"
         value={stats.initiative === undefined ? '' : signed(stats.initiative)}
         onchange={(e) => (stats.initiative = num(e.currentTarget.value))}
       />
@@ -123,7 +119,7 @@
   <div class="grid">
     {#each SPEEDS as k (k)}
       <label class="field small">
-        <span>{SPEED_NAMES[k]}, фт.</span>
+        <span>{t('dnd.ed.speedFt', { speed: SPEED_NAMES[k] })}</span>
         <input type="number" value={stats.speed[k] ?? ''} onchange={(e) => setSpeed(k, e.currentTarget.value)} />
       </label>
     {/each}
@@ -131,20 +127,20 @@
         type="checkbox"
         checked={!!stats.speed.hover}
         onchange={(e) => (e.currentTarget.checked ? (stats.speed.hover = true) : delete stats.speed.hover)}
-      /> парит</label>
+      /> {t('dnd.ed.hover')}</label>
   </div>
 </section>
 
 <section>
-  <h4>Характеристики</h4>
+  <h4>{t('dnd.ed.abilities')}</h4>
   <div class="abilities">
     {#each ABILITIES as a (a)}
       <div class="ability">
-        <span class="abbr" title={ABILITY_NAMES[a]}>{t.abilities[a]}</span>
+        <span class="abbr" title={ABILITY_NAMES[a]}>{lb.abilities[a]}</span>
         <input type="number" bind:value={stats.abilities[a]} />
         <span class="faint">{signed(mod(stats.abilities[a]))}</span>
-        <label class="save" title="Владение спасброском">
-          <input type="checkbox" checked={stats.saves[a] !== undefined} onchange={(e) => toggleSave(a, e.currentTarget.checked)} /> спас
+        <label class="save" title={t('dnd.saveHint')}>
+          <input type="checkbox" checked={stats.saves[a] !== undefined} onchange={(e) => toggleSave(a, e.currentTarget.checked)} /> {t('dnd.ed.save')}
         </label>
         {#if stats.saves[a] !== undefined}
           <input class="save-val" type="text" value={signed(stats.saves[a]!)} onchange={(e) => (stats.saves[a] = num(e.currentTarget.value) ?? 0)} />
@@ -155,13 +151,13 @@
 </section>
 
 <section>
-  <h4>Навыки</h4>
+  <h4>{t('dnd.skills')}</h4>
   <div class="skills">
     {#each stats.skills as s, i (s.skill)}
       <span class="skill">
-        {t.skills[s.skill] ?? s.skill}
+        {lb.skills[s.skill] ?? s.skill}
         <input type="text" value={signed(s.bonus)} onchange={(e) => (s.bonus = num(e.currentTarget.value) ?? 0)} />
-        <button type="button" class="icon-btn" title="Убрать" onclick={() => stats.skills.splice(i, 1)}><X size={12} /></button>
+        <button type="button" class="icon-btn" title={t('dnd.remove')} onclick={() => stats.skills.splice(i, 1)}><X size={12} /></button>
       </span>
     {/each}
     <select
@@ -171,24 +167,24 @@
         e.currentTarget.value = '';
       }}
     >
-      <option value="">+ навык</option>
-      {#each Object.entries(t.skills).filter(([k]) => !stats.skills.some((s) => s.skill === k)) as [k, l] (k)}<option value={k}>{l}</option>{/each}
+      <option value="">{t('dnd.ed.addSkill')}</option>
+      {#each Object.entries(lb.skills).filter(([k]) => !stats.skills.some((s) => s.skill === k)) as [k, l] (k)}<option value={k}>{l}</option>{/each}
     </select>
   </div>
 </section>
 
 <section>
-  <h4>Урон и состояния</h4>
+  <h4>{t('dnd.ed.damage')}</h4>
   <div class="rows">
-    <div class="row"><span class="lbl">Уязвимости</span><TermList bind:values={stats.vulnerabilities} table={t.damage} /></div>
-    <div class="row"><span class="lbl">Сопротивления</span><TermList bind:values={stats.resistances} table={t.damage} /></div>
-    <div class="row"><span class="lbl">Иммунитеты</span><TermList bind:values={stats.immunities} table={t.damage} /></div>
-    <div class="row"><span class="lbl">Иммунитет к состояниям</span><TermList bind:values={stats.conditionImmunities} table={t.conditions} /></div>
+    <div class="row"><span class="lbl">{t('dnd.ed.vulnerabilities')}</span><TermList bind:values={stats.vulnerabilities} table={lb.damage} /></div>
+    <div class="row"><span class="lbl">{t('dnd.ed.resistances')}</span><TermList bind:values={stats.resistances} table={lb.damage} /></div>
+    <div class="row"><span class="lbl">{t('dnd.ed.immunities')}</span><TermList bind:values={stats.immunities} table={lb.damage} /></div>
+    <div class="row"><span class="lbl">{t('dnd.ed.conditionImmunities')}</span><TermList bind:values={stats.conditionImmunities} table={lb.conditions} /></div>
   </div>
 </section>
 
 <section>
-  <h4>Чувства и языки</h4>
+  <h4>{t('dnd.ed.senses')}</h4>
   <div class="grid">
     {#each SENSES as k (k)}
       <label class="field small">
@@ -197,61 +193,61 @@
       </label>
     {/each}
     <label class="field small">
-      <span>Пасс. Внимательность</span>
+      <span>{t('dnd.ed.passive')}</span>
       <input type="number" placeholder={String(autoPassive)} bind:value={stats.senses.passivePerception} onblur={() => {
         if (typeof stats.senses.passivePerception !== 'number') stats.senses.passivePerception = autoPassive;
       }} />
     </label>
   </div>
   <div class="grid">
-    <label class="field wide"><span>Языки</span><input type="text" placeholder="Общий, Гоблинский" bind:value={stats.languages} /></label>
-    <label class="field wide"><span>Снаряжение</span><input type="text" placeholder="скимитар, щит" bind:value={stats.gear} /></label>
+    <label class="field wide"><span>{t('dnd.ed.languages')}</span><input type="text" placeholder={t('dnd.ed.languagesPh')} bind:value={stats.languages} /></label>
+    <label class="field wide"><span>{t('dnd.ed.gear')}</span><input type="text" placeholder={t('dnd.ed.gearPh')} bind:value={stats.gear} /></label>
   </div>
 </section>
 
 <section>
-  <h4>Опасность</h4>
+  <h4>{t('dnd.ed.challenge')}</h4>
   <div class="grid">
     <label class="field">
-      <span>Показатель опасности</span>
+      <span>{t('dnd.ed.cr')}</span>
       <select value={stats.cr} onchange={(e) => setCr(Number(e.currentTarget.value))}>
         {#each CRS as cr (cr)}<option value={cr}>{crText(cr)}</option>{/each}
       </select>
     </label>
-    <label class="field small"><span>Опыт</span><input type="number" bind:value={stats.xp} /></label>
-    <label class="field small"><span>Бонус мастерства</span><input type="number" bind:value={stats.pb} /></label>
+    <label class="field small"><span>{t('dnd.xp')}</span><input type="number" bind:value={stats.xp} /></label>
+    <label class="field small"><span>{t('dnd.pbFull')}</span><input type="number" bind:value={stats.pb} /></label>
   </div>
 </section>
 
 <section>
-  <h4>Колдовство</h4>
+  <h4>{t('dnd.ed.spellcasting')}</h4>
   <SpellEditor bind:stats {system} {lang} />
 </section>
 
 <section>
-  <h4>Особенности</h4>
-  <BlockList bind:blocks={stats.traits} addLabel="Особенность" />
+  <h4>{t('dnd.ed.traits')}</h4>
+  <BlockList bind:blocks={stats.traits} addLabel={t('dnd.ed.trait')} />
 </section>
 <section>
-  <h4>Действия</h4>
-  <BlockList bind:blocks={stats.actions} addLabel="Действие" />
+  <h4>{t('dnd.ed.actions')}</h4>
+  <BlockList bind:blocks={stats.actions} addLabel={t('dnd.ed.action')} />
 </section>
 <section>
-  <h4>Бонусные действия</h4>
-  <BlockList bind:blocks={stats.bonusActions} addLabel="Бонусное действие" />
+  <h4>{t('dnd.ed.bonusActions')}</h4>
+  <BlockList bind:blocks={stats.bonusActions} addLabel={t('dnd.ed.bonusAction')} />
 </section>
 <section>
-  <h4>Реакции</h4>
-  <BlockList bind:blocks={stats.reactions} addLabel="Реакция" />
+  <h4>{t('dnd.ed.reactions')}</h4>
+  <BlockList bind:blocks={stats.reactions} addLabel={t('dnd.ed.reaction')} />
 </section>
 <section>
-  <h4>Легендарные действия</h4>
+  <h4>{t('dnd.ed.legendary')}</h4>
   {#if stats.legendary}
-    <textarea rows="3" placeholder="Вступление: сколько легендарных действий и когда" bind:value={stats.legendary.intro}></textarea>
-    <BlockList bind:blocks={stats.legendary.actions} addLabel="Легендарное действие" />
-    <button type="button" class="btn danger" onclick={() => delete stats.legendary}>Убрать легендарные действия</button>
+    <textarea rows="3" placeholder={t('dnd.ed.legendaryPh')} bind:value={stats.legendary.intro}></textarea>
+    <BlockList bind:blocks={stats.legendary.actions} addLabel={t('dnd.ed.legendaryAction')} />
+    <button type="button" class="btn danger" onclick={() => delete stats.legendary}>{t('dnd.ed.removeLegendary')}</button>
   {:else}
-    <button type="button" class="btn" onclick={() => (stats.legendary = { intro: '', actions: [] })}><Plus size={14} /> Добавить легендарные действия</button>
+    <button type="button" class="btn" onclick={() => (stats.legendary = { intro: '', actions: [] })}><Plus size={14} /> {t('dnd.ed.addLegendary')}</button>
   {/if}
 </section>
 

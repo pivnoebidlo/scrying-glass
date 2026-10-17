@@ -1,5 +1,6 @@
 <!-- Особенности или действия: название, ограничение («Перезарядка 5–6»), текст и данные атаки. -->
 <script lang="ts">
+  import { t } from '../../renderer/lib/i18n.svelte';
   import { ArrowDown, ArrowUp, Plus, Trash2 } from '@lucide/svelte';
   import type { Block } from './stats';
 
@@ -25,25 +26,25 @@
 {#each blocks as b, i (i)}
   <div class="block">
     <div class="head">
-      <input class="name" type="text" placeholder="Название" bind:value={b.name} />
-      <input class="uses" type="text" placeholder="Ограничение: 3/день" title="Например: «Перезарядка 5–6», «3/день», «стоит 2 действия»" bind:value={b.uses} />
-      <button type="button" class="icon-btn" title="Выше" disabled={i === 0} onclick={() => move(i, -1)}><ArrowUp size={14} /></button>
-      <button type="button" class="icon-btn" title="Ниже" disabled={i === blocks.length - 1} onclick={() => move(i, 1)}><ArrowDown size={14} /></button>
-      <button type="button" class="icon-btn" title="Удалить" onclick={() => blocks.splice(i, 1)}><Trash2 size={14} /></button>
+      <input class="name" type="text" placeholder={t('dnd.bl.name')} bind:value={b.name} />
+      <input class="uses" type="text" placeholder={t('dnd.bl.usesPh')} title={t('dnd.bl.usesHint')} bind:value={b.uses} />
+      <button type="button" class="icon-btn" title={t('dnd.up')} disabled={i === 0} onclick={() => move(i, -1)}><ArrowUp size={14} /></button>
+      <button type="button" class="icon-btn" title={t('dnd.down')} disabled={i === blocks.length - 1} onclick={() => move(i, 1)}><ArrowDown size={14} /></button>
+      <button type="button" class="icon-btn" title={t('dnd.delete')} onclick={() => blocks.splice(i, 1)}><Trash2 size={14} /></button>
     </div>
-    <textarea rows={rows(b.text)} placeholder="Текст. *Курсив*, **жирный**, строки «- …» — список." bind:value={b.text}></textarea>
+    <textarea rows={rows(b.text)} placeholder={t('dnd.bl.textPh')} bind:value={b.text}></textarea>
     <div class="attack">
-      <span class="faint">Атака:</span>
+      <span class="faint">{t('dnd.bl.attack')}</span>
       <input
         type="text"
-        placeholder="бонус, +4"
+        placeholder={t('dnd.bl.bonusPh')}
         value={b.attack ? (b.attack.bonus >= 0 ? '+' : '') + b.attack.bonus : ''}
         onchange={(e) => setAttack(b, e.currentTarget.value, b.attack?.damage.join(', ') ?? '')}
       />
       <input
         class="dmg"
         type="text"
-        placeholder="урон, 1d6+2, 1d4"
+        placeholder={t('dnd.bl.damagePh')}
         disabled={!b.attack}
         value={b.attack?.damage.join(', ') ?? ''}
         onchange={(e) => b.attack && setAttack(b, String(b.attack.bonus), e.currentTarget.value)}

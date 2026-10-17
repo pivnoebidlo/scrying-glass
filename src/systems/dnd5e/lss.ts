@@ -1,6 +1,7 @@
 // Импорт персонажа из Long Story Short (longstoryshort.app): экспорт листа в JSON -> лист персонажа D&D 5e.
 // В экспорте: { jsonType: 'character', edition, data: '<JSON строкой>' }. Тексты в data.text — документы редактора
 // TipTap (ProseMirror), они переводятся в простую разметку карточек.
+import { t } from '../../shared/i18n';
 import type { Ability, Size } from './stats';
 import type { CharacterText, Dnd5eCharacter } from './character';
 
@@ -95,14 +96,14 @@ export function fromLss(j: LssExport, table: LssSpellTable = {}): LssImport {
     if (level) skills[key.replace(/ /g, '-')] = level;
   }
 
-  const t: Dnd5eCharacter['text'] = {};
+  const texts: Dnd5eCharacter['text'] = {};
   const notes: { title: string; text: string }[] = [];
   for (const [key, v] of Object.entries((d.text ?? {}) as Record<string, Val & { customLabel?: string }>)) {
     if (/^spells-level-/.test(key)) continue;
     const value = text(v);
     if (!value) continue;
-    if (TEXTS[key]) t[TEXTS[key]] = value;
-    else notes.push({ title: v?.customLabel?.trim() || 'Заметки', text: value });
+    if (TEXTS[key]) texts[TEXTS[key]] = value;
+    else notes.push({ title: v?.customLabel?.trim() || t('dnd.lss.notes'), text: value });
   }
 
   // Заклинания: ячейки slots-N, списки — тексты spells-level-N.
@@ -170,12 +171,12 @@ export function fromLss(j: LssExport, table: LssSpellTable = {}): LssImport {
       .map((w) => ({ name: str(w.name), bonus: str(w.mod), damage: str(w.dmg), ...(str(w.notes) ? { notes: str(w.notes) } : {}) })),
     ...(spellcasting ? { spellcasting } : {}),
     ...(Object.keys(coins).length ? { coins } : {}),
-    text: t,
+    text: texts,
     ...(notes.length ? { notes } : {}),
   };
 
   return {
-    name: str(d.name) || 'Без имени',
+    name: str(d.name) || t('dnd.lss.unnamed'),
     system: j.edition === '2024' ? 'dnd5e-2024' : 'dnd5e-2014',
     stats: character,
     lssId: avatarUrl ? (/\/avatar\/([0-9a-f]{24})/.exec(avatarUrl)?.[1] ?? null) : null,
@@ -230,13 +231,13 @@ function cardSpells(j: LssExport, table: LssSpellTable): { spells: Record<string
   }
   const spells = Object.fromEntries(Object.entries(byLevel).map(([l, names]) => [l, names.sort((a, b) => a.localeCompare(b, 'ru')).join(', ')]));
   if (!missing.length) return { spells, warnings: [] };
-  const how = 'Загрузите заклинания LSS в настройках «Карточки» (ответы API из инструментов разработчика браузера) или переключите книгу заклинаний персонажа в LSS на текст и экспортируйте заново.';
+  const how = t('dnd.lss.how');
   return {
     spells,
     warnings: [
       missing.length === ids.length
-        ? `Заклинания (${ids.length}) в LSS ведутся карточками — в экспорте только их номера, без названий, поэтому в карточку они не попали. ${how}`
-        : `Не нашлось заклинаний: ${missing.length} из ${ids.length} — их номеров нет в загруженной таблице заклинаний LSS. ${how}`,
+        ? t('dnd.lss.cards', { n: ids.length, how })
+        : t('dnd.lss.missing', { n: missing.length, total: ids.length, how }),
     ],
   };
 }

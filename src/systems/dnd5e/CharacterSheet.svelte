@@ -1,5 +1,7 @@
 <!-- Лист персонажа D&D 5e для мастера: шапка с главным и вкладки, как в Long Story Short. Только просмотр. -->
 <script lang="ts">
+  import { t } from '../../renderer/lib/i18n.svelte';
+  import { labels } from '../../shared/i18n';
   import type { Card } from '../../shared/cards';
   import { markdown } from '../../renderer/lib/markdown';
   import { spellLinks } from '../../renderer/lib/entry/links';
@@ -8,12 +10,13 @@
   import { ABILITIES, dict, mod, signed, sizeText, SKILL_ABILITY } from './stats';
   import {
     characterInitiative, characterPb, saveBonus, skillBonus, totalLevel, type CharacterText, type Dnd5eCharacter,
+    CHARACTER_TEXTS,
   } from './character';
 
   let { card }: { card: Card<Dnd5eCharacter> } = $props();
 
   const c = $derived(card.stats);
-  const t = dict('ru');
+  const lb = $derived(dict(card.lang));
   const pb = $derived(characterPb(c));
 
   const check = (e: MouseEvent, what: string, bonus: number) => rolls.check(card.name, what, bonus, modeOf(e));
@@ -25,13 +28,13 @@
   const tabs = $derived(
     (
       [
-        ['stats', 'Характеристики', true],
-        ['combat', 'Атаки', c.attacks.length > 0 || has('attacks')],
-        ['spells', 'Заклинания', !!c.spellcasting],
-        ['features', 'Умения', has('features') || has('traits') || has('proficiencies')],
-        ['equipment', 'Снаряжение', has('equipment') || !!c.coins],
-        ['person', 'Личность', ['personality', 'ideals', 'bonds', 'flaws', 'appearance', 'background', 'allies'].some((k) => has(k as CharacterText)) || !!c.details],
-        ['notes', 'Заметки', has('quests') || !!c.notes?.length],
+        ['stats', t('dnd.sh.stats'), true],
+        ['combat', t('dnd.attacks'), c.attacks.length > 0 || has('attacks')],
+        ['spells', t('dnd.spells'), !!c.spellcasting],
+        ['features', t('dnd.sh.features'), has('features') || has('traits') || has('proficiencies')],
+        ['equipment', t('dnd.sh.equipment'), has('equipment') || !!c.coins],
+        ['person', t('dnd.sh.person'), ['personality', 'ideals', 'bonds', 'flaws', 'appearance', 'background', 'allies'].some((k) => has(k as CharacterText)) || !!c.details],
+        ['notes', t('dnd.sh.notes'), has('quests') || !!c.notes?.length],
       ] as [Tab, string, boolean][]
     ).filter(([, , show]) => show)
   );
@@ -39,7 +42,7 @@
   const classes = $derived(c.classes.map((x) => `${x.name}${x.subclass ? ` (${x.subclass})` : ''} ${x.level}`).join(' / '));
   const skills = $derived(
     Object.entries(SKILL_ABILITY)
-      .map(([k, a]) => ({ key: k, name: t.skills[k] ?? k, ability: a, level: c.skills[k] ?? 0, bonus: skillBonus(c, k, a) }))
+      .map(([k, a]) => ({ key: k, name: lb.skills[k] ?? k, ability: a, level: c.skills[k] ?? 0, bonus: skillBonus(c, k, a) }))
       .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
   );
   const passive = (skill: string) => 10 + skillBonus(c, skill, SKILL_ABILITY[skill]!);
@@ -52,37 +55,35 @@
       : []
   );
 
-  const DETAILS: Record<string, string> = { age: 'Возраст', height: 'Рост', weight: 'Вес', eyes: 'Глаза', skin: 'Кожа', hair: 'Волосы' };
-  const COINS: Record<string, string> = { pp: 'ПМ', gp: 'ЗМ', ep: 'ЭМ', sp: 'СМ', cp: 'ММ' };
-  const PERSON: [CharacterText, string][] = [
-    ['personality', 'Черты характера'], ['ideals', 'Идеалы'], ['bonds', 'Привязанности'], ['flaws', 'Слабости'],
-    ['appearance', 'Внешность'], ['background', 'Предыстория'], ['allies', 'Союзники и организации'],
-  ];
+  const DETAILS: Record<string, string> = labels(['age', 'height', 'weight', 'eyes', 'skin', 'hair'], 'dnd.detail');
+  const COINS: Record<string, string> = labels(['pp', 'gp', 'ep', 'sp', 'cp'], 'dnd.coinShort');
+  const TEXT_TITLES = labels<CharacterText>(CHARACTER_TEXTS, 'dnd.text');
+  const PERSON: CharacterText[] = ['personality', 'ideals', 'bonds', 'flaws', 'appearance', 'background', 'allies'];
 </script>
 
 <article class="sheet">
   <p class="meta">
     {[classes, c.race, c.background, c.alignment, c.size ? sizeText({ size: [c.size] } as never, 'ru') : ''].filter(Boolean).join(' · ')}
-    {#if c.player}<span class="faint"> · игрок {c.player}</span>{/if}
-    {#if c.xp !== undefined}<span class="faint"> · опыт {c.xp}</span>{/if}
+    {#if c.player}<span class="faint">{t('dnd.sh.player', { name: c.player })}</span>{/if}
+    {#if c.xp !== undefined}<span class="faint">{t('dnd.sh.xp', { n: c.xp })}</span>{/if}
   </p>
 
   <div class="vitals">
-    <div class="vital"><span class="v">{c.ac}</span><span class="l">КД</span></div>
-    <div class="vital"><span class="v">{c.hpMax}</span><span class="l">хиты{c.hitDie ? ` · ${totalLevel(c)}×${c.hitDie.replace(/^\d+/, '')}` : ''}</span></div>
-    <div class="vital"><button class="v roll" title="Бросить инициативу. {rollHint()}" onclick={(e) => check(e, 'Инициатива', characterInitiative(c))}>{signed(characterInitiative(c))}</button><span class="l">инициатива</span></div>
-    <div class="vital"><span class="v">{c.speed}</span><span class="l">скорость, фт.</span></div>
-    <div class="vital"><span class="v">{signed(pb)}</span><span class="l">мастерство</span></div>
-    {#if c.inspiration}<div class="vital insp"><span class="v">★</span><span class="l">вдохновение</span></div>{/if}
+    <div class="vital"><span class="v">{c.ac}</span><span class="l">{t('dnd.ac')}</span></div>
+    <div class="vital"><span class="v">{c.hpMax}</span><span class="l">{t('dnd.sh.hp')}{c.hitDie ? ` · ${totalLevel(c)}×${c.hitDie.replace(/^\d+/, '')}` : ''}</span></div>
+    <div class="vital"><button class="v roll" title={t('dnd.rollInit', { hint: rollHint() })} onclick={(e) => check(e, t('dnd.initiative'), characterInitiative(c))}>{signed(characterInitiative(c))}</button><span class="l">{t('dnd.sh.initiative')}</span></div>
+    <div class="vital"><span class="v">{c.speed}</span><span class="l">{t('dnd.sh.speed')}</span></div>
+    <div class="vital"><span class="v">{signed(pb)}</span><span class="l">{t('dnd.sh.pb')}</span></div>
+    {#if c.inspiration}<div class="vital insp"><span class="v">★</span><span class="l">{t('dnd.sh.inspiration')}</span></div>{/if}
   </div>
 
   <div class="abilities">
     {#each ABILITIES as a (a)}
       <div class="ability">
-        <span class="abbr">{t.abilities[a]}</span>
-        <button class="mod roll" title="Проверка {t.abilities[a]}. {rollHint()}" onclick={(e) => check(e, `Проверка ${t.abilities[a]}`, mod(c.abilities[a]))}>{signed(mod(c.abilities[a]))}</button>
+        <span class="abbr">{lb.abilities[a]}</span>
+        <button class="mod roll" title="{t('dnd.check', { ability: lb.abilities[a] })}. {rollHint()}" onclick={(e) => check(e, t('dnd.check', { ability: lb.abilities[a] }), mod(c.abilities[a]))}>{signed(mod(c.abilities[a]))}</button>
         <span class="score faint">{c.abilities[a]}</span>
-        <button class="save roll" class:prof={c.saves.includes(a)} title="Спасбросок {t.abilities[a]}. {rollHint()}" onclick={(e) => check(e, `Спасбросок ${t.abilities[a]}`, saveBonus(c, a))}>спас {signed(saveBonus(c, a))}</button>
+        <button class="save roll" class:prof={c.saves.includes(a)} title="{t('dnd.saveOf', { ability: lb.abilities[a] })}. {rollHint()}" onclick={(e) => check(e, t('dnd.saveOf', { ability: lb.abilities[a] }), saveBonus(c, a))}>{t('dnd.sh.save', { n: signed(saveBonus(c, a)) })}</button>
       </div>
     {/each}
   </div>
@@ -98,21 +99,21 @@
       <ul class="skills">
         {#each skills as s (s.key)}
           <li class:prof={s.level > 0}>
-            <span class="dot" class:expert={s.level === 2} title={s.level === 2 ? 'Компетентность' : s.level ? 'Владение' : ''}></span>
+            <span class="dot" class:expert={s.level === 2} title={s.level === 2 ? t('dnd.expertise') : s.level ? t('dnd.proficiency') : ''}></span>
             <span class="sname">{s.name}</span>
-            <span class="faint ab">{t.abilities[s.ability]}</span>
+            <span class="faint ab">{lb.abilities[s.ability]}</span>
             <button class="sb roll" title="{s.name}. {rollHint()}" onclick={(e) => check(e, s.name, s.bonus)}>{signed(s.bonus)}</button>
           </li>
         {/each}
       </ul>
       <div>
         <dl class="passive">
-          <div><dt>Пассивная Внимательность</dt><dd>{passive('perception')}</dd></div>
-          <div><dt>Пассивная Проницательность</dt><dd>{passive('insight')}</dd></div>
-          <div><dt>Пассивный Анализ</dt><dd>{passive('investigation')}</dd></div>
+          <div><dt>{t('dnd.sh.passivePerception')}</dt><dd>{passive('perception')}</dd></div>
+          <div><dt>{t('dnd.sh.passiveInsight')}</dt><dd>{passive('insight')}</dd></div>
+          <div><dt>{t('dnd.sh.passiveInvestigation')}</dt><dd>{passive('investigation')}</dd></div>
         </dl>
         {#if has('proficiencies')}
-          <h4>Владения и языки</h4>
+          <h4>{TEXT_TITLES.proficiencies}</h4>
           <div class="text">{@html markdown(c.text.proficiencies!)}</div>
         {/if}
       </div>
@@ -120,7 +121,7 @@
   {:else if tab === 'combat'}
     {#if c.attacks.length}
       <table class="attacks">
-        <thead><tr><th>Атака</th><th>Бонус</th><th>Урон</th></tr></thead>
+        <thead><tr><th>{t('dnd.sh.attack')}</th><th>{t('dnd.sh.bonus')}</th><th>{t('dnd.sh.damage')}</th></tr></thead>
         <tbody>
           {#each c.attacks as a, i (i)}
             {@const bonus = parseBonus(a.bonus)}
@@ -129,12 +130,12 @@
               <td>{a.name}{#if a.notes}<div class="faint small">{a.notes}</div>{/if}</td>
               <td>
                 {#if bonus !== null}
-                  <button class="roll" title="Атака и урон. {rollHint()}" onclick={(e) => rolls.attack(card.name, a.name, bonus, dmg ? [a.damage] : [], modeOf(e))}>{a.bonus}</button>
+                  <button class="roll" title={t('dnd.attackHint', { hint: rollHint() })} onclick={(e) => rolls.attack(card.name, a.name, bonus, dmg ? [a.damage] : [], modeOf(e))}>{a.bonus}</button>
                 {:else}{a.bonus}{/if}
               </td>
               <td>
                 {#if dmg}
-                  <button class="roll" title="Только урон. Shift — критический (кубы ×2)" onclick={(e) => rolls.damage(card.name, a.name, a.damage, e.shiftKey)}>{a.damage}</button>
+                  <button class="roll" title={t('dnd.damageHint')} onclick={(e) => rolls.damage(card.name, a.name, a.damage, e.shiftKey)}>{a.damage}</button>
                 {:else}{a.damage}{/if}
               </td>
             </tr>
@@ -145,23 +146,23 @@
     {#if has('attacks')}<div class="text">{@html markdown(c.text.attacks!)}</div>{/if}
   {:else if tab === 'spells' && c.spellcasting}
     <div class="vitals small-vitals">
-      <div class="vital"><span class="v">{t.abilities[c.spellcasting.ability]}</span><span class="l">характеристика</span></div>
-      <div class="vital"><span class="v">{spellDc}</span><span class="l">СЛ спасброска</span></div>
-      <div class="vital"><button class="v roll" title="Атака заклинанием. {rollHint()}" onclick={(e) => check(e, 'Атака заклинанием', spellAttack)}>{signed(spellAttack)}</button><span class="l">бонус атаки</span></div>
+      <div class="vital"><span class="v">{lb.abilities[c.spellcasting.ability]}</span><span class="l">{t('dnd.sh.ability')}</span></div>
+      <div class="vital"><span class="v">{spellDc}</span><span class="l">{t('dnd.sh.dc')}</span></div>
+      <div class="vital"><button class="v roll" title={t('dnd.spellAttackHint', { hint: rollHint() })} onclick={(e) => check(e, t('dnd.spellAttack'), spellAttack)}>{signed(spellAttack)}</button><span class="l">{t('dnd.sh.atk')}</span></div>
     </div>
     {#each spellLevels as lvl (lvl)}
       <section class="spell-level">
         <h4>
-          {lvl === '0' ? 'Заговоры' : `${lvl}-й уровень`}
-          {#if c.spellcasting.slots[lvl]}<span class="slots">{#each Array(c.spellcasting.slots[lvl]) as _, i (i)}<span class="slot"></span>{/each} ячеек: {c.spellcasting.slots[lvl]}</span>{/if}
+          {lvl === '0' ? t('dnd.cantrips') : t('dnd.levelN', { n: lvl })}
+          {#if c.spellcasting.slots[lvl]}<span class="slots">{#each Array(c.spellcasting.slots[lvl]) as _, i (i)}<span class="slot"></span>{/each} {t('dnd.sh.slots', { n: c.spellcasting.slots[lvl] })}</span>{/if}
         </h4>
         {#if c.spellcasting.spells[lvl]}<div class="text spells" use:spellLinks={'text'}>{@html markdown(c.spellcasting.spells[lvl])}</div>{/if}
       </section>
     {/each}
   {:else if tab === 'features'}
-    {#if has('features')}<h4>Умения</h4><div class="text">{@html markdown(c.text.features!)}</div>{/if}
-    {#if has('traits')}<h4>Особенности и черты</h4><div class="text">{@html markdown(c.text.traits!)}</div>{/if}
-    {#if has('proficiencies')}<h4>Владения и языки</h4><div class="text">{@html markdown(c.text.proficiencies!)}</div>{/if}
+    {#if has('features')}<h4>{TEXT_TITLES.features}</h4><div class="text">{@html markdown(c.text.features!)}</div>{/if}
+    {#if has('traits')}<h4>{TEXT_TITLES.traits}</h4><div class="text">{@html markdown(c.text.traits!)}</div>{/if}
+    {#if has('proficiencies')}<h4>{TEXT_TITLES.proficiencies}</h4><div class="text">{@html markdown(c.text.proficiencies!)}</div>{/if}
   {:else if tab === 'equipment'}
     {#if c.coins}
       <div class="coins">
@@ -175,11 +176,11 @@
         {#each Object.entries(c.details) as [k, v] (k)}<div><dt>{DETAILS[k] ?? k}</dt><dd>{v}</dd></div>{/each}
       </dl>
     {/if}
-    {#each PERSON as [k, title] (k)}
-      {#if has(k)}<h4>{title}</h4><div class="text">{@html markdown(c.text[k]!)}</div>{/if}
+    {#each PERSON as k (k)}
+      {#if has(k)}<h4>{TEXT_TITLES[k]}</h4><div class="text">{@html markdown(c.text[k]!)}</div>{/if}
     {/each}
   {:else if tab === 'notes'}
-    {#if has('quests')}<h4>Задания</h4><div class="text">{@html markdown(c.text.quests!)}</div>{/if}
+    {#if has('quests')}<h4>{TEXT_TITLES.quests}</h4><div class="text">{@html markdown(c.text.quests!)}</div>{/if}
     {#each c.notes ?? [] as n, i (i)}<h4>{n.title}</h4><div class="text">{@html markdown(n.text)}</div>{/each}
   {/if}
 </article>

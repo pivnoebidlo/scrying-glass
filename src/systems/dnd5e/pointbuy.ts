@@ -1,13 +1,12 @@
 // Покупка характеристик (SRD 5.1 и 5.2.1, CC BY 4.0): каждая характеристика от 8 до 15 до бонусов, 27 очков,
 // цена 8–13 — по очку за ступень, 14 и 15 — по два. Бонусы: в правилах 2024 года — от предыстории (+2 и +1 или
 // +1 к трём), в правилах 2014 года — от расы. Здесь же — проверка готового персонажа: какие бонусы он мог взять.
+import { labels, t, type Key } from '../../shared/i18n';
 import { ABILITIES, type Ability } from './stats';
 
 export type Scores = Record<Ability, number>;
 
-export const ABILITY_TITLES: Record<Ability, string> = {
-  str: 'Сила', dex: 'Ловкость', con: 'Телосложение', int: 'Интеллект', wis: 'Мудрость', cha: 'Харизма',
-};
+export const ABILITY_TITLES = labels<Ability>(ABILITIES, 'dnd.ability');
 
 const COST: Record<number, number> = { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 };
 // Цена вне 8–15 (домашние правила с другими пределами): ниже 8 — минус очко за ступень, выше 15 — по два.
@@ -43,17 +42,20 @@ export interface RaceDef extends RaceBonus {
   subraces: Subrace[];
 }
 
+// Adds a title read from the dictionary on access (follows the interface language).
+const named = <T extends object>(key: Key, o: T) => Object.defineProperty(o, 'title', { enumerable: true, get: () => t(key) }) as T & { title: string };
+
 // Расы SRD 5.1 с подрасами. Свои расы и подрасы (в том числе к этим) пользователь добавляет сам.
 export const RACES_2014: RaceDef[] = [
-  { id: 'dwarf', title: 'Дварф', fixed: { con: 2 }, subraces: [{ id: 'hill', title: 'Холмовой', fixed: { wis: 1 } }, { id: 'mountain', title: 'Горный', fixed: { str: 2 } }] },
-  { id: 'elf', title: 'Эльф', fixed: { dex: 2 }, subraces: [{ id: 'high', title: 'Высший', fixed: { int: 1 } }] },
-  { id: 'halfling', title: 'Полурослик', fixed: { dex: 2 }, subraces: [{ id: 'lightfoot', title: 'Легконогий', fixed: { cha: 1 } }, { id: 'stout', title: 'Коренастый', fixed: { con: 1 } }] },
-  { id: 'human', title: 'Человек', fixed: { str: 1, dex: 1, con: 1, int: 1, wis: 1, cha: 1 }, subraces: [] },
-  { id: 'dragonborn', title: 'Драконорождённый', fixed: { str: 2, cha: 1 }, subraces: [] },
-  { id: 'gnome', title: 'Гном', fixed: { int: 2 }, subraces: [{ id: 'rock', title: 'Скальный', fixed: { con: 1 } }] },
-  { id: 'halfelf', title: 'Полуэльф', fixed: { cha: 2 }, choose: { count: 2, except: ['cha'] }, subraces: [] },
-  { id: 'halforc', title: 'Полуорк', fixed: { str: 2, con: 1 }, subraces: [] },
-  { id: 'tiefling', title: 'Тифлинг', fixed: { cha: 2, int: 1 }, subraces: [] },
+  named('dnd.race.dwarf', { id: 'dwarf', fixed: { con: 2 }, subraces: [named('dnd.subrace.hill', { id: 'hill', fixed: { wis: 1 } }), named('dnd.subrace.mountain', { id: 'mountain', fixed: { str: 2 } })] }),
+  named('dnd.race.elf', { id: 'elf', fixed: { dex: 2 }, subraces: [named('dnd.subrace.high', { id: 'high', fixed: { int: 1 } })] }),
+  named('dnd.race.halfling', { id: 'halfling', fixed: { dex: 2 }, subraces: [named('dnd.subrace.lightfoot', { id: 'lightfoot', fixed: { cha: 1 } }), named('dnd.subrace.stout', { id: 'stout', fixed: { con: 1 } })] }),
+  named('dnd.race.human', { id: 'human', fixed: { str: 1, dex: 1, con: 1, int: 1, wis: 1, cha: 1 }, subraces: [] }),
+  named('dnd.race.dragonborn', { id: 'dragonborn', fixed: { str: 2, cha: 1 }, subraces: [] }),
+  named('dnd.race.gnome', { id: 'gnome', fixed: { int: 2 }, subraces: [named('dnd.subrace.rock', { id: 'rock', fixed: { con: 1 } })] }),
+  named('dnd.race.halfelf', { id: 'halfelf', fixed: { cha: 2 }, choose: { count: 2, except: ['cha'] }, subraces: [] }),
+  named('dnd.race.halforc', { id: 'halforc', fixed: { str: 2, con: 1 }, subraces: [] }),
+  named('dnd.race.tiefling', { id: 'tiefling', fixed: { cha: 2, int: 1 }, subraces: [] }),
 ];
 
 // Бонусы расы с подрасой: постоянные складываются, «+1 на выбор» — от того, у кого он есть.
@@ -102,11 +104,11 @@ export interface Check {
 export function problemsOf(base: Scores, rules: Rules): Problem[] {
   const p: Problem[] = [];
   for (const a of ABILITIES) {
-    if (base[a] > rules.max) p.push({ ability: a, text: `${ABILITY_TITLES[a]} ${base[a]} до бонусов — больше ${rules.max}` });
-    if (base[a] < rules.min) p.push({ ability: a, text: `${ABILITY_TITLES[a]} ${base[a]} до бонусов — меньше ${rules.min}` });
+    if (base[a] > rules.max) p.push({ ability: a, text: t('dnd.pb.over', { ability: ABILITY_TITLES[a], value: base[a], max: rules.max }) });
+    if (base[a] < rules.min) p.push({ ability: a, text: t('dnd.pb.under', { ability: ABILITY_TITLES[a], value: base[a], min: rules.min }) });
   }
   const n = spent(base);
-  if (n > rules.budget) p.push({ text: `Потрачено ${n} очков из ${rules.budget}` });
+  if (n > rules.budget) p.push({ text: t('dnd.pb.spent', { n, budget: rules.budget }) });
   return p;
 }
 

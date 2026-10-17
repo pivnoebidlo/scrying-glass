@@ -1,5 +1,6 @@
 <!-- Список значений из справочника (типы урона, состояния) плюс свободный текст: «дробящий от немагических атак». -->
 <script lang="ts">
+  import { t } from '../../renderer/lib/i18n.svelte';
   import { X } from '@lucide/svelte';
 
   let {
@@ -19,7 +20,7 @@
 
 <div class="terms">
   {#each values as v, i (v)}
-    <button type="button" class="chip" title="Убрать" onclick={() => values.splice(i, 1)}>{label(v)} <X size={10} /></button>
+    <button type="button" class="chip" title={t('dnd.remove')} onclick={() => values.splice(i, 1)}>{label(v)} <X size={10} /></button>
   {/each}
   <select
     value=""
@@ -34,7 +35,7 @@
   {#if custom}
     <input
       type="text"
-      placeholder="свой вариант, Enter"
+      placeholder={t('dnd.term.ownPh')}
       bind:value={text}
       onkeydown={(e) => {
         if (e.key === 'Enter') {

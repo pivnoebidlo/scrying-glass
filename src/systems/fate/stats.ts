@@ -1,11 +1,12 @@
 // Карточка Fate Core: аспекты, навыки, трюки, стресс, последствия. Один вид для персонажей игроков и NPC.
 // Подписи свои (открытого русского перевода Fate Core нет); навыки хранятся текстом — свой список у каждой игры.
 import type { CardKind, CombatStats } from '../../shared/cards';
+import { labels } from '../../shared/i18n';
 import { ladderText, signed } from './ladder';
 
 // Важность NPC: безымянный (горстка навыков, клетка-другая стресса), второстепенный, главный (как персонаж).
 export type FateTier = 'nameless' | 'supporting' | 'main';
-export const TIERS: Record<FateTier, string> = { nameless: 'Безымянный', supporting: 'Второстепенный', main: 'Главный' };
+export const TIERS = labels<FateTier>(['nameless', 'supporting', 'main'], 'fcore.tier');
 
 export interface FateSkill {
   name: string;

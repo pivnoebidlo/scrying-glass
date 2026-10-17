@@ -1,6 +1,8 @@
 <!-- Редактор листа персонажа игрока D&D 5e. Что считается само (бонус мастерства, инициатива, СЛ заклинаний,
      бонусы навыков), показано подсказкой в пустом поле; вписанное число заменяет расчёт. -->
 <script lang="ts">
+  import { locale, t } from '../../renderer/lib/i18n.svelte';
+  import { labels } from '../../shared/i18n';
   import { ArrowDown, ArrowUp, Plus, Trash2 } from '@lucide/svelte';
   import { ABILITIES, SIZES, SKILL_ABILITY, dict, mod, signed, type Ability, type Size } from './stats';
   import {
@@ -9,31 +11,14 @@
 
   let { stats = $bindable() }: { stats: Dnd5eCharacter; system: string } = $props();
 
-  const t = dict('ru');
-  const ABILITY_NAMES: Record<Ability, string> = {
-    str: 'Сила', dex: 'Ловкость', con: 'Телосложение', int: 'Интеллект', wis: 'Мудрость', cha: 'Харизма',
-  };
-  const DETAILS = { age: 'Возраст', height: 'Рост', weight: 'Вес', eyes: 'Глаза', skin: 'Кожа', hair: 'Волосы' } as const;
-  const COINS = { pp: 'Платина', gp: 'Золото', ep: 'Электрум', sp: 'Серебро', cp: 'Медь' } as const;
-  const TEXT_NAMES: Record<CharacterText, [string, string]> = {
-    features: ['Умения', 'Классовые и расовые умения: что персонаж умеет, сколько раз, перезарядка'],
-    traits: ['Особенности и черты', 'Расовые особенности, черты (feats)'],
-    proficiencies: ['Владения и языки', '**Языки:** общий, эльфийский\n**Оружие:** простое'],
-    equipment: ['Снаряжение', '- Кольчуга\n- Щит\n- Набор путешественника'],
-    attacks: ['Атаки: заметки', 'Особые приёмы, боевые стили'],
-    personality: ['Черты характера', ''],
-    ideals: ['Идеалы', ''],
-    bonds: ['Привязанности', ''],
-    flaws: ['Слабости', ''],
-    appearance: ['Внешность', ''],
-    background: ['Предыстория', 'История персонажа'],
-    allies: ['Союзники и организации', ''],
-    quests: ['Задания', 'Личные цели и квесты'],
-  };
-  const ALIGNMENTS = [
-    'законно-добрый', 'нейтрально-добрый', 'хаотично-добрый', 'законно-нейтральный', 'нейтральный',
-    'хаотично-нейтральный', 'законно-злой', 'нейтрально-злой', 'хаотично-злой',
-  ];
+  const lb = $derived(dict(locale.lang));
+  const ABILITY_NAMES = labels<Ability>(ABILITIES, 'dnd.ability');
+  const DETAILS = labels(['age', 'height', 'weight', 'eyes', 'skin', 'hair'] as const, 'dnd.detail');
+  const COINS = labels(['pp', 'gp', 'ep', 'sp', 'cp'] as const, 'dnd.coin');
+  // Placeholders: only some texts have one.
+  const TEXT_PH: Partial<Record<CharacterText, string>> = labels(['features', 'traits', 'proficiencies', 'equipment', 'attacks', 'background', 'quests'], 'dnd.textPh');
+  const TEXT_TITLES = labels<CharacterText>(CHARACTER_TEXTS, 'dnd.text');
+  const alignments = $derived(t('dnd.alignments').split('|'));
 
   // Число из поля или undefined, если поле пустое.
   const num = (v: string) => {
@@ -112,26 +97,26 @@
   const pb = $derived(characterPb({ ...stats, pb: undefined }));
 </script>
 
-<datalist id="dnd-char-alignments">{#each ALIGNMENTS as a (a)}<option value={a}></option>{/each}</datalist>
+<datalist id="dnd-char-alignments">{#each alignments as a (a)}<option value={a}></option>{/each}</datalist>
 
 <section>
-  <h4>Персонаж</h4>
+  <h4>{t('dnd.ce.character')}</h4>
   <div class="grid">
-    <label class="field wide"><span>Раса</span><input type="text" placeholder="Человек" bind:value={stats.race} /></label>
-    <label class="field wide"><span>Предыстория</span><input type="text" placeholder="Благородный" bind:value={stats.background} /></label>
+    <label class="field wide"><span>{t('dnd.ce.race')}</span><input type="text" placeholder={t('dnd.ce.racePh')} bind:value={stats.race} /></label>
+    <label class="field wide"><span>{t('dnd.diff.background')}</span><input type="text" placeholder={t('dnd.ce.backgroundPh')} bind:value={stats.background} /></label>
     <label class="field wide">
-      <span>Мировоззрение</span><input type="text" list="dnd-char-alignments" placeholder="хаотично-добрый" bind:value={stats.alignment} />
+      <span>{t('dnd.alignment')}</span><input type="text" list="dnd-char-alignments" placeholder={t('dnd.ce.alignmentPh')} bind:value={stats.alignment} />
     </label>
   </div>
   <div class="grid">
-    <label class="field wide"><span>Игрок</span><input type="text" placeholder="Имя игрока" bind:value={stats.player} /></label>
+    <label class="field wide"><span>{t('dnd.player')}</span><input type="text" placeholder={t('dnd.ce.playerPh')} bind:value={stats.player} /></label>
     <label class="field small">
-      <span>Опыт</span><input type="number" value={stats.xp ?? ''} onchange={(e) => setOptional('xp', e.currentTarget.value)} />
+      <span>{t('dnd.xp')}</span><input type="number" value={stats.xp ?? ''} onchange={(e) => setOptional('xp', e.currentTarget.value)} />
     </label>
     <label class="field">
-      <span>Размер</span>
+      <span>{t('dnd.size')}</span>
       <select value={stats.size ?? 'medium'} onchange={(e) => (stats.size = e.currentTarget.value as Size)}>
-        {#each SIZES as s (s)}<option value={s}>{t.sizes[s]}</option>{/each}
+        {#each SIZES as s (s)}<option value={s}>{lb.sizes[s]}</option>{/each}
       </select>
     </label>
   </div>
@@ -146,29 +131,29 @@
 </section>
 
 <section>
-  <h4>Классы <span class="hint">уровень {totalLevel(stats)}</span></h4>
+  <h4>{t('dnd.ce.classes')} <span class="hint">{t('dnd.ce.level', { n: totalLevel(stats) })}</span></h4>
   {#each stats.classes as c, i (i)}
     <div class="row-line">
-      <input class="grow" type="text" placeholder="Класс: Жрец" bind:value={c.name} />
-      <input class="grow" type="text" placeholder="Подкласс: Домен обмана" bind:value={c.subclass} />
-      <input class="lvl" type="number" min="1" max="20" title="Уровень в этом классе" bind:value={c.level} />
-      <button type="button" class="icon-btn" title="Убрать класс" disabled={stats.classes.length === 1} onclick={() => stats.classes.splice(i, 1)}><Trash2 size={14} /></button>
+      <input class="grow" type="text" placeholder={t('dnd.ce.classPh')} bind:value={c.name} />
+      <input class="grow" type="text" placeholder={t('dnd.ce.subclassPh')} bind:value={c.subclass} />
+      <input class="lvl" type="number" min="1" max="20" title={t('dnd.ce.classLevelHint')} bind:value={c.level} />
+      <button type="button" class="icon-btn" title={t('dnd.ce.removeClass')} disabled={stats.classes.length === 1} onclick={() => stats.classes.splice(i, 1)}><Trash2 size={14} /></button>
     </div>
   {/each}
-  <button type="button" class="btn" onclick={() => stats.classes.push({ name: '', level: 1 })}><Plus size={14} /> Мультикласс</button>
+  <button type="button" class="btn" onclick={() => stats.classes.push({ name: '', level: 1 })}><Plus size={14} /> {t('dnd.ce.multiclass')}</button>
 </section>
 
 <section>
-  <h4>Характеристики и спасброски</h4>
+  <h4>{t('dnd.ce.abilitiesSaves')}</h4>
   <div class="abilities">
     {#each ABILITIES as a (a)}
       <div class="ability">
-        <span class="abbr" title={ABILITY_NAMES[a]}>{t.abilities[a]}</span>
+        <span class="abbr" title={ABILITY_NAMES[a]}>{lb.abilities[a]}</span>
         <input type="number" bind:value={stats.abilities[a]} />
         <span class="faint">{signed(mod(stats.abilities[a]))}</span>
-        <label class="save" title="Владение спасброском">
+        <label class="save" title={t('dnd.saveHint')}>
           <input type="checkbox" checked={stats.saves.includes(a)} onchange={(e) => toggleSave(a, e.currentTarget.checked)} />
-          спас {signed(saveBonus(stats, a))}
+          {t('dnd.sh.save', { n: signed(saveBonus(stats, a)) })}
         </label>
       </div>
     {/each}
@@ -176,16 +161,16 @@
 </section>
 
 <section>
-  <h4>Навыки</h4>
+  <h4>{t('dnd.skills')}</h4>
   <div class="skills">
-    {#each Object.entries(SKILL_ABILITY).sort((a, b) => (t.skills[a[0]] ?? '').localeCompare(t.skills[b[0]] ?? '', 'ru')) as [k, a] (k)}
+    {#each Object.entries(SKILL_ABILITY).sort((a, b) => (lb.skills[a[0]] ?? '').localeCompare(lb.skills[b[0]] ?? '', 'ru')) as [k, a] (k)}
       {@const level = stats.skills[k] ?? 0}
       <div class="skill">
-        <span class="sname">{t.skills[k]} <span class="faint">{t.abilities[a]}</span></span>
+        <span class="sname">{lb.skills[k]} <span class="faint">{lb.abilities[a]}</span></span>
         <span class="seg" role="group">
-          <button type="button" class:on={level === 0} title="Без владения" onclick={() => setSkill(k, 0)}>—</button>
-          <button type="button" class:on={level === 1} title="Владение" onclick={() => setSkill(k, 1)}>влад.</button>
-          <button type="button" class:on={level === 2} title="Компетентность (двойной бонус)" onclick={() => setSkill(k, 2)}>комп.</button>
+          <button type="button" class:on={level === 0} title={t('dnd.ce.noProf')} onclick={() => setSkill(k, 0)}>—</button>
+          <button type="button" class:on={level === 1} title={t('dnd.proficiency')} onclick={() => setSkill(k, 1)}>{t('dnd.ce.profShort')}</button>
+          <button type="button" class:on={level === 2} title={t('dnd.ce.expertiseHint')} onclick={() => setSkill(k, 2)}>{t('dnd.ce.expShort')}</button>
         </span>
         <span class="sb">{signed(skillBonus(stats, k, a))}</span>
       </div>
@@ -194,26 +179,26 @@
 </section>
 
 <section>
-  <h4>Бой</h4>
+  <h4>{t('dnd.ce.combat')}</h4>
   <div class="grid">
-    <label class="field small"><span>КД</span><input type="number" bind:value={stats.ac} /></label>
-    <label class="field small"><span>Макс. хиты</span><input type="number" bind:value={stats.hpMax} /></label>
-    <label class="field small"><span>Кость хитов</span><input type="text" placeholder="1d8" bind:value={stats.hitDie} /></label>
-    <label class="field small"><span>Скорость, фт.</span><input type="number" bind:value={stats.speed} /></label>
+    <label class="field small"><span>{t('dnd.ac')}</span><input type="number" bind:value={stats.ac} /></label>
+    <label class="field small"><span>{t('dnd.ce.maxHp')}</span><input type="number" bind:value={stats.hpMax} /></label>
+    <label class="field small"><span>{t('dnd.hitDie')}</span><input type="text" placeholder="1d8" bind:value={stats.hitDie} /></label>
+    <label class="field small"><span>{t('dnd.ce.speedFt')}</span><input type="number" bind:value={stats.speed} /></label>
     <label class="field small">
-      <span>Инициатива</span>
+      <span>{t('dnd.initiative')}</span>
       <input
         type="text"
-        placeholder="{signed(characterInitiative({ ...stats, initiative: undefined }))} (ЛОВ)"
+        placeholder="{signed(characterInitiative({ ...stats, initiative: undefined }))} ({lb.abilities.dex})"
         value={stats.initiative === undefined ? '' : signed(stats.initiative)}
         onchange={(e) => setOptional('initiative', e.currentTarget.value)}
       />
     </label>
     <label class="field small">
-      <span>Бонус мастерства</span>
+      <span>{t('dnd.pbFull')}</span>
       <input
         type="text"
-        placeholder="{signed(pb)} (уровень)"
+        placeholder={t('dnd.ce.pbPh', { n: signed(pb) })}
         value={stats.pb === undefined ? '' : signed(stats.pb)}
         onchange={(e) => setOptional('pb', e.currentTarget.value)}
       />
@@ -222,57 +207,57 @@
         type="checkbox"
         checked={!!stats.inspiration}
         onchange={(e) => (e.currentTarget.checked ? (stats.inspiration = true) : delete stats.inspiration)}
-      /> вдохновение</label>
+      /> {t('dnd.ce.inspiration')}</label>
   </div>
 </section>
 
 <section>
-  <h4>Атаки</h4>
+  <h4>{t('dnd.attacks')}</h4>
   {#each stats.attacks as a, i (i)}
     <div class="row-line">
-      <input class="grow" type="text" placeholder="Булава" bind:value={a.name} />
-      <input class="short" type="text" placeholder="+5" title="Бонус атаки" bind:value={a.bonus} />
-      <input class="grow" type="text" placeholder="1d6+3 дробящий" title="Урон" bind:value={a.damage} />
-      <input class="grow" type="text" placeholder="Заметка" bind:value={a.notes} />
-      <button type="button" class="icon-btn" title="Выше" disabled={i === 0} onclick={() => move(stats.attacks, i, -1)}><ArrowUp size={14} /></button>
-      <button type="button" class="icon-btn" title="Ниже" disabled={i === stats.attacks.length - 1} onclick={() => move(stats.attacks, i, 1)}><ArrowDown size={14} /></button>
-      <button type="button" class="icon-btn" title="Удалить" onclick={() => stats.attacks.splice(i, 1)}><Trash2 size={14} /></button>
+      <input class="grow" type="text" placeholder={t('dnd.ce.attackPh')} bind:value={a.name} />
+      <input class="short" type="text" placeholder="+5" title={t('dnd.ce.bonusHint')} bind:value={a.bonus} />
+      <input class="grow" type="text" placeholder={t('dnd.ce.damagePh')} title={t('dnd.ce.damage')} bind:value={a.damage} />
+      <input class="grow" type="text" placeholder={t('dnd.ce.notePh')} bind:value={a.notes} />
+      <button type="button" class="icon-btn" title={t('dnd.up')} disabled={i === 0} onclick={() => move(stats.attacks, i, -1)}><ArrowUp size={14} /></button>
+      <button type="button" class="icon-btn" title={t('dnd.down')} disabled={i === stats.attacks.length - 1} onclick={() => move(stats.attacks, i, 1)}><ArrowDown size={14} /></button>
+      <button type="button" class="icon-btn" title={t('dnd.delete')} onclick={() => stats.attacks.splice(i, 1)}><Trash2 size={14} /></button>
     </div>
   {/each}
-  <button type="button" class="btn" onclick={() => stats.attacks.push({ name: '', bonus: '', damage: '' })}><Plus size={14} /> Атака</button>
+  <button type="button" class="btn" onclick={() => stats.attacks.push({ name: '', bonus: '', damage: '' })}><Plus size={14} /> {t('dnd.ce.attack')}</button>
 </section>
 
 <section>
-  <h4>Заклинания</h4>
+  <h4>{t('dnd.spells')}</h4>
   {#if stats.spellcasting}
     {@const sc = stats.spellcasting}
     <div class="grid">
       <label class="field">
-        <span>Характеристика</span>
+        <span>{t('dnd.ce.ability')}</span>
         <select bind:value={sc.ability}>
           {#each ABILITIES as a (a)}<option value={a}>{ABILITY_NAMES[a]}</option>{/each}
         </select>
       </label>
       <label class="field small">
-        <span>СЛ спасброска</span>
+        <span>{t('dnd.ce.dc')}</span>
         <input type="text" placeholder={String(8 + characterPb(stats) + mod(stats.abilities[sc.ability]))} value={sc.dc ?? ''} onchange={(e) => setSpellNumber('dc', e.currentTarget.value)} />
       </label>
       <label class="field small">
-        <span>Бонус атаки</span>
+        <span>{t('dnd.ce.atk')}</span>
         <input type="text" placeholder={signed(characterPb(stats) + mod(stats.abilities[sc.ability]))} value={sc.attack === undefined ? '' : signed(sc.attack)} onchange={(e) => setSpellNumber('attack', e.currentTarget.value)} />
       </label>
     </div>
     {#each spellLevels as lvl (lvl)}
       <div class="spell-level">
         <div class="lvl-head">
-          <span class="lvl-title">{lvl === '0' ? 'Заговоры' : `${lvl}-й уровень`}</span>
+          <span class="lvl-title">{lvl === '0' ? t('dnd.cantrips') : t('dnd.levelN', { n: lvl })}</span>
           {#if lvl !== '0'}
-            <label class="slots">ячеек <input type="number" min="0" max="9" value={sc.slots[lvl] ?? ''} onchange={(e) => setSlots(lvl, e.currentTarget.value)} /></label>
+            <label class="slots">{t('dnd.ce.slots')} <input type="number" min="0" max="9" value={sc.slots[lvl] ?? ''} onchange={(e) => setSlots(lvl, e.currentTarget.value)} /></label>
           {/if}
         </div>
         <textarea
           rows={rows(sc.spells[lvl])}
-          placeholder="Названия заклинаний, по одному в строке"
+          placeholder={t('dnd.ce.spellsPh')}
           value={sc.spells[lvl] ?? ''}
           oninput={(e) => setSpells(lvl, e.currentTarget.value)}
         ></textarea>
@@ -286,19 +271,19 @@
           e.currentTarget.value = '';
         }}
       >
-        <option value="">+ уровень заклинаний</option>
-        {#each ['1', '2', '3', '4', '5', '6', '7', '8', '9'].filter((l) => !spellLevels.includes(l)) as l (l)}<option value={l}>{l}-й уровень</option>{/each}
+        <option value="">{t('dnd.ce.addLevel')}</option>
+        {#each ['1', '2', '3', '4', '5', '6', '7', '8', '9'].filter((l) => !spellLevels.includes(l)) as l (l)}<option value={l}>{t('dnd.levelN', { n: l })}</option>{/each}
       </select>
       <div class="grow"></div>
-      <button type="button" class="btn danger" onclick={() => delete stats.spellcasting}>Убрать заклинания</button>
+      <button type="button" class="btn danger" onclick={() => delete stats.spellcasting}>{t('dnd.ce.removeSpells')}</button>
     </div>
   {:else}
-    <button type="button" class="btn" onclick={() => (stats.spellcasting = { ability: 'wis', slots: {}, spells: {} })}><Plus size={14} /> Персонаж колдует</button>
+    <button type="button" class="btn" onclick={() => (stats.spellcasting = { ability: 'wis', slots: {}, spells: {} })}><Plus size={14} /> {t('dnd.ce.casts')}</button>
   {/if}
 </section>
 
 <section>
-  <h4>Монеты</h4>
+  <h4>{t('dnd.ce.coins')}</h4>
   <div class="grid">
     {#each Object.entries(COINS) as [k, l] (k)}
       <label class="field small">
@@ -311,10 +296,10 @@
 
 {#each CHARACTER_TEXTS as k (k)}
   <section>
-    <h4>{TEXT_NAMES[k][0]}</h4>
+    <h4>{TEXT_TITLES[k]}</h4>
     <textarea
       rows={rows(stats.text[k])}
-      placeholder={TEXT_NAMES[k][1] || '*Курсив*, **жирный**, строки «- …» — список'}
+      placeholder={TEXT_PH[k] || t('dnd.markupPh')}
       value={stats.text[k] ?? ''}
       oninput={(e) => setText(k, e.currentTarget.value)}
     ></textarea>
@@ -322,17 +307,17 @@
 {/each}
 
 <section>
-  <h4>Свои заметки</h4>
+  <h4>{t('dnd.ce.ownNotes')}</h4>
   {#each stats.notes ?? [] as n, i (i)}
     <div class="note">
       <div class="row-line">
-        <input class="grow title" type="text" placeholder="Заголовок" bind:value={n.title} />
-        <button type="button" class="icon-btn" title="Удалить" onclick={() => stats.notes?.splice(i, 1)}><Trash2 size={14} /></button>
+        <input class="grow title" type="text" placeholder={t('dnd.ce.titlePh')} bind:value={n.title} />
+        <button type="button" class="icon-btn" title={t('dnd.delete')} onclick={() => stats.notes?.splice(i, 1)}><Trash2 size={14} /></button>
       </div>
       <textarea rows={rows(n.text)} bind:value={n.text}></textarea>
     </div>
   {/each}
-  <button type="button" class="btn" onclick={() => (stats.notes ??= []).push({ title: '', text: '' })}><Plus size={14} /> Заметка</button>
+  <button type="button" class="btn" onclick={() => (stats.notes ??= []).push({ title: '', text: '' })}><Plus size={14} /> {t('dnd.ce.note')}</button>
 </section>
 
 <style>

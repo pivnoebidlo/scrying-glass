@@ -1,5 +1,6 @@
 <!-- Редактор характеристик неизвестной системы: блок stats как JSON. -->
 <script lang="ts">
+  import { t } from '../renderer/lib/i18n.svelte';
   let { stats = $bindable() }: { stats: unknown; system: string } = $props();
 
   let text = $state(JSON.stringify(stats, null, 2));
@@ -15,7 +16,7 @@
   }
 </script>
 
-<p class="faint">Для этой системы нет редактора: характеристики правятся как JSON.</p>
+<p class="faint">{t('sys.genericEditor')}</p>
 <textarea rows="24" spellcheck="false" bind:value={text} {oninput}></textarea>
 {#if error}<p class="error">{error}</p>{/if}
 
