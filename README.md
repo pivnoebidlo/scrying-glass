@@ -206,9 +206,7 @@ table is a plain Markdown file in a tables / random folder, easy to write in Obs
 on top, ×3 and ×5 — several at once, a click on an option in the list — pick it by hand.
 
 Where tables live: in an adventure, in the vault's shared tables folder or in the library — shared by all campaigns
-(`<library>/tables`, next to the shared cards). The 15 built-in tables in the interface language (human, elf, dwarf
-and halfling names, nicknames, appearance, personality, secret motives, a "Random NPC" generator,
-rumors, weather, road encounters, what's in the pockets, trinkets) are put into the library as ordinary files on the
+(`<library>/tables`, next to the shared cards). The 5 built-in tables in the interface language (rumors, weather, road encounters, what's in the pockets, trinkets) are put into the library as ordinary files on the
 first launch: they can be edited and extended. A deleted built-in table doesn't come back by itself — that's what
 "Restore built-in tables" is for. "New table" and "Copy to…" offer a place: the adventure, Shared or the library;
 [[links]] take the adventure's table first, then the shared one, then the library's. Any table can be deleted to
@@ -230,6 +228,13 @@ line; the file name says what's inside: `race_gender_kind.txt` (`human_man_names
 `dwarf_surnames.txt`; kinds — names, surnames, nicknames, epithets; race `any` — for all, or your own: `orc_man_names.txt`).
 "Load lists…" puts them into the library (`names/<lang>/`, the language by the letters), and they are added to the
 built-in ones; built-in or own lists can be turned off.
+
+**NPC generator** (Tools → NPC generator): race (or random), gender, importance (common to unique) → name, trade,
+appearance, character, manner of speech, what they want, what they hide and what they carry; important NPCs get a
+nickname or an epithet, fame and sometimes a magic trinket. Reroll or pin any part; recent NPCs stay in the history.
+"Create card" opens a new NPC card in the editor with the name, description and notes filled; "To journal" and "Copy"
+as with taverns. Names come from the name generator's lists. (The built-in name, appearance, personality, motives
+and "Random NPC" tables are retired — copies already in your library stay.)
 
 **Tavern generator** (Tools → Tavern generator): type (tavern, inn, roadside inn, harbor dive, hidden den, wine house),
 wealth (squalid to aristocratic — prices follow the SRD food, drink and lodging table), crowd, lodging and wonders.

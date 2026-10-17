@@ -1,7 +1,7 @@
 // Бестиарий в окне управления: краткий список карточек из ядра, фильтры и выбранная карточка.
 // Фильтры запоминаются между запусками (в окне, не в хранилище).
 import { locale, t } from '../../../renderer/lib/i18n.svelte';
-import type { Card, CardRef, CardScope, CardSummary, LssPreview } from '../../../shared/cards';
+import type { Card, CardKind, CardRef, CardScope, CardSummary, LssPreview } from '../../../shared/cards';
 import { defaultSide, imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
@@ -261,18 +261,23 @@ class Bestiary {
 
   // Новая карточка: система и язык — из фильтров, если они выбраны.
   // place — куда (например, открытая во «Файлах» папка); без него спросим.
-  async create(at?: Place) {
+  // prefill — a card started elsewhere (the NPC generator): name, description, notes, kind and language.
+  async create(at?: Place, prefill?: { name: string; description?: string; notes?: string; kind?: CardKind; lang?: string }) {
     const place = at ?? (await this.choosePlace({ title: t('best.whereNew'), action: t('best.create'), library: true }));
     if (!place) return;
     const system = this.newSystem();
-    const lang = this.lang !== 'all' ? this.lang : locale.lang;
+    const lang = prefill?.lang ?? (this.lang !== 'all' ? this.lang : locale.lang);
     // Вид — по папке: в папке персонажей — NPC, в папке партии — персонаж игрока, иначе монстр.
     const role = place.folder !== undefined ? place.folder.split('/').map(folderRole).filter(Boolean).at(-1) : null;
-    const kind = role === 'characters' ? 'npc' : role === 'party' ? 'character' : 'monster';
+    const kind = prefill?.kind ?? (role === 'characters' ? 'npc' : role === 'party' ? 'character' : 'monster');
     this.open({
       ...place,
       original: null,
-      card: { format: 1, id: '', kind, system, lang, name: '', side: defaultSide(kind), portraits: [], tags: [], notes: '', stats: systemOf(system).blank(kind) },
+      card: {
+        format: 1, id: '', kind, system, lang, name: prefill?.name ?? '', side: defaultSide(kind), portraits: [], tags: [],
+        ...(prefill?.description ? { description: prefill.description } : {}),
+        notes: prefill?.notes ?? '', stats: systemOf(system).blank(kind),
+      },
     });
     openTab('bestiary');
   }

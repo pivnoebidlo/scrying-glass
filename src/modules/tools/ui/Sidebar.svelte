@@ -1,7 +1,7 @@
 <!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Beer, Calculator, Dices, FileText, Gauge, Hourglass, ScrollText, Send, Signature, Table2 } from '@lucide/svelte';
+  import { Beer, Calculator, UserRound, Dices, FileText, Gauge, Hourglass, ScrollText, Send, Signature, Table2 } from '@lucide/svelte';
   import { tables } from '../tables/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
@@ -44,6 +44,10 @@
   <button class="item" data-nav class:active={ui.tool === 'names'} onclick={() => pickTool('names')}>
     <Signature size={14} />
     <span class="name">{t('tools.side.names')}</span>
+  </button>
+  <button class="item" data-nav class:active={ui.tool === 'npc'} onclick={() => pickTool('npc')}>
+    <UserRound size={14} />
+    <span class="name">{t('tools.side.npc')}</span>
   </button>
   <button class="item" data-nav class:active={ui.tool === 'tavern'} onclick={() => pickTool('tavern')}>
     <Beer size={14} />

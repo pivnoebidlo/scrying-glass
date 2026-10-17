@@ -1,0 +1,75 @@
+// NPC generator content in English (written for the app). Occupations and traits are shared with the taverns.
+import { en as tavern } from '../../tavern/content/en';
+import type { NpcContent } from '../types';
+
+export const en: NpcContent = {
+  occupations: [...tavern.occupations, ...tavern.staff, ...[
+    ['innkeeper'], ['guard captain'], ['street urchin'], ['retired soldier'], ['fortune teller'], ['locksmith'], ['tailor'],
+    ['shepherd', 'shepherdess'], ['ferryman', 'ferrywoman'], ['librarian'], ['cartographer'], ['jeweler'], ['beekeeper'], ['ratcatcher'],
+  ].map(([male, female]) => ({ male: male!, female: female ?? male! }))],
+  appearance: [
+    'a scar across the whole cheek', 'grey hair on a young face', 'eyes of different colors', 'huge hands with bitten nails',
+    'spotless clothes, out of place here', 'a badly set broken nose', 'a snake tattoo on the neck', 'squints all the time',
+    'jingles with many bracelets', 'two front teeth missing', 'very tall and stooping', 'smells of herbs and smoke',
+    'clothes clearly made for someone bigger', 'freckles and red braids', 'shaved head and a silver earring',
+    'an eye patch — over the good eye, it seems', 'ink-stained fingers', 'a hand-shaped burn on the arm',
+    'a very quiet voice — you have to lean in', 'a heavy limp and a carved cane', 'the straight back of a soldier',
+    'boots that are always wet', 'lips that keep whispering something', 'a missing finger on the left hand',
+    'a crooked, charming smile', 'sunburnt skin and white crow’s feet', 'a fine coat, threadbare at the elbows',
+    'a wooden leg carved with runes', 'a nervous tic in one eye', 'dirt under the nails, flour on the sleeves',
+    'perfume you can smell across the room', 'a wedding ring worn on a string around the neck', 'unusually long fingers',
+    'a cough they never get rid of', 'a large, kind dog always at their heels', 'a hat with a ridiculous feather',
+  ],
+  traits: tavern.traits,
+  manners: [
+    'speaks in a whisper, as if someone is listening', 'answers questions with questions', 'never finishes a sentence',
+    'swears by gods nobody has heard of', 'uses long words, often wrongly', 'laughs at their own jokes before the end',
+    'calls everyone “friend”', 'speaks very slowly, choosing every word', 'talks with their hands', 'quotes old proverbs, badly',
+    'hums between sentences', 'mispronounces names on purpose', 'speaks about themself in the third person',
+    'interrupts constantly', 'stares at the floor while talking', 'taps the table to make a point', 'lowers their voice for gossip',
+    'switches to a foreign tongue when angry', 'never says no — just “we’ll see”', 'counts on their fingers while talking',
+    'stands too close', 'apologizes before every sentence', 'always smells the air before answering', 'speaks in rhymes when nervous',
+  ],
+  desires: [
+    'to pay off a debt before winter', 'to see the sea at least once', 'to win back a lost love', 'to be taken seriously by the guild',
+    'to find the one who killed their father', 'a quiet life far from the city', 'to get rich quick, whatever it takes',
+    'to learn magic, though they have no gift', 'to protect a younger sibling', 'to be forgiven for an old betrayal',
+    'to own their own shop', 'to leave town without anyone noticing', 'revenge on the local lord', 'to finish a great work',
+    'to become an adventurer', 'to find a cure for a sick child', 'to marry above their station', 'to get the respect of their parent',
+    'to recover a family heirloom', 'to be remembered after they die', 'to break a curse on their family', 'one good night’s sleep',
+    'to win the next tournament', 'to see the old king’s heir on the throne',
+  ],
+  secrets: [
+    'owes a large sum to dangerous people', 'spies for the local lord', 'hides a stolen relic', 'belongs to a forbidden cult — and regrets it',
+    'is a werewolf', 'is preparing a poisoning', 'knows where a treasure is hidden but is afraid to go there', 'forges documents',
+    'secretly helps the highway robbers', 'wants their boss’s job — at any cost', 'saw what they shouldn’t have and fears the witnesses',
+    'is pretending to be someone else — the real owner of the name is dead', 'sells rumors to the highest bidder',
+    'is the heir of a fallen noble house', 'has a second family in another town', 'was once a famous thief',
+    'is slowly losing their sight and hides it', 'carries a letter that could start a war', 'made a deal with a devil',
+    'has a price on their head in the neighbouring kingdom', 'is in love with someone they must never be with',
+    'killed a man in self-defence and buried him in the woods', 'can hear the dead on moonless nights', 'is not human at all',
+  ],
+  items: [
+    'a locket with a portrait of a stranger', 'a map of the area with a cross by the river', 'a key without a tag',
+    'loaded dice', 'a dried rose', 'a letter they never sent', 'a pouch of foreign coins', 'a deck of cards missing a queen',
+    'a wax seal with a coat of arms', 'a child’s drawing', 'a broken blade with runes', 'a vial of cloudy liquid',
+    'an IOU in someone else’s name', 'a tooth — definitely not human', 'a wooden flute', 'a little bag of salt “against evil”',
+    'a book with half the pages torn out', 'a pocket watch that runs backwards', 'a lucky horseshoe nail', 'a well-worn prayer book',
+    'a lock of someone’s hair', 'a ferry ticket', 'a whistle only dogs can hear', 'a bundle of letters tied with ribbon',
+  ],
+  magicItems: [
+    'a ring that grows warm near a lie', 'a candle whose flame never goes out', 'a coin that always lands on the side they call',
+    'a compass that points to what they want most', 'a glove that cannot be dirtied', 'a mirror that shows yesterday',
+    'a bell that rings before danger', 'a cloak that is always dry', 'a pebble that floats an inch above the hand',
+    'a quill that writes only the truth', 'a flask that is never quite empty', 'a hat that changes color with their mood',
+    'a key that opens one door, somewhere', 'a feather that cannot be dropped', 'a seed that will grow into something strange',
+  ],
+  fame: [
+    'they say they once outdrank a dwarf', 'everyone knows they saved the mayor’s daughter', 'rumor has it they talk to ghosts',
+    'people cross the street to avoid them', 'children follow them for stories', 'they won the spring tournament three years running',
+    'they are said to have walked out of the Mire alive', 'the guard owes them a favor', 'the thieves leave their house alone',
+    'priests come to them for advice', 'their songs are sung in every tavern', 'nobody has ever seen them lose at cards',
+    'they once beat a troll with a frying pan, or so they say', 'every merchant in town owes them money',
+    'they are the only one who knows the way through the old mines', 'they are said to be older than they look',
+  ],
+};

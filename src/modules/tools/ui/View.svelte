@@ -15,6 +15,7 @@
   import PointBuy from '../pointbuy/PointBuy.svelte';
   import NameGenerator from '../names/NameGenerator.svelte';
   import TavernGenerator from '../tavern/TavernGenerator.svelte';
+  import NpcGenerator from '../npc/NpcGenerator.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
@@ -38,6 +39,8 @@
   <TablesView />
 {:else if ui.tool === 'names'}
   <NameGenerator />
+{:else if ui.tool === 'npc'}
+  <NpcGenerator />
 {:else if ui.tool === 'tavern'}
   <TavernGenerator />
 {:else if ui.tool === 'telegram'}

@@ -275,6 +275,9 @@ Electron-приложение для мастера D&D: окно управле
   `tools/names/builtin/<lang>/*.txt` (написаны для приложения); свои — `<библиотека>/names/<lang>/` (`main/names.ts`, IPC
   `names:*`), в репозиторий не кладём — это могут быть списки чужих сайтов (папка `/names/` в корне — в .gitignore).
   Выгрузка TXT / CSV — общий IPC `files:saveText`.
+  Генератор NPC: `tools/npc/` — как таверны (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — занятия и черты берёт у
+  таверн, `text.ts` — Markdown и карточка, `store.svelte.ts` — с историей); «Создать карточку» — `bestiary.create(place,
+  prefill)`.
   Генератор таверн: `tools/tavern/` — типы `types.ts`, генерация `generate.ts` (части `TAVERN_PARTS`, переброска с
   закреплёнными, `withPeople` — события и просьбы с именами здешних людей), содержимое `content/{en,ru}.ts` (написано
   для приложения; по-русски черты и секреты — в настоящем времени, чтобы подходили любому полу; прилагательные
