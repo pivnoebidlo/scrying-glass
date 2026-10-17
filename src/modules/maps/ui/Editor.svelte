@@ -1,5 +1,6 @@
 <!-- Вкладка «Карты»: редактор мастера. Туман полупрозрачный, рамкой — то, что видят игроки. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
   import {
@@ -37,15 +38,15 @@
   const data = $derived(path ? dataOf(ms, path) : null);
   const shown = $derived(!!path && ms.current === path);
 
-  const TOOLS: { id: Tool; title: string; icon: typeof Hand }[] = [
-    { id: 'pan', title: 'Рука: двигать карту (или пробел / средняя кнопка)', icon: Hand },
-    { id: 'reveal', title: 'Открыть кистью', icon: Brush },
-    { id: 'hide', title: 'Скрыть кистью', icon: Eraser },
-    { id: 'revealRect', title: 'Открыть прямоугольник', icon: SquareDashedMousePointer },
-    { id: 'hideRect', title: 'Скрыть прямоугольник', icon: SquareDashed },
-    { id: 'view', title: 'Двигать область, которую видят игроки', icon: Move },
-    { id: 'pin', title: 'Метки: щелчок — поставить, метку можно перетащить', icon: MapPinPlus },
-    { id: 'token', title: 'Жетоны: тащите жетон (с сеткой встаёт по клеткам)', icon: CircleUserRound },
+  const TOOLS: { id: Tool; icon: typeof Hand }[] = [
+    { id: 'pan', icon: Hand },
+    { id: 'reveal', icon: Brush },
+    { id: 'hide', icon: Eraser },
+    { id: 'revealRect', icon: SquareDashedMousePointer },
+    { id: 'hideRect', icon: SquareDashed },
+    { id: 'view', icon: Move },
+    { id: 'pin', icon: MapPinPlus },
+    { id: 'token', icon: CircleUserRound },
   ];
 
   // Метки этой карты; выбранная — та, что открыта в панели.
@@ -179,7 +180,7 @@
     ctx.setLineDash([]);
     ctx.font = `${12 * dpr()}px -apple-system, system-ui, sans-serif`;
     ctx.fillStyle = ctx.strokeStyle;
-    ctx.fillText(shown ? 'видят игроки' : 'увидят игроки', rx + 6 * dpr(), ry - 6 * dpr());
+    ctx.fillText(shown ? t('maps.playersSee') : t('maps.playersWillSee'), rx + 6 * dpr(), ry - 6 * dpr());
 
     if (drag?.kind === 'rect') {
       const x = Math.min(drag.x0, drag.x1);
@@ -428,7 +429,7 @@
 
   function removePin(p: Pin) {
     if (!path) return;
-    if ((p.title || p.note) && !confirm(`Удалить метку${p.title ? ` «${p.title}»` : ''}?`)) return;
+    if ((p.title || p.note) && !confirm(t('maps.confirmDeletePin', { name: p.title ? ` «${p.title}»` : '' }))) return;
     if (ui.pin === p.id) ui.pin = null;
     dispatch('maps', 'removePin', { path, id: p.id });
   }
@@ -544,8 +545,8 @@
 
   function resetFog(base: 'hidden' | 'revealed') {
     if (!path) return;
-    const what = base === 'hidden' ? 'Скрыть всю карту' : 'Открыть всю карту';
-    if (confirm(`${what}? Историю тумана нельзя будет отменить.`)) dispatch('maps', 'resetFog', { path, base });
+    const what = base === 'hidden' ? t('maps.hideAll') : t('maps.revealAllQ');
+    if (confirm(t('maps.resetConfirm', { what }))) dispatch('maps', 'resetFog', { path, base });
   }
 
   const cursor = $derived(
@@ -572,46 +573,46 @@
     <header class="toolbar">
       <div class="title" title={path}>{mapName(path)}</div>
       <button class="btn" class:primary={!shown} onclick={() => dispatch('maps', shown ? 'clear' : 'show', { path })}>
-        {#if shown}<EyeOff size={14} /> Убрать у игроков{:else}<Eye size={14} /> Показать игрокам{/if}
+        {#if shown}<EyeOff size={14} /> {t('maps.removeFromPlayers')}{:else}<Eye size={14} /> {t('maps.showToPlayers')}{/if}
       </button>
 
       <div class="sep"></div>
       <div class="seg">
-        {#each TOOLS as t (t.id)}
-          <button class:active={ui.tool === t.id} title={t.title} onclick={() => (ui.tool = t.id)}><t.icon size={15} /></button>
+        {#each TOOLS as tool (tool.id)}
+          <button class:active={ui.tool === tool.id} title={t(`maps.tool.${tool.id}`)} onclick={() => (ui.tool = tool.id)}><tool.icon size={15} /></button>
         {/each}
       </div>
       {#if ui.tool === 'reveal' || ui.tool === 'hide'}
-        <div class="brush" title="Размер кисти"><Slider value={ui.brush} min={8} max={160} step={1} oninput={(v) => (ui.brush = v)} /></div>
+        <div class="brush" title={t('maps.brush')}><Slider value={ui.brush} min={8} max={160} step={1} oninput={(v) => (ui.brush = v)} /></div>
       {/if}
       {#if ui.tool === 'pin'}
         <button
           class="btn"
-          title={ui.pinShown ? 'Новые метки игроки видят сразу' : 'Новые метки видны только вам, показать игрокам — в метке'}
+          title={ui.pinShown ? t('maps.newPinsShownHint') : t('maps.newPinsHiddenHint')}
           onclick={() => (ui.pinShown = !ui.pinShown)}
         >
-          {#if ui.pinShown}<Eye size={14} /> Новые — игрокам{:else}<EyeOff size={14} /> Новые — только мне{/if}
+          {#if ui.pinShown}<Eye size={14} /> {t('maps.newToPlayers')}{:else}<EyeOff size={14} /> {t('maps.newOnlyMe')}{/if}
         </button>
       {/if}
-      <button class="icon-btn" title="Отменить (⌘Z)" disabled={!data.fog.ops.length} onclick={() => dispatch('maps', 'undoFog', { path })}>
+      <button class="icon-btn" title={t('maps.undo')} disabled={!data.fog.ops.length} onclick={() => dispatch('maps', 'undoFog', { path })}>
         <Undo2 size={15} />
       </button>
-      <button class="btn" onclick={() => resetFog('revealed')}>Открыть всё</button>
-      <button class="btn" onclick={() => resetFog('hidden')}>Скрыть всё</button>
+      <button class="btn" onclick={() => resetFog('revealed')}>{t('maps.revealAll')}</button>
+      <button class="btn" onclick={() => resetFog('hidden')}>{t('maps.hideAllBtn')}</button>
 
       <div class="sep"></div>
-      <button class="btn" title="Игроки видят всю карту" onclick={() => dispatch('maps', 'setView', { path, view: FULL_VIEW })}>
-        <Maximize size={14} /> Вся карта
+      <button class="btn" title={t('maps.wholeMapHint')} onclick={() => dispatch('maps', 'setView', { path, view: FULL_VIEW })}>
+        <Maximize size={14} /> {t('maps.wholeMap')}
       </button>
-      <button class="btn" title="Игроки видят то же, что сейчас видно здесь" onclick={showMineToPlayers}>
-        <ScanEye size={14} /> Как у меня
+      <button class="btn" title={t('maps.likeMineHint')} onclick={showMineToPlayers}>
+        <ScanEye size={14} /> {t('maps.likeMine')}
       </button>
 
       <div class="sep"></div>
       <button
         class="icon-btn"
         class:active={data.grid.on}
-        title="Сетка"
+        title={t('maps.grid')}
         onclick={() => {
           if (data.grid.on && ui.tool === 'grid') ui.tool = 'pan';
           dispatch('maps', 'setGrid', { path, grid: { on: !data.grid.on } });
@@ -620,7 +621,7 @@
         <Grid3x3 size={15} />
       </button>
       {#if data.grid.on}
-        <div class="cells" title="Клеток по ширине карты">
+        <div class="cells" title={t('maps.cellsHint')}>
           <Slider value={data.grid.cells} min={5} max={100} step={0.5} onchange={(v) => dispatch('maps', 'setGrid', { path, grid: { cells: v } })} />
           <input
             type="number"
@@ -637,7 +638,7 @@
         <button
           class="icon-btn"
           class:active={ui.tool === 'grid'}
-          title="Сдвинуть сетку: тащите карту, пока линии не совпадут с нарисованными"
+          title={t('maps.shiftGrid')}
           onclick={() => (ui.tool = ui.tool === 'grid' ? 'pan' : 'grid')}
         >
           <Move3d size={15} />
@@ -648,25 +649,25 @@
       <button
         class="btn"
         class:on={ui.tokenList}
-        title="Жетоны на этой карте"
+        title={t('maps.tokensHint')}
         onclick={() => {
           ui.tokenList = !ui.tokenList;
           ui.pinList = false;
           ui.pin = null;
         }}
       >
-        <UsersRound size={14} /> Жетоны{#if data.tokens.length}<span class="faint">&nbsp;{data.tokens.length}</span>{/if}
+        <UsersRound size={14} /> {t('maps.tokens')}{#if data.tokens.length}<span class="faint">&nbsp;{data.tokens.length}</span>{/if}
       </button>
       <button
         class="btn"
         class:on={ui.pinList}
-        title="Список меток на этой карте"
+        title={t('maps.pinsHint')}
         onclick={() => {
           ui.pinList = !ui.pinList;
           ui.tokenList = false;
         }}
       >
-        <MapPin size={14} /> Метки{#if pins.length}<span class="faint">&nbsp;{pins.length}</span>{/if}
+        <MapPin size={14} /> {t('maps.pins')}{#if pins.length}<span class="faint">&nbsp;{pins.length}</span>{/if}
       </button>
     </header>
 
@@ -681,7 +682,7 @@
         onpointerleave={leave}
         onwheel={wheel}
       ></canvas>
-      {#if !img}<div class="loading faint">Загрузка карты…</div>{/if}
+      {#if !img}<div class="loading faint">{t('maps.loading')}</div>{/if}
       {#if ui.tokenList}
         <TokenPanel {path} {tokens} {data} fight={app.initiative.combatants} onaddfight={addFight} onaddcard={addCard} onaddparty={addParty} />
       {:else if pin || ui.pinList}
@@ -690,10 +691,9 @@
     </div>
   {:else}
     <div class="empty faint">
-      <p>Карт пока нет.</p>
+      <p>{t('maps.none')}</p>
       <p>
-        Положите картинки в папку <RoleFolderNames role="maps" /> — в приключении или главе. Любую другую картинку
-        можно открыть как карту кнопкой на её карточке.
+        {t('maps.putPictures')} <RoleFolderNames role="maps" /> {t('maps.inAdventureAny')}
       </p>
     </div>
   {/if}

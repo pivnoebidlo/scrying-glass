@@ -1,5 +1,6 @@
 <!-- Правая панель: карты под рукой (подборка) — щелчок выводит карту игрокам и убирает; у текущей — редактор и обзор. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Maximize, Pencil, Plus, X } from '@lucide/svelte';
   import { currentTray, trayOwner } from '../../scenes/tray';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -29,19 +30,19 @@
   caption={mapName}
   isOn={(p) => ms.current === p}
   {toggle}
-  hint="Карты под рукой: перетащите сюда карты из списка или добавьте кнопкой."
+  hint={t('maps.trayHint')}
   showLoose={false}
 >
   {#if ms.current}
     {@const path = ms.current}
     <div class="row">
       <span class="name" title={path}>{mapName(path)}</span>
-      <button class="icon-btn" title="Открыть в редакторе" onclick={() => { ui.selected = path; openTab('maps'); }}><Pencil size={14} /></button>
-      <button class="icon-btn" title="Игроки видят всю карту" onclick={() => dispatch('maps', 'setView', { path, view: FULL_VIEW })}><Maximize size={14} /></button>
+      <button class="icon-btn" title={t('maps.openInEditor')} onclick={() => { ui.selected = path; openTab('maps'); }}><Pencil size={14} /></button>
+      <button class="icon-btn" title={t('maps.wholeMapHint')} onclick={() => dispatch('maps', 'setView', { path, view: FULL_VIEW })}><Maximize size={14} /></button>
       {#if !inTrayNow(path)}
-        <button class="icon-btn" title="Добавить в подборку" onclick={() => dispatch('scenes', 'trayAdd', { owner: $state.snapshot(trayOwner(app.scenes, app.adventures)), part: 'map', paths: [path] })}><Plus size={14} /></button>
+        <button class="icon-btn" title={t('common.addToTray')} onclick={() => dispatch('scenes', 'trayAdd', { owner: $state.snapshot(trayOwner(app.scenes, app.adventures)), part: 'map', paths: [path] })}><Plus size={14} /></button>
       {/if}
-      <button class="icon-btn" title="Убрать карту с экрана" onclick={() => dispatch('maps', 'clear')}><X size={14} /></button>
+      <button class="icon-btn" title={t('maps.removeMap')} onclick={() => dispatch('maps', 'clear')}><X size={14} /></button>
     </div>
   {/if}
 </Tray>

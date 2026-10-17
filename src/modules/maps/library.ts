@@ -1,4 +1,5 @@
 // Список карт: картинки из папок maps/карты (на любой глубине) и всё, что уже открывали как карту.
+import { t } from '../../renderer/lib/i18n.svelte';
 import { allFiles, dirname, folderRole, prettyName, type VaultFolder } from '../../shared/vault';
 import { NO_ADVENTURE, placeOrder, placeTitle, visibleIn, type AdventuresState } from '../../shared/adventures';
 import type { MapsState } from './types';
@@ -31,7 +32,7 @@ export function mapGroups(tree: VaultFolder, vaultName: string, ms: MapsState, a
   const other = Object.keys(ms.maps)
     .filter((p) => !seen.has(p) && visibleIn(adv, p))
     .sort((a, b) => collator.compare(a, b));
-  if (other.length) out.push({ key: '', title: 'Другие карты', items: other });
+  if (other.length) out.push({ key: '', title: t('maps.otherMaps'), items: other });
   return out;
 }
 

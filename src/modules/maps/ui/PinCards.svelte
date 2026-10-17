@@ -1,6 +1,7 @@
 <!-- Карточки, привязанные к метке: кто здесь живёт или кого тут встретят. Щелчок открывает карточку сбоку,
      поле ниже ищет карточки по имени (сначала своего приключения). -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { Link, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -21,15 +22,15 @@
 <div class="cards">
   {#each linked as l (refKey(l.ref))}
     <div class="chip">
-      <button class="open" title="Открыть карточку" disabled={!l.card} onclick={() => bestiary.show(l.ref)}>
+      <button class="open" title={t('maps.openCard')} disabled={!l.card} onclick={() => bestiary.show(l.ref)}>
         {#if l.card?.portrait}<img src={thumb(cardImageUrl(l.card.ref.scope, l.card.portrait), 32)} alt="" />{:else}<Link size={12} />{/if}
-        <span class:faint={!l.card}>{l.card?.name ?? 'карточки больше нет'}</span>
+        <span class:faint={!l.card}>{l.card?.name ?? t('maps.cardGone')}</span>
       </button>
-      <button class="icon-btn" title="Отвязать" onclick={() => set((pin.cards ?? []).filter((r) => !sameRef(r, l.ref)))}><X size={12} /></button>
+      <button class="icon-btn" title={t('maps.unlink')} onclick={() => set((pin.cards ?? []).filter((r) => !sameRef(r, l.ref)))}><X size={12} /></button>
     </div>
   {/each}
 
-  <CardSearch placeholder="Привязать карточку: трактирщик, стража…" exclude={pin.cards ?? []} onpick={(c) => set([...(pin.cards ?? []), c.ref])} />
+  <CardSearch placeholder={t('maps.linkCard')} exclude={pin.cards ?? []} onpick={(c) => set([...(pin.cards ?? []), c.ref])} />
 </div>
 
 <style>

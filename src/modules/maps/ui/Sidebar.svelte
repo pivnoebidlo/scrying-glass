@@ -1,5 +1,6 @@
 <!-- Боковая панель: карты, сгруппированные по месту в хранилище. Двойной щелчок по названию — переименовать файл. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Eye, Map, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -54,7 +55,7 @@
             }}
           />
         {:else}
-          <button class="main" data-nav title="{p}. Двойной щелчок — переименовать" onclick={() => select(p)} ondblclick={() => (renaming = p)}>
+          <button class="main" data-nav title={t('maps.renameHint', { path: p })} onclick={() => select(p)} ondblclick={() => (renaming = p)}>
             <Map size={14} />
             <span class="name">{mapName(p)}</span>
           </button>
@@ -62,19 +63,19 @@
         <button
           class="icon-btn show"
           class:active={ms.current === p}
-          title={ms.current === p ? 'Убрать у игроков' : 'Показать игрокам'}
+          title={ms.current === p ? t('maps.removeFromPlayers') : t('maps.showToPlayers')}
           onclick={() => dispatch('maps', ms.current === p ? 'clear' : 'show', { path: p })}
         >
           <Eye size={13} />
         </button>
-        <button class="icon-btn trash" title="Переместить в корзину" onclick={() => dispatch('vault', 'trash', { paths: [p] })}>
+        <button class="icon-btn trash" title={t('maps.toTrash')} onclick={() => dispatch('vault', 'trash', { paths: [p] })}>
           <Trash2 size={13} />
         </button>
       </div>
     {/each}
   {:else}
     <p class="faint hint">
-      Карт пока нет. Положите картинки в папку <RoleFolderNames role="maps" /> — они появятся здесь.
+      {t('maps.none')} {t('maps.putPictures')} <RoleFolderNames role="maps" /> {t('maps.appearHere')}
     </p>
   {/each}
 </div>

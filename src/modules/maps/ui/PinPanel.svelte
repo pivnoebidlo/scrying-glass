@@ -1,6 +1,7 @@
 <!-- Панель меток поверх редактора карты: выбранная метка (название, цвет, видят ли игроки, заметка) или список
      всех меток карты. Заметку видит только мастер. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronLeft, Eye, EyeOff, Trash2, X } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { PIN_ICONS, type PinIcon } from '../icons';
@@ -58,61 +59,61 @@
     {#key pin.id}
       <header>
         {#if ui.pinList}
-          <button class="icon-btn" title="К списку меток" onclick={() => (ui.pin = null)}><ChevronLeft size={15} /></button>
+          <button class="icon-btn" title={t('maps.backToPins')} onclick={() => (ui.pin = null)}><ChevronLeft size={15} /></button>
         {/if}
         <input
           class="title"
           type="text"
           value={pin.title}
-          placeholder="Название"
+          placeholder={t('maps.title')}
           use:autofocus
           onchange={(e) => update(pin, { title: e.currentTarget.value.trim() })}
           onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
         />
-        <button class="icon-btn" title="Закрыть (Esc)" onclick={close}><X size={15} /></button>
+        <button class="icon-btn" title={t('app.closeEsc')} onclick={close}><X size={15} /></button>
       </header>
 
       <div class="row">
         <div class="colors">
           {#each Object.entries(PIN_COLORS) as [c, v] (c)}
-            <button class="color" class:active={pin.color === c} style:--c={v} title="Цвет" aria-label="Цвет" onclick={() => setColor(pin, c as PinColor)}></button>
+            <button class="color" class:active={pin.color === c} style:--c={v} title={t('maps.color')} aria-label={t('maps.color')} onclick={() => setColor(pin, c as PinColor)}></button>
           {/each}
         </div>
       </div>
 
       <div class="icons">
         {#each Object.entries(PIN_ICONS) as [id, ic] (id)}
-          <button class="ic" class:active={(pin.icon ?? 'pin') === id} title={ic.title} aria-label={ic.title} onclick={() => setIcon(pin, id as PinIcon)}>
+          <button class="ic" class:active={(pin.icon ?? 'pin') === id} title={t(`maps.icon.${id as PinIcon}`)} aria-label={t(`maps.icon.${id as PinIcon}`)} onclick={() => setIcon(pin, id as PinIcon)}>
             <PinIconSvg icon={id as PinIcon} size={16} />
           </button>
         {/each}
       </div>
 
       <button class="btn shown" class:primary={!pin.shown} onclick={() => update(pin, { shown: !pin.shown })}>
-        {#if pin.shown}<EyeOff size={14} /> Скрыть от игроков{:else}<Eye size={14} /> Показать игрокам{/if}
+        {#if pin.shown}<EyeOff size={14} /> {t('maps.hideFromPlayers')}{:else}<Eye size={14} /> {t('maps.showToPlayers')}{/if}
       </button>
       <div class="hint faint">
-        {pin.shown ? 'Игроки видят метку и название, даже под туманом.' : 'Метку видите только вы.'}
+        {pin.shown ? t('maps.pinShown') : t('maps.pinHidden')}
       </div>
 
       <textarea
         rows="5"
         value={pin.note}
-        placeholder="Заметка для себя: игроки её не видят"
+        placeholder={t('maps.noteForMe')}
         onchange={(e) => update(pin, { note: e.currentTarget.value })}
       ></textarea>
 
       <PinCards {path} {pin} />
 
       <footer>
-        <span class="faint">Перетащите метку инструментом меток</span>
-        <button class="icon-btn" title="Удалить метку (Delete)" onclick={() => onremove(pin)}><Trash2 size={15} /></button>
+        <span class="faint">{t('maps.dragPin')}</span>
+        <button class="icon-btn" title={t('maps.deletePin')} onclick={() => onremove(pin)}><Trash2 size={15} /></button>
       </footer>
     {/key}
   {:else}
     <header>
-      <div class="head">Метки</div>
-      <button class="icon-btn" title="Закрыть" onclick={close}><X size={15} /></button>
+      <div class="head">{t('maps.pins')}</div>
+      <button class="icon-btn" title={t('maps.close')} onclick={close}><X size={15} /></button>
     </header>
     {#if sorted.length}
       <ul>
@@ -120,17 +121,17 @@
           <li>
             <button class="item" onclick={() => onpick(p)}>
               <span class="mark"><PinIconSvg icon={p.icon} size={14} color={PIN_COLORS[p.color]} /></span>
-              <span class="name" class:faint={!p.title}>{p.title || 'Без названия'}</span>
+              <span class="name" class:faint={!p.title}>{p.title || t('maps.untitled')}</span>
               {#if p.note}<span class="note faint" title={p.note}>{p.note}</span>{/if}
             </button>
-            <button class="icon-btn" title={p.shown ? 'Видят игроки — скрыть' : 'Только у вас — показать игрокам'} onclick={() => update(p, { shown: !p.shown })}>
+            <button class="icon-btn" title={p.shown ? t('maps.pinShownToggle') : t('maps.pinHiddenToggle')} onclick={() => update(p, { shown: !p.shown })}>
               {#if p.shown}<Eye size={14} />{:else}<EyeOff size={14} />{/if}
             </button>
           </li>
         {/each}
       </ul>
     {:else}
-      <p class="faint empty">Меток нет. Выберите инструмент меток и щёлкните по карте.</p>
+      <p class="faint empty">{t('maps.noPins')}</p>
     {/if}
   {/if}
 </div>
