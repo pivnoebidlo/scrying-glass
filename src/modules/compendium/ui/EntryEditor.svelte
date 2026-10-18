@@ -1,6 +1,7 @@
 <!-- Редактор записи справочника: название (= имя файла), тип, поля типа, текст; справа — как будет выглядеть.
      Сохраняется по кнопке или ⌘S. Если запись у игроков, там она тоже обновится. -->
 <script lang="ts">
+  import { markdownKeys } from '../../../renderer/lib/markdownKeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Save } from '@lucide/svelte';
   import { untrack } from 'svelte';
@@ -128,7 +129,7 @@
       </div>
       <label class="field">
         <span>{t('cmpui.text')}</span>
-        <textarea rows="16" bind:value={draft.body} placeholder={t('cmpui.textPh')}></textarea>
+        <textarea rows="16" bind:value={draft.body} placeholder={t('cmpui.textPh')} use:markdownKeys></textarea>
       </label>
     </form>
     <div class="preview">

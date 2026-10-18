@@ -168,7 +168,8 @@ Types: spell (`spell`), item (`item`), feat (`feat`), condition (`condition`), r
 an unknown type is shown as "field — value". On the left — search (by title, tags and text) and types, "+" — a new
 entry (type and place); in the text — headings, lists, tables and [[links]] to other entries or monster cards,
 "Back" — to the previous entry. "Show to players" puts the entry on the player screen as a sheet of paper (a long one
-shrinks to fit). There too: editing with a preview, a copy to another place, opening the file in another app,
+shrinks to fit). There too: editing with a preview (Enter,
+⌘B / ⌘I / ⌘⇧X and Tab work as in the journal), a copy to another place, opening the file in another app,
 deleting to trash.
 
 ## Journal
