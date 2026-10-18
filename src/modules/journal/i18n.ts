@@ -30,6 +30,7 @@ export const en = {
   'journal.about1': "GM notes for an adventure: session plan, text to read aloud to the players, game results, plot ideas. A note is an ordinary Markdown file in the folder",
   'journal.about2': "of the adventure (or in the shared vault folder); it is easy to edit in Obsidian too. Sort notes into folders — “Sessions”, “Locations”, “Ideas”.",
   'journal.about3': "A quote “> ” is read-aloud text, “- [ ] ” is a task with a checkbox, {1d20} is a roll on click, [[Name]] is a link to another note, compendium entry or card. A note can be pinned to the right panel to stay at hand during the game. “+” in the list on the left — a new note.",
+  'journal.renameFolder': "Rename the folder (or double-click it); drag a folder onto another to move it",
 };
 
 export const ru: Messages<typeof en> = {
@@ -61,4 +62,5 @@ export const ru: Messages<typeof en> = {
   'journal.about1': "Заметки мастера к приключению: план сессии, текст, который нужно зачитать игрокам, итоги игры, идеи по сюжету. Заметка — обычный Markdown-файл в папке",
   'journal.about2': "приключения (или в общей папке хранилища), её удобно править и в Obsidian. Раскладывайте заметки по папкам — «Сессии», «Локации», «Идеи».",
   'journal.about3': "Цитата «> » — текст для зачитывания, «- [ ] » — задача с флажком, {1d20} — бросок по щелчку, [[Название]] — ссылка на другую заметку, запись справочника или карточку. Заметку можно закрепить в правой панели, чтобы она была под рукой на игре. «+» в списке слева — новая заметка.",
+  'journal.renameFolder': "Переименовать папку (или двойной щелчок); перетащите папку на другую, чтобы перенести",
 };

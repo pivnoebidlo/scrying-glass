@@ -23,6 +23,8 @@ export interface PackSlices {
   names: Record<string, string>;
   // Подборка правой панели приключения (без включённой сцены; у сцен — своя, внутри сцены).
   tray?: unknown;
+  // The adventure's pinned journal note (its path).
+  pinned?: string;
 }
 
 export interface PackManifest {
@@ -98,7 +100,7 @@ export async function readPack(file: string, tmp: string): Promise<ReadPack> {
     .map((n) => ({ id: path.basename(n, '.json'), json: json(n) }));
   return {
     manifest,
-    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray },
+    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' ? slices.pinned : undefined },
     dir: tmp,
     cards,
   };

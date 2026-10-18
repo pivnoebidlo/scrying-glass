@@ -82,6 +82,20 @@ export function textKind(role: FolderRole, sub: string, fallbackName: () => stri
       fs.renameSync(abs, target);
       return `${folder}/${name}`;
     },
+    // Rename a folder inside a folder of this role (not the role folder itself: its name gives the role). New path
+    // (the same if the name did not change) or null.
+    renameFolder(resolve: Resolve, rel: string, title: string): string | null {
+      const abs = resolve(rel);
+      const parent = rel.slice(0, rel.lastIndexOf('/'));
+      if (!abs || !isFolder(rel) || !isFolder(parent) || folderRole(path.basename(abs)) === role) return null;
+      if (!fs.existsSync(abs) || !fs.statSync(abs).isDirectory()) return null;
+      const base = safe(title);
+      if (base === path.basename(abs)) return rel;
+      let name = base;
+      for (let i = 2; fs.existsSync(path.join(path.dirname(abs), name)); i++) name = `${base} (${i})`;
+      fs.renameSync(abs, path.join(path.dirname(abs), name));
+      return `${parent}/${name}`;
+    },
     // Новая папка внутри папки своей роли. Путь или null.
     mkdir(resolve: Resolve, folder: string, title: string): string | null {
       const dir = isFolder(folder) ? resolve(folder) : null;

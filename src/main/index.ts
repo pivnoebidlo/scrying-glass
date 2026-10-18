@@ -447,6 +447,7 @@ const afterPageMove = async (from: string, to: string | null) => {
 };
 ipcMain.handle('journal:rename', (_event, { path: rel, title }: { path: string; title: string }) => afterPageMove(rel, pages.rename(resolveInVault, rel, title)));
 ipcMain.handle('journal:move', (_event, { path: rel, folder }: { path: string; folder: string }) => afterPageMove(rel, pages.move(resolveInVault, rel, folder)));
+ipcMain.handle('journal:renameFolder', (_event, { path: rel, title }: { path: string; title: string }) => afterPageMove(rel, pages.renameFolder(resolveInVault, rel, title)));
 
 // Файл библиотеки (таблица, запись справочника) — в корзину библиотеки, с подтверждением (файлы хранилища удаляет
 // действие vault/trash).
@@ -646,6 +647,8 @@ interface AdventureData {
   tray?: AnyRec;
   // Ролевая система приключения (у удалённых до 0.18 нет).
   system?: string;
+  // The pinned journal note (none before 0.32).
+  pinned?: string;
 }
 
 ipcMain.handle('packs:export', async (_event, adventure: string) => {
@@ -682,6 +685,7 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
     order: pick(s.order.groups, (k) => inAdventure(adventure, k) || inAdventure(`monsters:${adventure}`, k)),
     names: pick(s.portraits.names, (k) => inAdventure(adventure, k)),
     tray: s.scenes.trays?.[adventure],
+    pinned: (state as unknown as { journal: { pinned: Record<string, string> } }).journal.pinned[adventure],
   };
   // Общие карточки, на которые ссылаются заготовки и метки карт приключения.
   const refs = new Set<string>();
@@ -757,6 +761,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     names: drop(st['portraits']!['names'] as AnyRec, (k) => inAdventure(name, k)),
     tray: (st['scenes']!['trays'] as AnyRec | undefined)?.[name] as AnyRec | undefined,
     system: state.adventures.systems?.[name],
+    pinned: (st['journal']!['pinned'] as Record<string, string>)[name],
   };
   try {
     discard(vaultRoot, [name], { title: name, kind: 'adventure', data });
@@ -773,6 +778,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     scenes: (st['scenes'] as AnyRec[]).filter((x) => x['adventure'] !== name),
     trays: drop((st['trays'] as AnyRec | undefined) ?? {}, (k) => k !== name),
   }));
+  await merge('journal', (st) => ({ ...st, pinned: drop(st['pinned'] as AnyRec, (k) => k !== name) }));
   await merge('initiative', (st) => ({ ...st, encounters: (st['encounters'] as AnyRec[]).filter((x) => x['adventure'] !== name) }));
   await merge('maps', (st) => ({ ...st, maps: drop(st['maps'] as AnyRec, (k) => !inAdventure(name, k)) }));
   await merge('order', (st) => ({ ...st, groups: drop(st['groups'] as AnyRec, (k) => !mine(k)) }));
@@ -847,6 +853,7 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
     await merge('maps', (st) => ({ ...st, maps: { ...data.maps, ...(st['maps'] as AnyRec) } }));
     await merge('order', (st) => ({ ...st, groups: { ...data.order, ...(st['groups'] as AnyRec) } }));
     await merge('portraits', (st) => ({ ...st, names: { ...data.names, ...(st['names'] as AnyRec) } }));
+    if (data.pinned) await merge('journal', (st) => ({ ...st, pinned: { ...(st['pinned'] as AnyRec), [main.to]: data.pinned } }));
     saveVault();
   }
   if (place === 'vault') {
@@ -980,6 +987,7 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
     await merge('initiative', (s) => ({ ...s, encounters: [...(s['encounters'] as AnyRec[]), ...encounters] }));
     await merge('order', (s) => ({ ...s, groups: { ...(s['groups'] as AnyRec), ...sl.order } }));
     await merge('portraits', (s) => ({ ...s, names: { ...(s['names'] as AnyRec), ...sl.names } }));
+    if (sl.pinned) await merge('journal', (s) => ({ ...s, pinned: { ...(s['pinned'] as AnyRec), [name]: sl.pinned } }));
     saveVault();
     await enqueue('vault', async () => rescanVault());
     await runAction('adventures', 'mark', { path: name });

@@ -377,13 +377,15 @@ Electron-приложение для мастера D&D: окно управле
 - Журнал мастера (`modules/journal`): заметки к приключению — Markdown в папках роли `journal` (`FileKind` 'page',
   `main/scan.ts`), название = имя файла, папки внутри — свои. Ядро — `main/journal.ts` поверх `textstore.ts` (у него
   же `move` и `mkdir`), IPC `journal:*`; переименование и перенос — ещё и действие `journal/move` (закреплённая
-  заметка). Чистые функции — `shared/journal.ts` (свойства Obsidian `splitProps`, флажки `toggleTask`), разметка —
+  заметка); папки внутри журнала — `renameFolder` (`journal:renameFolder`, саму папку роли — нельзя) и перенос папки
+  перетаскиванием (`movePage`). Чистые функции — `shared/journal.ts` (свойства Obsidian `splitProps`, флажки `toggleTask`), разметка —
   общая со справочником `entryHtml(текст, { tasks, dice })`: цитата «>» — текст для зачитывания, «- [ ]» —
   `data-task` (номер задачи по порядку), {1d20} — кнопка броска (`rolls.damage`). Окно — `journal/ui/store.svelte.ts`
   (тексты всех видимых заметок, перечитываются по `notes.rev`), вид — `PageBody.svelte` ([[ссылка]]: заметка →
   `peekEntry`, он найдёт запись или карточку), правка — `PageEditor.svelte` (сохраняет сам). В состоянии — только
   `pinned` (приключение → путь): блок правой панели `OnScreen.svelte`. Заметки — в ⌘K (`QuickSearch` справочника).
-  Сам журнал игрокам не показывается; в .sgpack файлы уходят с папкой приключения, `pinned` — нет.
+  Сам журнал игрокам не показывается; в .sgpack файлы уходят с папкой приключения, `pinned` — тоже
+  (`PackSlices.pinned`, и в корзину — `AdventureData.pinned`).
 - Подборка правой панели (`modules/scenes/tray.ts`, вид — `scenes/ui/Tray.svelte` в блоках фона, карты, портретов и
   раздатки, `TrayChips.svelte` + `renderer/lib/ListPicker.svelte` — в музыке (плейлисты и треки; трек — действие
   `music/playTrack`, тогда `playlist` — путь трека) и инициативе (id заготовок; `Combatant.encounter` от

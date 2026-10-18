@@ -1,8 +1,9 @@
 <!-- Боковая панель журнала: поиск и дерево заметок — папки журнала приключения и общие, с подпапками. Заметки
-     переставляются перетаскиванием внутри папки, перетаскивание на папку — перенос в неё. -->
+     переставляются перетаскиванием внутри папки, перетаскивание на папку — перенос в неё. Folders are renamed in
+     place (the pencil or a double click) and dragged onto another folder to move them. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { ChevronDown, ChevronRight, FilePlus, Folder, FolderPlus, Search, Trash2 } from '@lucide/svelte';
+  import { ChevronDown, ChevronRight, FilePlus, Folder, FolderPlus, Pencil, Search, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { draggedFile, sortable } from '../../../renderer/lib/sortable';
@@ -61,9 +62,33 @@
   const toggle = (path: string) =>
     (ui.collapsed = ui.collapsed.includes(path) ? ui.collapsed.filter((x) => x !== path) : [...ui.collapsed, path]);
 
-  // Перенос заметки на папку.
+  // A folder moved or renamed: the open note and the collapsed folders follow it.
+  const moved = (p: string, from: string, to: string) => (p === from ? to : p.startsWith(from + '/') ? to + p.slice(from.length) : p);
+  function follow(from: string, to: string | null) {
+    if (!to || to === from) return;
+    if (ui.open) ui.open = moved(ui.open, from, to);
+    ui.collapsed = ui.collapsed.map((c) => moved(c, from, to));
+  }
+
+  // Rename a folder in place.
+  let renaming = $state<string | null>(null);
+  let renameTo = $state('');
+  function startRename(f: VaultFolder) {
+    renaming = f.path;
+    renameTo = f.name;
+  }
+  async function finishRename() {
+    const from = renaming;
+    const name = renameTo.trim();
+    renaming = null;
+    if (from && name) follow(from, await window.api.renamePageFolder(from, name));
+  }
+
+  // Перенос заметки (или папки) на папку.
   let over = $state<string | null>(null);
+  let dragFolder = $state<string | null>(null);
   const movable = (folder: string) => {
+    if (dragFolder) return folder !== dirname(dragFolder) && folder !== dragFolder && !folder.startsWith(dragFolder + '/');
     const f = draggedFile();
     return !!f && /\.(md|txt)$/i.test(f) && dirname(f) !== folder && journal.pages.some((p) => p.path === f);
   };
@@ -75,6 +100,15 @@
   }
   async function drop(e: DragEvent, folder: string) {
     over = null;
+    if (dragFolder) {
+      const from = dragFolder;
+      const ok = movable(folder);
+      dragFolder = null;
+      if (!ok) return;
+      e.preventDefault();
+      follow(from, await window.api.movePage(from, folder));
+      return;
+    }
     const f = draggedFile();
     if (!f || !movable(folder)) return;
     e.preventDefault();
@@ -104,16 +138,36 @@
       aria-selected="false"
       aria-expanded={open}
       tabindex="-1"
+      draggable={renaming !== f.path}
+      ondragstart={(e) => {
+        dragFolder = f.path;
+        e.dataTransfer?.setData('text/plain', f.path);
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+      }}
+      ondragend={() => ((dragFolder = null), (over = null))}
       ondragover={(e) => dragover(e, f.path)}
       ondragleave={() => over === f.path && (over = null)}
       ondrop={(e) => drop(e, f.path)}
     >
-      <button class="name" data-nav data-depth={depth - 1} aria-expanded={open} onclick={() => toggle(f.path)}>
-        {#if open}<ChevronDown size={14} />{:else}<ChevronRight size={14} />{/if}
-        <Folder size={14} />
-        <span class="t">{f.name}</span>
-      </button>
+      {#if renaming === f.path}
+        <!-- svelte-ignore a11y_autofocus -->
+        <input
+          class="rename"
+          type="text"
+          autofocus
+          bind:value={renameTo}
+          onkeydown={(e) => (e.key === 'Enter' ? finishRename() : e.key === 'Escape' && (renaming = null))}
+          onblur={finishRename}
+        />
+      {:else}
+        <button class="name" data-nav data-depth={depth - 1} aria-expanded={open} onclick={() => toggle(f.path)} ondblclick={() => startRename(f)}>
+          {#if open}<ChevronDown size={14} />{:else}<ChevronRight size={14} />{/if}
+          <Folder size={14} />
+          <span class="t">{f.name}</span>
+        </button>
+      {/if}
       <span class="tools">
+        <button class="icon-btn" title={t('journal.renameFolder')} onclick={() => startRename(f)}><Pencil size={14} /></button>
         <button class="icon-btn" title={t('journal.newNoteHere')} onclick={() => newPage(f.path)}><FilePlus size={14} /></button>
         <button class="icon-btn" title={t('journal.newSubfolder')} onclick={() => startFolder(f.path)}><FolderPlus size={14} /></button>
         <button class="icon-btn" title={t('journal.deleteFolder')} onclick={() => dispatch('vault', 'trash', { paths: [f.path] })}><Trash2 size={14} /></button>
@@ -302,6 +356,11 @@
   .over {
     outline: 1px dashed var(--accent);
     background: color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+  .rename {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
   }
   .new-folder {
     margin-left: calc(8px + var(--d, 0) * 14px);

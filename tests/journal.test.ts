@@ -45,3 +45,27 @@ describe('журнал: заметки', () => {
     expect(pagePreview('---\nx: 1\n---\n## План\n> Текст для [[Староста|старосты]]\n- [ ] **задача**')).toBe('План Текст для старосты задача');
   });
 });
+
+describe('журнал: папки', () => {
+  it('папку внутри журнала можно переименовать и перенести, саму папку журнала — нет', async () => {
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const { pages } = await import('../src/main/journal');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-journal-'));
+    try {
+      const resolve = (rel: string) => path.join(root, rel);
+      fs.mkdirSync(path.join(root, 'Strahd/journal/NPC'), { recursive: true });
+      fs.mkdirSync(path.join(root, 'Strahd/journal/Places'), { recursive: true });
+      fs.writeFileSync(path.join(root, 'Strahd/journal/NPC/Ireena.md'), 'x');
+      expect(pages.renameFolder(resolve, 'Strahd/journal/NPC', 'People')).toBe('Strahd/journal/People');
+      expect(fs.existsSync(path.join(root, 'Strahd/journal/People/Ireena.md'))).toBe(true);
+      expect(pages.renameFolder(resolve, 'Strahd/journal/People', 'Places')).toBe('Strahd/journal/Places (2)');
+      expect(pages.renameFolder(resolve, 'Strahd/journal', 'Notes')).toBeNull();
+      expect(pages.move(resolve, 'Strahd/journal/Places (2)', 'Strahd/journal/Places')).toBe('Strahd/journal/Places/Places (2)');
+      expect(pages.move(resolve, 'Strahd/journal/Places', 'Strahd/journal/Places/Places (2)')).toBeNull();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});

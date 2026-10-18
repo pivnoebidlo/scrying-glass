@@ -176,7 +176,8 @@ deleting to trash.
 A section of its own in the left strip: the GM's notes for an adventure — a session plan, read-aloud text, game
 summaries, plot ideas. A note is a plain Markdown file in the adventure's journal / notes folder (or in the vault's
 shared folder), easy to edit in Obsidian too. On the left — the tree of notes: folders ("Sessions", "Locations",
-"Ideas"), new note and folder — buttons on hover, order — by dragging, dragging onto a folder moves the note into it.
+"Ideas"), new note and folder — buttons on hover, order — by dragging, dragging onto a folder moves the note into it. A folder is renamed with the pencil or a double click and moved by
+dragging it onto another folder.
 A note opens formatted, "Edit" (⌘E) — the Markdown text, which saves itself:
 
     ## Arrival in the village
@@ -189,7 +190,8 @@ A note opens formatted, "Edit" (⌘E) — the Markdown text, which saves itself:
 
 A ">" quote is read-aloud text (a highlighted box), "- [ ]" — a task with a checkbox (a click checks it right in the
 file), {1d20+2} — a roll into the roll log on click, [[Title]] — another note, a compendium entry or a card (in a side
-drawer). A note can be pinned: it appears in the right panel, at hand during the game. Notes are found by ⌘K.
+drawer). A note can be pinned: it appears in the right panel, at hand during the game; the pin travels with the
+adventure file (.sgpack) and comes back with the adventure from the trash. Notes are found by ⌘K.
 
 ## Tools
 

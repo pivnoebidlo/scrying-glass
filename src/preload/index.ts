@@ -57,6 +57,7 @@ const api: Api = {
   createPageFolder: (folder, title) => ipcRenderer.invoke('journal:mkdir', { folder, title }),
   renamePage: (path, title) => ipcRenderer.invoke('journal:rename', { path, title }),
   movePage: (path, folder) => ipcRenderer.invoke('journal:move', { path, folder }),
+  renamePageFolder: (path, title) => ipcRenderer.invoke('journal:renameFolder', { path, title }),
   readTable: (path) => ipcRenderer.invoke('tables:read', path),
   listLibraryTables: () => ipcRenderer.invoke('tables:listLibrary'),
   seedLibraryTables: (files, restore) => ipcRenderer.invoke('tables:seed', { files, restore }),

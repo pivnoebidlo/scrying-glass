@@ -127,6 +127,8 @@ export interface Api {
   // Новое название = новое имя файла; перенос — в другую папку журнала. Новый путь или null.
   renamePage(path: string, title: string): Promise<string | null>;
   movePage(path: string, folder: string): Promise<string | null>;
+  // Rename a folder inside a journal folder; the new path or null.
+  renamePageFolder(path: string, title: string): Promise<string | null>;
   // Таблицы случайностей (shared/tables.ts): .md / .txt в папках таблиц хранилища или в библиотеке
   // (пути «library:tables/…» — общие для всех кампаний).
   readTable(path: string): Promise<string | null>;
