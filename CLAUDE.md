@@ -275,6 +275,9 @@ Electron-приложение для мастера D&D: окно управле
   `tools/names/builtin/<lang>/*.txt` (написаны для приложения); свои — `<библиотека>/names/<lang>/` (`main/names.ts`, IPC
   `names:*`), в репозиторий не кладём — это могут быть списки чужих сайтов (папка `/names/` в корне — в .gitignore).
   Выгрузка TXT / CSV — общий IPC `files:saveText`.
+  Генератор поселений: `tools/settlement/` — как NPC (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — русские
+  названия из основы и суффикса `fitsSuffix` или «прилагательное + существительное» по родам, `text.ts`,
+  `store.svelte.ts`); таверна и жители — через `Helpers` из генераторов таверн и NPC.
   Сокровища: `tools/treasure/` — `generate.ts` (монеты, ценности, вещи, редкости магических предметов по источнику
   и уровню; `pickItems` берёт предметы из `allEntries()` справочника по `rarityOf`), тексты `content.ts` (en и ru
   парами), `text.ts`. Вне D&D — диковины из генератора NPC, без цен.

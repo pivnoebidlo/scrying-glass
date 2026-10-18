@@ -242,6 +242,11 @@ on the side (in the journal they stay [[links]]). In D&D adventures an obstacle 
 dangerous road an event can come with a complication. Copy or to the journal. The built-in "Road Encounters" and
 "Tavern Rumors" tables are retired.
 
+**Settlement generator** (Tools → Settlement generator): a hamlet, a village, a town or a city (or random) → name,
+population and peoples, who rules and the defences, a first impression to read aloud, what it is known for, places
+(with a tavern named by the tavern generator), notable people (from the NPC generator) and a trouble to start an
+adventure. Each part can be rerolled or pinned; to the journal or copy.
+
 **Weather generator** (Tools → Weather generator): terrain (forest, plains, city, coast, mountains, swamp, jungle,
 desert, arctic, underground), season and 1, 3 or 7 days → for each day the sky, rain or snow (sleet, sandstorm,
 thunderstorm), wind and temperature (°F and °C), a line to read aloud and, rarely, something unusual (northern lights,
