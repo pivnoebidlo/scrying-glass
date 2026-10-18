@@ -245,6 +245,13 @@ dangerous road an event can come with a complication. "To an encounter" on an en
 with its creatures (weaker ones come in groups) and opens it in Initiative. Copy or to the journal. The built-in "Road Encounters" and
 "Tavern Rumors" tables are retired.
 
+**Travel** (Tools → Travel, D&D only): distance in miles, on foot / mounted / by cart or a ship (airship, galley,
+sailing ship…), pace, terrain, road and hours a day → the time on the way and the speed by the SRD travel rules of
+the adventure's edition. In the 2024 rules the terrain caps the pace (a good road raises the cap a step) and gives the
+encounter distance and the foraging, navigation and search DCs; in 2014 — difficult terrain halves the distance.
+Also: what the pace gives (Perception, Stealth), the mounted gallop, and a long day past 8 hours — the Constitution
+save DC for each extra hour. Ships keep their speed and can sail up to 24 hours a day.
+
 **Dungeon generator** (Tools → Dungeon generator): kind (tomb, caves, mine, temple, fortress, wizard's tower, sewers,
 ruins), the heroes' level and 5 or 8 rooms → a "five-room dungeon": a guarded entrance, a puzzle, a trap, the final
 fight and the reward (eight rooms add lairs and a quiet room); who built it and what happened to it, the entrance, the

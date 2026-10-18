@@ -275,6 +275,9 @@ Electron-приложение для мастера D&D: окно управле
   `tools/names/builtin/<lang>/*.txt` (написаны для приложения); свои — `<библиотека>/names/<lang>/` (`main/names.ts`, IPC
   `names:*`), в репозиторий не кладём — это могут быть списки чужих сайтов (папка `/names/` в корне — в .gitignore).
   Выгрузка TXT / CSV — общий IPC `files:saveText`.
+  Путь (только D&D): `tools/travel/rules.ts` (`travel` — темп и `PACE_RATE`, таблица местности 2024 `TERRAIN_TABLE`,
+  дороги, 2014 — трудная местность вдвое, долгий марш — СЛ 11, 12…, корабли `VESSEL_MPH`), `TravelCalculator.svelte`
+  (редакция — по системе приключения).
   Генераторы → заготовка боя: `tools/encounter.ts` (`findCard` — карточка по названию: язык текста, система
   приключения, свои важнее встроенных; `toEncounter` — `createEncounter` + `addToInitiative`, открывает «Инициативу»;
   без числа — `groupSize` по ПО). Кнопки — у комнат подземелья и у встреч в «Случайных событиях».
