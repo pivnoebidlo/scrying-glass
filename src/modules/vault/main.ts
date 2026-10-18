@@ -6,7 +6,7 @@ import * as path from 'node:path';
 import { shell, type OpenDialogOptions } from 'electron';
 import { defineModule, type ModuleContext } from '../../shared/module';
 import type { LangSetting } from '../../shared/i18n/core';
-import { AUDIO_EXT, DEFAULT_ROLES, IMAGE_EXT, type RoleNames, type VaultState } from '../../shared/vault';
+import { AUDIO_EXT, DEFAULT_ROLES, IMAGE_EXT, type RoleNames, type ThemeSetting, type VaultState } from '../../shared/vault';
 import { clipboardImage, freeName } from '../../main/files';
 import { listCards } from '../../main/cards';
 import { deleteWords, discard, trashSettings } from '../../main/trash';
@@ -14,7 +14,7 @@ import { deleteWords, discard, trashSettings } from '../../main/trash';
 const openDialog = (ctx: ModuleContext, opts: OpenDialogOptions) =>
   ctx.controlWindow ? ctx.dialog.showOpenDialog(ctx.controlWindow, opts) : ctx.dialog.showOpenDialog(opts);
 
-const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [], language: 'auto', lang: 'en' };
+const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [], language: 'auto', lang: 'en', theme: 'auto' };
 
 export default defineModule({
   id: 'vault',
@@ -55,6 +55,10 @@ export default defineModule({
       return ctx.vault.setSystemsOff(list);
     },
 
+    // The control window's colour theme (app settings).
+    setTheme(_s, { theme }: { theme: ThemeSetting }, ctx) {
+      return ctx.vault.setTheme(theme);
+    },
     // Interface language (app settings): 'auto' or a language.
     setLanguage(_s, { language }: { language: LangSetting }, ctx) {
       return ctx.vault.setLanguage(language);

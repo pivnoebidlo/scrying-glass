@@ -88,7 +88,7 @@
     font-size: 11px;
   }
   .warn {
-    color: #f0c45a;
+    color: var(--warning);
   }
   .row {
     display: flex;

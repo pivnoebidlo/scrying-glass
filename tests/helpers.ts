@@ -23,9 +23,12 @@ export function ctx(tree: VaultFolder | null = null): ModuleContext {
         throw new Error('не нужно в тестах');
       },
       setLanguage: () => {
-      throw new Error("not in tests");
-    },
-    setSystemsOff: () => {
+        throw new Error('не нужно в тестах');
+      },
+      setTheme: () => {
+        throw new Error('не нужно в тестах');
+      },
+      setSystemsOff: () => {
         throw new Error('не нужно в тестах');
       },
     },

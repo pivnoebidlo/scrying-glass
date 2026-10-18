@@ -252,12 +252,12 @@
     font-weight: 600;
   }
   .points.exact {
-    border-color: #4caf6a;
-    color: #4caf6a;
+    border-color: var(--success);
+    color: var(--success);
   }
   .points.over {
-    border-color: #e04545;
-    color: #e04545;
+    border-color: var(--danger);
+    color: var(--danger);
   }
   .intro {
     margin: 8px 0 14px;
@@ -311,11 +311,11 @@
     font-weight: 600;
   }
   tr.bad td {
-    background: color-mix(in srgb, #e04545 12%, transparent);
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
   }
   .warn {
     margin: 8px 0 0;
-    color: #f0c45a;
+    color: var(--warning);
   }
   .check {
     margin-top: 24px;
@@ -340,12 +340,12 @@
   }
   .verdict {
     padding: 10px 12px;
-    border: 1px solid #e04545;
+    border: 1px solid var(--danger);
     border-radius: var(--radius-m);
-    background: color-mix(in srgb, #e04545 10%, transparent);
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
   }
   .verdict.ok {
-    border-color: #4caf6a;
-    background: color-mix(in srgb, #4caf6a 10%, transparent);
+    border-color: var(--success);
+    background: color-mix(in srgb, var(--success) 10%, transparent);
   }
 </style>

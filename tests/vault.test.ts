@@ -90,3 +90,13 @@ describe('переименование файла', () => {
     expect(safeFileName('  Таверна: «Гусь» / ночь?  ')).toBe('Таверна «Гусь» ночь');
   });
 });
+
+describe('темы окна мастера', () => {
+  it('известные темы проходят, прочее — нет; у каждой, кроме auto, есть цвет фона окна', async () => {
+    const { THEMES, isTheme, THEME_BACKGROUND } = await import('../src/shared/vault');
+    for (const t of THEMES) expect(isTheme(t)).toBe(true);
+    expect(isTheme('sepia')).toBe(false);
+    expect(isTheme(undefined)).toBe(false);
+    for (const t of THEMES.filter((x) => x !== 'auto')) expect(THEME_BACKGROUND[t as Exclude<typeof t, 'auto'>]).toMatch(/^#[0-9a-f]{6}$/);
+  });
+});

@@ -10,7 +10,9 @@ On launch the app checks whether a new version is out (it asks GitHub and sends 
 top of the window offers "Download" / "Skip this version". Turn it off in ⌘, → General → Updates, where "Check now" is too.
 
 The interface is in English and Russian (⌘, → General → Language; by default — the system language if there is a
-translation for it, otherwise English). The language switches at once, without a restart. The built-in compendium
+translation for it, otherwise English). The language switches at once, without a restart. The theme of the GM window — automatic
+(as the system), dark, light or parchment — is in the same place (⌘, → General → Theme); the player screen keeps its
+own look. The built-in compendium
 and the Fate compendium exist in both languages and follow the interface language.
 
 ## Installation

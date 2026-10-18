@@ -61,7 +61,7 @@
     cursor: pointer;
   }
   .r {
-    color: var(--c);
+    color: color-mix(in srgb, var(--c) 70%, var(--text-normal));
     font-weight: 600;
   }
   .x {

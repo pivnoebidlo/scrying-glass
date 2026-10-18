@@ -193,7 +193,7 @@
     margin-bottom: 12px;
   }
   .rating .r {
-    color: var(--c);
+    color: color-mix(in srgb, var(--c) 70%, var(--text-normal));
     font-size: 22px;
     font-weight: 600;
   }

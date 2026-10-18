@@ -168,7 +168,7 @@
     padding: 1px 7px;
     border-radius: 999px;
     background: rgba(0, 0, 0, 0.7);
-    color: var(--text-muted);
+    color: #c8c8c8;
     font-size: 11px;
   }
   .row {

@@ -182,7 +182,7 @@
   }
   .warn {
     margin: 6px 0 0;
-    color: #d9a441;
+    color: var(--warning);
   }
   .cards {
     display: grid;

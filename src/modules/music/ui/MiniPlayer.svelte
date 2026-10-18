@@ -215,7 +215,7 @@
     display: grid;
   }
   .star.main {
-    color: #f0c45a;
+    color: var(--warning);
   }
   .star.main :global(svg) {
     fill: currentColor;

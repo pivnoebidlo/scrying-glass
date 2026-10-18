@@ -1,7 +1,7 @@
 import type { LangSetting } from './i18n/core';
 // Описание модуля со стороны ядра: состояние, действия, хуки.
 import type { BrowserWindow, Dialog } from 'electron';
-import type { RoleNames, VaultFolder, VaultState } from './vault';
+import type { RoleNames, ThemeSetting, VaultFolder, VaultState } from './vault';
 
 // Хранилище, как его видят модули.
 export interface VaultAccess {
@@ -21,6 +21,8 @@ export interface VaultAccess {
   setSystemsOff(list: string[]): VaultState;
   // Interface language (app settings).
   setLanguage(language: LangSetting): VaultState;
+  // The control window's colour theme (app settings).
+  setTheme(theme: ThemeSetting): VaultState;
 }
 
 // Контекст, который получают действия и хуки модулей.

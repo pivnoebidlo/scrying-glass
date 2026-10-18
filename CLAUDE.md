@@ -35,6 +35,11 @@ Electron-приложение для мастера D&D: окно управле
 - Updates: `main/updates.ts` (GitHub `/releases/latest`), compare — `shared/updates.ts` (`isNewer`); setting
   `settings.updates` (`check`, `skip`), IPC `updates:*`; on launch (5 s later) — event `updates:available` →
   `renderer/control/UpdateBanner.svelte`; the General settings section has the switch and «Check now».
+- Theme of the control window: `settings.theme` ('auto' | 'dark' | 'light' | 'parchment', `THEMES` in shared/vault.ts),
+  action `vault/setTheme`, state `vault.theme`; the core sets `nativeTheme.themeSource` and the window background
+  (`applyTheme`), the window — `<html data-theme>` (`applyTheme` in store.svelte.ts, the last one cached in
+  localStorage for the next launch). Colours — only tokens in `renderer/lib/theme.css` (incl. `--warning`,
+  `--success`); hard-coded colours only on pictures and on the player screen.
 - Setting: `settings.language` in settings.json ('auto' | lang), action `vault/setLanguage`, state `vault.language`
   (setting) and `vault.lang` (resolved); section «General / Общие» in the settings window (`Settings.svelte`).
 - Migration plan: 1) foundation + shell (done); 2) modules, systems, main process (done); 3) built-in content in English (done: compendium

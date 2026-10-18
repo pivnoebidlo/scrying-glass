@@ -385,7 +385,7 @@
   }
   .warn {
     margin: 8px 0 0;
-    color: var(--warning, #d9a441);
+    color: var(--warning);
     font-size: 12px;
   }
   .errors {

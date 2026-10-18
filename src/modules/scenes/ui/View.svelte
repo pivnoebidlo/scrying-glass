@@ -163,10 +163,10 @@
     gap: 8px;
     margin-top: 16px;
     padding: 10px 12px;
-    border: 1px solid #6b4e1f;
+    border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent);
     border-radius: var(--radius-m);
-    background: rgba(214, 158, 46, 0.08);
-    color: #e3b341;
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
+    color: var(--warning);
     font-size: 12px;
   }
   .lost ul {

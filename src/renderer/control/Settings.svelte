@@ -1,5 +1,6 @@
-<!-- Settings window: the General section (interface language, updates) + a section of every module that has settings. -->
+<!-- Settings window: the General section (interface language, theme, updates) + a section of every module that has settings. -->
 <script lang="ts">
+  import { THEMES, type ThemeSetting } from '../../shared/vault';
   import { Globe, X } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
   import { dispatch, store } from '../lib/store.svelte';
@@ -73,6 +74,15 @@
           >
             <option value="auto">{t('settings.languageAuto', { lang: LANGS[store.state.vault.lang] })}</option>
             {#each Object.entries(LANGS) as [id, name] (id)}<option value={id}>{name}</option>{/each}
+          </select>
+        </div>
+        <div class="setting">
+          <div class="info">
+            <div class="name">{t('settings.theme')}</div>
+            <div class="desc">{t('settings.themeDesc')}</div>
+          </div>
+          <select value={store.state.vault.theme} onchange={(e) => dispatch('vault', 'setTheme', { theme: e.currentTarget.value as ThemeSetting })}>
+            {#each THEMES as id (id)}<option value={id}>{t(`settings.theme.${id}` as never)}</option>{/each}
           </select>
         </div>
         <div class="setting">

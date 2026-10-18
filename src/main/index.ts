@@ -1,12 +1,12 @@
 // Ядро: единое состояние, хранилище, сохранение, загрузка модулей, IPC.
-import { app, BrowserWindow, ipcMain, dialog, protocol, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, nativeTheme, protocol, shell } from 'electron';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
 import { getLang, isLang, resolveLang, setLang, t, type Lang, type LangSetting } from '../shared/i18n';
-import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, type RoleNames, type VaultFolder, type VaultState } from '../shared/vault';
+import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, isTheme, THEME_BACKGROUND, type RoleNames, type ThemeSetting, type VaultFolder, type VaultState } from '../shared/vault';
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
 import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
 import { BACKUP_EXT, backupSizes, placeFiles, readBackup, writeBackup } from './archive';
@@ -71,6 +71,8 @@ interface AppSettings {
   systemsOff?: string[];
   // Interface language: 'auto' (OS language, else English) or a language.
   language?: LangSetting;
+  // The control window's colour theme; no field — follow the system.
+  theme?: ThemeSetting;
   // Update check on launch (shared/updates.ts); no field — on.
   updates?: UpdateSettings;
   // The GM's Telegram bot (main/telegram.ts): the token (encrypted) and the chats it knows.
@@ -110,6 +112,7 @@ function vaultState(): VaultState {
     systemsOff: setSystemsOff(settings.systemsOff),
     language: settings.language ?? 'auto',
     lang: interfaceLang(),
+    theme: isTheme(settings.theme) ? settings.theme : 'auto',
   };
 }
 
@@ -255,6 +258,21 @@ function setLanguageSetting(language: LangSetting): VaultState {
   return vaultState();
 }
 
+// Colour theme: native parts (scrollbars, menus, dialogs) follow it through nativeTheme; the window background —
+// so a reload does not flash the wrong colour; the pages switch on the next state broadcast.
+function applyTheme() {
+  const theme = isTheme(settings.theme) ? settings.theme : 'auto';
+  nativeTheme.themeSource = theme === 'auto' ? 'system' : theme === 'dark' ? 'dark' : 'light';
+  const shown = theme === 'auto' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme;
+  getControlWindow()?.setBackgroundColor(THEME_BACKGROUND[shown]);
+}
+function setThemeSetting(theme: ThemeSetting): VaultState {
+  settings = { ...settings, theme: isTheme(theme) ? theme : 'auto' };
+  writeJsonAtomic(settingsFile(), settings);
+  applyTheme();
+  return vaultState();
+}
+
 // Отключить ненужные ролевые системы (все сразу нельзя — setSystemsOff оставит хотя бы одну).
 function setSystemsOffSetting(list: string[]): VaultState {
   settings = { ...settings, systemsOff: setSystemsOff(list) };
@@ -280,6 +298,7 @@ const vault: VaultAccess = {
   setRoles,
   setSystemsOff: setSystemsOffSetting,
   setLanguage: setLanguageSetting,
+  setTheme: setThemeSetting,
 };
 
 const ctx: ModuleContext = {
@@ -1288,6 +1307,7 @@ app.whenReady().then(async () => {
   pruneThumbs();
 
   createControlWindow();
+  applyTheme();
   watchDisplays();
 
   // Последнее открытое хранилище открывается само; если его нет, окно покажет выбор хранилища.

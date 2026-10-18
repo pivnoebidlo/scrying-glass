@@ -346,7 +346,7 @@
     font-size: 24px;
   }
   .star.on {
-    color: #e6b422;
+    color: var(--warning);
   }
   .star.on :global(svg) {
     fill: currentColor;

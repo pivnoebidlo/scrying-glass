@@ -253,7 +253,7 @@
   }
   .modal .warn {
     margin-top: 6px;
-    color: #f0c45a;
+    color: var(--warning);
   }
   .modal .row {
     display: flex;

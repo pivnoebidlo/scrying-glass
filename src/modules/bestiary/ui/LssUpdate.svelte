@@ -164,8 +164,8 @@
     margin: 0 0 10px;
     padding: 8px 10px;
     border-radius: var(--radius-s);
-    background: rgba(240, 196, 90, 0.12);
-    color: #f0c45a;
+    background: color-mix(in srgb, var(--warning) 12%, transparent);
+    color: var(--warning);
     font-size: 13px;
   }
   .warn :global(svg) {
@@ -252,7 +252,7 @@
     cursor: pointer;
   }
   .add {
-    color: #5cb85c;
+    color: var(--success);
   }
   .del {
     color: var(--danger);

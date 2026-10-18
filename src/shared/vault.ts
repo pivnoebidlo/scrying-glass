@@ -37,7 +37,16 @@ export interface VaultState {
   // Interface language: the setting ('auto' or a language) and what it resolved to.
   language: LangSetting;
   lang: Lang;
+  // The control window's colour theme (app settings); the player screen keeps its own look.
+  theme: ThemeSetting;
 }
+
+// Colour themes of the control window (renderer/lib/theme.css): 'auto' follows the system (dark or light).
+export const THEMES = ['auto', 'dark', 'light', 'parchment'] as const;
+export type ThemeSetting = (typeof THEMES)[number];
+export const isTheme = (v: unknown): v is ThemeSetting => THEMES.includes(v as ThemeSetting);
+// The window background while the page loads, per theme (as --bg-primary).
+export const THEME_BACKGROUND: Record<Exclude<ThemeSetting, 'auto'>, string> = { dark: '#1e1e1e', light: '#ffffff', parchment: '#f3e9d2' };
 
 // Назначение папки угадывается по названию. Это подсказка, а не требование.
 export type FolderRole = 'characters' | 'party' | 'maps' | 'music' | 'backgrounds' | 'handouts' | 'bestiary' | 'compendium' | 'journal';

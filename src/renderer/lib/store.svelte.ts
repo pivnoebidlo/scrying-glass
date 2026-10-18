@@ -17,6 +17,17 @@ export const store = new Store();
 export const dispatch = window.api.dispatch;
 
 
+// The control window's theme: <html data-theme>, read by renderer/lib/theme.css; remembered by the window so the
+// next launch starts in it before the state arrives (control/main.ts).
+export function applyTheme(theme: string) {
+  document.documentElement.dataset['theme'] = theme;
+  try {
+    localStorage.setItem('theme', theme);
+  } catch {
+    /* not remembered — the state sets it a moment later */
+  }
+}
+
 // Загружает начальное состояние и подписывается на изменения. Вызывается до монтирования интерфейса.
 export async function connect(opts: { displays?: boolean } = {}) {
   // Названия папок ролей нужны folderRole() и прочим функциям shared/vault.ts — ставим их до нового состояния.
@@ -24,6 +35,7 @@ export async function connect(opts: { displays?: boolean } = {}) {
     setRoleNames(s.vault.roles);
     setSystemsOff(s.vault.systemsOff);
     applyLang(s.vault.lang);
+    applyTheme(s.vault.theme);
     store.state = s;
   };
   window.api.onState(apply);

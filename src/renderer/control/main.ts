@@ -4,5 +4,12 @@ import '../lib/theme.css';
 import { connect } from '../lib/store.svelte';
 import App from './App.svelte';
 
+// The theme of the last launch at once, before the state arrives (no flash of the wrong colours).
+try {
+  document.documentElement.dataset['theme'] = localStorage.getItem('theme') ?? 'auto';
+} catch {
+  /* the state sets it in a moment */
+}
+
 await connect({ displays: true });
 mount(App, { target: document.body });
