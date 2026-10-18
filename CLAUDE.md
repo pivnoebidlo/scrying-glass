@@ -275,6 +275,9 @@ Electron-приложение для мастера D&D: окно управле
   `tools/names/builtin/<lang>/*.txt` (написаны для приложения); свои — `<библиотека>/names/<lang>/` (`main/names.ts`, IPC
   `names:*`), в репозиторий не кладём — это могут быть списки чужих сайтов (папка `/names/` в корне — в .gitignore).
   Выгрузка TXT / CSV — общий IPC `files:saveText`.
+  Генератор лавок: `tools/shop/` — `content.ts` (en и ru парами, товары с ценой в медяках по SRD), `generate.ts`
+  (`shopGoods`: потолок цены по достатку, магические — из справочника по `MAGIC_VALUE` SRD 5.2, зелья — `isConsumable`),
+  страница `ShopGenerator.svelte`; хозяин — `helpers` из store генератора поселений, цены — `coins` таверн.
   Генератор поселений: `tools/settlement/` — как NPC (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — русские
   названия из основы и суффикса `fitsSuffix` или «прилагательное + существительное» по родам, `text.ts`,
   `store.svelte.ts`); таверна и жители — через `Helpers` из генераторов таверн и NPC.

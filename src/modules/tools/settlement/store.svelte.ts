@@ -45,7 +45,7 @@ export const save = () => {
 };
 
 let ownLoaded = false;
-async function helpers(lang: string): Promise<Helpers> {
+export async function helpers(lang: string): Promise<Helpers> {
   if (!ownLoaded) {
     ownLoaded = true;
     await loadOwn();

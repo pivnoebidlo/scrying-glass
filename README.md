@@ -242,6 +242,12 @@ on the side (in the journal they stay [[links]]). In D&D adventures an obstacle 
 dangerous road an event can come with a complication. Copy or to the journal. The built-in "Road Encounters" and
 "Tavern Rumors" tables are retired.
 
+**Shop generator** (Tools → Shop generator): a general store, a smith, an alchemist, a magic shop, books and maps or
+an antiques dealer, poor, modest or wealthy → name and owner (from the NPC generator), the look inside and a quirk,
+goods with prices and stock, and a hook. Ordinary goods are priced by the SRD equipment tables; in D&D adventures the
+magic shop sells compendium items at their SRD value (consumables at half), and the names open their entries;
+elsewhere it sells curiosities and prices are hidden. Copy, to the journal or to Telegram (without the hook).
+
 **Settlement generator** (Tools → Settlement generator): a hamlet, a village, a town or a city (or random) → name,
 population and peoples, who rules and the defences, a first impression to read aloud, what it is known for, places
 (with a tavern named by the tavern generator), notable people (from the NPC generator) and a trouble to start an

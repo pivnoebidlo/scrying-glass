@@ -20,6 +20,7 @@
   import EventsGenerator from '../events/EventsGenerator.svelte';
   import TreasureGenerator from '../treasure/TreasureGenerator.svelte';
   import SettlementGenerator from '../settlement/SettlementGenerator.svelte';
+  import ShopGenerator from '../shop/ShopGenerator.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
@@ -43,6 +44,8 @@
   <TablesView />
 {:else if ui.tool === 'names'}
   <NameGenerator />
+{:else if ui.tool === 'shop'}
+  <ShopGenerator />
 {:else if ui.tool === 'settlement'}
   <SettlementGenerator />
 {:else if ui.tool === 'treasure'}

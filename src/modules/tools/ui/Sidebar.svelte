@@ -1,7 +1,7 @@
 <!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Beer, Calculator, Castle, CloudSun, Gem, Signpost, UserRound, Dices, FileText, Gauge, Hourglass, ScrollText, Send, Signature, Table2 } from '@lucide/svelte';
+  import { Beer, Calculator, Castle, Store, CloudSun, Gem, Signpost, UserRound, Dices, FileText, Gauge, Hourglass, ScrollText, Send, Signature, Table2 } from '@lucide/svelte';
   import { tables } from '../tables/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
@@ -56,6 +56,10 @@
   <button class="item" data-nav class:active={ui.tool === 'settlement'} onclick={() => pickTool('settlement')}>
     <Castle size={14} />
     <span class="name">{t('tools.side.settlement')}</span>
+  </button>
+  <button class="item" data-nav class:active={ui.tool === 'shop'} onclick={() => pickTool('shop')}>
+    <Store size={14} />
+    <span class="name">{t('tools.side.shop')}</span>
   </button>
   <button class="item" data-nav class:active={ui.tool === 'weather'} onclick={() => pickTool('weather')}>
     <CloudSun size={14} />
