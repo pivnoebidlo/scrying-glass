@@ -18,7 +18,6 @@ describe('полная резервная копия', () => {
     w(path.join(vault, 'Страд/maps/карта.png'), 'png');
     w(path.join(lib, 'cards/огр.json'), '{}');
     w(path.join(lib, 'images/огр.png'), 'png');
-    w(path.join(lib, 'tables/.builtin.json'), '{"seeded":["Погода"]}');
     w(path.join(tmp, 'settings.json'), '{"roles":null}');
     fs.mkdirSync(path.join(vault, 'Шахты/music'), { recursive: true });
     const src = { vaultRoot: vault, vaultFiles: ['.scrying-glass/state.json', 'Страд/handouts/Письмо.note.json'], library: lib, settingsFile: path.join(tmp, 'settings.json') };
@@ -41,7 +40,6 @@ describe('полная резервная копия', () => {
     expect(fs.readFileSync(path.join(target, '.scrying-glass/state.json'), 'utf8')).toBe('{"modules":{}}');
     expect(fs.existsSync(path.join(target, 'Страд/maps/карта.png'))).toBe(true);
     expect(fs.existsSync(path.join(lib2, 'images/огр.png'))).toBe(true);
-    expect(fs.existsSync(path.join(lib2, 'tables/.builtin.json'))).toBe(true);
     // Пустые папки тоже возвращаются (даже в копии без картинок).
     const un3 = path.join(tmp, 'un3');
     await readBackup(path.join(tmp, 'a.sgbackup'), un3);

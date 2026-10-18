@@ -76,7 +76,7 @@
     if (!item) return;
     const p = item.path;
     if (isLibraryEntry(p)) {
-      if (await window.api.trashLibraryTable(p)) ui.open = replaces;
+      if (await window.api.trashLibraryEntry(p)) ui.open = replaces;
       return;
     }
     const s = await dispatch('vault', 'trash', { paths: [p] });

@@ -1,7 +1,7 @@
 // Состояние интерфейса файлов: выбранная папка (trash — открыта корзина) и раскрытые ветки дерева. Запоминается
 // между запусками.
 import { folderRole, type FolderRole } from '../../../shared/vault';
-import { BookOpen, Dices, Folder, Map, Music, NotebookPen, Scroll, Shield, Skull, Users, Wallpaper } from '@lucide/svelte';
+import { BookOpen, Folder, Map, Music, NotebookPen, Scroll, Shield, Skull, Users, Wallpaper } from '@lucide/svelte';
 import type { Component } from 'svelte';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
 
@@ -37,7 +37,7 @@ export function followAdventure(path: string) {
 }
 
 export const ROLE_ICONS: Record<FolderRole, Component> = {
-  characters: Users, party: Shield, maps: Map, music: Music, backgrounds: Wallpaper, handouts: Scroll, bestiary: Skull, tables: Dices, compendium: BookOpen, journal: NotebookPen,
+  characters: Users, party: Shield, maps: Map, music: Music, backgrounds: Wallpaper, handouts: Scroll, bestiary: Skull, compendium: BookOpen, journal: NotebookPen,
 };
 
 export const folderIcon = (name: string): Component => {

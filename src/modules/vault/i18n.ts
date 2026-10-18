@@ -52,8 +52,6 @@ export const en = {
   'vault.role.maps.desc': 'Maps with fog of war.',
   'vault.role.music': 'Music',
   'vault.role.music.desc': 'Music and ambience.',
-  'vault.role.tables': 'Tables',
-  'vault.role.tables.desc': 'Random tables and generators (Markdown files).',
   'vault.role.compendium': 'Compendium',
   'vault.role.compendium.desc': 'Spells, items, feats, rules, notes (Markdown files).',
   'vault.role.journal': 'Journal',
@@ -82,7 +80,7 @@ export const en = {
   'vault.trash.title': 'Trash',
   'vault.trash.deleted': 'Deleted files',
   'vault.trash.deletedDesc':
-    'Where files, cards, tables, entries and adventures deleted in the app go. The app trash is the hidden folder .trash in the vault (and in the library); things can be restored from Files → Trash.',
+    'Where files, cards, entries and adventures deleted in the app go. The app trash is the hidden folder .trash in the vault (and in the library); things can be restored from Files → Trash.',
   'vault.trash.toTrash': 'To the app trash',
   'vault.trash.deleteNow': 'Delete at once, no trash',
   'vault.trash.prune': 'Empty the trash',
@@ -107,7 +105,7 @@ export const en = {
   'vault.trash.revealHint': 'Show the vault trash folder in Finder',
   'vault.trash.close': 'Close the trash',
   'vault.trash.about':
-    'Things deleted in the app stay here until the trash is emptied: in the hidden folder .trash of the vault (or of the library — for shared tables, entries and cards). An adventure comes back with its scenes, prepared encounters and map markup.',
+    'Things deleted in the app stay here until the trash is emptied: in the hidden folder .trash of the vault (or of the library — for shared entries and cards). An adventure comes back with its scenes, prepared encounters and map markup.',
   'vault.trash.off': 'The trash is turned off now: deleted things are erased at once.',
   'vault.trash.autoPrune': 'Deleted things are erased for good {when}.',
   'vault.trash.changeIn': 'Change it in settings, the Files section.',
@@ -181,8 +179,6 @@ export const ru: Messages<typeof en> = {
   'vault.role.maps.desc': 'Карты с туманом войны.',
   'vault.role.music': 'Музыка',
   'vault.role.music.desc': 'Музыка и атмосфера.',
-  'vault.role.tables': 'Таблицы',
-  'vault.role.tables.desc': 'Таблицы случайностей и генераторы (Markdown-файлы).',
   'vault.role.compendium': 'Справочник',
   'vault.role.compendium.desc': 'Заклинания, предметы, черты, правила, заметки (Markdown-файлы).',
   'vault.role.journal': 'Журнал',
@@ -211,7 +207,7 @@ export const ru: Messages<typeof en> = {
   'vault.trash.title': 'Корзина',
   'vault.trash.deleted': 'Удалённые файлы',
   'vault.trash.deletedDesc':
-    'Куда уходят удалённые в приложении файлы, карточки, таблицы, записи и приключения. Корзина приложения — скрытая папка .trash в хранилище (и в библиотеке); вернуть оттуда можно в «Файлах» → «Корзина».',
+    'Куда уходят удалённые в приложении файлы, карточки, записи и приключения. Корзина приложения — скрытая папка .trash в хранилище (и в библиотеке); вернуть оттуда можно в «Файлах» → «Корзина».',
   'vault.trash.toTrash': 'В корзину приложения',
   'vault.trash.deleteNow': 'Удалять сразу, без корзины',
   'vault.trash.prune': 'Очищать корзину',
@@ -236,7 +232,7 @@ export const ru: Messages<typeof en> = {
   'vault.trash.revealHint': 'Показать папку корзины хранилища в Finder',
   'vault.trash.close': 'Закрыть корзину',
   'vault.trash.about':
-    'Удалённое в приложении лежит здесь, пока корзину не очистят: в скрытой папке .trash хранилища (или библиотеки — для общих таблиц, записей и карточек). Приключение возвращается вместе со сценами, заготовками боёв и разметкой карт.',
+    'Удалённое в приложении лежит здесь, пока корзину не очистят: в скрытой папке .trash хранилища (или библиотеки — для общих записей и карточек). Приключение возвращается вместе со сценами, заготовками боёв и разметкой карт.',
   'vault.trash.off': 'Сейчас корзина выключена: удалённое стирается сразу.',
   'vault.trash.autoPrune': 'Удалённое стирается насовсем {when}.',
   'vault.trash.changeIn': 'Изменить — в настройках, раздел «Файлы».',

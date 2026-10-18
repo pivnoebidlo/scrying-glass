@@ -40,9 +40,6 @@ export async function writeBackup(out: string, src: BackupSources, manifest: Bac
   const entries: ZipEntry[] = [{ name: 'manifest.json', data: enc(manifest) }, { name: 'settings.json', abs: src.settingsFile }];
   if (src.library) {
     for (const f of folderFiles(src.library, (rel) => rel.endsWith('.tmp'))) entries.push({ name: `library/${f.rel}`, abs: f.abs });
-    // Скрытый список уже разложенных встроенных таблиц: без него удалённые встроенные вернулись бы сами.
-    const seeded = path.join(src.library, 'tables', '.builtin.json');
-    if (fs.existsSync(seeded)) entries.push({ name: 'library/tables/.builtin.json', abs: seeded });
   }
   if (src.vaultRoot) {
     // Структура папок — всегда: пустые папки (новое приключение, стандартные папки) тоже должны вернуться.
@@ -79,8 +76,8 @@ export function placeFiles(from: string, to: string): number {
     fs.renameSync(dest + '.tmp', dest);
     n++;
   }
-  // Скрытые файлы, которые нужны (folderFiles пропускает скрытое): состояние хранилища, список встроенных таблиц.
-  for (const rel of ['.scrying-glass/state.json', 'tables/.builtin.json']) {
+  // Hidden files that are needed (folderFiles skips hidden ones): the vault's state.
+  for (const rel of ['.scrying-glass/state.json']) {
     const src = path.join(from, ...rel.split('/'));
     if (!fs.existsSync(src)) continue;
     const dest = path.join(to, ...rel.split('/'));

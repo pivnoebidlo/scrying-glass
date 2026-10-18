@@ -10,8 +10,8 @@ On launch the app checks whether a new version is out (it asks GitHub and sends 
 top of the window offers "Download" / "Skip this version". Turn it off in ⌘, → General → Updates, where "Check now" is too.
 
 The interface is in English and Russian (⌘, → General → Language; by default — the system language if there is a
-translation for it, otherwise English). The language switches at once, without a restart. The built-in compendium,
-random tables and the Fate compendium exist in both languages and follow the interface language.
+translation for it, otherwise English). The language switches at once, without a restart. The built-in compendium
+and the Fate compendium exist in both languages and follow the interface language.
 
 ## Installation
 
@@ -81,8 +81,8 @@ shared folders don't change the current adventure.
 
 **Folder roles** are guessed by name: characters / npc — portraits, party / players — player characters,
 backgrounds / locations — backgrounds, handouts / clues — handouts, maps — maps, music / audio — music,
-monsters / bestiary / creatures — bestiary cards, compendium / reference — compendium entries, tables / random —
-random tables, journal / notes — the GM journal (Russian names are recognized too). Names can be changed or extended
+monsters / bestiary / creatures — bestiary cards, compendium / reference — compendium entries,
+journal / notes — the GM journal (Russian names are recognized too). Names can be changed or extended
 in settings (⌘, → Files → Folder roles); the first name of a role is the one the app uses when it creates folders.
 A picture from any folder can be shown to the players from Files.
 
@@ -195,24 +195,6 @@ adventure file (.sgpack) and comes back with the adventure from the trash. Notes
 
 ## Tools
 
-**Random tables** (Tools → Random tables): rumors, weather, road encounters, names, what's in the pockets. Your own
-table is a plain Markdown file in a tables / random folder, easy to write in Obsidian too:
-
-    # Tavern Rumors
-    - The miller cuts his flour with chalk.
-    - 3× Lights were seen over the marsh.   ← comes up three times as often
-    1-4: Nothing happened.                  ← ranges, as in d20 book tables (and rows like "| 5-6 | … |")
-    - [[Elf Names]] sells {2d6} {arrows|candles|apples}.
-
-[[Another table]] — a roll on another table, {2d6+1} — dice, {a|b|c} — one of the options. Space or "Roll" — the result
-on top, ×3 and ×5 — several at once, a click on an option in the list — pick it by hand.
-
-Where tables live: in an adventure, in the vault's shared tables folder or in the library — shared by all campaigns
-(`<library>/tables`, next to the shared cards). There are no built-in tables any more: the generators in Tools took
-their place (tables already put into the library stay there as ordinary files). "New table" and "Copy to…" offer a place: the adventure, Shared or the library;
-[[links]] take the adventure's table first, then the shared one, then the library's. Any table can be deleted to
-trash. Notes are copied to another adventure the same way.
-
 **Encounter difficulty**: the current combat and every prepared encounter show a badge like "Moderate · 1,100 /
 1,500 XP"; a click shows the scale and details. It follows the 2024 rules (SRD 5.2): every hero has an XP budget by
 level (low, moderate, high), the enemies' XP adds up. Heroes come from the combat, or else from the adventure's player
@@ -234,16 +216,14 @@ built-in ones; built-in or own lists can be turned off.
 11–16, 17–20) → coins, gems and art, valuable things, pocket finds and trinkets; each part rerollable. In D&D
 adventures — magic items of the right rarity from the compendium (of the shown edition, your own items included; a
 click opens the entry, in the journal they are [[links]]) and prices with the total in gold; in other systems —
-curiosities and no prices. Copy, to the journal or to Telegram. It replaces the last built-in random tables ("What's
-in the Pockets", "Trinkets and Finds").
+curiosities and no prices. Copy, to the journal or to Telegram.
 
 **Random events** (Tools → Random events): terrain (as for the weather, the city and the underground included), day or
 night, danger (calm, tense, dangerous) and 1, 3 or 6 events → encounters, discoveries, obstacles, travellers, omens and
 rumors (from the tavern generator), each event rerollable. Creatures in the text are links: a click opens the SRD card
 on the side (in the journal they stay [[links]]). In D&D adventures an obstacle shows its check (skill and DC); on a
 dangerous road an event can come with a complication. "To an encounter" on an encounter makes an encounter preset
-with its creatures (weaker ones come in groups) and opens it in Initiative. Copy or to the journal. The built-in "Road Encounters" and
-"Tavern Rumors" tables are retired.
+with its creatures (weaker ones come in groups) and opens it in Initiative. Copy or to the journal.
 
 **Travel** (Tools → Travel, D&D only): distance in miles, on foot / mounted / by cart or a ship (airship, galley,
 sailing ship…), pace, terrain, road and hours a day → the time on the way and the speed by the SRD travel rules of
@@ -282,14 +262,13 @@ desert, arctic, underground), season and 1, 3 or 7 days → for each day the sky
 thunderstorm), wind and temperature (°F and °C), a line to read aloud and, rarely, something unusual (northern lights,
 a waterspout, a mirage…). Days follow each other: rain tends to last, the temperature drifts. In D&D adventures — the
 SRD weather rules that apply (extreme cold and heat, strong wind, heavy precipitation, fog). Copy, to the journal, or
-straight to the players in Telegram (without the rules). The built-in "Weather" table is retired.
+straight to the players in Telegram (without the rules).
 
 **NPC generator** (Tools → NPC generator): race (or random), gender, importance (common to unique) → name, trade,
 appearance, character, manner of speech, what they want, what they hide and what they carry; important NPCs get a
 nickname or an epithet, fame and sometimes a magic trinket. Reroll or pin any part; recent NPCs stay in the history.
 "Create card" opens a new NPC card in the editor with the name, description and notes filled; "To journal" and "Copy"
-as with taverns. Names come from the name generator's lists. (The built-in name, appearance, personality, motives
-and "Random NPC" tables are retired — copies already in your library stay.)
+as with taverns. Names come from the name generator's lists.
 
 **Tavern generator** (Tools → Tavern generator): type (tavern, inn, roadside inn, harbor dive, hidden den, wine house),
 wealth (squalid to aristocratic — prices follow the SRD food, drink and lodging table), crowd, lodging and wonders.
@@ -514,7 +493,7 @@ Hotkeys (⌘ on macOS, Ctrl on Windows and Linux): ⌘P — pause, ⌘→ / ⌘�
 ## Backups and moving data
 
 **Backups** (settings → Backups): the app takes snapshots of everything created in it — scenes, fog, pins and tokens of
-maps, prepared encounters, notes, tables, cards, the library (without pictures) and settings. A snapshot is taken when
+maps, prepared encounters, notes, cards, the library (without pictures) and settings. A snapshot is taken when
 the vault opens, every half hour of work (if something changed) and on quit; the last 20 are kept plus one per day for
 a month, manual ones — always. The snapshot folder can be chosen (for example, in the cloud) — existing snapshots move
 there, and a full copy is offered there by default too. "Restore…" brings back the vault data and/or the library; a
@@ -525,7 +504,7 @@ there too: one `.sgbackup` file — settings, the whole library and the vault da
 replace the same ones, the rest stay, the folder structure (and empty folders) comes back.
 
 **An adventure as one file** (the adventure switcher menu above the side panel): "Export “…”…" saves a `.sgpack` file —
-the adventure folder with all pictures, notes, tables and cards (music — if you like), its scenes, maps with fog, pins
+the adventure folder with all pictures, notes and cards (music — if you like), its scenes, maps with fog, pins
 and tokens, prepared encounters, tile order and the shared cards the encounters and pins refer to. "Import adventure…"
 adds it to the open vault: if the name is taken, the app asks for another; paths are recalculated; shared cards go to
 the library (yours aren't overwritten). A snapshot is taken before the import. A `.sgpack` is a plain ZIP. There too:
@@ -561,7 +540,7 @@ the diagram by the title, next to it — the eye: show or not.
 
 Pictures, maps and tracks can be deleted from the app (the trash can button on hover).
 
-**Trash** — the app's own, like Obsidian's: deleted files, cards, tables, compendium entries and adventures move to the
+**Trash** — the app's own, like Obsidian's: deleted files, cards, compendium entries and adventures move to the
 hidden `.trash` folder of the vault (or the library — for shared ones) rather than the system trash, which may be
 emptied on its own. Files → Trash at the bottom of the tree: what, from where and when was deleted, "Restore" to the old
 place (missing folders are created; a taken name — "x (2)"), "Delete forever" and "Empty trash". In settings (Files →

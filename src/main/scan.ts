@@ -13,11 +13,11 @@ export function scanVault(root: string): VaultFolder {
   return scan(root, '', path.basename(root), 0, null);
 }
 
-// Текстовые файлы — только в папках таблиц, справочника и журнала (и вложенных в них): остальные заметки хранилища
+// Текстовые файлы — только в папках справочника и журнала (и вложенных в них): остальные заметки хранилища
 // (Obsidian) не нужны.
 const TEXT = /\.(md|txt)$/i;
-type TextRole = 'tables' | 'compendium' | 'journal' | null;
-const TEXT_KIND = { tables: 'table', compendium: 'entry', journal: 'page' } as const;
+type TextRole = 'compendium' | 'journal' | null;
+const TEXT_KIND = { compendium: 'entry', journal: 'page' } as const;
 
 function scan(abs: string, rel: string, name: string, depth: number, text: TextRole): VaultFolder {
   const folder: VaultFolder = { path: rel, name: name.normalize('NFC'), folders: [], files: [] };
@@ -32,7 +32,7 @@ function scan(abs: string, rel: string, name: string, depth: number, text: TextR
     const childRel = rel ? `${rel}/${e.name}` : e.name;
     if (e.isDirectory()) {
       const role = folderRole(e.name);
-      const next: TextRole = text ?? (role === 'tables' || role === 'compendium' || role === 'journal' ? role : null);
+      const next: TextRole = text ?? (role === 'compendium' || role === 'journal' ? role : null);
       if (depth < MAX_DEPTH) folder.folders.push(scan(path.join(abs, e.name), childRel, e.name, depth + 1, next));
     } else if (e.isFile()) {
       const kind = fileKind(e.name) ?? (text && TEXT.test(e.name) ? TEXT_KIND[text] : null);

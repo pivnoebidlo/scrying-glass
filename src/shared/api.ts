@@ -8,14 +8,6 @@ import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 import type { UpdateInfo, UpdateSettings } from './updates';
 import type { TgChat, TgStatus } from './telegram';
 
-// A built-in table to put into the library: id — the same in every language, names — its titles in all languages.
-export interface BuiltinTable {
-  id: string;
-  name: string;
-  text: string;
-  names: string[];
-}
-
 export interface DisplayInfo {
   id: number;
   primary: boolean;
@@ -107,7 +99,7 @@ export interface Api {
   renameNote(path: string, title: string): Promise<string | null>;
 
   // Справочник (shared/compendium.ts): Markdown-записи в папках справочника хранилища и в библиотеке
-  // («library:compendium/…»). Удаление записи библиотеки — trashLibraryTable.
+  // («library:compendium/…»). Удаление записи библиотеки — trashLibraryEntry.
   readEntry(path: string): Promise<string | null>;
   listLibraryEntries(): Promise<{ path: string; text: string }[]>;
   // Встроенный справочник (SRD по редакциям), только чтение.
@@ -129,15 +121,8 @@ export interface Api {
   movePage(path: string, folder: string): Promise<string | null>;
   // Rename a folder inside a journal folder; the new path or null.
   renamePageFolder(path: string, title: string): Promise<string | null>;
-  // Таблицы случайностей (shared/tables.ts): .md / .txt в папках таблиц хранилища или в библиотеке
-  // (пути «library:tables/…» — общие для всех кампаний).
-  readTable(path: string): Promise<string | null>;
-  listLibraryTables(): Promise<{ path: string; text: string }[]>;
-  // Встроенные таблицы — в библиотеку (только новые; restore — и удалённые). Сколько файлов записано.
-  seedLibraryTables(files: BuiltinTable[], restore?: boolean): Promise<number>;
-  // Таблица или запись библиотеки — в корзину (спросит подтверждение). true — удалена.
-  trashLibraryTable(path: string): Promise<boolean>;
-  onTablesChanged(cb: () => void): void;
+  // A library entry of the compendium — to the trash (asks to confirm). true — removed.
+  trashLibraryEntry(path: string): Promise<boolean>;
   // Updates (shared/updates.ts): the setting, a check now, open a release page, a newer version found on launch.
   updateSettings(): Promise<UpdateSettings>;
   setUpdateSettings(next: Partial<UpdateSettings>): Promise<UpdateSettings>;
@@ -155,8 +140,6 @@ export interface Api {
   telegramSendFile(chats: number[], path: string, caption?: string): Promise<{ sent: number; errors: string[] }>;
   telegramSendCapture(chats: number[], rect: { x: number; y: number; width: number; height: number }, name: string, caption?: string): Promise<{ sent: number; errors: string[] }>;
   onTelegramChanged(cb: () => void): void;
-  writeTable(path: string, text: string): Promise<boolean>;
-  createTable(folder: string, title: string, text: string): Promise<string | null>;
   // Полная резервная копия одним файлом (.sgbackup, main/archive.ts): сколько весят библиотека и папка хранилища,
   // сохранить (media — вместе с картинками и музыкой хранилища; путь или null), восстановить (спросит файл и куда).
   backupSizes(): Promise<{ library: number; media: number }>;

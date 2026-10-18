@@ -1,8 +1,7 @@
 <!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Beer, Calculator, Castle, Footprints, DoorOpen, Sparkles, Store, CloudSun, Gem, Signpost, UserRound, Dices, FileText, Gauge, Hourglass, ScrollText, Send, Signature, Table2 } from '@lucide/svelte';
-  import { tables } from '../tables/store.svelte';
+  import { Beer, Calculator, Castle, Footprints, DoorOpen, Sparkles, Store, CloudSun, Gem, Signpost, UserRound, FileText, Gauge, Hourglass, ScrollText, Send, Signature } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
   import { noteGroups } from './library';
@@ -28,19 +27,6 @@
       <span class="name">{noteTitle(f.path)}</span>
     </button>
   {/each}
-  <button class="item" data-nav class:active={ui.tool === 'tables' && !ui.table} onclick={() => pickTool('tables')}>
-    <Dices size={14} />
-    <span class="name">{t('tools.side.tables')}</span>
-    <span class="count">{tables.vault.length + tables.library.length || ''}</span>
-  </button>
-  {#if ui.tool === 'tables' && ui.folded !== 'tables'}
-    {#each [...tables.vault, ...tables.library] as tb (tb.id)}
-      <button class="item sub" data-nav data-depth="1" class:active={ui.table === tb.id} title={tb.path} onclick={() => (ui.table = tb.id)}>
-        <Table2 size={13} />
-        <span class="name">{tb.table.title}</span>
-      </button>
-    {/each}
-  {/if}
   <button class="item" data-nav class:active={ui.tool === 'names'} onclick={() => pickTool('names')}>
     <Signature size={14} />
     <span class="name">{t('tools.side.names')}</span>

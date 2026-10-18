@@ -2,7 +2,7 @@
      Вернуть на прежнее место, удалить насовсем, очистить. -->
 <script lang="ts">
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
-  import { BookOpen, Dices, File, Folder, FolderOpen, Image, Map, Music, RotateCcw, Skull, Trash2, X } from '@lucide/svelte';
+  import { BookOpen, File, Folder, FolderOpen, Image, Map, Music, RotateCcw, Skull, Trash2, X } from '@lucide/svelte';
   import type { Component } from 'svelte';
   import { AUDIO_EXT, IMAGE_EXT, thumb } from '../../../shared/vault';
   import type { TrashItem, TrashPlace } from '../../../shared/trash';
@@ -28,7 +28,6 @@
     const p = it.paths[0] ?? '';
     if (IMAGE_EXT.includes(ext(p))) return Image;
     if (AUDIO_EXT.includes(ext(p))) return Music;
-    if (/(^|\/)tables\//.test(p)) return Dices;
     if (ext(p) === '.md') return BookOpen;
     return File;
   }

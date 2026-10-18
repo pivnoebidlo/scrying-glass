@@ -23,10 +23,9 @@ import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
 import { createNote, readNote, renameNote, writeNote } from './notes';
-import { createTable, isTablePath, listLibraryTables, readTable, seedLibraryTables, tableResolver, watchLibraryTables, writeTable } from './tables';
-import type { BuiltinTable } from '../shared/api';
 import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
 import { pages } from './journal';
+import { resolver } from './textstore';
 import type { Note } from '../shared/notes';
 import {
   cardsOf, readLss, updateFromLss, lssSpellTable, importLssSpells, clearLssSpells, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
@@ -350,49 +349,28 @@ ipcMain.handle('notes:create', async (_event, { folder, title, note }: { folder:
   if (rel) await afterNoteWrite();
   return rel;
 });
-// Таблицы случайностей: Markdown-файлы в папках таблиц хранилища и в библиотеке («library:tables/…»).
-const resolveTable = tableResolver(resolveInVault, resolveInLibrary);
-const libraryTables = () => libraryPath();
-// После записи: таблица хранилища — пересканировать хранилище; библиотеки — окна перечитают по tables:changed.
-const afterTableWrite = async (rel: string) => {
-  if (rel.startsWith(LIBRARY)) for (const win of BrowserWindow.getAllWindows()) win.webContents.send('tables:changed');
-  else await afterNoteWrite();
-};
-ipcMain.handle('tables:read', (_event, rel: string) => readTable(resolveTable, rel));
-ipcMain.handle('tables:listLibrary', () => listLibraryTables(libraryTables()));
-ipcMain.handle('tables:seed', (_event, { files, restore }: { files: BuiltinTable[]; restore?: boolean }) =>
-  seedLibraryTables(libraryTables(), files, restore)
-);
-ipcMain.handle('tables:write', async (_event, { path: rel, text }: { path: string; text: string }) => {
-  const ok = writeTable(resolveTable, rel, text);
-  if (ok) await afterTableWrite(rel);
-  return ok;
-});
-ipcMain.handle('tables:create', async (_event, { folder, title, text }: { folder: string; title: string; text: string }) => {
-  const rel = createTable(resolveTable, folder, title, text);
-  if (rel) await afterTableWrite(rel);
-  return rel;
-});
+// Text files (compendium entries) in the vault or the library («library:…»).
+const resolveText = resolver(resolveInVault, resolveInLibrary);
 // Справочник: записи в папках справочника хранилища и в библиотеке («library:compendium/…»).
 const afterEntryWrite = async (rel: string) => {
   if (rel.startsWith(LIBRARY)) for (const win of BrowserWindow.getAllWindows()) win.webContents.send('compendium:changed');
   else await afterNoteWrite();
 };
-ipcMain.handle('compendium:read', (_event, rel: string) => entries.read(resolveTable, rel));
+ipcMain.handle('compendium:read', (_event, rel: string) => entries.read(resolveText, rel));
 ipcMain.handle('compendium:listLibrary', () => entries.listLibrary(libraryPath()));
 ipcMain.handle('compendium:builtin', () => builtinEntries());
 ipcMain.handle('compendium:write', async (_event, { path: rel, text }: { path: string; text: string }) => {
-  const ok = entries.write(resolveTable, rel, text);
+  const ok = entries.write(resolveText, rel, text);
   if (ok) await afterEntryWrite(rel);
   return ok;
 });
 ipcMain.handle('compendium:create', async (_event, { folder, title, text }: { folder: string; title: string; text: string }) => {
-  const rel = entries.create(resolveTable, folder, title, text);
+  const rel = entries.create(resolveText, folder, title, text);
   if (rel) await afterEntryWrite(rel);
   return rel;
 });
 ipcMain.handle('compendium:rename', async (_event, { path: rel, title }: { path: string; title: string }) => {
-  const next = entries.rename(resolveTable, rel, title);
+  const next = entries.rename(resolveText, rel, title);
   if (next && next !== rel) {
     await runAction('handouts', 'move', { from: rel, to: next });
     await afterEntryWrite(next);
@@ -449,10 +427,10 @@ ipcMain.handle('journal:rename', (_event, { path: rel, title }: { path: string; 
 ipcMain.handle('journal:move', (_event, { path: rel, folder }: { path: string; folder: string }) => afterPageMove(rel, pages.move(resolveInVault, rel, folder)));
 ipcMain.handle('journal:renameFolder', (_event, { path: rel, title }: { path: string; title: string }) => afterPageMove(rel, pages.renameFolder(resolveInVault, rel, title)));
 
-// Файл библиотеки (таблица, запись справочника) — в корзину библиотеки, с подтверждением (файлы хранилища удаляет
-// действие vault/trash).
-ipcMain.handle('tables:trash', async (_event, rel: string) => {
-  const abs = rel.startsWith(LIBRARY) && (isTablePath(rel) || entries.isPath(rel)) ? resolveTable(rel) : null;
+// A library file (a compendium entry) — to the library's trash, with a confirmation (vault files are removed by the
+// vault/trash action).
+ipcMain.handle('library:trash', async (_event, rel: string) => {
+  const abs = rel.startsWith(LIBRARY) && entries.isPath(rel) ? resolveText(rel) : null;
   if (!abs || !fs.existsSync(abs)) return false;
   const win = getControlWindow();
   const words = deleteWords();
@@ -467,8 +445,7 @@ ipcMain.handle('tables:trash', async (_event, rel: string) => {
   const res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts);
   if (res.response !== 0) return false;
   discard(libraryPath()!, [rel.slice(LIBRARY.length)], { title: path.basename(abs), kind: 'file' });
-  if (entries.isPath(rel)) await afterEntryWrite(rel);
-  else await afterTableWrite(rel);
+  await afterEntryWrite(rel);
   return true;
 });
 // ---------- Снимки (резервные копии данных приложения, main/backups.ts) ----------
@@ -480,7 +457,7 @@ function appVaultFiles(): string[] {
   const out: string[] = [];
   if (!vaultRoot) return out;
   if (fs.existsSync(vaultStateFile())) out.push(`${DATA_DIR}/state.json`);
-  if (vaultTree) out.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'table' || f.kind === 'entry' || f.kind === 'page').map((f) => f.path));
+  if (vaultTree) out.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'entry' || f.kind === 'page').map((f) => f.path));
   out.push(...listCards().filter((c) => c.ref.scope === 'vault' && c.file).map((c) => c.file!));
   return out;
 }
@@ -559,7 +536,7 @@ ipcMain.handle('backups:restore', async (_event, { id, vault, library }: { id: s
   const n = restoreSnapshot(backupsDir(), id, { vaultRoot, library: libraryPath() }, { vault: toVault, library });
   if (library) {
     setLibrary(libraryPath()!);
-    for (const w of BrowserWindow.getAllWindows()) w.webContents.send('tables:changed');
+    for (const w of BrowserWindow.getAllWindows()) w.webContents.send('compendium:changed');
   }
   if (toVault && vaultRoot) await enqueue('vault', () => openVault(vaultRoot));
   return n;
@@ -625,7 +602,7 @@ ipcMain.handle('archive:restore', async () => {
     const roles = (saved as { roles?: Partial<RoleNames> | null } | null)?.roles;
     if (roles) setRoles(roles);
     if (lib) setLibrary(lib);
-    for (const w of BrowserWindow.getAllWindows()) w.webContents.send('tables:changed');
+    for (const w of BrowserWindow.getAllWindows()) w.webContents.send('compendium:changed');
     await enqueue('vault', () => openVault(target));
     return { files, vault: path.basename(target) };
   } finally {
@@ -865,7 +842,6 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
     }
   } else {
     for (const win of BrowserWindow.getAllWindows()) {
-      win.webContents.send('tables:changed');
       win.webContents.send('compendium:changed');
     }
   }
@@ -1014,7 +990,7 @@ ipcMain.handle('library:writeData', (_event, { name, data }: { name: string; dat
 
 // Открыть файл в программе по умолчанию (таблицу — например, в Obsidian или текстовом редакторе).
 ipcMain.handle('vault:openFile', async (_event, rel: string) => {
-  const abs = rel.startsWith(LIBRARY) ? resolveTable(rel) : resolveInVault(rel);
+  const abs = rel.startsWith(LIBRARY) ? resolveText(rel) : resolveInVault(rel);
   if (abs) await shell.openPath(abs);
 });
 
@@ -1278,10 +1254,7 @@ ipcMain.handle('cards:chooseLibrary', async (_event, { reset }: { reset?: boolea
   settings = { ...settings, library: dir };
   writeJsonAtomic(settingsFile(), settings);
   setLibrary(dir ?? defaultLibrary());
-  watchLibraryTables(libraryPath());
   watchLibraryCompendium(libraryPath());
-  watchLibraryCompendium(libraryPath());
-  for (const win of BrowserWindow.getAllWindows()) win.webContents.send('tables:changed');
   for (const win of BrowserWindow.getAllWindows()) win.webContents.send('compendium:changed');
 });
 
@@ -1296,7 +1269,6 @@ app.whenReady().then(async () => {
   loadSettings();
   stateById['vault'] = vaultState();
   initCards(settings.library ?? defaultLibrary());
-  watchLibraryTables(libraryPath());
 
   // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>,
   // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>, встроенные звуки: sg-asset://s/<путь>.

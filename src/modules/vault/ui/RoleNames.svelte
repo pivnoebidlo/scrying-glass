@@ -11,7 +11,7 @@
 
   const ROLES: { role: FolderRole }[] = [
     { role: 'characters' }, { role: 'party' }, { role: 'bestiary' }, { role: 'backgrounds' }, { role: 'handouts' },
-    { role: 'maps' }, { role: 'music' }, { role: 'tables' }, { role: 'compendium' }, { role: 'journal' },
+    { role: 'maps' }, { role: 'music' }, { role: 'compendium' }, { role: 'journal' },
   ];
   const titleOf = (role: FolderRole) => t(`vault.role.${role}` as Key);
   const descOf = (role: FolderRole) => t(`vault.role.${role}.desc` as Key);

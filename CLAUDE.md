@@ -41,8 +41,7 @@ Electron-приложение для мастера D&D: окно управле
   SRD, random tables, Fate; the bestiary was bilingual already); 4) README in English + README.ru.md (done).
 - Built-in content by language: compendium books `resources/compendium/<system>.<lang>.json` (a window shows the
   interface language, else English; `en` / `ru` — the title in the other language, found by search and [[links]]),
-  random tables `tools/tables/builtin/<lang>/` (seeded in the interface language; id — the English title), built-in
-  sounds — the file name is the id, the title is `builtinSoundTitle` (`shared/sounds.ts`, keys `sounds.builtin.*`).
+  built-in sounds — the file name is the id, the title is `builtinSoundTitle` (`shared/sounds.ts`, keys `sounds.builtin.*`).
 
 ## Команды
     npm run dev        # разработка (окна перезагружаются при сохранении)
@@ -172,7 +171,7 @@ Electron-приложение для мастера D&D: окно управле
   команде пользователя — только в корзину приложения, с подтверждением (действие `vault/trash`).
 - Корзина приложения, как в Obsidian (`main/trash.ts`, типы — `shared/trash.ts`): удалённое переезжает в скрытую
   `.trash` своего места — хранилища или библиотеки (`.trash/<id>/.meta.json` + файлы по прежним путям); системная
-  корзина не используется. Туда идут файлы хранилища (`vault/trash`), таблицы и записи библиотеки (`tables:trash`),
+  корзина не используется. Туда идут файлы хранилища (`vault/trash`), записи справочника библиотеки (`library:trash`),
   карточки с их картинками (`deleteCard`; при переносе карточки — насовсем) и приключения (`adventures:delete`:
   в `data` — его сцены, заготовки, разметка карт, порядок, подписи; `trash:restore` возвращает их, `remap` при
   занятом названии). Окно — «Файлы» → «Корзина» (`vault/ui/TrashView.svelte`, список — `trash.svelte.ts`, событие
@@ -256,15 +255,9 @@ Electron-приложение для мастера D&D: окно управле
   с кириллицей; готические шрифты Google Fonts — только латиница) — `note/fonts/` + `fonts.css`. Игрокам записку
   показывает раздатка: ядро кладёт её содержимое в `handouts.note` (окно игроков файлов не читает). Плитка —
   `tools/ui/NoteCard.svelte` (в «Раздатке», «Файлах» и «Инструментах»), редактор — `NoteEditor.svelte`, сохраняет сам.
-  Таблицы случайностей: формат и броски — `shared/tables.ts` (Markdown: списки, веса «3×», диапазоны, строки таблиц,
-  [[ссылки]], {кубы}, {а|б}); роль папок `tables` (в стандартные папки приключения не входит), `FileKind` 'table' —
-  .md/.txt только внутри таких папок (`main/scan.ts`: прочие заметки Obsidian в дерево не попадают); ядро —
-  `main/tables.ts` (IPC `tables:*`, пишет только в папки таблиц хранилища и в `<библиотека>/tables` — пути
-  «library:tables/…», общие для всех кампаний; изменения там — событие `tables:changed`). Встроенных таблиц сейчас
-  нет (их заменили генераторы), механизм остался: `tools/tables/builtin/<lang>/*.md`; окно при первом за запуск обращении кладёт в библиотеку
-  только новые (`seedLibraryTables`, список уже положенных — `tables/.builtin.json`; удалённую сами не возвращаем,
-  кнопка «Вернуть встроенные» — `restore`, видна при `hasBuiltins`). Окно — `tools/tables/store.svelte.ts` (при [[ссылках]] приключение важнее
-  общего, общее — библиотеки), место для новой/копии — `tables/place.ts` + `ui/CopyToMenu.svelte`.
+  Таблицы случайностей сняты (0.33): их заменили генераторы; роли папок `tables` больше нет, файлы пользователя
+  в таких папках и в `<библиотека>/tables` приложение не трогает (просто не показывает). Место для копии записки —
+  `ui/CopyToMenu.svelte`.
   Сложность боя: бюджеты 2024 (SRD 5.2) — `systems/dnd5e/difficulty.ts`, расчёт по участникам — `initiative/difficulty.ts`
   (партия: из боя → приключения → `initiative.party` из настроек), опыт монстра — `CombatStats.xp`, уровень героя —
   `rank` карточки (`initiative/ui/heroes.ts`). Плашка — `initiative/ui/Difficulty.svelte` (в бою и заготовке),
@@ -326,7 +319,7 @@ Electron-приложение для мастера D&D: окно управле
   (набросок — `state.svelte.ts`); свои расы и подрасы — `races.svelte.ts` + `RaceEditor.svelte`, файл
   `<библиотека>/pointbuy.json` (IPC `library:readData` / `writeData`, имена файлов — по списку в main/index.ts).
 - Резервные копии: снимки данных приложения — `main/backups.ts` (`<userData>/backups/<время>/`: state.json, записки,
-  таблицы и карточки хранилища, библиотека без `images/`, settings.json; без изменений — не делается; хранятся
+  карточки хранилища, библиотека без `images/`, settings.json; без изменений — не делается; хранятся
   последние 20 + по одному на день за 30 дней + ручные). Когда — `snapshotNow` в main/index.ts: при открытии
   хранилища, раз в 30 минут, при выходе, вручную, перед восстановлением. Восстановление пишет файлы поверх (новые не
   трогает) и перечитывает хранилище (`openVault`) и библиотеку. Раздел настроек — модуль `backup` (без состояния).
@@ -338,7 +331,7 @@ Electron-приложение для мастера D&D: окно управле
   `adventures/ui/Switcher.svelte`. Удаление приключения — IPC `adventures:delete` (подтверждение, снимок, папка — в
   Корзину, чистка сцен / заготовок / карт / порядка / подписей, `adventures/unmark`).
   Папка снимков — `settings.backups` (`backupsDir()`; IPC `backups:dir` / `backups:chooseDir`, снимки переезжают).
-  Полная копия одним файлом: `main/archive.ts` (.sgbackup: settings.json, library/… целиком с `tables/.builtin.json`,
+  Полная копия одним файлом: `main/archive.ts` (.sgbackup: settings.json, library/… целиком,
   vault/… — структура папок всегда, файлы приложения всегда, картинки и музыка по `media`), IPC `archive:*`;
   восстановление — в текущее хранилище или выбранную папку (`placeFiles`, затем `openVault`), из настроек — только
   роли папок. Партия: «Экспорт партии…» / «Импорт персонажей…» в `Switcher.svelte` — через `exportCards` и
@@ -346,7 +339,7 @@ Electron-приложение для мастера D&D: окно управле
 - Справочник (`modules/compendium`, без состояния): запись — Markdown с YAML-шапкой (`shared/compendium.ts`: свой
   разбор подмножества YAML — скаляры, «[a, b]», списки «- a»; ключи полей английские, подписи и типы — `TYPES`;
   название = имя файла). Роль папок `compendium`, `FileKind` 'entry' (.md только в таких папках, `main/scan.ts`).
-  Ядро — `main/compendium.ts` поверх общего `main/textstore.ts` (он же у таблиц: чтение, запись, создание,
+  Ядро — `main/compendium.ts` поверх общего `main/textstore.ts` (он же у журнала: чтение, запись, создание,
   переименование, список библиотеки), IPC `compendium:*`, библиотека — `<библиотека>/compendium` («library:compendium/…»,
   событие `compendium:changed`). Окно — `compendium/ui/store.svelte.ts` (`resolveEntry` для [[ссылок]]: приключение →
   общее → библиотека; не нашлось — карточка по имени), `ui.svelte.ts` (`openEntry` — открыть откуда угодно).
@@ -457,7 +450,7 @@ Electron-приложение для мастера D&D: окно управле
 редактором карточек, приключения, NPC рядом с портретами, лист персонажа игрока с редактором и импортом из LSS,
 названия папок ролей в настройках, броски из статблока и листа, перетаскивание плиток,
 быстрое добавление в бой и заготовки боёв, метки на картах (значки, карточки), сдвиг сетки, жетоны,
-записки, таблицы случайностей, сложность боя, таймер и покупка характеристик (раздел «Инструменты»),
+записки, генераторы, сложность боя, таймер и покупка характеристик (раздел «Инструменты»),
 справочник (заклинания, предметы, черты, правила, заметки), журнал мастера (заметки к приключению), автоматические снимки данных (резервные копии), экспорт и импорт приключения одним файлом, полная резервная копия в файл, устройство вывода музыки (`music/ui/output.svelte.ts`, в localStorage окна) и горячие клавиши (музыка — в `Player.svelte`,
 ⌘B — в `App.svelte`, сцены — `scenes/ui/Hotkeys.svelte`).
 Карточки, изменённые снаружи: хранилище перечитывает `watchVault` (main/index.ts), библиотеку — `watchLibrary`

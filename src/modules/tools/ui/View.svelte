@@ -9,7 +9,6 @@
   import NoteEditor from './NoteEditor.svelte';
   import { noteGroups } from './library';
   import { ui } from './ui.svelte';
-  import TablesView from '../tables/TablesView.svelte';
   import Calculator from '../difficulty/Calculator.svelte';
   import TimerTool from '../../timer/ui/TimerTool.svelte';
   import PointBuy from '../pointbuy/PointBuy.svelte';
@@ -43,9 +42,7 @@
   }
 </script>
 
-{#if ui.tool === 'tables'}
-  <TablesView />
-{:else if ui.tool === 'names'}
+{#if ui.tool === 'names'}
   <NameGenerator />
 {:else if ui.tool === 'travel' && dnd}
   <TravelCalculator />
