@@ -2,7 +2,8 @@
      rooms (creatures — links to their cards, puzzles, traps with SRD saves and damage in D&D) and the hoard from the
      treasure generator. Each part can be rerolled; copy or to the journal. The dungeon is remembered by the window. -->
 <script lang="ts">
-  import { Check, Copy, DoorOpen, NotebookPen, RefreshCw } from '@lucide/svelte';
+  import { Check, Copy, DoorOpen, NotebookPen, RefreshCw, Swords } from '@lucide/svelte';
+  import { toEncounter } from '../encounter';
   import { onMount, type Snippet } from 'svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
@@ -117,6 +118,14 @@
     openPage(path);
     openTab('journal');
   }
+  // A room's creatures → an encounter preset named after the dungeon and the room.
+  let missing = $state('');
+  async function roomToEncounter(d: Dungeon, x: Room, i: number) {
+    if (!x.monster) return;
+    const title = `${dungeonName(d, lang)} — ${t('dungeon.room', { n: i + 1 })}`;
+    const lost = await toEncounter(title, [{ name: monsterName(x, lang), count: x.monster.count }], lang);
+    missing = lost.length ? t('tools.noCards', { names: lost.join(', ') }) : '';
+  }
   const TIER_LEVELS: Record<Tier, string> = { 1: '1–4', 2: '5–10', 3: '11–16', 4: '17–20' };
 </script>
 
@@ -187,7 +196,12 @@
         <ol class="rooms">
           {#each d.rooms as x, i (i)}
             <li class="room role-{x.role}">
-              <h4>{t('dungeon.room', { n: i + 1 })} — {t(`dungeon.role.${x.role}` as never)}</h4>
+              <header class="room-head">
+                <h4>{t('dungeon.room', { n: i + 1 })} — {t(`dungeon.role.${x.role}` as never)}</h4>
+                {#if x.monster}
+                  <button class="btn small" title={t('tools.toEncounterHint')} onclick={() => roomToEncounter(d, x, i)}><Swords size={13} /> {t('tools.toEncounter')}</button>
+                {/if}
+              </header>
               <p>{roomText(x, lang)}</p>
               {#if x.monster}
                 <p><b>{t('dungeon.creatures')}:</b> <button class="link" onclick={() => peekEntry(monsterName(x, lang))}>{monsterName(x, lang)}</button>{#if x.monster.count > 1}{' '}×{x.monster.count}{/if}</p>
@@ -201,6 +215,7 @@
             </li>
           {/each}
         </ol>
+        {#if missing}<p class="faint">{missing}</p>{/if}
       {/snippet}
       {@render part('rooms', roomsBody)}
       {#snippet hoardBody()}
@@ -323,6 +338,16 @@
   }
   .role-reward {
     border-left-color: #4f9d69;
+  }
+  .room-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .small {
+    padding: 2px 8px;
+    font-size: 12px;
   }
   h4 {
     margin: 0;

@@ -239,7 +239,8 @@ in the Pockets", "Trinkets and Finds").
 night, danger (calm, tense, dangerous) and 1, 3 or 6 events → encounters, discoveries, obstacles, travellers, omens and
 rumors (from the tavern generator), each event rerollable. Creatures in the text are links: a click opens the SRD card
 on the side (in the journal they stay [[links]]). In D&D adventures an obstacle shows its check (skill and DC); on a
-dangerous road an event can come with a complication. Copy or to the journal. The built-in "Road Encounters" and
+dangerous road an event can come with a complication. "To an encounter" on an encounter makes an encounter preset
+with its creatures (weaker ones come in groups) and opens it in Initiative. Copy or to the journal. The built-in "Road Encounters" and
 "Tavern Rumors" tables are retired.
 
 **Dungeon generator** (Tools → Dungeon generator): kind (tomb, caves, mine, temple, fortress, wizard's tower, sewers,
@@ -247,7 +248,8 @@ ruins), the heroes' level and 5 or 8 rooms → a "five-room dungeon": a guarded 
 fight and the reward (eight rooms add lairs and a quiet room); who built it and what happened to it, the entrance, the
 atmosphere and a hook. Creatures are SRD cards by the level (a click opens the card); in D&D adventures traps have a
 save, DC and damage by the SRD, and the hoard comes from the treasure generator with magic items from the compendium.
-Each part can be rerolled; copy or to the journal (creatures and items as [[links]]).
+Each part can be rerolled; copy or to the journal (creatures and items as [[links]]). "To an encounter" on a room
+with creatures makes an encounter preset of the current adventure with them and opens it in Initiative.
 
 **Magic item generator** (Tools → Magic item generator): kind (weapon, armour, jewellery, wand or staff, clothing, a
 wondrous thing) and power (curio, minor, major, legendary) → a name, the look, a minor property, who made it and what

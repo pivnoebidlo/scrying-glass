@@ -2,7 +2,8 @@
      travellers, omens and rumors. Creatures in the text open their cards on the side; in D&D adventures an obstacle
      shows its check. Each event can be rerolled; copy or save to the journal. The last roll is remembered. -->
 <script lang="ts">
-  import { Check, Copy, Dices, NotebookPen, RefreshCw } from '@lucide/svelte';
+  import { Check, Copy, Dices, NotebookPen, RefreshCw, Swords } from '@lucide/svelte';
+  import { toEncounter } from '../encounter';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
   import { openTab } from '../../../renderer/lib/nav';
@@ -79,6 +80,15 @@
     }
     return out.join('\n');
   }
+  // An encounter's creatures (its links) → an encounter preset; how many — by the card's challenge.
+  const creatures = (g: GeneratedEvent) => [...new Set(splitLinks(eventText(g, ev.lang)).flatMap((p) => ('link' in p ? [p.link] : [])))];
+  let missing = $state('');
+  async function encounterOf(g: GeneratedEvent) {
+    const names = creatures(g);
+    const title = `${t('events.kind.encounter')}: ${names.join(', ')}`;
+    const lost = await toEncounter(title, names.map((name) => ({ name })), ev.lang);
+    missing = lost.length ? t('tools.noCards', { names: lost.join(', ') }) : '';
+  }
   let copied = $state(false);
   function copy() {
     void navigator.clipboard.writeText(markdown().replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2').replace(/\[\[([^\]]+)\]\]/g, '$1'));
@@ -142,6 +152,9 @@
           <header>
             <h3>{t(`events.kind.${g.kind}` as never)}</h3>
             <div class="spacer"></div>
+            {#if g.kind === 'encounter' && creatures(g).length}
+              <button class="btn small" title={t('tools.toEncounterHint')} onclick={() => encounterOf(g)}><Swords size={13} /> {t('tools.toEncounter')}</button>
+            {/if}
             <button class="icon-btn" title={t('events.reroll')} onclick={() => reroll(i)}><RefreshCw size={13} /></button>
           </header>
           <p class="text">
@@ -154,6 +167,7 @@
         </section>
       {/each}
     </div>
+    {#if missing}<p class="faint">{missing}</p>{/if}
   {/if}
 </div>
 
@@ -254,6 +268,10 @@
     font: inherit;
     text-decoration: underline dotted;
     cursor: pointer;
+  }
+  .small {
+    padding: 2px 8px;
+    font-size: 12px;
   }
   .check,
   .comp {

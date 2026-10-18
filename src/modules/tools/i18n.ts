@@ -716,6 +716,9 @@ export const en = {
   'dungeon.twist': "Twist",
   'dungeon.trapRule': "{save} save DC {dc}, {dice} {type} damage; Perception or Investigation DC {dc} to notice",
   'tools.side.dungeon': "Dungeon generator",
+  'tools.toEncounter': "To an encounter",
+  'tools.toEncounterHint': "Create an encounter preset with these creatures and open it in Initiative",
+  'tools.noCards': "No cards found for: {names}",
 };
 
 export const ru: Messages<typeof en> = {
@@ -1433,4 +1436,7 @@ export const ru: Messages<typeof en> = {
   'dungeon.twist': "Поворот",
   'dungeon.trapRule': "Спасбросок {save} СЛ {dc}, {dice} {type}; заметить — Внимательность или Анализ СЛ {dc}",
   'tools.side.dungeon': "Генератор подземелий",
+  'tools.toEncounter': "В заготовку боя",
+  'tools.toEncounterHint': "Создать заготовку боя с этими существами и открыть её в «Инициативе»",
+  'tools.noCards': "Не нашлось карточек: {names}",
 };
