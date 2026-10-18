@@ -22,6 +22,7 @@
   import SettlementGenerator from '../settlement/SettlementGenerator.svelte';
   import ShopGenerator from '../shop/ShopGenerator.svelte';
   import RelicGenerator from '../relic/RelicGenerator.svelte';
+  import DungeonGenerator from '../dungeon/DungeonGenerator.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
@@ -45,6 +46,8 @@
   <TablesView />
 {:else if ui.tool === 'names'}
   <NameGenerator />
+{:else if ui.tool === 'dungeon'}
+  <DungeonGenerator />
 {:else if ui.tool === 'relic'}
   <RelicGenerator />
 {:else if ui.tool === 'shop'}
