@@ -213,7 +213,7 @@
     height: 16px;
     border-radius: 50%;
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
   }
   .remove {
     position: absolute;

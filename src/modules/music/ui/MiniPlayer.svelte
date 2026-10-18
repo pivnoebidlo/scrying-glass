@@ -258,7 +258,7 @@
     border: 0;
     border-radius: 50%;
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
     cursor: pointer;
   }
   .play:hover {

@@ -179,7 +179,7 @@
     height: 20px;
     border-radius: 50%;
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
   }
   .doc {
     display: flex;

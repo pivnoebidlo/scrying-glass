@@ -1,4 +1,4 @@
-/* Themes of the control window, in the spirit of Obsidian: dark (the default), light and parchment; data-theme on
+/* Themes of the control window, in the spirit of Obsidian: dark (the default), light, parchment, space and neon; data-theme on
    <html> picks one, 'auto' follows the system. Colours are set only here. */
 :root {
   color-scheme: dark;
@@ -13,6 +13,8 @@
   --accent: #8a5cf5;
   --accent-hover: #9d76f7;
   --accent-soft: rgba(138, 92, 245, 0.18);
+  /* Text on an accent background (buttons, chips). */
+  --on-accent: #ffffff;
   --danger: #e5534b;
   /* Warnings and highlights (gold on dark, amber on light). */
   --warning: #f0c45a;
@@ -76,6 +78,57 @@
   --warning: #8a5a00;
   --success: #3d6b2a;
 }
+/* Space: a deep night sky, cyan instruments. */
+:root[data-theme='space'] {
+  color-scheme: dark;
+  --bg-primary: #0c1220;
+  --bg-secondary: #111a2d;
+  --bg-hover: #182440;
+  --bg-active: #20304f;
+  --border: #22314f;
+  --text-normal: #d7e3f6;
+  --text-muted: #8fa4c6;
+  --text-faint: #566a8c;
+  --accent: #4cc9f0;
+  --accent-hover: #7ad8f5;
+  --accent-soft: rgba(76, 201, 240, 0.16);
+  --on-accent: #04121c;
+  --danger: #ff5c7a;
+  --warning: #ffd166;
+  --success: #5ee0a0;
+}
+:root[data-theme='space'] body {
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(215, 227, 246, 0.35), transparent 60%),
+    radial-gradient(1px 1px at 68% 72%, rgba(215, 227, 246, 0.25), transparent 60%),
+    radial-gradient(1px 1px at 84% 9%, rgba(215, 227, 246, 0.3), transparent 60%),
+    var(--bg-primary);
+}
+:root[data-theme='space'] .pane-title { color: var(--accent); }
+
+/* Neon (cyberpunk): near-black, magenta neon, acid yellow warnings, a little glow. */
+:root[data-theme='neon'] {
+  color-scheme: dark;
+  --bg-primary: #0a0a12;
+  --bg-secondary: #10101c;
+  --bg-hover: #1a1a2e;
+  --bg-active: #24243f;
+  --border: #2a2a4a;
+  --text-normal: #ebe8ff;
+  --text-muted: #a09cc8;
+  --text-faint: #605c88;
+  --accent: #ff2bd6;
+  --accent-hover: #ff5ee2;
+  --accent-soft: rgba(255, 43, 214, 0.16);
+  --on-accent: #ffffff;
+  --danger: #ff3b5c;
+  --warning: #f5e663;
+  --success: #2bffb1;
+}
+:root[data-theme='neon'] .pane-title { color: #00e5ff; letter-spacing: 0.12em; }
+:root[data-theme='neon'] .btn.primary { box-shadow: 0 0 10px var(--accent-soft), 0 0 2px var(--accent); }
+:root[data-theme='neon'] :is(input[type=text], input[type=number], select, textarea):focus { box-shadow: 0 0 0 1px var(--accent), 0 0 10px var(--accent-soft); }
+:root[data-theme='neon'] ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 35%, var(--bg-active)); background-clip: padding-box; }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
@@ -99,7 +152,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   cursor: pointer; white-space: nowrap;
 }
 .btn:hover { background: var(--bg-active); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .btn.primary:hover { background: var(--accent-hover); }
 .btn.danger { color: var(--danger); }
 .btn:disabled { opacity: .5; cursor: default; }

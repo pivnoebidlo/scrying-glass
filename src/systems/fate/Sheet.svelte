@@ -138,7 +138,7 @@
   .roll:hover {
     background: var(--accent);
     box-shadow: 0 0 0 2px var(--accent);
-    color: #fff;
+    color: var(--on-accent);
   }
   .rolls {
     margin: 6px 0 0;

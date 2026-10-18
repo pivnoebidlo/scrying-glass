@@ -11,7 +11,7 @@ top of the window offers "Download" / "Skip this version". Turn it off in ⌘, �
 
 The interface is in English and Russian (⌘, → General → Language; by default — the system language if there is a
 translation for it, otherwise English). The language switches at once, without a restart. The theme of the GM window — automatic
-(as the system), dark, light or parchment — is in the same place (⌘, → General → Theme); the player screen keeps its
+(as the system), dark, light, parchment (fantasy), space or neon (science fiction, cyberpunk) — is in the same place (⌘, → General → Theme); the player screen keeps its
 own look. The built-in compendium
 and the Fate compendium exist in both languages and follow the interface language.
 

@@ -254,7 +254,7 @@
   }
   .roll:hover {
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
   }
   .rolls {
     display: flex;

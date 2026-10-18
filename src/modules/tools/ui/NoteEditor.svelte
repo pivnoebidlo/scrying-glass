@@ -486,7 +486,7 @@
   }
   .seg button.active {
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
   }
   .preview {
     display: flex;

@@ -271,7 +271,7 @@
   .chips button.on {
     border-color: var(--accent);
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
   }
   .seg {
     display: inline-flex;
@@ -289,7 +289,7 @@
   }
   .seg button.active {
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
   }
   .filters {
     margin: 8px 0 4px;

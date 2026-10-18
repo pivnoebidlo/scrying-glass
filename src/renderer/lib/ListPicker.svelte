@@ -165,7 +165,7 @@
     height: 16px;
     border: 1px solid var(--border);
     border-radius: 4px;
-    color: #fff;
+    color: var(--on-accent);
   }
   .on .box {
     border-color: var(--accent);

@@ -198,7 +198,7 @@
   }
   .roll:hover {
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
   }
   .sheet {
     max-width: 820px;

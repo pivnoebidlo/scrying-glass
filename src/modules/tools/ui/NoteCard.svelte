@@ -81,7 +81,7 @@
     padding: 1px 7px;
     border-radius: 999px;
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
     font-size: 11px;
   }
   .actions {

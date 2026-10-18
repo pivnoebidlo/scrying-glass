@@ -262,7 +262,7 @@ function setLanguageSetting(language: LangSetting): VaultState {
 // so a reload does not flash the wrong colour; the pages switch on the next state broadcast.
 function applyTheme() {
   const theme = isTheme(settings.theme) ? settings.theme : 'auto';
-  nativeTheme.themeSource = theme === 'auto' ? 'system' : theme === 'dark' ? 'dark' : 'light';
+  nativeTheme.themeSource = theme === 'auto' ? 'system' : theme === 'light' || theme === 'parchment' ? 'light' : 'dark';
   const shown = theme === 'auto' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme;
   getControlWindow()?.setBackgroundColor(THEME_BACKGROUND[shown]);
 }

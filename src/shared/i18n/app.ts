@@ -17,11 +17,13 @@ export const en = {
   'settings.languageDesc': 'Interface language. “Automatic” follows the system language; if there is no translation for it, English is used.',
   'settings.languageAuto': 'Automatic ({lang})',
   'settings.theme': "Theme",
-  'settings.themeDesc': "Colours of the GM window. “Automatic” follows the system (dark or light). The player screen keeps its look.",
+  'settings.themeDesc': "Colours of the GM window. “Automatic” follows the system (dark or light); parchment suits fantasy, space and neon — science fiction and cyberpunk. The player screen keeps its look.",
   'settings.theme.auto': "Automatic",
   'settings.theme.dark': "Dark",
   'settings.theme.light': "Light",
   'settings.theme.parchment': "Parchment",
+  'settings.theme.space': "Space",
+  'settings.theme.neon': "Neon (cyberpunk)",
 
   'welcome.text':
     'Choose your vault folder: it holds your adventures, characters, maps and music. An empty folder works, and so does one that already has your material. Files are not copied or changed.',
@@ -177,11 +179,13 @@ export const ru: Messages<typeof en> = {
   'settings.languageDesc': 'Язык интерфейса. «Автоматически» — как в системе; если перевода на него нет, будет английский.',
   'settings.languageAuto': 'Автоматически ({lang})',
   'settings.theme': "Тема",
-  'settings.themeDesc': "Цвета окна мастера. «Автоматически» — как в системе (тёмная или светлая). Экран игроков не меняется.",
+  'settings.themeDesc': "Цвета окна мастера. «Автоматически» — как в системе (тёмная или светлая); «Пергамент» — для фэнтези, «Космос» и «Неон» — для научной фантастики и киберпанка. Экран игроков не меняется.",
   'settings.theme.auto': "Автоматически",
   'settings.theme.dark': "Тёмная",
   'settings.theme.light': "Светлая",
   'settings.theme.parchment': "Пергамент",
+  'settings.theme.space': "Космос",
+  'settings.theme.neon': "Неон (киберпанк)",
 
   'welcome.text':
     'Выберите папку хранилища: в ней лежат ваши приключения, персонажи, карты и музыка. Подойдёт и пустая папка, и та, где материалы уже есть. Файлы не копируются и не изменяются.',
