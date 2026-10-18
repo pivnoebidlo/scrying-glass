@@ -178,7 +178,9 @@ summaries, plot ideas. A note is a plain Markdown file in the adventure's journa
 shared folder), easy to edit in Obsidian too. On the left — the tree of notes: folders ("Sessions", "Locations",
 "Ideas"), new note and folder — buttons on hover, order — by dragging, dragging onto a folder moves the note into it. A folder is renamed with the pencil or a double click and moved by
 dragging it onto another folder.
-A note opens formatted, "Edit" (⌘E) — the Markdown text, which saves itself:
+A note opens formatted, "Edit" (⌘E) — the Markdown text, which saves itself. As in Obsidian, Enter carries a ">" quote,
+a list, a task or a number on to the next line (Enter on an empty item ends the list), ⌘B / ⌘I / ⌘⇧X make the
+selection bold, italic or ~~struck through~~ (again — removes it), ⌘Z undoes:
 
     ## Arrival in the village
     > The road brings you to a palisade. A faded

@@ -378,7 +378,8 @@ Electron-приложение для мастера D&D: окно управле
   общая со справочником `entryHtml(текст, { tasks, dice })`: цитата «>» — текст для зачитывания, «- [ ]» —
   `data-task` (номер задачи по порядку), {1d20} — кнопка броска (`rolls.damage`). Окно — `journal/ui/store.svelte.ts`
   (тексты всех видимых заметок, перечитываются по `notes.rev`), вид — `PageBody.svelte` ([[ссылка]]: заметка →
-  `peekEntry`, он найдёт запись или карточку), правка — `PageEditor.svelte` (сохраняет сам). В состоянии — только
+  `peekEntry`, он найдёт запись или карточку), правка — `PageEditor.svelte` (сохраняет сам; Enter продолжает «>», списки, задачи и номера — `continueMarkup`,
+  ⌘B / ⌘I / ⌘⇧X — `toggleWrap` из `shared/journal.ts`; правки через `execCommand('insertText')`, чтобы работал ⌘Z). В состоянии — только
   `pinned` (приключение → путь): блок правой панели `OnScreen.svelte`. Заметки — в ⌘K (`QuickSearch` справочника).
   Сам журнал игрокам не показывается; в .sgpack файлы уходят с папкой приключения, `pinned` — тоже
   (`PackSlices.pinned`, и в корзину — `AdventureData.pinned`).
