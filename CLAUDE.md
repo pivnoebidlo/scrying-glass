@@ -275,6 +275,9 @@ Electron-приложение для мастера D&D: окно управле
   `tools/names/builtin/<lang>/*.txt` (написаны для приложения); свои — `<библиотека>/names/<lang>/` (`main/names.ts`, IPC
   `names:*`), в репозиторий не кладём — это могут быть списки чужих сайтов (папка `/names/` в корне — в .gitignore).
   Выгрузка TXT / CSV — общий IPC `files:saveText`.
+  Генератор магических предметов: `tools/relic/` — `content.ts` (en и ru парами; по-русски название «предмет +
+  владелец в родительном», в текстах предмет — «вещь», чтобы не согласовывать род), `generate.ts` (`pickBase` —
+  предмет справочника по редкости силы и категории вида), `RelicGenerator.svelte`.
   Генератор лавок: `tools/shop/` — `content.ts` (en и ru парами, товары с ценой в медяках по SRD), `generate.ts`
   (`shopGoods`: потолок цены по достатку, магические — из справочника по `MAGIC_VALUE` SRD 5.2, зелья — `isConsumable`),
   страница `ShopGenerator.svelte`; хозяин — `helpers` из store генератора поселений, цены — `coins` таверн.

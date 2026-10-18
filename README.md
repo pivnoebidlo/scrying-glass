@@ -242,6 +242,12 @@ on the side (in the journal they stay [[links]]). In D&D adventures an obstacle 
 dangerous road an event can come with a complication. Copy or to the journal. The built-in "Road Encounters" and
 "Tavern Rumors" tables are retired.
 
+**Magic item generator** (Tools → Magic item generator): kind (weapon, armour, jewellery, wand or staff, clothing, a
+wondrous thing) and power (curio, minor, major, legendary) → a name, the look, a minor property, who made it and what
+happened to it, a quirk and sometimes a curse. In D&D adventures a minor, major or legendary item stands on an SRD
+item of that rarity from the compendium (of the same kind when there is one; a link to its entry). Each part can be
+rerolled; copy, to the journal or to Telegram (without the curse).
+
 **Shop generator** (Tools → Shop generator): a general store, a smith, an alchemist, a magic shop, books and maps or
 an antiques dealer, poor, modest or wealthy → name and owner (from the NPC generator), the look inside and a quirk,
 goods with prices and stock, and a hook. Ordinary goods are priced by the SRD equipment tables; in D&D adventures the
