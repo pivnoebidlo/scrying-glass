@@ -34,7 +34,7 @@ import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { importNameLists, listNameLists, namesDir } from './names';
 import { checkForUpdates } from './updates';
-import { forgetChat, initTelegram, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
+import { clearInbox, forgetChat, inboxPhoto, initTelegram, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
@@ -1220,7 +1220,11 @@ ipcMain.handle('telegram:status', () => tgStatus());
 ipcMain.handle('telegram:setToken', (_event, token: string | null) => setToken(token));
 ipcMain.handle('telegram:updateChat', (_event, { id, patch }: { id: number; patch: { enabled?: boolean; label?: string } }) => updateChat(id, patch));
 ipcMain.handle('telegram:forgetChat', (_event, id: number) => forgetChat(id));
-ipcMain.handle('telegram:sendText', (_event, { chats, html }: { chats: number[]; html: string }) => sendText(chats, html));
+ipcMain.handle('telegram:sendText', (_event, { chats, html, replyTo }: { chats: number[]; html: string; replyTo?: number }) => sendText(chats, html, replyTo));
+ipcMain.handle('telegram:inbox', () => readInbox());
+ipcMain.handle('telegram:markRead', (_event, chat?: number) => markRead(chat));
+ipcMain.handle('telegram:clearInbox', (_event, chat?: number) => clearInbox(chat));
+ipcMain.handle('telegram:photo', (_event, name: string) => inboxPhoto(name));
 ipcMain.handle('telegram:sendFile', (_event, { chats, path: rel, caption }: { chats: number[]; path: string; caption?: string }) => {
   const file = rel.startsWith(LIBRARY) ? resolveInLibrary(rel.slice(LIBRARY.length)) : resolveInVault(rel);
   if (!file || !fs.existsSync(file)) return { sent: 0, errors: [rel] };
@@ -1319,6 +1323,8 @@ app.whenReady().then(async () => {
       writeJsonAtomic(settingsFile(), settings);
     },
     changed: () => getControlWindow()?.webContents.send('telegram:changed'),
+    dir: path.join(app.getPath('userData'), 'telegram'),
+    received: (m) => getControlWindow()?.webContents.send('telegram:inbox', m),
   });
   // A little later: the window is up and the vault opened, the check doesn't slow the start.
   setTimeout(() => void checkUpdatesOnLaunch(), 5000);

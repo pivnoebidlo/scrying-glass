@@ -104,3 +104,84 @@ export function entryToTelegram(e: Entry, def: TypeDef): string {
   const sub = entrySubtitle(e, def);
   return [titleHtml(e.title), sub ? `<i>${escape(sub)}</i>` : '', rows.join('\n'), markdownToTelegram(e.body)].filter(Boolean).join('\n\n');
 }
+
+// ---------- Inbox: what the players write back ----------
+
+// A message in the inbox: from a player (incoming) or sent from the app (mine) — the conversation is shown whole.
+export interface TgMessage {
+  // «<chat>:<message id>» (Telegram's ids; the app's own — «<chat>:out:<time>»).
+  id: string;
+  chat: number;
+  // Who wrote it: the sender's name in a group, the chat's name in private; '' for mine.
+  from: string;
+  text: string;
+  // What else came with it: a photo (its file in the inbox folder), or a kind without text.
+  photo?: string;
+  kind?: 'sticker' | 'voice' | 'video' | 'document' | 'other';
+  date: number;
+  mine?: boolean;
+  read?: boolean;
+}
+
+// The part of a Telegram message the inbox reads.
+export interface RawMessage {
+  message_id: number;
+  date: number;
+  chat: { id: number };
+  from?: { first_name?: string; last_name?: string; username?: string; is_bot?: boolean };
+  text?: string;
+  caption?: string;
+  photo?: { file_id: string; width: number; height: number }[];
+  sticker?: { emoji?: string };
+  voice?: unknown;
+  audio?: unknown;
+  video?: unknown;
+  video_note?: unknown;
+  document?: { file_name?: string };
+}
+
+export const INBOX_MAX = 300;
+
+// A Telegram message → an inbox message, or null: not from an enabled chat, a command (/start), from a bot, or
+// nothing to show.
+export function incoming(m: RawMessage, chats: TgChat[]): TgMessage | null {
+  const chat = chats.find((c) => c.id === m.chat.id);
+  if (!chat?.enabled || m.from?.is_bot) return null;
+  const text = (m.text ?? m.caption ?? '').trim();
+  if (/^\/\w+/.test(text) && !m.photo) return null;
+  const kind: TgMessage['kind'] = m.sticker
+    ? 'sticker'
+    : m.voice || m.audio || m.video_note
+      ? 'voice'
+      : m.video
+        ? 'video'
+        : m.document
+          ? 'document'
+          : !text && !m.photo
+            ? 'other'
+            : undefined;
+  const name = [m.from?.first_name, m.from?.last_name].filter(Boolean).join(' ') || (m.from?.username ? `@${m.from.username}` : '');
+  return {
+    id: `${m.chat.id}:${m.message_id}`,
+    chat: m.chat.id,
+    from: chat.kind === 'group' ? name : chat.label || name || chat.title,
+    text: text || (m.sticker?.emoji ?? '') || (m.document?.file_name ?? ''),
+    ...(kind ? { kind } : {}),
+    date: m.date * 1000,
+  };
+}
+
+// Add to the inbox (no repeats), keeping the last INBOX_MAX.
+export function addToInbox(list: TgMessage[], m: TgMessage): TgMessage[] {
+  if (list.some((x) => x.id === m.id)) return list;
+  return [...list, m].sort((a, b) => a.date - b.date).slice(-INBOX_MAX);
+}
+
+export const unreadCount = (list: TgMessage[], chat?: number) => list.filter((m) => !m.mine && !m.read && (chat === undefined || m.chat === chat)).length;
+
+// The largest photo size that is not huge (≤ 1600 px on the long side), or the smallest one.
+export function photoSize<T extends { width: number; height: number }>(sizes: T[]): T | undefined {
+  const bySize = [...sizes].sort((a, b) => a.width * a.height - b.width * b.height);
+  const fit = bySize.filter((s) => Math.max(s.width, s.height) <= 1600);
+  return fit.at(-1) ?? bySize[0];
+}

@@ -6,7 +6,7 @@ import type { Note } from './notes';
 import type { TrashItem, TrashKind, TrashPlace, TrashSettings } from './trash';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 import type { UpdateInfo, UpdateSettings } from './updates';
-import type { TgChat, TgStatus } from './telegram';
+import type { TgChat, TgMessage, TgStatus } from './telegram';
 
 export interface DisplayInfo {
   id: number;
@@ -136,7 +136,14 @@ export interface Api {
   setTelegramToken(token: string | null): Promise<TgStatus>;
   updateTelegramChat(id: number, patch: Partial<Pick<TgChat, 'enabled' | 'label'>>): Promise<TgStatus>;
   forgetTelegramChat(id: number): Promise<TgStatus>;
-  telegramSendText(chats: number[], html: string): Promise<{ sent: number; errors: string[] }>;
+  telegramSendText(chats: number[], html: string, replyTo?: number): Promise<{ sent: number; errors: string[] }>;
+  // The inbox: what players wrote in enabled chats and what the app sent; mark read / clear (a chat or all); a
+  // photo as a data: URL; a new message as it comes.
+  telegramInbox(): Promise<TgMessage[]>;
+  telegramMarkRead(chat?: number): Promise<TgMessage[]>;
+  telegramClearInbox(chat?: number): Promise<TgMessage[]>;
+  telegramPhoto(name: string): Promise<string | null>;
+  onTelegramMessage(cb: (m: TgMessage) => void): void;
   telegramSendFile(chats: number[], path: string, caption?: string): Promise<{ sent: number; errors: string[] }>;
   telegramSendCapture(chats: number[], rect: { x: number; y: number; width: number; height: number }, name: string, caption?: string): Promise<{ sent: number; errors: string[] }>;
   onTelegramChanged(cb: () => void): void;

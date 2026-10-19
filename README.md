@@ -293,6 +293,14 @@ paper plane in the note editor and on a compendium entry (as text), the paper pl
 panel — what the players see right now, Tools → Message to the players — your own text. The send dialog asks
 whom: the group chat and/or players privately.
 
+Answers come back: what players write in an enabled chat (text, photos, stickers; voice messages and files — as a
+note to open them in Telegram) appears in Tools → Message to the players as a conversation, next to what the app
+sent. A new message shows a toast in the corner (a click opens the conversation) and a count on the tool. Pick a
+chat to write to it straight away; ↩ on a message — a reply to it. In a group the bot sees only replies to its
+messages and mentions of it — to see everything, turn its privacy off: @BotFather → /setprivacy → Disable. The
+conversation is kept on this computer (`<app data>/telegram`, the last 300 messages); the bin clears it in the app
+only.
+
 **Timer** (Tools → Timer): an hourglass or digits on the player screen — top right, bottom right or large in the
 center, with a caption ("While the torch burns"). Presets from 30 seconds to 30 minutes or your own time. When time
 runs out, the timer flashes "Time's up!" and the GM hears a chime (on the music output device). Pause, ±1 minute,

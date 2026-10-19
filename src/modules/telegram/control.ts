@@ -1,11 +1,11 @@
-// Telegram in the control window: the settings section, the send dialog (always there) and the "Telegram" button on
-// pictures — only once a bot is set up and a chat is on.
+// Telegram in the control window: the settings section, the send dialog and the toast of new messages (always there)
+// and the "Telegram" button on pictures — only once a bot is set up and a chat is on.
 import { Send } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import { prettyName } from '../../shared/vault';
 import Settings from './ui/Settings.svelte';
-import SendDialog from './ui/SendDialog.svelte';
+import Background from './ui/Background.svelte';
 import { sendToTelegram, tgReady } from './ui/tg.svelte';
 
 export default defineControl({
@@ -16,7 +16,7 @@ export default defineControl({
   icon: Send,
   order: 95,
   settings: Settings,
-  background: SendDialog,
+  background: Background,
   imageActions: [
     {
       id: 'telegram',

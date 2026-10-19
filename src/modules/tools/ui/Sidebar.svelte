@@ -1,5 +1,6 @@
 <!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
 <script lang="ts">
+  import { unread } from '../../telegram/ui/tg.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Beer, Calculator, Castle, Footprints, DoorOpen, Sparkles, Store, CloudSun, Gem, Signpost, UserRound, FileText, Gauge, Hourglass, ScrollText, Send, Signature } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -70,6 +71,7 @@
   <button class="item" data-nav class:active={ui.tool === 'telegram'} onclick={() => pickTool('telegram')}>
     <Send size={14} />
     <span class="name">{t('tg.compose')}</span>
+    {#if unread()}<span class="count unread">{unread()}</span>{/if}
   </button>
   {#if dnd}
     <button class="item" data-nav class:active={ui.tool === 'difficulty'} onclick={() => pickTool('difficulty')}>
@@ -133,6 +135,14 @@
   .count {
     color: var(--text-faint);
     font-size: 12px;
+  }
+  .count.unread {
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--on-accent);
+    text-align: center;
   }
   .more {
     padding: 10px 8px;

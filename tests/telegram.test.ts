@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { setLang } from '../src/shared/i18n';
 import { TYPES } from '../src/shared/compendium';
-import { chatName, entryToTelegram, markdownToTelegram, splitMessage } from '../src/shared/telegram';
+import { addToInbox, chatName, entryToTelegram, incoming, markdownToTelegram, photoSize, splitMessage, unreadCount, type RawMessage } from '../src/shared/telegram';
 
 describe('Telegram', () => {
   it('Markdown → HTML Telegram: жирный, курсив, заголовки, списки, цитаты, [[ссылки]], экранирование', () => {
@@ -30,5 +30,41 @@ describe('Telegram', () => {
     setLang('en');
     expect(html).toBe('<b>Огненный шар</b>\n\n<i>3 уровень, воплощение</i>\n\n<b>Время накладывания:</b> Действие\n<b>Дистанция:</b> 150 футов\n\nЯркая <b>вспышка</b>.');
     expect(chatName({ id: 1, kind: 'private', title: 'Аня (@anya)', enabled: true, label: 'Гилберт' })).toBe('Гилберт (Аня (@anya))');
+  });
+});
+
+describe('telegram: входящие', () => {
+  const chats = [
+    { id: 1, kind: 'private' as const, title: 'Ann (@ann)', enabled: true, label: 'Гилберт' },
+    { id: 2, kind: 'group' as const, title: 'Party', enabled: true },
+    { id: 3, kind: 'private' as const, title: 'Stranger', enabled: false },
+  ];
+  const raw = (over: Partial<RawMessage>): RawMessage => ({ message_id: 7, date: 1000, chat: { id: 1 }, from: { first_name: 'Ann' }, text: 'Привет', ...over });
+
+  it('из включённого чата — сообщение; из выключенного, от бота и команды — нет', () => {
+    expect(incoming(raw({}), chats)).toMatchObject({ id: '1:7', chat: 1, from: 'Гилберт', text: 'Привет', date: 1000000 });
+    expect(incoming(raw({ chat: { id: 2 }, from: { first_name: 'Bob', last_name: 'Ray' } }), chats)?.from).toBe('Bob Ray');
+    expect(incoming(raw({ chat: { id: 3 } }), chats)).toBeNull();
+    expect(incoming(raw({ from: { is_bot: true } }), chats)).toBeNull();
+    expect(incoming(raw({ text: '/start' }), chats)).toBeNull();
+  });
+
+  it('стикер, голосовое, фото с подписью', () => {
+    expect(incoming(raw({ text: undefined, sticker: { emoji: '🐉' } }), chats)).toMatchObject({ kind: 'sticker', text: '🐉' });
+    expect(incoming(raw({ text: undefined, voice: {} }), chats)?.kind).toBe('voice');
+    const p = incoming(raw({ text: undefined, caption: 'Карта', photo: [{ file_id: 'a', width: 90, height: 90 }] }), chats)!;
+    expect([p.text, p.kind]).toEqual(['Карта', undefined]);
+  });
+
+  it('входящие без повторов, по времени, непрочитанные считаются; фото — не огромное', () => {
+    const a = incoming(raw({}), chats)!;
+    const b = { ...incoming(raw({ message_id: 8, date: 900 }), chats)!, read: true };
+    const list = addToInbox(addToInbox(addToInbox([], a), b), a);
+    expect(list.map((m) => m.id)).toEqual(['1:8', '1:7']);
+    expect(unreadCount(list)).toBe(1);
+    expect(unreadCount(list, 2)).toBe(0);
+    const sizes = [{ file_id: 's', width: 90, height: 60 }, { file_id: 'm', width: 1280, height: 853 }, { file_id: 'l', width: 2560, height: 1706 }];
+    expect(photoSize(sizes)?.file_id).toBe('m');
+    expect(photoSize([sizes[2]!])?.file_id).toBe('l');
   });
 });

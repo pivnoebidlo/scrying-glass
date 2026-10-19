@@ -313,8 +313,13 @@ Electron-приложение для мастера D&D: окно управле
   токен — `settings.telegram`, шифруется `safeStorage`; опрос `getUpdates` узнаёт чаты — /start игрока, бот в группе;
   новый чат выключен, включает мастер; отправка — `sendPhoto` / `sendDocument` больше 10 МБ / `sendMessage` HTML),
   IPC `telegram:*` (снимок части окна — `capturePage`: записка картинкой — `SendDialog` на миг рисует её крупно поверх окна), чистые функции — `shared/telegram.ts`
-  (`markdownToTelegram`, `splitMessage`, `entryToTelegram`). Окно: `ui/tg.svelte.ts` (`sendToTelegram(job)`),
-  `SendDialog.svelte` (фон модуля), `Settings.svelte`, `Compose.svelte` (страница в «Инструментах»); кнопка на
+  (`markdownToTelegram`, `splitMessage`, `entryToTelegram`). Входящие: опрос отдаёт `message` в `receive` —
+  `incoming` (shared, только включённые чаты, без команд и ботов) → `<userData>/telegram/inbox.json` (`addToInbox`,
+  последние `INBOX_MAX`; фото — `getFile`, размер `photoSize`, файлом рядом, в окно — data: URL `telegram:photo`);
+  отправленное тоже пишется туда (`mine`); событие `telegram:inbox`, IPC `telegram:inbox` / `markRead` / `clearInbox`.
+  Окно: `ui/tg.svelte.ts` (`sendToTelegram(job)`, `tg.inbox`, `unread`, `tg.toast`), фон модуля `Background.svelte`
+  (`SendDialog.svelte` + `Toast.svelte`), `Settings.svelte`, `Compose.svelte` (страница в «Инструментах» — переписка
+  с выбором чата, ответ — `reply_parameters`, «Все» — через окно отправки); кнопка на
   картинках — `imageActions` с `visible` (новое поле `FileAction`); открыть раздел настроек — `openSettings` из nav.ts.
   Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Chime` —
   сигнал WebAudio на устройство вывода музыки); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
