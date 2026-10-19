@@ -2,7 +2,7 @@
 <script lang="ts">
   import { unread } from '../../telegram/ui/tg.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Beer, Calculator, Castle, Footprints, DoorOpen, Sparkles, Store, CloudSun, Gem, Signpost, UserRound, FileText, Gauge, Hourglass, ScrollText, Send, Signature } from '@lucide/svelte';
+  import { Beer, CalendarClock, Calculator, Castle, Footprints, DoorOpen, Sparkles, Store, CloudSun, Gem, Signpost, UserRound, FileText, Gauge, Hourglass, ScrollText, Send, Signature } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
   import { noteGroups } from './library';
@@ -67,6 +67,10 @@
   <button class="item" data-nav class:active={ui.tool === 'treasure'} onclick={() => pickTool('treasure')}>
     <Gem size={14} />
     <span class="name">{t('tools.side.treasure')}</span>
+  </button>
+  <button class="item" data-nav class:active={ui.tool === 'schedule'} onclick={() => pickTool('schedule')}>
+    <CalendarClock size={14} />
+    <span class="name">{t('tools.side.schedule')}</span>
   </button>
   <button class="item" data-nav class:active={ui.tool === 'telegram'} onclick={() => pickTool('telegram')}>
     <Send size={14} />

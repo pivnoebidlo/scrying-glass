@@ -34,6 +34,8 @@ import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { importNameLists, listNameLists, namesDir } from './names';
 import { checkForUpdates } from './updates';
+import { announce, initSchedule, pressed, readSchedule, saveGames } from './schedule';
+import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
@@ -1227,6 +1229,10 @@ ipcMain.handle('telegram:markRead', (_event, chat?: number) => markRead(chat));
 ipcMain.handle('telegram:clearInbox', (_event, chat?: number) => clearInbox(chat));
 ipcMain.handle('telegram:photo', (_event, name: string) => inboxPhoto(name));
 ipcMain.handle('telegram:delete', (_event, id: string) => deleteSent(id));
+// The game schedule (main/schedule.ts): the whole of it, the games as edited, an announcement to the table.
+ipcMain.handle('schedule:get', () => readSchedule());
+ipcMain.handle('schedule:save', (_event, games: Game[]) => saveGames(games));
+ipcMain.handle('schedule:announce', (_event, key: string) => announce(key));
 ipcMain.handle('telegram:hide', (_event, id: string) => hideMessage(id));
 // A pasted or dropped image: its bytes (≤ 20 MB) as a picture.
 ipcMain.handle('telegram:sendBytes', (_event, { chats, data, name, caption }: { chats: number[]; data: Uint8Array; name: string; caption?: string }) =>
@@ -1332,6 +1338,12 @@ app.whenReady().then(async () => {
     changed: () => getControlWindow()?.webContents.send('telegram:changed'),
     dir: path.join(app.getPath('userData'), 'telegram'),
     received: (m) => getControlWindow()?.webContents.send('telegram:inbox', m),
+    pressed,
+  });
+  initSchedule({
+    file: path.join(app.getPath('userData'), 'schedule.json'),
+    changed: () => getControlWindow()?.webContents.send('schedule:changed'),
+    adventureName: (g) => g.adventure ?? '',
   });
   // A little later: the window is up and the vault opened, the check doesn't slow the start.
   setTimeout(() => void checkUpdatesOnLaunch(), 5000);

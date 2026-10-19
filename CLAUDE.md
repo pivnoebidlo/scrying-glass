@@ -332,6 +332,12 @@ Electron-приложение для мастера D&D: окно управле
   (`SendDialog.svelte` + `Toast.svelte`), `Settings.svelte`, `Compose.svelte` (страница в «Инструментах» — переписка
   с выбором чата, ответ — `reply_parameters`, «Все» — через окно отправки); кнопка на
   картинках — `imageActions` с `visible` (новое поле `FileAction`); открыть раздел настроек — `openSettings` из nav.ts.
+  Расписание — модуль `modules/schedule` (без состояния; правила — `shared/schedule.ts`: `Game` с повтором `week` /
+  `2weeks`, `until`, `skip`, `occurrences` по местным дням, ключ игры `occKey`, `reminderDue`, `tally`), ядро —
+  `main/schedule.ts` (`<userData>/schedule.json`, общий для хранилищ; анонс — `sendButtons` с callback `rsvp:<ключ>:<ответ>`,
+  ответ — `pressed` из `callback_query` бота, анонсы правятся `editButtons`; напоминания — раз в минуту, `tableChats`),
+  IPC `schedule:*`. Окно: страница `SchedulePage.svelte` в «Инструментах», блок правой панели `NextGame.svelte`,
+  загрузка — фоновый `Load.svelte`, «Начать игру» — `startGame` (приключение, `setTable`, `journal/pin`, вкладка сцен).
   Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Chime` —
   сигнал WebAudio на устройство вывода музыки); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
   окна только пересчитывают остаток по `setInterval`. Страница в «Инструментах» — `timer/ui/TimerTool.svelte`.

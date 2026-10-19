@@ -7,6 +7,7 @@ import type { TrashItem, TrashKind, TrashPlace, TrashSettings } from './trash';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 import type { UpdateInfo, UpdateSettings } from './updates';
 import type { TgChat, TgMessage, TgStatus, TgTable } from './telegram';
+import type { Game, ScheduleData } from './schedule';
 
 export interface DisplayInfo {
   id: number;
@@ -137,6 +138,12 @@ export interface Api {
   updateTelegramChat(id: number, patch: Partial<Pick<TgChat, 'enabled' | 'label' | 'table'>>): Promise<TgStatus>;
   // Tables (the groups of people who play together): the whole list; chats of a removed table lose it.
   setTelegramTables(tables: TgTable[]): Promise<TgStatus>;
+  // The game schedule (shared/schedule.ts, common to all vaults): the whole of it; the games as edited; announce a
+  // game (its occurrence key) to its table with «I'll come» buttons; changes (answers, reminders sent).
+  schedule(): Promise<ScheduleData>;
+  saveSchedule(games: Game[]): Promise<ScheduleData>;
+  announceGame(key: string): Promise<{ sent: number; error?: string }>;
+  onScheduleChanged(cb: () => void): void;
   forgetTelegramChat(id: number): Promise<TgStatus>;
   telegramSendText(chats: number[], html: string, replyTo?: number): Promise<{ sent: number; errors: string[] }>;
   // The inbox: what players wrote in enabled chats and what the app sent; mark read / clear (a chat or all); a

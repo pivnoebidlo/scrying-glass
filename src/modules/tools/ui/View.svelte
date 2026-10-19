@@ -23,6 +23,7 @@
   import RelicGenerator from '../relic/RelicGenerator.svelte';
   import DungeonGenerator from '../dungeon/DungeonGenerator.svelte';
   import TravelCalculator from '../travel/TravelCalculator.svelte';
+  import SchedulePage from '../../schedule/ui/SchedulePage.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
@@ -42,7 +43,9 @@
   }
 </script>
 
-{#if ui.tool === 'names'}
+{#if ui.tool === 'schedule'}
+  <SchedulePage />
+{:else if ui.tool === 'names'}
   <NameGenerator />
 {:else if ui.tool === 'travel' && dnd}
   <TravelCalculator />

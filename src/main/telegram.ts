@@ -30,6 +30,9 @@ interface Deps {
   // The inbox folder (inbox.json and photos) and the window to tell of a new message.
   dir: string;
   received(m: TgMessage): void;
+  // A button under a bot message was pressed (the schedule's «I'll come»): its data and who; the answer — a short
+  // notice the player sees.
+  pressed?(data: string, from: { id: number; name: string }): Promise<string | undefined>;
 }
 
 let deps: Deps | null = null;
@@ -132,6 +135,7 @@ function migrate(from: number, to: number) {
 
 interface Update {
   update_id: number;
+  callback_query?: { id: string; data?: string; from: { id: number; first_name?: string; last_name?: string; username?: string } };
   message?: RawMessage & { chat: RawChat; migrate_to_chat_id?: number; migrate_from_chat_id?: number };
   my_chat_member?: { chat: RawChat; new_chat_member: { status: string } };
 }
@@ -171,7 +175,7 @@ function restart() {
       try {
         const updates = await api<Update[]>(
           'getUpdates',
-          { offset: deps?.get().offset, timeout: 25, allowed_updates: ['message', 'my_chat_member'] },
+          { offset: deps?.get().offset, timeout: 25, allowed_updates: ['message', 'my_chat_member', 'callback_query'] },
           AbortSignal.any([ctl.signal, AbortSignal.timeout(40000)])
         );
         for (const u of updates) await handle(u);
@@ -192,6 +196,7 @@ function restart() {
 
 async function handle(u: Update) {
   if (!deps) return;
+  if (u.callback_query) return press(u.callback_query);
   const chat = u.message?.chat ?? u.my_chat_member?.chat;
   if (!chat) return;
   // A group became a supergroup: both chats tell about it — the known one moves to the new id.
@@ -421,4 +426,51 @@ export function sendPicture(ids: number[], picture: { file: string } | { png: Bu
     }
     return res;
   });
+}
+
+// ---------- Buttons ----------
+
+export type Buttons = { text: string; data: string }[][];
+const keyboard = (b: Buttons) => ({ inline_keyboard: b.map((row) => row.map((x) => ({ text: x.text, callback_data: x.data }))) });
+
+// A message with buttons under it (to an enabled chat); its id in Telegram.
+export async function sendButtons(chat: number, html: string, buttons: Buttons): Promise<number> {
+  if (!allowed([chat]).length) throw new Error(t('tg.chatOff'));
+  const m = await api<{ message_id: number }>('sendMessage', { chat_id: chat, text: html, parse_mode: 'HTML', reply_markup: keyboard(buttons) });
+  return m.message_id;
+}
+export async function editButtons(chat: number, mid: number, html: string, buttons: Buttons) {
+  await api('editMessageText', { chat_id: chat, message_id: mid, text: html, parse_mode: 'HTML', reply_markup: keyboard(buttons) }).catch(() => undefined);
+}
+// A plain message to enabled chats (reminders); how many went.
+export async function sendPlain(chats: number[], html: string): Promise<number> {
+  let n = 0;
+  for (const id of allowed(chats)) {
+    try {
+      await api('sendMessage', { chat_id: id, text: html, parse_mode: 'HTML' });
+      n++;
+    } catch {
+      /* the next chat */
+    }
+  }
+  return n;
+}
+
+async function press(q: NonNullable<Update['callback_query']>) {
+  if (!deps) return;
+  const s = deps.get();
+  // A player's own chat carries the GM's label (their character).
+  const own = (s.chats ?? []).find((c) => c.id === q.from.id && c.kind === 'private');
+  const name = own?.label || [q.from.first_name, q.from.last_name].filter(Boolean).join(' ') || (q.from.username ? `@${q.from.username}` : String(q.from.id));
+  const text = q.data && deps.pressed ? await deps.pressed(q.data, { id: q.from.id, name }).catch(() => undefined) : undefined;
+  await api('answerCallbackQuery', { callback_query_id: q.id, ...(text ? { text } : {}) }).catch(() => undefined);
+}
+
+// The chats a table plays in: its groups, or — without groups — its players; no table — every enabled group.
+export function tableChats(table?: string): number[] {
+  const on = (deps?.get().chats ?? []).filter((c) => c.enabled);
+  if (!table) return on.filter((c) => c.kind === 'group').map((c) => c.id);
+  const mine = on.filter((c) => c.table === table);
+  const groups = mine.filter((c) => c.kind === 'group');
+  return (groups.length ? groups : mine).map((c) => c.id);
 }

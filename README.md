@@ -311,6 +311,14 @@ messages and mentions of it — to see everything, turn its privacy off: @BotFat
 conversation is kept on this computer (`<app data>/telegram`, the last 300 messages); the bin clears it in the app
 only.
 
+**Schedule** (Tools → Schedule): your games — date and time, length, a repeat (every week or every two, until a
+day, with skipped ones), the table, the adventure and its plan (a journal note), the place (an address or a link to
+the online room). The bot announces a game to its table with "I'll come / Maybe / Can't" buttons; answers show under
+the game and in the announcement itself. It reminds the table a day and two hours before (while the app is open — a
+reminder whose time came while it was closed goes when it opens). "Start the game" switches to the adventure and the
+table, pins the plan and opens the scenes. The next game is in the right panel. The schedule is common to all vaults
+(`<app data>/schedule.json`).
+
 **Timer** (Tools → Timer): an hourglass or digits on the player screen — top right, bottom right or large in the
 center, with a caption ("While the torch burns"). Presets from 30 seconds to 30 minutes or your own time. When time
 runs out, the timer flashes "Time's up!" and the GM hears a chime (on the music output device). Pause, ±1 minute,
