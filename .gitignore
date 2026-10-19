@@ -5,3 +5,6 @@ out/
 # The GM's own name lists taken from other sites: loaded into the app's library, never committed.
 /names/
 .DS_Store
+
+# Local test kit (test vault, user data, CDP scripts) — see CLAUDE.md «Как проверять изменения»
+/.dev/
