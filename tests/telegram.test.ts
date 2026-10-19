@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { setLang } from '../src/shared/i18n';
 import { TYPES } from '../src/shared/compendium';
-import { addToInbox, chatName, entryToTelegram, incoming, markdownToTelegram, migrateChats, migrateInbox, photoSize, safeTgHtml, sortChats, splitMessage, unreadCount, type RawMessage } from '../src/shared/telegram';
+import { addToInbox, chatName, entryToTelegram, incoming, markdownToTelegram, migrateChats, migrateInbox, photoSize, safeTgHtml, sortChats, splitMessage, chatsAt, withTables, unreadCount, type RawMessage } from '../src/shared/telegram';
 
 describe('Telegram', () => {
   it('Markdown → HTML Telegram: жирный, курсив, заголовки, списки, цитаты, [[ссылки]], экранирование', () => {
@@ -105,5 +105,21 @@ describe('telegram: оформление', () => {
   it('сначала группы, потом игроки', () => {
     const c = [{ kind: 'private' as const, id: 1 }, { kind: 'group' as const, id: 2 }, { kind: 'private' as const, id: 3 }, { kind: 'group' as const, id: 4 }];
     expect(sortChats(c).map((x) => x.id)).toEqual([2, 4, 1, 3]);
+  });
+});
+
+describe('telegram: столы', () => {
+  const chats = [
+    { id: 1, kind: 'group' as const, title: 'Четверг', enabled: true, table: 'a' },
+    { id: 2, kind: 'group' as const, title: 'Онлайн', enabled: true, table: 'b' },
+    { id: 3, kind: 'private' as const, title: 'Ann', enabled: true },
+  ];
+  it('за столом видны его чаты и чаты без стола; без выбранного стола — все', () => {
+    expect(chatsAt(chats, 'a').map((c) => c.id)).toEqual([1, 3]);
+    expect(chatsAt(chats, '').map((c) => c.id)).toEqual([1, 2, 3]);
+  });
+  it('убранный стол: его чаты остаются без стола', () => {
+    const next = withTables(chats, [{ id: 'a', name: 'Четверг' }]);
+    expect(next.map((c) => c.table)).toEqual(['a', undefined, undefined]);
   });
 });

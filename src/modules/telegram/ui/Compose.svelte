@@ -10,7 +10,7 @@
   import { markdownKeys } from '../../../renderer/lib/markdownKeys';
   import { openSettings } from '../../../renderer/lib/nav';
   import { chatName, markdownToTelegram, safeTgHtml, sortChats, type TgMessage } from '../../../shared/telegram';
-  import { clearInbox, enabledChats, loadInbox, loadTg, markRead, photoUrl, prefs, sendToTelegram, tg, tgReady, unread } from './tg.svelte';
+  import { clearInbox, enabledChats, loadInbox, loadTg, markRead, photoUrl, prefs, sendToTelegram, setTable, table, tg, tgReady, unread, visibleChat } from './tg.svelte';
 
   onMount(() => {
     void loadTg();
@@ -40,7 +40,11 @@
   let chat = $state<number | null>(null);
   let replyTo = $state<TgMessage | null>(null);
   const chats = $derived(sortChats(enabledChats()));
-  const list = $derived(tg.inbox.filter((m) => chat === null || m.chat === chat));
+  const list = $derived(tg.inbox.filter((m) => (chat === null ? visibleChat(m.chat) : m.chat === chat)));
+  // A chat of another table is no longer here: back to all.
+  $effect(() => {
+    if (chat !== null && !chats.some((c) => c.id === chat)) pick(null);
+  });
   const chatOf = (id: number) => tg.status?.chats.find((x) => x.id === id);
   const nameOf = (id: number) => {
     const c = chatOf(id);
@@ -216,7 +220,7 @@
             rows="3"
             bind:value={text}
             placeholder={chat === null ? t('tg.composePh') : t('tg.composeTo', { name: nameOf(chat) })}
-            use:markdownKeys={{ enter: !prefs.enterSends }}
+            use:markdownKeys={{ enter: !prefs.enterSends, telegram: true }}
             {onkeydown}
             {onpaste}
           ></textarea>
@@ -233,6 +237,12 @@
       </div>
 
       <nav class="chats">
+        {#if tg.status?.tables.length}
+          <select class="table" title={t('tg.tableHint')} value={tg.status.tables.some((x) => x.id === table.id) ? table.id : ''} onchange={(e) => setTable(e.currentTarget.value)}>
+            <option value="">{t('tg.allTables')}</option>
+            {#each tg.status.tables as x (x.id)}<option value={x.id}>{x.name}</option>{/each}
+          </select>
+        {/if}
         <button class="chat" class:on={chat === null} onclick={() => pick(null)}>
           <span class="name">{t('tg.allChats')}</span>
           {#if unread()}<span class="badge">{unread()}</span>{/if}
@@ -292,6 +302,9 @@
     gap: 2px;
     width: 220px;
     overflow-y: auto;
+  }
+  .table {
+    margin-bottom: 6px;
   }
   .chat {
     display: flex;

@@ -6,7 +6,7 @@ import type { Note } from './notes';
 import type { TrashItem, TrashKind, TrashPlace, TrashSettings } from './trash';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 import type { UpdateInfo, UpdateSettings } from './updates';
-import type { TgChat, TgMessage, TgStatus } from './telegram';
+import type { TgChat, TgMessage, TgStatus, TgTable } from './telegram';
 
 export interface DisplayInfo {
   id: number;
@@ -134,7 +134,9 @@ export interface Api {
   // a picture of the vault or library, a capture of a part of this window (in CSS pixels). Result: sent, errors.
   telegramStatus(): Promise<TgStatus>;
   setTelegramToken(token: string | null): Promise<TgStatus>;
-  updateTelegramChat(id: number, patch: Partial<Pick<TgChat, 'enabled' | 'label'>>): Promise<TgStatus>;
+  updateTelegramChat(id: number, patch: Partial<Pick<TgChat, 'enabled' | 'label' | 'table'>>): Promise<TgStatus>;
+  // Tables (the groups of people who play together): the whole list; chats of a removed table lose it.
+  setTelegramTables(tables: TgTable[]): Promise<TgStatus>;
   forgetTelegramChat(id: number): Promise<TgStatus>;
   telegramSendText(chats: number[], html: string, replyTo?: number): Promise<{ sent: number; errors: string[] }>;
   // The inbox: what players wrote in enabled chats and what the app sent; mark read / clear (a chat or all); a

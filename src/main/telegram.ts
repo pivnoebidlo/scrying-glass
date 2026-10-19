@@ -9,13 +9,15 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { nativeImage, safeStorage } from 'electron';
 import { t } from '../shared/i18n';
-import { addToInbox, incoming, migrateChats, migrateInbox, photoSize, splitMessage, type RawMessage, type TgChat, type TgMessage, type TgStatus } from '../shared/telegram';
+import { addToInbox, incoming, migrateChats, migrateInbox, photoSize, withTables, type TgTable, splitMessage, type RawMessage, type TgChat, type TgMessage, type TgStatus } from '../shared/telegram';
 
 export interface TgSettings {
   // The token: encrypted (base64, enc: true) or plain where the system has no keychain.
   token?: string;
   enc?: boolean;
   chats?: TgChat[];
+  // Tables: the groups of people who play together (a chat belongs to one or to none).
+  tables?: TgTable[];
   // Where getUpdates stopped (so old messages aren't read again).
   offset?: number;
 }
@@ -53,7 +55,7 @@ function token(): string | null {
 }
 
 export function status(): TgStatus {
-  return { configured: !!token(), bot, error, chats: deps?.get().chats ?? [] };
+  return { configured: !!token(), bot, error, chats: deps?.get().chats ?? [], tables: deps?.get().tables ?? [] };
 }
 
 export function setToken(value: string | null) {
@@ -69,7 +71,15 @@ export function setToken(value: string | null) {
   return status();
 }
 
-export function updateChat(id: number, patch: Partial<Pick<TgChat, 'enabled' | 'label'>>) {
+export function setTables(tables: TgTable[]) {
+  if (!deps) return status();
+  const s = deps.get();
+  const clean = tables.filter((t) => t.id && t.name.trim()).map((t) => ({ id: t.id, name: t.name.trim() }));
+  deps.save({ ...s, tables: clean, chats: withTables(s.chats ?? [], clean) });
+  return status();
+}
+
+export function updateChat(id: number, patch: Partial<Pick<TgChat, 'enabled' | 'label' | 'table'>>) {
   if (!deps) return status();
   const s = deps.get();
   deps.save({ ...s, chats: (s.chats ?? []).map((c) => (c.id === id ? { ...c, ...patch } : c)) });

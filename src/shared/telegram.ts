@@ -12,6 +12,14 @@ export interface TgChat {
   enabled: boolean;
   // The GM's label: the character of this player («Гилберт»).
   label?: string;
+  // The table (a group of people who play together) the chat belongs to; none — it is seen at every table.
+  table?: string;
+}
+
+// A table: the people who play together — one adventure can be run for several tables.
+export interface TgTable {
+  id: string;
+  name: string;
 }
 
 export interface TgStatus {
@@ -21,6 +29,7 @@ export interface TgStatus {
   // The last error talking to Telegram (bad token, no network).
   error: string | null;
   chats: TgChat[];
+  tables: TgTable[];
 }
 
 export const chatName = (c: TgChat) => (c.label ? `${c.label} (${c.title})` : c.title);
@@ -220,4 +229,14 @@ export function migrateChats(chats: TgChat[], from: number, to: number): TgChat[
 }
 export function migrateInbox(list: TgMessage[], from: number, to: number): TgMessage[] {
   return list.map((m) => (m.chat === from ? { ...m, chat: to, id: `${to}:${m.id.slice(m.id.indexOf(':') + 1)}`, tgIds: undefined } : m));
+}
+
+// ---------- Tables ----------
+
+// The chats seen at a table: its own and those of no table ('' — all tables: every chat).
+export const chatsAt = <T extends { table?: string }>(chats: T[], table: string): T[] => (table ? chats.filter((c) => !c.table || c.table === table) : chats);
+// Tables after an edit: chats of a removed table become chats of no table.
+export function withTables(chats: TgChat[], tables: TgTable[]): TgChat[] {
+  const ids = new Set(tables.map((t) => t.id));
+  return chats.map((c) => (c.table && !ids.has(c.table) ? (({ table: _gone, ...rest }) => rest)(c) : c));
 }

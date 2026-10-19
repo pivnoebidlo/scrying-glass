@@ -1,5 +1,5 @@
 // Telegram in the window: the bot's status and chats (from the core, refreshed on its event) and the send dialog.
-import { unreadCount, type TgChat, type TgMessage, type TgStatus } from '../../../shared/telegram';
+import { chatsAt, type TgChat, type TgMessage, type TgStatus } from '../../../shared/telegram';
 
 export const tg = $state({
   status: null as TgStatus | null,
@@ -8,8 +8,42 @@ export const tg = $state({
   toast: null as TgMessage | null,
   reading: false,
 });
-export const unread = (chat?: number) => unreadCount(tg.inbox, chat);
-export const enabledChats = (): TgChat[] => tg.status?.chats.filter((c) => c.enabled) ?? [];
+// The table played at now ('' — all tables): chats, the send dialog, unread counts and toasts show only its chats
+// (and those of no table). Kept by the window; an adventure remembers its table (per vault).
+const readJson = <T>(key: string, fallback: T): T => {
+  try {
+    return (JSON.parse(localStorage.getItem(key) ?? 'null') as T) ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
+const writeJson = (key: string, v: unknown) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(v));
+  } catch {
+    /* not remembered — not a problem */
+  }
+};
+export const table = $state({ id: readJson<string>('tg.table', ''), adventure: '' });
+export function setTable(id: string) {
+  table.id = id;
+  writeJson('tg.table', id);
+  if (table.adventure) writeJson('tg.tableFor', { ...readJson<Record<string, string>>('tg.tableFor', {}), [table.adventure]: id });
+}
+// The adventure changed: its table, if it has one, becomes current.
+export function followAdventure(key: string) {
+  table.adventure = key;
+  const id = readJson<Record<string, string>>('tg.tableFor', {})[key];
+  if (id !== undefined && id !== table.id) {
+    table.id = id;
+    writeJson('tg.table', id);
+  }
+}
+const tableId = () => (table.id && tg.status?.tables.some((x) => x.id === table.id) ? table.id : '');
+export const enabledChats = (): TgChat[] => chatsAt(tg.status?.chats.filter((c) => c.enabled) ?? [], tableId());
+export const visibleChat = (id: number) => enabledChats().some((c) => c.id === id);
+export const unread = (chat?: number) =>
+  tg.inbox.filter((m) => !m.mine && !m.read && (chat === undefined ? visibleChat(m.chat) : m.chat === chat)).length;
 // There is somewhere to send: a bot and at least one chat turned on.
 export const tgReady = () => !!tg.status?.configured && enabledChats().length > 0;
 
@@ -20,7 +54,7 @@ export async function loadTg() {
     window.api.onTelegramChanged(() => void loadTg());
     window.api.onTelegramMessage((m) => {
       void loadInbox();
-      if (!m.mine && !tg.reading) tg.toast = m;
+      if (!m.mine && !tg.reading && visibleChat(m.chat)) tg.toast = m;
     });
     void loadInbox();
   }
@@ -29,11 +63,14 @@ export async function loadTg() {
 export async function loadInbox() {
   tg.inbox = await window.api.telegramInbox();
 }
+// One chat, or every chat of the current table.
 export async function markRead(chat?: number) {
-  if (unread(chat)) tg.inbox = await window.api.telegramMarkRead(chat);
+  for (const id of chat === undefined ? enabledChats().map((c) => c.id) : [chat]) {
+    if (unread(id)) tg.inbox = await window.api.telegramMarkRead(id);
+  }
 }
 export async function clearInbox(chat?: number) {
-  tg.inbox = await window.api.telegramClearInbox(chat);
+  for (const id of chat === undefined ? enabledChats().map((c) => c.id) : [chat]) tg.inbox = await window.api.telegramClearInbox(id);
 }
 
 // Photos of the inbox as data: URLs, loaded once.

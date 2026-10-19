@@ -68,6 +68,7 @@ const api: Api = {
   telegramStatus: () => ipcRenderer.invoke('telegram:status'),
   setTelegramToken: (token) => ipcRenderer.invoke('telegram:setToken', token),
   updateTelegramChat: (id, patch) => ipcRenderer.invoke('telegram:updateChat', { id, patch }),
+  setTelegramTables: (tables) => ipcRenderer.invoke('telegram:setTables', tables),
   forgetTelegramChat: (id) => ipcRenderer.invoke('telegram:forgetChat', id),
   telegramSendText: (chats, html, replyTo) => ipcRenderer.invoke('telegram:sendText', { chats, html, replyTo }),
   telegramInbox: () => ipcRenderer.invoke('telegram:inbox'),

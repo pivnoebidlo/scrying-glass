@@ -1,7 +1,7 @@
 <!-- Settings → Telegram: the bot token, its status, the chats it knows (on/off, whose player). -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { X } from '@lucide/svelte';
+  import { Plus, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { sortChats } from '../../../shared/telegram';
@@ -24,6 +24,21 @@
     tg.status = await window.api.setTelegramToken(null);
   }
   const s = $derived(tg.status);
+
+  // Tables: add, rename, remove (its chats become chats of no table).
+  let tableName = $state('');
+  async function addTable() {
+    const name = tableName.trim();
+    if (!name || !s) return;
+    tg.status = await window.api.setTelegramTables([...$state.snapshot(s.tables), { id: crypto.randomUUID(), name }]);
+    tableName = '';
+  }
+  const renameTable = async (id: string, name: string) =>
+    s && name.trim() && (tg.status = await window.api.setTelegramTables(s.tables.map((x) => (x.id === id ? { ...x, name: name.trim() } : $state.snapshot(x)))));
+  async function removeTable(id: string) {
+    if (!s || !confirm(t('tg.tableRemoveAsk'))) return;
+    tg.status = await window.api.setTelegramTables(s.tables.filter((x) => x.id !== id).map((x) => $state.snapshot(x)));
+  }
 </script>
 
 <div class="setting">
@@ -56,6 +71,24 @@
       <option value="mod">{t('tg.sendKey.mod')}</option>
     </select>
   </div>
+  <h3>{t('tg.tables')}</h3>
+  <p class="faint">{t('tg.tablesAbout')}</p>
+  {#if s.tables.length}
+    <ul>
+      {#each s.tables as x (x.id)}
+        <li>
+          <input class="tname" type="text" value={x.name} onchange={(e) => renameTable(x.id, e.currentTarget.value)} />
+          <span class="faint">{t('tg.tableChats', { count: s.chats.filter((c) => c.table === x.id).length })}</span>
+          <button class="icon-btn" title={t('tg.tableRemove')} onclick={() => removeTable(x.id)}><X size={13} /></button>
+        </li>
+      {/each}
+    </ul>
+  {/if}
+  <div class="row">
+    <input type="text" placeholder={t('tg.tablePh')} bind:value={tableName} onkeydown={(e) => e.key === 'Enter' && addTable()} />
+    <button class="btn" disabled={!tableName.trim()} onclick={addTable}><Plus size={14} /> {t('tg.tableAdd')}</button>
+  </div>
+
   <h3>{t('tg.chats')}</h3>
   <p class="faint">{t('tg.chatsAbout', { bot: s.bot ?? '…' })}</p>
   {#if s.chats.length}
@@ -75,6 +108,12 @@
               value={c.label ?? ''}
               onchange={async (e) => (tg.status = await window.api.updateTelegramChat(c.id, { label: e.currentTarget.value.trim() || undefined }))}
             />
+          {/if}
+          {#if s.tables.length}
+            <select class="ctable" title={t('tg.chatTable')} value={c.table ?? ''} onchange={async (e) => (tg.status = await window.api.updateTelegramChat(c.id, { table: e.currentTarget.value }))}>
+              <option value="">{t('tg.noTable')}</option>
+              {#each s.tables as x (x.id)}<option value={x.id}>{x.name}</option>{/each}
+            </select>
           {/if}
           <button class="icon-btn" title={t('tg.forget')} onclick={async () => (tg.status = await window.api.forgetTelegramChat(c.id))}><X size={13} /></button>
         </li>
@@ -128,5 +167,11 @@
   }
   .label {
     width: 140px;
+  }
+  .tname {
+    flex: 1;
+  }
+  .ctable {
+    max-width: 160px;
   }
 </style>

@@ -323,7 +323,11 @@ Electron-приложение для мастера D&D: окно управле
   48 часов; картинка — уменьшенная копия `previewOf` через nativeImage); событие `telegram:inbox`, IPC
   `telegram:inbox` / `markRead` / `clearInbox` / `delete` / `hide` / `sendBytes` (вставленная или перетащенная
   картинка; при «Все» — задание `image` окна отправки). Клавиша отправки — `prefs.enterSends` (localStorage окна,
-  настройки Telegram); `use:markdownKeys={{ enter }}` уступает Enter полю, где Enter отправляет.
+  настройки Telegram); `use:markdownKeys={{ enter, telegram }}` уступает Enter полю, где Enter отправляет, и
+  добавляет клавиши Telegram Desktop (⌘U, ⌘⇧M, ⌘⇧P). Столы: `TgTable` в `settings.telegram.tables`, у чата `table`
+  (`setTables` / IPC `telegram:setTables`, `withTables`); текущий стол и стол приключения — localStorage окна
+  (`table`, `setTable`, `followAdventure` в tg.svelte.ts, ключ «хранилище|приключение», следит `Background.svelte`);
+  видимые чаты — `chatsAt` (его и без стола) через `enabledChats` / `visibleChat`.
   Окно: `ui/tg.svelte.ts` (`sendToTelegram(job)`, `tg.inbox`, `unread`, `tg.toast`), фон модуля `Background.svelte`
   (`SendDialog.svelte` + `Toast.svelte`), `Settings.svelte`, `Compose.svelte` (страница в «Инструментах» — переписка
   с выбором чата, ответ — `reply_parameters`, «Все» — через окно отправки); кнопка на

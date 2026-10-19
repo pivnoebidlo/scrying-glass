@@ -34,7 +34,7 @@ import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { importNameLists, listNameLists, namesDir } from './names';
 import { checkForUpdates } from './updates';
-import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
+import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
@@ -1218,7 +1218,8 @@ ipcMain.handle('files:saveText', async (_event, { name, text }: { name: string; 
 // library, or a capture of a part of the control window (a note as the players see it).
 ipcMain.handle('telegram:status', () => tgStatus());
 ipcMain.handle('telegram:setToken', (_event, token: string | null) => setToken(token));
-ipcMain.handle('telegram:updateChat', (_event, { id, patch }: { id: number; patch: { enabled?: boolean; label?: string } }) => updateChat(id, patch));
+ipcMain.handle('telegram:updateChat', (_event, { id, patch }: { id: number; patch: { enabled?: boolean; label?: string; table?: string } }) => updateChat(id, patch));
+ipcMain.handle('telegram:setTables', (_event, tables: { id: string; name: string }[]) => setTables(tables));
 ipcMain.handle('telegram:forgetChat', (_event, id: number) => forgetChat(id));
 ipcMain.handle('telegram:sendText', (_event, { chats, html, replyTo }: { chats: number[]; html: string; replyTo?: number }) => sendText(chats, html, replyTo));
 ipcMain.handle('telegram:inbox', () => readInbox());

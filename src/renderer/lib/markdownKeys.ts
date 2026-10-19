@@ -1,10 +1,14 @@
 // Markdown text areas (journal notes, compendium entries) behave like Obsidian: Enter carries «>», list, task and
-// number markers on (continueMarkup), Cmd/Ctrl+B / I / Shift+X — bold, italic, strikethrough (toggleWrap), Tab /
+// number markers on (continueMarkup), Cmd/Ctrl+B / I / Shift+X — bold, italic, strikethrough (toggleWrap); a
+// Telegram message box adds Telegram Desktop's keys: U — underline, Shift+M — monospace, Shift+P — spoiler; Tab /
 // Shift+Tab — indent or outdent the line. Edits go through insertText: Cmd+Z undoes them and the input event keeps
 // bind:value and autosave in step.
 import { continueMarkup, toggleWrap, type TextEdit } from '../../shared/journal';
 
-const MARKS: Record<string, string> = { KeyB: '**', KeyI: '*', KeyX: '~~' };
+// [key, with Shift, mark].
+type Mark = [code: string, shift: boolean, mark: string];
+const MARKS: Mark[] = [['KeyB', false, '**'], ['KeyI', false, '*'], ['KeyX', true, '~~']];
+const TELEGRAM: Mark[] = [...MARKS, ['KeyU', false, '__'], ['KeyM', true, '`'], ['KeyP', true, '||']];
 
 function apply(area: HTMLTextAreaElement, edit: TextEdit) {
   area.setSelectionRange(edit.from, edit.to);
@@ -23,16 +27,22 @@ function indent(text: string, a: number, b: number, out: boolean): TextEdit {
   return { from: start, to: start + cut, insert: '', a: Math.max(start, a - cut), b: Math.max(start, b - cut) };
 }
 
-// enter: false — Enter is someone else's (a chat box where Enter sends); the marks and Tab still work.
-export function markdownKeys(area: HTMLTextAreaElement, opts: { enter?: boolean } = {}) {
+// enter: false — Enter is someone else's (a chat box where Enter sends); telegram — Telegram's set of marks.
+interface Opts {
+  enter?: boolean;
+  telegram?: boolean;
+}
+export function markdownKeys(area: HTMLTextAreaElement, opts: Opts = {}) {
   let enter = opts.enter ?? true;
+  let marks = opts.telegram ? TELEGRAM : MARKS;
   const onkeydown = (e: KeyboardEvent) => {
     const mod = e.metaKey || e.ctrlKey;
     const { selectionStart: a, selectionEnd: b, value: text } = area;
-    if (mod && !e.altKey && MARKS[e.code] && e.shiftKey === (e.code === 'KeyX')) {
+    const mark = mod && !e.altKey ? marks.find(([code, shift]) => code === e.code && shift === e.shiftKey) : undefined;
+    if (mark) {
       e.preventDefault();
       e.stopPropagation();
-      apply(area, toggleWrap(text, a, b, MARKS[e.code]!));
+      apply(area, toggleWrap(text, a, b, mark[2]));
     } else if (enter && e.key === 'Enter' && !mod && !e.shiftKey && !e.altKey && !e.isComposing && a === b) {
       const edit = continueMarkup(text, a);
       if (edit) {
@@ -46,7 +56,10 @@ export function markdownKeys(area: HTMLTextAreaElement, opts: { enter?: boolean 
   };
   area.addEventListener('keydown', onkeydown);
   return {
-    update: (next: { enter?: boolean } = {}) => (enter = next.enter ?? true),
+    update: (next: Opts = {}) => {
+      enter = next.enter ?? true;
+      marks = next.telegram ? TELEGRAM : MARKS;
+    },
     destroy: () => area.removeEventListener('keydown', onkeydown),
   };
 }
