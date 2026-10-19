@@ -187,3 +187,17 @@ export function photoSize<T extends { width: number; height: number }>(sizes: T[
   const fit = bySize.filter((s) => Math.max(s.width, s.height) <= 1600);
   return fit.at(-1) ?? bySize[0];
 }
+
+// ---------- A group upgraded to a supergroup ----------
+// Telegram gives the supergroup a new id: the known chat moves to it with its switch and label (a chat already added
+// under the new id is merged into it), and the conversation follows.
+export function migrateChats(chats: TgChat[], from: number, to: number): TgChat[] {
+  const old = chats.find((c) => c.id === from);
+  if (!old) return chats;
+  const already = chats.find((c) => c.id === to);
+  const moved: TgChat = { ...already, ...old, id: to, kind: 'group', enabled: old.enabled || !!already?.enabled, title: already?.title ?? old.title };
+  return chats.filter((c) => c.id !== from && c.id !== to).concat(moved);
+}
+export function migrateInbox(list: TgMessage[], from: number, to: number): TgMessage[] {
+  return list.map((m) => (m.chat === from ? { ...m, chat: to, id: `${to}:${m.id.slice(m.id.indexOf(':') + 1)}`, tgIds: undefined } : m));
+}

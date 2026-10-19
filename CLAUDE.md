@@ -316,7 +316,9 @@ Electron-приложение для мастера D&D: окно управле
   (`markdownToTelegram`, `splitMessage`, `entryToTelegram`). Входящие: опрос отдаёт `message` в `receive` —
   `incoming` (shared, только включённые чаты, без команд и ботов) → `<userData>/telegram/inbox.json` (`addToInbox`,
   последние `INBOX_MAX`; фото — `getFile`, размер `photoSize`, файлом рядом, в окно — data: URL `telegram:photo`);
-  отправленное тоже пишется туда (`mine`, `tgIds` — номера сообщений в Telegram для `deleteSent` → `deleteMessage`,
+  группа, ставшая супергруппой (новый id): `migrate_to_chat_id` / `migrate_from_chat_id` в обновлениях и
+  `parameters.migrate_to_chat_id` в ошибке отправки (`Migrated`) — чат переезжает (`migrateChats`, `migrateInbox`),
+  отправка повторяется; отправленное тоже пишется туда (`mine`, `tgIds` — номера сообщений в Telegram для `deleteSent` → `deleteMessage`,
   48 часов; картинка — уменьшенная копия `previewOf` через nativeImage); событие `telegram:inbox`, IPC
   `telegram:inbox` / `markRead` / `clearInbox` / `delete` / `hide` / `sendBytes` (вставленная или перетащенная
   картинка; при «Все» — задание `image` окна отправки). Клавиша отправки — `prefs.enterSends` (localStorage окна,

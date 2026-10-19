@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { setLang } from '../src/shared/i18n';
 import { TYPES } from '../src/shared/compendium';
-import { addToInbox, chatName, entryToTelegram, incoming, markdownToTelegram, photoSize, splitMessage, unreadCount, type RawMessage } from '../src/shared/telegram';
+import { addToInbox, chatName, entryToTelegram, incoming, markdownToTelegram, migrateChats, migrateInbox, photoSize, splitMessage, unreadCount, type RawMessage } from '../src/shared/telegram';
 
 describe('Telegram', () => {
   it('Markdown → HTML Telegram: жирный, курсив, заголовки, списки, цитаты, [[ссылки]], экранирование', () => {
@@ -66,5 +66,31 @@ describe('telegram: входящие', () => {
     const sizes = [{ file_id: 's', width: 90, height: 60 }, { file_id: 'm', width: 1280, height: 853 }, { file_id: 'l', width: 2560, height: 1706 }];
     expect(photoSize(sizes)?.file_id).toBe('m');
     expect(photoSize([sizes[2]!])?.file_id).toBe('l');
+  });
+});
+
+describe('telegram: группа стала супергруппой', () => {
+  it('чат переезжает на новый id со включением и подписью; уже появившийся новый — сливается', () => {
+    const chats = [
+      { id: -1, kind: 'group' as const, title: 'Партия', enabled: true, label: 'Стол' },
+      { id: 5, kind: 'private' as const, title: 'Ann', enabled: true },
+    ];
+    expect(migrateChats(chats, -1, -100)).toEqual([chats[1], { id: -100, kind: 'group', title: 'Партия', enabled: true, label: 'Стол' }]);
+    const both = [...chats, { id: -100, kind: 'group' as const, title: 'Партия (новая)', enabled: false }];
+    const merged = migrateChats(both, -1, -100);
+    expect(merged).toHaveLength(2);
+    expect(merged.find((c) => c.id === -100)).toMatchObject({ enabled: true, label: 'Стол', title: 'Партия (новая)' });
+    expect(migrateChats(chats, -7, -100)).toBe(chats);
+  });
+
+  it('переписка переезжает вместе с чатом, номера старых сообщений забываются', () => {
+    const list = [
+      { id: '-1:3', chat: -1, from: 'Bob', text: 'hi', date: 1 },
+      { id: '-1:out:9', chat: -1, from: '', text: 'yo', date: 2, mine: true, tgIds: [4] },
+      { id: '5:1', chat: 5, from: 'Ann', text: 'x', date: 3 },
+    ];
+    const moved = migrateInbox(list, -1, -100);
+    expect(moved.map((m) => m.id)).toEqual(['-100:3', '-100:out:9', '5:1']);
+    expect(moved[1]!.tgIds).toBeUndefined();
   });
 });

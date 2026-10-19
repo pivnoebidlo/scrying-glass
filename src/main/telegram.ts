@@ -9,7 +9,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { nativeImage, safeStorage } from 'electron';
 import { t } from '../shared/i18n';
-import { addToInbox, incoming, photoSize, splitMessage, type RawMessage, type TgChat, type TgMessage, type TgStatus } from '../shared/telegram';
+import { addToInbox, incoming, migrateChats, migrateInbox, photoSize, splitMessage, type RawMessage, type TgChat, type TgMessage, type TgStatus } from '../shared/telegram';
 
 export interface TgSettings {
   // The token: encrypted (base64, enc: true) or plain where the system has no keychain.
@@ -91,16 +91,38 @@ async function api<T>(method: string, body?: FormData | Record<string, unknown>,
     ...(body instanceof FormData ? { body } : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) }),
     signal: signal ?? AbortSignal.timeout(30000),
   });
-  const data = (await res.json().catch(() => null)) as { ok: boolean; result: T; description?: string } | null;
-  if (!data?.ok) throw new Error(data?.description ?? `HTTP ${res.status}`);
+  const data = (await res.json().catch(() => null)) as { ok: boolean; result: T; description?: string; parameters?: { migrate_to_chat_id?: number } } | null;
+  if (!data?.ok) {
+    const to = data?.parameters?.migrate_to_chat_id;
+    throw to ? new Migrated(to, data?.description ?? '') : new Error(data?.description ?? `HTTP ${res.status}`);
+  }
   return data.result;
+}
+
+// «The group was upgraded to a supergroup»: Telegram names the new id.
+class Migrated extends Error {
+  constructor(
+    readonly to: number,
+    message: string
+  ) {
+    super(message);
+  }
+}
+// Move a known chat to its supergroup id (settings and the conversation).
+function migrate(from: number, to: number) {
+  if (!deps || from === to) return;
+  const s = deps.get();
+  if (!(s.chats ?? []).some((c) => c.id === from)) return;
+  deps.save({ ...s, chats: migrateChats(s.chats ?? [], from, to) });
+  writeInbox(migrateInbox(readInbox(), from, to));
+  deps.changed();
 }
 
 // ---------- Polling: learn chats ----------
 
 interface Update {
   update_id: number;
-  message?: RawMessage & { chat: RawChat };
+  message?: RawMessage & { chat: RawChat; migrate_to_chat_id?: number; migrate_from_chat_id?: number };
   my_chat_member?: { chat: RawChat; new_chat_member: { status: string } };
 }
 interface RawChat {
@@ -162,6 +184,9 @@ async function handle(u: Update) {
   if (!deps) return;
   const chat = u.message?.chat ?? u.my_chat_member?.chat;
   if (!chat) return;
+  // A group became a supergroup: both chats tell about it — the known one moves to the new id.
+  if (u.message?.migrate_to_chat_id) return migrate(chat.id, u.message.migrate_to_chat_id);
+  if (u.message?.migrate_from_chat_id) return migrate(u.message.migrate_from_chat_id, chat.id);
   const left = u.my_chat_member && ['left', 'kicked'].includes(u.my_chat_member.new_chat_member.status);
   const s = deps.get();
   const known = (s.chats ?? []).find((c) => c.id === chat.id);
@@ -321,9 +346,19 @@ export interface SendResult {
 // Send to each allowed chat; `sent` collects Telegram's message ids per chat.
 async function each(ids: number[], send: (id: number) => Promise<number[]>, sent?: Map<number, number[]>): Promise<SendResult> {
   const out: SendResult = { sent: 0, errors: [] };
-  for (const id of allowed(ids)) {
+  for (const first of allowed(ids)) {
+    let id = first;
     try {
-      const mids = await send(id);
+      let mids: number[];
+      try {
+        mids = await send(id);
+      } catch (e) {
+        // Sent to a group that is a supergroup now: move the chat and send there.
+        if (!(e instanceof Migrated)) throw e;
+        migrate(id, e.to);
+        id = e.to;
+        mids = await send(id);
+      }
       sent?.set(id, mids);
       out.sent++;
     } catch (e) {
