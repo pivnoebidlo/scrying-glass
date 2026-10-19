@@ -280,10 +280,10 @@ export function inboxPhoto(name: string): string | null {
 }
 // What the app sent goes into the conversation too: per chat, with Telegram's message ids (to delete them later)
 // and a picture as a small copy in the inbox folder.
-function sentToInbox(sent: Map<number, number[]>, text: string, photo?: string) {
+function sentToInbox(sent: Map<number, number[]>, text: string, photo?: string, html?: string) {
   const now = Date.now();
   for (const [id, tgIds] of sent) {
-    remember({ id: `${id}:out:${now}`, chat: id, from: '', text, ...(photo ? { photo } : {}), date: now, mine: true, read: true, tgIds });
+    remember({ id: `${id}:out:${now}`, chat: id, from: '', text, ...(photo ? { photo } : {}), ...(html ? { html } : {}), date: now, mine: true, read: true, tgIds });
   }
 }
 // A copy of a sent picture for the conversation: at most 1280 px, JPEG. Its file name or undefined.
@@ -384,7 +384,7 @@ export async function sendText(ids: number[], html: string, replyTo?: number): P
     },
     sent
   );
-  if (res.sent) sentToInbox(sent, plain(html));
+  if (res.sent) sentToInbox(sent, plain(html), undefined, html);
   return res;
 }
 
@@ -407,7 +407,7 @@ export function sendPicture(ids: number[], picture: { file: string } | { png: Bu
   }, sent).then((res) => {
     if (res.sent) {
       const photo = previewOf(data);
-      sentToInbox(sent, caption ? plain(caption) : photo ? '' : `🖼 ${name.replace(/\.[^.]+$/, '')}`, photo);
+      sentToInbox(sent, caption ? plain(caption) : photo ? '' : `🖼 ${name.replace(/\.[^.]+$/, '')}`, photo, caption);
     }
     return res;
   });

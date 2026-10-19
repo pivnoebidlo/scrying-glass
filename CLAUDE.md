@@ -313,7 +313,8 @@ Electron-приложение для мастера D&D: окно управле
   токен — `settings.telegram`, шифруется `safeStorage`; опрос `getUpdates` узнаёт чаты — /start игрока, бот в группе;
   новый чат выключен, включает мастер; отправка — `sendPhoto` / `sendDocument` больше 10 МБ / `sendMessage` HTML),
   IPC `telegram:*` (снимок части окна — `capturePage`: записка картинкой — `SendDialog` на миг рисует её крупно поверх окна), чистые функции — `shared/telegram.ts`
-  (`markdownToTelegram`, `splitMessage`, `entryToTelegram`). Входящие: опрос отдаёт `message` в `receive` —
+  (`markdownToTelegram` — ещё ~~s~~, __u__, _i_, ||спойлер||; `safeTgHtml` — показ своего `html` в окне; `sortChats` —
+  группы первыми; `splitMessage`, `entryToTelegram`). Входящие: опрос отдаёт `message` в `receive` —
   `incoming` (shared, только включённые чаты, без команд и ботов) → `<userData>/telegram/inbox.json` (`addToInbox`,
   последние `INBOX_MAX`; фото — `getFile`, размер `photoSize`, файлом рядом, в окно — data: URL `telegram:photo`);
   группа, ставшая супергруппой (новый id): `migrate_to_chat_id` / `migrate_from_chat_id` в обновлениях и

@@ -7,7 +7,7 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openSettings } from '../../../renderer/lib/nav';
-  import { chatName, titleHtml } from '../../../shared/telegram';
+  import { chatName, markdownToTelegram, sortChats, titleHtml } from '../../../shared/telegram';
   import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
   import type { Note } from '../../../shared/notes';
   import { enabledChats, lastSelected, loadTg, rememberSelected, sending, tg, tgReady } from './tg.svelte';
@@ -22,7 +22,7 @@
   let result = $state('');
 
   const job = $derived(sending.job);
-  const chats = $derived(enabledChats());
+  const chats = $derived(sortChats(enabledChats()));
   const groups = $derived(chats.filter((c) => c.kind === 'group'));
   const players = $derived(chats.filter((c) => c.kind === 'private'));
 
@@ -52,7 +52,9 @@
     if (!j || !selected.length) return;
     busy = true;
     rememberSelected(selected);
-    const cap = caption.trim() ? titleHtml(caption.trim()) : undefined;
+    // The title offered as the caption goes bold; a caption written by hand — as Markdown.
+    const c = caption.trim();
+    const cap = !c ? undefined : j.kind !== 'image' && c === j.title ? titleHtml(c) : markdownToTelegram(c);
     let r: { sent: number; errors: string[] };
     if (j.kind === 'file') r = await window.api.telegramSendFile($state.snapshot(selected), j.path, cap);
     else if (j.kind === 'image') r = await window.api.telegramSendBytes($state.snapshot(selected), j.data, j.name, cap);

@@ -27,8 +27,9 @@ export const chatName = (c: TgChat) => (c.label ? `${c.label} (${c.title})` : c.
 
 const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-// Markdown of a compendium entry or a journal note -> the HTML subset Telegram accepts (b, i, code, blockquote):
-// headings and **bold** — bold, *italic* — italic, «- » lists — bullets, «> » — a quote, [[Link|Alias]] — its text.
+// Markdown of a compendium entry, a journal note or a message -> the HTML subset Telegram accepts: headings and
+// **bold** — bold, *italic* / _italic_ — italic, __underline__, ~~strikethrough~~, ||spoiler|| (hidden until tapped),
+// `code`, «- » lists — bullets, «> » — a quote, [[Link|Alias]] — its text.
 export function markdownToTelegram(md: string): string {
   const out: string[] = [];
   let quote: string[] = [];
@@ -63,8 +64,25 @@ function inline(s: string): string {
     .replace(/\*\*\*(.+?)\*\*\*/g, '<b><i>$1</i></b>')
     .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
     .replace(/(^|[^*])\*([^*\s][^*]*?)\*/g, '$1<i>$2</i>')
+    .replace(/~~(.+?)~~/g, '<s>$1</s>')
+    .replace(/__(.+?)__/g, '<u>$1</u>')
+    .replace(/(^|[\s(«"])_([^_\s][^_]*?)_(?=$|[\s.,;:!?)»"])/g, '$1<i>$2</i>')
+    .replace(/\|\|(.+?)\|\|/g, '<tg-spoiler>$1</tg-spoiler>')
     .replace(/`([^`]+)`/g, '<code>$1</code>');
 }
+
+// Telegram HTML made by markdownToTelegram, safe to show in the app: only its own tags stay, anything else is text.
+export function safeTgHtml(html: string): string {
+  return html
+    .replace(/<(\/?)(b|i|u|s|code|blockquote|tg-spoiler)>/g, '\u0001$1$2\u0002')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\u0001/g, '<')
+    .replace(/\u0002/g, '>');
+}
+
+// Chats in lists: groups first, then players, each in the order they were added.
+export const sortChats = <T extends { kind: TgChat['kind'] }>(chats: T[]): T[] => [...chats.filter((c) => c.kind === 'group'), ...chats.filter((c) => c.kind !== 'group')];
 
 // Telegram takes up to 4096 characters per message: split by paragraphs, then by lines, then hard.
 export function splitMessage(text: string, max = 4000): string[] {
@@ -121,8 +139,10 @@ export interface TgMessage {
   date: number;
   mine?: boolean;
   read?: boolean;
-  // Mine: Telegram's ids of the messages it went as (a long text — several), to delete them for everyone.
+  // Mine: Telegram's ids of the messages it went as (a long text — several), to delete them for everyone; the
+  // formatted text as it went (Telegram HTML), shown with its formatting.
   tgIds?: number[];
+  html?: string;
 }
 
 // The part of a Telegram message the inbox reads.

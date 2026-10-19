@@ -9,7 +9,7 @@
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { markdownKeys } from '../../../renderer/lib/markdownKeys';
   import { openSettings } from '../../../renderer/lib/nav';
-  import { chatName, markdownToTelegram, type TgMessage } from '../../../shared/telegram';
+  import { chatName, markdownToTelegram, safeTgHtml, sortChats, type TgMessage } from '../../../shared/telegram';
   import { clearInbox, enabledChats, loadInbox, loadTg, markRead, photoUrl, prefs, sendToTelegram, tg, tgReady, unread } from './tg.svelte';
 
   onMount(() => {
@@ -39,7 +39,7 @@
   // Which chat is open: null — all.
   let chat = $state<number | null>(null);
   let replyTo = $state<TgMessage | null>(null);
-  const chats = $derived(enabledChats());
+  const chats = $derived(sortChats(enabledChats()));
   const list = $derived(tg.inbox.filter((m) => chat === null || m.chat === chat));
   const chatOf = (id: number) => tg.status?.chats.find((x) => x.id === id);
   const nameOf = (id: number) => {
@@ -189,7 +189,7 @@
                 {@const url = photoUrl(m.photo)}
                 {#if url}<img src={url} alt="" />{/if}
               {/if}
-              {#if m.text}<div class="text">{m.text}</div>{/if}
+              {#if m.html}<div class="text">{@html safeTgHtml(m.html)}</div>{:else if m.text}<div class="text">{m.text}</div>{/if}
               {#if m.kind}<div class="faint kind">{t(`tg.kind.${m.kind}` as never)}</div>{/if}
             </div>
           {:else}
@@ -383,6 +383,21 @@
   }
   .kind {
     font-style: italic;
+  }
+  .text :global(blockquote) {
+    margin: 4px 0;
+    padding-left: 8px;
+    border-left: 3px solid var(--accent);
+  }
+  .text :global(tg-spoiler) {
+    border-radius: 3px;
+    background: var(--text-faint);
+    color: transparent;
+    transition: color 0.2s;
+  }
+  .text :global(tg-spoiler:hover) {
+    background: none;
+    color: inherit;
   }
   .empty {
     margin: auto;

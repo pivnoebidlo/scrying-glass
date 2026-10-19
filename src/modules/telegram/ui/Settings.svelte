@@ -4,6 +4,7 @@
   import { X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
+  import { sortChats } from '../../../shared/telegram';
   import { loadTg, prefs, setEnterSends, tg } from './tg.svelte';
 
   // Standard module props; nothing here uses them.
@@ -59,7 +60,7 @@
   <p class="faint">{t('tg.chatsAbout', { bot: s.bot ?? '…' })}</p>
   {#if s.chats.length}
     <ul>
-      {#each s.chats as c (c.id)}
+      {#each sortChats(s.chats) as c (c.id)}
         <li class:off={!c.enabled}>
           <label class="on" title={t('tg.enabled')}>
             <input type="checkbox" checked={c.enabled} onchange={async (e) => (tg.status = await window.api.updateTelegramChat(c.id, { enabled: e.currentTarget.checked }))} />

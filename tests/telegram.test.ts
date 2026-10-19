@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { setLang } from '../src/shared/i18n';
 import { TYPES } from '../src/shared/compendium';
-import { addToInbox, chatName, entryToTelegram, incoming, markdownToTelegram, migrateChats, migrateInbox, photoSize, splitMessage, unreadCount, type RawMessage } from '../src/shared/telegram';
+import { addToInbox, chatName, entryToTelegram, incoming, markdownToTelegram, migrateChats, migrateInbox, photoSize, safeTgHtml, sortChats, splitMessage, unreadCount, type RawMessage } from '../src/shared/telegram';
 
 describe('Telegram', () => {
   it('Markdown → HTML Telegram: жирный, курсив, заголовки, списки, цитаты, [[ссылки]], экранирование', () => {
@@ -92,5 +92,18 @@ describe('telegram: группа стала супергруппой', () => {
     const moved = migrateInbox(list, -1, -100);
     expect(moved.map((m) => m.id)).toEqual(['-100:3', '-100:out:9', '5:1']);
     expect(moved[1]!.tgIds).toBeUndefined();
+  });
+});
+
+describe('telegram: оформление', () => {
+  it('зачёркнутый, подчёркнутый, курсив подчёркиваниями, спойлер', () => {
+    expect(markdownToTelegram('~~нет~~ __да__ _так_ ||тайна|| snake_case_name')).toBe('<s>нет</s> <u>да</u> <i>так</i> <tg-spoiler>тайна</tg-spoiler> snake_case_name');
+  });
+  it('в приложении показываются только теги Telegram, остальное — текстом', () => {
+    expect(safeTgHtml('<b>a</b> &lt;i&gt; <img src=x onerror=1><tg-spoiler>s</tg-spoiler>')).toBe('<b>a</b> &lt;i&gt; &lt;img src=x onerror=1&gt;<tg-spoiler>s</tg-spoiler>');
+  });
+  it('сначала группы, потом игроки', () => {
+    const c = [{ kind: 'private' as const, id: 1 }, { kind: 'group' as const, id: 2 }, { kind: 'private' as const, id: 3 }, { kind: 'group' as const, id: 4 }];
+    expect(sortChats(c).map((x) => x.id)).toEqual([2, 4, 1, 3]);
   });
 });
