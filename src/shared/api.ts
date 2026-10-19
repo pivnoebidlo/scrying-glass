@@ -138,6 +138,9 @@ export interface Api {
   updateTelegramChat(id: number, patch: Partial<Pick<TgChat, 'enabled' | 'label' | 'table'>>): Promise<TgStatus>;
   // Tables (the groups of people who play together): the whole list; chats of a removed table lose it.
   setTelegramTables(tables: TgTable[]): Promise<TgStatus>;
+  // About: open one of its links (shared/about.ts); the menu asks to open a settings section.
+  openLink(url: string): Promise<void>;
+  onOpenSettings(cb: (section: string) => void): void;
   // The game schedule (shared/schedule.ts, common to all vaults): the whole of it; the games as edited; announce a
   // game (its occurrence key) to its table with «I'll come» buttons; changes (answers, reminders sent).
   schedule(): Promise<ScheduleData>;

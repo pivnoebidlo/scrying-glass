@@ -14,6 +14,8 @@
 
   const backgrounds = controlContributions.filter((c) => c.background);
   import { workspace } from './workspace.svelte';
+  // The app menu's «About» and «Settings…» (main/menu.ts).
+  window.api.onOpenSettings((section) => workspace.openSettings(section));
 
   function onkeydown(e: KeyboardEvent) {
     // Cmd/Ctrl + , — настройки, как в Obsidian.

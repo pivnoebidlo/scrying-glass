@@ -40,6 +40,10 @@ Electron-приложение для мастера D&D: окно управле
   (`applyTheme`), the window — `<html data-theme>` (`applyTheme` in store.svelte.ts, the last one cached in
   localStorage for the next launch). Colours — only tokens in `renderer/lib/theme.css` (incl. `--warning`,
   `--success`, `--on-accent` — text on an accent background: dark on the cyan of space); hard-coded colours only on pictures and on the player screen.
+- About: `shared/about.ts` (addresses, `CREDITS` — attribution the CC BY licenses require; only these links open,
+  IPC `app:openLink`), section `renderer/control/About.svelte` (settings section `about`). The app menu — `main/menu.ts`
+  (`buildMenu`, in the interface language, rebuilt on a language change; «About» / «Settings…» → event
+  `app:openSettings`; the macOS About panel — `setAboutPanelOptions`).
 - Setting: `settings.language` in settings.json ('auto' | lang), action `vault/setLanguage`, state `vault.language`
   (setting) and `vault.lang` (resolved); section «General / Общие» in the settings window (`Settings.svelte`).
 - Migration plan: 1) foundation + shell (done); 2) modules, systems, main process (done); 3) built-in content in English (done: compendium

@@ -34,6 +34,8 @@ import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { importNameLists, listNameLists, namesDir } from './names';
 import { checkForUpdates } from './updates';
+import { buildMenu } from './menu';
+import { isAboutLink } from '../shared/about';
 import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnouncement } from './schedule';
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
@@ -257,8 +259,12 @@ function setRoles(roles: Partial<RoleNames> | null): VaultState {
 function setLanguageSetting(language: LangSetting): VaultState {
   settings = { ...settings, language: language === 'auto' || isLang(language) ? language : 'auto' };
   writeJsonAtomic(settingsFile(), settings);
-  return vaultState();
+  const state = vaultState();
+  menu();
+  return state;
 }
+// The menu in the interface language; «About» and «Settings» open the settings window in the control window.
+const menu = () => buildMenu((section) => getControlWindow()?.webContents.send('app:openSettings', section));
 
 // Colour theme: native parts (scrollbars, menus, dialogs) follow it through nativeTheme; the window background —
 // so a reload does not flash the wrong colour; the pages switch on the next state broadcast.
@@ -1261,8 +1267,10 @@ ipcMain.handle('updates:setSettings', (_event, next: Partial<UpdateSettings>) =>
   return updateSettings();
 });
 ipcMain.handle('updates:check', () => checkForUpdates());
-ipcMain.handle('app:version', () => app.getVersion());
 ipcMain.handle('updates:open', (_event, url: string) => (isReleaseUrl(url) ? shell.openExternal(url) : undefined));
+// The About section's links (only its own addresses).
+ipcMain.handle('app:openLink', (_event, url: string) => (isAboutLink(url) ? shell.openExternal(url) : undefined));
+ipcMain.handle('app:version', () => app.getVersion());
 // On launch (if on): a newer version that the GM hasn't skipped — the control window shows a banner.
 async function checkUpdatesOnLaunch() {
   const s = updateSettings();
@@ -1326,6 +1334,7 @@ app.whenReady().then(async () => {
 
   createControlWindow();
   applyTheme();
+  menu();
   watchDisplays();
 
   // Последнее открытое хранилище открывается само; если его нет, окно покажет выбор хранилища.

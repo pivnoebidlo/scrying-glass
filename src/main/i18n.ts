@@ -101,6 +101,16 @@ export const en = {
   'core.screen': "Screen {n} ({w}×{h})",
   'core.primary': " — primary",
   'core.preview': "Scrying Glass — player screen (preview)",
+  'core.menu.about': "About Scrying Glass",
+  'core.menu.settings': "Settings…",
+  'core.menu.help': "Help",
+  'core.menu.repo': "Project on GitHub",
+  'core.menu.issues': "Report a problem…",
+  'core.menu.releases': "Releases",
+  'core.menu.file': "File",
+  'core.menu.edit': "Edit",
+  'core.menu.view': "View",
+  'core.menu.window': "Window",
 };
 
 export const ru: Messages<typeof en> = {
@@ -203,4 +213,14 @@ export const ru: Messages<typeof en> = {
   'core.screen': "Экран {n} ({w}×{h})",
   'core.primary': " — основной",
   'core.preview': "Scrying Glass — экран игроков (превью)",
+  'core.menu.about': "О программе Scrying Glass",
+  'core.menu.settings': "Настройки…",
+  'core.menu.help': "Справка",
+  'core.menu.repo': "Проект на GitHub",
+  'core.menu.issues': "Сообщить о проблеме…",
+  'core.menu.releases': "Выпуски",
+  'core.menu.file': "Файл",
+  'core.menu.edit': "Правка",
+  'core.menu.view': "Вид",
+  'core.menu.window': "Окно",
 };

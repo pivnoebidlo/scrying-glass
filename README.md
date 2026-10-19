@@ -301,6 +301,10 @@ Shift+Enter — a new line (or ⌘Enter sends — ⌘, → Telegram). Formatting
 *italic* ⌘I, __underlined__ ⌘U, ~~struck~~ ⌘⇧X, `monospace` ⌘⇧M, ||spoiler|| ⌘⇧P (hidden until tapped); «- » lists,
 «> » quotes.
 
+**About** (⌘, → About, or the app menu): the version, the project's links (GitHub, report a problem, releases), the
+license (GPL-3.0-or-later, no warranty) and the credits of the material by other authors the app includes. The app
+menu is in the interface language; Help leads to the project's pages.
+
 **Tables** (⌘, → Telegram → Tables): a table is the people who play together, so one adventure can be run for several
 tables. Give each chat its table; in the conversation pick the table you play at now (above the chats) — the chats,
 the send dialog, unread counts and toasts show only its chats and those of no table. An adventure remembers the table
