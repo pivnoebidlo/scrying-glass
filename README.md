@@ -295,8 +295,11 @@ whom: the group chat and/or players privately.
 
 Answers come back: what players write in an enabled chat (text, photos, stickers; voice messages and files — as a
 note to open them in Telegram) appears in Tools → Message to the players as a conversation, next to what the app
-sent. A new message shows a toast in the corner (a click opens the conversation) and a count on the tool. Pick a
-chat to write to it straight away; ↩ on a message — a reply to it. In a group the bot sees only replies to its
+sent, pictures included. A new message shows a toast in the corner (a click opens the conversation) and a count on
+the tool. Pick a chat on the right to write to it straight away; ↩ on a message — a reply to it. Enter sends,
+Shift+Enter — a new line (or ⌘Enter sends — ⌘, → Telegram). A picture can be pasted (⌘V), dropped onto the box or
+attached with the button — the text goes as its caption. Your own messages can be deleted for everyone (Telegram
+allows it for 48 hours); any message can be hidden in the app. In a group the bot sees only replies to its
 messages and mentions of it — to see everything, turn its privacy off: @BotFather → /setprivacy → Disable. The
 conversation is kept on this computer (`<app data>/telegram`, the last 300 messages); the bin clears it in the app
 only.

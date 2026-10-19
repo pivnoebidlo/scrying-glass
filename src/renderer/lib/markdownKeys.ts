@@ -23,7 +23,9 @@ function indent(text: string, a: number, b: number, out: boolean): TextEdit {
   return { from: start, to: start + cut, insert: '', a: Math.max(start, a - cut), b: Math.max(start, b - cut) };
 }
 
-export function markdownKeys(area: HTMLTextAreaElement) {
+// enter: false — Enter is someone else's (a chat box where Enter sends); the marks and Tab still work.
+export function markdownKeys(area: HTMLTextAreaElement, opts: { enter?: boolean } = {}) {
+  let enter = opts.enter ?? true;
   const onkeydown = (e: KeyboardEvent) => {
     const mod = e.metaKey || e.ctrlKey;
     const { selectionStart: a, selectionEnd: b, value: text } = area;
@@ -31,7 +33,7 @@ export function markdownKeys(area: HTMLTextAreaElement) {
       e.preventDefault();
       e.stopPropagation();
       apply(area, toggleWrap(text, a, b, MARKS[e.code]!));
-    } else if (e.key === 'Enter' && !mod && !e.shiftKey && !e.altKey && !e.isComposing && a === b) {
+    } else if (enter && e.key === 'Enter' && !mod && !e.shiftKey && !e.altKey && !e.isComposing && a === b) {
       const edit = continueMarkup(text, a);
       if (edit) {
         e.preventDefault();
@@ -43,5 +45,8 @@ export function markdownKeys(area: HTMLTextAreaElement) {
     }
   };
   area.addEventListener('keydown', onkeydown);
-  return { destroy: () => area.removeEventListener('keydown', onkeydown) };
+  return {
+    update: (next: { enter?: boolean } = {}) => (enter = next.enter ?? true),
+    destroy: () => area.removeEventListener('keydown', onkeydown),
+  };
 }

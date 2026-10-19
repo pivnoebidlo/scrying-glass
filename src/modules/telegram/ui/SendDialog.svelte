@@ -35,7 +35,7 @@
     const on = new Set(chats.map((c) => c.id));
     const last = lastSelected().filter((id) => on.has(id));
     selected = last.length ? last : groups.map((c) => c.id).slice(0, 1);
-    caption = job.kind === 'text' ? '' : job.title;
+    caption = job.kind === 'text' ? '' : job.kind === 'image' ? (job.caption ?? '') : job.title;
     result = '';
     busy = false;
   });
@@ -55,6 +55,7 @@
     const cap = caption.trim() ? titleHtml(caption.trim()) : undefined;
     let r: { sent: number; errors: string[] };
     if (j.kind === 'file') r = await window.api.telegramSendFile($state.snapshot(selected), j.path, cap);
+    else if (j.kind === 'image') r = await window.api.telegramSendBytes($state.snapshot(selected), j.data, j.name, cap);
     else if (j.kind === 'text') r = await window.api.telegramSendText($state.snapshot(selected), j.html);
     else r = await sendNote(j.path, j.title, cap);
     busy = false;

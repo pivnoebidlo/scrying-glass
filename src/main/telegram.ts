@@ -7,7 +7,7 @@
 //   the window is told of each new message (telegram:inbox).
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { safeStorage } from 'electron';
+import { nativeImage, safeStorage } from 'electron';
 import { t } from '../shared/i18n';
 import { addToInbox, incoming, photoSize, splitMessage, type RawMessage, type TgChat, type TgMessage, type TgStatus } from '../shared/telegram';
 
@@ -253,10 +253,51 @@ export function inboxPhoto(name: string): string | null {
     return null;
   }
 }
-// What the app sent goes into the conversation too (as text; a picture — by its name).
-function sentToInbox(ids: number[], text: string) {
+// What the app sent goes into the conversation too: per chat, with Telegram's message ids (to delete them later)
+// and a picture as a small copy in the inbox folder.
+function sentToInbox(sent: Map<number, number[]>, text: string, photo?: string) {
   const now = Date.now();
-  for (const id of allowed(ids)) remember({ id: `${id}:out:${now}`, chat: id, from: '', text, date: now, mine: true, read: true });
+  for (const [id, tgIds] of sent) {
+    remember({ id: `${id}:out:${now}`, chat: id, from: '', text, ...(photo ? { photo } : {}), date: now, mine: true, read: true, tgIds });
+  }
+}
+// A copy of a sent picture for the conversation: at most 1280 px, JPEG. Its file name or undefined.
+function previewOf(data: Buffer): string | undefined {
+  if (!deps) return undefined;
+  try {
+    let img = nativeImage.createFromBuffer(data);
+    if (img.isEmpty()) return undefined;
+    const { width, height } = img.getSize();
+    const k = Math.min(1, 1280 / Math.max(width, height));
+    if (k < 1) img = img.resize({ width: Math.round(width * k), height: Math.round(height * k), quality: 'good' });
+    const name = `out_${Date.now()}.jpg`;
+    fs.mkdirSync(deps.dir, { recursive: true });
+    fs.writeFileSync(path.join(deps.dir, name), img.toJPEG(82));
+    return name;
+  } catch {
+    return undefined;
+  }
+}
+const plain = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+
+// Delete a message the app sent — in Telegram for everyone (bots may delete their own messages for 48 hours) and from
+// the conversation. An error text or null.
+export async function deleteSent(id: string): Promise<string | null> {
+  const m = readInbox().find((x) => x.id === id);
+  if (!m?.mine) return null;
+  try {
+    for (const mid of m.tgIds ?? []) await api('deleteMessage', { chat_id: m.chat, message_id: mid });
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+  writeInbox(readInbox().filter((x) => x.id !== id));
+  return null;
+}
+// Hide a message in the app only (Telegram keeps it).
+export function hideMessage(id: string): TgMessage[] {
+  const list = readInbox().filter((x) => x.id !== id);
+  writeInbox(list);
+  return list;
 }
 
 export function stopTelegram() {
@@ -277,11 +318,13 @@ export interface SendResult {
   errors: string[];
 }
 
-async function each(ids: number[], send: (id: number) => Promise<unknown>): Promise<SendResult> {
+// Send to each allowed chat; `sent` collects Telegram's message ids per chat.
+async function each(ids: number[], send: (id: number) => Promise<number[]>, sent?: Map<number, number[]>): Promise<SendResult> {
   const out: SendResult = { sent: 0, errors: [] };
   for (const id of allowed(ids)) {
     try {
-      await send(id);
+      const mids = await send(id);
+      sent?.set(id, mids);
       out.sent++;
     } catch (e) {
       const c = deps?.get().chats?.find((x) => x.id === id);
@@ -293,20 +336,29 @@ async function each(ids: number[], send: (id: number) => Promise<unknown>): Prom
 
 export async function sendText(ids: number[], html: string, replyTo?: number): Promise<SendResult> {
   const parts = splitMessage(html);
-  const res = await each(ids, async (id) => {
-    for (const [i, text] of parts.entries()) {
-      await api('sendMessage', { chat_id: id, text, parse_mode: 'HTML', ...(replyTo && i === 0 ? { reply_parameters: { message_id: replyTo, allow_sending_without_reply: true } } : {}) });
-    }
-  });
-  if (res.sent) sentToInbox(ids, html.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'));
+  const sent = new Map<number, number[]>();
+  const res = await each(
+    ids,
+    async (id) => {
+      const mids: number[] = [];
+      for (const [i, text] of parts.entries()) {
+        const m = await api<{ message_id: number }>('sendMessage', { chat_id: id, text, parse_mode: 'HTML', ...(replyTo && i === 0 ? { reply_parameters: { message_id: replyTo, allow_sending_without_reply: true } } : {}) });
+        mids.push(m.message_id);
+      }
+      return mids;
+    },
+    sent
+  );
+  if (res.sent) sentToInbox(sent, plain(html));
   return res;
 }
 
-// A picture: a file (vault or library) or the bytes of a capture (a note as the players see it).
+// A picture: a file (vault or library) or bytes (a capture of a note as the players see it, a pasted image).
 export function sendPicture(ids: number[], picture: { file: string } | { png: Buffer; name: string }, caption?: string): Promise<SendResult> {
   const data = 'file' in picture ? fs.readFileSync(picture.file) : picture.png;
   const name = 'file' in picture ? path.basename(picture.file) : picture.name;
   const asDocument = data.length > MAX_PHOTO;
+  const sent = new Map<number, number[]>();
   return each(ids, async (id) => {
     const form = new FormData();
     form.append('chat_id', String(id));
@@ -315,9 +367,13 @@ export function sendPicture(ids: number[], picture: { file: string } | { png: Bu
       form.append('parse_mode', 'HTML');
     }
     form.append(asDocument ? 'document' : 'photo', new Blob([new Uint8Array(data)]), name);
-    await api(asDocument ? 'sendDocument' : 'sendPhoto', form);
-  }).then((res) => {
-    if (res.sent) sentToInbox(ids, `🖼 ${name.replace(/\.[^.]+$/, '')}`);
+    const m = await api<{ message_id: number }>(asDocument ? 'sendDocument' : 'sendPhoto', form);
+    return [m.message_id];
+  }, sent).then((res) => {
+    if (res.sent) {
+      const photo = previewOf(data);
+      sentToInbox(sent, caption ? plain(caption) : photo ? '' : `🖼 ${name.replace(/\.[^.]+$/, '')}`, photo);
+    }
     return res;
   });
 }

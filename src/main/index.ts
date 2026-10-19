@@ -34,7 +34,7 @@ import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { importNameLists, listNameLists, namesDir } from './names';
 import { checkForUpdates } from './updates';
-import { clearInbox, forgetChat, inboxPhoto, initTelegram, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
+import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
@@ -1225,6 +1225,12 @@ ipcMain.handle('telegram:inbox', () => readInbox());
 ipcMain.handle('telegram:markRead', (_event, chat?: number) => markRead(chat));
 ipcMain.handle('telegram:clearInbox', (_event, chat?: number) => clearInbox(chat));
 ipcMain.handle('telegram:photo', (_event, name: string) => inboxPhoto(name));
+ipcMain.handle('telegram:delete', (_event, id: string) => deleteSent(id));
+ipcMain.handle('telegram:hide', (_event, id: string) => hideMessage(id));
+// A pasted or dropped image: its bytes (≤ 20 MB) as a picture.
+ipcMain.handle('telegram:sendBytes', (_event, { chats, data, name, caption }: { chats: number[]; data: Uint8Array; name: string; caption?: string }) =>
+  data.byteLength > 20 * 1024 * 1024 ? { sent: 0, errors: ['> 20 MB'] } : sendPicture(chats, { png: Buffer.from(data), name: safeFileName(name) || 'image.png' }, caption)
+);
 ipcMain.handle('telegram:sendFile', (_event, { chats, path: rel, caption }: { chats: number[]; path: string; caption?: string }) => {
   const file = rel.startsWith(LIBRARY) ? resolveInLibrary(rel.slice(LIBRARY.length)) : resolveInVault(rel);
   if (!file || !fs.existsSync(file)) return { sent: 0, errors: [rel] };

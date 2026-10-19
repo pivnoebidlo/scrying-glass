@@ -143,6 +143,11 @@ export interface Api {
   telegramMarkRead(chat?: number): Promise<TgMessage[]>;
   telegramClearInbox(chat?: number): Promise<TgMessage[]>;
   telegramPhoto(name: string): Promise<string | null>;
+  // Delete a message the app sent — for everyone (Telegram allows 48 hours); an error text or null. Hide any message
+  // in the app only. Send an image's bytes (pasted or dropped) as a picture.
+  telegramDelete(id: string): Promise<string | null>;
+  telegramHide(id: string): Promise<TgMessage[]>;
+  telegramSendBytes(chats: number[], data: Uint8Array, name: string, caption?: string): Promise<{ sent: number; errors: string[] }>;
   onTelegramMessage(cb: (m: TgMessage) => void): void;
   telegramSendFile(chats: number[], path: string, caption?: string): Promise<{ sent: number; errors: string[] }>;
   telegramSendCapture(chats: number[], rect: { x: number; y: number; width: number; height: number }, name: string, caption?: string): Promise<{ sent: number; errors: string[] }>;

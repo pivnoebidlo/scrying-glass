@@ -52,11 +52,31 @@ export function photoUrl(name: string): string | null {
 // see it (the dialog draws it large for a moment and captures it).
 export type SendJob =
   | { kind: 'file'; path: string; title: string }
+  | { kind: 'image'; title: string; data: Uint8Array; name: string; caption?: string }
   | { kind: 'text'; title: string; html: string }
   | { kind: 'note'; path: string; title: string };
 
 export const sending = $state({ job: null as SendJob | null });
 export const sendToTelegram = (job: SendJob) => (sending.job = job);
+
+// How a message goes from the conversation: Enter (Shift+Enter — a new line) or ⌘/Ctrl+Enter (Enter — a new line).
+// Kept by the window.
+function readEnterSends() {
+  try {
+    return localStorage.getItem('tg.enterSends') !== 'false';
+  } catch {
+    return true;
+  }
+}
+export const prefs = $state({ enterSends: readEnterSends() });
+export function setEnterSends(on: boolean) {
+  prefs.enterSends = on;
+  try {
+    localStorage.setItem('tg.enterSends', String(on));
+  } catch {
+    /* not remembered — not a problem */
+  }
+}
 
 // Recipients chosen last time (per window).
 const KEY = 'tg.selected';

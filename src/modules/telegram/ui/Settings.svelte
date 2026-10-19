@@ -4,7 +4,7 @@
   import { X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { loadTg, tg } from './tg.svelte';
+  import { loadTg, prefs, setEnterSends, tg } from './tg.svelte';
 
   // Standard module props; nothing here uses them.
   let {}: ModuleProps<'telegram'> = $props();
@@ -45,6 +45,16 @@
 </div>
 
 {#if s?.configured}
+  <div class="setting">
+    <div class="info">
+      <div class="name">{t('tg.sendKey')}</div>
+      <div class="desc">{t('tg.sendKeyDesc')}</div>
+    </div>
+    <select value={prefs.enterSends ? 'enter' : 'mod'} onchange={(e) => setEnterSends(e.currentTarget.value === 'enter')}>
+      <option value="enter">{t('tg.sendKey.enter')}</option>
+      <option value="mod">{t('tg.sendKey.mod')}</option>
+    </select>
+  </div>
   <h3>{t('tg.chats')}</h3>
   <p class="faint">{t('tg.chatsAbout', { bot: s.bot ?? '…' })}</p>
   {#if s.chats.length}

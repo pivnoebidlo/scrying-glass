@@ -121,6 +121,8 @@ export interface TgMessage {
   date: number;
   mine?: boolean;
   read?: boolean;
+  // Mine: Telegram's ids of the messages it went as (a long text — several), to delete them for everyone.
+  tgIds?: number[];
 }
 
 // The part of a Telegram message the inbox reads.

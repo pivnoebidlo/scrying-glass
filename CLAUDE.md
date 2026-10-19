@@ -316,7 +316,11 @@ Electron-приложение для мастера D&D: окно управле
   (`markdownToTelegram`, `splitMessage`, `entryToTelegram`). Входящие: опрос отдаёт `message` в `receive` —
   `incoming` (shared, только включённые чаты, без команд и ботов) → `<userData>/telegram/inbox.json` (`addToInbox`,
   последние `INBOX_MAX`; фото — `getFile`, размер `photoSize`, файлом рядом, в окно — data: URL `telegram:photo`);
-  отправленное тоже пишется туда (`mine`); событие `telegram:inbox`, IPC `telegram:inbox` / `markRead` / `clearInbox`.
+  отправленное тоже пишется туда (`mine`, `tgIds` — номера сообщений в Telegram для `deleteSent` → `deleteMessage`,
+  48 часов; картинка — уменьшенная копия `previewOf` через nativeImage); событие `telegram:inbox`, IPC
+  `telegram:inbox` / `markRead` / `clearInbox` / `delete` / `hide` / `sendBytes` (вставленная или перетащенная
+  картинка; при «Все» — задание `image` окна отправки). Клавиша отправки — `prefs.enterSends` (localStorage окна,
+  настройки Telegram); `use:markdownKeys={{ enter }}` уступает Enter полю, где Enter отправляет.
   Окно: `ui/tg.svelte.ts` (`sendToTelegram(job)`, `tg.inbox`, `unread`, `tg.toast`), фон модуля `Background.svelte`
   (`SendDialog.svelte` + `Toast.svelte`), `Settings.svelte`, `Compose.svelte` (страница в «Инструментах» — переписка
   с выбором чата, ответ — `reply_parameters`, «Все» — через окно отправки); кнопка на
