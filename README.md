@@ -313,8 +313,13 @@ only.
 
 **Schedule** (Tools → Schedule): your games — date and time, length, a repeat (every week or every two, until a
 day, with skipped ones), the table, the adventure and its plan (a journal note), the place (an address or a link to
-the online room). The bot announces a game to its table with "I'll come / Maybe / Can't" buttons; answers show under
-the game and in the announcement itself. It reminds the table a day and two hours before (while the app is open — a
+the online room). The announcement has optional lines — each goes only when filled: a picture on top, the kind of game
+(one-shot, campaign, session) with its title, players, price, GM, system (from the adventure), characters' level and a
+description (with formatting); the editor shows a preview. The bot announces a game to its table with "I'll come /
+Maybe / Can't" buttons (one per row); answers show under the game and in the announcement itself. Changed the game
+after announcing it? The game shows "The announcement is out of date: Address…" — "Update the announcement" edits the
+sent message, "Update and tell the players" also replies to it with what changed. A moved time takes the answers
+along. It reminds the table a day and two hours before (while the app is open — a
 reminder whose time came while it was closed goes when it opens). "Start the game" switches to the adventure and the
 table, pins the plan and opens the scenes. The next game is in the right panel. The schedule is common to all vaults
 (`<app data>/schedule.json`).

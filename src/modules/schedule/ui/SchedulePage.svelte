@@ -2,11 +2,17 @@
      date and time, length, repeat (and until when), table, adventure of this vault and its plan, place, reminders.
      Per game: announce to the table in Telegram, start, skip this one (a repeat), edit, delete. -->
 <script lang="ts">
-  import { CalendarPlus, Megaphone, Pencil, Play, SkipForward, Trash2 } from '@lucide/svelte';
+  import { CalendarPlus, ImagePlus, Megaphone, Pencil, Play, RefreshCw, SkipForward, Trash2, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
-  import { gameId, occurrences, REPEATS, tally, type Game, type Occurrence } from '../../../shared/schedule';
+  import { announceDiff, announcementText, GAME_KINDS, gameId, occurrences, REPEATS, tally, type Game, type GameKind, type Occurrence } from '../../../shared/schedule';
+  import { safeTgHtml } from '../../../shared/telegram';
+  import { assetUrl, thumb } from '../../../shared/vault';
+  import { systemFor } from '../../../shared/adventures';
+  import { systemOf } from '../../../systems';
+  import { markdownKeys } from '../../../renderer/lib/markdownKeys';
+  import FilePicker from '../../../renderer/lib/FilePicker.svelte';
   import { allFiles } from '../../../shared/vault';
   import { pageTitle } from '../../../shared/journal';
   import { loadTg, tg } from '../../telegram/ui/tg.svelte';
@@ -38,7 +44,16 @@
     plan: string;
     place: string;
     remind: boolean;
+    image: string;
+    kind: GameKind;
+    players: string;
+    price: string;
+    gm: string;
+    system: string;
+    level: string;
+    description: string;
   }
+  const systemTitle = (adventure: string) => systemOf(systemFor(store.state.adventures, adventure || null)).title;
   const pad = (n: number) => String(n).padStart(2, '0');
   const dateOf = (t: number) => {
     const d = new Date(t);
@@ -50,10 +65,20 @@
   };
   let draft = $state<Draft | null>(null);
   function newGame() {
-    // Next week, same weekday, 19:00 — a starting point.
+    // Next week, same weekday, 19:00 — a starting point; the GM, price, players and place — as in the last game.
     const d = new Date(sched.now + 7 * 86400000);
     d.setHours(19, 0, 0, 0);
+    const last = sched.data.games.at(-1);
+    const adventure = store.state.adventures.current ?? '';
     draft = {
+      image: '',
+      kind: '',
+      players: last?.players ?? '',
+      price: last?.price ?? '',
+      gm: last?.gm ?? '',
+      system: systemTitle(adventure),
+      level: '',
+      description: '',
       id: null,
       title: '',
       date: dateOf(d.getTime()),
@@ -62,9 +87,9 @@
       repeat: 'week',
       until: '',
       table: tables.length === 1 ? tables[0]!.id : '',
-      adventure: store.state.adventures.current ?? '',
+      adventure,
       plan: '',
-      place: '',
+      place: last?.place ?? '',
       remind: true,
     };
   }
@@ -82,6 +107,14 @@
       plan: g.plan ?? '',
       place: g.place ?? '',
       remind: g.remind,
+      image: g.image ?? '',
+      kind: g.kind ?? '',
+      players: g.players ?? '',
+      price: g.price ?? '',
+      gm: g.gm ?? '',
+      system: g.system ?? '',
+      level: g.level ?? '',
+      description: g.description ?? '',
     };
   }
   const local = (date: string, time = '00:00') => {
@@ -107,6 +140,14 @@
       plan: d.plan || undefined,
       place: d.place.trim() || undefined,
       remind: d.remind,
+      ...(d.image ? { image: d.image } : {}),
+      ...(d.kind ? { kind: d.kind } : {}),
+      ...(d.players.trim() ? { players: d.players.trim() } : {}),
+      ...(d.price.trim() ? { price: d.price.trim() } : {}),
+      ...(d.gm.trim() ? { gm: d.gm.trim() } : {}),
+      ...(d.system.trim() ? { system: d.system.trim() } : {}),
+      ...(d.level.trim() ? { level: d.level.trim() } : {}),
+      ...(d.description.trim() ? { description: d.description.trim() } : {}),
     };
     const games = sched.data.games.filter((g) => g.id !== game.id);
     await saveGames([...games, game]);
@@ -128,6 +169,29 @@
       .map((f) => f.path)
       .filter((p) => (adv ? p.startsWith(adv + '/') : !store.state.adventures.list.some((a) => p.startsWith(a + '/'))));
   });
+
+  // The announcement as the players will see it (the first game of the draft).
+  const preview = $derived.by(() => {
+    const d = draft;
+    if (!d?.date || !d.time) return '';
+    const game: Game = { id: 'p', title: d.title.trim(), start: local(d.date, d.time), minutes: Math.round(d.hours * 60), repeat: 'none', remind: false, adventure: d.adventure || null, place: d.place, kind: d.kind, players: d.players, price: d.price, gm: d.gm, system: d.system, level: d.level, description: d.description };
+    return safeTgHtml(announcementText({ game, start: game.start, key: 'p' }, undefined, locale.lang));
+  });
+  let picking = $state(false);
+  const imageUrl = (p: string) => thumb(assetUrl(p), 300);
+
+  // A sent announcement that no longer matches the game: what changed.
+  const outdated = (o: Occurrence) => {
+    const before = sched.data.announcedAs?.[o.key];
+    if (!before || !sched.data.announced[o.key]?.length) return [];
+    return announceDiff(before, o.game);
+  };
+  async function update(o: Occurrence, notify: boolean) {
+    busy = o.key;
+    const r = await window.api.updateAnnouncement(o.key, notify);
+    busy = null;
+    message = r.error ?? '';
+  }
 
   let busy = $state<string | null>(null);
   let message = $state('');
@@ -169,7 +233,7 @@
           </select>
         </label>
         <label>{t('sched.adventure')}
-          <select bind:value={draft.adventure} onchange={() => draft && (draft.plan = '')}>
+          <select bind:value={draft.adventure} onchange={() => draft && ((draft.plan = ''), (draft.system = systemTitle(draft.adventure)))}>
             <option value="">{t('sched.noAdventure')}</option>
             {#each store.state.adventures.list as a (a)}<option value={a}>{a}</option>{/each}
           </select>
@@ -183,6 +247,39 @@
         <label class="wide">{t('sched.place')}<input type="text" placeholder={t('sched.placePh')} bind:value={draft.place} /></label>
       </div>
       <label class="check"><input type="checkbox" bind:checked={draft.remind} /> {t('sched.remind')}</label>
+
+      <h4>{t('sched.announceBlock')}</h4>
+      <p class="faint hint">{t('sched.announceHint')}</p>
+      <div class="announce">
+        <div class="grid">
+          <div class="image wide">
+            {#if draft.image}
+              <img src={imageUrl(draft.image)} alt="" />
+              <button class="icon-btn" title={t('sched.removeImage')} onclick={() => draft && (draft.image = '')}><X size={14} /></button>
+            {:else}
+              <button class="btn" disabled={!store.state.vault.tree} onclick={() => (picking = true)}><ImagePlus size={14} /> {t('sched.pickImage')}</button>
+            {/if}
+          </div>
+          <label>{t('sched.kind')}
+            <select bind:value={draft.kind}>
+              {#each GAME_KINDS as k (k)}<option value={k}>{t(`sched.kind.${k || 'none'}` as never)}</option>{/each}
+            </select>
+          </label>
+          <label>{t('sched.a.players')}<input type="text" placeholder={t('sched.playersPh')} bind:value={draft.players} /></label>
+          <label>{t('sched.a.price')}<input type="text" placeholder={t('sched.pricePh')} bind:value={draft.price} /></label>
+          <label>{t('sched.a.gm')}<input type="text" placeholder={t('sched.gmPh')} bind:value={draft.gm} /></label>
+          <label>{t('sched.a.system')}<input type="text" bind:value={draft.system} /></label>
+          <label>{t('sched.a.level')}<input type="text" placeholder={t('sched.levelPh')} bind:value={draft.level} /></label>
+          <label class="wide">{t('sched.a.description')}
+            <textarea rows="5" placeholder={t('sched.descriptionPh')} bind:value={draft.description} use:markdownKeys={{ telegram: true }}></textarea>
+          </label>
+        </div>
+        <div class="preview">
+          <div class="faint small">{t('sched.preview')}</div>
+          {#if draft.image}<img src={imageUrl(draft.image)} alt="" />{/if}
+          <div class="tgtext">{@html preview}</div>
+        </div>
+      </div>
       <div class="row">
         <button class="btn primary" disabled={!draft.date || !draft.time} onclick={save}>{t('sched.save')}</button>
         <button class="btn" onclick={() => (draft = null)}>{t('sched.cancel')}</button>
@@ -224,6 +321,13 @@
             {#if !sameVault(o.game)}<span>{t('sched.otherVault', { vault: vaultName(o.game.vault) })}</span>{/if}
             {#if sched.data.announced[o.key]?.length}<span>📣 {t('sched.announced')}</span>{/if}
           </div>
+          {#if outdated(o).length}
+            <div class="outdated">
+              <span>{t('sched.outdated', { what: outdated(o).map((f) => t(`sched.a.${f}` as never)).join(', ') })}</span>
+              <button class="btn small" disabled={busy === o.key} onclick={() => update(o, false)}><RefreshCw size={12} /> {t('sched.update')}</button>
+              <button class="btn small" disabled={busy === o.key} onclick={() => update(o, true)}><Megaphone size={12} /> {t('sched.updateNotify')}</button>
+            </div>
+          {/if}
           <div class="answers">
             {#if tl.yes.length + tl.maybe.length + tl.no.length}
               {#if tl.yes.length}<span>✅ {tl.yes.join(', ')}</span>{/if}
@@ -239,7 +343,83 @@
   {/if}
 </div>
 
+{#if picking && store.state.vault.tree}
+  <FilePicker tree={store.state.vault.tree} prefer="backgrounds" onpick={(p) => {
+      if (draft && p[0]) draft.image = p[0];
+      picking = false;
+    }} onclose={() => (picking = false)} />
+{/if}
+
 <style>
+  h4 {
+    margin: 14px 0 2px;
+    font-size: 13px;
+  }
+  .hint {
+    margin: 0 0 8px;
+    font-size: 12px;
+  }
+  .announce {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 14px;
+  }
+  .image {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .image img {
+    max-width: 200px;
+    max-height: 120px;
+    border-radius: var(--radius-s);
+  }
+  textarea {
+    width: 100%;
+  }
+  .preview {
+    align-self: start;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--bg-primary);
+    font-size: 13px;
+  }
+  .preview img {
+    display: block;
+    width: 100%;
+    margin: 4px 0;
+    border-radius: 6px;
+  }
+  .small {
+    font-size: 11px;
+  }
+  .tgtext {
+    white-space: pre-wrap;
+    line-height: 1.45;
+  }
+  .tgtext :global(blockquote) {
+    margin: 4px 0;
+    padding-left: 8px;
+    border-left: 3px solid var(--accent);
+  }
+  .tgtext :global(tg-spoiler) {
+    border-radius: 3px;
+    background: var(--text-faint);
+    color: transparent;
+  }
+  .outdated {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 6px;
+    color: var(--warning);
+    font-size: 12px;
+  }
+  .btn.small {
+    padding: 2px 8px;
+    font-size: 12px;
+  }
   .view {
     max-width: 920px;
     padding: 16px 20px 32px;

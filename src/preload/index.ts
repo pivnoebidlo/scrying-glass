@@ -72,6 +72,7 @@ const api: Api = {
   schedule: () => ipcRenderer.invoke('schedule:get'),
   saveSchedule: (games) => ipcRenderer.invoke('schedule:save', games),
   announceGame: (key) => ipcRenderer.invoke('schedule:announce', key),
+  updateAnnouncement: (key, notify) => ipcRenderer.invoke('schedule:update', { key, notify }),
   onScheduleChanged: (cb) => { ipcRenderer.on('schedule:changed', () => cb()); },
   forgetTelegramChat: (id) => ipcRenderer.invoke('telegram:forgetChat', id),
   telegramSendText: (chats, html, replyTo) => ipcRenderer.invoke('telegram:sendText', { chats, html, replyTo }),

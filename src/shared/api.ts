@@ -143,6 +143,8 @@ export interface Api {
   schedule(): Promise<ScheduleData>;
   saveSchedule(games: Game[]): Promise<ScheduleData>;
   announceGame(key: string): Promise<{ sent: number; error?: string }>;
+  // The game changed after its announcement: edit the sent announcement; notify — and tell the players what changed.
+  updateAnnouncement(key: string, notify: boolean): Promise<{ error?: string }>;
   onScheduleChanged(cb: () => void): void;
   forgetTelegramChat(id: number): Promise<TgStatus>;
   telegramSendText(chats: number[], html: string, replyTo?: number): Promise<{ sent: number; errors: string[] }>;

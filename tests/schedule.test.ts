@@ -53,7 +53,7 @@ describe('расписание: ядро', () => {
     const { initSchedule, saveGames, pressed, readSchedule, announce, stopSchedule } = await import('../src/main/schedule');
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-sched-'));
     try {
-      initSchedule({ file: path.join(dir, 'schedule.json'), changed: () => {}, adventureName: () => '' });
+      initSchedule({ file: path.join(dir, 'schedule.json'), changed: () => {}, adventureName: () => '', imageFile: () => null });
       stopSchedule();
       const g = game({ start: at(2030, 1, 3) });
       saveGames([g]);
@@ -65,5 +65,49 @@ describe('расписание: ядро', () => {
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('расписание: анонс', () => {
+  it('анонс как в примере: только заполненные строки, вид и название, описание с оформлением', async () => {
+    const { setLang } = await import('../src/shared/i18n');
+    setLang('ru');
+    const { announcementText } = await import('../src/shared/schedule');
+    const g = game({ start: at(2026, 10, 18, 10), minutes: 240, repeat: 'none', title: 'Без дураков', kind: 'oneshot', players: '4–5', price: 'Сколько не жалко', gm: '@weesps', place: 'бар Небелка', system: 'D&D 5e (2014)', level: '3', description: 'В деревнях **странный** недуг.' });
+    const text = announcementText({ game: g, start: g.start, key: 'k' }, { a: { name: 'Ann', answer: 'yes', at: 1 } }, 'ru');
+    expect(text).toBe(
+      [
+        '📅 18.10.2026 (вс)\n🕙 10:00–14:00\n👥 Количество участников: 4–5\n💰 Цена: Сколько не жалко\n💬 Мастер: @weesps\n📍 Адрес: бар Небелка\n🎲 Система: D&amp;D 5e (2014)\n⚔️ Уровень персонажей: 3',
+        '📌 Ваншот «Без дураков»',
+        '📝 В деревнях <b>странный</b> недуг.',
+        '✅ Будут: Ann',
+      ].join('\n\n')
+    );
+    const bare = announcementText({ game: game({ title: 'Игра', start: at(2026, 10, 22, 19) }), start: at(2026, 10, 22, 19), key: 'k' }, undefined, 'ru');
+    expect(bare).toBe('📅 22.10.2026 (чт)\n🕖 19:00–23:00\n\n📌 <b>Игра</b>');
+  });
+
+  it('циферблат по времени, полчаса — свой', async () => {
+    const { clockEmoji } = await import('../src/shared/schedule');
+    expect(clockEmoji(new Date(2026, 0, 1, 10, 30).getTime())).toBe('🕥');
+    expect(clockEmoji(new Date(2026, 0, 1, 0, 0).getTime())).toBe('🕛');
+    expect(clockEmoji(new Date(2026, 0, 1, 18, 50).getTime())).toBe('🕖');
+  });
+
+  it('что изменилось и сообщение об этом; сдвиг времени уносит ответы и анонсы', async () => {
+    const { announceDiff, changesText, rekey, EMPTY_SCHEDULE } = await import('../src/shared/schedule');
+    const before = game({ place: 'бар', price: '500' });
+    const after = { ...before, place: 'клуб', price: '', start: before.start + 3600000 };
+    expect(announceDiff(before, after)).toEqual(['start', 'price', 'place']);
+    expect(announceDiff(before, { ...before })).toEqual([]);
+    const msg = changesText({ game: after, start: after.start, key: 'k' }, ['place', 'price'], 'ru');
+    expect(msg).toContain('📍 Адрес: клуб');
+    expect(msg).toContain('Цена: больше нет');
+    const k = occKey(before, at(2026, 10, 29));
+    const data = { ...EMPTY_SCHEDULE, answers: { [k]: { a: { name: 'Ann', answer: 'yes' as const, at: 1 } } }, reminded: { [k]: ['day' as const] } };
+    const moved = rekey(data, before, after);
+    const nk = occKey(after, at(2026, 10, 29) + 3600000);
+    expect(Object.keys(moved.answers)).toEqual([nk]);
+    expect(moved.reminded).toEqual({});
   });
 });

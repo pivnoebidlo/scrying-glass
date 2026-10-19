@@ -474,3 +474,25 @@ export function tableChats(table?: string): number[] {
   const groups = mine.filter((c) => c.kind === 'group');
   return (groups.length ? groups : mine).map((c) => c.id);
 }
+
+// A picture with a caption and buttons (an announcement with its picture); its id.
+export async function sendPhotoButtons(chat: number, data: Buffer, name: string, caption: string, buttons?: Buttons): Promise<number> {
+  if (!allowed([chat]).length) throw new Error(t('tg.chatOff'));
+  const form = new FormData();
+  form.append('chat_id', String(chat));
+  if (caption) {
+    form.append('caption', caption);
+    form.append('parse_mode', 'HTML');
+  }
+  if (buttons) form.append('reply_markup', JSON.stringify(keyboard(buttons)));
+  form.append('photo', new Blob([new Uint8Array(data)]), name);
+  const m = await api<{ message_id: number }>('sendPhoto', form);
+  return m.message_id;
+}
+export async function editCaption(chat: number, mid: number, caption: string, buttons: Buttons) {
+  await api('editMessageCaption', { chat_id: chat, message_id: mid, caption, parse_mode: 'HTML', reply_markup: keyboard(buttons) }).catch(() => undefined);
+}
+// A message as a reply to another (a change to an announcement).
+export async function sendReply(chat: number, html: string, replyTo: number) {
+  await api('sendMessage', { chat_id: chat, text: html, parse_mode: 'HTML', reply_parameters: { message_id: replyTo, allow_sending_without_reply: true } });
+}

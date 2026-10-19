@@ -34,7 +34,7 @@ import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { importNameLists, listNameLists, namesDir } from './names';
 import { checkForUpdates } from './updates';
-import { announce, initSchedule, pressed, readSchedule, saveGames } from './schedule';
+import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnouncement } from './schedule';
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
@@ -1233,6 +1233,7 @@ ipcMain.handle('telegram:delete', (_event, id: string) => deleteSent(id));
 ipcMain.handle('schedule:get', () => readSchedule());
 ipcMain.handle('schedule:save', (_event, games: Game[]) => saveGames(games));
 ipcMain.handle('schedule:announce', (_event, key: string) => announce(key));
+ipcMain.handle('schedule:update', (_event, { key, notify }: { key: string; notify: boolean }) => updateAnnouncement(key, notify));
 ipcMain.handle('telegram:hide', (_event, id: string) => hideMessage(id));
 // A pasted or dropped image: its bytes (≤ 20 MB) as a picture.
 ipcMain.handle('telegram:sendBytes', (_event, { chats, data, name, caption }: { chats: number[]; data: Uint8Array; name: string; caption?: string }) =>
@@ -1344,6 +1345,14 @@ app.whenReady().then(async () => {
     file: path.join(app.getPath('userData'), 'schedule.json'),
     changed: () => getControlWindow()?.webContents.send('schedule:changed'),
     adventureName: (g) => g.adventure ?? '',
+    imageFile: (g) => {
+      if (!g.image) return null;
+      if (g.image.startsWith(LIBRARY)) return resolveInLibrary(g.image.slice(LIBRARY.length));
+      const root = g.vault ?? vaultRoot;
+      if (!root) return null;
+      const abs = path.resolve(root, g.image);
+      return abs.startsWith(path.resolve(root) + path.sep) ? abs : null;
+    },
   });
   // A little later: the window is up and the vault opened, the check doesn't slow the start.
   setTimeout(() => void checkUpdatesOnLaunch(), 5000);

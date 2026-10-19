@@ -336,7 +336,11 @@ Electron-приложение для мастера D&D: окно управле
   `2weeks`, `until`, `skip`, `occurrences` по местным дням, ключ игры `occKey`, `reminderDue`, `tally`), ядро —
   `main/schedule.ts` (`<userData>/schedule.json`, общий для хранилищ; анонс — `sendButtons` с callback `rsvp:<ключ>:<ответ>`,
   ответ — `pressed` из `callback_query` бота, анонсы правятся `editButtons`; напоминания — раз в минуту, `tableChats`),
-  IPC `schedule:*`. Окно: страница `SchedulePage.svelte` в «Инструментах», блок правой панели `NextGame.svelte`,
+  IPC `schedule:*`. Анонс собирает `announcementText` (shared: строки по заполненным полям, `clockEmoji`, описание —
+  `markdownToTelegram`; с картинкой — подпись к фото до 1024 знаков, иначе фото и текст отдельно; `Announced.caption`);
+  снимок анонсированной игры — `announcedAs`, что изменилось — `announceDiff`, правка — `updateAnnouncement`
+  (`editMessageCaption` / `editMessageText`, с `notify` — ответ `changesText`); смена времени — `rekey` в `saveGames`.
+  Окно: страница `SchedulePage.svelte` в «Инструментах», блок правой панели `NextGame.svelte`,
   загрузка — фоновый `Load.svelte`, «Начать игру» — `startGame` (приключение, `setTable`, `journal/pin`, вкладка сцен).
   Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Chime` —
   сигнал WebAudio на устройство вывода музыки); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
