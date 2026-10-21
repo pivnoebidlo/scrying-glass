@@ -30,11 +30,20 @@
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
-  import { familyOf, isDnd } from '../../../systems';
+  import { familyOf } from '../../../systems';
+  import { shown } from './registry.svelte';
+  import type { Component } from 'svelte';
 
   let { app }: ModuleProps<'tools'> = $props();
-  const dnd = $derived(isDnd(currentSystem(app.adventures)));
-  const maus = $derived(familyOf(currentSystem(app.adventures)) === 'mausritter');
+  const family = $derived(familyOf(currentSystem(app.adventures)));
+  // The page of each tool; a tool hidden in this system (another system's, not turned on) — the notes instead.
+  const PAGES: Partial<Record<string, Component>> = {
+    schedule: SchedulePage, names: NameGenerator, travel: TravelCalculator, dungeon: DungeonGenerator, relic: RelicGenerator,
+    shop: ShopGenerator, settlement: SettlementGenerator, treasure: TreasureGenerator, events: EventsGenerator,
+    weather: WeatherGenerator, mouse: MouseGenerator, mausTables: MausTables, factions: Factions, npc: NpcGenerator,
+    tavern: TavernGenerator, telegram: TelegramCompose, difficulty: Calculator, timer: TimerTool, pointbuy: PointBuy,
+  };
+  const Page = $derived(ui.tool !== 'notes' && shown(ui.tool, family) ? PAGES[ui.tool] : undefined);
 
   connectNotes();
   const groups = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures) : []);
@@ -47,44 +56,8 @@
   }
 </script>
 
-{#if ui.tool === 'schedule'}
-  <SchedulePage />
-{:else if ui.tool === 'names'}
-  <NameGenerator />
-{:else if ui.tool === 'travel' && dnd}
-  <TravelCalculator />
-{:else if ui.tool === 'dungeon'}
-  <DungeonGenerator />
-{:else if ui.tool === 'relic'}
-  <RelicGenerator />
-{:else if ui.tool === 'shop'}
-  <ShopGenerator />
-{:else if ui.tool === 'settlement'}
-  <SettlementGenerator />
-{:else if ui.tool === 'treasure'}
-  <TreasureGenerator />
-{:else if ui.tool === 'events'}
-  <EventsGenerator />
-{:else if ui.tool === 'weather'}
-  <WeatherGenerator />
-{:else if ui.tool === 'mouse' && maus}
-  <MouseGenerator />
-{:else if ui.tool === 'mausTables' && maus}
-  <MausTables />
-{:else if ui.tool === 'factions' && maus}
-  <Factions />
-{:else if ui.tool === 'npc'}
-  <NpcGenerator />
-{:else if ui.tool === 'tavern'}
-  <TavernGenerator />
-{:else if ui.tool === 'telegram'}
-  <TelegramCompose />
-{:else if ui.tool === 'difficulty' && dnd}
-  <Calculator />
-{:else if ui.tool === 'timer'}
-  <TimerTool />
-{:else if ui.tool === 'pointbuy' && dnd}
-  <PointBuy />
+{#if Page}
+  <Page />
 {:else if ui.note && exists}
   {#key ui.note}<NoteEditor path={ui.note} />{/key}
 {:else}

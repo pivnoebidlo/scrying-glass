@@ -209,6 +209,12 @@ adventure file (.sgpack) and comes back with the adventure from the trash. Notes
 
 ## Tools
 
+The Tools sidebar has the notes and the common tools (schedule, message to players, timer), then a section of the
+current adventure's system: in D&D — the generators (names, NPCs, taverns, settlements, shops, items, dungeons,
+weather, events, treasure), encounter difficulty, point buy and travel; in Mausritter — the mouse generator, the
+Mausritter tables and factions; Fate has no tools of its own yet. Tools of other systems are hidden; Settings → Tools
+turns one on for a system where it is needed too (it shows in "Other systems"), remembered by the window.
+
 **Encounter difficulty**: the current combat and every prepared encounter show a badge like "Moderate · 1,100 /
 1,500 XP"; a click shows the scale and details. It follows the 2024 rules (SRD 5.2): every hero has an XP budget by
 level (low, moderate, high), the enemies' XP adds up. Heroes come from the combat, or else from the adventure's player

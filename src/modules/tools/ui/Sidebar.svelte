@@ -1,22 +1,34 @@
-<!-- Боковая панель «Инструментов»: сами инструменты и, для записок, быстрый список записок приключения. -->
+<!-- Боковая панель «Инструментов»: записки (и их быстрый список), общие инструменты и раздел системы текущего
+     приключения; инструменты других систем — только включённые в настройках (registry.svelte.ts). -->
 <script lang="ts">
   import { unread } from '../../telegram/ui/tg.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Beer, CalendarClock, Rat, Table2, Flag, Calculator, Castle, Footprints, DoorOpen, Sparkles, Store, CloudSun, Gem, Signpost, UserRound, FileText, Gauge, Hourglass, ScrollText, Send, Signature } from '@lucide/svelte';
+  import { FileText, ScrollText } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
   import { noteGroups } from './library';
   import { pickTool, ui } from './ui.svelte';
   import { currentSystem } from '../../../shared/adventures';
-  import { familyOf, isDnd } from '../../../systems';
+  import { FAMILIES, familyOf } from '../../../systems';
+  import { placeOf, TOOLS, type Place, type ToolDef } from './registry.svelte';
 
   let { app }: ModuleProps<'tools'> = $props();
-  // The mouse generator — only in Mausritter adventures.
-  const maus = $derived(familyOf(currentSystem(app.adventures)) === 'mausritter');
-  // Инструменты D&D (сложность боя, покупка характеристик) — только в приключениях D&D.
-  const dnd = $derived(isDnd(currentSystem(app.adventures)));
+  const family = $derived(familyOf(currentSystem(app.adventures)));
+  const familyTitle = $derived(FAMILIES.find((f) => f.id === family)?.title ?? family);
+  const at = (place: Place) => TOOLS.filter((d) => placeOf(d, family) === place);
   const notes = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures).flatMap((g) => g.items) : []);
+  // A count next to a tool: unread messages, a running timer.
+  const badge = (d: ToolDef) => (d.id === 'telegram' ? unread() || '' : d.id === 'timer' && app.timer.active ? t('tools.side.running') : '');
 </script>
+
+{#snippet item(d: ToolDef)}
+  {@const Icon = d.icon}
+  <button class="item" data-nav class:active={ui.tool === d.id && !ui.note} onclick={() => pickTool(d.id)}>
+    <Icon size={14} />
+    <span class="name">{d.title}</span>
+    {#if badge(d)}<span class="count" class:unread={d.id === 'telegram'}>{badge(d)}</span>{/if}
+  </button>
+{/snippet}
 
 <div class="list">
   <button class="item" data-nav class:active={ui.tool === 'notes' && !ui.note} onclick={() => pickTool('notes')}>
@@ -30,89 +42,15 @@
       <span class="name">{noteTitle(f.path)}</span>
     </button>
   {/each}
-  <button class="item" data-nav class:active={ui.tool === 'names'} onclick={() => pickTool('names')}>
-    <Signature size={14} />
-    <span class="name">{t('tools.side.names')}</span>
-  </button>
-  {#if maus}
-    <button class="item" data-nav class:active={ui.tool === 'mouse'} onclick={() => pickTool('mouse')}>
-      <Rat size={14} />
-      <span class="name">{t('tools.side.mouse')}</span>
-    </button>
-    <button class="item" data-nav class:active={ui.tool === 'mausTables'} onclick={() => pickTool('mausTables')}>
-      <Table2 size={14} />
-      <span class="name">{t('tools.side.mausTables')}</span>
-    </button>
-    <button class="item" data-nav class:active={ui.tool === 'factions'} onclick={() => pickTool('factions')}>
-      <Flag size={14} />
-      <span class="name">{t('tools.side.factions')}</span>
-    </button>
+  {#each at('common') as d (d.id)}{@render item(d)}{/each}
+
+  {#if at('own').length}
+    <h4 class="section">{familyTitle}</h4>
+    {#each at('own') as d (d.id)}{@render item(d)}{/each}
   {/if}
-  <button class="item" data-nav class:active={ui.tool === 'npc'} onclick={() => pickTool('npc')}>
-    <UserRound size={14} />
-    <span class="name">{t('tools.side.npc')}</span>
-  </button>
-  <button class="item" data-nav class:active={ui.tool === 'tavern'} onclick={() => pickTool('tavern')}>
-    <Beer size={14} />
-    <span class="name">{t('tools.side.tavern')}</span>
-  </button>
-  <button class="item" data-nav class:active={ui.tool === 'settlement'} onclick={() => pickTool('settlement')}>
-    <Castle size={14} />
-    <span class="name">{t('tools.side.settlement')}</span>
-  </button>
-  <button class="item" data-nav class:active={ui.tool === 'shop'} onclick={() => pickTool('shop')}>
-    <Store size={14} />
-    <span class="name">{t('tools.side.shop')}</span>
-  </button>
-  <button class="item" data-nav class:active={ui.tool === 'relic'} onclick={() => pickTool('relic')}>
-    <Sparkles size={14} />
-    <span class="name">{t('tools.side.relic')}</span>
-  </button>
-  <button class="item" data-nav class:active={ui.tool === 'dungeon'} onclick={() => pickTool('dungeon')}>
-    <DoorOpen size={14} />
-    <span class="name">{t('tools.side.dungeon')}</span>
-  </button>
-  <button class="item" data-nav class:active={ui.tool === 'weather'} onclick={() => pickTool('weather')}>
-    <CloudSun size={14} />
-    <span class="name">{t('tools.side.weather')}</span>
-  </button>
-  <button class="item" data-nav class:active={ui.tool === 'events'} onclick={() => pickTool('events')}>
-    <Signpost size={14} />
-    <span class="name">{t('tools.side.events')}</span>
-  </button>
-  <button class="item" data-nav class:active={ui.tool === 'treasure'} onclick={() => pickTool('treasure')}>
-    <Gem size={14} />
-    <span class="name">{t('tools.side.treasure')}</span>
-  </button>
-  <button class="item" data-nav class:active={ui.tool === 'schedule'} onclick={() => pickTool('schedule')}>
-    <CalendarClock size={14} />
-    <span class="name">{t('tools.side.schedule')}</span>
-  </button>
-  <button class="item" data-nav class:active={ui.tool === 'telegram'} onclick={() => pickTool('telegram')}>
-    <Send size={14} />
-    <span class="name">{t('tg.compose')}</span>
-    {#if unread()}<span class="count unread">{unread()}</span>{/if}
-  </button>
-  {#if dnd}
-    <button class="item" data-nav class:active={ui.tool === 'difficulty'} onclick={() => pickTool('difficulty')}>
-      <Gauge size={14} />
-      <span class="name">{t('tools.side.difficulty')}</span>
-    </button>
-  {/if}
-  <button class="item" data-nav class:active={ui.tool === 'timer'} onclick={() => pickTool('timer')}>
-    <Hourglass size={14} />
-    <span class="name">{t('tools.side.timer')}</span>
-    {#if app.timer.active}<span class="count">{t('tools.side.running')}</span>{/if}
-  </button>
-  {#if dnd}
-    <button class="item" data-nav class:active={ui.tool === 'pointbuy'} onclick={() => pickTool('pointbuy')}>
-      <Calculator size={14} />
-      <span class="name">{t('tools.side.pointbuy')}</span>
-    </button>
-    <button class="item" data-nav class:active={ui.tool === 'travel'} onclick={() => pickTool('travel')}>
-      <Footprints size={14} />
-      <span class="name">{t('tools.side.travel')}</span>
-    </button>
+  {#if at('extra').length}
+    <h4 class="section" title={t('tools.side.extraHint')}>{t('tools.side.extra')}</h4>
+    {#each at('extra') as d (d.id)}{@render item(d)}{/each}
   {/if}
   <p class="faint more">{t('tools.side.more')}</p>
 </div>
@@ -163,6 +101,14 @@
     background: var(--accent);
     color: var(--on-accent);
     text-align: center;
+  }
+  .section {
+    margin: 12px 8px 4px;
+    color: var(--text-faint);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
   }
   .more {
     padding: 10px 8px;

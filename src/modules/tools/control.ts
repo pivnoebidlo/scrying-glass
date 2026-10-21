@@ -4,6 +4,7 @@ import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import Sidebar from './ui/Sidebar.svelte';
 import View from './ui/View.svelte';
+import Settings from './ui/Settings.svelte';
 
 export default defineControl({
   id: 'tools',
@@ -15,4 +16,5 @@ export default defineControl({
   order: 40,
   view: View,
   sidebar: Sidebar,
+  settings: Settings,
 });
