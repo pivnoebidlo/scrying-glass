@@ -4,7 +4,7 @@
   import { IdCard, Minus, Plus, RotateCcw, Wand2, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import type { Card } from '../../../shared/cards';
-  import { attackBlocks, changesOf, POWER_CRS, reshape, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
+  import { attackBlocks, changesOf, humanoidOnly, isHumanoid, POWER_CRS, reshape, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import StatBlock from '../../../systems/dnd5e/StatBlock.svelte';
   import { ABILITIES, crText, dict, mod, signed, type Ability, type Dnd5eStats } from '../../../systems/dnd5e/stats';
@@ -17,7 +17,9 @@
   // Labels in the interface language; texts that go into the card — in the card's.
   const L = $derived(dict(locale.lang));
   const ui = $derived(locale.lang === 'ru' ? 'ru' : 'en');
-  const tpls = $derived(rs.r.templates.map((id) => TEMPLATES.find((x) => x.id === id)).filter((x): x is Template => !!x));
+  const tpls = $derived(
+    rs.r.templates.map((id) => TEMPLATES.find((x) => x.id === id)).filter((x): x is Template => !!x && (!base || isHumanoid(base.stats) || !humanoidOnly(x))),
+  );
   const name = $derived(rs.name.trim() || (base ? (tpls.length ? `${base.name} (${tpls.map((x) => x.name[lang].toLowerCase()).join(', ')})` : base.name) : ''));
   const stats = $derived(base ? reshape($state.snapshot(base.stats) as Dnd5eStats, $state.snapshot(rs.r), lang, editionOf(base.system)) : null);
   const card = $derived(base && stats ? ({ ...$state.snapshot(base), name, stats } as Card<Dnd5eStats>) : null);
@@ -102,7 +104,8 @@
               <span class="faint label">{t(`reshape.group.${g}`)}</span>
               <div class="chips">
                 {#each TEMPLATES.filter((x) => x.group === g) as tp (tp.id)}
-                  <button class="chip" class:active={rs.r.templates.includes(tp.id)} onclick={() => toggle(tp)}>{tp.name[ui]}</button>
+                  {@const off = humanoidOnly(tp) && !isHumanoid(base.stats)}
+                  <button class="chip" class:active={!off && rs.r.templates.includes(tp.id)} disabled={off} title={off ? t('reshape.humanoidOnly') : undefined} onclick={() => toggle(tp)}>{tp.name[ui]}</button>
                 {/each}
               </div>
             </div>
@@ -258,6 +261,10 @@
     font: inherit;
     font-size: 12px;
     cursor: pointer;
+  }
+  .chip:disabled {
+    opacity: 0.4;
+    cursor: default;
   }
   .chip.active {
     border-color: var(--accent);

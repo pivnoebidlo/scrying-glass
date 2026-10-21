@@ -361,8 +361,8 @@ takes the final scores from a player's sheet, works out the bonuses itself and s
 how many points are spent, or what is broken; level increases and feats go into "Other".
 
 **Reshape a stat block** (Tools → Reshape a stat block, or "Reshape…" on any D&D card): a creature's stat block as the
-base — the headman from a commoner, a dwarf from a guard. Templates: age (child, elder), build (brawny or frail), role
-(leader), people (dwarf, elf, halfling, gnome, orc, tiefling, dragonborn) — abilities, size, speed, darkvision,
+base — the headman from a commoner, a dwarf from a guard. Templates: age (child, elder), build (frail or brawny), role
+(leader, seasoned fighter, skulker, healer, sage), people (human, dwarf, elf, halfling, gnome, orc, tiefling, dragonborn; age and people — only for humanoids) — abilities, size, speed, darkvision,
 resistances, traits and the language; abilities can be changed by hand on top; an attack can be swapped for an SRD
 weapon (the new attack is written in the card's language and edition, and its name follows into the multiattack and
 gear); "Power" makes it stronger or weaker — another CR: the proficiency bonus by the rules, and AC, hit

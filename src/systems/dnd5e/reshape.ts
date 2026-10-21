@@ -12,7 +12,7 @@ type Text = Record<Lang, string>;
 
 export interface Template {
   id: string;
-  // One template of a group at a time.
+  // One template of a group at a time. Age and people — only for humanoids (humanoidOnly).
   group: 'age' | 'build' | 'role' | 'people';
   name: Text;
   abilities?: Partial<Record<Ability, number>>;
@@ -27,6 +27,7 @@ export interface Template {
   saves?: Ability[];
   skills?: string[];
   traits?: { name: Text; text: Text }[];
+  actions?: { name: Text; text: Text }[];
   reactions?: { name: Text; text: Text }[];
   language?: Text;
   // The creature's subtype: «Humanoid (Dwarf)».
@@ -40,14 +41,22 @@ export const TEMPLATES: Template[] = [
     id: 'child', group: 'age', name: tr('Child', 'Ребёнок'), abilities: { str: -4, con: -2 }, size: 'small', speed: 25, hitDice: 0.5,
   },
   { id: 'elder', group: 'age', name: tr('Elder', 'Старик'), abilities: { str: -2, dex: -2, con: -2, wis: 2 }, speed: 25 },
+  { id: 'frail', group: 'build', name: tr('Frail', 'Хилый'), abilities: { str: -2, con: -2 } },
   {
     id: 'brute', group: 'build', name: tr('Brawny', 'Здоровяк'), abilities: { str: 2, con: 2 }, saves: ['str'], skills: ['athletics'],
   },
   {
-    id: 'frail', group: 'build', name: tr('Frail', 'Хилый'), abilities: { str: -2, con: -2 },
+    id: 'leader', group: 'role', name: tr('Leader', 'Главарь'), abilities: { cha: 2, int: 1 }, skills: ['intimidation'],
+    traits: [{
+      name: tr('Commanding Voice (1/Day)', 'Командный голос (1/день)'),
+      text: tr(
+        'As a bonus action, the creature rallies its allies: for 1 minute, each ally within 30 feet that can hear it adds 1d4 to its attack rolls and saving throws.',
+        'Бонусным действием существо ободряет союзников: на 1 минуту каждый союзник в пределах 30 фт., который его слышит, добавляет 1к4 к броскам атаки и спасброскам.',
+      ),
+    }],
   },
   {
-    id: 'leader', group: 'role', name: tr('Leader', 'Главарь'), abilities: { cha: 2, int: 1 }, skills: ['intimidation'],
+    id: 'veteran', group: 'role', name: tr('Seasoned fighter', 'Бывалый боец'), abilities: { str: 2, con: 1 }, saves: ['str', 'con'], skills: ['athletics'],
     reactions: [{
       name: tr('Parry', 'Парирование'),
       text: tr(
@@ -56,6 +65,24 @@ export const TEMPLATES: Template[] = [
       ),
     }],
   },
+  {
+    id: 'skulker', group: 'role', name: tr('Skulker', 'Ловкач'), abilities: { dex: 2, int: 1 }, skills: ['stealth', 'sleight-of-hand'],
+    traits: [{
+      name: tr('Cunning Action', 'Хитрое действие'),
+      text: tr('On each of its turns, the creature can take the Dash, Disengage, or Hide action as a bonus action.', 'В каждый свой ход существо может бонусным действием совершить действие Рывок, Отход или Засада.'),
+    }],
+  },
+  {
+    id: 'healer', group: 'role', name: tr('Healer', 'Целитель'), abilities: { wis: 2 }, skills: ['medicine', 'religion'],
+    actions: [{
+      name: tr('Healing Touch (3/Day)', 'Целебное касание (3/день)'),
+      text: tr('The creature touches another creature, which regains 2d8 + {wis} hit points.', 'Существо касается другого существа, и то восстанавливает 2к8 + {wis} хитов.'),
+    }],
+  },
+  {
+    id: 'sage', group: 'role', name: tr('Sage', 'Мудрец'), abilities: { int: 2, wis: 1 }, skills: ['arcana', 'history'],
+  },
+  { id: 'human', group: 'people', name: tr('Human', 'Человек'), subtype: tr('Human', 'человек') },
   {
     id: 'dwarf', group: 'people', name: tr('Dwarf', 'Дварф'), abilities: { con: 2 }, speed: 25, darkvision: 60, resistances: ['poison'],
     subtype: tr('Dwarf', 'дварф'), language: tr('Dwarvish', 'Дварфийский'),
@@ -117,6 +144,10 @@ export const TEMPLATES: Template[] = [
 ];
 
 export const templateById = (id: string) => TEMPLATES.find((t) => t.id === id);
+
+// A dwarf medusa or a child dragon make no sense: ages and peoples are for humanoids.
+export const humanoidOnly = (t: Template) => t.group === 'age' || t.group === 'people';
+export const isHumanoid = (s: Dnd5eStats) => /humanoid|гуманоид/i.test(s.type);
 
 // ---------- Weapons (SRD) ----------
 
@@ -336,7 +367,7 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // The reshaped stat block. lang and edition — the card's (texts of templates and weapons are written in them).
 export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '2014' | '2024'): Dnd5eStats {
   const l = L(lang);
-  const tpls = r.templates.map(templateById).filter((x): x is Template => !!x);
+  const tpls = r.templates.map(templateById).filter((x): x is Template => !!x && (isHumanoid(base) || !humanoidOnly(x)));
   const s: Dnd5eStats = structuredClone(base);
   const old = base.abilities;
 
@@ -373,8 +404,8 @@ export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '20
   if (people) {
     const sub = people.subtype![l];
     s.type = /\(.*\)/.test(s.type) ? s.type.replace(/\(.*\)/, `(${sub})`) : `${s.type} (${sub})`;
-    const lang2 = people.language![l];
-    if (!s.languages.includes(lang2)) s.languages = s.languages ? `${s.languages}, ${lang2}` : lang2;
+    const lang2 = people.language?.[l];
+    if (lang2 && !s.languages.includes(lang2)) s.languages = s.languages ? `${s.languages}, ${lang2}` : lang2;
   }
 
   // Hit points: the formula's dice by size (a share for a child), Constitution on each die.
@@ -417,6 +448,7 @@ export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '20
   const dc = 8 + s.pb + mod(abilities.con);
   for (const t of tpls) {
     for (const x of t.traits ?? []) if (!s.traits.some((b) => b.name === x.name[l])) s.traits.push({ name: x.name[l], text: x.text[l].replace('{dc}', String(dc)) });
+    for (const x of t.actions ?? []) if (!s.actions.some((b) => b.name === x.name[l])) s.actions.push({ name: x.name[l], text: x.text[l].replace('{wis}', String(Math.max(0, mod(abilities.wis)))) });
     for (const x of t.reactions ?? []) if (!s.reactions.some((b) => b.name === x.name[l])) s.reactions.push({ name: x.name[l], text: x.text[l] });
   }
 

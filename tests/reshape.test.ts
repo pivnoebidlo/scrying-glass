@@ -121,4 +121,19 @@ describe('переделка статблока', () => {
     expect(POWER_CRS[0]).toBe(0);
     expect(POWER_CRS.at(-1)).toBe(30);
   });
+
+  it('человек — подвид без бонусов; возраст и народ — только гуманоидам', () => {
+    const h = reshape(s14('srd51-guard'), { ...NO_RESHAPE, templates: ['human'] }, 'en', '2014');
+    expect(h.type).toBe('Humanoid (Human)');
+    expect(h.abilities).toEqual(s14('srd51-guard').abilities);
+    const medusa = s14('srd51-medusa');
+    expect(reshape(medusa, { ...NO_RESHAPE, templates: ['elf', 'child'] }, 'en', '2014')).toEqual(medusa);
+    // Build and role work on anyone.
+    expect(reshape(medusa, { ...NO_RESHAPE, templates: ['brute'] }, 'en', '2014').abilities.str).toBe(medusa.abilities.str + 2);
+  });
+
+  it('целитель: действие с модификатором Мудрости', () => {
+    const c = reshape(s24('srd52-commoner.ru'), { ...NO_RESHAPE, templates: ['healer'] }, 'ru', '2024');
+    expect(c.actions.at(-1)).toEqual({ name: 'Целебное касание (3/день)', text: 'Существо касается другого существа, и то восстанавливает 2к8 + 1 хитов.' });
+  });
 });
