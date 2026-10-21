@@ -2,7 +2,8 @@
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
-  import { Download, FilePlus, Plus, Search, Upload } from '@lucide/svelte';
+  import { Download, FilePlus, Plus, Search, Upload, Wand2 } from '@lucide/svelte';
+  import { reshapeNew } from '../../tools/reshape/store.svelte';
   import { langName, sameRef } from '../../../shared/cards';
   import { familyOf, isDnd, isEnabled, systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -86,6 +87,10 @@
         <div class="menu-backdrop" onclick={() => (menu = false)}></div>
         <div class="menu">
           <button onclick={create}><FilePlus size={14} /> {t('best.newCardMenu')}</button>
+          <!-- A stat block made from another one (Tools → Reshape a stat block) — in D&D adventures. -->
+          {#if isDnd(currentSystem(app.adventures))}
+            <button title={t('best.fromStatblockHint')} onclick={() => ((menu = false), reshapeNew())}><Wand2 size={14} /> {t('best.fromStatblock')}</button>
+          {/if}
           <div class="sep"></div>
           <button onclick={importCards}><Download size={14} /> {t('best.importFile')}</button>
           <button onclick={exportCards}><Upload size={14} /> {t('best.exportFile')}</button>

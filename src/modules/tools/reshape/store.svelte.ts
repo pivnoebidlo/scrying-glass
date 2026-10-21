@@ -36,6 +36,18 @@ export function reshapeFor(portrait: string, name: string) {
   openTab('tools');
 }
 
+// «From another stat block…» in the Cards menu: the tool with nothing picked yet.
+export function reshapeNew() {
+  rs.target = null;
+  rs.base = null;
+  rs.ref = null;
+  rs.name = '';
+  rs.r = structuredClone(NO_RESHAPE);
+  ui.tool = 'reshape';
+  ui.note = null;
+  openTab('tools');
+}
+
 // «Reshape…» on a card: the tool with it as the base.
 export async function reshapeFrom(ref: CardRef) {
   rs.target = null;

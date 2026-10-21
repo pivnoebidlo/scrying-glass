@@ -360,7 +360,8 @@ built in) or your own. "Custom races and subraces": a new race, or a subrace for
 takes the final scores from a player's sheet, works out the bonuses itself and says whether the spread is legal and
 how many points are spent, or what is broken; level increases and feats go into "Other".
 
-**Reshape a stat block** (Tools → Reshape a stat block, or "Reshape…" on any D&D card): a creature's stat block as the
+**Reshape a stat block** (Tools → Reshape a stat block, "Reshape…" on any D&D card, or "+" → "From another
+stat block…" in Cards): a creature's stat block as the
 base — the headman from a commoner, a dwarf from a guard. Templates: age (child, elder), build (frail or brawny), role
 (leader, seasoned fighter, skulker, healer, sage), people (human, dwarf, elf, halfling, gnome, orc, tiefling, dragonborn; age — only for humanoids, a people — only for those without one of their own: a goblin or a kobold stays what it is) — abilities, size, speed, darkvision,
 resistances, traits and the language; abilities can be changed by hand on top; an attack can be swapped for an SRD
