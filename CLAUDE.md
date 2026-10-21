@@ -324,6 +324,11 @@ Electron-приложение для мастера D&D: окно управле
   Генератор погоды: `tools/weather/` — модель `generate.ts` (климат по местности и сезону, дни связаны: температура
   тянется к среднему, дождь затягивается; день — коды, слова — в словаре `weather.*`), текст `text.ts` (`daySummary`,
   `dayFlavor`, `dayRules` — правила SRD только в D&D), страница `WeatherGenerator.svelte` (последняя погода — localStorage).
+  Генератор мыши (только Mausritter, `ui.tool = 'mouse'`): `tools/mouse/` — `tables.ts` (таблицы SRD en/ru: прошлое по
+  ЗЩ × пипсы, знаки, шёрстка, приметы; извлечены из `scripts/mausritter-srd.<lang>.md`), `content.ts` (оружие, имена —
+  свои), `generate.ts` (мышь — индексы; `extraFor` — слабая мышь, `swap`), `text.ts` (правила вещи — по английской
+  строке: броня, кубы, наёмник; `mouseSlots` раскладывает инвентарь, `mouseCard` → `bestiary.create(…, { system, stats })`),
+  `MouseGenerator.svelte`, `store.svelte.ts` (последняя мышь — localStorage окна).
   Генератор NPC: `tools/npc/` — как таверны (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — занятия и черты берёт у
   таверн, `text.ts` — Markdown и карточка, `store.svelte.ts` — с историей); «Создать карточку» — `bestiary.create(place,
   prefill)`.

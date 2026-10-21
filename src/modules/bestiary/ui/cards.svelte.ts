@@ -268,11 +268,12 @@ class Bestiary {
 
   // Новая карточка: система и язык — из фильтров, если они выбраны.
   // place — куда (например, открытая во «Файлах» папка); без него спросим.
-  // prefill — a card started elsewhere (the NPC generator): name, description, notes, kind and language.
-  async create(at?: Place, prefill?: { name: string; description?: string; notes?: string; kind?: CardKind; lang?: string }) {
+  // prefill — a card started elsewhere (the NPC and mouse generators): name, description, notes, kind and language;
+  // a system and its stats block when the generator filled them in.
+  async create(at?: Place, prefill?: { name: string; description?: string; notes?: string; kind?: CardKind; lang?: string; system?: string; stats?: unknown }) {
     const place = at ?? (await this.choosePlace({ title: t('best.whereNew'), action: t('best.create'), library: true }));
     if (!place) return;
-    const system = this.newSystem();
+    const system = prefill?.system ?? this.newSystem();
     const lang = prefill?.lang ?? (this.lang !== 'all' ? this.lang : locale.lang);
     // Вид — по папке: в папке персонажей — NPC, в папке партии — персонаж игрока, иначе монстр.
     const role = place.folder !== undefined ? place.folder.split('/').map(folderRole).filter(Boolean).at(-1) : null;
@@ -283,7 +284,7 @@ class Bestiary {
       card: {
         format: 1, id: '', kind, system, lang, name: prefill?.name ?? '', side: defaultSide(kind), portraits: [], tags: [],
         ...(prefill?.description ? { description: prefill.description } : {}),
-        notes: prefill?.notes ?? '', stats: systemOf(system).blank(kind),
+        notes: prefill?.notes ?? '', stats: prefill?.stats ?? systemOf(system).blank(kind),
       },
     });
     openTab('bestiary');

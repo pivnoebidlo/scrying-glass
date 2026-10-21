@@ -595,7 +595,11 @@ items past the ten make the mouse encumbered. A click on STR, DEX or WIL rolls a
 (Shift — advantage, the lower of 2d20; ⌥ — disadvantage). The tracker in a Mausritter adventure: HP, STR / DEX / WIL
 now and maximum, armour; damage past HP goes to STR, STR 0 takes the combatant out; turn order 2 — before the
 opponents (a passed DEX save or an ambush), 1 — the opponents ("Opponents' order"), 0 — after them, DEX breaks ties;
-the Mausritter Conditions (a click opens the Conditions entry).
+the Mausritter Conditions (a click opens the Conditions entry). **Tools → Mouse** (Mausritter adventures only) makes a
+new mouse by the SRD procedure: attributes (3d6, the two highest — the dice are shown, two attributes can be swapped),
+HP and pips, the background with its two items (a weak mouse gets items of another background), torches, rations, a
+weapon, birthsign, coat, physical detail and a name; "Create card" opens a mouse sheet with the inventory laid out
+(weapon in the paws, armour on the body, the rest in the pack), "To journal" and "Copy" — as text.
 
 ## Files and trash
 

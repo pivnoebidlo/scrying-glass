@@ -2,15 +2,17 @@
 <script lang="ts">
   import { unread } from '../../telegram/ui/tg.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Beer, CalendarClock, Calculator, Castle, Footprints, DoorOpen, Sparkles, Store, CloudSun, Gem, Signpost, UserRound, FileText, Gauge, Hourglass, ScrollText, Send, Signature } from '@lucide/svelte';
+  import { Beer, CalendarClock, Rat, Calculator, Castle, Footprints, DoorOpen, Sparkles, Store, CloudSun, Gem, Signpost, UserRound, FileText, Gauge, Hourglass, ScrollText, Send, Signature } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
   import { noteGroups } from './library';
   import { pickTool, ui } from './ui.svelte';
   import { currentSystem } from '../../../shared/adventures';
-  import { isDnd } from '../../../systems';
+  import { familyOf, isDnd } from '../../../systems';
 
   let { app }: ModuleProps<'tools'> = $props();
+  // The mouse generator — only in Mausritter adventures.
+  const maus = $derived(familyOf(currentSystem(app.adventures)) === 'mausritter');
   // Инструменты D&D (сложность боя, покупка характеристик) — только в приключениях D&D.
   const dnd = $derived(isDnd(currentSystem(app.adventures)));
   const notes = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures).flatMap((g) => g.items) : []);
@@ -32,6 +34,12 @@
     <Signature size={14} />
     <span class="name">{t('tools.side.names')}</span>
   </button>
+  {#if maus}
+    <button class="item" data-nav class:active={ui.tool === 'mouse'} onclick={() => pickTool('mouse')}>
+      <Rat size={14} />
+      <span class="name">{t('tools.side.mouse')}</span>
+    </button>
+  {/if}
   <button class="item" data-nav class:active={ui.tool === 'npc'} onclick={() => pickTool('npc')}>
     <UserRound size={14} />
     <span class="name">{t('tools.side.npc')}</span>

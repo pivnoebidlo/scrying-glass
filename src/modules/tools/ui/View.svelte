@@ -15,6 +15,7 @@
   import NameGenerator from '../names/NameGenerator.svelte';
   import TavernGenerator from '../tavern/TavernGenerator.svelte';
   import NpcGenerator from '../npc/NpcGenerator.svelte';
+  import MouseGenerator from '../mouse/MouseGenerator.svelte';
   import WeatherGenerator from '../weather/WeatherGenerator.svelte';
   import EventsGenerator from '../events/EventsGenerator.svelte';
   import TreasureGenerator from '../treasure/TreasureGenerator.svelte';
@@ -27,10 +28,11 @@
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
-  import { isDnd } from '../../../systems';
+  import { familyOf, isDnd } from '../../../systems';
 
   let { app }: ModuleProps<'tools'> = $props();
   const dnd = $derived(isDnd(currentSystem(app.adventures)));
+  const maus = $derived(familyOf(currentSystem(app.adventures)) === 'mausritter');
 
   connectNotes();
   const groups = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures) : []);
@@ -63,6 +65,8 @@
   <EventsGenerator />
 {:else if ui.tool === 'weather'}
   <WeatherGenerator />
+{:else if ui.tool === 'mouse' && maus}
+  <MouseGenerator />
 {:else if ui.tool === 'npc'}
   <NpcGenerator />
 {:else if ui.tool === 'tavern'}
