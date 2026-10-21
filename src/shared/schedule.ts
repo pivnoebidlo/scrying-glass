@@ -41,8 +41,15 @@ export interface Game {
   system?: string;
   level?: string;
   description?: string;
-  // Seats: how many players take part; more — in the reserve. None — no limit.
+  // Seats: how many players take part; more — in the reserve. None — the top number of `players` («3–5» → 5).
   seats?: number;
+}
+
+// The game's limit of players: its seats, else the largest number in «Players»; none — no limit.
+export function seatsOf(g: Pick<Game, 'seats' | 'players'>): number | undefined {
+  if (g.seats && g.seats > 0) return g.seats;
+  const n = Math.max(0, ...(g.players?.match(/\d+/g) ?? []).map(Number));
+  return n > 0 && n <= 99 ? n : undefined;
 }
 
 export const GAME_KINDS = ['', 'oneshot', 'campaign', 'session'] as const;
@@ -195,7 +202,7 @@ export function announcementText(o: Occurrence, answers: Record<string, Reply> |
   const f = fieldLines(o, lang);
   const head = [f.start, f.players, f.price, f.gm, f.place, f.system, f.level].filter(Boolean);
   const blocks = [head.join('\n'), f.title, f.description].filter(Boolean) as string[];
-  const seats = o.game.seats;
+  const seats = seatsOf(o.game);
   const tl = tally(answers, seats);
   const rows = [
     tl.yes.length || seats ? `✅ ${t('sched.coming')}${seats ? ` (${tl.yes.length}/${seats})` : ''}: ${tl.yes.length ? esc(tl.yes.join(', ')) : '—'}` : '',

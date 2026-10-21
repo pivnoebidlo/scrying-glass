@@ -96,7 +96,8 @@ export const en = {
   'sched.freedDirect': "A seat is free in {game}. Press «Join» under the announcement if you can come.",
   'sched.freedChat': "A seat is free! {who}, press «Join» if you can come.",
   'sched.seats': "Seats for players",
-  'sched.seatsHint': "How many players take part; the next ones go to the reserve. Empty — no limit.",
+  'sched.seatsHint': "How many players take part; the next ones go to the reserve. Empty — the top number of «Players», none there — no limit.",
+  'sched.seatsFrom': "{n}, as in «Players»",
   'sched.seatsPh': "no limit",
 };
 
@@ -195,6 +196,7 @@ export const ru: Messages<typeof en> = {
   'sched.freedDirect': "Освободилось место в игре {game}. Если можете прийти — нажмите «Участвовать» под анонсом.",
   'sched.freedChat': "Освободилось место! {who}, если можете прийти — нажмите «Участвовать».",
   'sched.seats': "Мест для игроков",
-  'sched.seatsHint': "Сколько игроков участвуют; следующие попадают в резерв. Пусто — без ограничения.",
+  'sched.seatsHint': "Сколько игроков участвуют; следующие попадают в резерв. Пусто — верхнее число из «Количество участников», нет там числа — без ограничения.",
+  'sched.seatsFrom': "{n}, как в «Количество участников»",
   'sched.seatsPh': "без ограничения",
 };

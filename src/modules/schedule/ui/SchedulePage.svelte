@@ -6,7 +6,7 @@
   import { onMount } from 'svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
-  import { announceDiff, announcementText, GAME_KINDS, gameId, occurrences, REPEATS, tally, type Game, type GameKind, type Occurrence } from '../../../shared/schedule';
+  import { announceDiff, announcementText, GAME_KINDS, gameId, occurrences, REPEATS, seatsOf, tally, type Game, type GameKind, type Occurrence } from '../../../shared/schedule';
   import { safeTgHtml } from '../../../shared/telegram';
   import { assetUrl, thumb } from '../../../shared/vault';
   import { systemFor } from '../../../shared/adventures';
@@ -270,7 +270,7 @@
             </select>
           </label>
           <label>{t('sched.a.players')}<input type="text" placeholder={t('sched.playersPh')} bind:value={draft.players} /></label>
-          <label title={t('sched.seatsHint')}>{t('sched.seats')}<input type="number" min="1" max="50" placeholder={t('sched.seatsPh')} bind:value={draft.seats} /></label>
+          <label title={t('sched.seatsHint')}>{t('sched.seats')}<input type="number" min="1" max="50" placeholder={seatsOf({ players: draft.players }) ? t('sched.seatsFrom', { n: seatsOf({ players: draft.players }) ?? 0 }) : t('sched.seatsPh')} bind:value={draft.seats} /></label>
           <label>{t('sched.a.price')}<input type="text" placeholder={t('sched.pricePh')} bind:value={draft.price} /></label>
           <label>{t('sched.a.gm')}<input type="text" placeholder={t('sched.gmPh')} bind:value={draft.gm} /></label>
           <label>{t('sched.a.system')}<input type="text" bind:value={draft.system} /></label>
@@ -298,7 +298,8 @@
     <h3>{t('sched.upcoming')}</h3>
     <div class="games">
       {#each list as o, i (o.key)}
-        {@const tl = tally(sched.data.answers[o.key], o.game.seats)}
+        {@const seats = seatsOf(o.game)}
+        {@const tl = tally(sched.data.answers[o.key], seats)}
         {@const until = untilText(o, sched.now, locale.lang)}
         {@const repeatOf = list.slice(0, i).some((x) => x.game.id === o.game.id)}
         {@const answered = tl.yes.length + tl.maybe.length + tl.no.length > 0}
@@ -335,7 +336,7 @@
           {/if}
           <div class="answers">
             {#if tl.yes.length + tl.maybe.length + tl.no.length}
-              {#if tl.yes.length}<span>✅ {o.game.seats ? `${tl.yes.length}/${o.game.seats}: ` : ''}{tl.yes.join(', ')}</span>{/if}
+              {#if tl.yes.length}<span>✅ {seats ? `${tl.yes.length}/${seats}: ` : ''}{tl.yes.join(', ')}</span>{/if}
               {#if tl.maybe.length}<span title={t('sched.maybe')}>🕓 {tl.maybe.join(', ')}</span>{/if}
               {#if tl.no.length}<span>❌ {tl.no.join(', ')}</span>{/if}
             {:else if sched.data.announced[o.key]?.length}

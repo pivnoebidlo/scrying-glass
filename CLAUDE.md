@@ -379,7 +379,7 @@ Electron-приложение для мастера D&D: окно управле
   Расписание — модуль `modules/schedule` (без состояния; правила — `shared/schedule.ts`: `Game` с повтором `week` /
   `2weeks`, `until`, `skip`, `occurrences` по местным дням, ключ игры `occKey`, `reminderDue`, `tally`), ядро —
   `main/schedule.ts` (`<userData>/schedule.json`, общий для хранилищ; анонс — `sendButtons` с callback `rsvp:<ключ>:<ответ>`,
-  ответ — `pressed` из `callback_query` бота, анонсы правятся `editButtons`; запись: `Game.seats`, `roster` / `isFull`
+  ответ — `pressed` из `callback_query` бота, анонсы правятся `editButtons`; запись: `seatsOf` (`Game.seats`, иначе верхнее число `players`), `roster` / `isFull`
   (участвуют первые «yes» до числа мест, остальные — в резерве; полная игра — `show_alert`, кнопка «Мест нет»;
   освободилось место — `tellReserve`: `sendDirect` каждому из резерва, не дошло — упоминание `tg://user?id` под анонсом); напоминания — раз в минуту, `tableChats`),
   IPC `schedule:*`. Анонс собирает `announcementText` (shared: строки по заполненным полям, `clockEmoji`, описание —

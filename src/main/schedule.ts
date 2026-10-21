@@ -4,7 +4,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { getLang, t } from '../shared/i18n';
-import { announceDiff, announcementText, changesText, dateLine, isFull, rekey, roster } from '../shared/schedule';
+import { announceDiff, announcementText, changesText, dateLine, isFull, rekey, roster, seatsOf } from '../shared/schedule';
 import { EMPTY_SCHEDULE, occurrences, parseKey, reminderDue, type Announced, type Answer, type Game, type Occurrence, type ScheduleData } from '../shared/schedule';
 import { editButtons, editCaption, sendButtons, sendDirect, sendPhotoButtons, sendPlain, sendReply, tableChats, type Buttons, type Pressed } from './telegram';
 
@@ -94,7 +94,7 @@ export async function announce(key: string): Promise<{ sent: number; error?: str
   for (const chat of chats) {
     try {
       // A picture on top: the announcement as its caption, or — too long for a caption — the picture first.
-      const b = buttons(key, isFull(data.answers[key], o.game.seats));
+      const b = buttons(key, isFull(data.answers[key], seatsOf(o.game)));
       if (picture && text.length <= CAPTION_MAX) sent.push({ chat, mid: await sendPhotoButtons(chat, picture.data, picture.name, text, b), caption: true });
       else {
         if (picture) await sendPhotoButtons(chat, picture.data, picture.name, '');
@@ -124,7 +124,7 @@ export async function pressed(data: string, from: { id: number; name: string }):
   const o = occurrenceOf(key, cur);
   if (!o) return t('sched.gone');
   const id = String(from.id);
-  const seats = o.game.seats;
+  const seats = seatsOf(o.game);
   const before = roster(cur.answers[key], seats);
   const wasGoing = before.going.some((r) => r.id === id);
   if (answer === 'yes' && !wasGoing && isFull(cur.answers[key], seats)) return { text: t('sched.fullAlert'), alert: true };
@@ -158,7 +158,7 @@ async function tellReserve(o: Occurrence, data: ScheduleData, reserve: { id: str
 // Edit every copy of a game's announcement to what it is now.
 async function refresh(o: Occurrence, data: ScheduleData) {
   const text = announcement(o, data);
-  const b = buttons(o.key, isFull(data.answers[o.key], o.game.seats));
+  const b = buttons(o.key, isFull(data.answers[o.key], seatsOf(o.game)));
   for (const a of data.announced[o.key] ?? []) {
     if (a.caption && text.length <= CAPTION_MAX) await editCaption(a.chat, a.mid, text, b);
     else if (!a.caption) await editButtons(a.chat, a.mid, text, b);

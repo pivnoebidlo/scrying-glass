@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isFull, nextGame, occKey, occurrences, parseKey, reminderDue, roster, tally, type Game } from '../src/shared/schedule';
+import { isFull, nextGame, occKey, occurrences, parseKey, reminderDue, roster, seatsOf, tally, type Game } from '../src/shared/schedule';
 
 const at = (y: number, m: number, d: number, h = 19) => new Date(y, m - 1, d, h, 0).getTime();
 const game = (over: Partial<Game> = {}): Game => ({ id: 'g1', title: '', start: at(2026, 10, 22), minutes: 240, repeat: 'week', remind: true, ...over });
@@ -94,6 +94,15 @@ describe('расписание: места и резерв', () => {
     expect(announcementText({ game: g, start: g.start, key: 'k' }, undefined, 'ru').split('\n\n').at(-1)).toBe('✅ Участвуют (0/3): —');
     expect(announceDiff(g, { ...g, seats: 4 })).toEqual(['seats']);
   });
+
+  it('без числа мест лимит — верхнее число из «Количество участников»', () => {
+    expect(seatsOf({ players: '1-2' })).toBe(2);
+    expect(seatsOf({ players: '4–5 человек' })).toBe(5);
+    expect(seatsOf({ players: '6' })).toBe(6);
+    expect(seatsOf({ players: '4', seats: 3 })).toBe(3);
+    expect(seatsOf({ players: 'кто придёт' })).toBeUndefined();
+    expect(seatsOf({})).toBeUndefined();
+  });
 });
 
 describe('расписание: ядро', () => {
@@ -133,7 +142,7 @@ describe('расписание: анонс', () => {
         '📅 18.10.2026 (вс)\n🕙 10:00–14:00\n👥 Количество участников: 4–5\n💰 Цена: Сколько не жалко\n💬 Мастер: @weesps\n📍 Адрес: бар Небелка\n🎲 Система: D&amp;D 5e (2014)\n⚔️ Уровень персонажей: 3',
         '📌 Ваншот «Без дураков»',
         '📝 В деревнях <b>странный</b> недуг.',
-        '✅ Участвуют: Ann',
+        '✅ Участвуют (1/5): Ann',
       ].join('\n\n')
     );
     const bare = announcementText({ game: game({ title: 'Игра', start: at(2026, 10, 22, 19) }), start: at(2026, 10, 22, 19), key: 'k' }, undefined, 'ru');
