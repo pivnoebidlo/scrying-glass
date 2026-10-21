@@ -32,7 +32,7 @@ interface Deps {
   received(m: TgMessage): void;
   // A button under a bot message was pressed (the schedule's «I'll come»): its data and who; the answer — a short
   // notice the player sees.
-  pressed?(data: string, from: { id: number; name: string }): Promise<string | undefined>;
+  pressed?(data: string, from: { id: number; name: string }): Promise<Pressed | undefined>;
 }
 
 let deps: Deps | null = null;
@@ -442,6 +442,17 @@ export async function sendButtons(chat: number, html: string, buttons: Buttons):
 export async function editButtons(chat: number, mid: number, html: string, buttons: Buttons) {
   await api('editMessageText', { chat_id: chat, message_id: mid, text: html, parse_mode: 'HTML', reply_markup: keyboard(buttons) }).catch(() => undefined);
 }
+// A message to a player in their own chat with the bot (a reserve seat freed): Telegram lets a bot write first only
+// to those who have written to it. Whether it went.
+export async function sendDirect(user: number, html: string): Promise<boolean> {
+  try {
+    await api('sendMessage', { chat_id: user, text: html, parse_mode: 'HTML' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // A plain message to enabled chats (reminders); how many went.
 export async function sendPlain(chats: number[], html: string): Promise<number> {
   let n = 0;
@@ -456,14 +467,18 @@ export async function sendPlain(chats: number[], html: string): Promise<number> 
   return n;
 }
 
+// What the bot says to a pressed button: a short note at the top, or — alert — a window to close.
+export type Pressed = string | { text: string; alert?: boolean };
+
 async function press(q: NonNullable<Update['callback_query']>) {
   if (!deps) return;
   const s = deps.get();
   // A player's own chat carries the GM's label (their character).
   const own = (s.chats ?? []).find((c) => c.id === q.from.id && c.kind === 'private');
   const name = own?.label || [q.from.first_name, q.from.last_name].filter(Boolean).join(' ') || (q.from.username ? `@${q.from.username}` : String(q.from.id));
-  const text = q.data && deps.pressed ? await deps.pressed(q.data, { id: q.from.id, name }).catch(() => undefined) : undefined;
-  await api('answerCallbackQuery', { callback_query_id: q.id, ...(text ? { text } : {}) }).catch(() => undefined);
+  const got = q.data && deps.pressed ? await deps.pressed(q.data, { id: q.from.id, name }).catch(() => undefined) : undefined;
+  const reply = typeof got === 'string' ? { text: got } : got;
+  await api('answerCallbackQuery', { callback_query_id: q.id, ...(reply?.text ? { text: reply.text, show_alert: !!reply.alert } : {}) }).catch(() => undefined);
 }
 
 // The chats a table plays in: its groups, or — without groups — its players; no table — every enabled group.

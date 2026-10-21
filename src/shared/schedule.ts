@@ -5,6 +5,7 @@ import { markdownToTelegram } from './telegram';
 
 export const REPEATS = ['none', 'week', '2weeks'] as const;
 export type Repeat = (typeof REPEATS)[number];
+// yes — taking part, maybe — in the reserve, no — can't come (the ids stay from the first «I'll come / Maybe / Can't»).
 export const ANSWERS = ['yes', 'maybe', 'no'] as const;
 export type Answer = (typeof ANSWERS)[number];
 
@@ -40,6 +41,8 @@ export interface Game {
   system?: string;
   level?: string;
   description?: string;
+  // Seats: how many players take part; more — in the reserve. None — no limit.
+  seats?: number;
 }
 
 export const GAME_KINDS = ['', 'oneshot', 'campaign', 'session'] as const;
@@ -118,10 +121,26 @@ export function reminderDue(o: Occurrence, now: number, sent: Reminder[] = []): 
   return null;
 }
 
-export function tally(answers: Record<string, Reply> | undefined): Record<Answer, string[]> {
-  const out: Record<Answer, string[]> = { yes: [], maybe: [], no: [] };
-  for (const r of Object.values(answers ?? {}).sort((a, b) => a.at - b.at)) out[r.answer].push(r.name);
-  return out;
+// Who takes part, who is in the reserve and who can't come, in the order they answered (by Telegram user id).
+// With seats: the first «yes» up to the limit take part, the later ones (the limit was lowered) wait in the reserve
+// ahead of those who chose it.
+export interface Entry extends Reply {
+  id: string;
+}
+export function roster(answers: Record<string, Reply> | undefined, seats?: number): Record<'going' | 'reserve' | 'out', Entry[]> {
+  const all = Object.entries(answers ?? {})
+    .map(([id, r]) => ({ ...r, id }))
+    .sort((a, b) => a.at - b.at);
+  const yes = all.filter((r) => r.answer === 'yes');
+  const cut = seats ? seats : yes.length;
+  return { going: yes.slice(0, cut), reserve: [...yes.slice(cut), ...all.filter((r) => r.answer === 'maybe')], out: all.filter((r) => r.answer === 'no') };
+}
+export const isFull = (answers: Record<string, Reply> | undefined, seats?: number) => !!seats && roster(answers, seats).going.length >= seats;
+
+// Names by answer, as the announcement and the window show them.
+export function tally(answers: Record<string, Reply> | undefined, seats?: number): Record<Answer, string[]> {
+  const r = roster(answers, seats);
+  return { yes: r.going.map((x) => x.name), maybe: r.reserve.map((x) => x.name), no: r.out.map((x) => x.name) };
 }
 
 // A short random id for a game.
@@ -159,6 +178,8 @@ function fieldLines(o: Occurrence, lang: string): Partial<Record<AnnounceField, 
   return {
     start: `📅 ${dateLine(o.start, lang)}\n${clockEmoji(o.start)} ${hm(o.start)}–${hm(o.start + g.minutes * 60000)}`,
     players: line('👥', 'sched.a.players', g.players),
+    // Shown in the list of who takes part (n/seats); a line of its own only in «what changed».
+    seats: line('🪑', 'sched.a.seats', g.seats ? String(g.seats) : undefined),
     price: line('💰', 'sched.a.price', g.price),
     gm: line('💬', 'sched.a.gm', g.gm),
     place: line('📍', 'sched.a.place', g.place),
@@ -174,10 +195,11 @@ export function announcementText(o: Occurrence, answers: Record<string, Reply> |
   const f = fieldLines(o, lang);
   const head = [f.start, f.players, f.price, f.gm, f.place, f.system, f.level].filter(Boolean);
   const blocks = [head.join('\n'), f.title, f.description].filter(Boolean) as string[];
-  const tl = tally(answers);
+  const seats = o.game.seats;
+  const tl = tally(answers, seats);
   const rows = [
-    tl.yes.length ? `✅ ${t('sched.coming')}: ${esc(tl.yes.join(', '))}` : '',
-    tl.maybe.length ? `🤔 ${t('sched.maybe')}: ${esc(tl.maybe.join(', '))}` : '',
+    tl.yes.length || seats ? `✅ ${t('sched.coming')}${seats ? ` (${tl.yes.length}/${seats})` : ''}: ${tl.yes.length ? esc(tl.yes.join(', ')) : '—'}` : '',
+    tl.maybe.length ? `🕓 ${t('sched.maybe')}: ${esc(tl.maybe.join(', '))}` : '',
     tl.no.length ? `❌ ${t('sched.notComing')}: ${esc(tl.no.join(', '))}` : '',
   ].filter(Boolean);
   if (rows.length) blocks.push(rows.join('\n'));
@@ -185,7 +207,7 @@ export function announcementText(o: Occurrence, answers: Record<string, Reply> |
 }
 
 // What a game's announcement shows; a change in any of them makes the sent announcement outdated.
-export const ANNOUNCE_FIELDS = ['start', 'players', 'price', 'gm', 'place', 'system', 'level', 'title', 'description', 'image'] as const;
+export const ANNOUNCE_FIELDS = ['start', 'players', 'seats', 'price', 'gm', 'place', 'system', 'level', 'title', 'description', 'image'] as const;
 export type AnnounceField = (typeof ANNOUNCE_FIELDS)[number];
 
 // What changed between the game as announced and as it is now (a moved time moves every repeat alike).
@@ -194,6 +216,7 @@ export function announceDiff(before: Game, after: Game): AnnounceField[] {
   const out: AnnounceField[] = [];
   if (before.start !== after.start || before.minutes !== after.minutes) out.push('start');
   for (const k of ['players', 'price', 'gm', 'place', 'system', 'level', 'description', 'image'] as const) if (!same(before[k], after[k])) out.push(k);
+  if ((before.seats ?? 0) !== (after.seats ?? 0)) out.push('seats');
   if (gameTitle(before) !== gameTitle(after) || (before.kind ?? '') !== (after.kind ?? '')) out.push('title');
   return out.sort((a, b) => ANNOUNCE_FIELDS.indexOf(a) - ANNOUNCE_FIELDS.indexOf(b));
 }

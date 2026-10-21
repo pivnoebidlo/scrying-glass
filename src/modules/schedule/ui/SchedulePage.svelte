@@ -47,6 +47,7 @@
     image: string;
     kind: GameKind;
     players: string;
+    seats: string;
     price: string;
     gm: string;
     system: string;
@@ -74,6 +75,7 @@
       image: '',
       kind: '',
       players: last?.players ?? '',
+      seats: last?.seats ? String(last.seats) : '',
       price: last?.price ?? '',
       gm: last?.gm ?? '',
       system: systemTitle(adventure),
@@ -110,6 +112,7 @@
       image: g.image ?? '',
       kind: g.kind ?? '',
       players: g.players ?? '',
+      seats: g.seats ? String(g.seats) : '',
       price: g.price ?? '',
       gm: g.gm ?? '',
       system: g.system ?? '',
@@ -143,6 +146,7 @@
       ...(d.image ? { image: d.image } : {}),
       ...(d.kind ? { kind: d.kind } : {}),
       ...(d.players.trim() ? { players: d.players.trim() } : {}),
+      ...(Number(d.seats) > 0 ? { seats: Math.round(Number(d.seats)) } : {}),
       ...(d.price.trim() ? { price: d.price.trim() } : {}),
       ...(d.gm.trim() ? { gm: d.gm.trim() } : {}),
       ...(d.system.trim() ? { system: d.system.trim() } : {}),
@@ -174,7 +178,7 @@
   const preview = $derived.by(() => {
     const d = draft;
     if (!d?.date || !d.time) return '';
-    const game: Game = { id: 'p', title: d.title.trim(), start: local(d.date, d.time), minutes: Math.round(d.hours * 60), repeat: 'none', remind: false, adventure: d.adventure || null, place: d.place, kind: d.kind, players: d.players, price: d.price, gm: d.gm, system: d.system, level: d.level, description: d.description };
+    const game: Game = { id: 'p', title: d.title.trim(), start: local(d.date, d.time), minutes: Math.round(d.hours * 60), repeat: 'none', remind: false, adventure: d.adventure || null, place: d.place, kind: d.kind, players: d.players, ...(Number(d.seats) > 0 ? { seats: Math.round(Number(d.seats)) } : {}), price: d.price, gm: d.gm, system: d.system, level: d.level, description: d.description };
     return safeTgHtml(announcementText({ game, start: game.start, key: 'p' }, undefined, locale.lang));
   });
   let picking = $state(false);
@@ -266,6 +270,7 @@
             </select>
           </label>
           <label>{t('sched.a.players')}<input type="text" placeholder={t('sched.playersPh')} bind:value={draft.players} /></label>
+          <label title={t('sched.seatsHint')}>{t('sched.seats')}<input type="number" min="1" max="50" placeholder={t('sched.seatsPh')} bind:value={draft.seats} /></label>
           <label>{t('sched.a.price')}<input type="text" placeholder={t('sched.pricePh')} bind:value={draft.price} /></label>
           <label>{t('sched.a.gm')}<input type="text" placeholder={t('sched.gmPh')} bind:value={draft.gm} /></label>
           <label>{t('sched.a.system')}<input type="text" bind:value={draft.system} /></label>
@@ -293,7 +298,7 @@
     <h3>{t('sched.upcoming')}</h3>
     <div class="games">
       {#each list as o, i (o.key)}
-        {@const tl = tally(sched.data.answers[o.key])}
+        {@const tl = tally(sched.data.answers[o.key], o.game.seats)}
         {@const until = untilText(o, sched.now, locale.lang)}
         {@const repeatOf = list.slice(0, i).some((x) => x.game.id === o.game.id)}
         {@const answered = tl.yes.length + tl.maybe.length + tl.no.length > 0}
@@ -330,8 +335,8 @@
           {/if}
           <div class="answers">
             {#if tl.yes.length + tl.maybe.length + tl.no.length}
-              {#if tl.yes.length}<span>✅ {tl.yes.join(', ')}</span>{/if}
-              {#if tl.maybe.length}<span>🤔 {tl.maybe.join(', ')}</span>{/if}
+              {#if tl.yes.length}<span>✅ {o.game.seats ? `${tl.yes.length}/${o.game.seats}: ` : ''}{tl.yes.join(', ')}</span>{/if}
+              {#if tl.maybe.length}<span title={t('sched.maybe')}>🕓 {tl.maybe.join(', ')}</span>{/if}
               {#if tl.no.length}<span>❌ {tl.no.join(', ')}</span>{/if}
             {:else if sched.data.announced[o.key]?.length}
               <span class="faint">{t('sched.nobody')}</span>

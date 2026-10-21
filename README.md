@@ -334,8 +334,12 @@ only.
 day, with skipped ones), the table, the adventure and its plan (a journal note), the place (an address or a link to
 the online room). The announcement has optional lines — each goes only when filled: a picture on top, the kind of game
 (one-shot, campaign, session) with its title, players, price, GM, system (from the adventure), characters' level and a
-description (with formatting); the editor shows a preview. The bot announces a game to its table with "I'll come /
-Maybe / Can't" buttons (one per row); answers show under the game and in the announcement itself. Changed the game
+description (with formatting); the editor shows a preview. The bot announces a game to its table with "Join /
+Reserve / Can't" buttons (one per row); answers show under the game and in the announcement itself, one list for the
+game whatever chat a player answers in. "Seats for players" limits who takes part: once they are taken, the first
+button says "No seats left" and pressing it explains that the reserve is open; when a player cancels, the bot writes
+to everyone in the reserve (those who never wrote to the bot are mentioned under the announcement instead). The bot
+answers while the app is open: presses made while it is closed are taken when it starts (Telegram keeps them a day). Changed the game
 after announcing it? The game shows "The announcement is out of date: Address…" — "Update the announcement" edits the
 sent message, "Update and tell the players" also replies to it with what changed. A moved time takes the answers
 along. It reminds the table a day and two hours before (while the app is open — a

@@ -4,9 +4,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { getLang, t } from '../shared/i18n';
-import { announceDiff, announcementText, changesText, rekey } from '../shared/schedule';
+import { announceDiff, announcementText, changesText, dateLine, isFull, rekey, roster } from '../shared/schedule';
 import { EMPTY_SCHEDULE, occurrences, parseKey, reminderDue, type Announced, type Answer, type Game, type Occurrence, type ScheduleData } from '../shared/schedule';
-import { editButtons, editCaption, sendButtons, sendPhotoButtons, sendPlain, sendReply, tableChats, type Buttons } from './telegram';
+import { editButtons, editCaption, sendButtons, sendDirect, sendPhotoButtons, sendPlain, sendReply, tableChats, type Buttons, type Pressed } from './telegram';
 
 interface Deps {
   file: string;
@@ -61,10 +61,11 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const titleOf = (g: Game) => g.title || deps?.adventureName(g) || t('sched.game');
 
 const announcement = (o: Occurrence, data: ScheduleData) => announcementText(o, data.answers[o.key], getLang());
-// One answer per row: long words are not cut.
-const buttons = (key: string): Buttons => [
-  [{ text: `✅ ${t('sched.btn.yes')}`, data: `rsvp:${key}:yes` }],
-  [{ text: `🤔 ${t('sched.btn.maybe')}`, data: `rsvp:${key}:maybe` }],
+// One answer per row: long words are not cut. A full game's first button says so (Telegram has no disabled buttons:
+// pressing it explains).
+const buttons = (key: string, full = false): Buttons => [
+  [{ text: full ? `🔒 ${t('sched.btn.full')}` : `✅ ${t('sched.btn.yes')}`, data: `rsvp:${key}:yes` }],
+  [{ text: `🕓 ${t('sched.btn.maybe')}`, data: `rsvp:${key}:maybe` }],
   [{ text: `❌ ${t('sched.btn.no')}`, data: `rsvp:${key}:no` }],
 ];
 // Telegram's limit for a picture's caption.
@@ -93,10 +94,11 @@ export async function announce(key: string): Promise<{ sent: number; error?: str
   for (const chat of chats) {
     try {
       // A picture on top: the announcement as its caption, or — too long for a caption — the picture first.
-      if (picture && text.length <= CAPTION_MAX) sent.push({ chat, mid: await sendPhotoButtons(chat, picture.data, picture.name, text, buttons(key)), caption: true });
+      const b = buttons(key, isFull(data.answers[key], o.game.seats));
+      if (picture && text.length <= CAPTION_MAX) sent.push({ chat, mid: await sendPhotoButtons(chat, picture.data, picture.name, text, b), caption: true });
       else {
         if (picture) await sendPhotoButtons(chat, picture.data, picture.name, '');
-        sent.push({ chat, mid: await sendButtons(chat, text, buttons(key)) });
+        sent.push({ chat, mid: await sendButtons(chat, text, b) });
       }
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
@@ -111,8 +113,9 @@ export async function announce(key: string): Promise<{ sent: number; error?: str
   return { sent: sent.length, ...(error ? { error } : {}) };
 }
 
-// A button of an announcement: the answer is kept, every copy of the announcement shows the new tally.
-export async function pressed(data: string, from: { id: number; name: string }): Promise<string | undefined> {
+// A button of an announcement: the answer is kept, every copy of the announcement shows the new tally. A full game
+// takes no one more («join the reserve»); a seat freed — the reserve hears of it.
+export async function pressed(data: string, from: { id: number; name: string }): Promise<Pressed | undefined> {
   const m = /^rsvp:(.+):(yes|maybe|no)$/.exec(data);
   if (!m) return undefined;
   const key = m[1]!;
@@ -120,18 +123,45 @@ export async function pressed(data: string, from: { id: number; name: string }):
   const cur = readSchedule();
   const o = occurrenceOf(key, cur);
   if (!o) return t('sched.gone');
-  const next: ScheduleData = { ...cur, answers: { ...cur.answers, [key]: { ...cur.answers[key], [String(from.id)]: { name: from.name, answer, at: Date.now() } } } };
+  const id = String(from.id);
+  const seats = o.game.seats;
+  const before = roster(cur.answers[key], seats);
+  const wasGoing = before.going.some((r) => r.id === id);
+  if (answer === 'yes' && !wasGoing && isFull(cur.answers[key], seats)) return { text: t('sched.fullAlert'), alert: true };
+  // Pressing the same answer again keeps the place in the queue.
+  const old = cur.answers[key]?.[id];
+  const reply = old?.answer === answer ? { ...old, name: from.name } : { name: from.name, answer, at: Date.now() };
+  const next: ScheduleData = { ...cur, answers: { ...cur.answers, [key]: { ...cur.answers[key], [id]: reply } } };
   write(next);
   await refresh(o, next);
+  const after = roster(next.answers[key], seats);
+  if (seats && wasGoing && !after.going.some((r) => r.id === id)) {
+    await tellReserve(o, next, after.reserve.filter((r) => r.id !== id && r.answer === 'maybe'));
+  }
   return t(`sched.got.${answer}` as never);
+}
+
+// A seat freed: each one in the reserve gets a message from the bot; those it can't write to (they never wrote to the
+// bot) are mentioned under the announcement in its chats.
+async function tellReserve(o: Occurrence, data: ScheduleData, reserve: { id: string; name: string }[]) {
+  if (!reserve.length) return;
+  const what = `<b>${esc(titleOf(o.game))}</b> — ${esc(dateLine(o.start, getLang()))}`;
+  const missed: { id: string; name: string }[] = [];
+  for (const r of reserve) if (!(await sendDirect(Number(r.id), t('sched.freedDirect', { game: what })))) missed.push(r);
+  if (!missed.length) return;
+  const who = missed.map((r) => `<a href="tg://user?id=${r.id}">${esc(r.name)}</a>`).join(', ');
+  for (const a of data.announced[o.key] ?? []) {
+    await sendReply(a.chat, t('sched.freedChat', { who }), a.mid).catch(() => undefined);
+  }
 }
 
 // Edit every copy of a game's announcement to what it is now.
 async function refresh(o: Occurrence, data: ScheduleData) {
   const text = announcement(o, data);
+  const b = buttons(o.key, isFull(data.answers[o.key], o.game.seats));
   for (const a of data.announced[o.key] ?? []) {
-    if (a.caption && text.length <= CAPTION_MAX) await editCaption(a.chat, a.mid, text, buttons(o.key));
-    else if (!a.caption) await editButtons(a.chat, a.mid, text, buttons(o.key));
+    if (a.caption && text.length <= CAPTION_MAX) await editCaption(a.chat, a.mid, text, b);
+    else if (!a.caption) await editButtons(a.chat, a.mid, text, b);
   }
 }
 

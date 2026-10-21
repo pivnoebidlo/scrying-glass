@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { nextGame, occKey, occurrences, parseKey, reminderDue, tally, type Game } from '../src/shared/schedule';
+import { isFull, nextGame, occKey, occurrences, parseKey, reminderDue, roster, tally, type Game } from '../src/shared/schedule';
 
 const at = (y: number, m: number, d: number, h = 19) => new Date(y, m - 1, d, h, 0).getTime();
 const game = (over: Partial<Game> = {}): Game => ({ id: 'g1', title: '', start: at(2026, 10, 22), minutes: 240, repeat: 'week', remind: true, ...over });
@@ -43,6 +43,59 @@ describe('расписание', () => {
   });
 });
 
+describe('расписание: места и резерв', () => {
+  const r = (answer: 'yes' | 'maybe' | 'no', at: number, name = String(at)) => ({ name, answer, at });
+  it('первые «участвую» до числа мест участвуют, лишние — в резерве впереди выбравших резерв', () => {
+    const answers = { a: r('yes', 1, 'Ann'), b: r('maybe', 2, 'Bob'), c: r('yes', 3, 'Cat'), d: r('yes', 4, 'Dan'), e: r('no', 5, 'Eve') };
+    const x = roster(answers, 2);
+    expect(x.going.map((e) => e.name)).toEqual(['Ann', 'Cat']);
+    expect(x.reserve.map((e) => e.name)).toEqual(['Dan', 'Bob']);
+    expect(x.out.map((e) => e.id)).toEqual(['e']);
+    expect(isFull(answers, 2)).toBe(true);
+    expect(isFull(answers, 5)).toBe(false);
+    expect(isFull(answers)).toBe(false);
+    expect(tally(answers, 2)).toEqual({ yes: ['Ann', 'Cat'], maybe: ['Dan', 'Bob'], no: ['Eve'] });
+  });
+
+  it('полная игра не берёт новых «участвую» (окно с объяснением), резерв и отказ — можно', async () => {
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const { setLang } = await import('../src/shared/i18n');
+    setLang('ru');
+    const { initSchedule, saveGames, pressed, readSchedule, stopSchedule } = await import('../src/main/schedule');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-sched-'));
+    try {
+      initSchedule({ file: path.join(dir, 'schedule.json'), changed: () => {}, adventureName: () => '', imageFile: () => null });
+      stopSchedule();
+      const g = game({ start: at(2030, 1, 3), seats: 1 });
+      saveGames([g]);
+      const key = occKey(g, at(2030, 1, 3));
+      expect(await pressed(`rsvp:${key}:yes`, { id: 1, name: 'Ann' })).toBe('Записал: вы участвуете');
+      expect(await pressed(`rsvp:${key}:yes`, { id: 2, name: 'Bob' })).toEqual({ text: expect.stringMatching(/Все места заняты/), alert: true });
+      expect(readSchedule().answers[key]!['2']).toBeUndefined();
+      expect(await pressed(`rsvp:${key}:maybe`, { id: 2, name: 'Bob' })).toBe('Записал: вы в резерве');
+      // Ann cancels: the reserve is told (without a bot nothing goes, and nothing breaks), Bob can take the seat.
+      expect(await pressed(`rsvp:${key}:no`, { id: 1, name: 'Ann' })).toBe('Записал: не сможете');
+      expect(await pressed(`rsvp:${key}:yes`, { id: 2, name: 'Bob' })).toBe('Записал: вы участвуете');
+      expect(roster(readSchedule().answers[key], 1).going.map((e) => e.name)).toEqual(['Bob']);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('в анонсе — участники из мест, резерв; смена числа мест — изменение анонса', async () => {
+    const { setLang } = await import('../src/shared/i18n');
+    setLang('ru');
+    const { announcementText, announceDiff } = await import('../src/shared/schedule');
+    const g = game({ title: 'Игра', start: at(2026, 10, 22, 19), seats: 3 });
+    const text = announcementText({ game: g, start: g.start, key: 'k' }, { a: r('yes', 1, 'Ann'), b: r('maybe', 2, 'Bob') }, 'ru');
+    expect(text.split('\n\n').at(-1)).toBe('✅ Участвуют (1/3): Ann\n🕓 Резерв: Bob');
+    expect(announcementText({ game: g, start: g.start, key: 'k' }, undefined, 'ru').split('\n\n').at(-1)).toBe('✅ Участвуют (0/3): —');
+    expect(announceDiff(g, { ...g, seats: 4 })).toEqual(['seats']);
+  });
+});
+
 describe('расписание: ядро', () => {
   it('ответ кнопкой записывается к игре; ушедшая игра — сообщение', async () => {
     const fs = await import('node:fs');
@@ -58,7 +111,7 @@ describe('расписание: ядро', () => {
       const g = game({ start: at(2030, 1, 3) });
       saveGames([g]);
       const key = occKey(g, at(2030, 1, 3));
-      expect(await pressed(`rsvp:${key}:yes`, { id: 7, name: 'Гилберт' })).toBe('Записал: будете');
+      expect(await pressed(`rsvp:${key}:yes`, { id: 7, name: 'Гилберт' })).toBe('Записал: вы участвуете');
       expect(readSchedule().answers[key]!['7']).toMatchObject({ name: 'Гилберт', answer: 'yes' });
       expect(await pressed(`rsvp:${occKey({ id: 'zz' }, 1)}:no`, { id: 7, name: 'x' })).toBe('Этой игры больше нет в расписании.');
       expect((await announce(key)).error).toMatch(/нет включённых чатов/);
@@ -80,7 +133,7 @@ describe('расписание: анонс', () => {
         '📅 18.10.2026 (вс)\n🕙 10:00–14:00\n👥 Количество участников: 4–5\n💰 Цена: Сколько не жалко\n💬 Мастер: @weesps\n📍 Адрес: бар Небелка\n🎲 Система: D&amp;D 5e (2014)\n⚔️ Уровень персонажей: 3',
         '📌 Ваншот «Без дураков»',
         '📝 В деревнях <b>странный</b> недуг.',
-        '✅ Будут: Ann',
+        '✅ Участвуют: Ann',
       ].join('\n\n')
     );
     const bare = announcementText({ game: game({ title: 'Игра', start: at(2026, 10, 22, 19) }), start: at(2026, 10, 22, 19), key: 'k' }, undefined, 'ru');
