@@ -362,25 +362,33 @@ how many points are spent, or what is broken; level increases and feats go into 
 
 ## Maps
 
-Pictures from maps folders (or any picture with "Show as a map"). The GM reveals and hides the fog of war with a
-brush or a rectangle (⌘Z — undo), chooses what part of the map the players see ("Whole map", "Like mine" or a frame)
-and turns on the grid (squares or hexes, pointy or flat top; cell count and offset are fitted to the grid drawn on the
-map; the palette button sets line width, opacity and colour; on hexes tokens stand in the centre of a hex). For the players the fog is
-opaque with a soft edge, and the view glides when it changes. Fog and view are saved per map: a map can be prepared
-in advance.
+Pictures from maps folders (or any picture with "Show as a map"). The toolbar has two rows: the top one picks a
+section — Fog, Players' view, Grid, Tokens, Pins — and the row under it holds that section's tools and settings (the
+hand that moves the map is in every section; space or the middle button work too).
+
+- **Fog** — reveal and hide with a brush or a rectangle, brush size, ⌘Z — undo, "Reveal all" / "Hide all".
+- **Players' view** — what part of the map the players see: "Whole map", a frame dragged over the map, or "Like
+  mine". "Like mine" stays pressed: while it is on, the players follow every move and zoom of your map — handy to set
+  the picture up on the player screen before the game. Press it again to let go.
+- **Grid** — on/off, cells across the map, squares or hexes (pointy or flat top), line width, opacity and colour, and
+  the shift tool: cell count and offset fit the grid to the one drawn on the map; on hexes tokens stand in the centre
+  of a hex.
+
+For the players the fog is opaque with a soft edge, and the view glides when it changes. Fog and view are saved per
+map: a map can be prepared in advance.
 
 **Pins**: the pin tool puts a marker on the map — a title, a color, an icon (tavern, temple, shop, danger…) and a
 note for yourself ("Borin the smith — the headman's brother"). Cards can be attached to a pin (the innkeeper, the
-guard) — they open from the pin on the side. Pins can be dragged; the list of all the map's pins — the "Pins" button.
+guard) — they open from the pin on the side. Pins can be dragged; the list of all the map's pins — "List" in the Pins section; whether new pins go to the players at once — the button next to it.
 The players see only the pins the GM has shown them (the title, without the note) — even under fog: for example, when
 the heroes have learned where the temple is. Pin size for the players — in the Maps settings.
 
-**Tokens**: "Tokens" → "From combat" puts the participants of the current combat from Initiative on the map, "Party" —
+**Tokens**: The Tokens section: "From combat" puts the participants of the current combat from Initiative on the map, "Party" —
 the adventure's heroes, search — any card (an NPC, a monster) without a combat. New tokens take free cells in the middle
 of what the players see. A token from combat takes its portrait, side (the outline color), turn (a white glow), wounds
 and "hidden"; a defeated one turns grey. A hero's token already on the map isn't duplicated by "From combat" but linked
 to the participant. Move them with the token tool or by hand; with the grid on, a token snaps to cells; size —
-1×1…4×4, the overall token scale of the map — the "Size" slider in the panel. Tokens lie under the fog: the players
+1×1…4×4, the overall token scale of the map — the "Size" slider; "List" opens the map's tokens and the search by card. Tokens lie under the fog: the players
 don't see them in the unrevealed part. Layer order on the player screen: background, map, portraits.
 
 ## Scenes

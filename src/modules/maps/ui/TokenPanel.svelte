@@ -2,13 +2,11 @@
      имя, портрет, сторону и ранения из инициативы. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Eye, EyeOff, Shield, Swords, Trash2, X } from '@lucide/svelte';
-  import Slider from '../../../renderer/lib/Slider.svelte';
+  import { Eye, EyeOff, Trash2, X } from '@lucide/svelte';
   import type { CardSummary } from '../../../shared/cards';
   import CardSearch from './CardSearch.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { assetUrl, thumb } from '../../../shared/vault';
-  import type { Combatant } from '../../initiative/types';
   import { RING, type TokenView } from '../tokens';
   import type { MapData } from '../types';
   import { ui } from './ui.svelte';
@@ -17,27 +15,13 @@
     path,
     tokens,
     data,
-    fight,
-    onaddfight,
     onaddcard,
-    onaddparty,
   }: {
     path: string;
     tokens: TokenView[];
     data: MapData;
-    fight: Combatant[];
-    onaddfight: () => void | Promise<void>;
     onaddcard: (c: CardSummary) => void;
-    onaddparty: () => Promise<number | undefined>;
   } = $props();
-
-  const shownScale = $derived(ui.tokenScale ?? data.tokenScale ?? 1);
-  let status = $state('');
-  async function party() {
-    const n = await onaddparty();
-    status = n ? '' : t('maps.allParty');
-    if (status) setTimeout(() => (status = ''), 3000);
-  }
 
   // Размеры D&D: крошечный и маленький занимают клетку так же, как средний.
   const SIZES = [
@@ -47,7 +31,6 @@
     { v: 4 },
   ];
 
-  const missing = $derived(fight.filter((c) => !data.tokens.some((t) => t.combatant === c.id)).length);
   const update = (id: string, changes: Record<string, unknown>) => dispatch('maps', 'updateToken', { path, id, changes });
 
   function clear() {
@@ -65,22 +48,7 @@
     <button class="icon-btn" title={t('maps.close')} onclick={() => (ui.tokenList = false)}><X size={15} /></button>
   </header>
 
-  <div class="row">
-    <button class="btn" disabled={!missing} title={t('maps.fromFightHint')} onclick={onaddfight}>
-      <Swords size={14} /> {t('maps.fromFight')}{missing ? ` (${missing})` : ''}
-    </button>
-    <button class="btn" title={t('maps.partyHint')} onclick={party}><Shield size={14} /> {t('maps.party')}</button>
-  </div>
   <CardSearch placeholder={t('maps.addByCard')} onpick={onaddcard} />
-  {#if status}<p class="faint hint">{status}</p>{/if}
-
-  <div class="scale" title={t('maps.scaleHint')}>
-    <span class="faint">{t('maps.size')}</span>
-    <div class="slider">
-      <Slider value={shownScale} min={0.25} max={4} step={0.05} oninput={(v) => (ui.tokenScale = v)} onchange={(v) => dispatch('maps', 'setTokenScale', { path, value: v }).then(() => (ui.tokenScale = null))} />
-    </div>
-    <span class="faint pct">{Math.round(shownScale * 100)}%</span>
-  </div>
 
   {#if tokens.length}
     <ul>
@@ -135,27 +103,6 @@
   .head {
     flex: 1;
     font-weight: 600;
-  }
-  .row {
-    display: flex;
-    gap: 6px;
-  }
-  .row .btn {
-    flex: 1;
-    justify-content: center;
-  }
-  .scale {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-  }
-  .slider {
-    flex: 1;
-  }
-  .pct {
-    width: 36px;
-    text-align: right;
   }
   ul {
     max-height: 45vh;

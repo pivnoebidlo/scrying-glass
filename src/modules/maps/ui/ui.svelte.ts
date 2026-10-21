@@ -3,10 +3,15 @@ import type { PinIcon } from '../icons';
 import type { PinColor } from '../types';
 
 export type Tool = 'pan' | 'reveal' | 'hide' | 'revealRect' | 'hideRect' | 'view' | 'pin' | 'grid' | 'token';
+// The editor's sections: the top row of the toolbar picks one, the row under it holds its options.
+export type Tab = 'fog' | 'view' | 'grid' | 'tokens' | 'pins';
 
 export const ui = $state({
   selected: null as string | null,
   tool: 'reveal' as Tool,
+  tab: 'fog' as Tab,
+  // «Like mine» held down: players see what the master sees here, following every move and zoom.
+  follow: false,
   // Радиус кисти в точках экрана.
   brush: 40,
   // Выбранная метка и открыт ли список меток.

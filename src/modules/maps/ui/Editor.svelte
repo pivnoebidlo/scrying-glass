@@ -4,7 +4,7 @@
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
   import {
-    Brush, CircleUserRound, Palette, Eraser, Eye, EyeOff, Grid3x3, Hand, Move3d, UsersRound, MapPin, MapPinPlus, Maximize, Move, ScanEye, SquareDashed, SquareDashedMousePointer, Undo2,
+    Brush, CircleUserRound, Cloud, Eraser, Eye, EyeOff, Grid3x3, Hand, List, Move3d, UsersRound, MapPin, MapPinPlus, Maximize, Move, ScanEye, Shield, SquareDashed, SquareDashedMousePointer, Swords, Undo2,
   } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { playerDisplay } from '../../../renderer/lib/nav';
@@ -26,7 +26,7 @@
   import { caption, imageGroups } from '../../portraits/library';
   import PinPanel from './PinPanel.svelte';
   import TokenPanel from './TokenPanel.svelte';
-  import { ui, type Tool } from './ui.svelte';
+  import { ui, type Tab, type Tool } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'maps'> = $props();
 
@@ -39,16 +39,39 @@
   const data = $derived(path ? dataOf(ms, path) : null);
   const shown = $derived(!!path && ms.current === path);
 
-  const TOOLS: { id: Tool; icon: typeof Hand }[] = [
-    { id: 'pan', icon: Hand },
-    { id: 'reveal', icon: Brush },
-    { id: 'hide', icon: Eraser },
-    { id: 'revealRect', icon: SquareDashedMousePointer },
-    { id: 'hideRect', icon: SquareDashed },
-    { id: 'view', icon: Move },
-    { id: 'pin', icon: MapPinPlus },
-    { id: 'token', icon: CircleUserRound },
+  type ToolDef = { id: Tool; icon: typeof Hand };
+  const PAN: ToolDef = { id: 'pan', icon: Hand };
+  // The sections of the top row and the tools of each (the hand in all of them).
+  const TABS: { id: Tab; icon: typeof Hand }[] = [
+    { id: 'fog', icon: Cloud },
+    { id: 'view', icon: ScanEye },
+    { id: 'grid', icon: Grid3x3 },
+    { id: 'tokens', icon: UsersRound },
+    { id: 'pins', icon: MapPin },
   ];
+  const TAB_TOOLS: Record<Tab, ToolDef[]> = {
+    fog: [
+      PAN,
+      { id: 'reveal', icon: Brush },
+      { id: 'hide', icon: Eraser },
+      { id: 'revealRect', icon: SquareDashedMousePointer },
+      { id: 'hideRect', icon: SquareDashed },
+    ],
+    view: [PAN, { id: 'view', icon: Move }],
+    grid: [PAN, { id: 'grid', icon: Move3d }],
+    tokens: [PAN, { id: 'token', icon: CircleUserRound }],
+    pins: [PAN, { id: 'pin', icon: MapPinPlus }],
+  };
+  // The tool a section starts with; the fog remembers the last one.
+  let fogTool: Tool = 'reveal';
+  const START: Record<Exclude<Tab, 'fog'>, Tool> = { view: 'view', grid: 'pan', tokens: 'token', pins: 'pin' };
+
+  function openTab(tab: Tab) {
+    if (ui.tab === 'fog' && ui.tool !== 'pan') fogTool = ui.tool;
+    ui.tab = tab;
+    ui.tool = tab === 'fog' ? fogTool : START[tab];
+    if (tab === 'tokens') ui.tokenList = true;
+  }
 
   // Метки этой карты; выбранная — та, что открыта в панели.
   const pins = $derived(data?.pins ?? []);
@@ -81,8 +104,6 @@
   let hoverToken: string | null = null;
   // Сдвиг сетки, пока его тащат.
   let gridPreview: { ox: number; oy: number } | null = null;
-  // The grid style panel (width, colour, opacity) under its button.
-  let gridStyle = $state(false);
   let overPin = $state(false);
   const PIN_R = 11;
 
@@ -129,6 +150,7 @@
     untrack(() => {
       ui.pin = null;
       ui.token = null;
+      ui.follow = false;
     });
   });
 
@@ -202,6 +224,7 @@
       ctx.lineWidth = 1.5 * dpr();
       ctx.stroke();
     }
+    if (ui.follow) followSoon();
   }
 
   // ---- Мышь ----
@@ -255,17 +278,17 @@
       ui.token = tok.id;
       ui.pin = null;
       ui.tokenList = true;
+      ui.tab = 'tokens';
       drag = { kind: 'token', id: tok.id, sx: p.x, sy: p.y, x0: tok.x, y0: tok.y, moved: false };
     } else if (hit) {
-      ui.tokenList = false;
       ui.token = null;
       ui.pin = hit.id;
+      ui.tab = 'pins';
       drag = { kind: 'pin', id: hit.id, sx: p.x, sy: p.y, x0: hit.x, y0: hit.y, moved: false };
     } else if (e.button === 0 && !spaceDown && ui.tool === 'pin') {
       const m = toMap(p);
       if (m.x < 0 || m.y < 0 || m.x > 1 || m.y > 1) return;
       const id = crypto.randomUUID();
-      ui.tokenList = false;
       dispatch('maps', 'addPin', { path, pin: { id, x: m.x, y: m.y, title: '', note: '', color: ui.pinColor, icon: ui.pinIcon, shown: ui.pinShown } });
       ui.pin = id;
       focusTitle = true;
@@ -284,6 +307,7 @@
     } else if (ui.tool === 'revealRect' || ui.tool === 'hideRect') {
       drag = { kind: 'rect', mode: ui.tool === 'revealRect' ? 'reveal' : 'hide', x0: p.x, y0: p.y, x1: p.x, y1: p.y };
     } else if (ui.tool === 'view') {
+      ui.follow = false;
       drag = { kind: 'view', sx: p.x, sy: p.y, view0: data.view };
     } else if (ui.tool === 'grid') {
       drag = { kind: 'grid', sx: p.x, sy: p.y, ox: data.grid.ox ?? 0, oy: data.grid.oy ?? 0 };
@@ -536,15 +560,43 @@
   }
 
   // ---- Кнопки ----
-  function showMineToPlayers() {
-    if (!img || !path || !canvas) return;
-    const view = {
-      x: -xf.ox / xf.s / img.w,
-      y: -xf.oy / xf.s / img.h,
-      w: canvas.width / xf.s / img.w,
-      h: canvas.height / xf.s / img.h,
-    };
-    dispatch('maps', 'setView', { path, view });
+  // What the master sees here, as the players' view.
+  function mine(): MapView | null {
+    if (!img || !canvas) return null;
+    return { x: -xf.ox / xf.s / img.w, y: -xf.oy / xf.s / img.h, w: canvas.width / xf.s / img.w, h: canvas.height / xf.s / img.h };
+  }
+
+  // «Like mine» held down: every move and zoom here goes to the players (a moment after it settles).
+  let followTimer: ReturnType<typeof setTimeout> | null = null;
+  function followSoon() {
+    if (followTimer) return;
+    followTimer = setTimeout(() => {
+      followTimer = null;
+      const v = mine();
+      const cur = data?.view;
+      if (!ui.follow || !v || !path || !cur) return;
+      const same = Math.abs(v.x - cur.x) + Math.abs(v.y - cur.y) + Math.abs(v.w - cur.w) + Math.abs(v.h - cur.h) < 1e-4;
+      if (!same) dispatch('maps', 'setView', { path, view: v });
+    }, 80);
+  }
+
+  function toggleFollow() {
+    ui.follow = !ui.follow;
+    // The frame tool would end following on the first drag: the hand moves the map.
+    if (ui.follow) {
+      ui.tool = 'pan';
+      followSoon();
+    }
+  }
+
+  // Tokens: how many of the fight are not on the map, the size slider, «Party» with nothing to add.
+  const missing = $derived(data ? app.initiative.combatants.filter((c) => !data.tokens.some((t) => t.combatant === c.id)).length : 0);
+  const shownScale = $derived(ui.tokenScale ?? data?.tokenScale ?? 1);
+  let partyStatus = $state('');
+  async function partyClick() {
+    const n = await addParty();
+    partyStatus = n ? '' : t('maps.allParty');
+    if (partyStatus) setTimeout(() => (partyStatus = ''), 3000);
   }
 
   function resetFog(base: 'hidden' | 'revealed') {
@@ -575,126 +627,127 @@
 <div class="editor">
   {#if path && data}
     <header class="toolbar">
-      <div class="title" title={path}>{mapName(path)}</div>
-      <button class="btn" class:primary={!shown} onclick={() => dispatch('maps', shown ? 'clear' : 'show', { path })}>
-        {#if shown}<EyeOff size={14} /> {t('maps.removeFromPlayers')}{:else}<Eye size={14} /> {t('maps.showToPlayers')}{/if}
-      </button>
-
-      <div class="sep"></div>
-      <div class="seg">
-        {#each TOOLS as tool (tool.id)}
-          <button class:active={ui.tool === tool.id} title={t(`maps.tool.${tool.id}`)} onclick={() => (ui.tool = tool.id)}><tool.icon size={15} /></button>
-        {/each}
+      <div class="tabs-row">
+        <div class="title" title={path}>{mapName(path)}</div>
+        <nav class="tabs">
+          {#each TABS as tab (tab.id)}
+            <button class:active={ui.tab === tab.id} onclick={() => openTab(tab.id)}>
+              <tab.icon size={14} /> {t(`maps.tab.${tab.id}`)}
+              {#if tab.id === 'tokens' && data.tokens.length}<span class="count">{data.tokens.length}</span>{/if}
+              {#if tab.id === 'pins' && pins.length}<span class="count">{pins.length}</span>{/if}
+            </button>
+          {/each}
+        </nav>
+        <button class="btn show" class:primary={!shown} onclick={() => dispatch('maps', shown ? 'clear' : 'show', { path })}>
+          {#if shown}<EyeOff size={14} /> {t('maps.removeFromPlayers')}{:else}<Eye size={14} /> {t('maps.showToPlayers')}{/if}
+        </button>
       </div>
-      {#if ui.tool === 'reveal' || ui.tool === 'hide'}
-        <div class="brush" title={t('maps.brush')}><Slider value={ui.brush} min={8} max={160} step={1} oninput={(v) => (ui.brush = v)} /></div>
-      {/if}
-      {#if ui.tool === 'pin'}
-        <button
-          class="btn"
-          title={ui.pinShown ? t('maps.newPinsShownHint') : t('maps.newPinsHiddenHint')}
-          onclick={() => (ui.pinShown = !ui.pinShown)}
-        >
-          {#if ui.pinShown}<Eye size={14} /> {t('maps.newToPlayers')}{:else}<EyeOff size={14} /> {t('maps.newOnlyMe')}{/if}
-        </button>
-      {/if}
-      <button class="icon-btn" title={t('maps.undo')} disabled={!data.fog.ops.length} onclick={() => dispatch('maps', 'undoFog', { path })}>
-        <Undo2 size={15} />
-      </button>
-      <button class="btn" onclick={() => resetFog('revealed')}>{t('maps.revealAll')}</button>
-      <button class="btn" onclick={() => resetFog('hidden')}>{t('maps.hideAllBtn')}</button>
 
-      <div class="sep"></div>
-      <button class="btn" title={t('maps.wholeMapHint')} onclick={() => dispatch('maps', 'setView', { path, view: FULL_VIEW })}>
-        <Maximize size={14} /> {t('maps.wholeMap')}
-      </button>
-      <button class="btn" title={t('maps.likeMineHint')} onclick={showMineToPlayers}>
-        <ScanEye size={14} /> {t('maps.likeMine')}
-      </button>
-
-      <div class="sep"></div>
-      <button
-        class="icon-btn"
-        class:active={data.grid.on}
-        title={t('maps.grid')}
-        onclick={() => {
-          if (data.grid.on && ui.tool === 'grid') ui.tool = 'pan';
-          dispatch('maps', 'setGrid', { path, grid: { on: !data.grid.on } });
-        }}
-      >
-        <Grid3x3 size={15} />
-      </button>
-      {#if data.grid.on}
-        <div class="cells" title={t('maps.cellsHint')}>
-          <Slider value={data.grid.cells} min={5} max={100} step={0.5} onchange={(v) => dispatch('maps', 'setGrid', { path, grid: { cells: v } })} />
-          <input
-            type="number"
-            min="2"
-            max="200"
-            step="0.1"
-            value={data.grid.cells}
-            onchange={(e) => {
-              const v = Number(e.currentTarget.value);
-              if (v > 0) dispatch('maps', 'setGrid', { path, grid: { cells: v } });
-            }}
-          />
+      <div class="options">
+        <div class="seg">
+          {#each TAB_TOOLS[ui.tab] as tool (tool.id)}
+            <button class:active={ui.tool === tool.id} disabled={tool.id === 'grid' && !data.grid.on} title={t(`maps.tool.${tool.id}`)} onclick={() => (ui.tool = tool.id)}><tool.icon size={15} /></button>
+          {/each}
         </div>
-        <select class="shape" title={t('maps.shapeHint')} value={shapeOf(data.grid)} onchange={(e) => dispatch('maps', 'setGrid', { path, grid: { shape: e.currentTarget.value as GridShape } })}>
-          {#each GRID_SHAPES as sh (sh)}<option value={sh}>{t(`maps.shape.${sh}`)}</option>{/each}
-        </select>
-        <div class="grid-style">
-          <button class="icon-btn" class:active={gridStyle} title={t('maps.gridStyle')} onclick={() => (gridStyle = !gridStyle)}><Palette size={15} /></button>
-          {#if gridStyle}
-            <div class="style-pop">
-              <label>
-                <span>{t('maps.gridWidth')}</span>
-                <Slider value={data.grid.width ?? GRID_STYLE.width} min={0.5} max={8} step={0.5} onchange={(v) => dispatch('maps', 'setGrid', { path, grid: { width: v } })} />
-              </label>
-              <label>
-                <span>{t('maps.gridAlpha')}</span>
-                <Slider value={data.grid.alpha ?? GRID_STYLE.alpha} min={0.05} max={1} step={0.05} onchange={(v) => dispatch('maps', 'setGrid', { path, grid: { alpha: v } })} />
-              </label>
-              <label class="color">
-                <span>{t('maps.gridColor')}</span>
-                <input type="color" value={data.grid.color ?? GRID_STYLE.color} onchange={(e) => dispatch('maps', 'setGrid', { path, grid: { color: e.currentTarget.value } })} />
-              </label>
-            </div>
+
+        {#if ui.tab === 'fog'}
+          {#if ui.tool === 'reveal' || ui.tool === 'hide'}
+            <label class="opt" title={t('maps.brush')}><span>{t('maps.brushShort')}</span><span class="slider"><Slider value={ui.brush} min={8} max={160} step={1} oninput={(v) => (ui.brush = v)} /></span></label>
           {/if}
-        </div>
-        <button
-          class="icon-btn"
-          class:active={ui.tool === 'grid'}
-          title={t('maps.shiftGrid')}
-          onclick={() => (ui.tool = ui.tool === 'grid' ? 'pan' : 'grid')}
-        >
-          <Move3d size={15} />
-        </button>
-      {/if}
-
-      <div class="sep"></div>
-      <button
-        class="btn"
-        class:on={ui.tokenList}
-        title={t('maps.tokensHint')}
-        onclick={() => {
-          ui.tokenList = !ui.tokenList;
-          ui.pinList = false;
-          ui.pin = null;
-        }}
-      >
-        <UsersRound size={14} /> {t('maps.tokens')}{#if data.tokens.length}<span class="faint">&nbsp;{data.tokens.length}</span>{/if}
-      </button>
-      <button
-        class="btn"
-        class:on={ui.pinList}
-        title={t('maps.pinsHint')}
-        onclick={() => {
-          ui.pinList = !ui.pinList;
-          ui.tokenList = false;
-        }}
-      >
-        <MapPin size={14} /> {t('maps.pins')}{#if pins.length}<span class="faint">&nbsp;{pins.length}</span>{/if}
-      </button>
+          <div class="sep"></div>
+          <button class="icon-btn" title={t('maps.undo')} disabled={!data.fog.ops.length} onclick={() => dispatch('maps', 'undoFog', { path })}>
+            <Undo2 size={15} />
+          </button>
+          <button class="btn" onclick={() => resetFog('revealed')}>{t('maps.revealAll')}</button>
+          <button class="btn" onclick={() => resetFog('hidden')}>{t('maps.hideAllBtn')}</button>
+        {:else if ui.tab === 'view'}
+          <div class="sep"></div>
+          <button class="btn" title={t('maps.wholeMapHint')} onclick={() => { ui.follow = false; dispatch('maps', 'setView', { path, view: FULL_VIEW }); }}>
+            <Maximize size={14} /> {t('maps.wholeMap')}
+          </button>
+          <button class="btn" class:on={ui.follow} aria-pressed={ui.follow} title={t('maps.likeMineHint')} onclick={toggleFollow}>
+            <ScanEye size={14} /> {t('maps.likeMine')}
+          </button>
+          {#if ui.follow}<span class="faint note">{t('maps.followOn')}</span>{/if}
+        {:else if ui.tab === 'grid'}
+          <button
+            class="btn"
+            class:on={data.grid.on}
+            aria-pressed={data.grid.on}
+            onclick={() => {
+              if (data.grid.on && ui.tool === 'grid') ui.tool = 'pan';
+              dispatch('maps', 'setGrid', { path, grid: { on: !data.grid.on } });
+            }}
+          >
+            <Grid3x3 size={14} /> {data.grid.on ? t('maps.gridOn') : t('maps.gridOff')}
+          </button>
+          {#if data.grid.on}
+            <div class="sep"></div>
+            <label class="opt" title={t('maps.cellsHint')}>
+              <span>{t('maps.cells')}</span>
+              <span class="slider wide"><Slider value={data.grid.cells} min={5} max={100} step={0.5} onchange={(v) => dispatch('maps', 'setGrid', { path, grid: { cells: v } })} /></span>
+              <input
+                type="number"
+                min="2"
+                max="200"
+                step="0.1"
+                value={data.grid.cells}
+                onchange={(e) => {
+                  const v = Number(e.currentTarget.value);
+                  if (v > 0) dispatch('maps', 'setGrid', { path, grid: { cells: v } });
+                }}
+              />
+            </label>
+            <select class="shape" title={t('maps.shapeHint')} value={shapeOf(data.grid)} onchange={(e) => dispatch('maps', 'setGrid', { path, grid: { shape: e.currentTarget.value as GridShape } })}>
+              {#each GRID_SHAPES as sh (sh)}<option value={sh}>{t(`maps.shape.${sh}`)}</option>{/each}
+            </select>
+            <div class="sep"></div>
+            <label class="opt" title={t('maps.gridWidth')}>
+              <span>{t('maps.gridWidthShort')}</span>
+              <span class="slider"><Slider value={data.grid.width ?? GRID_STYLE.width} min={0.5} max={8} step={0.5} onchange={(v) => dispatch('maps', 'setGrid', { path, grid: { width: v } })} /></span>
+            </label>
+            <label class="opt" title={t('maps.gridAlpha')}>
+              <span>{t('maps.gridAlphaShort')}</span>
+              <span class="slider"><Slider value={data.grid.alpha ?? GRID_STYLE.alpha} min={0.05} max={1} step={0.05} onchange={(v) => dispatch('maps', 'setGrid', { path, grid: { alpha: v } })} /></span>
+            </label>
+            <label class="opt color" title={t('maps.gridColor')}>
+              <input type="color" value={data.grid.color ?? GRID_STYLE.color} onchange={(e) => dispatch('maps', 'setGrid', { path, grid: { color: e.currentTarget.value } })} />
+            </label>
+          {/if}
+        {:else if ui.tab === 'tokens'}
+          <div class="sep"></div>
+          <button class="btn" disabled={!missing} title={t('maps.fromFightHint')} onclick={addFight}>
+            <Swords size={14} /> {t('maps.fromFight')}{missing ? ` (${missing})` : ''}
+          </button>
+          <button class="btn" title={t('maps.partyHint')} onclick={partyClick}><Shield size={14} /> {t('maps.party')}</button>
+          {#if partyStatus}<span class="faint note">{partyStatus}</span>{/if}
+          <div class="sep"></div>
+          <label class="opt" title={t('maps.scaleHint')}>
+            <span>{t('maps.size')}</span>
+            <span class="slider">
+              <Slider value={shownScale} min={0.25} max={4} step={0.05} oninput={(v) => (ui.tokenScale = v)} onchange={(v) => dispatch('maps', 'setTokenScale', { path, value: v }).then(() => (ui.tokenScale = null))} />
+            </span>
+            <span class="faint pct">{Math.round(shownScale * 100)}%</span>
+          </label>
+          <div class="sep"></div>
+          <button class="btn" class:on={ui.tokenList} aria-pressed={ui.tokenList} title={t('maps.tokensHint')} onclick={() => (ui.tokenList = !ui.tokenList)}>
+            <List size={14} /> {t('maps.list')}
+          </button>
+        {:else if ui.tab === 'pins'}
+          <div class="sep"></div>
+          <button
+            class="btn"
+            title={ui.pinShown ? t('maps.newPinsShownHint') : t('maps.newPinsHiddenHint')}
+            onclick={() => (ui.pinShown = !ui.pinShown)}
+          >
+            {#if ui.pinShown}<Eye size={14} /> {t('maps.newToPlayers')}{:else}<EyeOff size={14} /> {t('maps.newOnlyMe')}{/if}
+          </button>
+          <div class="sep"></div>
+          <button class="btn" class:on={ui.pinList} aria-pressed={ui.pinList} title={t('maps.pinsHint')} onclick={() => (ui.pinList = !ui.pinList)}>
+            <List size={14} /> {t('maps.list')}
+          </button>
+        {/if}
+      </div>
     </header>
 
     <div class="stage">
@@ -709,9 +762,9 @@
         onwheel={wheel}
       ></canvas>
       {#if !img}<div class="loading faint">{t('maps.loading')}</div>{/if}
-      {#if ui.tokenList}
-        <TokenPanel {path} {tokens} {data} fight={app.initiative.combatants} onaddfight={addFight} onaddcard={addCard} onaddparty={addParty} />
-      {:else if pin || ui.pinList}
+      {#if ui.tab === 'tokens' && ui.tokenList}
+        <TokenPanel {path} {tokens} {data} onaddcard={addCard} />
+      {:else if ui.tab === 'pins' && (pin || ui.pinList)}
         <PinPanel {path} {pins} {pin} bind:focusTitle onpick={centerOn} onremove={removePin} />
       {/if}
     </div>
@@ -732,20 +785,67 @@
     height: 100%;
   }
   .toolbar {
+    border-bottom: 1px solid var(--border);
+  }
+  .tabs-row {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
+    gap: 8px;
+    padding: 6px 12px 0;
   }
   .title {
     max-width: 220px;
-    margin-right: 4px;
+    margin-right: 8px;
+    padding-bottom: 6px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-weight: 600;
+  }
+  .tabs {
+    display: flex;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
+    overflow-x: auto;
+  }
+  .tabs button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px 7px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .tabs button:hover {
+    color: var(--text-normal);
+  }
+  .tabs button.active {
+    border-bottom-color: var(--accent);
+    color: var(--text-normal);
+  }
+  .count {
+    color: var(--text-faint);
+    font-size: 11px;
+  }
+  .show {
+    margin-bottom: 6px;
+  }
+  .options {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 40px;
+    padding: 6px 12px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-secondary);
   }
   .sep {
     width: 1px;
@@ -773,56 +873,50 @@
   .seg button:hover {
     color: var(--text-normal);
   }
+  .seg button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
   .seg button.active {
     background: var(--accent);
     color: var(--on-accent);
   }
-  .brush {
-    width: 100px;
-  }
-  .cells {
+  .opt {
     display: flex;
     align-items: center;
     gap: 6px;
-    width: 170px;
-    font-size: 12px;
-  }
-  .grid-style {
-    position: relative;
-  }
-  .style-pop {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 220px;
-    padding: 10px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-s);
-    background: var(--bg-secondary);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-    font-size: 12px;
-  }
-  .style-pop label {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
     color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
   }
-  .style-pop .color {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+  .opt .slider {
+    width: 70px;
   }
-  .cells input {
+  .opt .slider.wide {
+    width: 100px;
+  }
+  .opt input[type='number'] {
     width: 56px;
     padding: 2px 4px;
   }
+  .opt.color input {
+    width: 28px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: none;
+  }
+  .pct {
+    width: 36px;
+    text-align: right;
+  }
+  .note {
+    font-size: 12px;
+  }
   .btn.on {
     border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
     color: var(--accent);
   }
   .icon-btn:disabled {
