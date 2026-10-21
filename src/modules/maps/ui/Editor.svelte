@@ -12,7 +12,7 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { vaultUrl } from '../../../shared/vault';
   import { dataOf } from '../data';
-  import { mapGroups, mapName } from '../library';
+  import { mapGroups } from '../library';
   import {
     applyFogOp, buildFog, drawMap, drawPins, fitCanvas, fogCanvas, loadImage, pinHead, visibleArea, type LoadedImage, type Xf,
   } from '../render';
@@ -716,7 +716,6 @@
   {#if path && data}
     <header class="toolbar">
       <div class="tabs-row">
-        <div class="title" title={path}>{mapName(path)}</div>
         <nav class="tabs">
           {#each TABS as tab (tab.id)}
             <button class:active={ui.tab === tab.id} onclick={() => openTab(tab.id)}>
@@ -872,15 +871,6 @@
     align-items: center;
     gap: 8px;
     padding: 6px 12px 0;
-  }
-  .title {
-    max-width: 220px;
-    margin-right: 8px;
-    padding-bottom: 6px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-weight: 600;
   }
   .tabs {
     display: flex;
