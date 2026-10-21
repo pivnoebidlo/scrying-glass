@@ -293,11 +293,15 @@ as with taverns. Names come from the name generator's lists.
 **Tavern generator** (Tools → Tavern generator): type (tavern, inn, roadside inn, harbor dive, hidden den, wine house),
 wealth (squalid to aristocratic — prices follow the SRD food, drink and lodging table), crowd, lodging and wonders.
 The result: name and sign, a read-aloud description, the owner (name, trait, catchphrase, secret), staff, patrons
-with what they're doing and their secrets, a menu with prices, rooms and services, an event of the evening that uses
+with what they're doing and their secrets, a menu with prices (what is served follows the wealth and the kind of place:
+no rotgut in a rich house, fish at the harbor, wine at the wine house; "Menu as a handout" makes a note in the
+handouts folder — chalk on a board in a den, vellum among the rich), rooms and services, an event of the evening that uses
 the tavern's own people, rumors, a request and the tavern's secret. Any part can be rerolled or pinned ("Reroll
 unpinned" keeps the pinned ones); "To journal" saves the tavern as a note of the current adventure (the description
 as a read-aloud quote, rumors as tasks to tick off), "Copy" — the same text. Names come from the name generator's
 lists, including your own.
+
+A picture opened large (double-click) can be copied to the clipboard: the "Copy" button or ⌘C / Ctrl+C.
 
 **Telegram**: pictures, notes, compendium entries and messages can go to the players through your own bot. Create a
 bot with @BotFather (/newbot) and paste its token into ⌘, → Telegram (the token stays on this computer, encrypted; the
