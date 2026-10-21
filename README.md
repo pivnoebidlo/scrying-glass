@@ -364,7 +364,8 @@ how many points are spent, or what is broken; level increases and feats go into 
 base — the headman from a commoner, a dwarf from a guard. Templates: age (child, elder), build (frail or brawny), role
 (leader, seasoned fighter, skulker, healer, sage), people (human, dwarf, elf, halfling, gnome, orc, tiefling, dragonborn; age — only for humanoids, a people — only for those without one of their own: a goblin or a kobold stays what it is) — abilities, size, speed, darkvision,
 resistances, traits and the language; abilities can be changed by hand on top; an attack can be swapped for an SRD
-weapon, more weapons added (as attacks or only carried) and other things written into the gear; (the new attack is written in the card's language and edition, and its name follows into the multiattack and
+weapon, renamed with the same numbers (a frying pan with a club's stats) or dropped ("No weapon"), more weapons
+added (as attacks or only carried) and other things written into the gear; (the new attack is written in the card's language and edition, and its name follows into the multiattack and
 gear); "Power" makes it stronger or weaker — another CR: the proficiency bonus by the rules, and AC, hit
 points, attacks, damage and save DCs move as much as a typical creature's of that CR do (our own table: the medians of
 the SRD creatures, smoothed). The numbers that follow the abilities are recounted: saves, skills, passive Perception, initiative, hit points
