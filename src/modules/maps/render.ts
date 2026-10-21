@@ -1,5 +1,6 @@
 // Рисование карты на canvas: картинка, сетка, туман. Общее для редактора мастера и экрана игроков.
 import { PIN_ICONS, type PinIcon } from './icons';
+import { gridPath } from './grid';
 import { GRID_STYLE, PIN_COLORS, type Fog, type FogOp, type Grid, type MapPin, type MapView } from './types';
 
 export interface LoadedImage {
@@ -119,24 +120,18 @@ export function drawMap(ctx: CanvasRenderingContext2D, img: LoadedImage, fog: HT
   ctx.drawImage(img.el, 0, 0, img.w, img.h);
 
   if (o.grid.on) {
-    const step = img.w / o.grid.cells;
-    // Первая линия — на сдвиге (у самого края не рисуем).
-    const x0 = (o.grid.ox ?? 0) * step || step;
-    const y0 = (o.grid.oy ?? 0) * step || step;
+    // Squares or hexes (grid.ts); hexes cross the edge of the map — clipped to it.
+    ctx.save();
     ctx.beginPath();
-    for (let x = x0; x < img.w; x += step) {
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, img.h);
-    }
-    for (let y = y0; y < img.h; y += step) {
-      ctx.moveTo(0, y);
-      ctx.lineTo(img.w, y);
-    }
+    ctx.rect(0, 0, img.w, img.h);
+    ctx.clip();
+    gridPath(ctx, o.grid, img);
     ctx.strokeStyle = o.grid.color ?? GRID_STYLE.color;
     ctx.globalAlpha = o.grid.alpha ?? GRID_STYLE.alpha;
     ctx.lineWidth = (o.grid.width ?? GRID_STYLE.width) / xf.s;
     ctx.stroke();
     ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
   if (o.underFog) {

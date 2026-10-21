@@ -18,6 +18,7 @@
   } from '../render';
   import { FULL_VIEW, GRID_STYLE, type FogOp, type MapData, type MapPin as Pin, type MapToken, type MapView } from '../types';
   import { drawTokens, snap, tokenCell, tokenViews, type TokenView } from '../tokens';
+  import { GRID_SHAPES, periodOf, shapeOf, type GridShape } from '../grid';
   import type { CardSummary } from '../../../shared/cards';
   import { cardAsset } from '../../../shared/cards';
   import { visibleIn } from '../../../shared/adventures';
@@ -329,9 +330,10 @@
       drag = { ...drag, moved: true };
       tokenPreview = { id: drag.id, x: drag.x0 + (p.x - drag.sx) / xf.s / img.w, y: drag.y0 + (p.y - drag.sy) / xf.s / img.h };
     } else if (drag.kind === 'grid' && data) {
-      const step = (img.w / data.grid.cells) * xf.s;
+      // The offset is a fraction of the pattern's period (for hexes it is longer than a cell along one axis).
+      const { px, py } = periodOf(data.grid, img.w);
       const frac = (v: number) => ((v % 1) + 1) % 1;
-      gridPreview = { ox: frac(drag.ox + (p.x - drag.sx) / step), oy: frac(drag.oy + (p.y - drag.sy) / step) };
+      gridPreview = { ox: frac(drag.ox + (p.x - drag.sx) / (px * xf.s)), oy: frac(drag.oy + (p.y - drag.sy) / (py * xf.s)) };
     } else if (drag.kind === 'view') {
       const dx = (p.x - drag.sx) / xf.s / img.w;
       const dy = (p.y - drag.sy) / xf.s / img.h;
@@ -637,6 +639,9 @@
             }}
           />
         </div>
+        <select class="shape" title={t('maps.shapeHint')} value={shapeOf(data.grid)} onchange={(e) => dispatch('maps', 'setGrid', { path, grid: { shape: e.currentTarget.value as GridShape } })}>
+          {#each GRID_SHAPES as sh (sh)}<option value={sh}>{t(`maps.shape.${sh}`)}</option>{/each}
+        </select>
         <div class="grid-style">
           <button class="icon-btn" class:active={gridStyle} title={t('maps.gridStyle')} onclick={() => (gridStyle = !gridStyle)}><Palette size={15} /></button>
           {#if gridStyle}

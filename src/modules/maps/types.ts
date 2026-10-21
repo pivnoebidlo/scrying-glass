@@ -1,5 +1,6 @@
 import type { CardRef, CardSide } from '../../shared/cards';
 import type { PinIcon } from './icons';
+import type { GridShape } from './grid';
 
 // Карты. Все координаты — доли размера карты (0..1): x — от ширины, y — от высоты.
 // Так данные не зависят от разрешения картинки.
@@ -32,6 +33,8 @@ export interface Grid {
   // Сдвиг сетки в долях клетки (0..1), чтобы совпала с нарисованной на карте.
   ox?: number;
   oy?: number;
+  // Squares (none) or hexes: pointy-top or flat-top (grid.ts).
+  shape?: GridShape;
   // Line width in screen pixels (1 — thin), colour '#rrggbb' and opacity 0..1; none — black, 1 px, 0.35.
   width?: number;
   color?: string;

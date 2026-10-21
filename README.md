@@ -360,8 +360,8 @@ how many points are spent, or what is broken; level increases and feats go into 
 
 Pictures from maps folders (or any picture with "Show as a map"). The GM reveals and hides the fog of war with a
 brush or a rectangle (⌘Z — undo), chooses what part of the map the players see ("Whole map", "Like mine" or a frame)
-and turns on the grid (cell count and offset are fitted to the grid drawn on the map; the palette button sets line
-width, opacity and colour). For the players the fog is
+and turns on the grid (squares or hexes, pointy or flat top; cell count and offset are fitted to the grid drawn on the
+map; the palette button sets line width, opacity and colour; on hexes tokens stand in the centre of a hex). For the players the fog is
 opaque with a soft edge, and the view glides when it changes. Fog and view are saved per map: a map can be prepared
 in advance.
 

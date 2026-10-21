@@ -4,6 +4,7 @@ import { down as isDown, woundOf } from '../initiative/order';
 import { assetUrl } from '../../shared/vault';
 import type { Xf } from './render';
 import type { Grid, MapData, MapToken } from './types';
+import { nearestHex, shapeOf } from './grid';
 
 // Жетон, каким его рисовать: свои поля + состояние участника боя (портрет — участника, а если у него нет — свой).
 export interface TokenView extends MapToken {
@@ -31,7 +32,12 @@ export const cellOf = (grid: Grid, imgW: number) => imgW / grid.cells;
 export const tokenCell = (d: MapData, imgW: number) => cellOf(d.grid, imgW) * (d.tokenScale ?? 1);
 
 // Ближайшее место на сетке для жетона размером size клеток: центр клетки у нечётных, угол — у чётных.
+// On hexes — the centre of the nearest hex, whatever the size.
 export function snap(x: number, y: number, size: number, grid: Grid, img: { w: number; h: number }) {
+  if (shapeOf(grid) !== 'square') {
+    const c = nearestHex(x * img.w, y * img.h, grid, img);
+    return { x: c.x / img.w, y: c.y / img.h };
+  }
   const cell = cellOf(grid, img.w);
   const half = size % 2 ? 0.5 : 0;
   const at = (v: number, off: number) => (Math.round((v - off * cell) / cell - half) + half) * cell + off * cell;
