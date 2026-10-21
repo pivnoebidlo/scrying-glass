@@ -16,7 +16,7 @@ describe('hex grid', () => {
     expect(stepOf(pointy, img.w)).toBe(50);
     close(periodOf(pointy, img.w).py, 50 * Math.sqrt(3));
     close(periodOf(flat, img.w).px, 50 * Math.sqrt(3));
-    expect(periodOf({ on: true, cells: 20 }, img.w)).toEqual({ px: 50, py: 50 });
+    expect(periodOf({ cells: 20 }, img.w)).toEqual({ px: 50, py: 50 });
   });
 
   it('neighbouring centres are one step apart; a corner is step/√3 from the centre', () => {
