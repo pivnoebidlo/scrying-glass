@@ -4,7 +4,7 @@
   import { IdCard, Image, Minus, Plus, RotateCcw, Wand2, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import type { Card } from '../../../shared/cards';
-  import { attackBlocks, changesOf, ownTemplate, POWER_CRS, reshape, templateFits, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
+  import { attackBlocks, changesOf, NO_WEAPON, ownTemplate, POWER_CRS, reshape, templateFits, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import StatBlock from '../../../systems/dnd5e/StatBlock.svelte';
   import { ABILITIES, crText, dict, mod, signed, type Ability, type Dnd5eStats } from '../../../systems/dnd5e/stats';
@@ -32,7 +32,7 @@
   const card = $derived(base && stats ? ({ ...$state.snapshot(base), name, stats } as Card<Dnd5eStats>) : null);
   const attacks = $derived(base ? attackBlocks(base.stats) : []);
   const changes = $derived(base && stats ? changesOf(base.stats, stats, (k) => (k in L.abilities ? L.abilities[k as Ability] : t(`reshape.ch.${k}` as never)), (x) => L.sizes[x] ?? x) : []);
-  const touched = $derived(rs.r.cr !== undefined || !!rs.r.added?.length || !!rs.r.gear?.trim() || rs.r.templates.length > 0 || Object.values(rs.r.abilities).some(Boolean) || Object.keys(rs.r.weapons).length > 0);
+  const touched = $derived(rs.r.cr !== undefined || !!rs.r.added?.length || !!rs.r.gear?.trim() || rs.r.templates.length > 0 || Object.values(rs.r.abilities).some(Boolean) || Object.keys(rs.r.weapons).length > 0 || Object.values(rs.r.names ?? {}).some((x) => x.trim()));
 
   const GROUPS = ['age', 'build', 'role', 'people'] as const;
   // One template of a group at a time (brawny and frail exclude each other); the GM's go together.
@@ -67,7 +67,7 @@
     rs.target = null;
   }
   function reset() {
-    rs.r = { templates: [], abilities: {}, weapons: {} };
+    rs.r = { templates: [], abilities: {}, weapons: {}, names: {} };
     rs.name = '';
   }
   function toCard() {
@@ -191,19 +191,36 @@
         <section>
           <h3>{t('reshape.weapons')}</h3>
           {#each attacks as at (at.key)}
-            <label class="weapon">
-              <span>{at.name}</span>
-              <select value={rs.r.weapons[at.key] ?? ''} onchange={(e) => setWeapon(at.key, e.currentTarget.value)}>
-                <option value="">{t('reshape.keep')}</option>
-                {#each WEAPONS as wp (wp.id)}<option value={wp.id}>{wp.name[ui]} — {wp.dice}{wp.versatile ? ` / ${wp.versatile}` : ''}</option>{/each}
-              </select>
-            </label>
+            {@const swap = rs.r.weapons[at.key]}
+            <div class="attack">
+              <div class="weapon">
+                <span class:gone={swap === NO_WEAPON}>{at.name}</span>
+                <select value={swap ?? ''} onchange={(e) => setWeapon(at.key, e.currentTarget.value)}>
+                  <option value="">{t('reshape.keep')}</option>
+                  <option value={NO_WEAPON}>{t('reshape.noWeapon')}</option>
+                  {#each WEAPONS as wp (wp.id)}<option value={wp.id}>{wp.name[ui]} — {wp.dice}{wp.versatile ? ` / ${wp.versatile}` : ''}</option>{/each}
+                </select>
+              </div>
+              {#if swap !== NO_WEAPON}
+                <input
+                  class="rename"
+                  type="text"
+                  title={t('reshape.renameHint')}
+                  placeholder={t('reshape.renamePh', { name: (swap && WEAPONS.find((x) => x.id === swap)?.name[lang]) || at.name })}
+                  value={rs.r.names?.[at.key] ?? ''}
+                  oninput={(e) => (rs.r.names = { ...rs.r.names, [at.key]: e.currentTarget.value })}
+                />
+              {/if}
+            </div>
           {/each}
           {#each rs.r.added ?? [] as a, i (i)}
-            <div class="weapon added">
-              <span>+ {WEAPONS.find((x) => x.id === a.weapon)?.name[ui]}</span>
-              <label class="faint" title={t('reshape.asAttackHint')}><input type="checkbox" bind:checked={a.attack} /> {t('reshape.asAttack')}</label>
-              <button class="icon-btn" title={t('reshape.removeWeapon')} onclick={() => (rs.r.added = rs.r.added!.filter((_, j) => j !== i))}><X size={13} /></button>
+            <div class="attack">
+              <div class="weapon added">
+                <span>+ {WEAPONS.find((x) => x.id === a.weapon)?.name[ui]}</span>
+                <label class="faint" title={t('reshape.asAttackHint')}><input type="checkbox" bind:checked={a.attack} /> {t('reshape.asAttack')}</label>
+                <button class="icon-btn" title={t('reshape.removeWeapon')} onclick={() => (rs.r.added = rs.r.added!.filter((_, j) => j !== i))}><X size={13} /></button>
+              </div>
+              <input class="rename" type="text" title={t('reshape.renameHint')} placeholder={t('reshape.renamePh', { name: WEAPONS.find((x) => x.id === a.weapon)?.name[lang] ?? '' })} bind:value={a.name} />
             </div>
           {/each}
           <select class="add" value="" onchange={(e) => { addWeapon(e.currentTarget.value); e.currentTarget.value = ''; }}>
@@ -386,6 +403,20 @@
   }
   .weapon select {
     max-width: 60%;
+  }
+  .attack {
+    margin-bottom: 8px;
+  }
+  .attack .weapon {
+    margin-bottom: 3px;
+  }
+  .gone {
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+  .rename {
+    width: 100%;
+    font-size: 12px;
   }
   .weapon.added span {
     font-weight: 500;

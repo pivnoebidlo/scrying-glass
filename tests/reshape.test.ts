@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
-import { attackBlocks, NO_RESHAPE, ownTemplate, parseOwnTemplates, POWER_CRS, reshape, TEMPLATES, WEAPONS } from '../src/systems/dnd5e/reshape';
+import { attackBlocks, NO_RESHAPE, NO_WEAPON, ownTemplate, parseOwnTemplates, POWER_CRS, reshape, TEMPLATES, WEAPONS } from '../src/systems/dnd5e/reshape';
 import type { Dnd5eStats } from '../src/systems/dnd5e/stats';
 
 const load = (file: string) => {
@@ -149,7 +149,7 @@ describe('переделка статблока', () => {
     const r = reshape(s24('srd52-guard'), { ...NO_RESHAPE, added: [{ weapon: 'shortsword', attack: true }, { weapon: 'dagger', attack: false }], gear: 'Rope' }, 'en', '2024');
     expect(r.actions.map((a) => a.name)).toEqual(['Spear', 'Shortsword']);
     expect(r.actions[1]!.text).toBe('Melee Attack Roll: +3, reach 5 ft. Hit: 4 (1d6 + 1) Piercing damage.');
-    expect(r.gear).toBe('Chain Shirt, Shield, Spear, shortsword, dagger, rope');
+    expect(r.gear).toBe('Chain Shirt, Shield, Spear, Shortsword, Dagger, Rope');
     const c = reshape(s14('srd51-commoner'), { ...NO_RESHAPE, added: [{ weapon: 'dagger', attack: false }] }, 'en', '2014');
     expect(c.gear).toBe('Dagger');
   });
@@ -198,5 +198,28 @@ describe('переделка статблока', () => {
     expect(reshape(tabaxi, { ...NO_RESHAPE, templates: ['elf'] }, 'ru', '2024', own).type).toBe('Гуманоид (эльф)');
     // Without the GM's people the same card keeps its own.
     expect(reshape(tabaxi, { ...NO_RESHAPE, templates: ['elf'] }, 'ru', '2024').type).toBe('Гуманоид (табакси)');
+  });
+
+  it('другое название: сковородка с числами дубинки — и в снаряжении, в том же регистре', () => {
+    const c = reshape(s24('srd52-commoner.ru'), { ...NO_RESHAPE, names: { 'actions:0': 'Сковородка' } }, 'ru', '2024');
+    expect(c.actions[0]!.name).toBe('Сковородка');
+    expect(c.actions[0]!.attack).toEqual({ bonus: 2, damage: ['1d4'] });
+    expect(c.gear).toBe('Сковородка');
+    const g = reshape(s24('srd52-guard.ru'), { ...NO_RESHAPE, weapons: { 'actions:0': 'battleaxe' }, names: { 'actions:0': 'Топор лесоруба' } }, 'ru', '2024');
+    expect(g.actions[0]!.name).toBe('Топор лесоруба');
+    expect(g.gear).toBe('Кольчужная рубаха, щит, топор лесоруба');
+    const added = reshape(s24('srd52-guard'), { ...NO_RESHAPE, added: [{ weapon: 'club', attack: true, name: 'Frying Pan' }] }, 'en', '2024');
+    expect(added.actions.at(-1)!.name).toBe('Frying Pan');
+    expect(added.gear).toBe('Chain Shirt, Shield, Spear, Frying Pan');
+  });
+
+  it('без оружия: атака пропадает, из снаряжения — тоже; ключи остальных атак не сдвигаются', () => {
+    const scout = s24('srd52-scout');
+    const keys = attackBlocks(scout);
+    const bow = keys.find((k) => k.name === 'Longbow')!.key;
+    const sword = keys.find((k) => k.name === 'Shortsword')!.key;
+    const r = reshape(scout, { ...NO_RESHAPE, weapons: { [sword]: NO_WEAPON, [bow]: 'heavy-crossbow' } }, 'en', '2024');
+    expect(r.actions.map((a) => a.name)).toEqual(['Multiattack', 'Heavy Crossbow']);
+    expect(r.gear).toBe('Leather Armor, Heavy Crossbow');
   });
 });

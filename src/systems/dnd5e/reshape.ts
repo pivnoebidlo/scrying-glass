@@ -318,16 +318,20 @@ export interface Reshape {
   templates: string[];
   // Changes by hand on top of the templates.
   abilities: Partial<Record<Ability, number>>;
-  // Weapons in place of attack blocks: key — `list:index` (attackBlocks), value — weapon id.
+  // Weapons in place of attack blocks: key — `list:index` (attackBlocks), value — weapon id or NO_WEAPON.
   weapons: Record<string, string>;
+  // Other names of attacks (the same numbers): a frying pan with a club's stats.
+  names?: Record<string, string>;
   // Another challenge rating: the creature made stronger or weaker (empower).
   cr?: number;
   // Weapons added: as an attack (and in the gear) or only carried.
-  added?: { weapon: string; attack: boolean }[];
+  added?: { weapon: string; attack: boolean; name?: string }[];
   // Other things carried, as written: «rope, a lantern».
   gear?: string;
 }
 export const NO_RESHAPE: Reshape = { templates: [], abilities: {}, weapons: {} };
+// «No weapon» in place of an attack: the attack goes, and its name from the gear.
+export const NO_WEAPON = 'none';
 
 const LISTS = ['traits', 'actions', 'bonusActions', 'reactions'] as const;
 type ListKey = (typeof LISTS)[number];
@@ -542,37 +546,55 @@ export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '20
 
   // Blocks: weapon attacks follow their ability, save DCs — theirs; template traits and reactions are added.
   const swaps: [string, string][] = [];
+  const dropped: string[] = [];
   for (const list of LISTS) {
-    s[list] = s[list].map((b, i) => {
-      const key = `${list}:${i}`;
-      const wp = r.weapons[key] ? weaponById(r.weapons[key]!) : undefined;
-      if (wp) {
-        const nb = weaponBlock(wp, s, l, edition);
-        swaps.push([b.name, nb.name]);
+    s[list] = s[list]
+      .map((b, i): Block | null => {
+        const key = `${list}:${i}`;
+        if (r.weapons[key] === NO_WEAPON) {
+          dropped.push(b.name);
+          return null;
+        }
+        const wp = r.weapons[key] ? weaponById(r.weapons[key]!) : undefined;
+        let nb: Block;
+        if (wp) nb = weaponBlock(wp, s, l, edition);
+        else {
+          nb = b.attack || isAttackText(b.text) ? shiftAttack(b, dm[attackAbility(b, old)], l) : b;
+          nb = { ...nb, text: shiftDcs(nb.text, base.pb, old, dm) };
+        }
+        const name = r.names?.[key]?.trim();
+        if (name) nb = { ...nb, name };
+        if (nb.name !== b.name) swaps.push([b.name, nb.name]);
         return nb;
-      }
-      let nb = b.attack || isAttackText(b.text) ? shiftAttack(b, dm[attackAbility(b, old)], l) : b;
-      nb = { ...nb, text: shiftDcs(nb.text, base.pb, old, dm) };
-      return nb;
-    });
+      })
+      .filter((b): b is Block => !!b);
   }
-  // The new weapon's name where the old one was named (multiattack, gear).
+  // The new name where the old one was named (multiattack, gear), in the case it was written there.
   for (const [from, to] of swaps) {
     const re = new RegExp(`(^|[^\\p{L}])${escapeRe(from)}(?=[^\\p{L}]|$)`, 'giu');
-    for (const list of LISTS) s[list] = s[list].map((b) => ({ ...b, text: b.text.replace(re, (_m, pre: string) => `${pre}${to}`) }));
-    if (s.gear) s.gear = s.gear.replace(re, (_m, pre: string) => `${pre}${/^\p{Lu}/u.test(from) ? to : to.toLowerCase()}`);
+    const as = (m: string) => (/^\p{Lu}/u.test(m) ? to.charAt(0).toUpperCase() : to.charAt(0).toLowerCase()) + to.slice(1);
+    for (const list of LISTS) s[list] = s[list].map((b) => ({ ...b, text: b.text.replace(re, (m, pre: string) => `${pre}${as(m.slice(pre.length))}`) }));
+    if (s.gear) s.gear = s.gear.replace(re, (m, pre: string) => `${pre}${as(m.slice(pre.length))}`);
+  }
+  // A weapon given up leaves the gear too.
+  if (s.gear && dropped.length) {
+    const gone = new Set(dropped.map((x) => x.toLowerCase()));
+    s.gear = s.gear.split(/,\s*/).filter((x) => !gone.has(x.trim().toLowerCase())).join(', ');
   }
   // Added weapons and things carried.
   const carried: string[] = [];
   for (const a of r.added ?? []) {
     const wp = weaponById(a.weapon);
     if (!wp) continue;
-    if (a.attack) s.actions.push(weaponBlock(wp, s, l, edition));
-    carried.push(wp.name[l]);
+    const name = a.name?.trim() || wp.name[l];
+    if (a.attack) s.actions.push({ ...weaponBlock(wp, s, l, edition), name });
+    carried.push(name);
   }
   if (r.gear?.trim()) carried.push(r.gear.trim());
   if (carried.length) {
-    const more = s.gear ? carried.map((x) => x.charAt(0).toLowerCase() + x.slice(1)) : carried;
+    // Written like the gear already is: «Chain Shirt, Shield» keeps capitals, «Кольчужная рубаха, щит» — lower case.
+    const lower = !!s.gear && /,\s*\p{Ll}/u.test(s.gear);
+    const more = lower ? carried.map((x) => x.charAt(0).toLowerCase() + x.slice(1)) : carried;
     s.gear = [s.gear, ...more].filter(Boolean).join(', ');
   }
   const dc = 8 + s.pb + mod(abilities.con);
