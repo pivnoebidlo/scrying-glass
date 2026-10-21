@@ -577,7 +577,7 @@ default system). Cards, combat suggestions, ⌘K search and the compendium show 
 together); the built-in SRD and the D&D tools (encounter difficulty, point buy) — only in D&D adventures. A compendium
 entry is tied to a system with the `system:` field in the header (`fate-core`, `dnd5e` …); without it spells, items,
 feats and conditions count as D&D entries, while rules and notes fit any system. Systems you don't need are turned off
-in settings (Adventures → Role-playing systems): their content disappears everywhere — cards, SRD entries, adventures
+in settings (Game systems): their content disappears everywhere — cards, SRD entries, adventures
 with that system (together with their scenes and encounters). The files stay in place: turn the system back on and
 everything returns. Adventures created before systems existed count as D&D 5e (2024).
 

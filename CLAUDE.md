@@ -234,7 +234,7 @@ Electron-приложение для мастера D&D: окно управле
   `Layer.svelte` (order 32; угол — `place`, выбор — `CornerPick.svelte`, в одном углу встают друг под другом) — только в приключениях Fate (`fateHere`; блок
   прячет `screenWhen` из контрибуции). «Партия» — `ui/party.ts` (карточки Fate в папках партии, восстановление из
   карточки), «Новая сессия» — до восстановления, «Новая сцена» у мастера — по жетону на персонажа.
-  Ненужные системы отключаются в настройках «Приключения» (`adventures/ui/Settings.svelte`): `settings.systemsOff` в
+  Ненужные системы отключаются в настройках — раздел «Ролевые системы» модуля приключений (`settingsTitle` в `contrib.ts`, `adventures/ui/Settings.svelte`): `settings.systemsOff` в
   settings.json приложения → `vault.systemsOff` → `setSystemsOff` в `systems/index.ts` (ядро — из настроек, окна — в
   `store.svelte.ts`, как названия ролей; все отключить нельзя). Контента отключённой системы не видно нигде:
   `SystemSelect` её не предлагает (`enabledSystems`), `inCurrentFamily` скрывает карточки, справочник — редакции SRD

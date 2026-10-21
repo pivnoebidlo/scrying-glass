@@ -33,6 +33,9 @@ export interface ControlContribution<K extends ModuleId> {
   screenWhen?: (app: AppState) => boolean;
   // Раздел в окне настроек.
   settings?: ModuleComponent<K>;
+  // Its title and icon when they differ from the module's (Adventures → «Game systems»).
+  readonly settingsTitle?: string;
+  settingsIcon?: Component<{ size?: number }>;
   // Что модуль умеет делать с файлами хранилища (кнопки на карточке картинки, в строке трека).
   imageActions?: FileAction[];
   audioActions?: FileAction[];

@@ -55,9 +55,10 @@
         {t('settings.general')}
       </button>
       {#each moduleSections as c (c.id)}
+        {@const Icon = c.settingsIcon ?? c.icon}
         <button class="nav-item" class:active={current?.id === c.id} onclick={() => (workspace.settingsSection = c.id)}>
-          <c.icon size={14} />
-          {c.title}
+          <Icon size={14} />
+          {c.settingsTitle ?? c.title}
         </button>
       {/each}
       <button class="nav-item about-item" class:active={about} onclick={() => (workspace.settingsSection = ABOUT)}>
@@ -114,7 +115,7 @@
           <button class="btn" disabled={checking} onclick={checkNow}>{t('updates.checkNow')}</button>
         </div>
       {:else if current?.settings}
-        <h2>{current.title}</h2>
+        <h2>{current.settingsTitle ?? current.title}</h2>
         <current.settings ms={store.state[current.id]} app={store.state} />
       {/if}
     </section>
