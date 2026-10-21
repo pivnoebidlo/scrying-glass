@@ -370,7 +370,8 @@ points, attacks, damage and save DCs move as much as a typical creature's of tha
 the SRD creatures, smoothed). The numbers that follow the abilities are recounted: saves, skills, passive Perception, initiative, hit points
 (the hit die by size), AC by the armour worn, attack rolls, damage and save DCs in the texts of the blocks. On the right
 — the stat block as it comes out and the list of what changed; "Create card" opens it in the editor ("Based on: …" in
-the notes). Texts of traits and actions are not rewritten.
+the notes). Under a portrait without a card in Characters, the wand button ("From another stat block…") opens the tool
+for that portrait: the card goes next to it, with its name and picture. Texts of traits and actions are not rewritten.
 
 ## Maps
 

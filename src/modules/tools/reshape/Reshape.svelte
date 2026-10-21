@@ -1,7 +1,7 @@
 <!-- Tools → Reshape a stat block (D&D): a base card, templates (age, build, people), abilities by hand and other
      weapons; on the right — the stat block as it comes out and what changed. "Create card" opens it in the editor. -->
 <script lang="ts">
-  import { IdCard, Minus, Plus, RotateCcw, Wand2, X } from '@lucide/svelte';
+  import { IdCard, Image, Minus, Plus, RotateCcw, Wand2, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import type { Card } from '../../../shared/cards';
   import { attackBlocks, changesOf, POWER_CRS, reshape, templateFits, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
@@ -20,7 +20,7 @@
   const tpls = $derived(
     rs.r.templates.map((id) => TEMPLATES.find((x) => x.id === id)).filter((x): x is Template => !!x && (!base || templateFits(x, base.stats))),
   );
-  const name = $derived(rs.name.trim() || (base ? (tpls.length ? `${base.name} (${tpls.map((x) => x.name[lang].toLowerCase()).join(', ')})` : base.name) : ''));
+  const name = $derived(rs.name.trim() || rs.target?.name || (base ? (tpls.length ? `${base.name} (${tpls.map((x) => x.name[lang].toLowerCase()).join(', ')})` : base.name) : ''));
   const stats = $derived(base ? reshape($state.snapshot(base.stats) as Dnd5eStats, $state.snapshot(rs.r), lang, editionOf(base.system)) : null);
   const card = $derived(base && stats ? ({ ...$state.snapshot(base), name, stats } as Card<Dnd5eStats>) : null);
   const attacks = $derived(base ? attackBlocks(base.stats) : []);
@@ -57,6 +57,7 @@
     reset();
     rs.base = null;
     rs.ref = null;
+    rs.target = null;
   }
   function reset() {
     rs.r = { templates: [], abilities: {}, weapons: {} };
@@ -65,6 +66,17 @@
   function toCard() {
     if (!base || !stats) return;
     const from = t('reshape.basedOn', { name: base.name });
+    if (rs.target) {
+      bestiary.createFor(rs.target.portrait, name, {
+        system: base.system,
+        lang: base.lang,
+        // A named character: the base's general description («Commoners include…») would only be noise.
+        stats: $state.snapshot(stats),
+        notes: from,
+      });
+      rs.target = null;
+      return;
+    }
     void bestiary.create(undefined, {
       name,
       kind: base.kind === 'character' ? 'npc' : base.kind,
@@ -85,6 +97,13 @@
 
   <div class="cols">
     <div class="controls">
+      {#if rs.target}
+        <section class="target">
+          <Image size={14} />
+          <span>{t('reshape.forPortrait', { name: rs.target.name })}</span>
+          <button class="icon-btn" title={t('reshape.notForPortrait')} onclick={() => (rs.target = null)}><X size={13} /></button>
+        </section>
+      {/if}
       <section>
         <h3>{t('reshape.base')}</h3>
         {#if base}
@@ -245,6 +264,18 @@
   }
   input[type='text'] {
     width: 100%;
+  }
+  .target {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-s);
+    font-size: 13px;
+  }
+  .target span {
+    flex: 1;
   }
   .base {
     display: flex;

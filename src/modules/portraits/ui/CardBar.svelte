@@ -2,7 +2,11 @@
      Карточка привязана к портрету, если эта картинка — её основной портрет. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { FilePlus, ScrollText, Swords } from '@lucide/svelte';
+  import { FilePlus, ScrollText, Swords, Wand2 } from '@lucide/svelte';
+  import { isDnd } from '../../../systems';
+  import { currentSystem } from '../../../shared/adventures';
+  import { store } from '../../../renderer/lib/store.svelte';
+  import { reshapeFor } from '../../tools/reshape/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import { SIDE_TITLES } from '../../../shared/cards';
@@ -30,6 +34,10 @@
     <button class="create" title={t('portraits.createCardHint')} onclick={() => bestiary.createFor(path, name)}>
       <FilePlus size={12} /> {t('portraits.createCard')}
     </button>
+    <!-- A stat block made from another one (Tools → Reshape a stat block) — in D&D adventures. -->
+    {#if isDnd(currentSystem(store.state.adventures))}
+      <button class="icon-btn" title={t('portraits.fromStatblock')} onclick={() => reshapeFor(path, name)}><Wand2 size={13} /></button>
+    {/if}
   {/if}
 </div>
 

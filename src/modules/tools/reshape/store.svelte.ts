@@ -11,6 +11,8 @@ export const rs = $state({
   // Empty — the base's name with the templates.
   name: '',
   r: structuredClone(NO_RESHAPE) as Reshape,
+  // A portrait the card is made for (Characters → «From a stat block…»): it goes next to it, with its name.
+  target: null as { portrait: string; name: string } | null,
 });
 
 export async function pickBase(ref: CardRef) {
@@ -22,8 +24,21 @@ export async function pickBase(ref: CardRef) {
   rs.r = structuredClone(NO_RESHAPE);
 }
 
+// «From a stat block…» under a portrait without a card: the tool, a base to pick, the card — for this portrait.
+export function reshapeFor(portrait: string, name: string) {
+  rs.target = { portrait, name };
+  rs.base = null;
+  rs.ref = null;
+  rs.name = '';
+  rs.r = structuredClone(NO_RESHAPE);
+  ui.tool = 'reshape';
+  ui.note = null;
+  openTab('tools');
+}
+
 // «Reshape…» on a card: the tool with it as the base.
 export async function reshapeFrom(ref: CardRef) {
+  rs.target = null;
   await pickBase(ref);
   ui.tool = 'reshape';
   ui.note = null;

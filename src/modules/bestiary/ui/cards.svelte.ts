@@ -292,18 +292,21 @@ class Bestiary {
 
   // Карточка для портрета: ложится рядом с картинкой, картинка — её портрет. В папке партии — лист персонажа
   // игрока, в остальных — карточка NPC.
-  createFor(portrait: string, name: string) {
-    const system = this.newSystem();
-    const lang = this.lang !== 'all' ? this.lang : locale.lang;
+  // prefill — a stat block made elsewhere (Reshape a stat block from this portrait): its system, language and block.
+  createFor(portrait: string, name: string, prefill?: { system: string; lang: string; stats: unknown; description?: string; notes?: string }) {
+    const system = prefill?.system ?? this.newSystem();
+    const lang = prefill?.lang ?? (this.lang !== 'all' ? this.lang : locale.lang);
     const party = portrait.split('/').some((p) => folderRole(p) === 'party');
-    const kind = party ? 'character' : 'npc';
+    // A stat block is an NPC's even in the party folder: a player's sheet has another shape.
+    const kind = party && !prefill ? 'character' : 'npc';
     this.open({
       scope: 'vault',
       folder: dirname(portrait),
       original: null,
       card: {
-        format: 1, id: '', kind, system, lang, name, side: party ? 'party' : 'ally', portraits: [portrait], tags: [], notes: '',
-        stats: systemOf(system).blank(kind),
+        format: 1, id: '', kind, system, lang, name, side: party ? 'party' : 'ally', portraits: [portrait], tags: [], notes: prefill?.notes ?? '',
+        ...(prefill?.description ? { description: prefill.description } : {}),
+        stats: prefill?.stats ?? systemOf(system).blank(kind),
       },
     });
     openTab('bestiary');
