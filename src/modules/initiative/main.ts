@@ -81,6 +81,7 @@ export default defineModule({
         conditions: [],
         ...(c.stress ? { stress: c.stress } : {}),
         ...(c.consequences ? { consequences: c.consequences } : {}),
+        ...(c.attrs ? { attrs: c.attrs } : {}),
         card: c.card ?? null,
       };
       return withList(s, encounter, (list) => [...list, full]);
@@ -91,12 +92,26 @@ export default defineModule({
     },
 
     // Урон (amount < 0) или лечение (amount > 0). Хиты не выходят за 0 и максимум.
+    // Mausritter: damage past HP goes to STR (healing restores only HP).
     changeHp(s, { id, amount }: { id: string; amount: number }) {
       return patch(s, id, (c) => {
         if (c.hp === null && c.maxHp === null) return c;
         const max = c.maxHp ?? Infinity;
-        return { ...c, hp: Math.min(max, Math.max(0, (c.hp ?? c.maxHp ?? 0) + amount)) };
+        const now = c.hp ?? c.maxHp ?? 0;
+        const overflow = amount < 0 ? Math.max(0, -amount - now) : 0;
+        const attrs = overflow && c.attrs?.some((a) => a.id === 'str')
+          ? c.attrs.map((a) => (a.id === 'str' ? { ...a, value: Math.max(0, a.value - overflow) } : a))
+          : c.attrs;
+        return { ...c, hp: Math.min(max, Math.max(0, now + amount)), ...(attrs ? { attrs } : {}) };
       });
+    },
+
+    // Mausritter: set an attribute score now (damage, a spell, rest); not above its maximum.
+    setAttr(s, { id, attr, value }: { id: string; attr: string; value: number }) {
+      return patch(s, id, (c) => ({
+        ...c,
+        attrs: c.attrs?.map((a) => (a.id === attr ? { ...a, value: Math.max(0, Math.min(a.max, Math.round(value))) } : a)),
+      }));
     },
 
     toggleCondition(s, { id, condition }: { id: string; condition: string }) {

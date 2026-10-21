@@ -1,6 +1,6 @@
 // Журнал бросков мастера: броски из статблоков и листов персонажей (к20 и урон D&D, кубы Fate). Только в окне управления, игрокам не виден.
 import { t } from './i18n.svelte';
-import { parseDice, rollD20, rollDamage, rollFate, type D20Mode, type D20Roll, type DamageRoll, type FateRoll } from '../../shared/dice';
+import { parseDice, rollD20, rollDamage, rollFate, rollSave, type D20Mode, type D20Roll, type DamageRoll, type FateRoll, type SaveRoll } from '../../shared/dice';
 
 export interface RollEntry {
   id: number;
@@ -11,6 +11,8 @@ export interface RollEntry {
   d20?: D20Roll;
   // Кубы Fate (4dF) + навык.
   fate?: FateRoll;
+  // Roll-under save (Mausritter): d20 ≤ the attribute.
+  save?: SaveRoll;
   // Попадание проверяется по натуральной 20/1 только у атак.
   attack?: boolean;
   damage: DamageRoll[];
@@ -44,6 +46,11 @@ class Rolls {
   // Fate: 4dF + навык.
   fate(who: string, what: string, bonus: number) {
     this.push({ who, what, fate: rollFate(bonus), damage: [] });
+  }
+
+  // Mausritter: a save against STR, DEX or WIL.
+  save(who: string, what: string, target: number, mode: D20Mode = 'normal') {
+    this.push({ who, what, save: rollSave(target, mode), damage: [] });
   }
 
   damage(who: string, what: string, damage: string, crit = false) {

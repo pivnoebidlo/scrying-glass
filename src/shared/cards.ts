@@ -109,6 +109,8 @@ export interface CombatStats {
   // Fate: дорожки стресса (сколько клеток) и последствия (на сколько сдвигов каждое).
   stress?: { id: string; boxes: number }[];
   consequences?: number[];
+  // Mausritter: attribute scores (STR, DEX, WIL) — damage past HP goes to STR.
+  attrs?: { id: string; value: number }[];
 }
 
 // Языки карточек: код -> название на самом языке. Список можно расширять; карточка на языке не из списка

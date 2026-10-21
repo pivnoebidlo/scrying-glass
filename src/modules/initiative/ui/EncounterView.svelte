@@ -62,7 +62,7 @@
         <tr>
           <th></th>
           <th>{t('init.name')}</th>
-          <th class="c-num" title={tracker.bonus.title}>{tracker.bonus.label}</th>
+          {#if !tracker.bonus.from}<th class="c-num" title={tracker.bonus.title}>{tracker.bonus.label}</th>{/if}
           {#each tracker.fields as f (f.key)}<th class="c-num" title={f.title}>{f.label}</th>{/each}
           <th></th>
         </tr>
@@ -77,9 +77,11 @@
                 {#each Object.entries(SIDES) as [v, title] (v)}<option value={v}>{title}</option>{/each}
               </select>
             </td>
-            <td class="c-num">
-              <input type="text" inputmode="numeric" value={c.bonus} onchange={(ev) => update(c, { bonus: num(ev.currentTarget.value) ?? 0 })} />
-            </td>
+            {#if !tracker.bonus.from}
+              <td class="c-num">
+                <input type="text" inputmode="numeric" value={c.bonus} onchange={(ev) => update(c, { bonus: num(ev.currentTarget.value) ?? 0 })} />
+              </td>
+            {/if}
             {#each tracker.fields as f (f.key)}
               <td class="c-num">
                 <input

@@ -211,6 +211,14 @@ Electron-приложение для мастера D&D: окно управле
   текстом с числом, трюки, восстановление; стресс и последствия — по правилам `stressOf` / `consequencesOf`, если не
   заданы явно; очерёдность — Внимательность или `initiativeSkill`), вид `Sheet.svelte` (броски `rolls.fate`),
   редактор `Editor.svelte`; один вид для всех `kind`. Чужой блок stats у карточки Fate — общий вид (`fits` в `systems/ui.ts`).
+- Mausritter (третья система, в работе; SRD 2.3.1, CC BY 4.0 — атрибуция дословно в `about.credit.mausritter`):
+  `systems/mausritter/` — `stats.ts` (`MausStats`: hp — Hit Protection, str/dex/wil, armour, attacks `d6/d8`,
+  critical, abilities, wants, `warband`; у мыши `sheet` — уровень, XP, пипсы, 10 клеток `slots` (лапы 2, тело 2,
+  рюкзак 6; сверх — перегружена), состояния в клетках, `grit`; `parseStatBlock` — статблок SRD текстом), `Sheet.svelte`
+  (щелчок по СИЛ/ЛОВ/ВОЛ — спасбросок `rolls.save` / `rollSave`: к20 ≤ хар., преимущество — меньший), `Editor.svelte`,
+  трекер `tracker.ts` + `TrackerCells.svelte`: у участника `attrs` (сейчас / максимум), урон сверх защиты уходит в
+  СИЛ (`changeHp`), `setAttr`; выбыл при СИЛ 0 (`down`); очерёдность 2 / 1 (противники) / 0, бонус — ЛОВ
+  (`bonus.from`: отдельного поля нет). Дальше: встроенный бестиарий и справочник из `.dev/maus/srd.md`, README.
 - Аспекты сцены и жетоны судьбы — модуль `modules/fate` (состояние: `aspects` с `invokes` / `hidden`, `holders` —
   персонажи с `points` / `refresh`, `gm` — запас мастера, `show`). Блок правой панели `OnScreen.svelte` и слой игроков
   `Layer.svelte` (order 32; угол — `place`, выбор — `CornerPick.svelte`, в одном углу встают друг под другом) — только в приключениях Fate (`fateHere`; блок

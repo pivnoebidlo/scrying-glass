@@ -7,6 +7,8 @@ import type { TrackerDef } from './tracker';
 import { dndTracker } from './dnd5e/tracker';
 import { fateTracker } from './fate/tracker';
 import * as fateStats from './fate/stats';
+import { mausTracker } from './mausritter/tracker';
+import * as maus from './mausritter/stats';
 
 export interface SystemDef {
   id: string;
@@ -48,12 +50,25 @@ const fate: SystemDef = {
   tracker: fateTracker,
 };
 
-export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)'), fate];
+// Mausritter: one card for creatures and mice; a player mouse also has a sheet (inventory, level, pips).
+const mausritter: SystemDef = {
+  id: 'mausritter',
+  title: 'Mausritter',
+  family: 'mausritter',
+  subtitle: (s) => (maus.isMaus(s) ? maus.subtitle(s) : ''),
+  rank: (s) => (maus.isMaus(s) ? maus.rank(s) : null),
+  combat: (s) => (maus.isMaus(s) ? maus.combatStats(s) : { hp: null, ac: null, initiative: 0 }),
+  blank: (kind) => maus.blankStats(kind),
+  tracker: mausTracker,
+};
+
+export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)'), fate, mausritter];
 
 // Семейства систем по порядку (для выбора системы приключения — группами).
 export const FAMILIES: { id: string; title: string }[] = [
   { id: 'dnd5e', title: 'D&D 5e' },
   { id: 'fate', title: 'Fate' },
+  { id: 'mausritter', title: 'Mausritter' },
 ];
 
 // Система, если для приключения она не выбрана.

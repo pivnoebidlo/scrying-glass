@@ -27,6 +27,8 @@ export interface Combatant {
   // Fate: дорожки стресса и последствия (у D&D их нет).
   stress?: StressTrack[];
   consequences?: Consequence[];
+  // Mausritter: attribute scores, current and maximum (damage past HP goes to STR; STR 0 — dead).
+  attrs?: AttrScore[];
   // Выведен из боя (Fate: «taken out»); у D&D побеждённого определяют хиты.
   out?: boolean;
   // Карточка из бестиария, если участник добавлен оттуда (открыть статблок).
@@ -38,6 +40,13 @@ export interface StressTrack {
   // 'physical', 'mental' или свой ключ; подпись — `trackTitle`.
   id: string;
   boxes: boolean[];
+}
+
+export interface AttrScore {
+  // 'str', 'dex', 'wil'.
+  id: string;
+  value: number;
+  max: number;
 }
 
 // Последствие: ячейка на столько-то сдвигов (2 — лёгкое, 4 — среднее, 6 — тяжёлое) и его текст-аспект.

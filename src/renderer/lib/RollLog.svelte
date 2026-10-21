@@ -53,6 +53,15 @@
               <span class="note">4dF: <span class="faces">{e.fate.faces.map(face).join(' ')}</span> {signed(e.fate.bonus)}</span>
             </div>
           {/if}
+          {#if e.save}
+            <div class="line">
+              <span class="total" class:crit={e.save.success} class:fumble={!e.save.success}>{e.save.natural}</span>
+              <span class="note"
+                >{t('lib.d20')}: {e.save.rolls.join(' | ')}{e.save.mode === 'advantage' ? ` (${t('lib.adv')})` : e.save.mode === 'disadvantage' ? ` (${t('lib.dis')})` : ''} ≤ {e.save.target}</span
+              >
+              <span class="tag" class:crit={e.save.success} class:fumble={!e.save.success}>{e.save.success ? t('lib.saved') : t('lib.failed')}</span>
+            </div>
+          {/if}
           {#each e.damage as d, i (i)}
             <div class="line dmg">
               <span class="total">{d.total}</span>

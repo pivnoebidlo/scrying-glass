@@ -16,7 +16,8 @@ export interface TrackerDef {
   // Столбец очерёдности («Иниц.»).
   init: { label: string; title: string };
   // Бонус очерёдности: подпись в заготовке и кратко в строке участника.
-  bonus: { label: string; short: string; title: string };
+  // from — the key of a field that sets the bonus (Mausritter: DEX): no separate input, shown without a sign.
+  bonus: { label: string; short: string; title: string; from?: string };
   // Кнопка «Бросить за NPC»: результат для участника с этим бонусом.
   roll: { label: string; title: string; value(bonus: number): number };
   // Состояния: готовый список (у D&D) или свободный ввод (аспекты Fate).

@@ -11,6 +11,10 @@ import GenericEditor from './GenericEditor.svelte';
 import FateSheet from './fate/Sheet.svelte';
 import FateEditor from './fate/Editor.svelte';
 import { isFate } from './fate/stats';
+import MausSheet from './mausritter/Sheet.svelte';
+import MausEditor from './mausritter/Editor.svelte';
+import MausTrackerCells from './mausritter/TrackerCells.svelte';
+import { isMaus } from './mausritter/stats';
 import DndTrackerCells from './dnd5e/TrackerCells.svelte';
 import FateTrackerCells from './fate/TrackerCells.svelte';
 import type { Combatant } from '../modules/initiative/types';
@@ -24,17 +28,20 @@ const views: Record<string, StatsView> = {
   'dnd5e-2014': Dnd5eStatBlock,
   'dnd5e-2024': Dnd5eStatBlock,
   'fate-core': FateSheet,
+  mausritter: MausSheet,
 };
 
 const editors: Record<string, StatsEditor> = {
   'dnd5e-2014': Dnd5eEditor,
   'dnd5e-2024': Dnd5eEditor,
   'fate-core': FateEditor,
+  mausritter: MausEditor,
 };
 
 // stats нужен, чтобы отличить лист персонажа игрока от статблока.
-// Карточка Fate с чужим блоком stats (например, старая «поле — значение») — общий вид, чтобы ничего не потерять.
-const fits = (system: string, stats: unknown) => system !== 'fate-core' || stats === undefined || isFate(stats);
+// Карточка Fate (Mausritter) с чужим блоком stats (например, старая «поле — значение») — общий вид, чтобы ничего не потерять.
+const guards: Record<string, (stats: unknown) => boolean> = { 'fate-core': isFate, mausritter: isMaus };
+const fits = (system: string, stats: unknown) => stats === undefined || (guards[system]?.(stats) ?? true);
 export const statsView = (system: string, stats?: unknown): StatsView =>
   system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterSheet : fits(system, stats) ? (views[system] ?? GenericStats) : GenericStats;
 export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
@@ -42,5 +49,5 @@ export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
 
 // Ячейки строки участника в трекере инициативы (хиты и КД, стресс и последствия): по семейству системы.
 type TrackerCells = Component<{ c?: Combatant; head?: boolean }>;
-const trackers: Record<string, TrackerCells> = { fate: FateTrackerCells };
+const trackers: Record<string, TrackerCells> = { fate: FateTrackerCells, mausritter: MausTrackerCells };
 export const trackerCells = (system: string): TrackerCells => trackers[familyOf(system)] ?? DndTrackerCells;

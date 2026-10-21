@@ -114,7 +114,7 @@
                 <!-- Сторону можно поменять прямо в бою: союзник, на которого напали, становится противником. -->
                 <select class="side-select" value={c.side} title={t('init.side')} onchange={(e) => update(c, { side: e.currentTarget.value as Side })}>
                   {#each Object.entries(SIDES) as [v, title] (v)}<option value={v}>{title}</option>{/each}
-                </select>{c.bonus ? ` · ${tracker.bonus.short} ${c.bonus > 0 ? '+' : ''}${c.bonus}` : ''}
+                </select>{c.bonus ? ` · ${tracker.bonus.short} ${c.bonus > 0 && !tracker.bonus.from ? '+' : ''}${c.bonus}` : ''}
               </span>
             </td>
             <Cells {c} />

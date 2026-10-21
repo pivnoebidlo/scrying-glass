@@ -87,3 +87,18 @@ export function rollFate(bonus: number): FateRoll {
   const faces = Array.from({ length: 4 }, () => Math.ceil(die(6) / 2) - 2);
   return { faces, bonus, total: faces.reduce((a, b) => a + b, 0) + bonus };
 }
+
+// Roll-under save (Mausritter): d20 ≤ the attribute succeeds. Advantage — the lower of 2d20, disadvantage — the higher.
+export interface SaveRoll {
+  rolls: number[];
+  mode: D20Mode;
+  natural: number;
+  target: number;
+  success: boolean;
+}
+
+export function rollSave(target: number, mode: D20Mode = 'normal'): SaveRoll {
+  const rolls = mode === 'normal' ? [die(20)] : [die(20), die(20)];
+  const natural = mode === 'advantage' ? Math.min(...rolls) : mode === 'disadvantage' ? Math.max(...rolls) : rolls[0]!;
+  return { rolls, mode, natural, target, success: natural <= target };
+}

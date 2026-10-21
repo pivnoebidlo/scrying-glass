@@ -60,7 +60,7 @@
           name: n > 1 ? `${name} ${i}` : name,
           side: form.side,
           init: num(form.init),
-          bonus: num(form.bonus) ?? 0,
+          ...(tracker.bonus.from ? {} : { bonus: num(form.bonus) ?? 0 }),
         },
         encounter,
       });
@@ -127,7 +127,9 @@
   {#if !encounter}
     <input class="f-num" type="text" inputmode="numeric" placeholder={tracker.init.label} title={t('init.laterHint', { title: tracker.init.title })} bind:value={form.init} />
   {/if}
-  <input class="f-num" type="text" inputmode="numeric" placeholder={tracker.bonus.label} title={tracker.bonus.title} bind:value={form.bonus} />
+  {#if !tracker.bonus.from}
+    <input class="f-num" type="text" inputmode="numeric" placeholder={tracker.bonus.label} title={tracker.bonus.title} bind:value={form.bonus} />
+  {/if}
   {#each tracker.fields as f (f.key)}
     <input class="f-num" type="text" inputmode="numeric" placeholder={f.label} title={f.title} bind:value={values[f.key]} />
   {/each}
