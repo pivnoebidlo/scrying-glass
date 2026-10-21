@@ -13,6 +13,10 @@
   const extra = $derived(sheet ? sheet.slots.slice(SLOT_COUNT).filter((x) => x.name.trim()) : []);
 
   const save = (e: MouseEvent, a: MausAttr) => s[a] !== null && rolls.save(card.name, t('maus.saveOf', { attr: ATTR_SHORT[a]! }), s[a]!, modeOf(e));
+  // «Хочет, чтобы…» — the text may begin with its own comma.
+  const gap = (text: string) => (/^[,.;:]/.test(text) ? '' : ' ');
+  // Dice as the card's language writes them: «к8» on a Russian card.
+  const die = (d: string) => (card.lang === 'ru' ? d.replace(/d/g, 'к') : d);
   // «d6/d8» — one paw or both: each die is its own button.
   const damage = (die: string, name: string) => rolls.damage(card.name, name || die, `1${die}`);
 </script>
@@ -37,12 +41,12 @@
   {#if s.attacks.length}
     <p class="line">
       <b>{t('maus.attacks')}:</b>
-      {#each s.attacks as a, i (i)}{#if i > 0},{' '}{/if}{#each a.dice.split('/').filter(Boolean) as d, j (j)}{#if j > 0}/{/if}<button class="roll inline" title={t('maus.attackHint')} onclick={() => damage(d, a.name)}>{d}</button>{/each}{a.dice ? ' ' : ''}{a.name}{/each}
+      {#each s.attacks as a, i (i)}{#if i > 0},{' '}{/if}{#each a.dice.split('/').filter(Boolean) as d, j (j)}{#if j > 0}/{/if}<button class="roll inline" title={t('maus.attackHint')} onclick={() => damage(d, a.name)}>{die(d)}</button>{/each}{a.dice ? ' ' : ''}{a.name}{/each}
     </p>
   {/if}
   {#if s.critical}<p class="line"><b>{t('maus.critical')}:</b> {s.critical}</p>{/if}
   {#each s.abilities.filter((x) => x.trim()) as x, i (i)}<p class="line">{x}</p>{/each}
-  {#if s.wants}<p class="line"><b>{t('maus.wants')}</b> {s.wants}</p>{/if}
+  {#if s.wants}<p class="line"><b>{t('maus.wants')}</b>{gap(s.wants)}{s.wants}</p>{/if}
 
   {#if sheet}
     <h3>{t('maus.mouse')}</h3>

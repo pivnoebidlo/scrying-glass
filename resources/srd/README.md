@@ -26,6 +26,8 @@ This work is based on Mausritter (https://mausritter.com), a product of Losing G
 for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
 
 `resources/srd/mausritter.json` is built by `scripts/build-mausritter.ts` (`npm run build-mausritter`) from the Mausritter SRD 2.3.1
-(`scripts/mausritter-srd.en.md`, https://mausritter.com/srd). The text is split into entries and cards; headings and
+(`scripts/mausritter-srd.en.md`, https://mausritter.com/srd) and its Russian translation made for Scrying Glass
+(`scripts/mausritter-srd.ru.md`; the SRD licence allows translation). / Русский перевод Mausritter SRD сделан для
+Scrying Glass. The text is split into entries and cards; headings and
 links are adjusted, stat blocks are split into fields. The meaning of the rules is unchanged. This is not an official
 Mausritter product and is not endorsed by Losing Games.

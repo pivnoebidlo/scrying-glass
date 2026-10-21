@@ -41,7 +41,7 @@
     npm run import-srd # пересобрать встроенный бестиарий из SRD (нужен интернет)
     npm run import-compendium # пересобрать встроенный справочник SRD (нужен интернет)
     npm run build-fate # собрать встроенный справочник Fate из scripts/fate-core.<язык>.md
-    npm run build-mausritter # встроенные существа и справочник Mausritter из scripts/mausritter-srd.en.md
+    npm run build-mausritter # встроенные существа и справочник Mausritter из scripts/mausritter-srd.<язык>.md
     npm run dist       # установщик для своей системы в dist/ (electron-builder.yml)
     npm run icon       # иконка build/icon.png из build/icon.svg
 
@@ -144,12 +144,13 @@ journal / журнал / заметки / notes — журнал мастера.
 CC BY 3.0). Тексты лежат в `scripts/fate-core.<язык>.md`, `npm run build-fate` собирает из них
 `resources/compendium/fate-core.<язык>.json`.
 
-В приключениях **Mausritter** встроен Mausritter SRD 2.3.1 (пока на английском): правила по главам (создание мыши,
+В приключениях **Mausritter** встроен Mausritter SRD 2.3.1 на английском и русском (русский текст — перевод,
+сделанный для приложения): правила по главам (создание мыши,
 инвентарь, спасброски, бой, магия, наёмники и отряды, снаряжение и цены, советы мастеру, наборы для гексов и мест
 приключений, полезные таблицы), 15 заклинаний с перезарядкой и 11 существ карточками (кошка, сороконожка, ворона, фея,
-лягушка, призрак, мышь, сова, крыса, змея, паук — с таблицами вариантов). Текст SRD — в
-`scripts/mausritter-srd.en.md`, `npm run build-mausritter` собирает из него `resources/srd/mausritter.json` и
-`resources/compendium/mausritter.en.json`. This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
+лягушка, призрак, мышь, сова, крыса, змея, паук — с таблицами вариантов). Тексты — в
+`scripts/mausritter-srd.<язык>.md`, `npm run build-mausritter` собирает из них `resources/srd/mausritter.json` и
+`resources/compendium/mausritter.<язык>.json`. This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
 
 Справочник под рукой из любой вкладки:
 - заклинания в статблоках (курсивом, как в SRD) и в списках заклинаний листа персонажа — ссылки: щелчок открывает

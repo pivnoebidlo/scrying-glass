@@ -128,8 +128,24 @@ describe('Mausritter: tracker', () => {
 });
 
 describe('Mausritter: built-in content', () => {
-  const cards = JSON.parse(readFileSync('resources/srd/mausritter.json', 'utf8')) as { name: string; system: string; stats: unknown }[];
+  const all = JSON.parse(readFileSync('resources/srd/mausritter.json', 'utf8')) as { id: string; name: string; lang: string; system: string; stats: unknown; origin?: { id: string } }[];
+  const cards = all.filter((c) => c.lang === 'en');
   const book = JSON.parse(readFileSync('resources/compendium/mausritter.en.json', 'utf8')) as BuiltinBook;
+  const ruBook = JSON.parse(readFileSync('resources/compendium/mausritter.ru.json', 'utf8')) as BuiltinBook;
+
+  it('the Russian translation: a card for each creature with the same numbers, a paired entry for each entry', () => {
+    const ru = all.filter((c) => c.lang === 'ru');
+    expect(ru).toHaveLength(11);
+    for (const r of ru) {
+      const orig = cards.find((c) => c.id === r.origin?.id)!;
+      const [a, b] = [r.stats, orig.stats] as ReturnType<typeof parseStatBlock>[];
+      expect([a!.hp, a!.str, a!.dex, a!.wil, a!.armour, a!.attacks.map((x) => x.dice)]).toEqual([b!.hp, b!.str, b!.dex, b!.wil, b!.armour, b!.attacks.map((x) => x.dice)]);
+    }
+    expect(ru.find((c) => c.id === 'maus-owl.ru')!.name).toBe('Сова');
+    expect(ruBook.entries).toHaveLength(book.entries.length);
+    expect(ruBook.entries.find((e) => e.en === 'Conditions')!.title).toBe('Состояния');
+    expect(ruBook.entries.filter((e) => e.type === 'mspell').map((e) => e.title)).toContain('Огненный шар');
+  });
 
   it('eleven creatures, each a Mausritter stat block the app reads', () => {
     expect(cards.map((c) => c.name)).toEqual(['Cat', 'Centipede', 'Crow', 'Faerie', 'Frog', 'Ghost', 'Mouse', 'Owl', 'Rat', 'Snake', 'Spider']);

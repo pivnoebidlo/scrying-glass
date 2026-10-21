@@ -72,7 +72,7 @@ export const mausTracker: TrackerDef = {
     },
     free: false,
     // The SRD describes Conditions in one section of the built-in compendium.
-    entry: () => ['Conditions'],
+    entry: () => ['Conditions', 'Состояния'],
   },
   fields: [
     {
