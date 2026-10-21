@@ -12,7 +12,7 @@ type Text = Record<Lang, string>;
 
 export interface Template {
   id: string;
-  // One template of a group at a time. Age and people — only for humanoids (humanoidOnly).
+  // One template of a group at a time. Age — only for humanoids, people — for those without one (templateFits).
   group: 'age' | 'build' | 'role' | 'people';
   name: Text;
   abilities?: Partial<Record<Ability, number>>;
@@ -145,9 +145,21 @@ export const TEMPLATES: Template[] = [
 
 export const templateById = (id: string) => TEMPLATES.find((t) => t.id === id);
 
-// A dwarf medusa or a child dragon make no sense: ages and peoples are for humanoids.
-export const humanoidOnly = (t: Template) => t.group === 'age' || t.group === 'people';
+// A dwarf medusa or a child dragon make no sense: ages are for humanoids, peoples — see peopleFits.
 export const isHumanoid = (s: Dnd5eStats) => /humanoid|гуманоид/i.test(s.type);
+
+// The subtype in brackets: «Humanoid (goblinoid)» → «goblinoid».
+const subtypeOf = (s: Dnd5eStats) => /\(([^)]*)\)/.exec(s.type)?.[1]?.trim().toLowerCase() ?? '';
+// Subtypes that are not a people of their own: none, any race, a class (2024 Russian SRD), or one of our peoples.
+const OPEN_SUBTYPES = ['', 'any race', 'любая раса', 'wizard', 'cleric', 'druid', 'priest', 'волшебник', 'жрец', 'друид'];
+const CLASS_SUBTYPES = OPEN_SUBTYPES.slice(4);
+// A people can be given to a humanoid with no people of its own: a goblin or a kobold stays what it is.
+export function peopleFits(s: Dnd5eStats): boolean {
+  if (!isHumanoid(s)) return false;
+  const sub = subtypeOf(s);
+  return OPEN_SUBTYPES.includes(sub) || TEMPLATES.some((t) => t.subtype && (t.subtype.en.toLowerCase() === sub || t.subtype.ru.toLowerCase() === sub));
+}
+export const templateFits = (t: Template, s: Dnd5eStats) => (t.group === 'people' ? peopleFits(s) : t.group === 'age' ? isHumanoid(s) : true);
 
 // ---------- Weapons (SRD) ----------
 
@@ -218,6 +230,10 @@ export interface Reshape {
   weapons: Record<string, string>;
   // Another challenge rating: the creature made stronger or weaker (empower).
   cr?: number;
+  // Weapons added: as an attack (and in the gear) or only carried.
+  added?: { weapon: string; attack: boolean }[];
+  // Other things carried, as written: «rope, a lantern».
+  gear?: string;
 }
 export const NO_RESHAPE: Reshape = { templates: [], abilities: {}, weapons: {} };
 
@@ -367,7 +383,7 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // The reshaped stat block. lang and edition — the card's (texts of templates and weapons are written in them).
 export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '2014' | '2024'): Dnd5eStats {
   const l = L(lang);
-  const tpls = r.templates.map(templateById).filter((x): x is Template => !!x && (isHumanoid(base) || !humanoidOnly(x)));
+  const tpls = r.templates.map(templateById).filter((x): x is Template => !!x && templateFits(x, base));
   const s: Dnd5eStats = structuredClone(base);
   const old = base.abilities;
 
@@ -403,7 +419,9 @@ export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '20
   const people = tpls.find((t) => t.subtype);
   if (people) {
     const sub = people.subtype![l];
-    s.type = /\(.*\)/.test(s.type) ? s.type.replace(/\(.*\)/, `(${sub})`) : `${s.type} (${sub})`;
+    // A class in brackets stays: «Гуманоид (волшебник, дварф)».
+    const keep = CLASS_SUBTYPES.includes(subtypeOf(base));
+    s.type = /\(.*\)/.test(s.type) ? s.type.replace(/\((.*)\)/, (_m, x: string) => `(${keep ? `${x}, ${sub}` : sub})`) : `${s.type} (${sub})`;
     const lang2 = people.language?.[l];
     if (lang2 && !s.languages.includes(lang2)) s.languages = s.languages ? `${s.languages}, ${lang2}` : lang2;
   }
@@ -444,6 +462,19 @@ export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '20
     const re = new RegExp(`(^|[^\\p{L}])${escapeRe(from)}(?=[^\\p{L}]|$)`, 'giu');
     for (const list of LISTS) s[list] = s[list].map((b) => ({ ...b, text: b.text.replace(re, (_m, pre: string) => `${pre}${to}`) }));
     if (s.gear) s.gear = s.gear.replace(re, (_m, pre: string) => `${pre}${/^\p{Lu}/u.test(from) ? to : to.toLowerCase()}`);
+  }
+  // Added weapons and things carried.
+  const carried: string[] = [];
+  for (const a of r.added ?? []) {
+    const wp = weaponById(a.weapon);
+    if (!wp) continue;
+    if (a.attack) s.actions.push(weaponBlock(wp, s, l, edition));
+    carried.push(wp.name[l]);
+  }
+  if (r.gear?.trim()) carried.push(r.gear.trim());
+  if (carried.length) {
+    const more = s.gear ? carried.map((x) => x.charAt(0).toLowerCase() + x.slice(1)) : carried;
+    s.gear = [s.gear, ...more].filter(Boolean).join(', ');
   }
   const dc = 8 + s.pb + mod(abilities.con);
   for (const t of tpls) {

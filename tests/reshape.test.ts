@@ -136,4 +136,21 @@ describe('переделка статблока', () => {
     const c = reshape(s24('srd52-commoner.ru'), { ...NO_RESHAPE, templates: ['healer'] }, 'ru', '2024');
     expect(c.actions.at(-1)).toEqual({ name: 'Целебное касание (3/день)', text: 'Существо касается другого существа, и то восстанавливает 2к8 + 1 хитов.' });
   });
+
+  it('народ — только гуманоиду без своего: гоблин остаётся гоблином, дроу можно сделать дварфом', () => {
+    const goblin = s14('srd51-goblin');
+    expect(reshape(goblin, { ...NO_RESHAPE, templates: ['gnome'] }, 'en', '2014')).toEqual(goblin);
+    expect(reshape(goblin, { ...NO_RESHAPE, templates: ['child'] }, 'en', '2014').size).toEqual(['small']);
+    expect(reshape(s14('srd51-drow'), { ...NO_RESHAPE, templates: ['dwarf'] }, 'en', '2014').type).toBe('Humanoid (Dwarf)');
+    expect(reshape(s24('srd52-mage.ru'), { ...NO_RESHAPE, templates: ['dwarf'] }, 'ru', '2024').type).toBe('Гуманоид (волшебник, дварф)');
+  });
+
+  it('добавленное оружие — атакой или в снаряжение; прочие вещи — в снаряжение', () => {
+    const r = reshape(s24('srd52-guard'), { ...NO_RESHAPE, added: [{ weapon: 'shortsword', attack: true }, { weapon: 'dagger', attack: false }], gear: 'Rope' }, 'en', '2024');
+    expect(r.actions.map((a) => a.name)).toEqual(['Spear', 'Shortsword']);
+    expect(r.actions[1]!.text).toBe('Melee Attack Roll: +3, reach 5 ft. Hit: 4 (1d6 + 1) Piercing damage.');
+    expect(r.gear).toBe('Chain Shirt, Shield, Spear, shortsword, dagger, rope');
+    const c = reshape(s14('srd51-commoner'), { ...NO_RESHAPE, added: [{ weapon: 'dagger', attack: false }] }, 'en', '2014');
+    expect(c.gear).toBe('Dagger');
+  });
 });

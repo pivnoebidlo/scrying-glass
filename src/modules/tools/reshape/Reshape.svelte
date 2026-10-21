@@ -4,7 +4,7 @@
   import { IdCard, Minus, Plus, RotateCcw, Wand2, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import type { Card } from '../../../shared/cards';
-  import { attackBlocks, changesOf, humanoidOnly, isHumanoid, POWER_CRS, reshape, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
+  import { attackBlocks, changesOf, POWER_CRS, reshape, templateFits, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import StatBlock from '../../../systems/dnd5e/StatBlock.svelte';
   import { ABILITIES, crText, dict, mod, signed, type Ability, type Dnd5eStats } from '../../../systems/dnd5e/stats';
@@ -18,14 +18,14 @@
   const L = $derived(dict(locale.lang));
   const ui = $derived(locale.lang === 'ru' ? 'ru' : 'en');
   const tpls = $derived(
-    rs.r.templates.map((id) => TEMPLATES.find((x) => x.id === id)).filter((x): x is Template => !!x && (!base || isHumanoid(base.stats) || !humanoidOnly(x))),
+    rs.r.templates.map((id) => TEMPLATES.find((x) => x.id === id)).filter((x): x is Template => !!x && (!base || templateFits(x, base.stats))),
   );
   const name = $derived(rs.name.trim() || (base ? (tpls.length ? `${base.name} (${tpls.map((x) => x.name[lang].toLowerCase()).join(', ')})` : base.name) : ''));
   const stats = $derived(base ? reshape($state.snapshot(base.stats) as Dnd5eStats, $state.snapshot(rs.r), lang, editionOf(base.system)) : null);
   const card = $derived(base && stats ? ({ ...$state.snapshot(base), name, stats } as Card<Dnd5eStats>) : null);
   const attacks = $derived(base ? attackBlocks(base.stats) : []);
   const changes = $derived(base && stats ? changesOf(base.stats, stats, (k) => (k in L.abilities ? L.abilities[k as Ability] : t(`reshape.ch.${k}` as never)), (x) => L.sizes[x] ?? x) : []);
-  const touched = $derived(rs.r.cr !== undefined || rs.r.templates.length > 0 || Object.values(rs.r.abilities).some(Boolean) || Object.keys(rs.r.weapons).length > 0);
+  const touched = $derived(rs.r.cr !== undefined || !!rs.r.added?.length || !!rs.r.gear?.trim() || rs.r.templates.length > 0 || Object.values(rs.r.abilities).some(Boolean) || Object.keys(rs.r.weapons).length > 0);
 
   const GROUPS = ['age', 'build', 'role', 'people'] as const;
   // One template of a group at a time (brawny and frail exclude each other).
@@ -49,6 +49,14 @@
   function setWeapon(key: string, id: string) {
     if (id) rs.r.weapons[key] = id;
     else delete rs.r.weapons[key];
+  }
+  function addWeapon(id: string) {
+    if (id) rs.r.added = [...(rs.r.added ?? []), { weapon: id, attack: true }];
+  }
+  function cancel() {
+    reset();
+    rs.base = null;
+    rs.ref = null;
   }
   function reset() {
     rs.r = { templates: [], abilities: {}, weapons: {} };
@@ -104,8 +112,8 @@
               <span class="faint label">{t(`reshape.group.${g}`)}</span>
               <div class="chips">
                 {#each TEMPLATES.filter((x) => x.group === g) as tp (tp.id)}
-                  {@const off = humanoidOnly(tp) && !isHumanoid(base.stats)}
-                  <button class="chip" class:active={!off && rs.r.templates.includes(tp.id)} disabled={off} title={off ? t('reshape.humanoidOnly') : undefined} onclick={() => toggle(tp)}>{tp.name[ui]}</button>
+                  {@const off = !templateFits(tp, base.stats)}
+                  <button class="chip" class:active={!off && rs.r.templates.includes(tp.id)} disabled={off} title={off ? t(tp.group === 'age' ? 'reshape.humanoidOnly' : 'reshape.ownPeople') : undefined} onclick={() => toggle(tp)}>{tp.name[ui]}</button>
                 {/each}
               </div>
             </div>
@@ -144,24 +152,39 @@
           </div>
         </section>
 
-        {#if attacks.length}
-          <section>
-            <h3>{t('reshape.weapons')}</h3>
-            {#each attacks as at (at.key)}
-              <label class="weapon">
-                <span>{at.name}</span>
-                <select value={rs.r.weapons[at.key] ?? ''} onchange={(e) => setWeapon(at.key, e.currentTarget.value)}>
-                  <option value="">{t('reshape.keep')}</option>
-                  {#each WEAPONS as wp (wp.id)}<option value={wp.id}>{wp.name[ui]} — {wp.dice}{wp.versatile ? ` / ${wp.versatile}` : ''}</option>{/each}
-                </select>
-              </label>
-            {/each}
-          </section>
-        {/if}
+        <section>
+          <h3>{t('reshape.weapons')}</h3>
+          {#each attacks as at (at.key)}
+            <label class="weapon">
+              <span>{at.name}</span>
+              <select value={rs.r.weapons[at.key] ?? ''} onchange={(e) => setWeapon(at.key, e.currentTarget.value)}>
+                <option value="">{t('reshape.keep')}</option>
+                {#each WEAPONS as wp (wp.id)}<option value={wp.id}>{wp.name[ui]} — {wp.dice}{wp.versatile ? ` / ${wp.versatile}` : ''}</option>{/each}
+              </select>
+            </label>
+          {/each}
+          {#each rs.r.added ?? [] as a, i (i)}
+            <div class="weapon added">
+              <span>+ {WEAPONS.find((x) => x.id === a.weapon)?.name[ui]}</span>
+              <label class="faint" title={t('reshape.asAttackHint')}><input type="checkbox" bind:checked={a.attack} /> {t('reshape.asAttack')}</label>
+              <button class="icon-btn" title={t('reshape.removeWeapon')} onclick={() => (rs.r.added = rs.r.added!.filter((_, j) => j !== i))}><X size={13} /></button>
+            </div>
+          {/each}
+          <select class="add" value="" onchange={(e) => { addWeapon(e.currentTarget.value); e.currentTarget.value = ''; }}>
+            <option value="">{t('reshape.addWeapon')}</option>
+            {#each WEAPONS as wp (wp.id)}<option value={wp.id}>{wp.name[ui]} — {wp.dice}{wp.versatile ? ` / ${wp.versatile}` : ''}</option>{/each}
+          </select>
+        </section>
+
+        <section>
+          <h3>{t('reshape.gear')}</h3>
+          <input type="text" placeholder={t('reshape.gearPh')} bind:value={rs.r.gear} />
+        </section>
 
         <div class="buttons">
           <button class="btn primary" onclick={toCard}><IdCard size={14} /> {t('reshape.toCard')}</button>
           <button class="btn" disabled={!touched} onclick={reset}><RotateCcw size={14} /> {t('reshape.reset')}</button>
+          <button class="btn" title={t('reshape.cancelHint')} onclick={cancel}><X size={14} /> {t('reshape.cancel')}</button>
         </div>
         <p class="faint hint">{t('reshape.note')}</p>
       {/if}
@@ -311,6 +334,18 @@
   }
   .weapon select {
     max-width: 60%;
+  }
+  .weapon.added span {
+    font-weight: 500;
+  }
+  .weapon.added label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+  }
+  select.add {
+    width: 100%;
   }
   .power {
     display: flex;
