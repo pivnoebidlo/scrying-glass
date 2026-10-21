@@ -103,6 +103,10 @@ export const en = {
   'view.zoom': 'Double-click to look closer',
   'view.prev': 'Previous (←)',
   'view.next': 'Next (→)',
+  'view.copy': 'Copy',
+  'view.copyHint': 'Copy the picture to the clipboard (⌘C / Ctrl+C)',
+  'view.copied': 'Copied',
+  'view.copyFailed': 'Could not copy',
 
   'empty.none': 'none',
   'empty.nobody': 'nobody',
@@ -289,6 +293,10 @@ export const ru: Messages<typeof en> = {
   'view.zoom': 'Двойной щелчок — рассмотреть крупно',
   'view.prev': 'Предыдущая (←)',
   'view.next': 'Следующая (→)',
+  'view.copy': 'Копировать',
+  'view.copyHint': 'Скопировать картинку в буфер обмена (⌘C / Ctrl+C)',
+  'view.copied': 'Скопировано',
+  'view.copyFailed': 'Не удалось скопировать',
 
   'empty.none': 'нет',
   'empty.nobody': 'никого',

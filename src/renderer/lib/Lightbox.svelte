@@ -1,7 +1,7 @@
 <!-- Картинка крупно у мастера: рассмотреть перед тем, как показывать игрокам. Esc или щелчок мимо — закрыть,
      ← → — соседние картинки той же сетки. Внизу — те же действия, что на плитке (портрет, фон, раздатка…). -->
 <script lang="ts">
-  import { ChevronLeft, ChevronRight, X } from '@lucide/svelte';
+  import { Check, ChevronLeft, ChevronRight, Copy, X } from '@lucide/svelte';
   import { assetUrl, prettyName } from '../../shared/vault';
   import { badgeOf } from './contrib';
   import { closeLightbox, lightbox } from './view-image.svelte';
@@ -18,9 +18,21 @@
     if (n > 1) lightbox.index = (lightbox.index + d + n) % n;
   }
 
+  // Copy the picture (⌘C / Ctrl+C or the button): the file itself, as PNG.
+  let copied = $state<'ok' | 'fail' | null>(null);
+  let copiedTimer: ReturnType<typeof setTimeout> | undefined;
+  async function copy() {
+    if (!path) return;
+    copied = (await window.api.copyImage(path)) ? 'ok' : 'fail';
+    clearTimeout(copiedTimer);
+    copiedTimer = setTimeout(() => (copied = null), 1500);
+  }
+
   function onkeydown(e: KeyboardEvent) {
     if (!path) return;
-    if (e.key === 'Escape') closeLightbox();
+    // A layout-independent key: C is KeyC in any keyboard layout (a Russian one types «с»).
+    if ((e.metaKey || e.ctrlKey) && e.code === 'KeyC' && !window.getSelection()?.toString()) void copy();
+    else if (e.key === 'Escape') closeLightbox();
     else if (e.key === 'ArrowLeft') step(-1);
     else if (e.key === 'ArrowRight') step(1);
     else return;
@@ -44,6 +56,9 @@
     <div class="bar" onclick={(e) => e.stopPropagation()}>
       <span class="name" title={path}>{name}</span>
       {#if lightbox.items.length > 1}<span class="count">{lightbox.index + 1} / {lightbox.items.length}</span>{/if}
+      <button class="btn" title={t('view.copyHint')} onclick={copy}>
+        {#if copied === 'ok'}<Check size={14} /> {t('view.copied')}{:else}<Copy size={14} /> {copied === 'fail' ? t('view.copyFailed') : t('view.copy')}{/if}
+      </button>
       {#each imageActions.filter((a) => a.visible?.(app, path) ?? true) as a (a.id)}
         {@const on = a.active(app, path)}
         <button class="btn" class:primary={on} onclick={() => a.toggle(app, path)}>

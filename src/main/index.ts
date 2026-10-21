@@ -13,7 +13,7 @@ import { BACKUP_EXT, backupSizes, placeFiles, readBackup, writeBackup } from './
 import { randomUUID } from 'node:crypto';
 import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
-import { clipboardImage, freeName, isDir, readJson, writeJsonAtomic } from './files';
+import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { systemFor } from '../shared/adventures';
 import { setSystemsOff } from '../systems';
@@ -1215,6 +1215,12 @@ ipcMain.handle('names:reveal', async () => {
   await shell.openPath(namesDir(lib));
 });
 // Save text into a file the GM picks (a dialog): name — the suggested file name with its extension.
+// A picture of the vault or the library into the clipboard (the lightbox: «Copy», ⌘C).
+ipcMain.handle('files:copyImage', async (_event, file: string) => {
+  const real = file.startsWith(LIBRARY) ? resolveInLibrary(file.slice(LIBRARY.length)) : resolveInVault(file);
+  return real ? copyImageFile(real).catch(() => false) : false;
+});
+
 ipcMain.handle('files:saveText', async (_event, { name, text }: { name: string; text: string }) => {
   const win = getControlWindow();
   const ext = path.extname(name).slice(1) || 'txt';

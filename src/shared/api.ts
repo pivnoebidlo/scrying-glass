@@ -88,6 +88,8 @@ export interface Api {
   revealNameLists(): Promise<void>;
   // Save text into a file the GM picks (name — the suggested name with an extension). false — cancelled or failed.
   saveTextFile(name: string, text: string): Promise<boolean>;
+  // A picture (vault path or «library:…») into the clipboard as PNG; false — it could not be read.
+  copyImage(path: string): Promise<boolean>;
 
   // Хранилище перечитано (файлы изменились — в приложении или снаружи).
   onVaultRescan(cb: () => void): void;

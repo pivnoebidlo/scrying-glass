@@ -2,7 +2,7 @@
 import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { clipboard, dialog } from 'electron';
+import { clipboard, ClipboardItem, dialog, nativeImage } from 'electron';
 import { fileURLToPath } from 'node:url';
 import { IMAGE_EXT } from '../shared/vault';
 
@@ -101,4 +101,13 @@ export async function clipboardImage(): Promise<{ name: string; data: Buffer } |
     }
   }
   return null;
+}
+
+// A picture file into the clipboard, as PNG (any format the system decodes). false — not a picture we can read.
+export async function copyImageFile(file: string): Promise<boolean> {
+  const img = nativeImage.createFromPath(file);
+  if (img.isEmpty()) return false;
+  const png = img.toPNG();
+  await clipboard.write([new ClipboardItem({ 'image/png': new Blob([new Uint8Array(png)], { type: 'image/png' }) })]);
+  return true;
 }

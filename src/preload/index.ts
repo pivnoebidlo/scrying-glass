@@ -36,6 +36,7 @@ const api: Api = {
   importNameLists: () => ipcRenderer.invoke('names:import'),
   revealNameLists: () => ipcRenderer.invoke('names:reveal'),
   saveTextFile: (name, text) => ipcRenderer.invoke('files:saveText', { name, text }),
+  copyImage: (path) => ipcRenderer.invoke('files:copyImage', path),
 
   onVaultRescan: (cb) => { ipcRenderer.on('vault:rescanned', () => cb()); },
   readNote: (path) => ipcRenderer.invoke('notes:read', path),
