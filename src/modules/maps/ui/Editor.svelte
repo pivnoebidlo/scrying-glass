@@ -4,7 +4,7 @@
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
   import {
-    Brush, CircleUserRound, Cloud, Eraser, Eye, EyeOff, Grid3x3, Hand, List, Move3d, UsersRound, MapPin, MapPinPlus, Maximize, Move, ScanEye, Shield, SquareDashed, SquareDashedMousePointer, Swords, Undo2,
+    Brush, CircleUserRound, Cloud, Eraser, Eye, EyeOff, Grid2x2X, Grid3x3, Hand, Hexagon, List, Move3d, UsersRound, MapPin, MapPinPlus, Maximize, Move, ScanEye, Shield, SquareDashed, SquareDashedMousePointer, Swords, Undo2,
   } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { playerDisplay } from '../../../renderer/lib/nav';
@@ -18,7 +18,7 @@
   } from '../render';
   import { FULL_VIEW, GRID_STYLE, type FogOp, type MapData, type MapPin as Pin, type MapToken, type MapView } from '../types';
   import { drawTokens, snap, tokenCell, tokenViews, type TokenView } from '../tokens';
-  import { GRID_SHAPES, periodOf, shapeOf, type GridShape } from '../grid';
+  import { periodOf, shapeOf, type GridShape } from '../grid';
   import type { CardSummary } from '../../../shared/cards';
   import { cardAsset } from '../../../shared/cards';
   import { visibleIn } from '../../../shared/adventures';
@@ -94,6 +94,7 @@
     | { kind: 'brush'; op: Extract<FogOp, { kind: 'brush' }>; lx: number; ly: number }
     | { kind: 'rect'; mode: 'reveal' | 'hide'; x0: number; y0: number; x1: number; y1: number }
     | { kind: 'view'; sx: number; sy: number; view0: MapView }
+    | { kind: 'resize'; handle: Handle; r0: Rect }
     | { kind: 'pin'; id: string; sx: number; sy: number; x0: number; y0: number; moved: boolean }
     | { kind: 'grid'; sx: number; sy: number; ox: number; oy: number }
     | { kind: 'token'; id: string; sx: number; sy: number; x0: number; y0: number; moved: boolean };
@@ -108,6 +109,16 @@
   const PIN_R = 11;
 
   const dpr = () => window.devicePixelRatio || 1;
+
+  // Zoom and pan redraw once a frame, however many events come in it.
+  let frameReq = 0;
+  function redraw() {
+    if (frameReq) return;
+    frameReq = requestAnimationFrame(() => {
+      frameReq = 0;
+      draw();
+    });
+  }
 
   // ---- Загрузка карты ----
   $effect(() => {
@@ -141,6 +152,7 @@
     void ui.pin;
     void tokens;
     void ui.token;
+    void ui.tool;
     untrack(draw);
   });
 
@@ -191,13 +203,9 @@
     });
 
     // Что видят игроки: обзор, вписанный в экран с его пропорциями.
-    const d = playerDisplay();
-    const v = visibleArea(viewPreview ?? data.view, img, d ? d.width / d.height : 16 / 9);
+    const fr = frame()!;
+    const [rx, ry, rw, rh] = [fr.x, fr.y, fr.w, fr.h];
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    const rx = v.x * img.w * xf.s + xf.ox;
-    const ry = v.y * img.h * xf.s + xf.oy;
-    const rw = v.w * img.w * xf.s;
-    const rh = v.h * img.h * xf.s;
     ctx.lineWidth = 2 * dpr();
     ctx.strokeStyle = shown ? '#8a5cf5' : 'rgba(138, 92, 245, 0.55)';
     ctx.setLineDash(shown ? [] : [8 * dpr(), 6 * dpr()]);
@@ -206,6 +214,15 @@
     ctx.font = `${12 * dpr()}px -apple-system, system-ui, sans-serif`;
     ctx.fillStyle = ctx.strokeStyle;
     ctx.fillText(shown ? t('maps.playersSee') : t('maps.playersWillSee'), rx + 6 * dpr(), ry - 6 * dpr());
+    // The frame tool: handles to resize it.
+    if (ui.tool === 'view') {
+      const k = 4 * dpr();
+      for (const [hx, hy] of Object.values(handlePoints(fr))) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(hx - k, hy - k, k * 2, k * 2);
+        ctx.strokeRect(hx - k, hy - k, k * 2, k * 2);
+      }
+    }
 
     if (drag?.kind === 'rect') {
       const x = Math.min(drag.x0, drag.x1);
@@ -226,6 +243,59 @@
     }
     if (ui.follow) followSoon();
   }
+
+  // ---- The players' frame ----
+  type Handle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+  type Rect = { x: number; y: number; w: number; h: number };
+  // The frame players see, in canvas pixels (the view fitted to their screen's proportions).
+  function frame(view?: MapView): Rect | null {
+    if (!img || !data) return null;
+    const d = playerDisplay();
+    const v = visibleArea(view ?? viewPreview ?? data.view, img, d ? d.width / d.height : 16 / 9);
+    return { x: v.x * img.w * xf.s + xf.ox, y: v.y * img.h * xf.s + xf.oy, w: v.w * img.w * xf.s, h: v.h * img.h * xf.s };
+  }
+  function handlePoints(r: Rect): Record<Handle, [number, number]> {
+    const [l, c, rt, t, m, b] = [r.x, r.x + r.w / 2, r.x + r.w, r.y, r.y + r.h / 2, r.y + r.h];
+    return { nw: [l, t], n: [c, t], ne: [rt, t], e: [rt, m], se: [rt, b], s: [c, b], sw: [l, b], w: [l, m] };
+  }
+  function handleAt(p: { x: number; y: number }): Handle | null {
+    const r = frame();
+    if (!r) return null;
+    const near = 8 * dpr();
+    for (const [h, [hx, hy]] of Object.entries(handlePoints(r)) as [Handle, [number, number]][]) {
+      if (Math.abs(p.x - hx) <= near && Math.abs(p.y - hy) <= near) return h;
+    }
+    // Anywhere along an edge, not only at its middle.
+    const inX = p.x > r.x && p.x < r.x + r.w;
+    const inY = p.y > r.y && p.y < r.y + r.h;
+    if (inX && Math.abs(p.y - r.y) <= near) return 'n';
+    if (inX && Math.abs(p.y - r.y - r.h) <= near) return 's';
+    if (inY && Math.abs(p.x - r.x) <= near) return 'w';
+    if (inY && Math.abs(p.x - r.x - r.w) <= near) return 'e';
+    return null;
+  }
+  // The frame resized by a handle: the opposite side (or corner) stays, the proportions stay the players' screen's;
+  // an edge grows the other way about the middle.
+  function resized(r0: Rect, h: Handle, p: { x: number; y: number }): Rect {
+    const a = r0.w / r0.h;
+    const min = 24 * dpr();
+    const west = h.includes('w');
+    const north = h.includes('n');
+    const ax = west ? r0.x + r0.w : r0.x;
+    const ay = north ? r0.y + r0.h : r0.y;
+    let w: number;
+    if (h === 'n' || h === 's') w = Math.abs(p.y - ay) * a;
+    else if (h === 'e' || h === 'w') w = Math.abs(p.x - ax);
+    else w = Math.max(Math.abs(p.x - ax), Math.abs(p.y - ay) * a);
+    w = Math.max(w, min * a);
+    const hh = w / a;
+    const x = h === 'n' || h === 's' ? r0.x + r0.w / 2 - w / 2 : west ? ax - w : ax;
+    const y = h === 'e' || h === 'w' ? r0.y + r0.h / 2 - hh / 2 : north ? ay - hh : ay;
+    return { x, y, w, h: hh };
+  }
+  const toView = (r: Rect): MapView => ({ x: (r.x - xf.ox) / xf.s / img!.w, y: (r.y - xf.oy) / xf.s / img!.h, w: r.w / xf.s / img!.w, h: r.h / xf.s / img!.h });
+  const HANDLE_CURSOR: Record<Handle, string> = { n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize', ne: 'nesw-resize', sw: 'nesw-resize', nw: 'nwse-resize', se: 'nwse-resize' };
+  let hoverHandle = $state<Handle | null>(null);
 
   // ---- Мышь ----
   // Точка события в пикселях canvas (от clientX: offsetX бывает неточным, например у программных событий).
@@ -308,7 +378,9 @@
       drag = { kind: 'rect', mode: ui.tool === 'revealRect' ? 'reveal' : 'hide', x0: p.x, y0: p.y, x1: p.x, y1: p.y };
     } else if (ui.tool === 'view') {
       ui.follow = false;
-      drag = { kind: 'view', sx: p.x, sy: p.y, view0: data.view };
+      const h = handleAt(p);
+      const r0 = frame();
+      drag = h && r0 ? { kind: 'resize', handle: h, r0 } : { kind: 'view', sx: p.x, sy: p.y, view0: data.view };
     } else if (ui.tool === 'grid') {
       drag = { kind: 'grid', sx: p.x, sy: p.y, ox: data.grid.ox ?? 0, oy: data.grid.oy ?? 0 };
     }
@@ -319,6 +391,7 @@
     const p = at(e);
     pointer = p;
     hoverToken = drag ? null : (tokenAt(p)?.id ?? null);
+    if (!drag) hoverHandle = ui.tool === 'view' && !spaceDown ? handleAt(p) : null;
     if (!drag)
       overPin =
         !spaceDown &&
@@ -326,6 +399,7 @@
     if (!drag || !img || !fog) return draw();
     if (drag.kind === 'pan') {
       xf = { ...xf, ox: drag.ox + p.x - drag.sx, oy: drag.oy + p.y - drag.sy };
+      return redraw();
     } else if (drag.kind === 'brush') {
       // Новая точка — не чаще, чем раз в 3 точки экрана: мазок остаётся лёгким.
       if (Math.hypot(p.x - drag.lx, p.y - drag.ly) < 3 * dpr()) return;
@@ -358,6 +432,8 @@
       const { px, py } = periodOf(data.grid, img.w);
       const frac = (v: number) => ((v % 1) + 1) % 1;
       gridPreview = { ox: frac(drag.ox + (p.x - drag.sx) / (px * xf.s)), oy: frac(drag.oy + (p.y - drag.sy) / (py * xf.s)) };
+    } else if (drag.kind === 'resize') {
+      viewPreview = toView(resized(drag.r0, drag.handle, p));
     } else if (drag.kind === 'view') {
       const dx = (p.x - drag.sx) / xf.s / img.w;
       const dy = (p.y - drag.sy) / xf.s / img.h;
@@ -391,7 +467,7 @@
     } else if (d.kind === 'grid' && gridPreview) {
       await dispatch('maps', 'setGrid', { path, grid: gridPreview });
       gridPreview = null;
-    } else if (d.kind === 'view' && viewPreview) {
+    } else if ((d.kind === 'view' || d.kind === 'resize') && viewPreview) {
       await dispatch('maps', 'setView', { path, view: viewPreview });
       viewPreview = null;
     }
@@ -406,7 +482,7 @@
     const s = Math.min(Math.max(xf.s * k, 0.02), 20);
     const f = s / xf.s;
     xf = { s, ox: p.x - (p.x - xf.ox) * f, oy: p.y - (p.y - xf.oy) * f };
-    draw();
+    redraw();
   }
 
   function leave() {
@@ -566,10 +642,11 @@
     return { x: -xf.ox / xf.s / img.w, y: -xf.oy / xf.s / img.h, w: canvas.width / xf.s / img.w, h: canvas.height / xf.s / img.h };
   }
 
-  // «Like mine» held down: every move and zoom here goes to the players (a moment after it settles).
+  // «Like mine» held down: every move and zoom here goes to the players once it settles (sending each step would
+  // send the whole state to every window many times a second).
   let followTimer: ReturnType<typeof setTimeout> | null = null;
   function followSoon() {
-    if (followTimer) return;
+    if (followTimer) clearTimeout(followTimer);
     followTimer = setTimeout(() => {
       followTimer = null;
       const v = mine();
@@ -577,7 +654,14 @@
       if (!ui.follow || !v || !path || !cur) return;
       const same = Math.abs(v.x - cur.x) + Math.abs(v.y - cur.y) + Math.abs(v.w - cur.w) + Math.abs(v.h - cur.h) < 1e-4;
       if (!same) dispatch('maps', 'setView', { path, view: v });
-    }, 80);
+    }, 150);
+  }
+
+  // The grid's shape, or none (the grid off).
+  function setShape(shape: GridShape | null) {
+    if (!path) return;
+    if (!shape && ui.tool === 'grid') ui.tool = 'pan';
+    dispatch('maps', 'setGrid', { path, grid: shape ? { on: true, shape } : { on: false } });
   }
 
   function toggleFollow() {
@@ -606,7 +690,11 @@
   }
 
   const cursor = $derived(
-    drag?.kind === 'pin' || drag?.kind === 'token'
+    drag?.kind === 'resize'
+      ? HANDLE_CURSOR[drag.handle]
+      : hoverHandle && !drag
+        ? HANDLE_CURSOR[hoverHandle]
+        : drag?.kind === 'pin' || drag?.kind === 'token'
       ? ui.tool === 'pin' || ui.tool === 'token' ? 'grabbing' : 'pointer'
       : overPin
         ? ui.tool === 'pin' || ui.tool === 'token' ? 'grab' : 'pointer'
@@ -670,17 +758,12 @@
           </button>
           {#if ui.follow}<span class="faint note">{t('maps.followOn')}</span>{/if}
         {:else if ui.tab === 'grid'}
-          <button
-            class="btn"
-            class:on={data.grid.on}
-            aria-pressed={data.grid.on}
-            onclick={() => {
-              if (data.grid.on && ui.tool === 'grid') ui.tool = 'pan';
-              dispatch('maps', 'setGrid', { path, grid: { on: !data.grid.on } });
-            }}
-          >
-            <Grid3x3 size={14} /> {data.grid.on ? t('maps.gridOn') : t('maps.gridOff')}
-          </button>
+          <div class="seg">
+            <button class:active={!data.grid.on} title={t('maps.gridOff')} onclick={() => setShape(null)}><Grid2x2X size={15} /></button>
+            <button class:active={data.grid.on && shapeOf(data.grid) === 'square'} title={t('maps.shape.square')} onclick={() => setShape('square')}><Grid3x3 size={15} /></button>
+            <button class:active={data.grid.on && shapeOf(data.grid) === 'hex-pointy'} title={t('maps.shape.hex-pointy')} onclick={() => setShape('hex-pointy')}><Hexagon size={15} /></button>
+            <button class:active={data.grid.on && shapeOf(data.grid) === 'hex-flat'} title={t('maps.shape.hex-flat')} onclick={() => setShape('hex-flat')}><span class="flat"><Hexagon size={15} /></span></button>
+          </div>
           {#if data.grid.on}
             <div class="sep"></div>
             <label class="opt" title={t('maps.cellsHint')}>
@@ -698,9 +781,6 @@
                 }}
               />
             </label>
-            <select class="shape" title={t('maps.shapeHint')} value={shapeOf(data.grid)} onchange={(e) => dispatch('maps', 'setGrid', { path, grid: { shape: e.currentTarget.value as GridShape } })}>
-              {#each GRID_SHAPES as sh (sh)}<option value={sh}>{t(`maps.shape.${sh}`)}</option>{/each}
-            </select>
             <div class="sep"></div>
             <label class="opt" title={t('maps.gridWidth')}>
               <span>{t('maps.gridWidthShort')}</span>
@@ -837,10 +917,12 @@
   .show {
     margin-bottom: 6px;
   }
+  /* One row: the sliders give way when it is narrow. */
   .options {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow: hidden;
     gap: 6px;
     min-height: 40px;
     padding: 6px 12px;
@@ -873,6 +955,10 @@
   .seg button:hover {
     color: var(--text-normal);
   }
+  .flat {
+    display: grid;
+    transform: rotate(90deg);
+  }
   .seg button:disabled {
     opacity: 0.4;
     cursor: default;
@@ -883,17 +969,25 @@
   }
   .opt {
     display: flex;
+    flex: 0 1 auto;
     align-items: center;
     gap: 6px;
+    min-width: 0;
     color: var(--text-muted);
     font-size: 12px;
     white-space: nowrap;
   }
   .opt .slider {
-    width: 70px;
+    flex: 0 1 90px;
+    min-width: 36px;
   }
   .opt .slider.wide {
-    width: 100px;
+    flex-basis: 130px;
+  }
+  .options > .btn,
+  .options > .seg,
+  .options > .icon-btn {
+    flex-shrink: 0;
   }
   .opt input[type='number'] {
     width: 56px;

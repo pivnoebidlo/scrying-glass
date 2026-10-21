@@ -367,10 +367,10 @@ section — Fog, Players' view, Grid, Tokens, Pins — and the row under it hold
 hand that moves the map is in every section; space or the middle button work too).
 
 - **Fog** — reveal and hide with a brush or a rectangle, brush size, ⌘Z — undo, "Reveal all" / "Hide all".
-- **Players' view** — what part of the map the players see: "Whole map", a frame dragged over the map, or "Like
-  mine". "Like mine" stays pressed: while it is on, the players follow every move and zoom of your map — handy to set
+- **Players' view** — what part of the map the players see: "Whole map", a frame (drag it to move; its edges and corners resize it, keeping the
+  proportions of the players' screen), or "Like mine". "Like mine" stays pressed: while it is on, the players follow every move and zoom of your map — handy to set
   the picture up on the player screen before the game. Press it again to let go.
-- **Grid** — on/off, cells across the map, squares or hexes (pointy or flat top), line width, opacity and colour, and
+- **Grid** — no grid, squares or hexes (pointy or flat top) — icons; cells across the map, line width, opacity and colour, and
   the shift tool: cell count and offset fit the grid to the one drawn on the map; on hexes tokens stand in the centre
   of a hex.
 
