@@ -11,6 +11,24 @@
   import { hordePips, KINDS, SEASONS, type Kind, type Line } from './generate';
   import { mt, rollNow, save } from './store.svelte';
   import { extraText, labelOf, lineText, plain, resultMarkdown, rollText, tablesLang } from './text';
+  import { SRD_TABLES } from './srd';
+  import { IdCard } from '@lucide/svelte';
+  import { bestiary } from '../../bestiary/ui/cards.svelte';
+  import { NAMES } from '../mouse/content';
+  import type { Hireling } from './generate';
+
+  // A hireling's card: a Mausritter NPC with its numbers.
+  function hirelingCard(l: Line) {
+    const h = l.extra!.params as unknown as Hireling;
+    void bestiary.create(undefined, {
+      name: NAMES[lang][h.name]!,
+      kind: 'npc',
+      lang,
+      system: 'mausritter',
+      description: plain(lineText({ ...l, extra: undefined }, lang)),
+      stats: { hp: h.hp, str: h.str, dex: h.dex, wil: h.wil, armour: 0, attacks: [], critical: '', abilities: [], wants: '' },
+    });
+  }
 
   const lang = $derived(tablesLang(locale.lang));
   const result = $derived(mt.results[mt.kind]);
@@ -43,6 +61,7 @@
     {#if extraText(l) && l.label !== 'room'}<span class="tag" class:warn={l.extra?.key === 'cursed' || l.extra?.key === 'poor'}>{extraText(l)}</span>{/if}
     {#if l.label === 'room'}<span class="tag">{extraText(l)}</span>{/if}
     {#if l.roll}<span class="dice faint">{rollText(l.roll, lang)}</span>{/if}
+    {#if l.extra?.key === 'hireling'}<button class="icon-btn" title={t('mt.hirelingCard')} onclick={() => hirelingCard(l)}><IdCard size={13} /></button>{/if}
     {#if l.sub?.length}
       <ul>{#each l.sub as s, i (i)}{@render row(s)}{/each}</ul>
     {/if}
@@ -73,6 +92,14 @@
       {#each ['former', 'magical', 'guarded', 'adversity'] as const as q (q)}
         <label class="check"><input type="checkbox" bind:checked={mt.opts[q]} onchange={save} /> {t(`mt.q.${q}`)}</label>
       {/each}
+    {:else if mt.kind === 'hirelings'}
+      <label>{t('mt.hireKind')}
+        <select bind:value={mt.opts.hireling} onchange={save}>
+          {#each SRD_TABLES[lang]['hirelings']!.rows as r, i (i)}<option value={i}>{r[0]} · {r[2]}</option>{/each}
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" bind:checked={mt.opts.paid} onchange={save} /> {t('mt.paid')}</label>
+      {#if !mt.opts.paid}<label title={t('mt.wilHint')}>{t('mt.wil')} <input type="number" min="1" max="20" bind:value={mt.opts.wil} onchange={save} /></label>{/if}
     {:else if mt.kind === 'weather'}
       <label>{t('mt.season')}
         <select bind:value={mt.opts.season} onchange={save}>

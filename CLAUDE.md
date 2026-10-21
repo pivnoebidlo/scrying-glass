@@ -334,6 +334,13 @@ Electron-приложение для мастера D&D: окно управле
   `generate.ts` (результат — ячейки `{ table, row, col }`, текст — по языку интерфейса; `rangeOf` / `rowFor` по первому
   столбцу английской таблицы; поселение, гекс, место с комнатами, сокровища, мышь мастера, завязка, погода, реакция),
   `text.ts` (`lineText`, Markdown), `MausTables.svelte`, `store.svelte.ts` (localStorage окна).
+  Фракции и счётчик исследования Mausritter — модуль `modules/mausritter` (`byAdventure[приключение | '']`: `factions`
+  с целями `FactionGoal` (`marks`, `progress`, `relevant`, `rival`), `session` — итог «между сессиями» (`betweenSessions`:
+  к6 + relevant − rival, 4–5 +1, 6+ +2), `clock` — ход / стража / день, `last` — бросок встречи; у бросающих действий
+  четвёртый аргумент — куб, для тестов). Страница «Фракции» в «Инструментах» (`ui/Factions.svelte`, примеры SRD —
+  `EXAMPLE_FACTIONS` в `tools/maus/srd.ts`), блок «Исследование» в правой панели (`ui/Clock.svelte`, `mausHere`). Данные
+  приключения уходят в `.sgpack` (`PackSlices.mausritter`) и в корзину (`AdventureData.mausritter`). Наёмники — в
+  «Таблицах Mausritter» (`hirelings`).
   Генератор NPC: `tools/npc/` — как таверны (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — занятия и черты берёт у
   таверн, `text.ts` — Markdown и карточка, `store.svelte.ts` — с историей); «Создать карточку» — `bestiary.create(place,
   prefill)`.

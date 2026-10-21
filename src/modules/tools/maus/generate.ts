@@ -5,7 +5,7 @@ import { die } from '../../../shared/dice';
 import { NAMES } from '../mouse/content';
 import { SRD_TABLES, type SrdTable } from './srd';
 
-export const KINDS = ['settlement', 'hex', 'site', 'treasure', 'npc', 'seed', 'weather', 'reaction'] as const;
+export const KINDS = ['settlement', 'hex', 'site', 'treasure', 'npc', 'hirelings', 'seed', 'weather', 'reaction'] as const;
 export type Kind = (typeof KINDS)[number];
 export const SEASONS = ['Spring', 'Summer', 'Autumn', 'Winter'] as const;
 export type Season = (typeof SEASONS)[number];
@@ -43,8 +43,12 @@ export interface Options {
   guarded: boolean;
   adversity: boolean;
   season: Season;
+  // Hirelings: which kind (a row of the table), paid 20p instead of a WIL save, the recruiting mouse's WIL.
+  hireling: number;
+  paid: boolean;
+  wil: number;
 }
-export const DEFAULT_OPTIONS: Options = { rooms: 6, former: false, magical: false, guarded: false, adversity: false, season: 'Spring' };
+export const DEFAULT_OPTIONS: Options = { rooms: 6, former: false, magical: false, guarded: false, adversity: false, season: 'Spring', hireling: 0, paid: false, wil: 9 };
 
 type Roll = (sides: number) => number;
 const T = (id: string): SrdTable => SRD_TABLES.en[id]!;
@@ -235,6 +239,36 @@ export function npc(roll: Roll = die): Result {
 }
 
 // d66: two d6 — tens and ones; the rows go 11…16, 21…26 … 61…66. Each column is rolled on its own.
+// A hireling the tool made: its numbers by the SRD (d6 HP, 2d6 for each attribute) and a name.
+export interface Hireling {
+  name: number;
+  hp: number;
+  str: number;
+  dex: number;
+  wil: number;
+}
+
+// A day asking around: a WIL save (or 20p), then «Number» — how many of the kind look for work.
+export function hirelings(opts: Pick<Options, 'hireling' | 'paid' | 'wil'>, roll: Roll = die): Result {
+  const row = Math.max(0, Math.min(T('hirelings').rows.length - 1, opts.hireling));
+  const save = opts.paid ? null : roll(20);
+  const found = save === null || save <= opts.wil;
+  const head: Line = {
+    label: 'hireKind',
+    join: 'dash',
+    cells: [{ table: 'hirelings', row, col: 0 }, { table: 'hirelings', row, col: 2 }],
+    ...(save === null ? { extra: { key: 'paid' } } : { roll: `d20: ${save} ≤ ${opts.wil}`, extra: { key: found ? 'saved' : 'failed' } }),
+  };
+  if (!found) return { kind: 'hirelings', lines: [head] };
+  const sides = Number(/d(\d+)/.exec(T('hirelings').rows[row]![1]!)![1]);
+  const n = roll(sides);
+  const lines: Line[] = Array.from({ length: n }, () => {
+    const h: Hireling = { name: roll(NAMES.en.length) - 1, hp: roll(6), str: roll(6) + roll(6), dex: roll(6) + roll(6), wil: roll(6) + roll(6) };
+    return { label: 'hireling', cells: [{ table: 'hirelings', row, col: 0 }], extra: { key: 'hireling', params: { ...h } } };
+  });
+  return { kind: 'hirelings', lines: [{ ...head, extra: { key: found && save !== null ? 'savedN' : 'paidN', params: { count: n } } }, ...lines] };
+}
+
 export function seed(roll: Roll = die): Result {
   const col = (c: number, label: string): Line => {
     const [a, b] = [roll(6), roll(6)];
@@ -274,6 +308,8 @@ export function generate(kind: Kind, opts: Options, roll: Roll = die): Result {
       return treasure(opts, roll);
     case 'npc':
       return npc(roll);
+    case 'hirelings':
+      return hirelings(opts, roll);
     case 'seed':
       return seed(roll);
     case 'weather':

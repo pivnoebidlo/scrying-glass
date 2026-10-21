@@ -313,6 +313,7 @@ function allTables(lang: string): { path: string; table: Table }[] {
 
 const WANT: [string, string, number?][] = [
   ['spells', 'Magic / List of spells'],
+  ['hirelings', 'Recruiting help / Hirelings / Recruiting hirelings'],
   ['reaction', 'Running Mausritter / Encounters / Reactions'],
   ['hook', 'Hexcrawl toolbox / Running a hexcrawl / First session'],
   ['hexType', 'Hexcrawl toolbox / Hex contents / Hex type'],
@@ -398,3 +399,55 @@ ${tablesTs(picked)}};
 `
 );
 console.log(`${tablesOut}: ${WANT.length} tables`);
+
+// ---------- Example factions (Tools → Factions) ----------
+// «### 1. Cat lord / #### Resources (list) / #### Goals (list with ○ marks)» → { name, resources, goals: [text, marks] }.
+
+interface ExampleFaction {
+  name: string;
+  resources: string[];
+  goals: { text: string; marks: number }[];
+}
+
+function exampleFactions(lang: string): ExampleFaction[] {
+  const text = fs.readFileSync(source(lang), 'utf8').replace(/\r\n/g, '\n');
+  const section = split(text, 2).find((s) => s.title === (lang === 'en' ? 'Example factions' : 'Примеры фракций'));
+  if (!section) throw new Error(`${lang}: no example factions`);
+  return split(section.body, 3)
+    .filter((f) => f.title)
+    .map((f) => {
+      const [resources, goals] = split(f.body, 4).filter((p) => p.title).map((p) => p.body.split('\n').filter((l) => l.startsWith('- ')).map((l) => l.slice(2).trim()));
+      return {
+        name: plain(f.title),
+        resources: resources ?? [],
+        goals: (goals ?? []).map((g) => {
+          const m = /^(○+)\s*(.+)$/.exec(g)!;
+          return { text: m[2]!, marks: m[1]!.length };
+        }),
+      };
+    });
+}
+
+const factions = { en: exampleFactions('en'), ru: exampleFactions('ru') };
+if (factions.en.length !== 10 || factions.ru.length !== 10) throw new Error('example factions: expected 10 in each language');
+factions.en.forEach((f, i) => {
+  const r = factions.ru[i]!;
+  if (f.goals.map((g) => g.marks).join() !== r.goals.map((g) => g.marks).join() || f.resources.length !== r.resources.length) {
+    throw new Error(`faction «${f.name}» / «${r.name}»: goals or resources differ`);
+  }
+});
+fs.appendFileSync(
+  tablesOut,
+  `
+export interface ExampleFaction {
+  name: string;
+  resources: string[];
+  goals: { text: string; marks: number }[];
+}
+
+// The example factions of the SRD (Hexcrawl toolbox → Example factions).
+export const EXAMPLE_FACTIONS: Record<'en' | 'ru', ExampleFaction[]> = {
+${(['en', 'ru'] as const).map((l) => `  ${l}: [\n${factions[l].map((f) => `    ${JSON.stringify(f)},`).join('\n')}\n  ],\n`).join('')}};
+`
+);
+console.log(`${tablesOut}: 10 example factions`);

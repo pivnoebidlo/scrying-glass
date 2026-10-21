@@ -25,6 +25,8 @@ export interface PackSlices {
   tray?: unknown;
   // The adventure's pinned journal note (its path).
   pinned?: string;
+  // Mausritter: the adventure's factions and exploration clock (none before 0.41).
+  mausritter?: unknown;
 }
 
 export interface PackManifest {
@@ -100,7 +102,7 @@ export async function readPack(file: string, tmp: string): Promise<ReadPack> {
     .map((n) => ({ id: path.basename(n, '.json'), json: json(n) }));
   return {
     manifest,
-    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' ? slices.pinned : undefined },
+    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' ? slices.pinned : undefined, mausritter: slices.mausritter },
     dir: tmp,
     cards,
   };

@@ -17,6 +17,7 @@
   import NpcGenerator from '../npc/NpcGenerator.svelte';
   import MouseGenerator from '../mouse/MouseGenerator.svelte';
   import MausTables from '../maus/MausTables.svelte';
+  import Factions from '../../mausritter/ui/Factions.svelte';
   import WeatherGenerator from '../weather/WeatherGenerator.svelte';
   import EventsGenerator from '../events/EventsGenerator.svelte';
   import TreasureGenerator from '../treasure/TreasureGenerator.svelte';
@@ -70,6 +71,8 @@
   <MouseGenerator />
 {:else if ui.tool === 'mausTables' && maus}
   <MausTables />
+{:else if ui.tool === 'factions' && maus}
+  <Factions />
 {:else if ui.tool === 'npc'}
   <NpcGenerator />
 {:else if ui.tool === 'tavern'}

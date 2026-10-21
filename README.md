@@ -604,8 +604,15 @@ Mausritter tables** rolls on the GM tables of the SRD by its rules: a mouse sett
 governance — d6 + size, cities and towns get two features or trades, a name and, from a hamlet up, a tavern), a hex
 (the landmark by hex type, its detail by d6 and d8), an adventure site (theme and N rooms: type, creature, treasure
 and what is there), a treasure horde (a d20 more for each "yes"; magic swords with a 1-in-6 curse, spells, pips
-counted), a GM mouse, an adventure seed, the weather and event of a season (poor weather is marked) and a reaction.
-The dice are shown; "To journal" and "Copy" take the result as Markdown.
+counted), a GM mouse, hirelings (a WIL save or 20p, then how many look for work, each with d6 HP and 2d6 attributes
+and a card in one click), an adventure seed, the weather and event of a season (poor weather is marked) and a
+reaction. The dice are shown; "To journal" and "Copy" take the result as Markdown. **Tools → Factions** keeps the
+adventure's factions: resources, goals with progress marks (a click marks one), and "Between sessions" rolls d6 + the
+faction's relevant resources − a rival's for each current goal (4–5 — a mark, 6+ — two; a completed goal suggests a
+new resource); the ten example factions of the SRD are added from a list. The **Exploration** block in the right panel
+counts turns in an adventure site (every third — an encounter roll: 1 — an encounter, 2 — an omen; every sixth —
+torches mark usage) and watches of travel (four a day; morning and evening start with an encounter roll and its hour).
+Factions and the clock belong to the adventure: they go into the .sgpack and to the trash with it.
 
 ## Files and trash
 
