@@ -4,14 +4,16 @@
      приключения. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { BookOpen, Eye, Plus, ScrollText, X } from '@lucide/svelte';
+  import { BookOpen, Eye, Plus, X } from '@lucide/svelte';
   import type { Snippet } from 'svelte';
   import FilePicker from '../../../renderer/lib/FilePicker.svelte';
   import { draggedFile, sortable } from '../../../renderer/lib/sortable';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { allFiles, assetUrl, prettyName, thumb, type FileKind, type FolderRole } from '../../../shared/vault';
   import { isNotePath } from '../../../shared/notes';
-  import { BUILTIN } from '../../../shared/compendium';
+  import { BUILTIN, entryImage } from '../../../shared/compendium';
+  import { entryAt } from '../../compendium/ui/store.svelte';
+  import TrayNote from './TrayNote.svelte';
   import type { AppState } from '../../../shared/types';
   import { currentTray, shown, trayOwner, type TrayPart } from '../tray';
 
@@ -93,9 +95,16 @@
         <div class="tile" class:on use:sortable={{ group: `tray:${part}`, id: path, ids: tray, disabled: !tray.includes(path), onmove: reorder }}>
           <button class="pick" title={t('scenes.pickHint', { caption: caption(path), action: on ? t('scenes.removeFromScreen') : t('scenes.showToPlayers') })} onclick={() => toggle(path)}>
             {#if isNotePath(path)}
-              <span class="doc"><ScrollText size={18} /><b>{caption(path)}</b></span>
+              <TrayNote {path} />
             {:else if isEntry(path)}
-              <span class="doc"><BookOpen size={18} /><b>{caption(path)}</b></span>
+              {@const found = entryAt(path)}
+              {@const image = found ? entryImage(found.entry) : null}
+              {#if image}
+                <img src={thumb(assetUrl(image), 128)} alt="" loading="lazy" />
+                <span class="label">{caption(path)}</span>
+              {:else}
+                <span class="doc"><BookOpen size={18} /><b>{caption(path)}</b></span>
+              {/if}
             {:else}
               <img src={thumb(assetUrl(path), 128)} alt="" loading="lazy" />
             {/if}
@@ -115,6 +124,7 @@
   {#each loose as path (path)}
     <div class="loose">
       <span class="faint">{t('scenes.onScreenLabel')}</span>
+      {#if kindOf.get(path) === 'image'}<img class="mini" src={thumb(assetUrl(path), 40)} alt="" />{/if}
       <span class="loose-name" title={path}>{caption(path)}</span>
       <button class="icon-btn" title={t('scenes.addToTray')} onclick={() => add([path])}><Plus size={13} /></button>
       <button class="icon-btn" title={t('scenes.removeFromScreenBtn')} onclick={() => toggle(path)}><X size={13} /></button>
@@ -180,6 +190,26 @@
     display: block;
     width: 100%;
     height: 100%;
+    object-fit: cover;
+  }
+  /* A picture of a compendium entry: its name along the bottom. */
+  .label {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: hidden;
+    padding: 1px 3px 1px 16px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mini {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
     object-fit: cover;
   }
   .doc {

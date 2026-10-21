@@ -2,7 +2,7 @@
 import { t } from '../../../renderer/lib/i18n.svelte';
 import { currentTray } from '../tray';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
-import { capture, suggestName } from '../apply';
+import { capture, defaultSceneName, suggestName } from '../apply';
 
 export const ui = $state({ selected: null as string | null });
 
@@ -12,7 +12,7 @@ export async function createEmpty() {
   const app = store.state;
   const none = { path: null };
   const s = await dispatch('scenes', 'create', {
-    name: t('scenes.defaultName', { n: app.scenes.scenes.length + 1 }),
+    name: defaultSceneName(app.scenes.scenes, app.adventures.current),
     content: {
       background: { path: null, fit: app.scene.fit },
       map: none,
@@ -30,7 +30,7 @@ export async function createEmpty() {
 // Название новой сцены по тому, что на экране и в подборке.
 export function suggestCurrent(): string {
   const app = store.state;
-  return suggestName(capture(app), app.scenes.scenes.length, currentTray(app.scenes, app.adventures));
+  return suggestName(capture(app), app.scenes.scenes, app.adventures.current, currentTray(app.scenes, app.adventures));
 }
 
 // Сохранить то, что сейчас на экране, и подборку новой сценой. edit — открыть её в редакторе (из правой панели — нет:
@@ -41,7 +41,7 @@ export async function saveCurrent(name?: string, edit = true) {
   // Что накидано в правую панель — тоже в сцену.
   const tray = $state.snapshot(currentTray(app.scenes, app.adventures));
   const s = await dispatch('scenes', 'create', {
-    name: name?.trim() || suggestName(content, app.scenes.scenes.length, tray),
+    name: name?.trim() || suggestName(content, app.scenes.scenes, app.adventures.current, tray),
     content,
     adventure: app.adventures.current,
     tray,

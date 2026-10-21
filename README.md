@@ -170,7 +170,7 @@ Types: spell (`spell`), item (`item`), feat (`feat`), condition (`condition`), r
 an unknown type is shown as "field — value". On the left — search (by title, tags and text) and types, "+" — a new
 entry (type and place); in the text — headings, lists, tables and [[links]] to other entries or monster cards,
 "Back" — to the previous entry. "Show to players" puts the entry on the player screen as a sheet of paper (a long one
-shrinks to fit). There too: editing with a preview (Enter,
+shrinks to fit); an entry can have a picture (an item, a place) — the players see it with the text. There too: editing with a preview (Enter,
 ⌘B / ⌘I / ⌘⇧X and Tab work as in the journal), a copy to another place, opening the file in another app,
 deleting to trash.
 
@@ -194,8 +194,8 @@ selection bold, italic or ~~struck through~~ (again — removes it), ⌘Z undoes
     - [ ] The tavern
 
 A ">" quote is read-aloud text (a highlighted box), "- [ ]" — a task with a checkbox (a click checks it right in the
-file), {1d20+2} — a roll into the roll log on click, [[Title]] — another note, a compendium entry or a card (in a side
-drawer). A note can be pinned: it appears in the right panel, at hand during the game; the pin travels with the
+file), {1d20+2} — a roll into the roll log on click, [[Title]] — another note, a card or a compendium entry (in a side
+drawer; a card wins over an entry with the same name). A note can be pinned: it appears in the right panel, at hand during the game; the pin travels with the
 adventure file (.sgpack) and comes back with the adventure from the trash. Notes are found by ⌘K.
 
 ## Tools
@@ -325,7 +325,7 @@ after announcing it? The game shows "The announcement is out of date: Address…
 sent message, "Update and tell the players" also replies to it with what changed. A moved time takes the answers
 along. It reminds the table a day and two hours before (while the app is open — a
 reminder whose time came while it was closed goes when it opens). "Start the game" switches to the adventure and the
-table, pins the plan and opens the scenes. The next game is in the right panel. The schedule is common to all vaults
+table, pins the plan and opens the scenes. The schedule is common to all vaults
 (`<app data>/schedule.json`).
 
 **Timer** (Tools → Timer): an hourglass or digits on the player screen — top right, bottom right or large in the
@@ -399,9 +399,10 @@ all". Any audio file in Files can be played as a sound. Basic sounds are built i
 in the "Built-in" group: 18 effects (thunder, lever, doors, lock, coins, sword, spell, glass, rocks, monster roar,
 ghost, giant, werewolf howl…) and 12 ambience loops (forest by day and night, eerie forest, campfire, torch,
 underground river, sea, swamp, rain, thunderstorm, winter and desert wind). Sources and licenses —
-`resources/sounds/README.md`. Combats in the tray are prepared encounters: a click adds their participants to the
-combat and opens Initiative (roll initiative), the running combat is highlighted. So the "Tower" scene can have both
-"Rats" and "Goblins" ready — you start the one you need.
+`resources/sounds/README.md`. Combats in the tray are prepared encounters: a click starts that combat instead of the
+running one (heroes added by hand stay) and opens Initiative (roll initiative), the running combat is highlighted, a
+second click turns it off with all its participants. So the "Tower" scene can have both "Rats" and "Goblins" ready —
+you start the one you need. Notes in the tray are small sheets, compendium entries with a picture — the picture.
 
 When tabs don't fit, they shrink (the current one's title is always visible), and then the tab strip scrolls with the
 wheel. A tab closes with the middle mouse button.

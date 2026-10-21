@@ -1,6 +1,7 @@
 <!-- Редактор листа персонажа игрока D&D 5e. Что считается само (бонус мастерства, инициатива, СЛ заклинаний,
      бонусы навыков), показано подсказкой в пустом поле; вписанное число заменяет расчёт. -->
 <script lang="ts">
+  import { markdownKeys } from '../../renderer/lib/markdownKeys';
   import { locale, t } from '../../renderer/lib/i18n.svelte';
   import { labels } from '../../shared/i18n';
   import { ArrowDown, ArrowUp, Plus, Trash2 } from '@lucide/svelte';
@@ -255,7 +256,7 @@
             <label class="slots">{t('dnd.ce.slots')} <input type="number" min="0" max="9" value={sc.slots[lvl] ?? ''} onchange={(e) => setSlots(lvl, e.currentTarget.value)} /></label>
           {/if}
         </div>
-        <textarea
+        <textarea use:markdownKeys
           rows={rows(sc.spells[lvl])}
           placeholder={t('dnd.ce.spellsPh')}
           value={sc.spells[lvl] ?? ''}
@@ -297,7 +298,7 @@
 {#each CHARACTER_TEXTS as k (k)}
   <section>
     <h4>{TEXT_TITLES[k]}</h4>
-    <textarea
+    <textarea use:markdownKeys
       rows={rows(stats.text[k])}
       placeholder={TEXT_PH[k] || t('dnd.markupPh')}
       value={stats.text[k] ?? ''}
@@ -314,7 +315,7 @@
         <input class="grow title" type="text" placeholder={t('dnd.ce.titlePh')} bind:value={n.title} />
         <button type="button" class="icon-btn" title={t('dnd.delete')} onclick={() => stats.notes?.splice(i, 1)}><Trash2 size={14} /></button>
       </div>
-      <textarea rows={rows(n.text)} bind:value={n.text}></textarea>
+      <textarea use:markdownKeys rows={rows(n.text)} bind:value={n.text}></textarea>
     </div>
   {/each}
   <button type="button" class="btn" onclick={() => (stats.notes ??= []).push({ title: '', text: '' })}><Plus size={14} /> {t('dnd.ce.note')}</button>

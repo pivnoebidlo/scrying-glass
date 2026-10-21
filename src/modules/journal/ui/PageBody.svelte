@@ -1,5 +1,6 @@
 <!-- Заметка журнала в оформленном виде: во вкладке и закреплённая в правой панели. [[Ссылка]] — другая заметка
-     (открывается во вкладке), иначе запись справочника или карточка в выдвижной панели; {1d20} — бросок в журнал
+     (открывается во вкладке), иначе карточка (монстр, NPC — она важнее одноимённой записи) или запись справочника
+     в выдвижной панели; {1d20} — бросок в журнал
      бросков; флажок задачи сразу пишется в файл. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -9,6 +10,9 @@
   import { rolls } from '../../../renderer/lib/rolls.svelte';
   import { splitProps, toggleTask } from '../../../shared/journal';
   import { journal, resolvePage, type PageItem } from './store.svelte';
+  import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
+  import { inCurrentFamily } from '../../../shared/adventures';
+  import { store } from '../../../renderer/lib/store.svelte';
   import { openPage } from './ui.svelte';
 
   let { page, compact = false }: { page: PageItem; compact?: boolean } = $props();
@@ -22,6 +26,15 @@
     await window.api.writePage(path, text);
   }
 
+  // A card of this adventure's system with the name — its panel, otherwise a compendium entry (or any card).
+  async function openLink(name: string) {
+    await connectCards();
+    const key = name.trim().toLowerCase();
+    const card = bestiary.all.find((c) => c.name.toLowerCase() === key && inCurrentFamily(store.state.adventures, c.system));
+    if (card) bestiary.show(card.ref);
+    else peekEntry(name);
+  }
+
   function onclick(e: MouseEvent) {
     const t = e.target as HTMLElement;
     const link = t.closest('a.wikilink') as HTMLElement | null;
@@ -30,7 +43,7 @@
       const name = link.dataset['link'] ?? '';
       const p = resolvePage(name);
       if (p) openPage(p.path);
-      else peekEntry(name);
+      else void openLink(name);
       return;
     }
     const dice = t.closest('button.dice') as HTMLElement | null;

@@ -77,3 +77,39 @@ describe('инициатива', () => {
     expect(s.display).toEqual({ size: 2, names: false, wounds: true, position: 'top' });
   });
 });
+
+describe('prepared fights from the right panel', () => {
+  function prepared(): InitiativeState {
+    let s = act(S0, 'add', { c: { name: 'Paladin', side: 'party' } });
+    s = act(s, 'createEncounter', { id: 'rats', name: 'Rats', adventure: null });
+    s = act(s, 'add', { c: { name: 'Rat' }, encounter: 'rats' });
+    s = act(s, 'add', { c: { name: 'Paladin', side: 'party' }, encounter: 'rats' });
+    s = act(s, 'createEncounter', { id: 'gob', name: 'Goblins', adventure: null });
+    s = act(s, 'add', { c: { name: 'Goblin' }, encounter: 'gob' });
+    s = act(s, 'add', { c: { name: 'Rogue', side: 'party' }, encounter: 'gob' });
+    return s;
+  }
+
+  it('another fight replaces the running one; heroes are not doubled', () => {
+    let s = act(prepared(), 'startEncounter', { id: 'rats', replace: true });
+    expect(names(s).sort()).toEqual(['Paladin', 'Rat']);
+    s = act(s, 'start');
+    s = act(s, 'startEncounter', { id: 'gob', replace: true });
+    expect(names(s).sort()).toEqual(['Goblin', 'Paladin', 'Rogue']);
+    expect(s.turn).toBeNull();
+  });
+
+  it('turning the only fight off clears it, heroes too', () => {
+    let s = act(prepared(), 'startEncounter', { id: 'gob', replace: true });
+    s = act(s, 'stopEncounter', { id: 'gob' });
+    expect(s.combatants).toEqual([]);
+    expect(s.round).toBe(0);
+  });
+
+  it('with two fights running, one turned off leaves the other', () => {
+    let s = act(prepared(), 'startEncounter', { id: 'rats' });
+    s = act(s, 'startEncounter', { id: 'gob' });
+    s = act(s, 'stopEncounter', { id: 'rats' });
+    expect(names(s).sort()).toEqual(['Goblin', 'Paladin', 'Rogue']);
+  });
+});

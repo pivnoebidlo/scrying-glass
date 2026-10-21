@@ -3,11 +3,13 @@
 <script lang="ts">
   import { markdownKeys } from '../../../renderer/lib/markdownKeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Save } from '@lucide/svelte';
+  import { ImagePlus, Save, X } from '@lucide/svelte';
+  import FilePicker from '../../../renderer/lib/FilePicker.svelte';
+  import { assetUrl, thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
-  import { BUILTIN, COMMON_FIELDS, OVERRIDES, serializeEntry, type Entry, type FieldDef, type FieldValue } from '../../../shared/compendium';
+  import { BUILTIN, COMMON_FIELDS, entryImage, IMAGE_FIELD, OVERRIDES, serializeEntry, type Entry, type FieldDef, type FieldValue } from '../../../shared/compendium';
   import { ui } from './ui.svelte';
   import { forPlayers, typeDef } from '../../../renderer/lib/entry/types.svelte';
   import { entriesFolder, isBuiltinEntry, typesHere, type EntryItem } from './store.svelte';
@@ -24,7 +26,7 @@
   const def = $derived(typeDef(draft.type));
   const fields = $derived([...def.fields, ...COMMON_FIELDS]);
   // Поля, которых нет у типа (из Obsidian или прошлого типа), — показываем и даём править как текст.
-  const extra = $derived(Object.keys(draft.fields).filter((k) => k !== OVERRIDES && !fields.some((f) => f.key === k)));
+  const extra = $derived(Object.keys(draft.fields).filter((k) => k !== OVERRIDES && k !== IMAGE_FIELD && !fields.some((f) => f.key === k)));
   // Встроенная запись: правка сохранится в библиотеку и заменит её.
   const builtin = $derived(isBuiltinEntry(item.path));
 
@@ -38,6 +40,14 @@
     const next = { ...draft.fields };
     if (v === undefined || v === '' || (Array.isArray(v) && !v.length) || (typeof v === 'number' && isNaN(v))) delete next[f.key];
     else next[f.key] = v;
+    draft.fields = next;
+  }
+
+  let picking = $state(false);
+  function setImage(path: string | null) {
+    const next = { ...draft.fields };
+    if (path) next[IMAGE_FIELD] = path;
+    else delete next[IMAGE_FIELD];
     draft.fields = next;
   }
 
@@ -86,6 +96,10 @@
 
 <svelte:window {onkeydown} />
 
+{#if picking && store.state.vault.tree}
+  <FilePicker tree={store.state.vault.tree} prefer="handouts" onpick={(p) => ((picking = false), setImage(p[0] ?? null))} onclose={() => (picking = false)} />
+{/if}
+
 <div class="editor">
   <header class="bar">
     <input class="title" type="text" bind:value={draft.title} placeholder={t('cmpui.title')} />
@@ -126,6 +140,15 @@
             <input type="text" value={listText(draft.fields[k])} onchange={(e) => set({ key: k, title: k, kind: Array.isArray(draft.fields[k]) ? 'list' : 'text' }, e.currentTarget.value)} />
           </label>
         {/each}
+      </div>
+      <div class="image">
+        {#if entryImage(draft)}
+          <img src={thumb(assetUrl(entryImage(draft)!), 120)} alt="" />
+          <button type="button" class="btn" onclick={() => (picking = true)}><ImagePlus size={14} /> {t('cmpui.imageChange')}</button>
+          <button type="button" class="icon-btn" title={t('cmpui.imageRemove')} onclick={() => setImage(null)}><X size={14} /></button>
+        {:else}
+          <button type="button" class="btn" title={t('cmpui.imageHint')} onclick={() => (picking = true)}><ImagePlus size={14} /> {t('cmpui.image')}</button>
+        {/if}
       </div>
       <label class="field">
         <span>{t('cmpui.text')}</span>
@@ -204,6 +227,17 @@
     resize: vertical;
     font: inherit;
     line-height: 1.5;
+  }
+  .image {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .image img {
+    max-width: 120px;
+    max-height: 80px;
+    border-radius: var(--radius-s);
+    object-fit: contain;
   }
   .preview {
     padding: 20px 24px;

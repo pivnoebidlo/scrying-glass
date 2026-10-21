@@ -2,6 +2,7 @@
 import { t } from '../../shared/i18n';
 import { randomUUID } from 'node:crypto';
 import { defineModule } from '../../shared/module';
+import { sameRef } from '../../shared/cards';
 import { defeated, ordered, refreshed } from './order';
 import { DEFAULT_SYSTEM, systemOf } from '../../systems';
 import type { Combatant, Encounter, InitiativeState, StripSettings } from './types';
@@ -206,10 +207,25 @@ export default defineModule({
     },
 
     // В бой: участники заготовки добавляются к текущему бою (партия и кто уже есть — остаются).
-    // Сама заготовка остаётся: бой можно повторить.
-    startEncounter(s, { id }: { id: string }) {
+    // Сама заготовка остаётся: бой можно повторить. replace — another prepared fight instead of the running one
+    // (the right panel: fights of one scene are alternatives); heroes added by hand stay. Heroes of the encounter
+    // who are already in the fight are not added twice.
+    startEncounter(s, { id, replace }: { id: string; replace?: boolean }) {
       const e = s.encounters.find((x) => x.id === id);
-      return e ? { ...s, combatants: [...s.combatants, ...e.combatants.map((c) => ({ ...fresh(c), encounter: id }))] } : s;
+      if (!e) return s;
+      const kept = replace ? s.combatants.filter((c) => !c.encounter && c.side === 'party') : s.combatants;
+      const present = (c: Combatant) => c.side === 'party' && kept.some((k) => k.side === 'party' && (c.card && k.card ? sameRef(c.card, k.card) : k.name === c.name));
+      const added = e.combatants.filter((c) => !present(c)).map((c) => ({ ...fresh(c), encounter: id }));
+      return { ...s, ...(replace ? { turn: null, round: 0 } : {}), combatants: [...kept, ...added] };
+    },
+
+    // Turn a prepared fight off: its combatants (heroes too) leave; if no other prepared fight runs — the whole
+    // fight is cleared.
+    stopEncounter(s, { id }: { id: string }) {
+      const others = s.combatants.some((c) => c.encounter && c.encounter !== id);
+      const combatants = others ? s.combatants.filter((c) => c.encounter !== id) : [];
+      const turn = combatants.some((c) => c.id === s.turn) ? s.turn : null;
+      return { ...s, combatants, turn, round: turn ? s.round : 0 };
     },
 
     setParty(s, changes: Partial<InitiativeState['party']>) {

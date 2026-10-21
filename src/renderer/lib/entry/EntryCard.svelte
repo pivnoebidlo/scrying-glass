@@ -4,7 +4,8 @@
 <script lang="ts">
   import { t } from '../i18n.svelte';
   import '../note/fonts.css';
-  import { COMMON_FIELDS, entrySubtitle, fieldText, type Entry } from '../../../shared/compendium';
+  import { COMMON_FIELDS, entryImage, entrySubtitle, fieldText, IMAGE_FIELD, type Entry } from '../../../shared/compendium';
+  import { assetUrl, thumb } from '../../../shared/vault';
   import { typeDef } from './types.svelte';
   import { entryHtml } from './markup';
 
@@ -15,12 +16,19 @@
   // Поля для показа: по описанию типа (кроме того, что уже в строке типа), у неизвестного типа — все.
   const IN_SUBTITLE: Record<string, string[]> = { spell: ['level', 'school', 'ritual', 'concentration'], item: ['category', 'rarity', 'attunement'], feat: ['category', 'prerequisite'], rule: ['category'] };
   const rows = $derived.by(() => {
-    const skip = new Set([...(IN_SUBTITLE[entry.type] ?? []), 'tags', 'source', 'overrides']);
+    const skip = new Set([...(IN_SUBTITLE[entry.type] ?? []), 'tags', 'source', 'overrides', IMAGE_FIELD]);
     const known = def.fields.filter((f) => !skip.has(f.key) && !f.subtitle && entry.fields[f.key] !== undefined && entry.fields[f.key] !== '' && entry.fields[f.key] !== false);
     const extra = Object.keys(entry.fields).filter((k) => !skip.has(k) && !def.fields.some((f) => f.key === k) && !COMMON_FIELDS.some((f) => f.key === k));
     return [...known.map((f) => ({ title: f.title, value: fieldText(entry.fields[f.key]!) })), ...extra.map((k) => ({ title: k, value: fieldText(entry.fields[k]!) }))];
   });
   const html = $derived(entryHtml(entry.body));
+  // Players get the full picture, the GM — a thumbnail.
+  const image = $derived(entryImage(entry));
+  let broken = $state(false);
+  $effect(() => {
+    void image;
+    broken = false;
+  });
   const aliases = $derived(Array.isArray(entry.fields['aliases']) ? (entry.fields['aliases'] as string[]) : []);
   const tags = $derived(Array.isArray(entry.fields['tags']) ? (entry.fields['tags'] as string[]) : []);
 
@@ -64,6 +72,9 @@
     <div class="sub">{entrySubtitle(entry, def)}</div>
     {#if aliases.length && !players}<div class="aka">{t('lib.alsoKnown', { names: aliases.join(', ') })}</div>{/if}
   </header>
+  {#if image && !broken}
+    <img class="pic" src={players ? assetUrl(image) : thumb(assetUrl(image), 260)} alt="" onerror={() => (broken = true)} />
+  {/if}
   {#if rows.length}
     <dl>
       {#each rows as r (r.title)}<div><dt>{r.title}</dt><dd>{r.value}</dd></div>{/each}
@@ -102,6 +113,14 @@
   }
   dl {
     margin: 0 0 10px;
+  }
+  .pic {
+    float: right;
+    max-width: 45%;
+    max-height: 260px;
+    margin: 0 0 8px 12px;
+    border-radius: var(--radius-s);
+    object-fit: contain;
   }
   dl div {
     display: flex;
@@ -178,6 +197,12 @@
     --accent: #7a1a12;
     --text-muted: #5a4630;
     --border: rgba(90, 60, 30, 0.35);
+  }
+  .players .pic {
+    max-height: 40cqh;
+    margin: 0 0 1.5cqmin 2cqmin;
+    border-radius: 0.5cqmin;
+    box-shadow: 0 0.3cqmin 1cqmin rgba(0, 0, 0, 0.35);
   }
   .players h1 {
     font-family: 'Old Standard TT', Georgia, serif;

@@ -1,5 +1,6 @@
 <!-- Редактор статблока D&D 5e. Подписи интерфейса — по-русски, справочные значения хранятся ключами. -->
 <script lang="ts">
+  import { markdownKeys } from '../../renderer/lib/markdownKeys';
   import { locale, t } from '../../renderer/lib/i18n.svelte';
   import { labels } from '../../shared/i18n';
   import { Calculator, Plus, X } from '@lucide/svelte';
@@ -243,7 +244,7 @@
 <section>
   <h4>{t('dnd.ed.legendary')}</h4>
   {#if stats.legendary}
-    <textarea rows="3" placeholder={t('dnd.ed.legendaryPh')} bind:value={stats.legendary.intro}></textarea>
+    <textarea use:markdownKeys rows="3" placeholder={t('dnd.ed.legendaryPh')} bind:value={stats.legendary.intro}></textarea>
     <BlockList bind:blocks={stats.legendary.actions} addLabel={t('dnd.ed.legendaryAction')} />
     <button type="button" class="btn danger" onclick={() => delete stats.legendary}>{t('dnd.ed.removeLegendary')}</button>
   {:else}

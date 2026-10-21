@@ -13,10 +13,12 @@
 
   let { ms, app }: ModuleProps<'initiative'> = $props();
 
-  // Подборка: заготовки боёв. Щелчок — участники в бой (дальше — инициатива во вкладке); идущий — к вкладке.
+  // Подборка: заготовки боёв — варианты для сцены. Щелчок — этот бой вместо идущего (дальше — инициатива во
+  // вкладке); по идущему — выключить его.
   const inFight = (id: string) => ms.combatants.some((c) => c.encounter === id);
   async function start(id: string) {
-    if (!inFight(id)) await dispatch('initiative', 'startEncounter', { id });
+    if (inFight(id)) return dispatch('initiative', 'stopEncounter', { id });
+    await dispatch('initiative', 'startEncounter', { id, replace: true });
     ui.encounter = null;
     openTab('initiative');
   }

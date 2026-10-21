@@ -225,6 +225,9 @@ export const BUILTIN = 'srd:';
 // Правка встроенной записи — своя запись в библиотеке с полем overrides: «<система>/<тип>/<название>» (путь без
 // «srd:»). Она заменяет встроенную везде: в списке, поиске, ссылках. Удалить правку — вернуть как в SRD.
 export const OVERRIDES = 'overrides';
+// A picture of the entry (an item, a place): a vault path or «library:…»; players see it with the text.
+export const IMAGE_FIELD = 'image';
+export const entryImage = (e: Entry) => (typeof e.fields[IMAGE_FIELD] === 'string' && e.fields[IMAGE_FIELD] ? (e.fields[IMAGE_FIELD] as string) : null);
 
 export const ENTRY_EXT = '.md';
 export const entryTitle = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.(md|txt)$/i, '');

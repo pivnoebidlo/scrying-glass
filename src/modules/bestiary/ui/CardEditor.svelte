@@ -1,6 +1,7 @@
 <!-- Визуальный редактор карточки: общая часть (название, вид, система, язык, портреты, заметки)
      и характеристики от системы. Справа — как карточка будет выглядеть. -->
 <script lang="ts">
+  import { markdownKeys } from '../../../renderer/lib/markdownKeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
   import { ClipboardPaste, FolderOpen, HardDrive, Save, Star, X } from '@lucide/svelte';
@@ -227,7 +228,7 @@
 
       <section>
         <h4>{t('best.description')}</h4>
-        <textarea
+        <textarea use:markdownKeys
           rows="4"
           placeholder={t('best.descriptionPh')}
           bind:value={card.description}
@@ -238,7 +239,7 @@
 
       <section>
         <h4>{t('best.gmNotes')}</h4>
-        <textarea rows="5" placeholder={t('best.gmNotesPh')} bind:value={card.notes}></textarea>
+        <textarea use:markdownKeys rows="5" placeholder={t('best.gmNotesPh')} bind:value={card.notes}></textarea>
       </section>
     </form>
 

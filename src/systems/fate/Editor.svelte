@@ -1,6 +1,7 @@
 <!-- Редактор карточки Fate Core. Стресс и последствия по умолчанию считаются по правилам (из Телосложения, Воли и
      важности NPC); их можно задать вручную. -->
 <script lang="ts">
+  import { markdownKeys } from '../../renderer/lib/markdownKeys';
   import { t } from '../../renderer/lib/i18n.svelte';
   import { Plus, X } from '@lucide/svelte';
   import { consequencesOf, DEFAULT_SKILLS, stepTitle, stressOf, TIERS, type FateStats, type FateTier } from './stats';
@@ -108,7 +109,7 @@
         <input type="text" placeholder={t('fcore.ed.stuntPh')} bind:value={st.name} />
         <button type="button" class="icon-btn" title={t('fcore.remove')} onclick={() => stats.stunts.splice(i, 1)}><X size={14} /></button>
       </span>
-      <textarea rows="2" placeholder={t('fcore.ed.stuntTextPh')} bind:value={st.text}></textarea>
+      <textarea use:markdownKeys rows="2" placeholder={t('fcore.ed.stuntTextPh')} bind:value={st.text}></textarea>
     </div>
   {/each}
   <button type="button" class="btn add" onclick={() => stats.stunts.push({ name: '', text: '' })}><Plus size={14} /> {t('fcore.ed.stunt')}</button>

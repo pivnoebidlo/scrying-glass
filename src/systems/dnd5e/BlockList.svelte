@@ -1,5 +1,6 @@
 <!-- Особенности или действия: название, ограничение («Перезарядка 5–6»), текст и данные атаки. -->
 <script lang="ts">
+  import { markdownKeys } from '../../renderer/lib/markdownKeys';
   import { t } from '../../renderer/lib/i18n.svelte';
   import { ArrowDown, ArrowUp, Plus, Trash2 } from '@lucide/svelte';
   import type { Block } from './stats';
@@ -32,7 +33,7 @@
       <button type="button" class="icon-btn" title={t('dnd.down')} disabled={i === blocks.length - 1} onclick={() => move(i, 1)}><ArrowDown size={14} /></button>
       <button type="button" class="icon-btn" title={t('dnd.delete')} onclick={() => blocks.splice(i, 1)}><Trash2 size={14} /></button>
     </div>
-    <textarea rows={rows(b.text)} placeholder={t('dnd.bl.textPh')} bind:value={b.text}></textarea>
+    <textarea use:markdownKeys rows={rows(b.text)} placeholder={t('dnd.bl.textPh')} bind:value={b.text}></textarea>
     <div class="attack">
       <span class="faint">{t('dnd.bl.attack')}</span>
       <input

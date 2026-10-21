@@ -352,7 +352,7 @@ Electron-приложение для мастера D&D: окно управле
   `markdownToTelegram`; с картинкой — подпись к фото до 1024 знаков, иначе фото и текст отдельно; `Announced.caption`);
   снимок анонсированной игры — `announcedAs`, что изменилось — `announceDiff`, правка — `updateAnnouncement`
   (`editMessageCaption` / `editMessageText`, с `notify` — ответ `changesText`); смена времени — `rekey` в `saveGames`.
-  Окно: страница `SchedulePage.svelte` в «Инструментах», блок правой панели `NextGame.svelte`,
+  Окно: страница `SchedulePage.svelte` в «Инструментах» (блока в правой панели нет — на игре он не нужен),
   загрузка — фоновый `Load.svelte`, «Начать игру» — `startGame` (приключение, `setTable`, `journal/pin`, вкладка сцен).
   Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Chime` —
   сигнал WebAudio на устройство вывода музыки); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
@@ -403,6 +403,7 @@ Electron-приложение для мастера D&D: окно управле
   записи, заполняет указатель и рисует панель (с панелью карточки — одна из двух, «назад» к карточке), в нём же
   `QuickSearch.svelte` (⌘K: записи + `bestiary.all`). Состояния трекера → записи — `CONDITION_ENTRY` в
   `systems/dnd5e/conditions.ts` (через `tracker.conditions.entry`). Другие названия — поле `aliases` (`altNames` в store: английское + aliases).
+  Картинка записи — поле `image` (`IMAGE_FIELD`, `entryImage`; путь хранилища, выбор — `FilePicker` в `EntryEditor`), у игроков — вместе с текстом.
   Свои типы: `CustomType` (id = значение `type:` в файле, поля `FieldDef` с `subtitle` — значение в строке под
   названием), разбор и проверка — `parseCustomTypes`, ключ из подписи — `keyFrom` (транслитерация); файл
   `<библиотека>/compendium-types.json` (IPC `library:readData` / `writeData`). В окне — `renderer/lib/entry/types.svelte.ts`
@@ -421,7 +422,7 @@ Electron-приложение для мастера D&D: окно управле
   общая со справочником `entryHtml(текст, { tasks, dice })`: цитата «>» — текст для зачитывания, «- [ ]» —
   `data-task` (номер задачи по порядку), {1d20} — кнопка броска (`rolls.damage`). Окно — `journal/ui/store.svelte.ts`
   (тексты всех видимых заметок, перечитываются по `notes.rev`), вид — `PageBody.svelte` ([[ссылка]]: заметка →
-  `peekEntry`, он найдёт запись или карточку), правка — `PageEditor.svelte` (сохраняет сам). Клавиши Markdown-полей (журнал и `EntryEditor` справочника) — действие
+  карточка системы приключения → `peekEntry` (запись или любая карточка)), правка — `PageEditor.svelte` (сохраняет сам). Клавиши Markdown-полей (журнал, `EntryEditor` справочника, текстовые поля редакторов карточек) — действие
   `use:markdownKeys` (`renderer/lib/markdownKeys.ts`): Enter продолжает «>», списки, задачи и номера — `continueMarkup`,
   ⌘B / ⌘I / ⌘⇧X — `toggleWrap` из `shared/journal.ts`, Tab — отступ; правки через `execCommand('insertText')` — ⌘Z работает. В состоянии — только
   `pinned` (приключение → путь): блок правой панели `OnScreen.svelte`. Заметки — в ⌘K (`QuickSearch` справочника).
@@ -430,7 +431,8 @@ Electron-приложение для мастера D&D: окно управле
 - Подборка правой панели (`modules/scenes/tray.ts`, вид — `scenes/ui/Tray.svelte` в блоках фона, карты, портретов и
   раздатки, `TrayChips.svelte` + `renderer/lib/ListPicker.svelte` — в музыке (плейлисты и треки; трек — действие
   `music/playTrack`, тогда `playlist` — путь трека) и инициативе (id заготовок; `Combatant.encounter` от
-  `startEncounter` — какой бой идёт)); «Сохранить текущее» передаёт подборку в `scenes/create` (`tray`),
+  `startEncounter` — какой бой идёт; из панели — `replace`: бой вместо идущего, повторный щелчок — `stopEncounter`));
+  записки в подборке — `TrayNote.svelte` (лист в миниатюре), записи справочника с картинкой — картинкой; «Сохранить текущее» передаёт подборку в `scenes/create` (`tray`),
   выход из сцены — `markActive` null; порядок — `use:sortable` с `onmove` (действие `traySet`); звёздочка в музыке —
   основная музыка сцены (`music` + `include.music` сцены); имя новой сцены и переименование — поле в `QuickBar`;
   атмосфера — часть `ambience` в блоке музыки; звуки — модуль `modules/sounds` (без вкладки: команда `play` растёт

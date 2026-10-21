@@ -20,12 +20,25 @@ export function capture(app: AppState): SceneContent {
   };
 }
 
+// «Scene N» for a new scene: numbered within its adventure (each adventure starts with «Scene 1»), the first free number.
+export function defaultSceneName(scenes: Scene[], adventure: string | null): string {
+  const taken = new Set(scenes.filter((s) => (s.adventure ?? null) === adventure).map((s) => s.name));
+  let n = taken.size + 1;
+  for (let i = 1; i <= taken.size; i++) {
+    if (!taken.has(t('scenes.defaultName', { n: i }))) {
+      n = i;
+      break;
+    }
+  }
+  return t('scenes.defaultName', { n });
+}
+
 // Название новой сцены по её содержимому.
 // Ничего не показано — по подборке.
-export function suggestName(c: SceneContent, count: number, tray?: Tray): string {
+export function suggestName(c: SceneContent, scenes: Scene[], adventure: string | null, tray?: Tray): string {
   const first = c.map.path ?? c.background.path ?? c.portraits.paths[0] ?? tray?.map[0] ?? tray?.background[0];
   if (first) return prettyName(first);
-  return t('scenes.defaultName', { n: count + 1 });
+  return defaultSceneName(scenes, adventure);
 }
 
 // Файлы сцены, которых больше нет в хранилище.
