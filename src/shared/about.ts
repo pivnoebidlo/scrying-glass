@@ -31,6 +31,7 @@ export const CREDITS: Credit[] = [
   { id: 'mausritter', who: 'Losing Games and Isaac Williams', license: 'CC BY 4.0', url: 'https://mausritter.com', licenseUrl: CC_BY_4 },
   { id: 'ambience', who: 'JC Sounds — Nature Ambient Pack Vol 1', license: 'CC BY 4.0', url: 'https://opengameart.org/node/180349', licenseUrl: CC_BY_4 },
   { id: 'sfx', who: 'Kenney, artisticdude, rubberduck', license: 'CC0', url: 'https://opengameart.org', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/' },
+  { id: 'bigsoundbank', who: 'Joseph Sardin — BigSoundBank.com', license: 'CC0', url: 'https://bigsoundbank.com', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/' },
   { id: 'fonts', who: 'Google Fonts', license: 'SIL OFL 1.1', url: 'https://fonts.google.com', licenseUrl: 'https://openfontlicense.org' },
   { id: 'icons', who: 'Lucide', license: 'ISC', url: 'https://lucide.dev', licenseUrl: 'https://lucide.dev/license' },
   { id: 'engine', who: 'Electron, Svelte, fflate', license: 'MIT', url: 'https://www.electronjs.org', licenseUrl: 'https://opensource.org/license/mit' },

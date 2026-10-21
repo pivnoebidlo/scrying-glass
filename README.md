@@ -412,9 +412,12 @@ doesn't change the music. Ambience in the tray (in the Music block) is looped so
 click turns it on and off. Sounds are a block of their own: one-shot effects on a button (the lever was pulled —
 thunder); a click plays the sound once over the music, on the same output device; there too — sound volume and "stop
 all". Any audio file in Files can be played as a sound. Basic sounds are built in — in the "+" window they come first,
-in the "Built-in" group: 18 effects (thunder, lever, doors, lock, coins, sword, spell, glass, rocks, monster roar,
-ghost, giant, werewolf howl…) and 12 ambience loops (forest by day and night, eerie forest, campfire, torch,
-underground river, sea, swamp, rain, thunderstorm, winter and desert wind). Sources and licenses —
+in the "Built-in" group: 38 effects (thunder, lever, doors, lock, coins, sword, spell, glass, rocks, monster roar,
+ghost, giant, werewolf howl, bell and alarm bells, war horn, explosion, chains, arrows, whip, punch, body fall, ghost
+wail, undead moan, horse and gallop, crows, owl, heartbeat, mad laughter, creaking floor, dogs…) and 23 ambience loops
+(forest by day and night, eerie forest, campfire, torch, underground river, sea, swamp, rain, thunderstorm, winter and
+desert wind, tavern, market, cave, haunted house, crypt, smithy, field at night, hearth, temple, pasture, wind in the
+chimney). Sources and licenses —
 `resources/sounds/README.md`. Combats in the tray are prepared encounters: a click starts that combat instead of the
 running one (heroes added by hand stay) and opens Initiative (roll initiative), the running combat is highlighted, a
 second click turns it off with all its participants. So the "Tower" scene can have both "Rats" and "Goblins" ready —
@@ -680,4 +683,5 @@ Neucha, Comforter Brush, Cormorant Garamond, Old Standard TT, Kurale, Forum, Yes
 Monomakh, Underdog, Rubik Wet Paint, Rubik Distressed, Rubik Beastly) — SIL Open Font License 1.1, the license texts
 lie next to the fonts in `src/renderer/lib/note/fonts/`. Seal emblems — Lucide outlines (ISC). Built-in sounds
 (`resources/sounds/`): ambience — Nature Ambient Pack Vol 1, JC Sounds, CC BY 4.0; effects — Kenney (RPG Audio),
-artisticdude (RPG Sound Pack), rubberduck (100 CC0 SFX #2), CC0. More in `resources/sounds/README.md`.
+artisticdude (RPG Sound Pack), rubberduck (100 CC0 SFX #2), CC0; more ambience and effects — Joseph Sardin,
+BigSoundBank.com, CC0. More in `resources/sounds/README.md`.
