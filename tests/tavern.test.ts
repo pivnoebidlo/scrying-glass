@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { addList, parseList, parseListName, type NameBook } from '../src/shared/names';
 import { en } from '../src/modules/tools/tavern/content/en';
 import { ru } from '../src/modules/tools/tavern/content/ru';
-import { coins, generatePart, generateTavern, rerollTavern, withPeople } from '../src/modules/tools/tavern/generate';
+import { coins, generatePart, generateTavern, menuFor, rerollTavern, withPeople } from '../src/modules/tools/tavern/generate';
 import { tavernMarkdown } from '../src/modules/tools/tavern/markdown';
 import { TAVERN_TYPES, WEALTH, type TavernContent, type TavernOptions } from '../src/modules/tools/tavern/types';
 
@@ -17,6 +17,27 @@ const names = (lang: string): NameBook => {
 const opts: TavernOptions = { type: 'inn', wealth: 'modest', crowd: 'usual', lodging: 'auto', wonders: 'often' };
 // A fixed sequence instead of Math.random: results repeat.
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+
+describe('меню таверн', () => {
+  it('в каждом виде и достатке есть из чего выбрать; в роскоши нет сивухи, в притоне — лебедятины', () => {
+    for (const type of TAVERN_TYPES) {
+      for (const wealth of WEALTH) {
+        for (const c of [en, ru]) {
+          expect(menuFor(c.drinks, { type, wealth }).length, `${type} ${wealth} drinks`).toBeGreaterThanOrEqual(5);
+          expect(menuFor(c.food, { type, wealth }).length, `${type} ${wealth} food`).toBeGreaterThanOrEqual(5);
+        }
+      }
+    }
+    const names = (type: (typeof TAVERN_TYPES)[number], wealth: (typeof WEALTH)[number]) => menuFor(ru.drinks, { type, wealth }).map((x) => x.item.name);
+    expect(names('tavern', 'aristocratic')).not.toContain('Сивуха, дерущая горло');
+    expect(names('den', 'squalid')).toContain('Сивуха, дерущая горло');
+    expect(menuFor(ru.food, { type: 'den', wealth: 'squalid' }).map((x) => x.item.name)).not.toContain('Пирог с лебедятиной в золочёной корочке');
+    // Fish at the harbor, wine at the winehouse — and not elsewhere.
+    expect(menuFor(ru.food, { type: 'harbor', wealth: 'modest' }).map((x) => x.item.name)).toContain('Уха с перцем');
+    expect(menuFor(ru.food, { type: 'den', wealth: 'modest' }).map((x) => x.item.name)).not.toContain('Уха с перцем');
+    expect(en.drinks.length).toBe(ru.drinks.length);
+  });
+});
 
 describe('генератор таверн', () => {
   it('цены: медь, серебро и золото, крупные — округлены', () => {

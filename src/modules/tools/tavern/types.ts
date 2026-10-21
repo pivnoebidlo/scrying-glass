@@ -55,7 +55,11 @@ export interface TavernContent {
 export interface MenuItem {
   name: string;
   price: number;
+  // The wealth range of places that serve it (menu.ts).
   from: Wealth;
+  to: Wealth;
+  // Only at these kinds of place (and more likely there); none — anywhere.
+  types?: TavernType[];
 }
 
 export interface Person {

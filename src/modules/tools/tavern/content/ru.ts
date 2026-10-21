@@ -1,6 +1,7 @@
 // Содержимое генератора таверн на русском (написано для приложения). Цены — SRD «Еда, напитки и ночлег», в медяках.
 // Черты, секреты и занятия — в настоящем времени, чтобы подходили и мужчине, и женщине.
 import type { Agreeing, Gendered, NounGender, TavernContent } from '../types';
+import { menuDrinks, menuFood } from '../menu';
 
 // «Пьяный|Пьяная|Пьяное» — формы прилагательного по родам.
 const forms = (s: string): Agreeing => {
@@ -231,42 +232,9 @@ export const ru: TavernContent = {
     'ищет украденную книгу заклинаний',
     'знает, кто на самом деле сжёг старую мельницу',
   ],
-  drinks: [
-    { name: 'Кружка эля', price: 4, from: 'squalid' },
-    { name: 'Дешёвый сидр', price: 3, from: 'squalid' },
-    { name: 'Сивуха, дерущая горло', price: 5, from: 'squalid' },
-    { name: 'Тёмный портер', price: 6, from: 'poor' },
-    { name: 'Кувшин простого вина', price: 20, from: 'poor' },
-    { name: 'Медовуха', price: 10, from: 'poor' },
-    { name: 'Глинтвейн с пряностями', price: 15, from: 'modest' },
-    { name: 'Дварфийский стаут', price: 12, from: 'modest' },
-    { name: 'Травяной чай', price: 3, from: 'modest' },
-    { name: 'Сливовая настойка', price: 25, from: 'modest' },
-    { name: 'Эльфийское вино', price: 200, from: 'comfortable' },
-    { name: 'Бутылка хорошего вина', price: 1000, from: 'wealthy' },
-    { name: 'Ликёр полуросликов на табачном листе', price: 60, from: 'comfortable' },
-    { name: 'Бренди «Дыхание дракона» (подаётся горящим)', price: 300, from: 'wealthy' },
-    { name: 'Вино из погребов самого герцога', price: 2500, from: 'aristocratic' },
-  ],
-  food: [
-    { name: 'Ломоть хлеба и миска каши', price: 3, from: 'squalid' },
-    { name: 'Похлёбка из репы', price: 4, from: 'squalid' },
-    { name: 'Варёные бобы с салом', price: 2, from: 'squalid' },
-    { name: 'Жареная рыба дня', price: 8, from: 'poor' },
-    { name: 'Хлеб с сыром', price: 12, from: 'poor' },
-    { name: 'Баранья похлёбка с ячменём', price: 20, from: 'poor' },
-    { name: 'Кусок жареного мяса', price: 30, from: 'modest' },
-    { name: 'Пирог с мясом', price: 15, from: 'modest' },
-    { name: 'Колбаски с жареным луком', price: 18, from: 'modest' },
-    { name: 'Грибной суп в хлебной миске', price: 10, from: 'modest' },
-    { name: 'Жареная курица с яблоками', price: 50, from: 'comfortable' },
-    { name: 'Оленина под можжевеловым соусом', price: 80, from: 'comfortable' },
-    { name: 'Медовые коврижки', price: 6, from: 'modest' },
-    { name: 'Копчёный угорь', price: 25, from: 'modest' },
-    { name: 'Фазан с трюфелями', price: 300, from: 'wealthy' },
-    { name: 'Пир на весь стол', price: 1000, from: 'wealthy' },
-    { name: 'Пирог с лебедятиной в золочёной корочке', price: 2000, from: 'aristocratic' },
-  ],
+  // The menu lives in menu.ts (both languages, wealth ranges, kinds of place).
+  drinks: menuDrinks('ru'),
+  food: menuFood('ru'),
   rooms: {
     squalid: 'Место на полу у огня',
     poor: 'Койка в общем зале',

@@ -1,6 +1,6 @@
 // Tavern generation: pure functions over the content of one language and the name book (shared/names.ts).
 import { entriesFor, type NameBook } from '../../../shared/names';
-import type { Gendered, Person, Tavern, TavernContent, TavernOptions, TavernPart, Wealth } from './types';
+import type { Gendered, MenuItem, Person, Tavern, TavernContent, TavernOptions, TavernPart, Wealth } from './types';
 import { WEALTH } from './types';
 
 type Random = () => number;
@@ -53,6 +53,26 @@ export function coins(cp: number, c: TavernContent['coins']): string {
 
 const levelOf = (w: Wealth) => WEALTH.indexOf(w);
 
+// What this place serves: its wealth within the item's range, its kind among the item's kinds. An item made for
+// this kind of place weighs more (a harbor tavern leans to fish).
+export function menuFor(list: MenuItem[], o: Pick<TavernOptions, 'type' | 'wealth'>): { item: MenuItem; weight: number }[] {
+  const at = levelOf(o.wealth);
+  return list
+    .filter((m) => levelOf(m.from) <= at && at <= levelOf(m.to) && (!m.types || m.types.includes(o.type)))
+    .map((item) => ({ item, weight: item.types ? 3 : 1 }));
+}
+// n different items, the heavier ones more likely.
+function pickWeighted<T>(list: { item: T; weight: number }[], n: number, r: Random): T[] {
+  const pool = [...list];
+  const out: T[] = [];
+  while (out.length < n && pool.length) {
+    let x = r() * pool.reduce((sum, p) => sum + p.weight, 0);
+    const i = Math.max(0, pool.findIndex((p) => (x -= p.weight) < 0));
+    out.push(pool.splice(i, 1)[0]!.item);
+  }
+  return out;
+}
+
 // One part of a tavern, generated anew (the others are kept: pinned or not asked for).
 export function generatePart(part: TavernPart, t: Tavern, c: TavernContent, book: NameBook, o: TavernOptions, r: Random = Math.random): Partial<Tavern> {
   switch (part) {
@@ -89,10 +109,9 @@ export function generatePart(part: TavernPart, t: Tavern, c: TavernContent, book
       };
     }
     case 'menu': {
-      const fits = (from: Wealth) => levelOf(from) <= levelOf(o.wealth);
       const price = (cp: number) => coins(cp * MULTIPLIER[o.wealth], c.coins);
-      const drinks = pickSome(c.drinks.filter((d) => fits(d.from)), between(3, 4, r), r);
-      const food = pickSome(c.food.filter((d) => fits(d.from)), between(3, 4, r), r);
+      const drinks = pickWeighted(menuFor(c.drinks, o), between(3, 5, r), r);
+      const food = pickWeighted(menuFor(c.food, o), between(3, 5, r), r);
       return {
         menu: [...drinks.map((d) => ({ name: d.name, price: price(d.price), kind: 'drink' as const })), ...food.map((d) => ({ name: d.name, price: price(d.price), kind: 'food' as const }))],
       };

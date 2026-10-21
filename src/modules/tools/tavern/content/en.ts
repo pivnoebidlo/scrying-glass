@@ -1,5 +1,6 @@
 // Tavern generator content in English (written for the app). Prices: SRD "Food, Drink, and Lodging", in copper.
 import type { Agreeing, Gendered, TavernContent } from '../types';
+import { menuDrinks, menuFood } from '../menu';
 
 const same = (w: string): Agreeing => ({ m: w, f: w, n: w });
 const both = (w: string, f = w): Gendered => ({ male: w, female: f });
@@ -215,42 +216,9 @@ export const en: TavernContent = {
     'is a mage who has lost their spellbook',
     'knows who really burned down the old mill',
   ],
-  drinks: [
-    { name: 'Mug of ale', price: 4, from: 'squalid' },
-    { name: 'Cheap cider', price: 3, from: 'squalid' },
-    { name: 'Rotgut that burns the throat', price: 5, from: 'squalid' },
-    { name: 'Dark stout', price: 6, from: 'poor' },
-    { name: 'Pitcher of common wine', price: 20, from: 'poor' },
-    { name: 'Honey mead', price: 10, from: 'poor' },
-    { name: 'Mulled wine with spices', price: 15, from: 'modest' },
-    { name: 'Dwarven stout', price: 12, from: 'modest' },
-    { name: 'Herbal tea', price: 3, from: 'modest' },
-    { name: 'Plum brandy', price: 25, from: 'modest' },
-    { name: 'Elven wine', price: 200, from: 'comfortable' },
-    { name: 'Bottle of fine wine', price: 1000, from: 'wealthy' },
-    { name: 'Halfling pipe-weed liqueur', price: 60, from: 'comfortable' },
-    { name: 'Dragon’s breath brandy (served on fire)', price: 300, from: 'wealthy' },
-    { name: 'Wine from the duke’s own cellars', price: 2500, from: 'aristocratic' },
-  ],
-  food: [
-    { name: 'Hunk of bread and a bowl of gruel', price: 3, from: 'squalid' },
-    { name: 'Turnip stew', price: 4, from: 'squalid' },
-    { name: 'Boiled beans with lard', price: 2, from: 'squalid' },
-    { name: 'Fried fish of the day', price: 8, from: 'poor' },
-    { name: 'Bread and cheese', price: 12, from: 'poor' },
-    { name: 'Mutton stew with barley', price: 20, from: 'poor' },
-    { name: 'Chunk of roast meat', price: 30, from: 'modest' },
-    { name: 'Meat pie', price: 15, from: 'modest' },
-    { name: 'Sausages with fried onions', price: 18, from: 'modest' },
-    { name: 'Mushroom soup in a bread bowl', price: 10, from: 'modest' },
-    { name: 'Roast chicken with apples', price: 50, from: 'comfortable' },
-    { name: 'Venison with juniper sauce', price: 80, from: 'comfortable' },
-    { name: 'Honey cakes', price: 6, from: 'modest' },
-    { name: 'Smoked eel', price: 25, from: 'modest' },
-    { name: 'Pheasant with truffles', price: 300, from: 'wealthy' },
-    { name: 'Feast for the whole table', price: 1000, from: 'wealthy' },
-    { name: 'Swan pie with gilded crust', price: 2000, from: 'aristocratic' },
-  ],
+  // The menu lives in menu.ts (both languages, wealth ranges, kinds of place).
+  drinks: menuDrinks('en'),
+  food: menuFood('en'),
   rooms: {
     squalid: 'A spot on the floor by the fire',
     poor: 'A bunk in the common room',

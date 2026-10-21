@@ -2,7 +2,10 @@
      can be rerolled or pinned; "Reroll unpinned" keeps the pinned ones. "To journal" saves the tavern as a Markdown
      note of the current adventure (the description as a read-aloud quote, rumors as tasks); "Copy" — the same text. -->
 <script lang="ts">
-  import { Check, Copy, Dices, NotebookPen, Pin, RefreshCw } from '@lucide/svelte';
+  import { Check, Copy, Dices, NotebookPen, Pin, RefreshCw, ScrollText } from '@lucide/svelte';
+  import { createNote } from '../../../renderer/lib/note/notes.svelte';
+  import { editNote } from '../ui/ui.svelte';
+  import { menuNote } from './handout';
   import type { Snippet } from 'svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { openTab } from '../../../renderer/lib/nav';
@@ -59,6 +62,15 @@
     if (!path) return;
     openPage(path);
     openTab('journal');
+  }
+
+  // The menu as a handout note in the adventure's handouts folder; it opens in the note editor.
+  async function menuToHandout() {
+    if (!tv) return;
+    const title = t('tavern.menuTitle', { name: tv.name.replace(/[«»"“”]/g, '').trim() });
+    const note = menuNote(tv, { drinks: t('tavern.drinks'), food: t('tavern.food'), rooms: t('tavern.part.rooms') });
+    const path = await createNote(store.state.vault.tree, store.state.adventures, title, note);
+    if (path) editNote(path);
   }
 
   const set = <K extends keyof typeof tavern.opts>(k: K, v: (typeof tavern.opts)[K]) => {
@@ -176,6 +188,7 @@
             </div>
           {/each}
         </div>
+        <button class="btn handout" title={t('tavern.toHandoutHint')} onclick={menuToHandout}><ScrollText size={14} /> {t('tavern.toHandout')}</button>
       {/snippet}
       {@render part('menu', menuBody)}
 
@@ -325,5 +338,8 @@
     flex: 1;
     border-bottom: 1px dotted var(--border);
     transform: translateY(-4px);
+  }
+  .handout {
+    margin-top: 8px;
   }
 </style>
