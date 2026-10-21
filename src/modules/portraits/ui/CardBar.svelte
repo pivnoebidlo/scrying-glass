@@ -15,6 +15,13 @@
   let { path, name }: { path: string; name: string } = $props();
 
   const card = $derived(bestiary.cardFor(path));
+  // In D&D a card can start from another stat block: the button asks how; elsewhere it makes a blank one.
+  const dnd = $derived(isDnd(currentSystem(store.state.adventures)));
+  let menu = $state(false);
+  function create() {
+    if (dnd) menu = !menu;
+    else bestiary.createFor(path, name);
+  }
 
   async function fight() {
     if (!card) return;
@@ -31,18 +38,23 @@
     </button>
     <button class="icon-btn" title={t('portraits.toInitiativeSide', { side: SIDE_TITLES[card.side].toLowerCase() })} onclick={fight}><Swords size={13} /></button>
   {:else}
-    <button class="create" title={t('portraits.createCardHint')} onclick={() => bestiary.createFor(path, name)}>
+    <button class="create" title={t('portraits.createCardHint')} onclick={create}>
       <FilePlus size={12} /> {t('portraits.createCard')}
     </button>
-    <!-- A stat block made from another one (Tools → Reshape a stat block) — in D&D adventures. -->
-    {#if isDnd(currentSystem(store.state.adventures))}
-      <button class="icon-btn" title={t('portraits.fromStatblock')} onclick={() => reshapeFor(path, name)}><Wand2 size={13} /></button>
+    {#if menu}
+      <div class="backdrop" role="presentation" onclick={() => (menu = false)}></div>
+      <div class="menu">
+        <button onclick={() => ((menu = false), bestiary.createFor(path, name))}><FilePlus size={13} /> {t('portraits.blankCard')}</button>
+        <!-- A stat block made from another one (Tools → Reshape a stat block). -->
+        <button title={t('portraits.fromStatblock')} onclick={() => ((menu = false), reshapeFor(path, name))}><Wand2 size={13} /> {t('portraits.fromStatblockShort')}</button>
+      </div>
     {/if}
   {/if}
 </div>
 
 <style>
   .bar {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 2px;
@@ -76,6 +88,43 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+  }
+  .menu {
+    position: absolute;
+    top: calc(100% - 2px);
+    left: 4px;
+    z-index: 41;
+    display: flex;
+    flex-direction: column;
+    min-width: 180px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: var(--bg-secondary);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  }
+  .menu button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    border: 0;
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--text-normal);
+    font: inherit;
+    font-size: 12px;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .menu button:hover {
+    background: var(--bg-hover);
   }
   .icon-btn {
     width: 24px;

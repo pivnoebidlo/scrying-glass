@@ -158,12 +158,15 @@ const subtypeOf = (s: Dnd5eStats) => /\(([^)]*)\)/.exec(s.type)?.[1]?.trim().toL
 const OPEN_SUBTYPES = ['', 'any race', 'любая раса', 'wizard', 'cleric', 'druid', 'priest', 'волшебник', 'жрец', 'друид'];
 const CLASS_SUBTYPES = OPEN_SUBTYPES.slice(4);
 // A people can be given to a humanoid with no people of its own: a goblin or a kobold stays what it is.
-export function peopleFits(s: Dnd5eStats): boolean {
+// own — the GM's templates: their peoples are peoples too («Гуманоид (табакси)» can become an elf and back).
+export function peopleFits(s: Dnd5eStats, own: Template[] = []): boolean {
   if (!isHumanoid(s)) return false;
   const sub = subtypeOf(s);
-  return OPEN_SUBTYPES.includes(sub) || TEMPLATES.some((t) => t.subtype && (t.subtype.en.toLowerCase() === sub || t.subtype.ru.toLowerCase() === sub));
+  const known = (t: Template) => t.group === 'people' && t.subtype && (t.subtype.en.toLowerCase() === sub || t.subtype.ru.toLowerCase() === sub);
+  return OPEN_SUBTYPES.includes(sub) || TEMPLATES.some(known) || own.some(known);
 }
-export const templateFits = (t: Template, s: Dnd5eStats) => (t.group === 'people' ? peopleFits(s) : t.group === 'age' ? isHumanoid(s) : true);
+export const templateFits = (t: Template, s: Dnd5eStats, own: Template[] = []) =>
+  t.group === 'people' ? peopleFits(s, own) : t.group === 'age' ? isHumanoid(s) : true;
 
 // ---------- The GM's templates ----------
 
@@ -171,6 +174,8 @@ export const templateFits = (t: Template, s: Dnd5eStats) => (t.group === 'people
 export interface OwnTemplate {
   id: string;
   name: string;
+  // A people of the GM (a tabaxi): goes with the peoples — one at a time, for a humanoid without one of its own.
+  people?: boolean;
   abilities?: Partial<Record<Ability, number>>;
   size?: Size;
   speed?: number;
@@ -190,7 +195,7 @@ export function ownTemplate(o: OwnTemplate): Template {
   const blocks = (list: string) => (o.blocks ?? []).filter((b) => b.list === list && b.name.trim()).map((b) => ({ name: same(b.name.trim()), text: same(b.text) }));
   return {
     id: o.id,
-    group: 'own',
+    group: o.people ? 'people' : 'own',
     name: same(o.name),
     ...(o.abilities ? { abilities: o.abilities } : {}),
     ...(o.size ? { size: o.size } : {}),
@@ -230,6 +235,7 @@ export function parseOwnTemplates(data: unknown): OwnTemplate[] {
     out.push({
       id: x.id,
       name: x.name,
+      ...(x.people === true ? { people: true } : {}),
       abilities,
       ...(SIZES.includes(x.size as Size) ? { size: x.size as Size } : {}),
       ...(num(x.speed) ? { speed: num(x.speed) } : {}),
@@ -470,7 +476,7 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // own — the GM's templates (ownTemplate), found by id like the built-in ones.
 export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '2014' | '2024', own: Template[] = []): Dnd5eStats {
   const l = L(lang);
-  const tpls = r.templates.map((id) => templateById(id, own)).filter((x): x is Template => !!x && templateFits(x, base));
+  const tpls = r.templates.map((id) => templateById(id, own)).filter((x): x is Template => !!x && templateFits(x, base, own));
   const s: Dnd5eStats = structuredClone(base);
   const old = base.abilities;
 
@@ -507,7 +513,7 @@ export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '20
   s.resistances = s.resistances.filter((x) => !s.immunities.includes(x));
   for (const t of tpls) for (const x of t.resistances ?? []) if (!s.resistances.includes(x) && !s.immunities.includes(x)) s.resistances.push(x);
   // The subtype — of a people (or a GM's template) given to a humanoid without one; languages — from any template.
-  const people = peopleFits(base) ? tpls.find((t) => t.subtype) : undefined;
+  const people = peopleFits(base, own) ? tpls.find((t) => t.subtype) : undefined;
   if (people) {
     const sub = people.subtype![l];
     // A class in brackets stays: «Гуманоид (волшебник, дварф)».

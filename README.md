@@ -370,11 +370,12 @@ points, attacks, damage and save DCs move as much as a typical creature's of tha
 the SRD creatures, smoothed). The numbers that follow the abilities are recounted: saves, skills, passive Perception, initiative, hit points
 (the hit die by size), AC by the armour worn, attack rolls, damage and save DCs in the texts of the blocks. On the right
 — the stat block as it comes out and the list of what changed; "Create card" opens it in the editor ("Based on: …" in
-the notes). Under a portrait without a card in Characters, the wand button ("From another stat block…") opens the tool
-for that portrait: the card goes next to it, with its name and picture. Texts of traits and actions are not rewritten.
+the notes). Under a portrait without a card in Characters, "Create card" → "From another stat block…" opens the tool
+for that portrait ("Blank" — as before): the card goes next to it, with its name and picture. Texts of traits and actions are not rewritten.
 "Mine" — the GM's own templates ("Cultist of the Sea God": cold resistance, swimming, a trait, Aquan): abilities, size,
 speeds, darkvision, resistances and immunities, save and skill proficiencies, traits, actions and reactions, a
-language and a subtype. They go together with any templates and fit any creature; stored in the library
+language and a subtype. "This is a people" puts a template with the peoples (a tabaxi): one at a time, for a humanoid without a people, and a
+card of that people can become another one and back. The others go together with any templates and fit any creature; stored in the library
 (`reshape-templates.json`) — common to all campaigns.
 
 ## Maps

@@ -184,4 +184,19 @@ describe('переделка статблока', () => {
     expect(r.immunities).toEqual(['poison']);
     expect(r.resistances).toEqual([]);
   });
+
+  it('свой народ: встаёт к народам, а карточку этого народа можно сделать другим и обратно', () => {
+    const own = [ownTemplate({ id: 'own-tabaxi', name: 'Табакси', people: true, abilities: { dex: 2 }, darkvision: 60, subtype: 'табакси' })];
+    expect(own[0]!.group).toBe('people');
+    const g = reshape(s24('srd52-guard.ru'), { ...NO_RESHAPE, templates: ['dwarf', 'own-tabaxi'] }, 'ru', '2024', own);
+    // One people at a time is the page's job; here the first with a subtype names it.
+    expect(g.type).toBe('Гуманоид (дварф)');
+    const tabaxi = reshape(s24('srd52-guard.ru'), { ...NO_RESHAPE, templates: ['own-tabaxi'] }, 'ru', '2024', own);
+    expect(tabaxi.type).toBe('Гуманоид (табакси)');
+    expect(tabaxi.abilities.dex).toBe(14);
+    // A tabaxi card is a known people now: it can become an elf.
+    expect(reshape(tabaxi, { ...NO_RESHAPE, templates: ['elf'] }, 'ru', '2024', own).type).toBe('Гуманоид (эльф)');
+    // Without the GM's people the same card keeps its own.
+    expect(reshape(tabaxi, { ...NO_RESHAPE, templates: ['elf'] }, 'ru', '2024').type).toBe('Гуманоид (табакси)');
+  });
 });

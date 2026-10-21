@@ -57,6 +57,10 @@
           <button class="icon-btn" title={t('reshape.own.delete')} onclick={() => remove(tpl)}><Trash2 size={14} /></button>
         </div>
 
+        <label class="people" title={t('reshape.own.peopleHint')}>
+          <input type="checkbox" bind:checked={tpl.people} onchange={saveOwn} /> {t('reshape.own.people')}
+        </label>
+
         <span class="label">{t('reshape.abilities')}</span>
         <div class="abilities">
           {#each ABILITIES as a (a)}
@@ -204,6 +208,12 @@
   .row input {
     flex: 1;
     min-width: 0;
+  }
+  .people {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
   }
   .label {
     color: var(--text-muted);

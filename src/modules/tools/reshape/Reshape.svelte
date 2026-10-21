@@ -25,9 +25,9 @@
   const all = $derived([...TEMPLATES, ...owned]);
   let editOwn = $state(false);
   const tpls = $derived(
-    rs.r.templates.map((id) => all.find((x) => x.id === id)).filter((x): x is Template => !!x && (!base || templateFits(x, base.stats))),
+    rs.r.templates.map((id) => all.find((x) => x.id === id)).filter((x): x is Template => !!x && (!base || templateFits(x, base.stats, owned))),
   );
-  const name = $derived(rs.name.trim() || rs.target?.name || (base ? (tpls.length ? `${base.name} (${tpls.map((x) => (x.group === 'own' ? x.name[lang] : x.name[lang].toLowerCase())).join(', ')})` : base.name) : ''));
+  const name = $derived(rs.name.trim() || rs.target?.name || (base ? (tpls.length ? `${base.name} (${tpls.map((x) => (x.id.startsWith('own-') ? x.name[lang] : x.name[lang].toLowerCase())).join(', ')})` : base.name) : ''));
   const stats = $derived(base ? reshape($state.snapshot(base.stats) as Dnd5eStats, $state.snapshot(rs.r), lang, editionOf(base.system), owned) : null);
   const card = $derived(base && stats ? ({ ...$state.snapshot(base), name, stats } as Card<Dnd5eStats>) : null);
   const attacks = $derived(base ? attackBlocks(base.stats) : []);
@@ -137,8 +137,8 @@
             <div class="group">
               <span class="faint label">{t(`reshape.group.${g}`)}</span>
               <div class="chips">
-                {#each TEMPLATES.filter((x) => x.group === g) as tp (tp.id)}
-                  {@const off = !templateFits(tp, base.stats)}
+                {#each all.filter((x) => x.group === g) as tp (tp.id)}
+                  {@const off = !templateFits(tp, base.stats, owned)}
                   <button class="chip" class:active={!off && rs.r.templates.includes(tp.id)} disabled={off} title={off ? t(tp.group === 'age' ? 'reshape.humanoidOnly' : 'reshape.ownPeople') : undefined} onclick={() => toggle(tp)}>{tp.name[ui]}</button>
                 {/each}
               </div>
@@ -147,7 +147,7 @@
           <div class="group">
             <span class="faint label">{t('reshape.group.own')}</span>
             <div class="chips">
-              {#each owned as tp (tp.id)}
+              {#each owned.filter((x) => x.group === 'own') as tp (tp.id)}
                 <button class="chip" class:active={rs.r.templates.includes(tp.id)} onclick={() => toggle(tp)}>{tp.name[ui] || '—'}</button>
               {/each}
               <button class="chip edit" class:active={editOwn} onclick={() => (editOwn = !editOwn)}>{owned.length ? t('reshape.own.edit') : t('reshape.own.add')}</button>
