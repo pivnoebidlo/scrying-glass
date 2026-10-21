@@ -4,34 +4,41 @@
   import { IdCard, Image, Minus, Plus, RotateCcw, Wand2, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import type { Card } from '../../../shared/cards';
-  import { attackBlocks, changesOf, POWER_CRS, reshape, templateFits, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
+  import { attackBlocks, changesOf, ownTemplate, POWER_CRS, reshape, templateFits, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import StatBlock from '../../../systems/dnd5e/StatBlock.svelte';
   import { ABILITIES, crText, dict, mod, signed, type Ability, type Dnd5eStats } from '../../../systems/dnd5e/stats';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import CardSearch from '../../maps/ui/CardSearch.svelte';
-  import { editionOf, pickBase, rs } from './store.svelte';
+  import { editionOf, loadOwn, own, pickBase, rs } from './store.svelte';
+  import OwnTemplates from './OwnTemplates.svelte';
+  import { onMount } from 'svelte';
 
   const base = $derived(rs.base);
   const lang = $derived(base?.lang === 'ru' ? 'ru' : 'en');
   // Labels in the interface language; texts that go into the card — in the card's.
   const L = $derived(dict(locale.lang));
   const ui = $derived(locale.lang === 'ru' ? 'ru' : 'en');
+  onMount(loadOwn);
+  // The GM's templates (library) beside the built-in ones.
+  const owned = $derived(own.list.map(ownTemplate));
+  const all = $derived([...TEMPLATES, ...owned]);
+  let editOwn = $state(false);
   const tpls = $derived(
-    rs.r.templates.map((id) => TEMPLATES.find((x) => x.id === id)).filter((x): x is Template => !!x && (!base || templateFits(x, base.stats))),
+    rs.r.templates.map((id) => all.find((x) => x.id === id)).filter((x): x is Template => !!x && (!base || templateFits(x, base.stats))),
   );
-  const name = $derived(rs.name.trim() || rs.target?.name || (base ? (tpls.length ? `${base.name} (${tpls.map((x) => x.name[lang].toLowerCase()).join(', ')})` : base.name) : ''));
-  const stats = $derived(base ? reshape($state.snapshot(base.stats) as Dnd5eStats, $state.snapshot(rs.r), lang, editionOf(base.system)) : null);
+  const name = $derived(rs.name.trim() || rs.target?.name || (base ? (tpls.length ? `${base.name} (${tpls.map((x) => (x.group === 'own' ? x.name[lang] : x.name[lang].toLowerCase())).join(', ')})` : base.name) : ''));
+  const stats = $derived(base ? reshape($state.snapshot(base.stats) as Dnd5eStats, $state.snapshot(rs.r), lang, editionOf(base.system), owned) : null);
   const card = $derived(base && stats ? ({ ...$state.snapshot(base), name, stats } as Card<Dnd5eStats>) : null);
   const attacks = $derived(base ? attackBlocks(base.stats) : []);
   const changes = $derived(base && stats ? changesOf(base.stats, stats, (k) => (k in L.abilities ? L.abilities[k as Ability] : t(`reshape.ch.${k}` as never)), (x) => L.sizes[x] ?? x) : []);
   const touched = $derived(rs.r.cr !== undefined || !!rs.r.added?.length || !!rs.r.gear?.trim() || rs.r.templates.length > 0 || Object.values(rs.r.abilities).some(Boolean) || Object.keys(rs.r.weapons).length > 0);
 
   const GROUPS = ['age', 'build', 'role', 'people'] as const;
-  // One template of a group at a time (brawny and frail exclude each other).
+  // One template of a group at a time (brawny and frail exclude each other); the GM's go together.
   function toggle(tp: Template) {
     const on = rs.r.templates.includes(tp.id);
-    const rest = rs.r.templates.filter((id) => TEMPLATES.find((x) => x.id === id)?.group !== tp.group);
+    const rest = rs.r.templates.filter((id) => id !== tp.id && (tp.group === 'own' || all.find((x) => x.id === id)?.group !== tp.group));
     rs.r.templates = on ? rest : [...rest, tp.id];
   }
   function bump(a: Ability, d: number) {
@@ -109,7 +116,7 @@
         {#if base}
           <div class="base">
             <span class="base-name">{base.name}</span>
-            <span class="faint">{L.crShort} {base.stats.cr}</span>
+            <span class="faint">{L.crShort} {crText(base.stats.cr)}</span>
             <button class="icon-btn" title={t('reshape.otherBase')} onclick={() => (rs.base = null)}><X size={14} /></button>
           </div>
         {:else}
@@ -137,7 +144,17 @@
               </div>
             </div>
           {/each}
+          <div class="group">
+            <span class="faint label">{t('reshape.group.own')}</span>
+            <div class="chips">
+              {#each owned as tp (tp.id)}
+                <button class="chip" class:active={rs.r.templates.includes(tp.id)} onclick={() => toggle(tp)}>{tp.name[ui] || '—'}</button>
+              {/each}
+              <button class="chip edit" class:active={editOwn} onclick={() => (editOwn = !editOwn)}>{owned.length ? t('reshape.own.edit') : t('reshape.own.add')}</button>
+            </div>
+          </div>
         </section>
+        {#if editOwn}<OwnTemplates onclose={() => (editOwn = false)} />{/if}
 
         <section>
           <h3>{t('reshape.power')}</h3>
@@ -319,6 +336,10 @@
   .chip:disabled {
     opacity: 0.4;
     cursor: default;
+  }
+  .chip.edit {
+    border-style: dashed;
+    color: var(--text-muted);
   }
   .chip.active {
     border-color: var(--accent);

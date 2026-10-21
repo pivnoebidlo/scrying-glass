@@ -2,7 +2,7 @@
 // ability changes and other weapons. Pure functions: the numbers that follow the abilities are recounted — saves,
 // skills, passive Perception, initiative, hit points, AC by the armour worn, attack rolls, damage and save DCs in the
 // texts of SRD blocks (2014 and 2024, English and Russian). Texts are not rewritten; a number not recognised stays.
-import { ABILITIES, averageHp, mod, pbFor, signed, type Ability, type Block, type Dnd5eStats, type Size, SKILL_ABILITY, xpFor } from './stats';
+import { ABILITIES, averageHp, mod, pbFor, signed, SIZES, SKILL_ABILITY, SPEEDS, xpFor, type Ability, type Block, type Dnd5eStats, type Size, type SpeedKind } from './stats';
 
 type Lang = 'en' | 'ru';
 const L = (lang: string): Lang => (lang === 'ru' ? 'ru' : 'en');
@@ -13,14 +13,18 @@ type Text = Record<Lang, string>;
 export interface Template {
   id: string;
   // One template of a group at a time. Age — only for humanoids, people — for those without one (templateFits).
-  group: 'age' | 'build' | 'role' | 'people';
+  // 'own' — the GM's templates (library): any number at once, for any creature.
+  group: 'age' | 'build' | 'role' | 'people' | 'own';
   name: Text;
   abilities?: Partial<Record<Ability, number>>;
   size?: Size;
   // Walking speed (feet).
   speed?: number;
   darkvision?: number;
+  // Other speeds: swim, fly, climb, burrow (the larger of the base's and this).
+  speeds?: Partial<Record<Exclude<SpeedKind, 'walk'>, number>>;
   resistances?: string[];
+  immunities?: string[];
   // Hit dice: a share of the base number (a child has half).
   hitDice?: number;
   // Proficiency in saves (added if missing).
@@ -143,7 +147,7 @@ export const TEMPLATES: Template[] = [
   },
 ];
 
-export const templateById = (id: string) => TEMPLATES.find((t) => t.id === id);
+export const templateById = (id: string, own: Template[] = []) => TEMPLATES.find((t) => t.id === id) ?? own.find((t) => t.id === id);
 
 // A dwarf medusa or a child dragon make no sense: ages are for humanoids, peoples — see peopleFits.
 export const isHumanoid = (s: Dnd5eStats) => /humanoid|гуманоид/i.test(s.type);
@@ -160,6 +164,88 @@ export function peopleFits(s: Dnd5eStats): boolean {
   return OPEN_SUBTYPES.includes(sub) || TEMPLATES.some((t) => t.subtype && (t.subtype.en.toLowerCase() === sub || t.subtype.ru.toLowerCase() === sub));
 }
 export const templateFits = (t: Template, s: Dnd5eStats) => (t.group === 'people' ? peopleFits(s) : t.group === 'age' ? isHumanoid(s) : true);
+
+// ---------- The GM's templates ----------
+
+// A template of the GM, as kept in the library (reshape-templates.json): one language — the one it was written in.
+export interface OwnTemplate {
+  id: string;
+  name: string;
+  abilities?: Partial<Record<Ability, number>>;
+  size?: Size;
+  speed?: number;
+  speeds?: Template['speeds'];
+  darkvision?: number;
+  resistances?: string[];
+  immunities?: string[];
+  saves?: Ability[];
+  skills?: string[];
+  blocks?: { list: 'traits' | 'actions' | 'reactions'; name: string; text: string }[];
+  language?: string;
+  subtype?: string;
+}
+
+const same = (x: string): Text => ({ en: x, ru: x });
+export function ownTemplate(o: OwnTemplate): Template {
+  const blocks = (list: string) => (o.blocks ?? []).filter((b) => b.list === list && b.name.trim()).map((b) => ({ name: same(b.name.trim()), text: same(b.text) }));
+  return {
+    id: o.id,
+    group: 'own',
+    name: same(o.name),
+    ...(o.abilities ? { abilities: o.abilities } : {}),
+    ...(o.size ? { size: o.size } : {}),
+    ...(o.speed ? { speed: o.speed } : {}),
+    ...(o.speeds ? { speeds: o.speeds } : {}),
+    ...(o.darkvision ? { darkvision: o.darkvision } : {}),
+    ...(o.resistances?.length ? { resistances: o.resistances } : {}),
+    ...(o.immunities?.length ? { immunities: o.immunities } : {}),
+    ...(o.saves?.length ? { saves: o.saves } : {}),
+    ...(o.skills?.length ? { skills: o.skills } : {}),
+    traits: blocks('traits'),
+    actions: blocks('actions'),
+    reactions: blocks('reactions'),
+    ...(o.language?.trim() ? { language: same(o.language.trim()) } : {}),
+    ...(o.subtype?.trim() ? { subtype: same(o.subtype.trim()) } : {}),
+  };
+}
+
+// The library file as read: every field may be anything.
+type Raw = { [K in keyof OwnTemplate]?: unknown };
+type RawBlock = { list?: unknown; name?: unknown; text?: unknown };
+
+// The library file, checked: anything odd is dropped rather than trusted.
+export function parseOwnTemplates(data: unknown): OwnTemplate[] {
+  const list = (data as { templates?: unknown } | null)?.templates;
+  if (!Array.isArray(list)) return [];
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined);
+  const strs = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : undefined);
+  const out: OwnTemplate[] = [];
+  for (const x of list as (Raw | null)[]) {
+    if (!x || typeof x.id !== 'string' || typeof x.name !== 'string') continue;
+    const abilities = Object.fromEntries(ABILITIES.map((a) => [a, num((x.abilities as Partial<Record<string, unknown>> | undefined)?.[a])]).filter(([, v]) => v));
+    const speeds = Object.fromEntries(SPEEDS.filter((k) => k !== 'walk').map((k) => [k, num((x.speeds as Partial<Record<string, unknown>> | undefined)?.[k])]).filter(([, v]) => v));
+    const blocks = Array.isArray(x.blocks)
+      ? ((x.blocks as (RawBlock | null)[]).filter((b) => b && ['traits', 'actions', 'reactions'].includes(b.list as string) && typeof b.name === 'string' && typeof b.text === 'string') as OwnTemplate['blocks'])
+      : [];
+    out.push({
+      id: x.id,
+      name: x.name,
+      abilities,
+      ...(SIZES.includes(x.size as Size) ? { size: x.size as Size } : {}),
+      ...(num(x.speed) ? { speed: num(x.speed) } : {}),
+      speeds,
+      ...(num(x.darkvision) ? { darkvision: num(x.darkvision) } : {}),
+      resistances: strs(x.resistances) ?? [],
+      immunities: strs(x.immunities) ?? [],
+      saves: (strs(x.saves) ?? []).filter((a): a is Ability => (ABILITIES as string[]).includes(a)),
+      skills: (strs(x.skills) ?? []).filter((k) => k in SKILL_ABILITY),
+      blocks,
+      ...(typeof x.language === 'string' ? { language: x.language } : {}),
+      ...(typeof x.subtype === 'string' ? { subtype: x.subtype } : {}),
+    });
+  }
+  return out;
+}
 
 // ---------- Weapons (SRD) ----------
 
@@ -381,9 +467,10 @@ const DAMAGE_TYPE: Record<Weapon['type'], Text> = {
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // The reshaped stat block. lang and edition — the card's (texts of templates and weapons are written in them).
-export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '2014' | '2024'): Dnd5eStats {
+// own — the GM's templates (ownTemplate), found by id like the built-in ones.
+export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '2014' | '2024', own: Template[] = []): Dnd5eStats {
   const l = L(lang);
-  const tpls = r.templates.map(templateById).filter((x): x is Template => !!x && templateFits(x, base));
+  const tpls = r.templates.map((id) => templateById(id, own)).filter((x): x is Template => !!x && templateFits(x, base));
   const s: Dnd5eStats = structuredClone(base);
   const old = base.abilities;
 
@@ -413,16 +500,22 @@ export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '20
   if (size) s.size = [size];
   const speed = tpls.filter((t) => t.speed).map((t) => t.speed!);
   if (speed.length) s.speed = { ...s.speed, walk: Math.min(s.speed.walk ?? 30, ...speed) };
+  for (const t of tpls) for (const [k, v] of Object.entries(t.speeds ?? {}) as [SpeedKind, number][]) if (v > (s.speed[k] ?? 0)) s.speed = { ...s.speed, [k]: v };
   const dv = Math.max(0, ...tpls.map((t) => t.darkvision ?? 0));
   if (dv > (s.senses.darkvision ?? 0)) s.senses.darkvision = dv;
+  for (const t of tpls) for (const x of t.immunities ?? []) if (!s.immunities.includes(x)) s.immunities.push(x);
+  s.resistances = s.resistances.filter((x) => !s.immunities.includes(x));
   for (const t of tpls) for (const x of t.resistances ?? []) if (!s.resistances.includes(x) && !s.immunities.includes(x)) s.resistances.push(x);
-  const people = tpls.find((t) => t.subtype);
+  // The subtype — of a people (or a GM's template) given to a humanoid without one; languages — from any template.
+  const people = peopleFits(base) ? tpls.find((t) => t.subtype) : undefined;
   if (people) {
     const sub = people.subtype![l];
     // A class in brackets stays: «Гуманоид (волшебник, дварф)».
     const keep = CLASS_SUBTYPES.includes(subtypeOf(base));
     s.type = /\(.*\)/.test(s.type) ? s.type.replace(/\((.*)\)/, (_m, x: string) => `(${keep ? `${x}, ${sub}` : sub})`) : `${s.type} (${sub})`;
-    const lang2 = people.language?.[l];
+  }
+  for (const t of tpls) {
+    const lang2 = t.language?.[l];
     if (lang2 && !s.languages.includes(lang2)) s.languages = s.languages ? `${s.languages}, ${lang2}` : lang2;
   }
 

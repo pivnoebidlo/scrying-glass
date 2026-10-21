@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
-import { attackBlocks, NO_RESHAPE, POWER_CRS, reshape, TEMPLATES, WEAPONS } from '../src/systems/dnd5e/reshape';
+import { attackBlocks, NO_RESHAPE, ownTemplate, parseOwnTemplates, POWER_CRS, reshape, TEMPLATES, WEAPONS } from '../src/systems/dnd5e/reshape';
 import type { Dnd5eStats } from '../src/systems/dnd5e/stats';
 
 const load = (file: string) => {
@@ -152,5 +152,36 @@ describe('переделка статблока', () => {
     expect(r.gear).toBe('Chain Shirt, Shield, Spear, shortsword, dagger, rope');
     const c = reshape(s14('srd51-commoner'), { ...NO_RESHAPE, added: [{ weapon: 'dagger', attack: false }] }, 'en', '2014');
     expect(c.gear).toBe('Dagger');
+  });
+
+  it('свой шаблон: культист Морского бога — холод, плавание, особенность, язык; сочетается с народом', () => {
+    const [cultist] = parseOwnTemplates({
+      templates: [{
+        id: 'own-sea', name: 'Культист Морского бога', abilities: { wis: 2, str: 'x' }, speeds: { swim: 30 }, resistances: ['cold'],
+        skills: ['religion', 'nonsense'], blocks: [{ list: 'traits', name: 'Дитя глубин', text: 'Дышит водой.' }, { list: 'weird', name: 'x', text: 'y' }],
+        language: 'Акван', subtype: 'глубоководный',
+      }, { name: 'без id' }],
+    });
+    expect(cultist!.abilities).toEqual({ wis: 2 });
+    expect(cultist!.skills).toEqual(['religion']);
+    expect(cultist!.blocks).toHaveLength(1);
+    const own = [ownTemplate(cultist!)];
+    const g = reshape(s24('srd52-guard.ru'), { ...NO_RESHAPE, templates: ['own-sea', 'dwarf'] }, 'ru', '2024', own);
+    expect(g.speed).toEqual({ walk: 25, swim: 30 });
+    expect(g.resistances).toEqual(['cold', 'poison']);
+    expect(g.traits.map((x) => x.name)).toEqual(['Дитя глубин', 'Дварфийская стойкость']);
+    expect(g.languages).toBe('Общий, Акван, Дварфийский');
+    expect(g.skills.find((x) => x.skill === 'religion')!.bonus).toBe(2);
+    // The subtype of a GM's template goes only to a humanoid without a people of its own.
+    const medusa = s14('srd51-medusa');
+    expect(reshape(medusa, { ...NO_RESHAPE, templates: ['own-sea'] }, 'en', '2014', own).type).toBe(medusa.type);
+    expect(reshape(s14('srd51-commoner'), { ...NO_RESHAPE, templates: ['own-sea'] }, 'en', '2014', own).type).toBe('Humanoid (глубоководный)');
+  });
+
+  it('иммунитет из шаблона убирает то же сопротивление', () => {
+    const own = [ownTemplate({ id: 'own-x', name: 'X', immunities: ['poison'] })];
+    const r = reshape(s14('srd51-guard'), { ...NO_RESHAPE, templates: ['dwarf', 'own-x'] }, 'en', '2014', own);
+    expect(r.immunities).toEqual(['poison']);
+    expect(r.resistances).toEqual([]);
   });
 });

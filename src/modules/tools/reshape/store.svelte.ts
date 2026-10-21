@@ -1,7 +1,7 @@
 // Reshape a stat block: the base card and what is done to it (kept while the window is open).
 import { openTab } from '../../../renderer/lib/nav';
 import type { Card, CardRef } from '../../../shared/cards';
-import { NO_RESHAPE, type Reshape } from '../../../systems/dnd5e/reshape';
+import { NO_RESHAPE, parseOwnTemplates, type OwnTemplate, type Reshape } from '../../../systems/dnd5e/reshape';
 import type { Dnd5eStats } from '../../../systems/dnd5e/stats';
 import { ui } from '../ui/ui.svelte';
 
@@ -46,3 +46,36 @@ export async function reshapeFrom(ref: CardRef) {
 }
 
 export const editionOf = (system: string): '2014' | '2024' => (system.endsWith('2014') ? '2014' : '2024');
+
+// ---------- The GM's templates (the library: reshape-templates.json, common to all campaigns) ----------
+
+export const own = $state({ list: [] as OwnTemplate[], loaded: false });
+
+let loading: Promise<void> | null = null;
+export function loadOwn() {
+  loading ??= window.api.readLibraryData('reshape-templates.json').then((d) => {
+    own.list = parseOwnTemplates(d);
+    own.loaded = true;
+  });
+  return loading;
+}
+
+let timer: ReturnType<typeof setTimeout> | undefined;
+// Saved a moment later: edits come in a row (typing a name).
+export function saveOwn() {
+  clearTimeout(timer);
+  timer = setTimeout(() => window.api.writeLibraryData('reshape-templates.json', { templates: $state.snapshot(own.list) }), 400);
+}
+
+export function addOwn(name: string): string {
+  const id = `own-${Math.random().toString(36).slice(2, 10)}`;
+  own.list.push({ id, name, abilities: {}, speeds: {}, resistances: [], immunities: [], saves: [], skills: [], blocks: [] });
+  saveOwn();
+  return id;
+}
+
+export function removeOwn(id: string) {
+  own.list = own.list.filter((x) => x.id !== id);
+  rs.r.templates = rs.r.templates.filter((x) => x !== id);
+  saveOwn();
+}

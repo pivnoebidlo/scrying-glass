@@ -372,6 +372,10 @@ the SRD creatures, smoothed). The numbers that follow the abilities are recounte
 — the stat block as it comes out and the list of what changed; "Create card" opens it in the editor ("Based on: …" in
 the notes). Under a portrait without a card in Characters, the wand button ("From another stat block…") opens the tool
 for that portrait: the card goes next to it, with its name and picture. Texts of traits and actions are not rewritten.
+"Mine" — the GM's own templates ("Cultist of the Sea God": cold resistance, swimming, a trait, Aquan): abilities, size,
+speeds, darkvision, resistances and immunities, save and skill proficiencies, traits, actions and reactions, a
+language and a subtype. They go together with any templates and fit any creature; stored in the library
+(`reshape-templates.json`) — common to all campaigns.
 
 ## Maps
 
