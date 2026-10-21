@@ -50,7 +50,7 @@
     const e = resolveEntry(name);
     if (e) return openEntry(e.path);
     await connectCards();
-    const card = bestiary.all.find((c) => c.name.toLowerCase() === name.trim().toLowerCase());
+    const card = bestiary.named(name);
     if (card) return bestiary.show(card.ref);
     flash(t('cmpui.notInCompendium', { name }));
   }

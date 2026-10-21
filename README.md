@@ -2,7 +2,7 @@
 
 **English** · [Русский](README.ru.md)
 
-A game master's screen for tabletop sessions (D&D 5e and Fate Core). The GM has a control window; the players see a
+A game master's screen for tabletop sessions (D&D 5e, Fate Core and Mausritter). The GM has a control window; the players see a
 second monitor with portraits, backgrounds, maps with fog of war, handouts and the initiative tracker. On top of
 that: music and ambience, scenes, a compendium, a GM journal and a bestiary with character sheets.
 
@@ -41,6 +41,7 @@ The app is not signed with Apple or Microsoft certificates, so the system warns 
     npm run import-srd # rebuild the built-in bestiary from the SRD (needs the internet)
     npm run import-compendium # rebuild the built-in SRD compendium (needs the internet)
     npm run build-fate # build the built-in Fate compendium from scripts/fate-core.<lang>.md
+    npm run build-mausritter # built-in Mausritter creatures and compendium from scripts/mausritter-srd.en.md
     npm run dist       # installer for your system in dist/ (electron-builder.yml)
     npm run icon       # build/icon.png from build/icon.svg
 
@@ -150,6 +151,13 @@ actions, aspects, invokes and compels, fate points, conflict, stress, consequenc
 together with all 18 skills and sample stunts — a retelling of the Fate Core SRD in English and Russian written for
 the app (Evil Hat Productions, CC BY 3.0). The texts are in `scripts/fate-core.<lang>.md`; `npm run build-fate`
 builds `resources/compendium/fate-core.<lang>.json` from them.
+
+In **Mausritter** adventures the Mausritter SRD 2.3.1 is built in (English only for now): the rules by chapter (making
+a mouse, inventory, saves, combat, magic, hirelings and warbands, gear and prices, running the game, hexcrawl and
+adventure site toolboxes, useful tables), the 15 spells with their recharge, and the 11 creatures as cards (cat,
+centipede, crow, faerie, frog, ghost, mouse, owl, rat, snake, spider — with their variant tables). The SRD text is in
+`scripts/mausritter-srd.en.md`; `npm run build-mausritter` builds `resources/srd/mausritter.json` and
+`resources/compendium/mausritter.en.json`. This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
 
 The compendium is at hand from any tab:
 - spells in stat blocks (in italics, as in the SRD) and in a character sheet's spell lists are links: a click opens
@@ -557,7 +565,7 @@ trash the adventure comes back together with them. A snapshot is taken before de
 
 ## Role-playing systems
 
-The adventure switcher also sets the adventure's **system** (D&D 5e 2024 or 2014, Fate Core; for "Whole vault" — the
+The adventure switcher also sets the adventure's **system** (D&D 5e 2024 or 2014, Fate Core, Mausritter; for "Whole vault" — the
 default system). Cards, combat suggestions, ⌘K search and the compendium show what fits that system (both D&D editions
 together); the built-in SRD and the D&D tools (encounter difficulty, point buy) — only in D&D adventures. A compendium
 entry is tied to a system with the `system:` field in the header (`fate-core`, `dnd5e` …); without it spells, items,
@@ -577,6 +585,16 @@ until they are revealed) and fate points — for the party's characters ("Party"
 session" — up to refresh) and for the GM ("new scene" — one point per character). The players see aspects and points
 (by the portraits) in the chosen corners of the screen — by default bottom left and right; the corner is picked with
 the diagram by the title, next to it — the eye: show or not.
+
+**Mausritter.** One card for creatures and mice: HP (Hit Protection), STR, DEX, WIL, armour, attacks (a click on a die
+rolls damage), critical damage, other features, wants, warband scale; "Paste stat block" fills the card from a stat
+block written as in the SRD. A mouse also gets a sheet: level, XP to the next level, Grit, pips, background, birthsign,
+coat, physical detail and ten inventory slots (two paws, two body, six pack) with usage dots; Conditions take slots,
+items past the ten make the mouse encumbered. A click on STR, DEX or WIL rolls a save: d20 at or under the attribute
+(Shift — advantage, the lower of 2d20; ⌥ — disadvantage). The tracker in a Mausritter adventure: HP, STR / DEX / WIL
+now and maximum, armour; damage past HP goes to STR, STR 0 takes the combatant out; turn order 2 — before the
+opponents (a passed DEX save or an ambush), 1 — the opponents ("Opponents' order"), 0 — after them, DEX breaks ties;
+the Mausritter Conditions (a click opens the Conditions entry).
 
 ## Files and trash
 
@@ -620,7 +638,7 @@ side panel, tabs, the player screen preview on the right. Settings: ⌘, (Ctrl+,
   - display.ts: a layer on the player screen (defineDisplay)
   - i18n.ts: the module's messages (English and Russian)
   - ui/: the module's Svelte components
-- src/systems/<system>/: role-playing systems for cards: stats, stat block, editor, tracker (D&D 5e, Fate Core)
+- src/systems/<system>/: role-playing systems for cards: stats, stat block, editor, tracker (D&D 5e, Fate Core, Mausritter)
 - resources/srd/: the built-in bestiary, built by scripts/import-srd.ts
 - resources/compendium/: the built-in compendium (`<system>.<lang>.json`)
 - src/modules/index.ts: the list of core modules, a new module is added here; the windows pick up control.ts and
@@ -632,7 +650,8 @@ For testing, the app can run with a separate data folder: `SG_USER_DATA=/path np
 
 GNU GPL version 3 or later (`LICENSE`). The built-in bestiary and compendium are SRD 5.1 / 5.2 material under CC BY 4.0,
 credits in `resources/srd/README.md` and `resources/compendium/README.md`; the Fate compendium is based on the Fate
-Core SRD (Evil Hat Productions, CC BY 3.0). Note fonts (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
+Core SRD (Evil Hat Productions, CC BY 3.0); the Mausritter creatures and compendium — Mausritter SRD 2.3.1 (Losing
+Games and Isaac Williams, CC BY 4.0). Note fonts (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
 Neucha, Comforter Brush, Cormorant Garamond, Old Standard TT, Kurale, Forum, Yeseva One, Ruslan Display, Ponomar,
 Monomakh, Underdog, Rubik Wet Paint, Rubik Distressed, Rubik Beastly) — SIL Open Font License 1.1, the license texts
 lie next to the fonts in `src/renderer/lib/note/fonts/`. Seal emblems — Lucide outlines (ISC). Built-in sounds

@@ -35,3 +35,13 @@ for Scrying Glass; the stunt examples are new.
 Русский текст (`fate-core.ru.json`) — пересказ и перевод Fate Core SRD (https://fate-srd.com/fate-core), сделанный для
 Scrying Glass; примеры трюков написаны заново. Подписи ступеней лестницы и названия навыков — свои (открытого
 русского перевода Fate Core нет).
+
+### Mausritter
+
+This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed
+for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
+
+`mausritter.en.json` is built by `scripts/build-mausritter.ts` (`npm run build-mausritter`) from the Mausritter SRD 2.3.1
+(`scripts/mausritter-srd.en.md`, https://mausritter.com/srd). The text is split into entries and cards; headings and
+links are adjusted, stat blocks are split into fields. The meaning of the rules is unchanged. This is not an official
+Mausritter product and is not endorsed by Losing Games.

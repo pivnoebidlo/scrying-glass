@@ -218,7 +218,13 @@ Electron-приложение для мастера D&D: окно управле
   (щелчок по СИЛ/ЛОВ/ВОЛ — спасбросок `rolls.save` / `rollSave`: к20 ≤ хар., преимущество — меньший), `Editor.svelte`,
   трекер `tracker.ts` + `TrackerCells.svelte`: у участника `attrs` (сейчас / максимум), урон сверх защиты уходит в
   СИЛ (`changeHp`), `setAttr`; выбыл при СИЛ 0 (`down`); очерёдность 2 / 1 (противники) / 0, бонус — ЛОВ
-  (`bonus.from`: отдельного поля нет). Дальше: встроенный бестиарий и справочник из `.dev/maus/srd.md`, README.
+  (`bonus.from`: отдельного поля нет); состояния ведут в запись «Conditions».
+  Встроенное: `npm run build-mausritter` (`scripts/build-mausritter.ts` из `scripts/mausritter-srd.en.md` — SRD
+  2.3.1 целиком, CC BY 4.0) → `resources/srd/mausritter.json` (11 существ, таблицы вариантов — в `description`
+  жирными строками: заголовков разметка карточек не знает) и `resources/compendium/mausritter.en.json` (главы →
+  `category`, разделы `##` → записи, у главы — запись-оглавление; заклинания — тип `mspell` с `recharge`; «Terms of
+  use» не копируется). Перевода пока нет — книга английская и в русском интерфейсе. [[Ссылка]] на карточку по имени —
+  `bestiary.named` (сначала системы приключения: «Owl» есть и в D&D).
 - Аспекты сцены и жетоны судьбы — модуль `modules/fate` (состояние: `aspects` с `invokes` / `hidden`, `holders` —
   персонажи с `points` / `refresh`, `gm` — запас мастера, `show`). Блок правой панели `OnScreen.svelte` и слой игроков
   `Layer.svelte` (order 32; угол — `place`, выбор — `CornerPick.svelte`, в одном углу встают друг под другом) — только в приключениях Fate (`fateHere`; блок

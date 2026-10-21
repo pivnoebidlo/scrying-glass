@@ -15,6 +15,7 @@
     "import-srd": "node --no-warnings scripts/import-srd.ts",
     "import-compendium": "node --no-warnings scripts/import-compendium.ts",
     "build-fate": "node --no-warnings scripts/build-fate.ts",
+    "build-mausritter": "node --no-warnings scripts/build-mausritter.ts",
     "postinstall": "node node_modules/electron/install.js",
     "icon": "electron scripts/render-icon.cjs",
     "dist": "electron-vite build && electron-builder",

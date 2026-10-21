@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import type { BuiltinBook } from '../src/shared/compendium';
 import initiative from '../src/modules/initiative/main';
 import { defeated, down, refreshed, woundOf } from '../src/modules/initiative/order';
 import type { Combatant, InitiativeState } from '../src/modules/initiative/types';
@@ -6,7 +8,7 @@ import { rollSave } from '../src/shared/dice';
 import { familyOf, systemOf } from '../src/systems';
 import { fromFields } from '../src/systems/tracker';
 import { mausTracker, ORDER } from '../src/systems/mausritter/tracker';
-import { blankStats, encumbered, gritFor, isMaus, levelFor, parseStatBlock, SLOT_COUNT, statLine, xpFor } from '../src/systems/mausritter/stats';
+import { blankStats, parseAttacks, encumbered, gritFor, isMaus, levelFor, parseStatBlock, SLOT_COUNT, statLine, xpFor } from '../src/systems/mausritter/stats';
 import { run } from './helpers';
 
 const S0 = initiative.initialState;
@@ -122,5 +124,34 @@ describe('Mausritter: tracker', () => {
     expect(only(s).hp).toBe(0);
     expect(only(s).attrs).toBeUndefined();
     expect(defeated(only(s) as Combatant)).toBe(true);
+  });
+});
+
+describe('Mausritter: built-in content', () => {
+  const cards = JSON.parse(readFileSync('resources/srd/mausritter.json', 'utf8')) as { name: string; system: string; stats: unknown }[];
+  const book = JSON.parse(readFileSync('resources/compendium/mausritter.en.json', 'utf8')) as BuiltinBook;
+
+  it('eleven creatures, each a Mausritter stat block the app reads', () => {
+    expect(cards.map((c) => c.name)).toEqual(['Cat', 'Centipede', 'Crow', 'Faerie', 'Frog', 'Ghost', 'Mouse', 'Owl', 'Rat', 'Snake', 'Spider']);
+    for (const c of cards) {
+      expect(c.system).toBe('mausritter');
+      expect(isMaus(c.stats)).toBe(true);
+    }
+    const ghost = cards.find((c) => c.name === 'Ghost')!.stats as ReturnType<typeof parseStatBlock>;
+    expect(ghost.attacks).toEqual([{ dice: '', name: 'ghostly power' }, { dice: 'd8', name: 'chilling touch (damages WIL)' }]);
+  });
+
+  it('the book: spells with their recharge, links lead to entries or creatures, no licence chapter', () => {
+    const spells = book.entries.filter((e) => e.type === 'mspell');
+    expect(spells).toHaveLength(15);
+    expect(spells.find((e) => e.title === 'Fireball')!.fields['recharge']).toMatch(/raging fire/);
+    const names = new Set([...book.entries.map((e) => e.title.toLowerCase()), ...cards.map((c) => c.name.toLowerCase())]);
+    for (const e of book.entries) for (const m of e.body.matchAll(/\[\[([^\]|#]+)/g)) expect(names.has(m[1]!.toLowerCase())).toBe(true);
+    expect(book.entries.some((e) => /Terms of use|Third Party/i.test(e.title))).toBe(false);
+    expect(book.entries.some((e) => e.title === 'Conditions')).toBe(true);
+  });
+
+  it('the app parses attacks like the build script', () => {
+    expect(parseAttacks('d10 spear or d6 tongue').map((a) => a.dice)).toEqual(['d10', 'd6']);
   });
 });

@@ -7,7 +7,7 @@ import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
 import { currentSystem, inCurrentFamily, visibleIn } from '../../../shared/adventures';
 import { dirname, folderRole } from '../../../shared/vault';
-import { isDnd, systemOf } from '../../../systems';
+import { systemOf } from '../../../systems';
 
 const KEY = 'sg.bestiary';
 
@@ -147,8 +147,8 @@ class Bestiary {
     const q = fold(f.search.trim());
     const out: CardSummary[] = [];
     for (const group of this.groups.values()) {
-      // Встроенный SRD есть только у D&D: в другой системе фильтр «SRD» показывает всё.
-      const srdNone = f.scope === 'srd' && !isDnd(currentSystem(store.state.adventures));
+      // Built-in cards exist for D&D and Mausritter: in a system without them the «SRD» filter shows everything.
+      const srdNone = f.scope === 'srd' && !this.all.some((c) => c.ref.scope === 'srd' && inCurrentFamily(store.state.adventures, c.system));
       const inScope = (c: CardSummary) =>
         f.scope === 'all' || srdNone || c.ref.scope === f.scope || (f.scope.startsWith('vault:') && c.ref.scope === 'vault' && c.folder === f.scope.slice(6));
       // Карточки хранилища — только текущего приключения и общие.
@@ -174,6 +174,13 @@ class Bestiary {
 
   select(ref: CardRef | null) {
     this.selected = ref && { scope: ref.scope, id: ref.id };
+  }
+
+  // A card by name (any of names, case-insensitive) for a [[link]]: the adventure's system first, then any.
+  named(names: string | string[]): CardSummary | undefined {
+    const keys = (Array.isArray(names) ? names : [names]).map((n) => n.trim().toLowerCase());
+    const hits = this.all.filter((c) => keys.includes(c.name.toLowerCase()));
+    return hits.find((c) => inCurrentFamily(store.state.adventures, c.system)) ?? hits[0];
   }
 
   // Показать карточку в выдвижной панели — из «Персонажей», «Файлов», трекера инициативы. Повторное нажатие на ту же

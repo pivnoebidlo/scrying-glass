@@ -132,6 +132,8 @@ export const TYPES: Record<string, TypeDef> = {
   ),
   condition: type('condition', [], 'dnd5e'),
   skill: type('skill', [], 'fate'),
+  // Mausritter spells: the effect is the text ([SUM], [DICE]), the recharge requirement — a field.
+  mspell: type('mspell', [field('mspell', 'recharge', 'text')], 'mausritter'),
   rule: type('rule', [field('rule', 'category', 'text', { hint: true })]),
   note: type('note', []),
 };

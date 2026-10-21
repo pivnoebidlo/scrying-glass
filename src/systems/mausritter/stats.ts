@@ -143,6 +143,19 @@ export function blankStats(kind?: CardKind): MausStats {
 export const isMaus = (s: unknown): s is MausStats =>
   !!s && typeof s === 'object' && Array.isArray((s as MausStats).attacks) && 'wil' in s && 'armour' in s;
 
+// «d6 swipe, d8 bite», «d10 spear or d6 tongue», «ghostly power, d8 chilling touch (damages WIL)» — an attack
+// without a die is kept with an empty one. Commas inside brackets don't split.
+export function parseAttacks(text: string): MausAttack[] {
+  return text
+    .split(/,\s*(?![^(]*\))|\s+or\s+/i)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const m = part.match(/^(d\d+(?:\/d\d+)?)\s*(.*)$/i);
+      return m ? { dice: m[1]!.toLowerCase(), name: m[2]!.trim() } : { dice: '', name: part };
+    });
+}
+
 // «12hp, STR 12, DEX 15, WIL 15, Armour 1 / Attacks: d8 peck, d6 bite / Critical damage: … / other lines» —
 // the stat block of the SRD (and how GMs write it). Unknown lines go to abilities.
 export function parseStatBlock(text: string): MausStats {
@@ -157,10 +170,7 @@ export function parseStatBlock(text: string): MausStats {
     }
     const attacks = line.match(/^attacks?:\s*(.+)$/i);
     if (attacks) {
-      for (const part of attacks[1]!.split(/,\s*(?=d\d)/i)) {
-        const m = part.trim().match(/^(d\d+(?:\/d\d+)?)\s*(.*)$/i);
-        if (m) s.attacks.push({ dice: m[1]!.toLowerCase(), name: m[2]!.trim() });
-      }
+      s.attacks = parseAttacks(attacks[1]!);
       continue;
     }
     const crit = line.match(/^critical damage:\s*(.+)$/i);

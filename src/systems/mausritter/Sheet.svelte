@@ -37,7 +37,7 @@
   {#if s.attacks.length}
     <p class="line">
       <b>{t('maus.attacks')}:</b>
-      {#each s.attacks as a, i (i)}{#if i > 0},{' '}{/if}{#each a.dice.split('/') as d, j (j)}{#if j > 0}/{/if}<button class="roll inline" title={t('maus.attackHint')} onclick={() => damage(d, a.name)}>{d}</button>{/each} {a.name}{/each}
+      {#each s.attacks as a, i (i)}{#if i > 0},{' '}{/if}{#each a.dice.split('/').filter(Boolean) as d, j (j)}{#if j > 0}/{/if}<button class="roll inline" title={t('maus.attackHint')} onclick={() => damage(d, a.name)}>{d}</button>{/each}{a.dice ? ' ' : ''}{a.name}{/each}
     </p>
   {/if}
   {#if s.critical}<p class="line"><b>{t('maus.critical')}:</b> {s.critical}</p>{/if}

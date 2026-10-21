@@ -30,8 +30,8 @@
   // entry (or any card).
   async function openLink(name: string) {
     await connectCards();
-    const key = name.trim().toLowerCase();
-    const card = bestiary.all.find((c) => c.name.toLowerCase() === key && inCurrentFamily(store.state.adventures, c.system));
+    const found = bestiary.named(name);
+    const card = found && inCurrentFamily(store.state.adventures, found.system) ? found : null;
     const p = card ? null : resolvePage(name);
     if (card) bestiary.show(card.ref);
     else if (p) openPage(p.path);

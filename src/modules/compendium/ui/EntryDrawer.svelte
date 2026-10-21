@@ -63,8 +63,7 @@
     const names = entryPeek.names;
     if (!names || item || !book.builtin.length) return;
     void connectCards().then(() => {
-      const keys = names.map((n) => n.trim().toLowerCase());
-      const card = bestiary.all.find((c) => keys.includes(c.name.toLowerCase()));
+      const card = bestiary.named(names);
       if (card && entryPeek.names === names) bestiary.show(card.ref);
     });
   });
