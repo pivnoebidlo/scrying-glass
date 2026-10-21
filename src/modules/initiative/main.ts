@@ -173,16 +173,10 @@ export default defineModule({
       return { ...s, turn: null, round: 0 };
     },
 
-    // Убрать противников и союзников после боя; партия остаётся, инициатива и состояния сбрасываются.
-    clearEnemies(s) {
-      return {
-        ...s,
-        turn: null,
-        round: 0,
-        combatants: s.combatants
-          .filter((c) => c.side === 'party')
-          .map((c) => ({ ...c, init: null, conditions: [] })),
-      };
+    // Clear the fight after it ends: everyone leaves, heroes too (the next fight brings them from its encounter or
+    // the «Party» button).
+    clearFight(s) {
+      return { ...s, turn: null, round: 0, combatants: [] };
     },
 
     // ---- Заготовки боёв ----

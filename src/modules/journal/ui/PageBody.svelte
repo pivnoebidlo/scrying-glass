@@ -1,6 +1,6 @@
-<!-- Заметка журнала в оформленном виде: во вкладке и закреплённая в правой панели. [[Ссылка]] — другая заметка
-     (открывается во вкладке), иначе карточка (монстр, NPC — она важнее одноимённой записи) или запись справочника
-     в выдвижной панели; {1d20} — бросок в журнал
+<!-- Заметка журнала в оформленном виде: во вкладке и закреплённая в правой панели. [[Ссылка]] — карточка (монстр,
+     NPC: она важнее одноимённой заметки и записи — заметка о NPC не перехватывает ссылку на его статблок), иначе
+     другая заметка (во вкладке) или запись справочника в выдвижной панели; {1d20} — бросок в журнал
      бросков; флажок задачи сразу пишется в файл. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -26,12 +26,15 @@
     await window.api.writePage(path, text);
   }
 
-  // A card of this adventure's system with the name — its panel, otherwise a compendium entry (or any card).
+  // A card of this adventure's system with the name — its panel; otherwise a note (in a tab), otherwise a compendium
+  // entry (or any card).
   async function openLink(name: string) {
     await connectCards();
     const key = name.trim().toLowerCase();
     const card = bestiary.all.find((c) => c.name.toLowerCase() === key && inCurrentFamily(store.state.adventures, c.system));
+    const p = card ? null : resolvePage(name);
     if (card) bestiary.show(card.ref);
+    else if (p) openPage(p.path);
     else peekEntry(name);
   }
 
@@ -41,9 +44,7 @@
     if (link) {
       e.preventDefault();
       const name = link.dataset['link'] ?? '';
-      const p = resolvePage(name);
-      if (p) openPage(p.path);
-      else void openLink(name);
+      void openLink(name);
       return;
     }
     const dice = t.closest('button.dice') as HTMLElement | null;

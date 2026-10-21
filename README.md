@@ -194,8 +194,8 @@ selection bold, italic or ~~struck through~~ (again — removes it), ⌘Z undoes
     - [ ] The tavern
 
 A ">" quote is read-aloud text (a highlighted box), "- [ ]" — a task with a checkbox (a click checks it right in the
-file), {1d20+2} — a roll into the roll log on click, [[Title]] — another note, a card or a compendium entry (in a side
-drawer; a card wins over an entry with the same name). A note can be pinned: it appears in the right panel, at hand during the game; the pin travels with the
+file), {1d20+2} — a roll into the roll log on click, [[Title]] — a card, another note or a compendium entry (in a side
+drawer; a card wins over a note or an entry with the same name). A note can be pinned: it appears in the right panel, at hand during the game; the pin travels with the
 adventure file (.sgpack) and comes back with the adventure from the trash. Notes are found by ⌘K.
 
 ## Tools
@@ -345,7 +345,8 @@ how many points are spent, or what is broken; level increases and feats go into 
 
 Pictures from maps folders (or any picture with "Show as a map"). The GM reveals and hides the fog of war with a
 brush or a rectangle (⌘Z — undo), chooses what part of the map the players see ("Whole map", "Like mine" or a frame)
-and turns on the grid (cell count and offset are fitted to the grid drawn on the map). For the players the fog is
+and turns on the grid (cell count and offset are fitted to the grid drawn on the map; the palette button sets line
+width, opacity and colour). For the players the fog is
 opaque with a soft edge, and the view glides when it changes. Fog and view are saved per map: a map can be prepared
 in advance.
 

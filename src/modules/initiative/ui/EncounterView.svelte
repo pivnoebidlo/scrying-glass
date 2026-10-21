@@ -29,10 +29,12 @@
     ui.encounter = null;
   }
 
+  // The id is taken first: once ui.encounter is null, the prop `e` is gone (it comes from the open encounter).
   function remove() {
+    const id = e.id;
     if (confirm(t('init.deleteEncounter', { name: e.name }))) {
       ui.encounter = null;
-      dispatch('initiative', 'deleteEncounter', { id: e.id });
+      dispatch('initiative', 'deleteEncounter', { id });
     }
   }
 </script>

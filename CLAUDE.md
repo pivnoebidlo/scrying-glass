@@ -248,6 +248,7 @@ Electron-приложение для мастера D&D: окно управле
   карточки (`PinCards.svelte`, поиск — `suggest` из инициативы). Жетоны `tokens` (`maps/tokens.ts`): копия
   участника боя + `combatant`, живые имя/портрет/ход/ранения берёт `tokenViews` из `app.initiative`; рисуются в
   `drawMap` через `underFog` (у игроков туман их прячет), привязка к сетке — `snap`, панель — `TokenPanel.svelte`.
+  Вид сетки — `Grid.width` / `color` / `alpha` (`GRID_STYLE` по умолчанию, панелька под кнопкой-палитрой в редакторе).
   Масштаб жетонов карты — `tokenScale` (`tokenCell`); жетоны не из боя — по карточке (`CardSearch.svelte`, общий
   с метками) и «Партия»; место — `placeTokens` в редакторе (свободные клетки вокруг середины обзора).
 - Инициатива: текущий бой (`combatants`) и заготовки боёв (`encounters`, у каждой `adventure`). Действия `add` /
@@ -421,8 +422,8 @@ Electron-приложение для мастера D&D: окно управле
   перетаскиванием (`movePage`). Чистые функции — `shared/journal.ts` (свойства Obsidian `splitProps`, флажки `toggleTask`), разметка —
   общая со справочником `entryHtml(текст, { tasks, dice })`: цитата «>» — текст для зачитывания, «- [ ]» —
   `data-task` (номер задачи по порядку), {1d20} — кнопка броска (`rolls.damage`). Окно — `journal/ui/store.svelte.ts`
-  (тексты всех видимых заметок, перечитываются по `notes.rev`), вид — `PageBody.svelte` ([[ссылка]]: заметка →
-  карточка системы приключения → `peekEntry` (запись или любая карточка)), правка — `PageEditor.svelte` (сохраняет сам). Клавиши Markdown-полей (журнал, `EntryEditor` справочника, текстовые поля редакторов карточек) — действие
+  (тексты всех видимых заметок, перечитываются по `notes.rev`), вид — `PageBody.svelte` ([[ссылка]]: карточка системы
+  приключения → заметка → `peekEntry` (запись или любая карточка)), правка — `PageEditor.svelte` (сохраняет сам). Клавиши Markdown-полей (журнал, `EntryEditor` справочника, текстовые поля редакторов карточек) — действие
   `use:markdownKeys` (`renderer/lib/markdownKeys.ts`): Enter продолжает «>», списки, задачи и номера — `continueMarkup`,
   ⌘B / ⌘I / ⌘⇧X — `toggleWrap` из `shared/journal.ts`, Tab — отступ; правки через `execCommand('insertText')` — ⌘Z работает. В состоянии — только
   `pinned` (приключение → путь): блок правой панели `OnScreen.svelte`. Заметки — в ⌘K (`QuickSearch` справочника).

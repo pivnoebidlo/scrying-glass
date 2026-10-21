@@ -32,7 +32,13 @@ export interface Grid {
   // Сдвиг сетки в долях клетки (0..1), чтобы совпала с нарисованной на карте.
   ox?: number;
   oy?: number;
+  // Line width in screen pixels (1 — thin), colour '#rrggbb' and opacity 0..1; none — black, 1 px, 0.35.
+  width?: number;
+  color?: string;
+  alpha?: number;
 }
+
+export const GRID_STYLE = { width: 1, color: '#000000', alpha: 0.35 };
 
 // Метка мастера на карте: что где находится. Игроки видят только отмеченные «игрокам» — название, без заметки
 // (и поверх тумана: раз мастер показал, место им известно).

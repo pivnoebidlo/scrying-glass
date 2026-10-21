@@ -4,7 +4,7 @@
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
   import {
-    Brush, CircleUserRound, Eraser, Eye, EyeOff, Grid3x3, Hand, Move3d, UsersRound, MapPin, MapPinPlus, Maximize, Move, ScanEye, SquareDashed, SquareDashedMousePointer, Undo2,
+    Brush, CircleUserRound, Palette, Eraser, Eye, EyeOff, Grid3x3, Hand, Move3d, UsersRound, MapPin, MapPinPlus, Maximize, Move, ScanEye, SquareDashed, SquareDashedMousePointer, Undo2,
   } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { playerDisplay } from '../../../renderer/lib/nav';
@@ -16,7 +16,7 @@
   import {
     applyFogOp, buildFog, drawMap, drawPins, fitCanvas, fogCanvas, loadImage, pinHead, visibleArea, type LoadedImage, type Xf,
   } from '../render';
-  import { FULL_VIEW, type FogOp, type MapData, type MapPin as Pin, type MapToken, type MapView } from '../types';
+  import { FULL_VIEW, GRID_STYLE, type FogOp, type MapData, type MapPin as Pin, type MapToken, type MapView } from '../types';
   import { drawTokens, snap, tokenCell, tokenViews, type TokenView } from '../tokens';
   import type { CardSummary } from '../../../shared/cards';
   import { cardAsset } from '../../../shared/cards';
@@ -80,6 +80,8 @@
   let hoverToken: string | null = null;
   // Сдвиг сетки, пока его тащат.
   let gridPreview: { ox: number; oy: number } | null = null;
+  // The grid style panel (width, colour, opacity) under its button.
+  let gridStyle = $state(false);
   let overPin = $state(false);
   const PIN_R = 11;
 
@@ -635,6 +637,25 @@
             }}
           />
         </div>
+        <div class="grid-style">
+          <button class="icon-btn" class:active={gridStyle} title={t('maps.gridStyle')} onclick={() => (gridStyle = !gridStyle)}><Palette size={15} /></button>
+          {#if gridStyle}
+            <div class="style-pop">
+              <label>
+                <span>{t('maps.gridWidth')}</span>
+                <Slider value={data.grid.width ?? GRID_STYLE.width} min={0.5} max={8} step={0.5} onchange={(v) => dispatch('maps', 'setGrid', { path, grid: { width: v } })} />
+              </label>
+              <label>
+                <span>{t('maps.gridAlpha')}</span>
+                <Slider value={data.grid.alpha ?? GRID_STYLE.alpha} min={0.05} max={1} step={0.05} onchange={(v) => dispatch('maps', 'setGrid', { path, grid: { alpha: v } })} />
+              </label>
+              <label class="color">
+                <span>{t('maps.gridColor')}</span>
+                <input type="color" value={data.grid.color ?? GRID_STYLE.color} onchange={(e) => dispatch('maps', 'setGrid', { path, grid: { color: e.currentTarget.value } })} />
+              </label>
+            </div>
+          {/if}
+        </div>
         <button
           class="icon-btn"
           class:active={ui.tool === 'grid'}
@@ -760,6 +781,36 @@
     gap: 6px;
     width: 170px;
     font-size: 12px;
+  }
+  .grid-style {
+    position: relative;
+  }
+  .style-pop {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 220px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: var(--bg-secondary);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    font-size: 12px;
+  }
+  .style-pop label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--text-muted);
+  }
+  .style-pop .color {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
   .cells input {
     width: 56px;

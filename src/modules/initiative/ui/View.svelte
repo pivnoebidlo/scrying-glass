@@ -51,9 +51,9 @@
     input.value = '';
   }
 
-  function clearEnemies() {
+  function clearFight() {
     if (confirm(t('init.clearConfirm'))) {
-      dispatch('initiative', 'clearEnemies');
+      dispatch('initiative', 'clearFight');
     }
   }
 </script>
@@ -86,7 +86,7 @@
     <button class="icon-btn" title={t('init.saveAsEnc')} disabled={!ms.combatants.some((c) => c.side !== 'party')} onclick={saveAsEncounter}
       ><Save size={15} /></button
     >
-    <button class="icon-btn" title={t('init.clearEnemies')} onclick={clearEnemies}><Trash2 size={15} /></button>
+    <button class="icon-btn" title={t('init.clearEnemies')} onclick={clearFight}><Trash2 size={15} /></button>
   </header>
 
   {#if list.length}

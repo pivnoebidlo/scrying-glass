@@ -1,6 +1,6 @@
 // Рисование карты на canvas: картинка, сетка, туман. Общее для редактора мастера и экрана игроков.
 import { PIN_ICONS, type PinIcon } from './icons';
-import { PIN_COLORS, type Fog, type FogOp, type Grid, type MapPin, type MapView } from './types';
+import { GRID_STYLE, PIN_COLORS, type Fog, type FogOp, type Grid, type MapPin, type MapView } from './types';
 
 export interface LoadedImage {
   el: HTMLImageElement;
@@ -132,9 +132,11 @@ export function drawMap(ctx: CanvasRenderingContext2D, img: LoadedImage, fog: HT
       ctx.moveTo(0, y);
       ctx.lineTo(img.w, y);
     }
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-    ctx.lineWidth = 1 / xf.s;
+    ctx.strokeStyle = o.grid.color ?? GRID_STYLE.color;
+    ctx.globalAlpha = o.grid.alpha ?? GRID_STYLE.alpha;
+    ctx.lineWidth = (o.grid.width ?? GRID_STYLE.width) / xf.s;
     ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   if (o.underFog) {

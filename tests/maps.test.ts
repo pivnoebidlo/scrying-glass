@@ -45,6 +45,13 @@ describe('карты: сетка', () => {
     expect(dataOf(s, P).grid.cells).toBe(200);
   });
 
+  it('line width, opacity and colour stay in range; a bad colour is ignored', () => {
+    let s = act(S0, 'setGrid', { path: P, grid: { width: 20, alpha: 0, color: '#ff8800' } });
+    expect(dataOf(s, P).grid).toMatchObject({ width: 8, alpha: 0.05, color: '#ff8800' });
+    s = act(s, 'setGrid', { path: P, grid: { color: 'red; x' } });
+    expect(dataOf(s, P).grid.color).toBe('#ff8800');
+  });
+
   it('жетон встаёт по клеткам: нечётный — в центр клетки, чётный — на угол', () => {
     const img = { w: 800, h: 600 };
     const grid = { on: true, cells: 20, ox: 13 / 40, oy: 27 / 40 }; // клетка 40 точек, линии на 13 и 27

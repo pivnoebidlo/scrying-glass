@@ -113,3 +113,13 @@ describe('prepared fights from the right panel', () => {
     expect(names(s).sort()).toEqual(['Goblin', 'Paladin', 'Rogue']);
   });
 });
+
+describe('clearing the fight', () => {
+  it('everyone leaves, heroes too', () => {
+    let s = fight([{ name: 'Paladin', side: 'party', init: 12 }, { name: 'Rat', init: 5 }]);
+    s = act(s, 'start');
+    s = act(s, 'clearFight');
+    expect(s.combatants).toEqual([]);
+    expect([s.turn, s.round]).toEqual([null, 0]);
+  });
+});

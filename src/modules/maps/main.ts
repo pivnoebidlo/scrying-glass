@@ -89,6 +89,9 @@ export default defineModule({
           cells: Math.min(200, Math.max(2, grid.cells ?? d.grid.cells)),
           ox: frac(grid.ox ?? d.grid.ox ?? 0),
           oy: frac(grid.oy ?? d.grid.oy ?? 0),
+          ...(grid.width !== undefined ? { width: Math.min(8, Math.max(0.5, grid.width)) } : {}),
+          ...(grid.alpha !== undefined ? { alpha: Math.min(1, Math.max(0.05, grid.alpha)) } : {}),
+          ...(grid.color !== undefined ? { color: /^#[0-9a-f]{6}$/i.test(grid.color) ? grid.color : (d.grid.color ?? '#000000') } : {}),
         },
       }));
     },
