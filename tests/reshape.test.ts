@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
-import { attackBlocks, NO_RESHAPE, reshape, TEMPLATES, WEAPONS } from '../src/systems/dnd5e/reshape';
+import { attackBlocks, NO_RESHAPE, POWER_CRS, reshape, TEMPLATES, WEAPONS } from '../src/systems/dnd5e/reshape';
 import type { Dnd5eStats } from '../src/systems/dnd5e/stats';
 
 const load = (file: string) => {
@@ -89,5 +89,36 @@ describe('переделка статблока', () => {
   it('у шаблонов и оружия есть оба языка', () => {
     for (const t of TEMPLATES) expect(t.name.en && t.name.ru).toBeTruthy();
     for (const x of WEAPONS) expect(x.name.en && x.name.ru).toBeTruthy();
+  });
+
+  it('сила: обыватель с ПО 0 до ПО 2 — БМ, КД, хиты, атака, урон, опыт', () => {
+    const c = reshape(s14('srd51-commoner'), { ...NO_RESHAPE, cr: 2 }, 'en', '2014');
+    expect([c.cr, c.xp, c.pb]).toEqual([2, 450, 2]);
+    expect(c.ac).toBe(12);
+    expect(c.hpFormula).toBe('10d8');
+    expect(c.hp).toBe(45);
+    expect(c.actions[0]!.attack!.bonus).toBe(5);
+    expect(c.actions[0]!.text).toMatch(/^Melee Weapon Attack: \+5 to hit, reach 5 ft\., one target\. Hit: \d+ \(\d+d\d+\) bludgeoning damage\.$/);
+    expect(c.actions[0]!.attack!.damage[0]).not.toBe('1d4');
+  });
+
+  it('сила: слабее — меньше, но не ниже единицы; без смены ПО — как было', () => {
+    const g = reshape(s24('srd52-guard'), { ...NO_RESHAPE, cr: 0 }, 'en', '2024');
+    expect(g.cr).toBe(0);
+    expect(g.hp).toBeGreaterThanOrEqual(1);
+    expect(g.hp).toBeLessThan(11);
+    expect(g.actions[0]!.attack!.bonus).toBeLessThan(3);
+    const same = s24('srd52-guard');
+    expect(reshape(same, { ...NO_RESHAPE, cr: same.cr }, 'en', '2024')).toEqual(same);
+  });
+
+  it('СЛ в тексте растёт с силой; БМ с ПО 5 — +3', () => {
+    const base = s14('srd51-commoner');
+    base.actions.push({ name: 'Shove', text: 'Each creature must succeed on a DC 10 Strength saving throw.' });
+    const r = reshape(base, { ...NO_RESHAPE, cr: 5 }, 'en', '2014');
+    expect(r.pb).toBe(3);
+    expect(r.actions[1]!.text).toContain('DC 14');
+    expect(POWER_CRS[0]).toBe(0);
+    expect(POWER_CRS.at(-1)).toBe(30);
   });
 });

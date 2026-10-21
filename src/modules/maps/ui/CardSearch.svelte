@@ -6,6 +6,7 @@
   import { thumb } from '../../../shared/vault';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { suggest } from '../../initiative/ui/quick';
+  import { systemOf } from '../../../systems';
 
   let { placeholder, exclude = [], onpick }: { placeholder: string; exclude?: CardRef[]; onpick: (c: CardSummary) => void } = $props();
 
@@ -54,7 +55,8 @@
           <button type="button" class="hint" class:active={i === active} onmousedown={(e) => e.preventDefault()} onclick={() => pick(c)} onmouseenter={() => (active = i)}>
             {#if c.portrait}<img src={thumb(cardImageUrl(c.ref.scope, c.portrait), 32)} alt="" />{:else}<span class="noimg"></span>{/if}
             <span class="n">{c.name}</span>
-            {#if c.ref.scope === 'srd'}<span class="faint w">SRD</span>{/if}
+            <!-- The system tells apart the same creature of two editions (and, later, of other games). -->
+            <span class="faint w">{systemOf(c.system).title}{c.ref.scope === 'srd' ? ' · SRD' : ''}</span>
           </button>
         </li>
       {/each}

@@ -4,9 +4,10 @@
   import { IdCard, Minus, Plus, RotateCcw, Wand2, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import type { Card } from '../../../shared/cards';
-  import { attackBlocks, changesOf, reshape, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
+  import { attackBlocks, changesOf, POWER_CRS, reshape, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
+  import Slider from '../../../renderer/lib/Slider.svelte';
   import StatBlock from '../../../systems/dnd5e/StatBlock.svelte';
-  import { ABILITIES, dict, mod, signed, type Ability, type Dnd5eStats } from '../../../systems/dnd5e/stats';
+  import { ABILITIES, crText, dict, mod, signed, type Ability, type Dnd5eStats } from '../../../systems/dnd5e/stats';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import CardSearch from '../../maps/ui/CardSearch.svelte';
   import { editionOf, pickBase, rs } from './store.svelte';
@@ -22,17 +23,26 @@
   const card = $derived(base && stats ? ({ ...$state.snapshot(base), name, stats } as Card<Dnd5eStats>) : null);
   const attacks = $derived(base ? attackBlocks(base.stats) : []);
   const changes = $derived(base && stats ? changesOf(base.stats, stats, (k) => (k in L.abilities ? L.abilities[k as Ability] : t(`reshape.ch.${k}` as never)), (x) => L.sizes[x] ?? x) : []);
-  const touched = $derived(rs.r.templates.length > 0 || Object.values(rs.r.abilities).some(Boolean) || Object.keys(rs.r.weapons).length > 0);
+  const touched = $derived(rs.r.cr !== undefined || rs.r.templates.length > 0 || Object.values(rs.r.abilities).some(Boolean) || Object.keys(rs.r.weapons).length > 0);
 
-  const GROUPS = ['age', 'build', 'people'] as const;
-  // One age and one people at a time; builds go together.
+  const GROUPS = ['age', 'build', 'role', 'people'] as const;
+  // One template of a group at a time (brawny and frail exclude each other).
   function toggle(tp: Template) {
     const on = rs.r.templates.includes(tp.id);
-    const rest = rs.r.templates.filter((id) => id !== tp.id && (tp.group === 'build' || TEMPLATES.find((x) => x.id === id)?.group !== tp.group));
+    const rest = rs.r.templates.filter((id) => TEMPLATES.find((x) => x.id === id)?.group !== tp.group);
     rs.r.templates = on ? rest : [...rest, tp.id];
   }
   function bump(a: Ability, d: number) {
     rs.r.abilities[a] = (rs.r.abilities[a] ?? 0) + d;
+  }
+  // The power slider walks the CRs; the base's own CR clears it.
+  const crIndex = (cr: number) => Math.max(0, POWER_CRS.findIndex((x) => x >= cr));
+  const shownCr = $derived(rs.r.cr ?? base?.stats.cr ?? 0);
+  function setCr(i: number) {
+    if (!base) return;
+    const cr = POWER_CRS[Math.round(i)] ?? base.stats.cr;
+    if (cr === base.stats.cr) delete rs.r.cr;
+    else rs.r.cr = cr;
   }
   function setWeapon(key: string, id: string) {
     if (id) rs.r.weapons[key] = id;
@@ -97,6 +107,20 @@
               </div>
             </div>
           {/each}
+        </section>
+
+        <section>
+          <h3>{t('reshape.power')}</h3>
+          <div class="power">
+            <span class="faint">{t('reshape.weaker')}</span>
+            <span class="slider"><Slider value={crIndex(shownCr)} min={0} max={POWER_CRS.length - 1} step={1} oninput={setCr} /></span>
+            <span class="faint">{t('reshape.stronger')}</span>
+          </div>
+          <p class="cr">
+            {L.crShort} {crText(base.stats.cr)}{#if rs.r.cr !== undefined}&nbsp;→ <b>{crText(rs.r.cr)}</b>
+              <button class="link" onclick={() => setCr(crIndex(base.stats.cr))}>{t('reshape.asBase')}</button>{/if}
+          </p>
+          <p class="faint hint">{t('reshape.powerHint')}</p>
         </section>
 
         <section>
@@ -280,6 +304,29 @@
   }
   .weapon select {
     max-width: 60%;
+  }
+  .power {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .power .slider {
+    flex: 1;
+  }
+  .cr {
+    margin: 6px 0 0;
+    font-size: 13px;
+  }
+  .link {
+    margin-left: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
   }
   .buttons {
     display: flex;

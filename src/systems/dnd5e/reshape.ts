@@ -2,7 +2,7 @@
 // ability changes and other weapons. Pure functions: the numbers that follow the abilities are recounted — saves,
 // skills, passive Perception, initiative, hit points, AC by the armour worn, attack rolls, damage and save DCs in the
 // texts of SRD blocks (2014 and 2024, English and Russian). Texts are not rewritten; a number not recognised stays.
-import { ABILITIES, averageHp, mod, signed, type Ability, type Block, type Dnd5eStats, type Size, SKILL_ABILITY } from './stats';
+import { ABILITIES, averageHp, mod, pbFor, signed, type Ability, type Block, type Dnd5eStats, type Size, SKILL_ABILITY, xpFor } from './stats';
 
 type Lang = 'en' | 'ru';
 const L = (lang: string): Lang => (lang === 'ru' ? 'ru' : 'en');
@@ -12,7 +12,8 @@ type Text = Record<Lang, string>;
 
 export interface Template {
   id: string;
-  group: 'age' | 'build' | 'people';
+  // One template of a group at a time.
+  group: 'age' | 'build' | 'role' | 'people';
   name: Text;
   abilities?: Partial<Record<Ability, number>>;
   size?: Size;
@@ -46,7 +47,7 @@ export const TEMPLATES: Template[] = [
     id: 'frail', group: 'build', name: tr('Frail', 'Хилый'), abilities: { str: -2, con: -2 },
   },
   {
-    id: 'leader', group: 'build', name: tr('Leader', 'Главарь'), abilities: { cha: 2, int: 1 }, skills: ['intimidation'],
+    id: 'leader', group: 'role', name: tr('Leader', 'Главарь'), abilities: { cha: 2, int: 1 }, skills: ['intimidation'],
     reactions: [{
       name: tr('Parry', 'Парирование'),
       text: tr(
@@ -184,6 +185,8 @@ export interface Reshape {
   abilities: Partial<Record<Ability, number>>;
   // Weapons in place of attack blocks: key — `list:index` (attackBlocks), value — weapon id.
   weapons: Record<string, string>;
+  // Another challenge rating: the creature made stronger or weaker (empower).
+  cr?: number;
 }
 export const NO_RESHAPE: Reshape = { templates: [], abilities: {}, weapons: {} };
 
@@ -426,6 +429,105 @@ export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '20
       ...(s.spellcasting.attack !== undefined ? { attack: s.spellcasting.attack + d } : {}),
     };
   }
+  return r.cr !== undefined && r.cr !== base.cr ? empower(s, r.cr, l) : s;
+}
+
+// ---------- Power by challenge rating ----------
+
+// Typical numbers of a creature by CR: AC, hit points, attack bonus, damage of one hit, save DC. Our own table: the
+// medians of the SRD 5.1 and 5.2.1 creatures, smoothed so that each grows with CR.
+const BY_CR: Record<number, [ac: number, hp: number, atk: number, dmg: number, dc: number]> = {
+  0: [11, 3, 2, 2, 10], 0.125: [12, 9, 3, 4, 11], 0.25: [12, 13, 4, 5, 11], 0.5: [12, 22, 4, 6, 11],
+  1: [13, 28, 4, 7, 12], 2: [13, 45, 5, 9, 12], 3: [14, 60, 5, 10, 13], 4: [14, 80, 6, 12, 13],
+  5: [15, 100, 7, 13, 14], 6: [15, 114, 7, 14, 14], 7: [16, 126, 7, 15, 15], 8: [16, 138, 8, 15, 15],
+  9: [17, 155, 9, 16, 16], 10: [17, 175, 9, 17, 16], 11: [17, 190, 10, 18, 17], 12: [17, 200, 10, 18, 17],
+  13: [18, 210, 10, 18, 18], 14: [18, 220, 11, 19, 18], 15: [18, 230, 11, 19, 18], 16: [19, 240, 12, 20, 19],
+  17: [19, 256, 13, 21, 20], 18: [19, 265, 13, 21, 20], 19: [19, 275, 14, 22, 20], 20: [20, 330, 14, 23, 21],
+  21: [21, 340, 15, 24, 22], 22: [21, 420, 15, 25, 22], 23: [22, 480, 16, 26, 23], 24: [22, 545, 17, 27, 24],
+  25: [23, 580, 17, 28, 24], 26: [23, 620, 18, 30, 24], 27: [24, 650, 18, 32, 25], 28: [24, 670, 18, 34, 25],
+  29: [25, 680, 19, 35, 25], 30: [25, 690, 19, 36, 26],
+};
+export const POWER_CRS = Object.keys(BY_CR).map(Number).sort((a, b) => a - b);
+const row = (cr: number) => BY_CR[cr] ?? BY_CR[POWER_CRS.reduce((best, x) => (Math.abs(x - cr) < Math.abs(best - cr) ? x : best), 0)]!;
+
+const DICE = [4, 6, 8, 10, 12];
+// Dice for a new average: the same die with more or fewer of them, or a neighbouring die when that fits better.
+function scaleDice(n: number, die: number, ratio: number): [number, number] {
+  const target = (n * (die + 1) * ratio) / 2;
+  let best: [number, number] = [n, die];
+  let err = Infinity;
+  for (const d of DICE.includes(die) ? DICE : [die]) {
+    const m = Math.max(1, Math.round(target / ((d + 1) / 2)));
+    const e = Math.abs((m * (d + 1)) / 2 - target) + (d === die ? 0 : 0.75);
+    if (e < err) [best, err] = [[m, d], e];
+  }
+  return best;
+}
+
+// The stat block made as strong as a creature of another CR: proficiency by the rules; AC, hit points, attack
+// bonuses, damage and DCs move as much as the typical numbers move between the two CRs.
+export function empower(s0: Dnd5eStats, cr: number, lang: Lang): Dnd5eStats {
+  const s: Dnd5eStats = structuredClone(s0);
+  const [a0, h0, t0, d0, c0] = row(s0.cr);
+  const [a1, h1, t1, d1, c1] = row(cr);
+  const dPb = pbFor(cr) - s0.pb;
+  const dAtk = t1 - t0;
+  const dDc = c1 - c0;
+  s.cr = cr;
+  s.xp = xpFor(cr);
+  s.pb = pbFor(cr);
+  s.ac = Math.max(5, s0.ac + (a1 - a0));
+  for (const a of ABILITIES) if (s.saves[a] !== undefined) s.saves[a] = s.saves[a]! + dPb;
+  s.skills = s.skills.map((x) => ({ ...x, bonus: x.bonus + dPb }));
+  if (s.skills.some((x) => x.skill === 'perception')) s.senses = { ...s.senses, passivePerception: s.senses.passivePerception + dPb };
+  // Hit points: more or fewer hit dice; Constitution stays on each.
+  const hf = /^(\d+)([dк])(\d+)/.exec((s0.hpFormula ?? '').replace(/\s+/g, ''));
+  if (hf) {
+    // As many hit points more as a typical creature of that CR has more (a ratio would blow up a tiny base).
+    const dieAvg = (Number(hf[3]) + 1) / 2 + mod(s.abilities.con);
+    const n = Math.max(1, Math.round((s0.hp + h1 - h0) / Math.max(1, dieAvg)));
+    const k = n * mod(s.abilities.con);
+    s.hpFormula = `${n}${hf[2]}${hf[3]}${k ? (k > 0 ? `+${k}` : `-${-k}`) : ''}`;
+    s.hp = averageHp(s.hpFormula) ?? s.hp;
+  } else s.hp = Math.max(1, s0.hp + h1 - h0);
+  const minus = lang === 'en' ? '-' : '−';
+  for (const list of LISTS) {
+    s[list] = s[list].map((b) => {
+      // The first damage of a block grows by as much as a typical hit does; the others in the same proportion.
+      let ratio = 1;
+      let first = true;
+      let text = b.text.replace(DAMAGE, (_all, _avg: string, n: string, dch: string, die: string, sign?: string, k?: string) => {
+        const kk = k ? num(`${sign}${k}`) : 0;
+        if (first) {
+          first = false;
+          const now = (Number(n) * (Number(die) + 1)) / 2;
+          ratio = Math.max(0.1, (now + d1 - d0) / now);
+        }
+        const [m, d] = scaleDice(Number(n), Number(die), ratio);
+        return `${avgOf(m, d, kk)} (${m}${dch}${d}${kk ? ` ${kk > 0 ? '+' : minus} ${Math.abs(kk)}` : ''})`;
+      });
+      const attack = b.attack || isAttackText(b.text);
+      if (attack) text = text.replace(TO_HIT, (_all, pre: string, n: string, post: string) => `${pre}${signedText(num(n) + dAtk, lang)}${post}`);
+      text = text.replace(/(^|[^\p{L}])(DC|СЛ) (\d+)/gu, (_all, pre: string, word: string, n: string) => `${pre}${word} ${Number(n) + dDc}`);
+      const atk = b.attack && {
+        bonus: b.attack.bonus + dAtk,
+        damage: b.attack.damage.map((x) => {
+          const m = /^(\d+)([dк])(\d+)(.*)$/.exec(x.replace(/\s+/g, ''));
+          if (!m) return x;
+          const [n, d] = scaleDice(Number(m[1]), Number(m[3]), ratio);
+          return `${n}${m[2]}${d}${m[4]}`;
+        }),
+      };
+      return { ...b, text, ...(atk ? { attack: atk } : {}) };
+    });
+  }
+  if (s.spellcasting) {
+    s.spellcasting = {
+      ...s.spellcasting,
+      ...(s.spellcasting.dc !== undefined ? { dc: s.spellcasting.dc + dDc } : {}),
+      ...(s.spellcasting.attack !== undefined ? { attack: s.spellcasting.attack + dAtk } : {}),
+    };
+  }
   return s;
 }
 
@@ -438,6 +540,8 @@ export interface Change {
 export function changesOf(a: Dnd5eStats, b: Dnd5eStats, label: (key: string) => string, size: (s: Size) => string = (x) => x): Change[] {
   const out: Change[] = [];
   const push = (what: string, x: string | number, y: string | number) => String(x) !== String(y) && out.push({ what, from: String(x), to: String(y) });
+  const crs = (c: number) => (c === 0.125 ? '1/8' : c === 0.25 ? '1/4' : c === 0.5 ? '1/2' : String(c));
+  push(label('cr'), crs(a.cr), crs(b.cr));
   push(label('size'), a.size.map(size).join('/'), b.size.map(size).join('/'));
   push(label('ac'), a.ac, b.ac);
   push(label('hp'), `${a.hp} (${a.hpFormula ?? ''})`, `${b.hp} (${b.hpFormula ?? ''})`);
