@@ -2,7 +2,7 @@
 <script lang="ts">
   import { unread } from '../../telegram/ui/tg.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Beer, CalendarClock, Rat, Calculator, Castle, Footprints, DoorOpen, Sparkles, Store, CloudSun, Gem, Signpost, UserRound, FileText, Gauge, Hourglass, ScrollText, Send, Signature } from '@lucide/svelte';
+  import { Beer, CalendarClock, Rat, Table2, Calculator, Castle, Footprints, DoorOpen, Sparkles, Store, CloudSun, Gem, Signpost, UserRound, FileText, Gauge, Hourglass, ScrollText, Send, Signature } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
   import { noteGroups } from './library';
@@ -38,6 +38,10 @@
     <button class="item" data-nav class:active={ui.tool === 'mouse'} onclick={() => pickTool('mouse')}>
       <Rat size={14} />
       <span class="name">{t('tools.side.mouse')}</span>
+    </button>
+    <button class="item" data-nav class:active={ui.tool === 'mausTables'} onclick={() => pickTool('mausTables')}>
+      <Table2 size={14} />
+      <span class="name">{t('tools.side.mausTables')}</span>
     </button>
   {/if}
   <button class="item" data-nav class:active={ui.tool === 'npc'} onclick={() => pickTool('npc')}>

@@ -329,6 +329,11 @@ Electron-приложение для мастера D&D: окно управле
   свои), `generate.ts` (мышь — индексы; `extraFor` — слабая мышь, `swap`), `text.ts` (правила вещи — по английской
   строке: броня, кубы, наёмник; `mouseSlots` раскладывает инвентарь, `mouseCard` → `bestiary.create(…, { system, stats })`),
   `MouseGenerator.svelte`, `store.svelte.ts` (последняя мышь — localStorage окна).
+  Таблицы Mausritter (только Mausritter, `ui.tool = 'mausTables'`): `tools/maus/` — `srd.ts` (48 таблиц SRD en/ru,
+  собирает `build-mausritter`: все таблицы файлов по порядку, нужные — по пути заголовков оригинала, `WANT`),
+  `generate.ts` (результат — ячейки `{ table, row, col }`, текст — по языку интерфейса; `rangeOf` / `rowFor` по первому
+  столбцу английской таблицы; поселение, гекс, место с комнатами, сокровища, мышь мастера, завязка, погода, реакция),
+  `text.ts` (`lineText`, Markdown), `MausTables.svelte`, `store.svelte.ts` (localStorage окна).
   Генератор NPC: `tools/npc/` — как таверны (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — занятия и черты берёт у
   таверн, `text.ts` — Markdown и карточка, `store.svelte.ts` — с историей); «Создать карточку» — `bestiary.create(place,
   prefill)`.

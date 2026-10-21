@@ -280,3 +280,121 @@ for (const [lang, book] of [['en', en], ['ru', ru]] as const) {
 const bestiary = path.join(RES, 'srd', 'mausritter.json');
 fs.writeFileSync(bestiary, JSON.stringify(cards) + '\n');
 console.log(`${bestiary}: ${cards.length} cards`);
+
+// ---------- Tables for the Mausritter tool (Tools → Mausritter tables) ----------
+// Every table of the books in document order (both files have the same ones); the tool gets those it rolls on,
+// named by their place in the English original: [id, heading path, which table under it].
+
+interface Table {
+  head: string[];
+  rows: string[][];
+}
+
+function allTables(lang: string): { path: string; table: Table }[] {
+  const lines = fs.readFileSync(source(lang), 'utf8').replace(/\r\n/g, '\n').replace(/^<!--[\s\S]*?-->\s*/, '').split('\n');
+  const out: { path: string; table: Table }[] = [];
+  let heads: string[] = [];
+  let skipping = false;
+  const cells = (line: string) => line.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+  for (let i = 0; i < lines.length; i++) {
+    const h = /^(#+) (.+)$/.exec(lines[i]!);
+    if (h) {
+      if (h[1]!.length === 1) skipping = SKIP.has(h[2]!);
+      heads = [...heads.slice(0, h[1]!.length - 1), h[2]!.trim()];
+      continue;
+    }
+    if (!lines[i]!.startsWith('|') || skipping) continue;
+    const rows: string[][] = [];
+    for (; i < lines.length && lines[i]!.startsWith('|'); i++) rows.push(cells(lines[i]!));
+    out.push({ path: heads.join(' / '), table: { head: rows[0]!, rows: rows.slice(2) } });
+  }
+  return out;
+}
+
+const WANT: [string, string, number?][] = [
+  ['spells', 'Magic / List of spells'],
+  ['reaction', 'Running Mausritter / Encounters / Reactions'],
+  ['hook', 'Hexcrawl toolbox / Running a hexcrawl / First session'],
+  ['hexType', 'Hexcrawl toolbox / Hex contents / Hex type'],
+  ['landmark', 'Hexcrawl toolbox / Hex contents / Landmarks'],
+  ['landmarkDetail', 'Hexcrawl toolbox / Hex contents / Landmark details'],
+  ['size', 'Hexcrawl toolbox / Mouse settlements / Settlement size'],
+  ['governance', 'Hexcrawl toolbox / Mouse settlements / Governance'],
+  ['inhabitants', 'Hexcrawl toolbox / Mouse settlements / Settlement details', 0],
+  ['feature', 'Hexcrawl toolbox / Mouse settlements / Settlement details', 1],
+  ['industry', 'Hexcrawl toolbox / Mouse settlements / Settlement details', 2],
+  ['event', 'Hexcrawl toolbox / Mouse settlements / Settlement details', 3],
+  ['names', 'Hexcrawl toolbox / Mouse settlements / Settlement name seeds'],
+  ['tavern', 'Hexcrawl toolbox / Mouse settlements / Taverns and inns'],
+  ['construction', 'Adventure site toolbox / Adventure site theme / History / Construction'],
+  ['ruination', 'Adventure site toolbox / Adventure site theme / History / Ruination'],
+  ['denizens', 'Adventure site toolbox / Adventure site theme / Denizens / Inhabitants...'],
+  ['seeking', 'Adventure site toolbox / Adventure site theme / Denizens / Searching for or protecting'],
+  ['secret', 'Adventure site toolbox / Adventure site theme / Secret'],
+  ['roomType', 'Adventure site toolbox / Randomly stocking rooms / Room type'],
+  ['roomCreature', 'Adventure site toolbox / Randomly stocking rooms / Room has a creature?'],
+  ['roomTreasure', 'Adventure site toolbox / Randomly stocking rooms / Room has treasure?'],
+  ['lair', 'Adventure site toolbox / Randomly stocking rooms / Creatures and lairs'],
+  ['empty', 'Adventure site toolbox / Randomly stocking rooms / Empty rooms'],
+  ['obstacle', 'Adventure site toolbox / Randomly stocking rooms / Obstacles'],
+  ['trap', 'Adventure site toolbox / Randomly stocking rooms / Traps'],
+  ['puzzle', 'Adventure site toolbox / Randomly stocking rooms / Puzzles'],
+  ['treasure', 'Adventure site toolbox / Treasure / Treasure tables', 0],
+  ['trinket', 'Adventure site toolbox / Treasure / Treasure tables', 1],
+  ['valuable', 'Adventure site toolbox / Treasure / Treasure tables', 2],
+  ['large', 'Adventure site toolbox / Treasure / Treasure tables', 3],
+  ['unusual', 'Adventure site toolbox / Treasure / Treasure tables', 4],
+  ['useful', 'Adventure site toolbox / Treasure / Treasure tables', 5],
+  ['swordClass', 'Adventure site toolbox / Magic swords', 0],
+  ['sword', 'Adventure site toolbox / Magic swords', 1],
+  ['curse', 'Adventure site toolbox / Magic swords / Cursed swords'],
+  ['social', 'Useful tables / Non-player mice / Social position'],
+  ['npcSign', 'Useful tables / Non-player mice / Birthsign'],
+  ['npcDetails', 'Useful tables / Non-player mice / Details'],
+  ['seed', 'Useful tables / Adventure seeds'],
+  ...(['Spring', 'Summer', 'Autumn', 'Winter'] as const).flatMap((s): [string, string][] => [
+    [`weather${s}`, `Useful tables / Seasons / ${s} / Weather`],
+    [`events${s}`, `Useful tables / Seasons / ${s} / Seasonal events`],
+  ]),
+];
+
+const enTables = allTables('en');
+const ruTables = allTables('ru');
+if (enTables.length !== ruTables.length) throw new Error(`tables: en ${enTables.length}, ru ${ruTables.length}`);
+const picked: Record<'en' | 'ru', Record<string, Table>> = { en: {}, ru: {} };
+for (const [id, where, nth = 0] of WANT) {
+  const i = enTables.map((x, k) => (x.path === where ? k : -1)).filter((k) => k >= 0)[nth];
+  if (i === undefined) throw new Error(`no table «${where}» #${nth}`);
+  const [e, r] = [enTables[i]!.table, ruTables[i]!.table];
+  if (e.rows.length !== r.rows.length) throw new Error(`«${where}»: ${e.rows.length} rows in English, ${r.rows.length} in Russian`);
+  picked.en[id] = e;
+  picked.ru[id] = r;
+}
+// One row of a table per line of the file: readable and easy to compare.
+const tablesTs = (all: typeof picked) =>
+  Object.entries(all)
+    .map(([lang, list]) => {
+      const tables = Object.entries(list).map(
+        ([id, tb]) => `    ${id}: {\n      head: ${JSON.stringify(tb.head)},\n      rows: [\n${tb.rows.map((r) => `        ${JSON.stringify(r)},`).join('\n')}\n      ],\n    },`
+      );
+      return `  ${lang}: {\n${tables.join('\n')}\n  },\n`;
+    })
+    .join('');
+const tablesOut = path.resolve(import.meta.dirname, '../src/modules/tools/maus/srd.ts');
+fs.mkdirSync(path.dirname(tablesOut), { recursive: true });
+fs.writeFileSync(
+  tablesOut,
+  `// Built by scripts/build-mausritter.ts from scripts/mausritter-srd.<lang>.md — do not edit by hand.
+// Tables of the Mausritter SRD 2.3.1 (CC BY 4.0, Losing Games and Isaac Williams; Russian — our translation) for
+// Tools → Mausritter tables: the header and the rows as in the SRD, cells with their Markdown (**bold**).
+
+export interface SrdTable {
+  head: string[];
+  rows: string[][];
+}
+
+export const SRD_TABLES: Record<'en' | 'ru', Record<string, SrdTable>> = {
+${tablesTs(picked)}};
+`
+);
+console.log(`${tablesOut}: ${WANT.length} tables`);
