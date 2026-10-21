@@ -12,6 +12,7 @@
   import Calculator from '../difficulty/Calculator.svelte';
   import TimerTool from '../../timer/ui/TimerTool.svelte';
   import PointBuy from '../pointbuy/PointBuy.svelte';
+  import Reshape from '../reshape/Reshape.svelte';
   import NameGenerator from '../names/NameGenerator.svelte';
   import TavernGenerator from '../tavern/TavernGenerator.svelte';
   import NpcGenerator from '../npc/NpcGenerator.svelte';
@@ -41,7 +42,7 @@
     schedule: SchedulePage, names: NameGenerator, travel: TravelCalculator, dungeon: DungeonGenerator, relic: RelicGenerator,
     shop: ShopGenerator, settlement: SettlementGenerator, treasure: TreasureGenerator, events: EventsGenerator,
     weather: WeatherGenerator, mouse: MouseGenerator, mausTables: MausTables, factions: Factions, npc: NpcGenerator,
-    tavern: TavernGenerator, telegram: TelegramCompose, difficulty: Calculator, timer: TimerTool, pointbuy: PointBuy,
+    tavern: TavernGenerator, telegram: TelegramCompose, difficulty: Calculator, timer: TimerTool, pointbuy: PointBuy, reshape: Reshape,
   };
   const Page = $derived(ui.tool !== 'notes' && shown(ui.tool, family) ? PAGES[ui.tool] : undefined);
 

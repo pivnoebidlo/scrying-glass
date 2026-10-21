@@ -329,6 +329,12 @@ Electron-приложение для мастера D&D: окно управле
   Генератор погоды: `tools/weather/` — модель `generate.ts` (климат по местности и сезону, дни связаны: температура
   тянется к среднему, дождь затягивается; день — коды, слова — в словаре `weather.*`), текст `text.ts` (`daySummary`,
   `dayFlavor`, `dayRules` — правила SRD только в D&D), страница `WeatherGenerator.svelte` (последняя погода — localStorage).
+  Переделка статблока (только D&D, `ui.tool = 'reshape'`): правила — `systems/dnd5e/reshape.ts` (`TEMPLATES` — возраст,
+  сложение, народ en/ru; `WEAPONS` — оружие SRD; `reshape` пересчитывает спасброски, навыки, пассивную Внимательность,
+  инициативу, хиты по кости размера, КД по доспеху (`armourDex`), атаки и урон в текстах блоков по характеристике,
+  чей модификатор в уроне (`attackAbility`), СЛ — если её даёт ровно одна характеристика; `weaponBlock` — атака на языке
+  и в редакции карточки; `changesOf` — список изменений), страница `tools/reshape/Reshape.svelte`, состояние и
+  `reshapeFrom(ref)` — `store.svelte.ts` (кнопка «Переделать…» в `CardView`); карточка — `bestiary.create(…, { stats })`.
   Генератор мыши (только Mausritter, `ui.tool = 'mouse'`): `tools/mouse/` — `tables.ts` (таблицы SRD en/ru: прошлое по
   ЗЩ × пипсы, знаки, шёрстка, приметы; извлечены из `scripts/mausritter-srd.<lang>.md`), `content.ts` (оружие, имена —
   свои), `generate.ts` (мышь — индексы; `extraFor` — слабая мышь, `swap`), `text.ts` (правила вещи — по английской

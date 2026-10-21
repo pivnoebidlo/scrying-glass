@@ -211,7 +211,7 @@ adventure file (.sgpack) and comes back with the adventure from the trash. Notes
 
 The Tools sidebar has the notes and the common tools (schedule, message to players, timer), then a section of the
 current adventure's system: in D&D — the generators (names, NPCs, taverns, settlements, shops, items, dungeons,
-weather, events, treasure), encounter difficulty, point buy and travel; in Mausritter — the mouse generator, the
+weather, events, treasure), encounter difficulty, point buy, reshaping a stat block and travel; in Mausritter — the mouse generator, the
 Mausritter tables and factions; Fate has no tools of its own yet. Tools of other systems are hidden; Settings → Tools
 turns one on for a system where it is needed too (it shows in "Other systems"), remembered by the window.
 
@@ -359,6 +359,16 @@ built in) or your own. "Custom races and subraces": a new race, or a subrace for
 ("Elf → Wood"), with bonuses and "+1 of choice"; stored in the library — shared by all campaigns. "Check a character"
 takes the final scores from a player's sheet, works out the bonuses itself and says whether the spread is legal and
 how many points are spent, or what is broken; level increases and feats go into "Other".
+
+**Reshape a stat block** (Tools → Reshape a stat block, or "Reshape…" on any D&D card): a creature's stat block as the
+base — the headman from a commoner, a dwarf from a guard. Templates: age (child, elder), build (brawny, frail,
+leader), people (dwarf, elf, halfling, gnome, orc, tiefling, dragonborn) — abilities, size, speed, darkvision,
+resistances, traits and the language; abilities can be changed by hand on top; an attack can be swapped for an SRD
+weapon (the new attack is written in the card's language and edition, and its name follows into the multiattack and
+gear). The numbers that follow the abilities are recounted: saves, skills, passive Perception, initiative, hit points
+(the hit die by size), AC by the armour worn, attack rolls, damage and save DCs in the texts of the blocks. On the right
+— the stat block as it comes out and the list of what changed; "Create card" opens it in the editor ("Based on: …" in
+the notes). Texts of traits and actions are not rewritten.
 
 ## Maps
 
