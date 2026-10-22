@@ -26,7 +26,7 @@
   const fumble = (e: RollEntry) => !!e.attack && e.d20?.natural === 1;
 </script>
 
-{#if rolls.open && rolls.list.length}
+{#if rolls.open}
   <section class="log" aria-label={t('lib.rolls')}>
     <header>
       <Dices size={14} />
@@ -34,6 +34,7 @@
       <button class="icon-btn" title={t('lib.clear')} onclick={() => rolls.clear()}><Trash2 size={13} /></button>
       <button class="icon-btn" title={t('lib.hideLog')} onclick={() => (rolls.open = false)}><X size={14} /></button>
     </header>
+    {#if !rolls.list.length}<p class="empty">{t('lib.noRolls')}</p>{/if}
     <ol bind:this={list}>
       {#each rolls.list as e (e.id)}
         <li class:last={e === rolls.list.at(-1)}>
@@ -77,6 +78,12 @@
 {/if}
 
 <style>
+  .empty {
+    margin: 0;
+    padding: 10px 12px;
+    color: var(--text-faint);
+    font-size: 13px;
+  }
   .faces {
     font-family: ui-monospace, monospace;
     letter-spacing: 0.1em;

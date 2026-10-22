@@ -1,6 +1,7 @@
 <!-- Общий поиск ⌘K (Ctrl+K): записи справочника, карточки (монстры, NPC, персонажи) и заметки журнала из любой
      вкладки. Enter — в выдвижной панели (заметка — всегда во вкладке), ⌘Enter — во вкладке; стрелки — выбор, Esc — закрыть. -->
 <script lang="ts">
+  import { quickSearch } from '../../../renderer/lib/quicksearch.svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { BookOpen, NotebookPen, Search, Skull } from '@lucide/svelte';
   import { tick } from 'svelte';
@@ -19,6 +20,14 @@
   type Hit = { kind: 'entry'; e: EntryItem; score: number } | { kind: 'card'; c: CardSummary; score: number } | { kind: 'page'; p: PageItem; score: number };
 
   let open = $state(false);
+  // The button in the title row asks for the search (renderer/lib/quicksearch.svelte.ts).
+  let seen = quickSearch.seq;
+  $effect(() => {
+    if (quickSearch.seq !== seen) {
+      seen = quickSearch.seq;
+      void show();
+    }
+  });
   let query = $state('');
   let index = $state(0);
   let input = $state<HTMLInputElement>();

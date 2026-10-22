@@ -4,7 +4,9 @@
   import { store } from '../lib/store.svelte';
   import { listNav } from '../lib/listnav';
   import { t } from '../lib/i18n.svelte';
-  import { PanelLeftClose } from '@lucide/svelte';
+  import { Dices, PanelLeftClose, Search } from '@lucide/svelte';
+  import { openQuickSearch } from '../lib/quicksearch.svelte';
+  import { rolls } from '../lib/rolls.svelte';
   import { workspace } from './workspace.svelte';
 
   const c = $derived(controlContributions.find((x) => x.id === workspace.sidebar));
@@ -12,9 +14,11 @@
 </script>
 
 <aside class="sidebar">
-  <!-- The title row (the traffic lights in macOS stand on its left): «hide the panel»; drags the window (without the
-       system title bar). -->
+  <!-- The title row (the traffic lights in macOS stand on its left — nothing there): search ⌘K, the roll log, «hide the
+       panel»; drags the window (without the system title bar). -->
   <div class="title-row drag">
+    <button class="icon-btn faint-btn" title={t('app.search')} onclick={openQuickSearch}><Search size={17} /></button>
+    <button class="icon-btn faint-btn" class:on={rolls.open} title={t('lib.rolls')} onclick={() => (rolls.open = !rolls.open)}><Dices size={17} /></button>
     <button class="icon-btn faint-btn" title={t('app.hideSidebar')} onclick={() => (workspace.sidebarOpen = false)}><PanelLeftClose size={18} /></button>
   </div>
   {#each headers as h (h.id)}
@@ -62,6 +66,9 @@
   }
   .title-row .faint-btn {
     color: var(--text-faint);
+  }
+  .title-row .faint-btn.on {
+    color: var(--text-normal);
   }
   .empty {
     padding: 0 12px;
