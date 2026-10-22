@@ -6,14 +6,14 @@ import type { DungeonType } from './generate';
 type Pair = [en: string, ru: string];
 
 export const PLACES: Record<DungeonType, Pair[]> = {
-  tomb: [['Tomb', 'Гробница'], ['Crypt', 'Склеп'], ['Barrow', 'Курган']],
-  cave: [['Caves', 'Пещеры'], ['Grotto', 'Грот'], ['Den', 'Логово']],
-  mine: [['Mine', 'Рудник'], ['Shafts', 'Шахты'], ['Delvings', 'Выработки']],
-  temple: [['Temple', 'Храм'], ['Sanctum', 'Святилище'], ['Shrine', 'Капище']],
-  fortress: [['Fortress', 'Крепость'], ['Keep', 'Цитадель'], ['Stronghold', 'Твердыня']],
-  tower: [['Tower', 'Башня'], ['Laboratory', 'Лаборатория'], ['Spire', 'Шпиль']],
-  sewer: [['Sewers', 'Стоки'], ['Cisterns', 'Цистерны'], ['Catacombs', 'Катакомбы']],
-  ruins: [['Ruins', 'Руины'], ['Halls', 'Чертоги'], ['Undercity', 'Подгород']],
+  tomb: [['Tomb', 'Гробница'], ['Crypt', 'Склеп'], ['Barrow', 'Курган'], ['Mausoleum', 'Мавзолей'], ['Ossuary', 'Оссуарий'], ['Necropolis', 'Некрополь']],
+  cave: [['Caves', 'Пещеры'], ['Grotto', 'Грот'], ['Den', 'Логово'], ['Hollows', 'Пустоты'], ['Warren', 'Норы'], ['Abyss', 'Бездна']],
+  mine: [['Mine', 'Рудник'], ['Shafts', 'Шахты'], ['Delvings', 'Выработки'], ['Diggings', 'Раскопы'], ['Quarry', 'Каменоломня'], ['Lode', 'Жила']],
+  temple: [['Temple', 'Храм'], ['Sanctum', 'Святилище'], ['Shrine', 'Капище'], ['Chapel', 'Капелла'], ['Monastery', 'Монастырь'], ['Abbey', 'Аббатство']],
+  fortress: [['Fortress', 'Крепость'], ['Keep', 'Цитадель'], ['Stronghold', 'Твердыня'], ['Bastion', 'Бастион'], ['Redoubt', 'Редут'], ['Garrison', 'Острог']],
+  tower: [['Tower', 'Башня'], ['Laboratory', 'Лаборатория'], ['Spire', 'Шпиль'], ['Observatory', 'Обсерватория'], ['Athenaeum', 'Книгохранилище'], ['Sanctuary', 'Убежище']],
+  sewer: [['Sewers', 'Стоки'], ['Cisterns', 'Цистерны'], ['Catacombs', 'Катакомбы'], ['Drains', 'Водостоки'], ['Undercroft', 'Подклеть'], ['Conduits', 'Каналы']],
+  ruins: [['Ruins', 'Руины'], ['Halls', 'Чертоги'], ['Undercity', 'Подгород'], ['Remnants', 'Развалины'], ['Vaults', 'Своды'], ['Citadel', 'Детинец']],
 };
 
 export type Monster = [en: string, ru: string, cr: number, types: string];
@@ -56,6 +56,51 @@ export const MONSTERS: Monster[] = [
   ['Iron Golem', 'Железный голем', 16, 'tower fortress'], ['Marilith', 'Марилит', 16, 'temple'],
   ['Adult Red Dragon', 'Взрослый красный дракон', 17, 'cave mine'], ['Balor', 'Балор', 19, 'temple'],
   ['Pit Fiend', 'Ямный дьявол', 20, 'temple fortress'], ['Lich', 'Лич', 21, 'tower tomb'], ['Ancient Red Dragon', 'Древний красный дракон', 24, 'cave'],
+  ['Guard', 'Стражник', 0.125, 'fortress'], ['Flying Snake', 'Летающая змея', 0.125, 'temple ruins'],
+  ['Giant Weasel', 'Гигантская ласка', 0.125, 'cave'], ['Dretch', 'Дретч', 0.25, 'temple'],
+  ['Giant Bat', 'Гигантская летучая мышь', 0.25, 'cave'],
+  ['Giant Centipede', 'Гигантская сороконожка', 0.25, 'cave mine sewer'],
+  ['Giant Lizard', 'Гигантская ящерица', 0.25, 'cave'],
+  ['Giant Wolf Spider', 'Гигантский паук-волк', 0.25, 'cave ruins'], ['Grimlock', 'Гримлок', 0.25, 'cave mine'],
+  ['Pseudodragon', 'Псевдодракон', 0.25, 'tower'], ['Steam Mephit', 'Паровой мефит', 0.25, 'tower'],
+  ['Swarm of Ravens', 'Рой воронов', 0.25, 'tomb ruins'], ['Wolf', 'Волк', 0.25, 'cave ruins'],
+  ['Cockatrice', 'Кокатрис', 0.5, 'ruins cave'], ['Crocodile', 'Крокодил', 0.5, 'sewer'],
+  ['Dust Mephit', 'Пылевой мефит', 0.5, 'tomb tower'], ['Giant Wasp', 'Гигантская оса', 0.5, 'ruins'],
+  ['Ice Mephit', 'Ледяной мефит', 0.5, 'tower'], ['Magma Mephit', 'Магмовый мефит', 0.5, 'mine'],
+  ['Magmin', 'Магмин', 0.5, 'mine tower'], ['Satyr', 'Сатир', 0.5, 'ruins'],
+  ['Swarm of Insects', 'Рой насекомых', 0.5, 'tomb sewer cave'],
+  ['Warhorse Skeleton', 'Скелет боевого коня', 0.5, 'tomb fortress'], ['Scout', 'Разведчик', 0.5, 'fortress'],
+  ['Animated Armor', 'Оживлённый доспех', 1, 'tower fortress tomb'],
+  ['Brass Dragon Wyrmling', 'Детёныш латунного дракона', 1, 'cave'],
+  ['Copper Dragon Wyrmling', 'Детёныш медного дракона', 1, 'cave'], ['Dire Wolf', 'Лютый волк', 1, 'cave'],
+  ['Harpy', 'Гарпия', 1, 'ruins'], ['Quasit', 'Квазит', 1, 'temple tower'],
+  ['Giant Toad', 'Гигантская жаба', 1, 'sewer cave'], ['Ankheg', 'Анхег', 2, 'mine cave'],
+  ['Berserker', 'Берсерк', 2, 'fortress'], ['Black Dragon Wyrmling', 'Детёныш чёрного дракона', 2, 'sewer cave'],
+  ['Druid', 'Друид', 2, 'temple ruins'], ['Ghast', 'Гаст', 2, 'tomb sewer'],
+  ['Giant Constrictor Snake', 'Гигантский удав', 2, 'ruins cave'],
+  ['Green Dragon Wyrmling', 'Детёныш зелёного дракона', 2, 'ruins'],
+  ['White Dragon Wyrmling', 'Детёныш белого дракона', 2, 'cave'], ['Merrow', 'Мерроу', 2, 'sewer'],
+  ['Bearded Devil', 'Бородатый дьявол', 3, 'temple fortress'],
+  ['Blue Dragon Wyrmling', 'Детёныш синего дракона', 3, 'cave ruins'], ['Green Hag', 'Зелёная карга', 3, 'ruins'],
+  ['Phase Spider', 'Фазовый паук', 3, 'tower cave'], ['Manticore', 'Мантикора', 3, 'ruins'],
+  ['Nightmare', 'Кошмар', 3, 'temple'], ['Giant Scorpion', 'Гигантский скорпион', 3, 'tomb'],
+  ['Chuul', 'Чуул', 4, 'sewer cave'], ['Lamia', 'Ламия', 4, 'ruins temple'],
+  ['Red Dragon Wyrmling', 'Детёныш красного дракона', 4, 'cave mine'],
+  ['Air Elemental', 'Воздушный элементаль', 5, 'tower'], ['Barbed Devil', 'Шипастый дьявол', 5, 'temple fortress'],
+  ['Fire Elemental', 'Огненный элементаль', 5, 'tower temple'], ['Gorgon', 'Горгона', 5, 'ruins'],
+  ['Salamander', 'Саламандра', 5, 'mine'], ['Shambling Mound', 'Шатающийся холм', 5, 'sewer ruins'],
+  ['Water Elemental', 'Водяной элементаль', 5, 'sewer'], ['Invisible Stalker', 'Невидимый охотник', 6, 'tower'],
+  ['Vrock', 'Врок', 6, 'temple'], ['Young White Dragon', 'Молодой белый дракон', 6, 'cave'],
+  ['Oni', 'Они', 7, 'fortress ruins'], ['Young Copper Dragon', 'Молодой медный дракон', 7, 'cave'],
+  ['Hezrou', 'Хезроу', 8, 'temple'], ['Frost Giant', 'Ледяной великан', 8, 'fortress'],
+  ['Glabrezu', 'Глабрезу', 9, 'temple tower'], ['Cloud Giant', 'Облачный великан', 9, 'tower'],
+  ['Djinni', 'Джинн', 11, 'tower'], ['Efreeti', 'Ифрит', 11, 'tower'], ['Remorhaz', 'Реморхаз', 11, 'cave'],
+  ['Erinyes', 'Эриния', 12, 'temple fortress'], ['Nalfeshnee', 'Налфешни', 13, 'temple'],
+  ['Adult White Dragon', 'Взрослый белый дракон', 13, 'cave'], ['Ice Devil', 'Ледяной дьявол', 14, 'fortress'],
+  ['Adult Copper Dragon', 'Взрослый медный дракон', 14, 'cave'],
+  ['Adult Green Dragon', 'Взрослый зелёный дракон', 15, 'ruins'],
+  ['Adult Blue Dragon', 'Взрослый синий дракон', 16, 'cave ruins'],
+  ['Ancient Black Dragon', 'Древний чёрный дракон', 21, 'cave sewer'],
 ];
 
 export const BUILDERS: Pair[] = [
@@ -63,6 +108,14 @@ export const BUILDERS: Pair[] = [
   ['An empire that no one remembers', 'Империя, которую никто не помнит'], ['A cult of a sleeping god', 'Культ спящего бога'],
   ['A paranoid noble family', 'Знатный род, повсюду видевший заговоры'], ['Smugglers, over generations', 'Несколько поколений контрабандистов'],
   ['Nature itself, and something that moved in later', 'Сама природа — и то, что поселилось там позже'], ['Giants, long before people came', 'Великаны, задолго до прихода людей'],
+  ['Monks who wanted to be closer to their god — underground', 'Монахи, хотевшие быть ближе к своему богу — под землёй'],
+  ['A dragon, before it was a hoard', 'Дракон — ещё до того, как это стало его логовом'],
+  ['Prisoners, forced to dig their own jail', 'Узники, которых заставили вырыть себе тюрьму'],
+  ['Gnome inventors who loved traps a little too much', 'Гномы-изобретатели, слишком любившие ловушки'],
+  ['A wizard’s apprentices, while the master was away', 'Ученики волшебника, пока хозяина не было'],
+  ['Refugees of a war long over', 'Беженцы давно закончившейся войны'],
+  ['An order of knights guarding a secret', 'Рыцарский орден, хранивший тайну'],
+  ['Nobody knows — the stone is older than any people', 'Никто не знает — камень старше любого народа'],
 ];
 
 export const FATES: Pair[] = [
@@ -70,6 +123,14 @@ export const FATES: Pair[] = [
   ['An earthquake opened it again a month ago.', 'Месяц назад землетрясение снова открыло вход.'], ['It was abandoned when the gold ran out.', 'Подземелье бросили, когда кончилось золото.'],
   ['Its last defenders still keep their watch — dead.', 'Последние защитники всё ещё на посту — мёртвые.'], ['A flood drowned the lower halls.', 'Наводнение затопило нижние залы.'],
   ['Adventurers went in last spring and did not come back.', 'Прошлой весной туда ушли искатели приключений и не вернулись.'], ['New masters moved in and are digging deeper.', 'Туда пришли новые хозяева и копают глубже.'],
+  ['Its builders walled themselves in on purpose.', 'Строители сами замуровали себя внутри.'],
+  ['A curse turned its masters into its guards.', 'Проклятие превратило хозяев в стражей.'],
+  ['It sank into the ground in a single night.', 'Оно ушло под землю за одну ночь.'],
+  ['The last master is still inside, very old.', 'Последний хозяин всё ещё внутри — очень старый.'],
+  ['A fire gutted the upper halls a century ago.', 'Век назад пожар выжег верхние залы.'],
+  ['It was forgotten after the only map burned.', 'О нём забыли, когда сгорела единственная карта.'],
+  ['A war ended at its gates, and both sides left their dead.', 'У его ворот закончилась война, и обе стороны оставили там мёртвых.'],
+  ['Something below ate everyone, slowly, over years.', 'Нечто внизу медленно, годами, съело всех.'],
 ];
 
 export const ENTRANCES: Pair[] = [
@@ -77,6 +138,14 @@ export const ENTRANCES: Pair[] = [
   ['Huge bronze doors, half open.', 'Огромные бронзовые двери, приоткрытые наполовину.'], ['A well in an abandoned village.', 'Колодец в брошенной деревне.'],
   ['A crack in a cliff, just wide enough to squeeze through.', 'Расщелина в скале — едва протиснуться.'], ['A trapdoor under a tavern’s cellar.', 'Люк под погребом таверны.'],
   ['A gate guarded by two stone statues.', 'Ворота между двумя каменными статуями.'], ['A sinkhole that opened in a field overnight.', 'Провал, за ночь открывшийся посреди поля.'],
+  ['A doorway inside a hollow tree.', 'Дверной проём внутри дуплистого дерева.'],
+  ['Steps carved into the side of a dry well.', 'Ступени, вырубленные в стенке сухого колодца.'],
+  ['A gate in a hillside that opens only by moonlight.', 'Ворота в склоне холма, открывающиеся только при луне.'],
+  ['A secret door behind a shrine’s altar.', 'Тайная дверь за алтарём святилища.'],
+  ['A grate in a city gutter, its lock freshly oiled.', 'Решётка в городской канаве, замок недавно смазан.'],
+  ['A cave mouth shaped like a screaming face.', 'Вход в пещеру в виде кричащего лица.'],
+  ['A ship’s hull buried in the sand, the hatch open.', 'Занесённый песком корабельный корпус с открытым люком.'],
+  ['A trapdoor in an old windmill.', 'Люк в старой ветряной мельнице.'],
 ];
 
 export const ATMOSPHERES: Pair[] = [
@@ -84,6 +153,14 @@ export const ATMOSPHERES: Pair[] = [
   ['A cold draught from somewhere below.', 'Холодный сквозняк откуда-то снизу.'], ['The smell of old smoke and burnt fat.', 'Запах старого дыма и горелого жира.'],
   ['Faint chanting that stops whenever someone listens.', 'Едва слышное пение — оно стихает, стоит прислушаться.'], ['Warm, stale air and the buzzing of flies.', 'Тёплый спёртый воздух и жужжание мух.'],
   ['Glowing moss on the walls gives a little green light.', 'Светящийся мох на стенах даёт немного зелёного света.'], ['Scratching inside the walls.', 'Скрежет внутри стен.'],
+  ['The air smells of incense, though nothing burns.', 'Пахнет благовониями, хотя ничего не горит.'],
+  ['Every sound echoes for too long.', 'Каждый звук отдаётся эхом слишком долго.'],
+  ['Icy cold, and frost grows on metal.', 'Ледяной холод; на металле нарастает иней.'],
+  ['The floor is warm, as if something sleeps below.', 'Пол тёплый, будто внизу кто-то спит.'],
+  ['Dust hangs in the air and never settles.', 'Пыль висит в воздухе и никогда не оседает.'],
+  ['Wind howls through the passages from nowhere.', 'По ходам воет ветер — непонятно откуда.'],
+  ['The walls sweat; everything is slippery.', 'Стены потеют; всё скользкое.'],
+  ['A sweet, rotten smell, like overripe fruit.', 'Сладкий гнилой запах, как от перезревших фруктов.'],
 ];
 
 export const HOOKS: Pair[] = [
@@ -91,6 +168,14 @@ export const HOOKS: Pair[] = [
   ['Something comes out at night and takes livestock.', 'По ночам оттуда выходит что-то и уносит скот.'], ['A map to it was found in a dead man’s boot.', 'Карту туда нашли в сапоге у мертвеца.'],
   ['A rival party is already on its way there.', 'Туда уже направился отряд соперников.'], ['A noble wants a family heirloom brought back.', 'Вельможа хочет вернуть фамильную реликвию.'],
   ['The local priest asks to put the dead inside to rest.', 'Местный жрец просит упокоить мёртвых внутри.'], ['Strange lights have been seen there three nights in a row.', 'Три ночи подряд там видят странные огни.'],
+  ['A dying adventurer crawled out and said one word.', 'Умирающий искатель приключений выполз оттуда и сказал одно слово.'],
+  ['The lord forbids anyone to enter — and pays to have it emptied.', 'Лорд запрещает туда входить — и платит, чтобы его очистили.'],
+  ['A prophecy names the heroes and this place.', 'Пророчество называет героев и это место.'],
+  ['A merchant’s caravan vanished on the road beside it.', 'На дороге рядом исчез купеческий караван.'],
+  ['A ghost visits the village every night and points there.', 'Каждую ночь в деревню приходит призрак и указывает туда.'],
+  ['A thief hid stolen crown jewels inside.', 'Вор спрятал там украденные королевские драгоценности.'],
+  ['The water from the nearby spring started to make people ill.', 'Вода из ближнего родника начала вызывать болезнь.'],
+  ['A rival wizard wants a book that is kept there.', 'Соперник-волшебник хочет книгу, которая хранится там.'],
 ];
 
 export const ROOMS: Pair[] = [
@@ -102,6 +187,22 @@ export const ROOMS: Pair[] = [
   ['A flooded hall, water up to the waist.', 'Затопленный зал, вода по пояс.'], ['A workshop full of half-finished things.', 'Мастерская, полная недоделанных вещей.'],
   ['A burial niche wall with hundreds of skulls.', 'Стена погребальных ниш с сотнями черепов.'], ['A throne room with an empty throne.', 'Тронный зал с пустым троном.'],
   ['A prison: cells with rusted doors, one locked.', 'Тюрьма: камеры с ржавыми дверями, одна заперта.'], ['A shaft going down into darkness, with a rope ladder.', 'Колодец вниз, в темноту, с верёвочной лестницей.'],
+  ['A scriptorium with desks and dried ink pots.', 'Скрипторий с пюпитрами и высохшими чернильницами.'],
+  ['A torture chamber, the tools still laid out.', 'Пыточная, инструменты всё ещё разложены.'],
+  ['A cistern with stairs leading down into black water.', 'Цистерна, лестница уходит в чёрную воду.'],
+  ['A hall of mirrors, most of them cracked.', 'Зеркальный зал, почти все зеркала треснули.'],
+  ['A garden of stone flowers.', 'Сад каменных цветов.'],
+  ['A forge with a dead fire and a half-made sword.', 'Кузня с потухшим горном и недокованным мечом.'],
+  ['A trophy room of heads that are not all animals.', 'Трофейный зал с головами — не все из них звериные.'],
+  ['A dining hall set for a feast, the food turned to dust.', 'Пиршественный зал: стол накрыт, еда обратилась в прах.'],
+  ['A crypt with a single open coffin.', 'Склеп с единственным открытым гробом.'],
+  ['A map room with a huge table carved as a landscape.', 'Картографический зал с огромным столом в виде рельефа.'],
+  ['A bathhouse with dry pools and mosaics of sea creatures.', 'Купальня: пустые бассейны и мозаики с морскими тварями.'],
+  ['A treasury, its doors torn off.', 'Сокровищница с сорванными дверями.'],
+  ['A shrine to a god whose face has been chiselled away.', 'Святилище бога, чьё лицо сбито зубилом.'],
+  ['A nursery with tiny beds — too many of them.', 'Детская с крошечными кроватками — их слишком много.'],
+  ['A hall of statues of the same person, getting older.', 'Зал статуй одного человека — всё старше и старше.'],
+  ['A pit room: a deep shaft with chains hanging down.', 'Яма: глубокая шахта, вниз свисают цепи.'],
 ];
 
 export const FEATURES: Pair[] = [
@@ -111,6 +212,18 @@ export const FEATURES: Pair[] = [
   ['A message scratched by previous adventurers.', 'Надпись, выцарапанная прежними искателями приключений.'], ['Webs as thick as curtains.', 'Паутина, плотная как занавес.'],
   ['The echo answers a little too late.', 'Эхо отвечает с опозданием.'], ['A dead adventurer with a half-written letter.', 'Мёртвый искатель приключений с недописанным письмом.'],
   ['Running water can be heard behind one wall.', 'За одной из стен слышна бегущая вода.'], ['Everything here is covered with a thin layer of ash.', 'Всё покрыто тонким слоем пепла.'],
+  ['A draught moves the dust into shapes.', 'Сквозняк складывает пыль в узоры.'],
+  ['Claw marks on the ceiling.', 'Следы когтей на потолке.'],
+  ['A lantern still burns on a hook.', 'На крюке всё ещё горит фонарь.'],
+  ['The floor slopes slightly toward a drain.', 'Пол чуть наклонён к стоку.'],
+  ['Old graffiti: a rude drawing of the dungeon’s master.', 'Старая надпись: грубая карикатура на хозяина подземелья.'],
+  ['A pile of bones, neatly sorted by size.', 'Груда костей, аккуратно разложенная по размеру.'],
+  ['A door with too many locks, all opened.', 'Дверь со слишком многими замками — все открыты.'],
+  ['Water drips upward from a puddle.', 'Вода из лужи капает вверх.'],
+  ['A chalk circle on the floor, unbroken.', 'Меловой круг на полу, неразорванный.'],
+  ['Shelves of jars with something floating in each.', 'Полки банок, в каждой что-то плавает.'],
+  ['A faint heartbeat in the walls.', 'В стенах слышно слабое сердцебиение.'],
+  ['Fresh bread on a table, still warm.', 'На столе свежий хлеб, ещё тёплый.'],
 ];
 
 export const PUZZLES: Pair[] = [
@@ -124,6 +237,16 @@ export const PUZZLES: Pair[] = [
   ['Mirrors that must reflect a beam of light onto a gem in the wall.', 'Зеркала, которыми нужно направить луч света на камень в стене.'],
   ['Bells of different notes; the door opens to a tune hummed by a statue.', 'Колокола разных нот; дверь откроется под мелодию, которую напевает статуя.'],
   ['A bridge that appears only while no one looks down.', 'Мост, который есть, только пока никто не смотрит вниз.'],
+  ['A chessboard floor; crossing it like a knight is safe.', 'Пол-шахматная доска; пройти можно только ходом коня.'],
+  ['Five doors, each with a symbol; the right one is named in a nursery rhyme carved nearby.', 'Пять дверей с символами; верная названа в детской считалке, вырезанной рядом.'],
+  ['A pool whose water level must be raised to reach a key.', 'Бассейн: чтобы достать ключ, надо поднять уровень воды.'],
+  ['A door that opens only for someone carrying nothing of metal.', 'Дверь, которая открывается только тому, кто не несёт ничего металлического.'],
+  ['A star map on the ceiling; pressing the right constellation opens the way.', 'Звёздная карта на потолке; путь открывает нужное созвездие.'],
+  ['Six candles that must all be lit at once.', 'Шесть свечей, которые надо зажечь одновременно.'],
+  ['A talking door that answers only questions it has never heard.', 'Говорящая дверь отвечает лишь на вопросы, которых ещё не слышала.'],
+  ['Pipes of an organ that must be played in the right order.', 'Трубы органа, на которых нужно сыграть в правильном порядке.'],
+  ['Two statues: one always lies, one always tells the truth.', 'Две статуи: одна всегда лжёт, другая всегда говорит правду.'],
+  ['A sand clock that must be turned at the exact moment a bell rings.', 'Песочные часы, которые нужно перевернуть точно в момент удара колокола.'],
 ];
 
 // [en, ru, save ability (systems/dnd5e key), damage type en, damage type ru (genitive)].
@@ -139,6 +262,16 @@ export const TRAPS: Trap[] = [
   ['A cursed idol whispers to whoever touches it.', 'Проклятый идол шепчет тому, кто к нему прикоснётся.', 'wis', 'psychic', 'психического урона'],
   ['Lightning arcs between two bronze pillars.', 'Между двумя бронзовыми колоннами бьёт молния.', 'dex', 'lightning', 'урона электричеством'],
   ['Frost spreads from a rune on the floor.', 'От руны на полу расползается иней.', 'con', 'cold', 'урона холодом'],
+  ['A rune releases a thunderclap that shakes dust from the ceiling.', 'Руна выпускает громовой раскат, с потолка сыплется пыль.', 'con', 'thunder', 'урона звуком'],
+  ['Acid sprays from the mouths of carved gargoyles.', 'Из пастей резных горгулий брызжет кислота.', 'dex', 'acid', 'урона кислотой'],
+  ['A sarcophagus lid slides open and a black mist pours out.', 'Крышка саркофага отъезжает, и выползает чёрный туман.', 'con', 'necrotic', 'некротического урона'],
+  ['A holy symbol on the floor blazes at anyone unworthy.', 'Священный символ на полу вспыхивает перед недостойными.', 'con', 'radiant', 'урона излучением'],
+  ['An invisible wall of force slams shut and pushes toward a pit.', 'Невидимая силовая стена захлопывается и толкает к яме.', 'str', 'force', 'урона силовым полем'],
+  ['The floor turns into a slide toward spinning blades.', 'Пол превращается в горку, ведущую к вращающимся лезвиям.', 'dex', 'slashing', 'рубящего урона'],
+  ['A cage drops from the ceiling, and spikes rise from its floor.', 'С потолка падает клетка, а из её пола поднимаются шипы.', 'dex', 'piercing', 'колющего урона'],
+  ['Burning oil pours from holes in the walls.', 'Из отверстий в стенах льётся горящее масло.', 'dex', 'fire', 'урона огнём'],
+  ['A mirror shows a hero’s worst memory.', 'Зеркало показывает худшее воспоминание героя.', 'wis', 'psychic', 'психического урона'],
+  ['A rolling boulder comes down the corridor.', 'По коридору катится валун.', 'dex', 'bludgeoning', 'дробящего урона'],
 ];
 
 export const TWISTS: Pair[] = [
@@ -148,4 +281,10 @@ export const TWISTS: Pair[] = [
   ['Taking the treasure wakes something below.', 'Если взять сокровище, внизу что-то проснётся.'],
   ['A prisoner is kept here, and they know a way out.', 'Здесь держат пленника, и он знает другой выход.'],
   ['The hoard has already been looted — almost.', 'Клад уже разграбили — почти.'],
+  ['The boss is not the master here — only a servant.', 'Главный противник здесь не хозяин, а лишь слуга.'],
+  ['A hero’s ancestor helped build this place.', 'Предок одного из героев помогал это строить.'],
+  ['The treasure is cursed, and the curse is the only thing holding the roof up.', 'Сокровище проклято, и только проклятие держит своды.'],
+  ['The exit has been sealed behind the heroes.', 'Выход за героями запечатан.'],
+  ['The prisoner they freed is the real villain.', 'Освобождённый пленник и есть настоящий злодей.'],
+  ['The dungeon is alive, and it is hungry.', 'Подземелье живое — и голодное.'],
 ];
