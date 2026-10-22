@@ -110,9 +110,6 @@ class Workspace {
   }
 }
 
-// Modules in the title row over the side panel instead of the ribbon (Sidebar.svelte): Files, as in Obsidian.
-export const TITLE_ROW: ModuleId[] = ['vault'];
-
 export const workspace = new Workspace();
 provideNav({
   openTab: (id) => workspace.openTab(id),

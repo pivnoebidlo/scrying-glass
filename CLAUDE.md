@@ -50,8 +50,8 @@ Electron-приложение для мастера D&D: окно управле
   вкладок, строки над полосой модулей и боковой панелью, заголовок правой панели, полоса в `Welcome`), кнопки и поля в
   них — нет (`theme.css`). Области перетаскивания не видят слоёв: всё `position: fixed` поверх них помечено
   `-webkit-app-region: no-drag` — новому всплывающему окну нужна та же строка. Строка заголовка есть во всех режимах:
-  над боковой панелью — модули `TITLE_ROW` (workspace.svelte.ts: «Файлы», их нет в полосе модулей) и «Скрыть», при
-  скрытой панели «Показать» — в начале полосы вкладок (`Tabs.svelte`).
+  над боковой панелью справа — «Скрыть» (слева в macOS — светофор, туда ничего не ставить), при скрытой панели
+  «Показать» — в начале полосы вкладок (`Tabs.svelte`).
 - About: `shared/about.ts` (addresses, `CREDITS` — attribution the CC BY licenses require; only these links open,
   IPC `app:openLink`), section `renderer/control/About.svelte` (settings section `about`). The app menu — `main/menu.ts`
   (`buildMenu`, in the interface language, rebuilt on a language change; «About» / «Settings…» → event

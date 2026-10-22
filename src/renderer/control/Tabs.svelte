@@ -4,7 +4,7 @@
   import { PanelLeftOpen, X } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
   import { store } from '../lib/store.svelte';
-  import { TITLE_ROW, workspace } from './workspace.svelte';
+  import { workspace } from './workspace.svelte';
   import { t } from '../lib/i18n.svelte';
 
   const find = (id: string) => controlContributions.find((x) => x.id === id);
@@ -25,14 +25,14 @@
   const sidebarShown = $derived(workspace.sidebarOpen && !!workspace.sidebar);
   function showSidebar() {
     if (workspace.sidebar) workspace.sidebarOpen = true;
-    else workspace.select(TITLE_ROW[0]!);
+    else workspace.select('vault');
   }
 </script>
 
 <main class="workspace">
   <div class="tab-bar drag" class:no-sidebar={!sidebarShown} bind:this={bar} {onwheel}>
     {#if !sidebarShown}
-      <button class="icon-btn show-sidebar" title={t('app.showSidebar')} onclick={showSidebar}><PanelLeftOpen size={15} /></button>
+      <button class="icon-btn show-sidebar" title={t('app.showSidebar')} onclick={showSidebar}><PanelLeftOpen size={18} /></button>
     {/if}
     {#each workspace.tabs as id (id)}
       {@const c = find(id)}
@@ -88,14 +88,14 @@
   }
   /* macOS: the traffic lights stand over the ribbon and the sidebar; with the sidebar hidden — before the tabs. */
   :global(:root[data-frame='mac']:not([data-fullscreen='true'])) .tab-bar.no-sidebar {
-    padding-left: 30px;
+    padding-left: 40px;
   }
   .show-sidebar {
     flex: none;
     align-self: center;
-    width: 28px;
-    height: 28px;
-    margin: -6px 6px 0 0;
+    width: 32px;
+    height: 32px;
+    margin: -6px 8px 0 0;
     color: var(--text-faint);
   }
   .tab-bar::-webkit-scrollbar {
