@@ -1,7 +1,7 @@
 // Reshape a stat block: the base card and what is done to it (kept while the window is open).
 import { openTab } from '../../../renderer/lib/nav';
 import type { Card, CardRef } from '../../../shared/cards';
-import { NO_RESHAPE, parseOwnTemplates, type OwnTemplate, type Reshape } from '../../../systems/dnd5e/reshape';
+import { NO_RESHAPE, parseOwnTemplates, parseOwnWeapons, type OwnWeapon, type OwnTemplate, type Reshape } from '../../../systems/dnd5e/reshape';
 import type { Dnd5eStats } from '../../../systems/dnd5e/stats';
 import { ui } from '../ui/ui.svelte';
 
@@ -61,12 +61,14 @@ export const editionOf = (system: string): '2014' | '2024' => (system.endsWith('
 
 // ---------- The GM's templates (the library: reshape-templates.json, common to all campaigns) ----------
 
-export const own = $state({ list: [] as OwnTemplate[], loaded: false });
+// The GM's templates and weapons (one file in the library).
+export const own = $state({ list: [] as OwnTemplate[], weapons: [] as OwnWeapon[], loaded: false });
 
 let loading: Promise<void> | null = null;
 export function loadOwn() {
   loading ??= window.api.readLibraryData('reshape-templates.json').then((d) => {
     own.list = parseOwnTemplates(d);
+    own.weapons = parseOwnWeapons(d);
     own.loaded = true;
   });
   return loading;
@@ -76,7 +78,7 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 // Saved a moment later: edits come in a row (typing a name).
 export function saveOwn() {
   clearTimeout(timer);
-  timer = setTimeout(() => window.api.writeLibraryData('reshape-templates.json', { templates: $state.snapshot(own.list) }), 400);
+  timer = setTimeout(() => window.api.writeLibraryData('reshape-templates.json', { templates: $state.snapshot(own.list), weapons: $state.snapshot(own.weapons) }), 400);
 }
 
 export function addOwn(name: string): string {
@@ -84,6 +86,21 @@ export function addOwn(name: string): string {
   own.list.push({ id, name, abilities: {}, speeds: {}, resistances: [], immunities: [], saves: [], skills: [], blocks: [] });
   saveOwn();
   return id;
+}
+
+export function addOwnWeapon(name: string): string {
+  const id = `ownw-${Math.random().toString(36).slice(2, 10)}`;
+  own.weapons.push({ id, name, dice: '1d8', type: 'slashing', kind: 'melee' });
+  saveOwn();
+  return id;
+}
+
+// A weapon removed: out of the reshape too (in place of an attack — the attack stays as it was).
+export function removeOwnWeapon(id: string) {
+  own.weapons = own.weapons.filter((x) => x.id !== id);
+  rs.r.weapons = Object.fromEntries(Object.entries(rs.r.weapons).filter(([, v]) => v !== id));
+  rs.r.added = (rs.r.added ?? []).filter((a) => a.weapon !== id);
+  saveOwn();
 }
 
 export function removeOwn(id: string) {

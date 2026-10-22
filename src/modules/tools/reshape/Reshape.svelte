@@ -4,7 +4,7 @@
   import { IdCard, Image, Minus, Plus, RotateCcw, Wand2, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import type { Card } from '../../../shared/cards';
-  import { attackBlocks, changesOf, NO_WEAPON, ownTemplate, POWER_CRS, reshape, templateFits, TEMPLATES, WEAPONS, type Template } from '../../../systems/dnd5e/reshape';
+  import { attackBlocks, changesOf, NO_WEAPON, ownTemplate, ownWeapon, POWER_CRS, reshape, templateFits, TEMPLATES, WEAPONS, type Template, type Weapon } from '../../../systems/dnd5e/reshape';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import StatBlock from '../../../systems/dnd5e/StatBlock.svelte';
   import { ABILITIES, crText, dict, mod, signed, type Ability, type Dnd5eStats } from '../../../systems/dnd5e/stats';
@@ -12,6 +12,7 @@
   import CardSearch from '../../maps/ui/CardSearch.svelte';
   import { editionOf, loadOwn, own, pickBase, rs } from './store.svelte';
   import OwnTemplates from './OwnTemplates.svelte';
+  import OwnWeapons from './OwnWeapons.svelte';
   import { onMount } from 'svelte';
 
   const base = $derived(rs.base);
@@ -24,11 +25,15 @@
   const owned = $derived(own.list.map(ownTemplate));
   const all = $derived([...TEMPLATES, ...owned]);
   let editOwn = $state(false);
+  // The GM's weapons beside the SRD ones (the pickers and the reshape).
+  const ownWeapons = $derived(own.weapons.map(ownWeapon));
+  const weaponOf = (id: string | undefined): Weapon | undefined => (id ? (WEAPONS.find((x) => x.id === id) ?? ownWeapons.find((x) => x.id === id)) : undefined);
+  let editWeapons = $state(false);
   const tpls = $derived(
     rs.r.templates.map((id) => all.find((x) => x.id === id)).filter((x): x is Template => !!x && (!base || templateFits(x, base.stats, owned))),
   );
   const name = $derived(rs.name.trim() || rs.target?.name || (base ? (tpls.length ? `${base.name} (${tpls.map((x) => (x.id.startsWith('own-') ? x.name[lang] : x.name[lang].toLowerCase())).join(', ')})` : base.name) : ''));
-  const stats = $derived(base ? reshape($state.snapshot(base.stats) as Dnd5eStats, $state.snapshot(rs.r), lang, editionOf(base.system), owned) : null);
+  const stats = $derived(base ? reshape($state.snapshot(base.stats) as Dnd5eStats, $state.snapshot(rs.r), lang, editionOf(base.system), owned, $state.snapshot(ownWeapons) as Weapon[]) : null);
   const card = $derived(base && stats ? ({ ...$state.snapshot(base), name, stats } as Card<Dnd5eStats>) : null);
   const attacks = $derived(base ? attackBlocks(base.stats) : []);
   const changes = $derived(base && stats ? changesOf(base.stats, stats, (k) => (k in L.abilities ? L.abilities[k as Ability] : t(`reshape.ch.${k}` as never)), (x) => L.sizes[x] ?? x) : []);
@@ -95,6 +100,17 @@
     });
   }
 </script>
+
+{#snippet weaponOptions()}
+  <optgroup label="SRD">
+    {#each WEAPONS as wp (wp.id)}<option value={wp.id}>{wp.name[ui]} — {wp.dice}{wp.versatile ? ` / ${wp.versatile}` : ''}</option>{/each}
+  </optgroup>
+  {#if ownWeapons.length}
+    <optgroup label={t('reshape.ow.title')}>
+      {#each ownWeapons as wp (wp.id)}<option value={wp.id}>{wp.name[ui] || '—'} — {wp.dice}{wp.bonus ? ` +${wp.bonus}` : ''}{wp.extra ? ` + ${wp.extra.dice}` : ''}</option>{/each}
+    </optgroup>
+  {/if}
+{/snippet}
 
 <div class="page">
   <header>
@@ -198,7 +214,7 @@
                 <select value={swap ?? ''} onchange={(e) => setWeapon(at.key, e.currentTarget.value)}>
                   <option value="">{t('reshape.keep')}</option>
                   <option value={NO_WEAPON}>{t('reshape.noWeapon')}</option>
-                  {#each WEAPONS as wp (wp.id)}<option value={wp.id}>{wp.name[ui]} — {wp.dice}{wp.versatile ? ` / ${wp.versatile}` : ''}</option>{/each}
+                  {@render weaponOptions()}
                 </select>
               </div>
               {#if swap !== NO_WEAPON}
@@ -206,7 +222,7 @@
                   class="rename"
                   type="text"
                   title={t('reshape.renameHint')}
-                  placeholder={t('reshape.renamePh', { name: (swap && WEAPONS.find((x) => x.id === swap)?.name[lang]) || at.name })}
+                  placeholder={t('reshape.renamePh', { name: (swap && weaponOf(swap)?.name[lang]) || at.name })}
                   value={rs.r.names?.[at.key] ?? ''}
                   oninput={(e) => (rs.r.names = { ...rs.r.names, [at.key]: e.currentTarget.value })}
                 />
@@ -216,17 +232,19 @@
           {#each rs.r.added ?? [] as a, i (i)}
             <div class="attack">
               <div class="weapon added">
-                <span>+ {WEAPONS.find((x) => x.id === a.weapon)?.name[ui]}</span>
+                <span>+ {weaponOf(a.weapon)?.name[ui]}</span>
                 <label class="faint" title={t('reshape.asAttackHint')}><input type="checkbox" bind:checked={a.attack} /> {t('reshape.asAttack')}</label>
                 <button class="icon-btn" title={t('reshape.removeWeapon')} onclick={() => (rs.r.added = rs.r.added!.filter((_, j) => j !== i))}><X size={13} /></button>
               </div>
-              <input class="rename" type="text" title={t('reshape.renameHint')} placeholder={t('reshape.renamePh', { name: WEAPONS.find((x) => x.id === a.weapon)?.name[lang] ?? '' })} bind:value={a.name} />
+              <input class="rename" type="text" title={t('reshape.renameHint')} placeholder={t('reshape.renamePh', { name: weaponOf(a.weapon)?.name[lang] ?? '' })} bind:value={a.name} />
             </div>
           {/each}
           <select class="add" value="" onchange={(e) => { addWeapon(e.currentTarget.value); e.currentTarget.value = ''; }}>
             <option value="">{t('reshape.addWeapon')}</option>
-            {#each WEAPONS as wp (wp.id)}<option value={wp.id}>{wp.name[ui]} — {wp.dice}{wp.versatile ? ` / ${wp.versatile}` : ''}</option>{/each}
+            {@render weaponOptions()}
           </select>
+          <button class="link own-weapons" onclick={() => (editWeapons = !editWeapons)}>{own.weapons.length ? t('reshape.ow.edit') : t('reshape.ow.add')}</button>
+          {#if editWeapons}<OwnWeapons onclose={() => (editWeapons = false)} />{/if}
         </section>
 
         <section>
@@ -259,6 +277,10 @@
 </div>
 
 <style>
+  .own-weapons {
+    display: block;
+    margin: 6px 0 8px;
+  }
   .page {
     height: 100%;
     overflow: auto;

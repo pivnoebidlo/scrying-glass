@@ -255,11 +255,14 @@ export function parseOwnTemplates(data: unknown): OwnTemplate[] {
 
 // ---------- Weapons (SRD) ----------
 
+export const DAMAGE_TYPES = ['acid', 'bludgeoning', 'cold', 'fire', 'force', 'lightning', 'necrotic', 'piercing', 'poison', 'psychic', 'radiant', 'slashing', 'thunder'] as const;
+export type DamageType = (typeof DAMAGE_TYPES)[number];
+
 export interface Weapon {
   id: string;
   name: Text;
   dice: string;
-  type: 'bludgeoning' | 'piercing' | 'slashing';
+  type: DamageType;
   kind: 'melee' | 'ranged';
   finesse?: boolean;
   reach?: boolean;
@@ -267,6 +270,10 @@ export interface Weapon {
   range?: [number, number];
   // Two hands: the die then.
   versatile?: string;
+  // A magic weapon: +1…+3 to hit and to damage.
+  bonus?: number;
+  // More damage of another type: a flame tongue's «plus 2d6 fire».
+  extra?: { dice: string; type: DamageType };
 }
 
 const w = (id: string, en: string, ru: string, dice: string, type: Weapon['type'], extra: Partial<Weapon> = {}): Weapon => ({
@@ -310,7 +317,64 @@ export const WEAPONS: Weapon[] = [
   w('longbow', 'Longbow', 'Длинный лук', '1d8', 'piercing', { kind: 'ranged', range: [150, 600] }),
 ];
 
-export const weaponById = (id: string) => WEAPONS.find((x) => x.id === id);
+// own — the GM's weapons (ownWeapon), found by id like the SRD ones.
+export const weaponById = (id: string, own: Weapon[] = []) => WEAPONS.find((x) => x.id === id) ?? own.find((x) => x.id === id);
+
+// The GM's own weapons (the library, reshape-templates.json beside the templates): written in one language — the name
+// goes as it is into a card of any language.
+export interface OwnWeapon {
+  id: string;
+  name: string;
+  dice: string;
+  type: DamageType;
+  kind: 'melee' | 'ranged';
+  finesse?: boolean;
+  reach?: boolean;
+  range?: [number, number];
+  versatile?: string;
+  bonus?: number;
+  extra?: { dice: string; type: DamageType };
+}
+export const ownWeapon = (o: OwnWeapon): Weapon => ({ ...o, name: { en: o.name, ru: o.name } });
+
+// «2d6», «1к8 » → «2d6»; not dice — null.
+export function diceOf(text: string): string | null {
+  const m = /^\s*(\d{1,2})\s*[dдкk]\s*(\d{1,3})\s*$/iu.exec(text);
+  return m && Number(m[1]) > 0 && [4, 6, 8, 10, 12, 20].includes(Number(m[2])) ? `${Number(m[1])}d${Number(m[2])}` : null;
+}
+
+export function parseOwnWeapons(data: unknown): OwnWeapon[] {
+  const list = (data as { weapons?: unknown } | null)?.weapons;
+  if (!Array.isArray(list)) return [];
+  const type = (v: unknown) => ((DAMAGE_TYPES as readonly string[]).includes(v as string) ? (v as DamageType) : null);
+  const out: OwnWeapon[] = [];
+  for (const x of list as (Partial<Record<keyof OwnWeapon, unknown>> | null)[]) {
+    if (!x || typeof x.id !== 'string' || typeof x.name !== 'string') continue;
+    const dice = diceOf(String(x.dice ?? ''));
+    const t = type(x.type);
+    if (!dice || !t) continue;
+    const range = Array.isArray(x.range) && x.range.length === 2 && x.range.every((n) => typeof n === 'number' && n > 0) ? (x.range as [number, number]) : undefined;
+    const versatile = typeof x.versatile === 'string' ? diceOf(x.versatile) : null;
+    const bonus = typeof x.bonus === 'number' && [1, 2, 3].includes(x.bonus) ? x.bonus : undefined;
+    const ex = x.extra as { dice?: unknown; type?: unknown } | undefined;
+    const extraDice = ex && typeof ex.dice === 'string' ? diceOf(ex.dice) : null;
+    const extraType = ex ? type(ex.type) : null;
+    out.push({
+      id: x.id,
+      name: x.name,
+      dice,
+      type: t,
+      kind: x.kind === 'ranged' ? 'ranged' : 'melee',
+      ...(x.finesse === true ? { finesse: true } : {}),
+      ...(x.reach === true ? { reach: true } : {}),
+      ...(range ? { range } : {}),
+      ...(versatile ? { versatile } : {}),
+      ...(bonus ? { bonus } : {}),
+      ...(extraDice && extraType ? { extra: { dice: extraDice, type: extraType } } : {}),
+    });
+  }
+  return out;
+}
 
 // ---------- Recounting ----------
 
@@ -429,7 +493,8 @@ const HIT_DIE: Record<Size, number> = { tiny: 4, small: 6, medium: 8, large: 10,
 export function weaponBlock(wp: Weapon, s: Dnd5eStats, lang: string, edition: '2014' | '2024'): Block {
   const l = L(lang);
   const ab: Ability = wp.kind === 'ranged' ? 'dex' : wp.finesse && s.abilities.dex > s.abilities.str ? 'dex' : 'str';
-  const m = mod(s.abilities[ab]);
+  const magic = wp.bonus ?? 0;
+  const m = mod(s.abilities[ab]) + magic;
   const bonus = s.pb + m;
   const dmg = (dice: string) => {
     const [n, die] = dice.split('d').map(Number) as [number, number];
@@ -440,16 +505,25 @@ export function weaponBlock(wp: Weapon, s: Dnd5eStats, lang: string, edition: '2
   const reach = wp.reach ? 10 : 5;
   const type = DAMAGE_TYPE[wp.type][l];
   const range = wp.range ? `${wp.range[0]}/${wp.range[1]}` : '';
+  // More damage of another type: no modifier.
+  const extraOf = (cap: boolean) => {
+    if (!wp.extra) return '';
+    const [n, die] = wp.extra.dice.split('d').map(Number) as [number, number];
+    const dice = `${n}${l === 'ru' && edition === '2014' ? 'к' : 'd'}${die}`;
+    const tp = DAMAGE_TYPE[wp.extra.type][l];
+    return l === 'en' ? ` plus ${avgOf(n, die, 0)} (${dice}) ${cap ? tp.charAt(0).toUpperCase() + tp.slice(1) : tp} damage` : ` плюс ${avgOf(n, die, 0)} (${dice}) ${tp} урона`;
+  };
   let text: string;
   if (l === 'en') {
     const kind = thrown ? 'Melee or Ranged' : wp.kind === 'ranged' ? 'Ranged' : 'Melee';
     const where = thrown ? `reach ${reach} ft. or range ${range} ft.` : wp.kind === 'ranged' ? `range ${range} ft.` : `reach ${reach} ft.`;
     const typeEn = edition === '2014' ? type : type.charAt(0).toUpperCase() + type.slice(1);
     const two = wp.versatile ? ` or ${dmg(wp.versatile)} ${typeEn} damage if used with two hands` : '';
+    const plus = extraOf(edition !== '2014');
     text =
       edition === '2014'
-        ? `${kind} Weapon Attack: ${signedText(bonus, l)} to hit, ${where}, one target. Hit: ${dmg(wp.dice)} ${typeEn} damage${two}.`
-        : `${kind} Attack Roll: ${signedText(bonus, l)}, ${where} Hit: ${dmg(wp.dice)} ${typeEn} damage${two}.`;
+        ? `${kind} Weapon Attack: ${signedText(bonus, l)} to hit, ${where}, one target. Hit: ${dmg(wp.dice)} ${typeEn} damage${two}${plus}.`
+        : `${kind} Attack Roll: ${signedText(bonus, l)}, ${where} Hit: ${dmg(wp.dice)} ${typeEn} damage${two}${plus}.`;
   } else {
     const kind = thrown ? 'Рукопашная или дальнобойная атака' : wp.kind === 'ranged' ? 'Дальнобойная атака' : 'Рукопашная атака';
     const ft = edition === '2014' ? 'фт.' : 'футов';
@@ -459,26 +533,43 @@ export function weaponBlock(wp: Weapon, s: Dnd5eStats, lang: string, edition: '2
         ? `${edition === '2014' ? 'дальность' : 'дистанция'} ${range} ${ft}`
         : `досягаемость ${reach} ${ft}`;
     const two = wp.versatile ? ` или ${dmg(wp.versatile)} ${type} урона при использовании двумя руками` : '';
+    const plus = extraOf(false);
     text =
       edition === '2014'
-        ? `*${kind} оружием:* ${signedText(bonus, l)} к попаданию, ${where}, одна цель. *Попадание:* ${dmg(wp.dice)} ${type} урона${two}.`
-        : `*${kind}:* ${signedText(bonus, l)}, ${where}. ${dmg(wp.dice)} ${type} урона${two}.`;
+        ? `*${kind} оружием:* ${signedText(bonus, l)} к попаданию, ${where}, одна цель. *Попадание:* ${dmg(wp.dice)} ${type} урона${two}${plus}.`
+        : `*${kind}:* ${signedText(bonus, l)}, ${where}. ${dmg(wp.dice)} ${type} урона${two}${plus}.`;
   }
   const plain = (dice: string) => `${dice}${m ? (m > 0 ? `+${m}` : `${m}`) : ''}`;
-  return { name: wp.name[l], text, attack: { bonus, damage: [plain(wp.dice), ...(wp.versatile ? [plain(wp.versatile)] : [])] } };
+  return {
+    name: wp.name[l],
+    text,
+    attack: { bonus, damage: [plain(wp.dice), ...(wp.versatile ? [plain(wp.versatile)] : []), ...(wp.extra ? [wp.extra.dice] : [])] },
+  };
 }
 
-const DAMAGE_TYPE: Record<Weapon['type'], Text> = {
+// As the Russian SRD writes them: «Колющего урона», «Огненного урона».
+const DAMAGE_TYPE: Record<DamageType, Text> = {
+  acid: tr('acid', 'Кислотного'),
   bludgeoning: tr('bludgeoning', 'Дробящего'),
+  cold: tr('cold', 'Холодного'),
+  fire: tr('fire', 'Огненного'),
+  force: tr('force', 'Силового'),
+  lightning: tr('lightning', 'Электрического'),
+  necrotic: tr('necrotic', 'Некротического'),
   piercing: tr('piercing', 'Колющего'),
+  poison: tr('poison', 'Ядовитого'),
+  psychic: tr('psychic', 'Психического'),
+  radiant: tr('radiant', 'Излучающего'),
   slashing: tr('slashing', 'Рубящего'),
+  thunder: tr('thunder', 'Громового'),
 };
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // The reshaped stat block. lang and edition — the card's (texts of templates and weapons are written in them).
 // own — the GM's templates (ownTemplate), found by id like the built-in ones.
-export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '2014' | '2024', own: Template[] = []): Dnd5eStats {
+// weapons — the GM's own (ownWeapon), beside the SRD ones.
+export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '2014' | '2024', own: Template[] = [], weapons: Weapon[] = []): Dnd5eStats {
   const l = L(lang);
   const tpls = r.templates.map((id) => templateById(id, own)).filter((x): x is Template => !!x && templateFits(x, base, own));
   const s: Dnd5eStats = structuredClone(base);
@@ -555,7 +646,7 @@ export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '20
           dropped.push(b.name);
           return null;
         }
-        const wp = r.weapons[key] ? weaponById(r.weapons[key]!) : undefined;
+        const wp = r.weapons[key] ? weaponById(r.weapons[key]!, weapons) : undefined;
         let nb: Block;
         if (wp) nb = weaponBlock(wp, s, l, edition);
         else {
@@ -584,7 +675,7 @@ export function reshape(base: Dnd5eStats, r: Reshape, lang: string, edition: '20
   // Added weapons and things carried.
   const carried: string[] = [];
   for (const a of r.added ?? []) {
-    const wp = weaponById(a.weapon);
+    const wp = weaponById(a.weapon, weapons);
     if (!wp) continue;
     const name = a.name?.trim() || wp.name[l];
     if (a.attack) s.actions.push({ ...weaponBlock(wp, s, l, edition), name });

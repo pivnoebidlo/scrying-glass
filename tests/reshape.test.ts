@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
-import { attackBlocks, NO_RESHAPE, NO_WEAPON, ownTemplate, parseOwnTemplates, POWER_CRS, reshape, TEMPLATES, WEAPONS } from '../src/systems/dnd5e/reshape';
+import { attackBlocks, diceOf, NO_RESHAPE, NO_WEAPON, ownTemplate, ownWeapon, parseOwnTemplates, parseOwnWeapons, POWER_CRS, reshape, TEMPLATES, WEAPONS } from '../src/systems/dnd5e/reshape';
 import type { Dnd5eStats } from '../src/systems/dnd5e/stats';
 
 const load = (file: string) => {
@@ -222,4 +222,29 @@ describe('переделка статблока', () => {
     expect(r.actions.map((a) => a.name)).toEqual(['Multiattack', 'Heavy Crossbow']);
     expect(r.gear).toBe('Leather Armor, Heavy Crossbow');
   });
+
+  it('своё оружие: разбор, магический бонус и урон другого типа — в тексте атаки и в бросках', () => {
+    expect(diceOf('2к6')).toBe('2d6');
+    expect(diceOf('1d7')).toBeNull();
+    const list = parseOwnWeapons({
+      weapons: [
+        { id: 'ownw-1', name: 'Пылающий клинок', dice: '1d8', type: 'slashing', kind: 'melee', bonus: 1, versatile: '1d10', extra: { dice: '2d6', type: 'fire' } },
+        { id: 'ownw-2', name: 'Bad', dice: 'много', type: 'slashing' },
+        { id: 'ownw-3', name: 'Frost Bow', dice: '1d8', type: 'piercing', kind: 'ranged', range: [150, 600], extra: { dice: '1d6', type: 'cold' } },
+      ],
+    });
+    expect(list.map((x) => x.id)).toEqual(['ownw-1', 'ownw-3']);
+    const weapons = list.map(ownWeapon);
+    const base = s14('srd51-commoner');
+    const r = reshape(base, { ...NO_RESHAPE, added: [{ weapon: 'ownw-1', attack: true }] }, 'ru', '2014', [], weapons);
+    const blade = r.actions.at(-1)!;
+    expect(blade.name).toBe('Пылающий клинок');
+    // Commoner: STR 10, PB 2; +1 magic — +3 to hit, 1d8+1.
+    expect(blade.attack?.bonus).toBe(3);
+    expect(blade.attack?.damage).toEqual(['1d8+1', '1d10+1', '2d6']);
+    expect(blade.text).toContain('плюс 7 (2к6) Огненного урона');
+    const en = reshape(s24('srd52-commoner') ?? base, { ...NO_RESHAPE, added: [{ weapon: 'ownw-3', attack: true }] }, 'en', '2024', [], weapons);
+    expect(en.actions.at(-1)!.text).toMatch(/Ranged Attack Roll: .*range 150\/600 ft\. Hit: .* Piercing damage plus 3 \(1d6\) Cold damage\./);
+  });
 });
+
