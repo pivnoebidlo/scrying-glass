@@ -15,6 +15,7 @@ import * as adventures from '../../modules/adventures/i18n';
 import * as backup from '../../modules/backup/i18n';
 import * as timer from '../../modules/timer/i18n';
 import * as fate from '../../modules/fate/i18n';
+import * as clocks from '../../modules/clocks/i18n';
 import * as journal from '../../modules/journal/i18n';
 import * as initiative from '../../modules/initiative/i18n';
 import * as tools from '../../modules/tools/i18n';
@@ -28,8 +29,8 @@ import * as mausritter from '../../modules/mausritter/i18n';
 
 export * from './core';
 
-export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en, ...maps.en, ...music.en, ...adventures.en, ...backup.en, ...timer.en, ...fate.en, ...journal.en, ...initiative.en, ...tools.en, ...compendium.en, ...bestiary.en, ...systems.en, ...core.en, ...telegram.en, ...schedule.en, ...mausritter.en };
-const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru, ...maps.ru, ...music.ru, ...adventures.ru, ...backup.ru, ...timer.ru, ...fate.ru, ...journal.ru, ...initiative.ru, ...tools.ru, ...compendium.ru, ...bestiary.ru, ...systems.ru, ...core.ru, ...telegram.ru, ...schedule.ru, ...mausritter.ru } };
+export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en, ...maps.en, ...music.en, ...adventures.en, ...backup.en, ...timer.en, ...fate.en, ...journal.en, ...initiative.en, ...tools.en, ...compendium.en, ...bestiary.en, ...systems.en, ...core.en, ...telegram.en, ...schedule.en, ...mausritter.en, ...clocks.en };
+const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru, ...maps.ru, ...music.ru, ...adventures.ru, ...backup.ru, ...timer.ru, ...fate.ru, ...journal.ru, ...initiative.ru, ...tools.ru, ...compendium.ru, ...bestiary.ru, ...systems.ru, ...core.ru, ...telegram.ru, ...schedule.ru, ...mausritter.ru, ...clocks.ru } };
 
 export type Key = keyof typeof en;
 

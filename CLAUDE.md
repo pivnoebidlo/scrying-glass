@@ -262,6 +262,11 @@ Electron-приложение для мастера D&D: окно управле
   стража, состояния «Измотан / Напуган / Голоден / Ранен / Опустошён», к6, [СУММА] / [КУБЫ]. У русской карточки кубы
   показываются «к8» (`Sheet.svelte`). [[Ссылка]] на карточку по имени —
   `bestiary.named` (сначала системы приключения: «Owl» есть и в D&D).
+- Часы прогресса — модуль `modules/clocks` (любая система): `byAdventure[приключение | '']` — `Clock` (`segments`
+  2–12, `filled`, `tone` danger / progress / neutral, `shown`), `place` (угол, `CornerPick` из fate) и `size`; действия
+  `add` / `update` / `tick` / `remove` / `reorder`. Блок правой панели `ui/OnScreen.svelte` (щелчок — вперёд, правый —
+  назад), слой игроков `ui/Layer.svelte` (order 33), круг — `ui/ClockFace.svelte` + `draw.ts`. В .sgpack —
+  `PackSlices.clocks`, в корзину — `AdventureData.clocks`.
 - Аспекты сцены и жетоны судьбы — модуль `modules/fate` (состояние: `aspects` с `invokes` / `hidden`, `holders` —
   персонажи с `points` / `refresh`, `gm` — запас мастера, `show`). Блок правой панели `OnScreen.svelte` и слой игроков
   `Layer.svelte` (order 32; угол — `place`, выбор — `CornerPick.svelte`, в одном углу встают друг под другом) — только в приключениях Fate (`fateHere`; блок

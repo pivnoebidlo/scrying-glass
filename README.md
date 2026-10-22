@@ -122,17 +122,22 @@ a click on the sheet and dragged around: splashes and drops of blood, smears, bl
 wax drops, scorches, burnt holes, claw marks, wax seals (with an emblem or a letter, whole or broken) and ink stamps
 with text around the edge. The pen draws right on the sheet — a map to a treasure, a sketch, arrows: inks of the note,
 three widths, an eraser and undo (⌘Z); the players see the drawing with the text. The editor is in three parts: the
-text and the sheet, the pen, the marks.
+text and the sheet, the pen, the marks. Nineteen fonts with Cyrillic: handwriting, calligraphy, book faces, Old Russian, chronicle,
+ancient manuscript, creepy ones (drips, distressed, beastly); "shaky handwriting" makes the letters dance. A note is a
+file "Title.note.json" in the adventure's handouts folder: it sits in Handouts and Files next to the pictures and is
+shown to the players the same way. It saves itself; if the players see it, edits appear at once.
 
 **Canvases** (Tools → Canvases, "New canvas" in Handouts, or "Draw over" on any picture) are handouts you draw: on a
 sheet of the notes' paper, on a plain colour or over a picture of the vault (the picture itself does not change).
 Pen, a see-through marker, line, arrow, rectangle and ellipse (outline, see-through or solid; Shift — square, circle,
 15° steps), a bucket (a click fills a shape or a part closed by lines, under the drawing — rooms inside a filled
 background stay as they are; a drag fills an area drawn by hand), text in the notes' fonts, an eraser and undo (⌘Z). A canvas is shown
-like any handout — and while it is on the player screen, the players see every line as you draw it. Nineteen fonts with Cyrillic: handwriting, calligraphy, book faces, Old Russian, chronicle,
-ancient manuscript, creepy ones (drips, distressed, beastly); "shaky handwriting" makes the letters dance. A note is a
-file "Title.note.json" in the adventure's handouts folder: it sits in Handouts and Files next to the pictures and is
-shown to the players the same way. It saves itself; if the players see it, edits appear at once.
+like any handout — and while it is on the player screen, the players see every line as you draw it.
+
+**Progress clocks** (as in Blades in the Dark) — a block in the right panel, in any system: a circle of 4, 6, 8 or 12
+segments for a danger drawing near ("The guards raise the alarm") or the party's work ("Picking the vault lock"). A
+click ticks it forward, a right click — back; the eye shows it to the players, in the corner and size you pick; a full
+clock glows. Each adventure has its own; they move with it in a .sgpack and go to the trash with it.
 
 ## Compendium
 
