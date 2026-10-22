@@ -7,7 +7,7 @@ import { isNotePath, newNote, noteTitle, parseNote } from '../src/shared/notes';
 import { fileKind } from '../src/shared/vault';
 import { noteHtml } from '../src/renderer/lib/note/markup';
 import { creaseSvg, holesMask, marksSvg } from '../src/renderer/lib/note/marks';
-import { markTint, newMark } from '../src/shared/notes';
+import { markTint, newMark, strokePath } from '../src/shared/notes';
 
 describe('формат записки', () => {
   it('файл записки узнаётся по имени', () => {
@@ -102,4 +102,24 @@ describe('файлы записок', () => {
     // То же имя — путь не меняется.
     expect(renameNote(resolve, c, 'Приказ')).toBe(c);
   });
+
+  it('перо: штрихи из файла (без мусора), линия через точки; старые записки — без штрихов', () => {
+    expect(parseNote({ scryingGlass: 'note', text: 'x' })!.strokes).toEqual([]);
+    const n = parseNote({
+      scryingGlass: 'note',
+      strokes: [
+        { ink: 'red', width: 0.007, points: [0.1, 0.1, 0.2, 0.2, 0.3] },
+        { ink: 'nonsense', width: 9, points: [0.5, 0.5, 0.6, 0.6] },
+        { ink: 'blue', points: [0.1] },
+        'junk',
+      ],
+    })!;
+    expect(n.strokes).toEqual([
+      { ink: 'red', width: 0.007, points: [0.1, 0.1, 0.2, 0.2] },
+      { ink: 'auto', width: 0.05, points: [0.5, 0.5, 0.6, 0.6] },
+    ]);
+    expect(strokePath([0.1, 0.1, 0.2, 0.2, 0.3, 0.1], 1000, 500)).toBe('M100.0 50.0Q200.0 100.0 250.0 75.0L300.0 50.0');
+    expect(strokePath([0.1, 0.1], 1000, 1000)).toMatch(/^M100.0 100.0l/);
+  });
 });
+

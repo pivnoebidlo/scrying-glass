@@ -3,15 +3,18 @@
      одинаково. Бумага рисуется SVG-фильтрами (зерно, пятна, затемнение к краям), края — по зерну записки. -->
 <script lang="ts">
   import './fonts.css';
-  import { NOTE_FONTS, NOTE_INKS, NOTE_SHAPES, type Note } from '../../../shared/notes';
+  import { NOTE_FONTS, NOTE_INKS, NOTE_SHAPES, STROKE_WIDTHS, strokePath, type Note, type NoteInk, type StrokeWidth } from '../../../shared/notes';
   import { noteHtml } from './markup';
   import { creaseSvg, holesMask, markDefs, marksSvg, rng } from './marks';
 
   // edit — редактор следов: выбранный след и нажатие на лист (id следа или null — мимо следов; x, y — доли листа).
+  // pen — the pen is in hand: a drag draws a stroke (onstroke, points in fractions of the sheet), with `erase` —
+  // a touch takes away the stroke under it (onerase, its index).
   interface Edit {
     selected: string | null;
     placing: boolean;
     onpick: (e: PointerEvent, id: string | null, x: number, y: number) => void;
+    pen?: { ink: NoteInk; width: StrokeWidth; erase: boolean; onstroke: (points: number[]) => void; onerase: (i: number) => void } | null;
   }
   let {
     note,
@@ -99,6 +102,56 @@
     const box = (e.currentTarget as Element).closest('svg')!.getBoundingClientRect();
     edit.onpick(e, id, (e.clientX - box.left) / box.width, (e.clientY - box.top) / box.height);
   }
+  // The pen: the stroke being drawn is shown at once; a short stroke stays as a dot.
+  const strokeInk = (k: NoteInk) => NOTE_INKS[k].color || ink;
+  let live = $state<number[] | null>(null);
+  function penDown(e: PointerEvent) {
+    const pen = edit?.pen;
+    if (!pen || e.button !== 0) return;
+    e.preventDefault();
+    const box = (e.currentTarget as Element).getBoundingClientRect();
+    const at = (ev: PointerEvent) => [(ev.clientX - box.left) / box.width, (ev.clientY - box.top) / box.height] as const;
+    if (pen.erase) {
+      const erase = (ev: PointerEvent) => {
+        const i = strokeAt(...at(ev), box.width);
+        if (i >= 0) pen.onerase(i);
+      };
+      erase(e);
+      const up = () => (window.removeEventListener('pointermove', erase), window.removeEventListener('pointerup', up));
+      window.addEventListener('pointermove', erase);
+      window.addEventListener('pointerup', up);
+      return;
+    }
+    const pts: number[] = [...at(e)];
+    live = pts;
+    const move = (ev: PointerEvent) => {
+      const [x, y] = at(ev);
+      // Every point at least ~2 px from the last: a lighter file, a smoother line.
+      if (Math.hypot((x - pts.at(-2)!) * box.width, (y - pts.at(-1)!) * box.height) < 2) return;
+      pts.push(+x.toFixed(4), +y.toFixed(4));
+      live = [...pts];
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      live = null;
+      pen.onstroke(pts.length >= 4 ? pts : [...pts, pts[0]! + 0.0005, pts[1]!]);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+  // The topmost stroke within reach of (x, y): the distance to its points, in pixels of the sheet on screen.
+  function strokeAt(x: number, y: number, px: number): number {
+    for (let i = note.strokes.length - 1; i >= 0; i--) {
+      const s = note.strokes[i]!;
+      const reach = Math.max(6, (s.width * px) / 2 + 4);
+      for (let k = 0; k < s.points.length; k += 2) {
+        if (Math.hypot((s.points[k]! - x) * px, (s.points[k + 1]! - y) * px / aspect) < reach) return i;
+      }
+    }
+    return -1;
+  }
+
 
   // Неровный почерк: каждая буква чуть повёрнута, сдвинута и другого размера (по зерну записки). Слова не
   // разрываются (буквы — inline-block, иначе строка рвалась бы где угодно).
@@ -229,6 +282,21 @@
         {/if}
       </div>
 
+      <!-- Drawn with the pen: ink like the text, a little rough at the edge; the marks lie over it. -->
+      {#if note.strokes.length}
+        <svg class="ink" viewBox="0 0 {W} {H}" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="{uid}-pen" x="-5%" y="-5%" width="110%" height="110%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed={note.seed % 997} result="n" />
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="3" />
+            </filter>
+          </defs>
+          <g clip-path="url(#{uid}-clip)" filter="url(#{uid}-pen)" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.92">
+            {#each note.strokes as s, i (i)}<path d={strokePath(s.points, W, H)} stroke={strokeInk(s.ink)} stroke-width={s.width * W} />{/each}
+          </g>
+        </svg>
+      {/if}
+
   
       <!-- Следы и складки — поверх текста: пятно темнит и бумагу, и буквы под собой. -->
       {#if marks.multiply || marks.normal || marks.top}
@@ -250,7 +318,13 @@
       {/if}
     </div>
 
-    {#if edit}
+    {#if edit?.pen}
+      <svg class="edit pen" class:erase={edit.pen.erase} viewBox="0 0 {W} {H}" preserveAspectRatio="none" role="presentation" onpointerdown={penDown}>
+        {#if live}
+          <path d={strokePath(live, W, H)} fill="none" stroke={strokeInk(edit.pen.ink)} stroke-width={STROKE_WIDTHS[edit.pen.width] * W} stroke-linecap="round" stroke-linejoin="round" />
+        {/if}
+      </svg>
+    {:else if edit}
       <svg class="edit" class:placing={edit.placing} viewBox="0 0 {W} {H}" preserveAspectRatio="none" role="presentation" onpointerdown={(e) => pick(e, null)}>
         {#each note.marks as m (m.id)}
           <circle
@@ -307,6 +381,13 @@
   .edit.placing,
   .edit.placing .hit {
     cursor: crosshair;
+  }
+  .edit.pen {
+    cursor: crosshair;
+    touch-action: none;
+  }
+  .edit.pen.erase {
+    cursor: cell;
   }
   .edit .sel {
     fill: none;

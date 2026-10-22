@@ -314,7 +314,8 @@ Electron-приложение для мастера D&D: окно управле
   (бумага SVG-фильтрами, размеры в cqw — одинаково на плитке и у игроков), разметка — `note/markup.ts`; следы
   (`marks`: кровь, отпечатки, подпалины, дыры… — виды и цвета `NOTE_MARKS` / `NOTE_TINTS`) и складки (`crease`) рисует
   `note/marks.ts` SVG-строками по зерну (слои multiply и normal поверх текста; дыры — CSS-маска `data:`, поэтому в CSP
-  окон `img-src … data:`); ставят и двигают их в редакторе (проп `edit` у `NotePaper`). Печать и штамп — тоже следы
+  окон `img-src … data:`); ставят и двигают их в редакторе (проп `edit` у `NotePaper`). Перо — `Note.strokes` (`NoteStroke`: чернила `NOTE_INKS`, толщина `STROKE_WIDTHS`, точки
+  в долях листа; линия — `strokePath`), слой SVG между текстом и следами; рисование и ластик — `edit.pen` у `NotePaper`. Печать и штамп — тоже следы
   (`text`, `emblem` — знаки из `shared/emblems.ts`, собраны из Lucide; `broken`), печать — в слое `top` без обрезки
   краем; старые поля `seal` / `sealLetter` `parseNote` превращает в след. Неровный почерк `shaky` — буквы в
   inline-block с поворотом (`shake` в `NotePaper`), шрифты (OFL,

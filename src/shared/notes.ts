@@ -378,6 +378,18 @@ export function markTint(m: NoteMark): NoteTint | null {
   return m.tint && tints.includes(m.tint) ? m.tint : (tints[0] ?? null);
 }
 
+// A stroke of the pen drawn on the sheet (a map to a treasure, a sketch, an arrow): the ink of the note's inks ('auto' —
+// the paper's own), the width in fractions of the sheet's width, the points — x, y in fractions of the sheet, in a row.
+export interface NoteStroke {
+  ink: NoteInk;
+  width: number;
+  points: number[];
+}
+export const STROKE_WIDTHS = { thin: 0.003, medium: 0.007, thick: 0.016 } as const;
+export type StrokeWidth = keyof typeof STROKE_WIDTHS;
+export const MAX_STROKES = 500;
+const MAX_POINTS = 4000;
+
 export interface Note {
   scryingGlass: 'note';
   version: 1;
@@ -401,6 +413,8 @@ export interface Note {
   crease: NoteCrease;
   // Следы поверх листа (кровь, отпечатки, подпалины…), по порядку: последний — сверху.
   marks: NoteMark[];
+  // Drawn with the pen: under the marks, over the text (the order — as drawn).
+  strokes: NoteStroke[];
 }
 
 export function newNote(): Note {
@@ -421,6 +435,7 @@ export function newNote(): Note {
     seed: Math.floor(Math.random() * 10000),
     crease: 'none',
     marks: [],
+    strokes: [],
   };
 }
 
@@ -468,7 +483,38 @@ export function parseNote(raw: unknown): Note | null {
     seed: num(r['seed'], d.seed, 0, 1e9),
     crease: pick(r['crease'], NOTE_CREASES, d.crease),
     marks,
+    strokes: (Array.isArray(r['strokes']) ? r['strokes'] : []).flatMap((s) => parseStroke(s)).slice(0, MAX_STROKES),
   };
+}
+
+function parseStroke(raw: unknown): NoteStroke[] {
+  if (!raw || typeof raw !== 'object') return [];
+  const s = raw as Record<string, unknown>;
+  const pts = Array.isArray(s['points']) ? s['points'].filter((v): v is number => typeof v === 'number' && isFinite(v)).slice(0, MAX_POINTS) : [];
+  if (pts.length < 2) return [];
+  const width = typeof s['width'] === 'number' && isFinite(s['width']) ? Math.min(0.05, Math.max(0.001, s['width'])) : STROKE_WIDTHS.medium;
+  return [{ ink: pick(s['ink'], NOTE_INKS, 'auto'), width, points: pts.slice(0, pts.length - (pts.length % 2)) }];
+}
+
+// A smooth line through the points of a stroke (quadratic curves through the midpoints), in a w × h box.
+export function strokePath(points: number[], w: number, h: number): string {
+  const xy = (i: number) => [points[i * 2]! * w, points[i * 2 + 1]! * h] as const;
+  const n = points.length / 2;
+  const f = (v: number) => v.toFixed(1);
+  if (n === 1) {
+    const [x, y] = xy(0);
+    return `M${f(x)} ${f(y)}l0.1 0`;
+  }
+  let d = '';
+  const [x0, y0] = xy(0);
+  d = `M${f(x0)} ${f(y0)}`;
+  for (let i = 1; i < n - 1; i++) {
+    const [ax, ay] = xy(i);
+    const [bx, by] = xy(i + 1);
+    d += `Q${f(ax)} ${f(ay)} ${f((ax + bx) / 2)} ${f((ay + by) / 2)}`;
+  }
+  const [lx, ly] = xy(n - 1);
+  return d + `L${f(lx)} ${f(ly)}`;
 }
 
 const LEGACY_SEALS: Record<string, NoteTint> = { red: 'redWax', black: 'blackWax', green: 'greenWax', blue: 'blueWax', gold: 'goldWax' };

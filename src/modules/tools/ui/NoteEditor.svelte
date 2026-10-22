@@ -3,17 +3,17 @@
 <script lang="ts">
   import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { AlignCenter, AlignJustify, AlignLeft, ArrowUpToLine, ChevronLeft, Dices, Eraser, Eye, EyeOff, Send, Trash2, TriangleAlert } from '@lucide/svelte';
+  import { AlignCenter, AlignJustify, AlignLeft, ArrowUpToLine, ChevronLeft, Dices, Eraser, Eye, EyeOff, PenLine, Send, Trash2, TriangleAlert, Undo2 } from '@lucide/svelte';
   import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
   import { onDestroy, untrack } from 'svelte';
   import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import {
-    MARK_SIZE, NOTE_CREASES, NOTE_EDGES, NOTE_FONTS, NOTE_INKS, NOTE_MARKS, NOTE_PAPERS, NOTE_SHAPES, NOTE_TINTS, MAX_MARKS, SEAL_TEXT_MAX,
-    markTint, newMark, noteTitle,
+    MARK_SIZE, NOTE_CREASES, NOTE_EDGES, NOTE_FONTS, NOTE_INKS, NOTE_MARKS, NOTE_PAPERS, NOTE_SHAPES, NOTE_TINTS, MAX_MARKS, MAX_STROKES, SEAL_TEXT_MAX,
+    STROKE_WIDTHS, markTint, newMark, noteTitle,
     type Note, type NoteCrease, type NoteEdge, type NoteFont, type NoteInk, type NoteMarkKind, type NotePaper as Paper,
-    type NoteShape, type NoteTint,
+    type NoteShape, type NoteTint, type StrokeWidth,
   } from '../../../shared/notes';
   import { markDefs, markShape } from '../../../renderer/lib/note/marks';
   import { SEAL_EMBLEMS, type SealEmblem } from '../../../shared/emblems';
@@ -135,6 +135,36 @@
     window.addEventListener('pointerup', up);
   }
 
+  // The pen: draws strokes on the sheet (in the ink and width chosen), the eraser takes a stroke away. The pen and placing
+  // marks exclude each other.
+  let pen = $state<{ on: boolean; ink: NoteInk; width: StrokeWidth; erase: boolean }>({ on: false, ink: 'auto', width: 'medium', erase: false });
+  function setPen(on: boolean, erase = pen.erase) {
+    pen.on = on;
+    pen.erase = erase;
+    if (on) {
+      tool = null;
+      selected = null;
+    }
+  }
+  $effect(() => {
+    if (tool) pen.on = false;
+  });
+  const penEdit = $derived(
+    pen.on
+      ? {
+          ink: pen.ink,
+          width: pen.width,
+          erase: pen.erase,
+          onstroke: (points: number[]) => {
+            if (note && note.strokes.length < MAX_STROKES) note.strokes.push({ ink: pen.ink, width: STROKE_WIDTHS[pen.width], points });
+          },
+          onerase: (i: number) => {
+            if (note) note.strokes = note.strokes.filter((_, j) => j !== i);
+          },
+        }
+      : null,
+  );
+
   function removeMark() {
     if (!note || !selected) return;
     note.marks = note.marks.filter((m) => m.id !== selected);
@@ -158,9 +188,10 @@
   function onkeydown(e: KeyboardEvent) {
     const t = e.target as HTMLElement;
     if (t.closest('input, textarea, select, [contenteditable]')) return;
-    if (e.key === 'Escape' && (tool || selected)) {
+    if (e.key === 'Escape' && (tool || selected || pen.on)) {
       e.stopPropagation();
-      if (tool) tool = null;
+      if (pen.on) pen.on = false;
+      else if (tool) tool = null;
       else selected = null;
     } else if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
       e.preventDefault();
@@ -287,6 +318,35 @@
 
         <section class="marks">
           <div class="marks-head">
+            <span>{t('tools.note.pen')}</span>
+            {#if note.strokes.length}
+              <button type="button" class="link" onclick={() => (note!.strokes = note!.strokes.slice(0, -1))}><Undo2 size={12} /> {t('tools.note.penUndo')}</button>
+              <button type="button" class="link" onclick={() => confirm(t('tools.note.penClearQ')) && (note!.strokes = [])}><Eraser size={12} /> {t('tools.note.penClear')}</button>
+            {/if}
+          </div>
+          <div class="pen-row">
+            <div class="seg">
+              <button type="button" class:active={pen.on && !pen.erase} onclick={() => setPen(!(pen.on && !pen.erase), false)}><PenLine size={14} /> {t('tools.note.penDraw')}</button>
+              <button type="button" class:active={pen.on && pen.erase} onclick={() => setPen(!(pen.on && pen.erase), true)}><Eraser size={14} /> {t('tools.note.penErase')}</button>
+            </div>
+            <div class="inks" role="radiogroup" aria-label={t('tools.note.ink')}>
+              {#each Object.entries(NOTE_INKS) as [id, i] (id)}
+                <button type="button" role="radio" aria-checked={pen.ink === id} class="ink-chip" class:active={pen.ink === id} class:auto={!i.color} style:--c={i.color || 'transparent'} title={i.title} onclick={() => ((pen.ink = id as NoteInk), setPen(true, false))}></button>
+              {/each}
+            </div>
+            <div class="seg">
+              {#each Object.keys(STROKE_WIDTHS) as w (w)}
+                <button type="button" class:active={pen.width === w} title={t(`tools.note.penWidth.${w}` as never)} onclick={() => ((pen.width = w as StrokeWidth), setPen(true, false))}>
+                  <span class="dot-w" style:--w="{w === 'thin' ? 2 : w === 'medium' ? 4 : 7}px"></span>
+                </button>
+              {/each}
+            </div>
+          </div>
+          <small class="faint">{pen.on ? t(pen.erase ? 'tools.note.penErasing' : 'tools.note.penDrawing') : t('tools.note.penHelp')}</small>
+        </section>
+
+        <section class="marks">
+          <div class="marks-head">
             <span>{t('tools.note.marks')}</span>
             {#if note.marks.length}
               <button type="button" class="link" title={t('tools.note.clearMarksHint')} onclick={() => ((note!.marks = []), (selected = null))}><Eraser size={12} /> {t('tools.note.clearMarks')}</button>
@@ -370,7 +430,7 @@
       </form>
 
       <div class="preview">
-        <div class="paper" {onwheel}><NotePaper note={note} shadow bind:overflow edit={{ selected, placing: !!tool, onpick }} /></div>
+        <div class="paper" {onwheel}><NotePaper note={note} shadow bind:overflow edit={{ selected, placing: !!tool, onpick, pen: penEdit }} /></div>
         {#if overflow}
           <p class="warn"><TriangleAlert size={14} /> {t('tools.note.overflow')}</p>
         {/if}
@@ -380,6 +440,48 @@
 </div>
 
 <style>
+  .pen-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+  }
+  .pen-row .seg button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: auto;
+    padding: 0 8px;
+    white-space: nowrap;
+  }
+  .inks {
+    display: flex;
+    gap: 4px;
+  }
+  .ink-chip {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--c);
+    cursor: pointer;
+  }
+  .ink-chip.auto {
+    background: linear-gradient(135deg, #3b2412 50%, #ead9b2 50%);
+  }
+  .ink-chip.active {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .dot-w {
+    display: inline-block;
+    width: 14px;
+    height: var(--w);
+    border-radius: 999px;
+    background: currentColor;
+  }
   .editor {
     display: flex;
     flex-direction: column;
