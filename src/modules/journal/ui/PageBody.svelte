@@ -10,11 +10,10 @@
   import { rolls } from '../../../renderer/lib/rolls.svelte';
   import { pdfLink, splitProps, toggleTask } from '../../../shared/journal';
   import { journal, resolvePage, resolvePdf, type PageItem } from './store.svelte';
-  import { peekPdf } from '../../../renderer/lib/pdf/pdf.svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { inCurrentFamily } from '../../../shared/adventures';
   import { store } from '../../../renderer/lib/store.svelte';
-  import { openPage } from './ui.svelte';
+  import { openPage, peekJournal } from './ui.svelte';
 
   let { page, compact = false }: { page: PageItem; compact?: boolean } = $props();
 
@@ -34,13 +33,13 @@
   async function openLink(name: string, anchor: string | null) {
     const book = resolvePdf(name);
     const at = anchor ? pdfLink(`${name}#${anchor}`).page : null;
-    if (book && at) return peekPdf(book.path, at);
+    if (book && at) return peekJournal(book.path, at);
     await connectCards();
     const found = bestiary.named(name);
     const card = found && inCurrentFamily(store.state.adventures, found.system) ? found : null;
     const p = card ? null : resolvePage(name);
     if (card) bestiary.show(card.ref);
-    else if (!p && book) peekPdf(book.path);
+    else if (!p && book) peekJournal(book.path);
     else if (p) openPage(p.path);
     else peekEntry(name);
   }

@@ -14,7 +14,7 @@ translation for it, otherwise English). The language switches at once, without a
 (as the system), dark, light, parchment (fantasy), space or neon (science fiction, cyberpunk) — is in the same place (⌘, → General → Theme); the player screen keeps its
 own look. The tab bar is the window's title bar, as in Obsidian (drag the window by its empty space): on in macOS,
 a beta in Windows and Linux, where the system buttons go to the top right corner — ⌘, → General → Tabs in the title
-bar (works at once). Over the side panel — search (⌘K), the roll log and "Hide"; with the panel hidden, "Show" stands at the start of the tab
+bar (works at once). Over the side panel — search (⌘K), the roll log, the trash (with the number of items) and "Hide"; with the panel hidden, "Show" stands at the start of the tab
 bar. At its right end — the list of all tabs with whole titles. The player screen title shows its status (a dot: closed,
 open, blacked out) with quick "Open / Close" and "Black out", and "Hide": the hidden panel leaves its dot and
 "Show" at the end of the tab bar. The built-in compendium
@@ -237,14 +237,15 @@ turned off in Settings → Journal; the compendium editor has them too):
 
 A ">" quote is read-aloud text (a highlighted box), "- [ ]" — a task with a checkbox (a click checks it right in the
 file), {1d20+2} — a roll into the roll log on click, [[Title]] — a card, another note or a compendium entry (in a side
-drawer; a card wins over a note or an entry with the same name). A note can be pinned: it appears in the right panel, at hand during the game; the pin travels with the
+drawer; a card wins over a note or an entry with the same name). Notes and PDFs can be pinned — any number of them: the right panel lists their names, at hand during the game; a click
+opens one in the side drawer over any tab, the pin button unpins it. The pins travel with the
 adventure file (.sgpack) and comes back with the adventure from the trash. Notes are found by ⌘K.
 
 **PDF books and adventures** live in the journal too: drop a PDF on the Journal tab or its icon, or right onto a folder
 of the tree (or put it into the journal folder) and it shows in the tree next to the notes. It opens right in the app — pages one under another,
 selectable text, search (⌘F; Enter — the next match), the page number, zoom and fit to width; each file opens where it
-was left. To look something up during the game without leaving the fight or the map, open it in the side drawer
-over any tab, or pin it to the right panel. [[Book#12]] in a note opens page 12 of the PDF "Book" in the drawer.
+was left. To look something up during the game without leaving the fight or the map, pin it: from the right panel
+it opens in the side drawer over any tab. [[Book#12]] in a note opens page 12 of the PDF "Book" in the drawer.
 PDFs are renamed, moved between folders and deleted like notes and travel with the adventure in a .sgpack.
 
 ## Tools

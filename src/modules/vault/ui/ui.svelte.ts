@@ -4,6 +4,7 @@ import { folderRole, type FolderRole } from '../../../shared/vault';
 import { BookOpen, Folder, Map, Music, NotebookPen, Scroll, Shield, Skull, Users, Wallpaper } from '@lucide/svelte';
 import type { Component } from 'svelte';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
+import { openTab } from '../../../renderer/lib/nav';
 
 const KEY = 'sg.files';
 
@@ -44,3 +45,9 @@ export const folderIcon = (name: string): Component => {
   const role = folderRole(name);
   return role ? ROLE_ICONS[role] : Folder;
 };
+
+// The trash from anywhere (the button over the sidebar): Files with the trash open.
+export function openTrash() {
+  ui.trash = true;
+  openTab('vault');
+}

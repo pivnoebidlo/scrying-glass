@@ -23,8 +23,8 @@ export interface PackSlices {
   names: Record<string, string>;
   // Подборка правой панели приключения (без включённой сцены; у сцен — своя, внутри сцены).
   tray?: unknown;
-  // The adventure's pinned journal note (its path).
-  pinned?: string;
+  // The adventure's pinned journal notes and PDFs (paths; before 0.56 — one path).
+  pinned?: string | string[];
   // Mausritter: the adventure's factions and exploration clock (none before 0.41).
   mausritter?: unknown;
   // The adventure's progress clocks (none before 0.54).
@@ -106,7 +106,7 @@ export async function readPack(file: string, tmp: string): Promise<ReadPack> {
     .map((n) => ({ id: path.basename(n, '.json'), json: json(n) }));
   return {
     manifest,
-    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' ? slices.pinned : undefined, mausritter: slices.mausritter, clocks: Array.isArray(slices.clocks) ? slices.clocks : undefined, crew: slices.crew },
+    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' || Array.isArray(slices.pinned) ? slices.pinned : undefined, mausritter: slices.mausritter, clocks: Array.isArray(slices.clocks) ? slices.clocks : undefined, crew: slices.crew },
     dir: tmp,
     cards,
   };

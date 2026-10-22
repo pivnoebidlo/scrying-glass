@@ -1,5 +1,5 @@
 // PDF files of the journal (the GM's books and adventures): where each one was left (page and zoom — localStorage of
-// the window) and the side drawer that shows one over any tab (`peekPdf`).
+// the window).
 
 export interface PdfPlace {
   page: number;
@@ -38,13 +38,3 @@ export function movePlace(from: string, to: string) {
   const p = places[from];
   if (p) savePlace(to, p);
 }
-
-// The drawer: the file and, if asked, the page to open (else where it was left).
-export const pdfPeek = $state({ path: null as string | null, page: null as number | null, rev: 0 });
-
-export function peekPdf(path: string, page: number | null = null) {
-  pdfPeek.path = path;
-  pdfPeek.page = page;
-  pdfPeek.rev++;
-}
-export const closePdf = () => (pdfPeek.path = null);

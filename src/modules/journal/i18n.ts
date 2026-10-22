@@ -4,6 +4,7 @@ import type { Messages } from '../../shared/i18n/core';
 export const en = {
   'journal.openInTab': "Open in the Journal tab",
   'journal.unpin': "Unpin",
+  'journal.peekHint': "Open in the side panel — over any tab",
   'journal.empty': "Empty. “Edit” — write the note.",
   'journal.editorPlaceholder': "Write as in Obsidian.\n\n## Subheading\n> Text to read aloud to the players\n- [ ] A task with a checkbox\n{1d20} — a roll, [[Name]] — a link to a note, compendium entry or card",
   'journal.toolbarTitle': "Formatting toolbar",
@@ -39,7 +40,6 @@ export const en = {
   'pdf.prev': "Previous match",
   'pdf.next': "Next match",
   'pdf.failed': "The PDF could not be opened",
-  'pdf.drawer': "Look in the side panel: over any tab",
   'pdf.inTab': "In the Journal tab",
   'pdf.unpinHint': "Unpin from the right panel",
   'pdf.pinHint': "Pin to the right panel: the book stays at hand during the game",
@@ -56,12 +56,12 @@ export const en = {
   'journal.newNoteIn': "New note in «{folder}»",
   'journal.newFolderIn': "New folder in «{folder}»",
   'journal.treeHint': "Right click — actions. Drag a note, a PDF or a folder onto a folder to move it; PDFs from Finder can be dropped onto a folder too.",
-  'pdf.peek': "Look in the side panel",
 };
 
 export const ru: Messages<typeof en> = {
   'journal.openInTab': "Открыть во вкладке «Журнал»",
   'journal.unpin': "Открепить",
+  'journal.peekHint': "Открыть в выдвижной панели — поверх любой вкладки",
   'journal.empty': "Пусто. «Править» — написать заметку.",
   'journal.editorPlaceholder': "Пишите как в Obsidian.\n\n## Подзаголовок\n> Текст, который нужно зачитать игрокам\n- [ ] Задача с флажком\n{1d20} — бросок, [[Название]] — ссылка на заметку, запись справочника или карточку",
   'journal.toolbarTitle': "Панель оформления",
@@ -97,7 +97,6 @@ export const ru: Messages<typeof en> = {
   'pdf.prev': "Предыдущее совпадение",
   'pdf.next': "Следующее совпадение",
   'pdf.failed': "Не удалось открыть PDF",
-  'pdf.drawer': "Подсмотреть в выдвижной панели — поверх любой вкладки",
   'pdf.inTab': "Во вкладке «Журнал»",
   'pdf.unpinHint': "Открепить от правой панели",
   'pdf.pinHint': "Закрепить в правой панели: книга под рукой во время игры",
@@ -114,5 +113,4 @@ export const ru: Messages<typeof en> = {
   'journal.newNoteIn': "Новая заметка в «{folder}»",
   'journal.newFolderIn': "Новая папка в «{folder}»",
   'journal.treeHint': "Правый щелчок — действия. Перетащите заметку, PDF или папку на папку, чтобы перенести; PDF из Finder тоже можно бросить на папку.",
-  'pdf.peek': "Подсмотреть в выдвижной панели",
 };

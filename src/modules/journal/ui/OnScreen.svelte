@@ -1,84 +1,74 @@
-<!-- Блок «Журнал» в правой панели: закреплённая заметка приключения под рукой на игре (видит только мастер); a pinned
-     PDF — a small viewer and the button to look at it in the side drawer. -->
+<!-- Блок «Журнал» в правой панели: закреплённые заметки и PDF приключения под рукой на игре (видит только мастер).
+     Only their names: a click (or the panel button) opens one in the side drawer over any tab; the pin unpins it. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Maximize2, PanelRight, PinOff } from '@lucide/svelte';
-  import PdfView from '../../../renderer/lib/pdf/PdfView.svelte';
-  import { peekPdf } from '../../../renderer/lib/pdf/pdf.svelte';
-  import { pageTitle } from '../../../shared/journal';
+  import { BookOpen, NotebookText, PanelRight, PinOff } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { pinnedPage } from '../control';
-  import PageBody from './PageBody.svelte';
-  import { loadPages, pageAt, pdfAt } from './store.svelte';
-  import { openPage } from './ui.svelte';
+  import { isPdf, pageTitle } from '../../../shared/journal';
+  import { pinnedPages } from '../control';
+  import { peek, peekJournal } from './ui.svelte';
 
   let { app }: ModuleProps<'journal'> = $props();
 
-  const tree = $derived(app.vault.tree);
   const adv = $derived(app.adventures.current);
-  $effect(() => {
-    void tree;
-    void adv;
-    void notes.rev;
-    void loadPages();
-  });
-
-  const path = $derived(pinnedPage(app));
-  const page = $derived(pageAt(path));
-  const pdf = $derived((void tree, void adv, pdfAt(path)));
+  const list = $derived(pinnedPages(app));
 </script>
 
-{#if pdf}
-  <div class="pinned">
-    <div class="head">
-      <span class="t" title={pdf.path}>{pageTitle(pdf.path)}</span>
-      <button class="icon-btn" title={t('pdf.drawer')} onclick={() => peekPdf(pdf.path)}><PanelRight size={13} /></button>
-      <button class="icon-btn" title={t('journal.openInTab')} onclick={() => openPage(pdf.path)}><Maximize2 size={13} /></button>
-      <button class="icon-btn" title={t('journal.unpin')} onclick={() => dispatch('journal', 'pin', { adventure: adv, path: null })}><PinOff size={13} /></button>
-    </div>
-    <div class="pdf">{#key pdf.path}<PdfView path={pdf.path} compact />{/key}</div>
-  </div>
-{:else if page}
-  <div class="pinned">
-    <div class="head">
-      <span class="t" title={page.path}>{page.title}</span>
-      <button class="icon-btn" title={t('journal.openInTab')} onclick={() => openPage(page.path)}><Maximize2 size={13} /></button>
-      <button class="icon-btn" title={t('journal.unpin')} onclick={() => dispatch('journal', 'pin', { adventure: adv, path: null })}><PinOff size={13} /></button>
-    </div>
-    <div class="body"><PageBody {page} compact /></div>
-  </div>
-{/if}
+<ul class="pinned">
+  {#each list as path (path)}
+    <li class:open={peek.path === path}>
+      <button class="name" title={t('journal.peekHint')} onclick={() => peekJournal(path)}>
+        {#if isPdf(path)}<BookOpen size={13} />{:else}<NotebookText size={13} />{/if}
+        <span class="t">{pageTitle(path)}</span>
+      </button>
+      <button class="icon-btn" title={t('journal.peekHint')} onclick={() => peekJournal(path)}><PanelRight size={13} /></button>
+      <button class="icon-btn" title={t('journal.unpin')} onclick={() => dispatch('journal', 'unpin', { adventure: adv, path })}><PinOff size={13} /></button>
+    </li>
+  {/each}
+</ul>
 
 <style>
   .pinned {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
-  .head {
+  li {
     display: flex;
     align-items: center;
     gap: 2px;
+    border-radius: var(--radius-s);
   }
-  .t {
+  li.open {
+    background: var(--bg-active);
+  }
+  .name {
+    display: flex;
     flex: 1;
     min-width: 0;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px;
+    border: 0;
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--text-normal);
+    text-align: left;
+    cursor: pointer;
+  }
+  .name:hover {
+    background: var(--bg-hover);
+  }
+  .t {
     overflow: hidden;
-    font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .head .icon-btn {
+  li .icon-btn {
     padding: 3px;
-  }
-  .pdf {
-    height: 45vh;
-  }
-  .body {
-    max-height: 45vh;
-    padding-right: 4px;
-    overflow: auto;
   }
 </style>

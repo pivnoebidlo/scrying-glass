@@ -108,3 +108,20 @@ describe('журнал: PDF', () => {
     }
   });
 });
+
+describe('журнал: закреплённые', () => {
+  it('несколько на приключение; старое сохранение с одной заметкой переводится; перенос правит пути', async () => {
+    const { default: journal } = await import('../src/modules/journal/main');
+    const { ctx, run } = await import('./helpers');
+    let s = journal.init!({ pinned: { Strahd: 'Strahd/journal/Plan.md' } as never }, ctx());
+    expect(s.pinned['Strahd']).toEqual(['Strahd/journal/Plan.md']);
+    s = run(journal, s, 'pin', { adventure: 'Strahd', path: 'Strahd/journal/Book.pdf' });
+    s = run(journal, s, 'pin', { adventure: 'Strahd', path: 'Strahd/journal/Book.pdf' });
+    expect(s.pinned['Strahd']).toEqual(['Strahd/journal/Plan.md', 'Strahd/journal/Book.pdf']);
+    s = run(journal, s, 'move', { from: 'Strahd/journal/Book.pdf', to: 'Strahd/journal/Books/Book.pdf' });
+    s = run(journal, s, 'unpin', { adventure: 'Strahd', path: 'Strahd/journal/Plan.md' });
+    expect(s.pinned['Strahd']).toEqual(['Strahd/journal/Books/Book.pdf']);
+    s = run(journal, s, 'unpin', { adventure: 'Strahd', path: 'Strahd/journal/Books/Book.pdf' });
+    expect(s.pinned['Strahd']).toBeUndefined();
+  });
+});

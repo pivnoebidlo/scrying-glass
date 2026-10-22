@@ -1,4 +1,5 @@
-// Журнал в окне управления: вкладка с заметками, список слева, закреплённая заметка — в правой панели.
+// Журнал в окне управления: вкладка с заметками, список слева, закреплённые заметки и PDF — в правой панели, they open
+// in the side drawer (Drawer.svelte).
 import { NotebookPen } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
@@ -8,13 +9,14 @@ import OnScreen from './ui/OnScreen.svelte';
 import Sidebar from './ui/Sidebar.svelte';
 import View from './ui/View.svelte';
 import Settings from './ui/Settings.svelte';
-import PdfDrawer from './ui/PdfDrawer.svelte';
+import Drawer from './ui/Drawer.svelte';
 
 // Закреплённая заметка текущего приключения, если файл на месте.
-// A note or a PDF.
-export function pinnedPage(app: AppState): string | null {
-  const p = app.journal.pinned[app.adventures.current ?? ''];
-  return p && app.vault.tree && allFiles(app.vault.tree).some((f) => f.path === p && (f.kind === 'page' || f.kind === 'pdf')) ? p : null;
+// Pinned notes and PDFs of the current adventure whose files are in place.
+export function pinnedPages(app: AppState): string[] {
+  const list = app.journal.pinned[app.adventures.current ?? ''] ?? [];
+  const files = app.vault.tree ? new Set(allFiles(app.vault.tree).filter((f) => f.kind === 'page' || f.kind === 'pdf').map((f) => f.path)) : new Set<string>();
+  return list.filter((p) => files.has(p));
 }
 
 export default defineControl({
@@ -28,7 +30,7 @@ export default defineControl({
   view: View,
   sidebar: Sidebar,
   screen: OnScreen,
-  screenEmpty: (app) => (pinnedPage(app) ? null : t('empty.noPinned')),
+  screenEmpty: (app) => (pinnedPages(app).length ? null : t('empty.noPinned')),
   settings: Settings,
-  background: PdfDrawer,
+  background: Drawer,
 });

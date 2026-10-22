@@ -3,9 +3,9 @@
 <script lang="ts">
   import { hotkeyLabel } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { ChevronLeft, Eye, ExternalLink, PanelRight, Pencil, Pin, PinOff, Trash2 } from '@lucide/svelte';
+  import { ChevronLeft, Eye, ExternalLink, Pencil, Pin, PinOff, Trash2 } from '@lucide/svelte';
   import PdfView from '../../../renderer/lib/pdf/PdfView.svelte';
-  import { movePlace, peekPdf } from '../../../renderer/lib/pdf/pdf.svelte';
+  import { movePlace } from '../../../renderer/lib/pdf/pdf.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -31,7 +31,7 @@
   const pdf = $derived((void tree, void adv, pdfAt(ui.open)));
   const page = $derived(pageAt(ui.open) ?? pdf);
   const pinKey = $derived(adv ?? '');
-  const pinned = $derived(!!page && ms.pinned[pinKey] === page.path);
+  const pinned = $derived(!!page && (ms.pinned[pinKey] ?? []).includes(page.path));
   let editor = $state<PageEditor>();
   let title = $state('');
   let titleInput = $state<HTMLInputElement>();
@@ -75,7 +75,7 @@
     const s = await dispatch('vault', 'trash', { paths: [p] });
     if (!s.vault.tree || !allFiles(s.vault.tree).some((f) => f.path === p)) {
       ui.open = null;
-      if (pinned) dispatch('journal', 'pin', { adventure: adv, path: null });
+      if (pinned) dispatch('journal', 'unpin', { adventure: adv, path: p });
     }
   }
 
@@ -102,9 +102,7 @@
         onchange={rename}
         onkeydown={(e) => e.key === 'Enter' && (e.currentTarget.blur(), document.querySelector<HTMLTextAreaElement>('.journal-text')?.focus())}
       />
-      {#if pdf}
-        <button class="icon-btn" title={t('pdf.drawer')} onclick={() => peekPdf(pdf.path)}><PanelRight size={15} /></button>
-      {:else}
+      {#if !pdf}
         <button class="btn" class:primary={!ui.editing} title={hotkeyLabel('journalPreview')} onclick={() => (ui.editing = !ui.editing)}>
           {#if ui.editing}<Eye size={14} /> {t('journal.preview')}{:else}<Pencil size={14} /> {t('journal.edit')}{/if}
         </button>
@@ -113,7 +111,7 @@
         class="icon-btn"
         class:on={pinned}
         title={pinned ? t('journal.unpinHint') : t(pdf ? 'pdf.pinHint' : 'journal.pinHint')}
-        onclick={() => dispatch('journal', 'pin', { adventure: adv, path: pinned ? null : page.path })}
+        onclick={() => dispatch('journal', pinned ? 'unpin' : 'pin', { adventure: adv, path: page.path })}
       >
         {#if pinned}<PinOff size={15} />{:else}<Pin size={15} />{/if}
       </button>

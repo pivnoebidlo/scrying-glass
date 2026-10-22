@@ -711,8 +711,8 @@ interface AdventureData {
   tray?: AnyRec;
   // Ролевая система приключения (у удалённых до 0.18 нет).
   system?: string;
-  // The pinned journal note (none before 0.32).
-  pinned?: string;
+  // The pinned journal notes and PDFs (none before 0.32, one path before 0.56).
+  pinned?: string | string[];
   // Mausritter factions and clock (none before 0.41).
   mausritter?: AnyRec;
   // Progress clocks (none before 0.54).
@@ -755,7 +755,7 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
     order: pick(s.order.groups, (k) => inAdventure(adventure, k) || inAdventure(`monsters:${adventure}`, k)),
     names: pick(s.portraits.names, (k) => inAdventure(adventure, k)),
     tray: s.scenes.trays?.[adventure],
-    pinned: (state as unknown as { journal: { pinned: Record<string, string> } }).journal.pinned[adventure],
+    pinned: (state as unknown as { journal: { pinned: Record<string, string[]> } }).journal.pinned[adventure],
     mausritter: (state as unknown as { mausritter: { byAdventure: Record<string, unknown> } }).mausritter.byAdventure[adventure],
     clocks: state.clocks.byAdventure[adventure],
     crew: state.crew.byAdventure[adventure] as unknown as AnyRec | undefined,
@@ -834,7 +834,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     names: drop(st['portraits']!['names'] as AnyRec, (k) => inAdventure(name, k)),
     tray: (st['scenes']!['trays'] as AnyRec | undefined)?.[name] as AnyRec | undefined,
     system: state.adventures.systems?.[name],
-    pinned: (st['journal']!['pinned'] as Record<string, string>)[name],
+    pinned: (st['journal']!['pinned'] as Record<string, string[]>)[name],
     mausritter: (st['mausritter']!['byAdventure'] as Record<string, AnyRec>)[name],
     clocks: (st['clocks']!['byAdventure'] as Record<string, unknown[]>)[name],
     crew: (st['crew']!['byAdventure'] as Record<string, AnyRec>)[name],
@@ -932,7 +932,7 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
     await merge('maps', (st) => ({ ...st, maps: { ...data.maps, ...(st['maps'] as AnyRec) } }));
     await merge('order', (st) => ({ ...st, groups: { ...data.order, ...(st['groups'] as AnyRec) } }));
     await merge('portraits', (st) => ({ ...st, names: { ...data.names, ...(st['names'] as AnyRec) } }));
-    if (data.pinned) await merge('journal', (st) => ({ ...st, pinned: { ...(st['pinned'] as AnyRec), [main.to]: data.pinned } }));
+    if (data.pinned) await merge('journal', (st) => ({ ...st, pinned: { ...(st['pinned'] as AnyRec), [main.to]: [data.pinned].flat() } }));
     if (data.mausritter) await merge('mausritter', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.mausritter } }));
     if (data.clocks) await merge('clocks', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.clocks } }));
     if (data.crew) await merge('crew', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.crew } }));
@@ -1068,7 +1068,7 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
     await merge('initiative', (s) => ({ ...s, encounters: [...(s['encounters'] as AnyRec[]), ...encounters] }));
     await merge('order', (s) => ({ ...s, groups: { ...(s['groups'] as AnyRec), ...sl.order } }));
     await merge('portraits', (s) => ({ ...s, names: { ...(s['names'] as AnyRec), ...sl.names } }));
-    if (sl.pinned) await merge('journal', (s) => ({ ...s, pinned: { ...(s['pinned'] as AnyRec), [name]: sl.pinned } }));
+    if (sl.pinned) await merge('journal', (s) => ({ ...s, pinned: { ...(s['pinned'] as AnyRec), [name]: [sl.pinned].flat() } }));
     if (sl.mausritter) await merge('mausritter', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.mausritter } }));
     if (sl.clocks) await merge('clocks', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.clocks } }));
     if (sl.crew) await merge('crew', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.crew } }));

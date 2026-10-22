@@ -20,3 +20,12 @@ export function openPage(path: string, edit = false) {
   ui.editing = edit;
   openTab('journal');
 }
+
+// The side drawer of the journal: a pinned note or a PDF over any tab (from the right panel, a [[link]] — a PDF page).
+export const peek = $state({ path: null as string | null, page: null as number | null, rev: 0 });
+export function peekJournal(path: string, page: number | null = null) {
+  peek.path = path;
+  peek.page = page;
+  peek.rev++;
+}
+export const closePeek = () => (peek.path = null);

@@ -51,7 +51,7 @@ Electron-приложение для мастера D&D: окно управле
   них — нет (`theme.css`). Области перетаскивания не видят слоёв: всё `position: fixed` поверх них помечено
   `-webkit-app-region: no-drag` — новому всплывающему окну нужна та же строка. Строка заголовка есть во всех режимах:
   над боковой панелью справа — поиск ⌘K (`openQuickSearch`, renderer/lib/quicksearch.svelte.ts), журнал бросков
-  (`rolls.open`, пустой — с подсказкой) и «Скрыть» (слева в macOS — светофор, туда ничего не ставить), при скрытой панели
+  (`rolls.open`, пустой — с подсказкой), корзина (`openTrash` из vault/ui/ui.svelte.ts, число — `trashCount`) и «Скрыть» (слева в macOS — светофор, туда ничего не ставить), при скрытой панели
   «Показать» — в начале полосы вкладок (`Tabs.svelte`). В конце полосы — список вкладок (меню под стрелкой). Правая
   панель скрывается (`workspace.panelOpen`); состояние экрана игроков — `ScreenStatus.svelte` (точка + быстрые кнопки) в
   её заголовке, а при скрытой панели — в конце полосы вкладок. Windows/Linux: правый край строки отдан системным
@@ -551,14 +551,16 @@ Electron-приложение для мастера D&D: окно управле
   ⌘B / ⌘I / ⌘⇧X — `toggleWrap` из `shared/journal.ts`, ⌘⇧. — цитата (`toggleLinePrefix`), Tab — отступ; панель кнопок над
   текстом — `renderer/lib/MarkdownToolbar.svelte` (журнал и справочник; `journal` — ещё задача и бросок; выключается в
   «Настройки» → «Журнал», `editorPrefs.toolbar` в localStorage окна); правки через `execCommand('insertText')` — ⌘Z работает. В состоянии — только
-  `pinned` (приключение → путь): блок правой панели `OnScreen.svelte`. Заметки — в ⌘K (`QuickSearch` справочника).
+  `pinned` (приключение → пути, по порядку; до 0.56 — один путь, `init` переводит), действия `pin` / `unpin`: блок
+  правой панели `OnScreen.svelte` — только названия, щелчок — выдвижная панель журнала (`peek` / `peekJournal` в
+  `journal/ui/ui.svelte.ts` → фоновый `Drawer.svelte`: заметка — `PageBody`, PDF — `PdfView`). Заметки — в ⌘K (`QuickSearch` справочника).
   PDF (книги и приключения) — тоже в папках журнала: `FileKind` 'pdf' (`main/scan.ts`, `PDF` в shared/vault.ts),
   переименование и перенос — `textstore` (`other` у `textKind`: файл не читается как текст); перетаскивание и ⌘V на
   «Журнал» (`roleAccepts` 'journal'), на папку дерева — `data-drop-folder` (FileDrop). Боковая панель журнала без кнопок
   при наведении: «Заметка» / «Папка» сверху — в `ui.selected` (или папку открытой), действия строки — контекстное меню
   `renderer/lib/ContextMenu.svelte` (правый щелчок или «⋯» у выбранной; `items` — вложенный список, «Перенести в…»). Просмотр — pdf.js (`pdfjs-dist`, точная версия): `renderer/lib/pdf/PdfView.svelte`
-  (страницы, поиск — `PDFFindController`, масштаб; `compact` — правая панель), место в файле — `pdf.svelte.ts`
-  (localStorage окна), выдвижная панель — `pdfPeek` / `peekPdf` → фоновый `journal/ui/PdfDrawer.svelte` (z-index ниже
+  (страницы, поиск — `PDFFindController`, масштаб; `compact` — узкий вид без масштаба), место в файле — `pdf.svelte.ts`
+  (localStorage окна), выдвижная панель — `peekJournal` → фоновый `journal/ui/Drawer.svelte` (z-index ниже
   карточки и записи). [[Книга#12]] — `pdfLink`, якорь ссылки — `data-anchor` (`entry/markup.ts`). Файл — по
   `sg-asset://v/…` через fetch: в `serveFile` заголовки CORS (окна — file://), в CSP окна мастера `connect-src
   sg-asset:`; данные pdf.js (CMaps, шрифты, ICC, wasm) — плагин `pdfjsData` в electron.vite.config.ts кладёт их в

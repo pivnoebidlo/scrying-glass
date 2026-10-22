@@ -5,11 +5,11 @@
      and onto a folder (or a place) to move; files from Finder can be dropped onto a folder (FileDrop: data-drop-folder). -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { BookOpen, ChevronDown, ChevronRight, ExternalLink, FilePlus, Folder, FolderInput, FolderPlus, MoreHorizontal, PanelRight, Pencil, Pin, PinOff, Search, Trash2 } from '@lucide/svelte';
+  import { BookOpen, ChevronDown, ChevronRight, ExternalLink, FilePlus, Folder, FolderInput, FolderPlus, MoreHorizontal, Pencil, Pin, PinOff, Search, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import ContextMenu, { type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
-  import { movePlace, peekPdf } from '../../../renderer/lib/pdf/pdf.svelte';
+  import { movePlace } from '../../../renderer/lib/pdf/pdf.svelte';
   import { draggedFile, sortable } from '../../../renderer/lib/sortable';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { applyOrder } from '../../../shared/order';
@@ -64,7 +64,7 @@
     return q ? journalPdfs().filter((p) => searchKey(p.title).includes(q)) : [];
   });
   const groups = $derived(app.order.groups);
-  const pinned = $derived(app.journal.pinned[adv ?? '']);
+  const pinned = $derived(app.journal.pinned[adv ?? ''] ?? []);
 
   async function newPage(folder: string) {
     const path = await window.api.createPage(folder, t('journal.newNoteName'), '');
@@ -165,7 +165,7 @@
     if (s.vault.tree && !journalRoots().some((r) => r.folder.path === path)) {
       if (gone(ui.open)) ui.open = null;
       if (gone(ui.selected)) ui.selected = null;
-      if (gone(pinned ?? null)) dispatch('journal', 'pin', { adventure: adv, path: null });
+      for (const p of pinned) if (gone(p)) dispatch('journal', 'unpin', { adventure: adv, path: p });
     }
   }
 
@@ -188,9 +188,8 @@
   }
   function fileMenu(path: string): MenuItem[] {
     const pdf = isPdf(path);
-    const isPinned = pinned === path;
+    const isPinned = pinned.includes(path);
     return [
-      ...(pdf ? [{ label: t('pdf.peek'), icon: PanelRight, action: () => peekPdf(path) }] : []),
       {
         label: t('journal.rename'),
         icon: Pencil,
@@ -200,7 +199,7 @@
         },
       },
       { label: t('journal.moveTo'), icon: FolderInput, items: moveItems(path) },
-      { label: isPinned ? t('journal.unpin') : t('journal.pinShort'), icon: isPinned ? PinOff : Pin, action: () => dispatch('journal', 'pin', { adventure: adv, path: isPinned ? null : path }) },
+      { label: isPinned ? t('journal.unpin') : t('journal.pinShort'), icon: isPinned ? PinOff : Pin, action: () => dispatch('journal', isPinned ? 'unpin' : 'pin', { adventure: adv, path }) },
       { label: t('journal.openExternalShort'), icon: ExternalLink, action: () => window.api.openFile(path) },
       { label: t(pdf ? 'pdf.delete' : 'journal.deleteNote'), icon: Trash2, danger: true, action: () => void trash(path) },
     ];
@@ -305,7 +304,7 @@
         >
           {#if file.kind === 'pdf'}<BookOpen size={13} class="pdf-icon" />{/if}
           <span class="t">{pageTitle(file.path)}</span>
-          {#if pinned === file.path}<Pin size={11} class="pin-mark" />{/if}
+          {#if pinned.includes(file.path)}<Pin size={11} class="pin-mark" />{/if}
         </button>
         {#if ui.open === file.path}{@render more(() => fileMenu(file.path))}{/if}
       </div>
