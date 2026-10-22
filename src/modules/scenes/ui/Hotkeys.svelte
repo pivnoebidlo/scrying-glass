@@ -1,15 +1,20 @@
-<!-- ⌘1…⌘9 (Ctrl+1…9): включить сцену с этим номером. -->
+<!-- ⌘1…⌘9 (Ctrl+1…9; the GM may move the row to other modifiers — shared/hotkeys.ts): switch on the scene with this
+     number. -->
 <script lang="ts">
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { activate } from '../apply';
   import { scenesFor } from '../types';
+  import { comboFor, rowNumber } from '../../../shared/hotkeys';
 
   let { ms, app }: ModuleProps<'scenes'> = $props();
 
   function onkeydown(e: KeyboardEvent) {
-    if (!(e.metaKey || e.ctrlKey) || e.altKey || e.shiftKey) return;
-    const n = Number(e.key);
-    const sc = Number.isInteger(n) && n >= 1 && n <= 9 ? scenesFor(ms, app.adventures)[n - 1] : undefined;
+    // Without ⌘/Ctrl the keys type text (⌥1 → ¡): not while the cursor is in a text field.
+    const el = e.target as HTMLElement | null;
+    const typing = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || !!el?.isContentEditable;
+    if (typing && !comboFor('scene').includes('Mod')) return;
+    const n = rowNumber(e, 'scene');
+    const sc = n ? scenesFor(ms, app.adventures)[n - 1] : undefined;
     if (!sc) return;
     e.preventDefault();
     activate(app, sc);

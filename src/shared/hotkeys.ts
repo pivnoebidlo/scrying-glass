@@ -17,7 +17,7 @@ export interface HotkeyDef {
   combo: string;
   // The GM can change it (its handler checks matches()).
   edit?: boolean;
-  // Shown as a range of keys: «Mod+1» → «⌘1 … ⌘9».
+  // A row of keys 1…range: «Mod+1» → «⌘1 … ⌘9»; the GM changes the modifiers of the whole row (sceneOf).
   range?: string;
 }
 
@@ -25,7 +25,7 @@ export const HOTKEYS: HotkeyDef[] = [
   { id: 'settings', group: 'app', combo: 'Mod+,', edit: true },
   { id: 'search', group: 'search', combo: 'Mod+K', edit: true },
   { id: 'blackout', group: 'screen', combo: 'Mod+B', edit: true },
-  { id: 'scene', group: 'screen', combo: 'Mod+1', range: '9' },
+  { id: 'scene', group: 'screen', combo: 'Mod+1', range: '9', edit: true },
   { id: 'closeScreen', group: 'screen', combo: 'Escape' },
   { id: 'playPause', group: 'music', combo: 'Mod+P', edit: true },
   { id: 'nextTrack', group: 'music', combo: 'Mod+ArrowRight', edit: true },
@@ -129,6 +129,24 @@ export function matches(e: KeyPress, id: string): boolean {
   );
 }
 
+// A row of digits (the scenes): the number pressed with the row's modifiers, 1…9; otherwise null.
+export function rowNumber(e: KeyPress, id: string): number | null {
+  const h = byId.get(id);
+  if (!h?.range) return null;
+  const digit = Number(keyOf(e.code));
+  if (!Number.isInteger(digit) || digit < 1 || digit > Number(h.range)) return null;
+  // Not {...e}: a KeyboardEvent keeps its fields on the prototype, a spread would lose them.
+  return matches({ code: 'Digit1', metaKey: e.metaKey, ctrlKey: e.ctrlKey, altKey: e.altKey, shiftKey: e.shiftKey }, id) ? digit : null;
+}
+
+// Every combo a shortcut takes: one, or the whole row (Mod+1 … Mod+9).
+export function combosOf(id: string, combo = comboFor(id)): string[] {
+  const h = byId.get(id);
+  if (!h?.range) return [combo];
+  const head = combo.replace(/\d$/, '');
+  return Array.from({ length: Number(h.range) }, (_, i) => `${head}${i + 1}`);
+}
+
 // ---------- Labels ----------
 
 const MAC_MOD: Record<string, string> = { Mod: '⌘', Alt: '⌥', Shift: '⇧' };
@@ -177,19 +195,28 @@ export const accelerator = (id: string) =>
 // Also the View menu: reload, developer tools, zoom.
 const RESERVED = ['Mod+C', 'Mod+V', 'Mod+X', 'Mod+Z', 'Mod+Shift+Z', 'Mod+A', 'Mod+Q', 'Mod+W', 'Mod+H', 'Mod+M', 'Mod+R', 'Mod+Shift+R', 'Mod+Alt+I', 'Mod+Shift+I', 'Mod+=', 'Mod+-', 'Mod+0'];
 
-export type ComboProblem = { kind: 'bare' } | { kind: 'reserved' } | { kind: 'taken'; by: string };
+export type ComboProblem = { kind: 'bare' } | { kind: 'reserved' } | { kind: 'taken'; by: string } | { kind: 'digit' };
 
 // Why a combo cannot be a shortcut: no modifier (it would fire while typing; F1–F12 may go alone), the system's own,
 // or another changeable shortcut has it. null — fine.
+// A row (the scenes) takes a modifier with a digit, and is checked as all its combos.
 export function comboProblem(id: string, combo: string): ComboProblem | null {
   const parts = combo.split('+');
   const key = parts.at(-1)!;
+  if (byId.get(id)?.range && !/^\d$/.test(key)) return { kind: 'digit' };
   if (!parts.some((p) => p === 'Mod' || p === 'Alt') && !/^F\d{1,2}$/.test(key)) return { kind: 'bare' };
-  if (RESERVED.includes(combo)) return { kind: 'reserved' };
-  const other = HOTKEYS.find((h) => h.id !== id && h.edit && comboFor(h.id) === combo);
+  const mine = combosOf(id, combo);
+  if (mine.some((c) => RESERVED.includes(c))) return { kind: 'reserved' };
+  const other = HOTKEYS.find((h) => h.id !== id && h.edit && combosOf(h.id).some((c) => mine.includes(c)));
   return other ? { kind: 'taken', by: other.id } : null;
 }
 
+// What to keep for a pressed combo: a row keeps its first key (⌥7 → ⌥1 — the row ⌥1 … ⌥9).
+export const normalizeCombo = (id: string, combo: string) => (byId.get(id)?.range ? combo.replace(/\d$/, '1') : combo);
+
 // Shortcuts of text fields and other places that have this combo too (a warning, not a ban: the shortcut does not
 // fire while the cursor is in a text field).
-export const alsoUsedBy = (id: string, combo: string) => HOTKEYS.filter((h) => h.id !== id && !h.edit && h.combo === combo).map((h) => h.id);
+export const alsoUsedBy = (id: string, combo: string) => {
+  const mine = combosOf(id, combo);
+  return HOTKEYS.filter((h) => h.id !== id && !h.edit && mine.includes(h.combo)).map((h) => h.id);
+};

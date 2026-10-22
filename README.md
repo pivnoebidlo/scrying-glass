@@ -602,7 +602,7 @@ Hotkeys (⌘ on macOS, Ctrl on Windows and Linux): ⌘P — pause, ⌘→ / ⌘�
 ⌘⇧A — ambience, ⌘B — black out the player screen, ⌘1…⌘9 — scenes, ⌘K — search. Every shortcut of the app is listed
 in ⌘, → Hotkeys (with a search); the common ones — settings, search, black out, music — can be changed there: click the
 keys and press the new combo. A combo needs ⌘/Ctrl or Alt (F1–F12 may go alone); the system's own (copy, paste, undo,
-quit…) and taken ones are refused. Hints on buttons show the current keys: "Search · ⌘K".
+quit…) and taken ones are refused. The scenes move as a row: press, say, ⌥1 — and they are ⌥1…⌥9. Hints on buttons show the current keys: "Search · ⌘K".
 
 ## Backups and moving data
 

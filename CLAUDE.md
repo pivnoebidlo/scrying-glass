@@ -58,7 +58,8 @@ Electron-приложение для мастера D&D: окно управле
   кнопкам — `--controls-w` (theme.css, из `env(titlebar-area-*)`).
 - Горячие клавиши: один реестр — `shared/hotkeys.ts` (`HOTKEYS`: id, группа, сочетание «Mod+Shift+A» по месту клавиши —
   `e.code`, раскладка не важна; Mod — ⌘ на Mac, Ctrl в остальных, ⌘ и Ctrl оба считаются Mod). Обработчик проверяет
-  `matches(e, id)`; переназначаемые (`edit`: настройки, поиск, затемнение, музыка) мастер меняет в «Настройки» →
+  `matches(e, id)`; переназначаемые (`edit`: настройки, поиск, затемнение, музыка, ряд сцен — `range`, `rowNumber`,
+  `combosOf`, `normalizeCombo`: меняется модификатор всего ряда) мастер меняет в «Настройки» →
   «Горячие клавиши» (`renderer/control/Hotkeys.svelte`, запись нажатием, `comboProblem` — без модификатора, системные
   `RESERVED`, занятые; `alsoUsedBy` — предупреждение о местных) → `settings.hotkeys` → `vault.hotkeys` → `setHotkeys`
   (ядро — и меню: `accelerator('settings')`). Остальные — только для справки; сделать переназначаемым — `edit` и

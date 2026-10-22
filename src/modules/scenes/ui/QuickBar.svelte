@@ -2,7 +2,7 @@
      saves the current screen as a scene (asks for a name first); double-click a scene to rename it. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { comboLabel } from '../../../shared/hotkeys';
+  import { comboLabel, combosOf } from '../../../shared/hotkeys';
   import { Plus, X } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -52,7 +52,7 @@
     <div class="scene" class:live={ms.active === sc.id}>
       <button
         class="main"
-        title={t('scenes.renameHint', { name: i < 9 ? `${sc.name} · ${comboLabel(`Mod+${i + 1}`)}` : sc.name })}
+        title={t('scenes.renameHint', { name: i < 9 ? `${sc.name} · ${comboLabel(combosOf('scene')[i]!)}` : sc.name })}
         onclick={() => activate(app, sc)}
         ondblclick={() => startRename(sc.id, sc.name)}
       >

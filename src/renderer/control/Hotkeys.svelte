@@ -7,7 +7,7 @@
   import { t } from '../lib/i18n.svelte';
   import { dispatch, store } from '../lib/store.svelte';
   import {
-    alsoUsedBy, comboLabel, comboOf, comboProblem, HOTKEY_GROUPS, HOTKEYS, hotkeyLabel, isCombo, isMac, type HotkeyDef,
+    alsoUsedBy, comboLabel, comboOf, comboProblem, HOTKEY_GROUPS, HOTKEYS, hotkeyLabel, isCombo, isMac, normalizeCombo, type HotkeyDef,
   } from '../../shared/hotkeys';
 
   let query = $state('');
@@ -51,8 +51,9 @@
       recording = null;
       return;
     }
-    const combo = comboOf(e);
-    if (!combo) return;
+    const pressed = comboOf(e);
+    if (!pressed) return;
+    const combo = normalizeCombo(h.id, pressed);
     if (!isCombo(combo)) {
       problem = { id: h.id, text: t('hk.unsupported') };
       return;
@@ -60,7 +61,7 @@
     const p = comboProblem(h.id, combo);
     if (p) {
       const keys = comboLabel(combo);
-      problem = { id: h.id, text: p.kind === 'bare' ? t('hk.bare', { ...mods, mod: isMac() ? '⌘' : 'Ctrl' }) : p.kind === 'reserved' ? t('hk.reserved', { keys }) : t('hk.taken', { keys, name: title(p.by) }) };
+      problem = { id: h.id, text: p.kind === 'bare' ? t('hk.bare', { ...mods, mod: isMac() ? '⌘' : 'Ctrl' }) : p.kind === 'digit' ? t('hk.digit', { example: comboLabel('Alt+1') }) : p.kind === 'reserved' ? t('hk.reserved', { keys }) : t('hk.taken', { keys, name: title(p.by) }) };
       return;
     }
     recording = null;

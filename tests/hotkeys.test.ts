@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  accelerator, alsoUsedBy, comboFor, comboLabel, comboOf, comboProblem, HOTKEY_GROUPS, HOTKEYS, hotkeyLabel, matches, setHotkeys,
+  accelerator, alsoUsedBy, comboFor, comboLabel, comboOf, comboProblem, HOTKEY_GROUPS, HOTKEYS, hotkeyLabel, matches, normalizeCombo, rowNumber,
+  setHotkeys,
 } from '../src/shared/hotkeys';
 import { tr } from '../src/shared/i18n';
 
@@ -61,5 +62,21 @@ describe('горячие клавиши', () => {
     }
     for (const g of HOTKEY_GROUPS) expect(HOTKEYS.some((h) => h.group === g), g).toBe(true);
     expect(new Set(HOTKEYS.map((h) => h.id)).size).toBe(HOTKEYS.length);
+  });
+
+  it('ряд сцен: модификатор с цифрой, весь ряд переезжает; совпадения проверяются по всему ряду', () => {
+    expect(rowNumber(press('Digit5', { metaKey: true }), 'scene')).toBe(5);
+    expect(rowNumber(press('Digit0', { metaKey: true }), 'scene')).toBeNull();
+    expect(comboProblem('scene', 'Mod+K')).toEqual({ kind: 'digit' });
+    expect(normalizeCombo('scene', 'Alt+7')).toBe('Alt+1');
+    expect(comboProblem('scene', 'Alt+1')).toBeNull();
+    setHotkeys({ scene: 'Alt+1' });
+    expect(rowNumber(press('Digit3', { altKey: true }), 'scene')).toBe(3);
+    expect(rowNumber(press('Digit3', { metaKey: true }), 'scene')).toBeNull();
+    // A real event: its fields are getters on the prototype.
+    const real = Object.create({ code: 'Digit4', metaKey: false, ctrlKey: false, altKey: true, shiftKey: false });
+    expect(rowNumber(real, 'scene')).toBe(4);
+    expect(hotkeyLabel('scene')).toMatch(/1 … .*9$/);
+    expect(comboProblem('playPause', 'Alt+4')).toEqual({ kind: 'taken', by: 'scene' });
   });
 });
