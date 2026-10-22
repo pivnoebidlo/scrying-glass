@@ -24,6 +24,8 @@ export interface Day {
   wind: Wind;
   // A rare event: an index into weather.event.<terrain>.<n> (the dictionary has a few per terrain).
   event: number | null;
+  // Which of the two lines to read aloud (weather.f.<id> or weather.f.<id>2); no field — the first.
+  flavor?: number;
 }
 
 interface Climate {
@@ -53,7 +55,7 @@ const CLIMATE: Record<Terrain, Climate> = {
 
 // How many rare events each terrain has in the dictionary (weather.event.<terrain>.0…).
 export const EVENTS: Record<Terrain, number> = {
-  forest: 4, plains: 4, city: 4, coast: 4, mountains: 4, swamp: 4, jungle: 4, desert: 4, arctic: 4, underground: 4,
+  forest: 8, plains: 8, city: 8, coast: 8, mountains: 8, swamp: 8, jungle: 8, desert: 8, arctic: 8, underground: 8,
 };
 
 type Random = () => number;
@@ -75,7 +77,7 @@ export function generateWeather(o: WeatherOptions, r: Random = Math.random): Day
     if (i > 0) temp = mean + 0.6 * (temp - mean) + gauss(r) * c.spread * 0.7;
     const t = Math.round(temp);
     if (o.terrain === 'underground') {
-      out.push({ temp: t, sky: 'clear', precip: 'none', kind: 'rain', storm: false, wind: 'calm', event: r() < 0.15 ? Math.floor(r() * EVENTS.underground) : null });
+      out.push({ temp: t, sky: 'clear', precip: 'none', kind: 'rain', storm: false, wind: 'calm', event: r() < 0.15 ? Math.floor(r() * EVENTS.underground) : null, flavor: r() < 0.5 ? 1 : 0 });
       continue;
     }
     // Rain tends to last: a wet day makes the next one wetter.
@@ -96,6 +98,7 @@ export function generateWeather(o: WeatherOptions, r: Random = Math.random): Day
       storm: heavy && kind === 'rain' && t >= 12 && r() < 0.6,
       wind,
       event: r() < 0.06 ? Math.floor(r() * EVENTS[o.terrain]) : null,
+      flavor: r() < 0.5 ? 1 : 0,
     });
   }
   return out;

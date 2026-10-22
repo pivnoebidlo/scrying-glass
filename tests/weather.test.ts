@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { tr, type Lang } from '../src/shared/i18n';
-import { effectsOf, generateWeather, SEASONS, TERRAINS } from '../src/modules/tools/weather/generate';
+import { effectsOf, EVENTS, generateWeather, SEASONS, TERRAINS } from '../src/modules/tools/weather/generate';
 import { daySummary, weatherMarkdown } from '../src/modules/tools/weather/text';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
@@ -15,7 +15,7 @@ describe('генератор погоды', () => {
             const days = generateWeather({ terrain, season, days: 7 }, seeded(i * 31 + terrain.length));
             expect(days).toHaveLength(7);
             // Every day with an event too: all event lines exist.
-            const withEvents = days.map((d, j) => ({ ...d, event: j % 4 }));
+            const withEvents = days.map((d, j) => ({ ...d, event: (j + i) % EVENTS[terrain], flavor: j % 2 }));
             const md = weatherMarkdown(withEvents, terrain, lang, true, t, 'W');
             expect(md, md).not.toMatch(/weather\./);
           }

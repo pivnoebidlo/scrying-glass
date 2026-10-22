@@ -28,7 +28,7 @@ export function daySummary(d: Day, terrain: Terrain, lang: string, tr: Tr): stri
 }
 
 export function dayFlavor(d: Day, terrain: Terrain, tr: Tr): string {
-  const f = (id: string) => tr(k(`weather.f.${id}`));
+  const f = (id: string) => tr(k(`weather.f.${id}${d.flavor ? '2' : ''}`));
   if (terrain === 'underground') return f('underground');
   if (d.storm) return f('storm');
   if (d.precip !== 'none') return d.kind === 'sand' ? f('sand') : d.kind === 'snow' ? f(d.precip === 'heavy' ? 'snow' : 'snowLight') : d.kind === 'sleet' ? f('sleet') : d.precip === 'heavy' ? f('rain') : f('drizzle');
