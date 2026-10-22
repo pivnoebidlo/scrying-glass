@@ -252,6 +252,10 @@ a.wikilink.spell:hover { color: var(--accent); }
 :root[data-theme='oldschool'] .panel { border-left: 3px double #00aaaa; }
 :root[data-theme='oldschool'] .tab-bar { border-bottom: 3px double #00aaaa; }
 :root[data-theme='oldschool'] .modal { border: 3px double #55ffff; }
+/* The title row stays one strip: the ribbon's top covers its double line (the traffic lights stand there), one double
+   line under the whole row. */
+:root[data-theme='oldschool'] .ribbon .title-space { margin-right: -3px; border-bottom: 3px double #00aaaa; }
+:root[data-theme='oldschool'] :is(.sidebar .title-row, .panel .panel-title) { border-bottom: 3px double #00aaaa; }
 /* The preview of the player screen keeps its own look, as the player screen does. */
 :root[data-theme='oldschool'] .stage-box { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif; -webkit-font-smoothing: auto; }
 
