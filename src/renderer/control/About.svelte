@@ -13,18 +13,23 @@
   onMount(async () => (version = await window.api.appVersion()));
   const open = (url: string) => void window.api.openLink(url);
 
-  // An easter egg: «oldschool» typed here switches on the hidden theme (keys by their place — any layout will do).
-  const WORD = 'oldschool';
+  // An easter egg: «oldschool» or «nc\nc» (how that file manager was started) typed here switches on the hidden theme;
+  // keys by their place — any layout will do. The command is shown as typed (oldschool → oldschool.exe).
+  const WORDS: Record<string, string> = { oldschool: 'oldschool.exe', 'nc\\nc': 'nc\\nc' };
+  const LONGEST = Math.max(...Object.keys(WORDS).map((w) => w.length));
   let typed = '';
   let egg = $state('');
   function onkeydown(e: KeyboardEvent) {
-    if (e.metaKey || e.ctrlKey || e.altKey || !/^Key[A-Z]$/.test(e.code)) return;
-    typed = (typed + e.code.slice(3).toLowerCase()).slice(-WORD.length);
-    if (typed !== WORD) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const ch = /^Key[A-Z]$/.test(e.code) ? e.code.slice(3).toLowerCase() : e.code === 'Backslash' || e.code === 'IntlBackslash' ? '\\' : '';
+    if (!ch) return;
+    typed = (typed + ch).slice(-LONGEST);
+    const word = Object.keys(WORDS).find((w) => typed.endsWith(w));
+    if (!word) return;
     typed = '';
     const already = store.state.vault.theme === 'oldschool';
     if (!already) dispatch('vault', 'setTheme', { theme: 'oldschool' });
-    egg = t(already ? 'about.eggAgain' : 'about.egg');
+    egg = t(already ? 'about.eggAgain' : 'about.egg', { cmd: WORDS[word]! });
     setTimeout(() => (egg = ''), 6000);
   }
   const year = new Date().getFullYear();
