@@ -7,7 +7,7 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { store } from '../../../renderer/lib/store.svelte';
-  import { RACES } from '../../../shared/names';
+  import { PEOPLES, RACES } from '../../../shared/names';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import { journalFolder } from '../../journal/ui/store.svelte';
   import { openPage } from '../../journal/ui/ui.svelte';
@@ -84,7 +84,10 @@
     <label>{t('names.race')}
       <select value={npcs.opts.race} onchange={(e) => set('race', e.currentTarget.value)}>
         <option value="">{t('npc.random')}</option>
-        {#each RACES as r (r)}<option value={r}>{race(r)}</option>{/each}
+        {#each RACES as r (r)}
+          <option value={r}>{race(r)}</option>
+          {#each PEOPLES[r] ?? [] as p (p)}<option value={p}>&nbsp;&nbsp;— {race(p)}</option>{/each}
+        {/each}
       </select>
     </label>
     <label>{t('names.gender')}

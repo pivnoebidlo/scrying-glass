@@ -2,7 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-  addList, entriesFor, filterNames, generateNames, lengthOf, listLang, nameText, parseList, parseListName, racesIn, RACES, soundOf, type NameBook,
+  addList, entriesFor, filterNames, generateNames, lengthOf, listLang, nameText, parseList, parseListName, peoplesIn, PEOPLES, racesIn, RACES, soundOf,
+  type NameBook,
 } from '../src/shared/names';
 
 const builtin = (lang: string): NameBook => {
@@ -75,6 +76,19 @@ describe('генератор имён', () => {
           all.push(...entriesFor(book, race, g, 'names'));
         }
       }
+      // Human peoples: every one has names of both genders and surnames; the lists are pairs in both languages.
+      expect(peoplesIn(book, 'human')).toEqual([...PEOPLES['human']!]);
+      for (const p of PEOPLES['human']!) {
+        for (const g of ['male', 'female'] as const) {
+          expect(entriesFor(book, p, g, 'names').length, `${p} ${g}`).toBeGreaterThanOrEqual(30);
+          expect(entriesFor(book, p, g, 'surnames').length, `${p} ${g}`).toBeGreaterThanOrEqual(30);
+          for (const k of ['names', 'surnames'] as const)
+            expect(entriesFor(book, p, g, k).length, `${p} ${g} ${k}`).toBe(entriesFor(builtin('en'), p, g, k).length);
+        }
+      }
+      expect(entriesFor(book, 'tethyrian', 'male', 'names')).toEqual([...entriesFor(book, 'chondathan', 'male', 'names'), ...entriesFor(book, 'calishite', 'male', 'names')]);
+      const shou = generateNames(book, { race: 'shou', gender: 'male', form: 'full', nickname: 'none', length: 'any', sound: 'any', first: '', count: 3 });
+      expect(shou.every((g) => g.surnameFirst && nameText(g, (s) => s) === `${g.surname} ${g.name}`)).toBe(true);
       for (const s of ['melodic', 'soft', 'harsh'] as const) expect(all.filter((n) => soundOf(n) === s).length, s).toBeGreaterThan(30);
       for (const l of ['short', 'medium', 'long'] as const) expect(all.filter((n) => lengthOf(n) === l).length, l).toBeGreaterThan(10);
     });

@@ -296,7 +296,9 @@ Electron-приложение для мастера D&D: окно управле
   `rank` карточки (`initiative/ui/heroes.ts`). Плашка — `initiative/ui/Difficulty.svelte` (в бою и заготовке),
   подробности — `DifficultyDetails.svelte`, калькулятор — `tools/difficulty/Calculator.svelte` (набросок — `calc.svelte.ts`).
   Генератор имён: правила и генерация — `shared/names.ts` (`parseListName`: файл `раса_пол_вид.txt`, `generateNames`,
-  фильтры `lengthOf` / `soundOf`), страница — `tools/names/NameGenerator.svelte`, окно — `names/store.svelte.ts`
+  фильтры `lengthOf` / `soundOf`; народы людей Забытых Королевств — `PEOPLES` (в списках — свои «расы»,
+  `calishite_man_names.txt`; в генераторе — строка «Происхождение», `peoplesIn`), `MIXED` — тетирцы берут имена
+  чондатанцев и калишитов, `surnameFirst` — шу; генератор NPC делает человека из народа в половине случаев), страница — `tools/names/NameGenerator.svelte`, окно — `names/store.svelte.ts`
   (настройки и история — localStorage окна, избранное — `<библиотека>/names.json`). Встроенные списки —
   `tools/names/builtin/<lang>/*.txt` (написаны для приложения); свои — `<библиотека>/names/<lang>/` (`main/names.ts`, IPC
   `names:*`), в репозиторий не кладём — это могут быть списки чужих сайтов (папка `/names/` в корне — в .gitignore).

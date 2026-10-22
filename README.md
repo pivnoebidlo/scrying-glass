@@ -222,7 +222,9 @@ characters (level from the sheet; a hero without a card is looked up by name); i
 party from the setting in the same badge. XP comes from the enemy cards; allies and neutrals don't count. Sketch an
 encounter and pick enemies in Tools → Encounter difficulty, and from there — straight "To an encounter".
 
-**Name generator** (Tools → Name generator): race (human, elf, dwarf, gnome, halfling, dragonborn, tiefling), gender,
+**Name generator** (Tools → Name generator): race (human, elf, dwarf, gnome, halfling, dragonborn, tiefling), for
+humans — origin: common names or one of the peoples of the Forgotten Realms (Calishite, Chondathan, Damaran, Illuskan,
+Mulan, Rashemi, Shou — family name first, Tethyrian, Turami), gender,
 form — just a name or a name and surname, nickname — none, simple ("the Lame") or epic ("Bane of Giants"). Filters —
 length, sound (melodic, soft, harsh) and first letters; 1, 5, 10 or 20 names at once, Space — more. Each name has
 "Copy" and a "favorite" star; favorites (shared by all campaigns, in the library) and history export to TXT and CSV.
@@ -284,7 +286,7 @@ a waterspout, a mirage…). Days follow each other: rain tends to last, the temp
 SRD weather rules that apply (extreme cold and heat, strong wind, heavy precipitation, fog). Copy, to the journal, or
 straight to the players in Telegram (without the rules).
 
-**NPC generator** (Tools → NPC generator): race (or random), gender, importance (common to unique) → name, trade,
+**NPC generator** (Tools → NPC generator): race or human people (or random; a human is from one of the peoples half of the time), gender, importance (common to unique) → name, trade,
 appearance, character, manner of speech, what they want, what they hide and what they carry; important NPCs get a
 nickname or an epithet, fame and sometimes a magic trinket. Reroll or pin any part; recent NPCs stay in the history.
 "Create card" opens a new NPC card in the editor with the name, description and notes filled; "To journal" and "Copy"

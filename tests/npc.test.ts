@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { addList, parseList, parseListName, RACES, type NameBook } from '../src/shared/names';
+import { addList, parseList, parseListName, PEOPLES, RACES, type NameBook } from '../src/shared/names';
 import { en } from '../src/modules/tools/npc/content/en';
 import { ru } from '../src/modules/tools/npc/content/ru';
 import { generateNpc, npcName, rerollNpc } from '../src/modules/tools/npc/generate';
@@ -25,7 +25,7 @@ describe('генератор NPC', () => {
         const importance = IMPORTANCE[i % IMPORTANCE.length]!;
         const n = generateNpc(c, book, { race: RACES[i % RACES.length]!, gender: i % 2 ? 'male' : 'female', importance }, seeded(i));
         expect(n.name).not.toBe('?');
-        expect(n.race).toBe(RACES[i % RACES.length]);
+        expect([RACES[i % RACES.length], ...(PEOPLES[RACES[i % RACES.length]!] ?? [])]).toContain(n.race);
         for (const k of ['occupation', 'trait', 'manner', 'desire', 'secret', 'item'] as const) expect(n[k], k).toBeTruthy();
         expect(n.appearance.length).toBe(IMPORTANCE.indexOf(importance) >= 2 ? 2 : 1);
         if (IMPORTANCE.indexOf(importance) >= 3) expect(n.epithet).toBeTruthy();
@@ -41,10 +41,20 @@ describe('генератор NPC', () => {
   it('случайная раса и пол; переброска не трогает закреплённое', () => {
     const book = names('en');
     const n = generateNpc(en, book, { race: '', gender: 'random', importance: 'rare' }, seeded(5));
-    expect(RACES).toContain(n.race as never);
+    expect([...RACES, ...PEOPLES['human']!]).toContain(n.race);
     const next = rerollNpc(n, ['name', 'secret'], en, book, seeded(77));
     expect(npcName(next, (s) => s)).toBe(npcName(n, (s) => s));
     expect(next.secret).toBe(n.secret);
     expect(next.race).toBe(n.race);
+  });
+
+  it('человек из народа: имя по его спискам, у шу фамилия первой', () => {
+    const book = names('ru');
+    const n = generateNpc(ru, book, { race: 'shou', gender: 'female', importance: 'rare' }, seeded(3));
+    expect(n.race).toBe('shou');
+    expect(npcName({ ...n, nickname: '', epithet: '', surname: 'Чжан', name: 'Мэй' }, (s) => s)).toBe('Чжан Мэй');
+    const races = new Set(Array.from({ length: 60 }, (_, i) => generateNpc(ru, book, { race: 'human', gender: 'male', importance: 'common' }, seeded(i * 100003 + 1)).race));
+    expect(races.has('human')).toBe(true);
+    expect([...races].some((r) => PEOPLES['human']!.includes(r))).toBe(true);
   });
 });

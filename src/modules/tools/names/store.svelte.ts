@@ -17,8 +17,10 @@ const OPTIONS_KEY = 'names.options';
 const HISTORY_KEY = 'names.history';
 const HISTORY_MAX = 200;
 
-const DEFAULTS: NameOptions & { lang: string; builtin: boolean; own: boolean } = {
+const DEFAULTS: NameOptions & { people: string; lang: string; builtin: boolean; own: boolean } = {
   race: 'human',
+  // A people of the race ('' — the race's common names).
+  people: '',
   gender: 'male',
   form: 'full',
   nickname: 'none',

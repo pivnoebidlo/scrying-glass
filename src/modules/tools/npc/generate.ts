@@ -1,5 +1,5 @@
 // NPC generation: pure functions over the content of one language and the name book (shared/names.ts).
-import { entriesFor, RACES, type NameBook } from '../../../shared/names';
+import { entriesFor, peoplesIn, RACES, surnameFirst, type NameBook } from '../../../shared/names';
 import type { Npc, NpcContent, NpcOptions, NpcPart } from './types';
 import { IMPORTANCE } from './types';
 
@@ -60,7 +60,10 @@ export function generateNpcPart(part: NpcPart, n: Npc, c: NpcContent, book: Name
 }
 
 export function generateNpc(c: NpcContent, book: NameBook, o: NpcOptions, r: Random = Math.random): Npc {
-  const race = o.race && entriesFor(book, o.race, 'male', 'names').length + entriesFor(book, o.race, 'female', 'names').length ? o.race : pickRace(book, r);
+  let race = o.race && entriesFor(book, o.race, 'male', 'names').length + entriesFor(book, o.race, 'female', 'names').length ? o.race : pickRace(book, r);
+  // A human is from one of the peoples half of the time, otherwise with the common human names.
+  const peoples = peoplesIn(book, race);
+  if (peoples.length && r() < 0.5) race = pick(peoples, r);
   const gender = o.gender === 'random' ? (r() < 0.5 ? 'male' : 'female') : o.gender;
   // Random importance leans to the ordinary.
   const importance = o.importance !== 'random' ? o.importance : pick(['common', 'common', 'common', 'uncommon', 'uncommon', 'rare', 'veryRare', 'legendary'] as const, r);
@@ -78,8 +81,9 @@ export function rerollNpc(n: Npc, pinned: NpcPart[], c: NpcContent, book: NameBo
   return next;
 }
 
-// «Aldric “the Lame” Moor, Bane of Giants».
+// «Aldric “the Lame” Moor, Bane of Giants»; Shou — the family name first.
 export function npcName(n: Npc, quote: (s: string) => string): string {
-  const head = [n.name, n.nickname ? quote(n.nickname) : '', n.surname].filter(Boolean).join(' ');
+  const nick = n.nickname ? quote(n.nickname) : '';
+  const head = (surnameFirst(n.race) ? [n.surname, n.name, nick] : [n.name, nick, n.surname]).filter(Boolean).join(' ');
   return n.epithet ? `${head}, ${n.epithet}` : head;
 }

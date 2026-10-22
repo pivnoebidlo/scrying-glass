@@ -6,7 +6,7 @@
   import { Check, Copy, Dices, FolderOpen, Star, Trash2, Upload } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { LANGUAGES } from '../../../shared/cards';
-  import { generateNames, nameText, racesIn, RACES, type Gender, type LengthFilter, type NameOptions, type SoundFilter } from '../../../shared/names';
+  import { generateNames, isPeople, nameText, peoplesIn, racesIn, RACES, type Gender, type LengthFilter, type NameOptions, type SoundFilter } from '../../../shared/names';
   import {
     asCsv, asText, book, clearFavorites, clearHistory, isFavorite, langNow, listLangs, loadFavorites, loadOwn, names, opts, ownCount, remember,
     resetFilters, saveOptions, toggleFavorite, type SavedName,
@@ -21,7 +21,11 @@
   const races = $derived(racesIn(current));
   // The chosen race has no names in these lists (own lists turned off, another language) — the first that has.
   const race = $derived(races.includes(opts.race) ? opts.race : (races[0] ?? opts.race));
-  const raceTitle = (id: string) => ((RACES as readonly string[]).includes(id) ? t(`names.race.${id}` as never) : id.charAt(0).toUpperCase() + id.slice(1));
+  // Peoples of the race (humans of the Forgotten Realms); '' — the common names of the race.
+  const peoples = $derived(peoplesIn(current, race));
+  const people = $derived(peoples.includes(opts.people) ? opts.people : '');
+  const raceTitle = (id: string) =>
+    (RACES as readonly string[]).includes(id) || isPeople(id) ? t(`names.race.${id}` as never) : id.charAt(0).toUpperCase() + id.slice(1);
   const genderTitle = (g: Gender) => t(g === 'male' ? 'names.male' : 'names.female');
   const quote = (s: string) => t('common.quote', { text: s });
   const filtersOn = $derived(opts.length !== 'any' || opts.sound !== 'any' || !!opts.first.trim());
@@ -32,10 +36,10 @@
   };
 
   function generate() {
-    const o: NameOptions = { ...$state.snapshot(opts), race };
+    const o: NameOptions = { ...$state.snapshot(opts), race: people || race };
     const list = generateNames(current, o);
     names.results = list;
-    remember(list.map((g) => ({ text: nameText(g, quote), race, gender: opts.gender })));
+    remember(list.map((g) => ({ text: nameText(g, quote), race: o.race, gender: opts.gender })));
   }
 
   let copied = $state('');
@@ -97,6 +101,15 @@
         {#each races as r (r)}<button class:on={race === r} onclick={() => set('race', r)}>{raceTitle(r)}</button>{/each}
       </div>
     </div>
+    {#if peoples.length}
+      <div class="row">
+        <span class="label" title={t('names.peopleHint')}>{t('names.people')}</span>
+        <div class="chips">
+          <button class:on={!people} onclick={() => set('people', '')}>{t('names.peopleCommon')}</button>
+          {#each peoples as p (p)}<button class:on={people === p} onclick={() => set('people', p)}>{raceTitle(p)}</button>{/each}
+        </div>
+      </div>
+    {/if}
     <div class="row">
       <span class="label">{t('names.gender')}</span>
       <div class="seg">

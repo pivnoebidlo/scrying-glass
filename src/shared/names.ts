@@ -7,6 +7,18 @@
 // for every race).
 
 export const RACES = ['human', 'elf', 'dwarf', 'gnome', 'halfling', 'dragonborn', 'tiefling'] as const;
+// Peoples of a race — the human ethnicities of the Forgotten Realms. A people is a race of its own in the lists
+// («calishite_man_names.txt»); the generators show it under its race.
+export const PEOPLES: Record<string, readonly string[]> = {
+  human: ['calishite', 'chondathan', 'damaran', 'illuskan', 'mulan', 'rashemi', 'shou', 'tethyrian', 'turami'],
+};
+// A mixed people also takes the names of the peoples it comes from (Tethyrians have none of their own).
+const MIXED: Record<string, readonly string[]> = { tethyrian: ['chondathan', 'calishite'] };
+// Peoples who put the family name first.
+const SURNAME_FIRST = new Set(['shou']);
+export const surnameFirst = (race: string) => SURNAME_FIRST.has(race);
+const ALL_PEOPLES = new Set(Object.values(PEOPLES).flat());
+export const isPeople = (race: string) => ALL_PEOPLES.has(race);
 export type Gender = 'male' | 'female';
 export type ListGender = Gender | 'any';
 export type ListKind = 'names' | 'surnames' | 'nicknames' | 'epithets';
@@ -83,7 +95,7 @@ export function addList(book: NameBook, id: ListId, entries: string[]) {
 // Entries for a race and gender: its own lists, lists «for both genders» and lists for any race.
 export function entriesFor(book: NameBook, race: Race, gender: Gender, kind: ListKind): string[] {
   const from = (r: Race) => [...(book[r]?.[gender]?.[kind] ?? []), ...(book[r]?.any?.[kind] ?? [])];
-  const own = from(race);
+  const own = [...new Set([race, ...(MIXED[race] ?? [])].flatMap(from))];
   // Names are the race's own; surnames, nicknames and epithets may come from the lists for any race.
   return kind === 'names' ? own : [...new Set([...own, ...from('any')])];
 }
@@ -91,8 +103,12 @@ export function entriesFor(book: NameBook, race: Race, gender: Gender, kind: Lis
 // Races that have names in the book: the standard ones first, then the GM's own.
 export const racesIn = (book: NameBook) => {
   const has = (r: Race) => Object.values(book[r] ?? {}).some((k) => (k?.names?.length ?? 0) > 0);
-  return [...RACES.filter(has), ...Object.keys(book).filter((r) => r !== 'any' && !(RACES as readonly string[]).includes(r) && has(r)).sort()];
+  return [...RACES.filter(has), ...Object.keys(book).filter((r) => r !== 'any' && !(RACES as readonly string[]).includes(r) && !isPeople(r) && has(r)).sort()];
 };
+
+// Peoples of a race that have names in the book (for both genders).
+export const peoplesIn = (book: NameBook, race: Race) =>
+  (PEOPLES[race] ?? []).filter((p) => entriesFor(book, p, 'male', 'names').length && entriesFor(book, p, 'female', 'names').length);
 
 // ---------- Filters ----------
 export type LengthFilter = 'any' | 'short' | 'medium' | 'long';
@@ -146,6 +162,8 @@ export interface GeneratedName {
   surname?: string;
   nickname?: string;
   epithet?: string;
+  // The family name goes first (Shou).
+  surnameFirst?: boolean;
 }
 
 // Names that pass the filters.
@@ -171,7 +189,10 @@ export function generateNames(book: NameBook, o: NameOptions, random: () => numb
     const i = Math.floor(random() * pool.length);
     const name = pool[i]!;
     const g: GeneratedName = { name };
-    if (o.form === 'full' && surnames.length) g.surname = pick(surnames);
+    if (o.form === 'full' && surnames.length) {
+      g.surname = pick(surnames);
+      if (surnameFirst(o.race)) g.surnameFirst = true;
+    }
     if (o.nickname === 'simple' && nicknames.length) g.nickname = pick(nicknames);
     if (o.nickname === 'epic' && nicknames.length) g.epithet = pick(nicknames);
     const key = nameText(g, (s) => s);
@@ -183,8 +204,9 @@ export function generateNames(book: NameBook, o: NameOptions, random: () => numb
   return out;
 }
 
-// «Aldric “the Lame” Moor», «Aldric Moor, Slayer of Wyrms». quote — the language's quotes around a nickname.
+// «Aldric “the Lame” Moor», «Aldric Moor, Slayer of Wyrms», «Zhang Wei». quote — the language's quotes around a nickname.
 export function nameText(g: GeneratedName, quote: (s: string) => string): string {
-  const head = [g.name, g.nickname ? quote(g.nickname) : '', g.surname ?? ''].filter(Boolean).join(' ');
+  const nick = g.nickname ? quote(g.nickname) : '';
+  const head = (g.surnameFirst ? [g.surname ?? '', g.name, nick] : [g.name, nick, g.surname ?? '']).filter(Boolean).join(' ');
   return g.epithet ? `${head}, ${g.epithet}` : head;
 }
