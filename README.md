@@ -46,6 +46,7 @@ The app is not signed with Apple or Microsoft certificates, so the system warns 
     npm run import-srd # rebuild the built-in bestiary from the SRD (needs the internet)
     npm run import-compendium # rebuild the built-in SRD compendium (needs the internet)
     npm run build-fate # build the built-in Fate compendium from scripts/fate-core.<lang>.md
+    npm run build-fitd # build the built-in Forged in the Dark compendium from scripts/fitd.<lang>.md
     npm run build-mausritter # built-in Mausritter creatures and compendium from scripts/mausritter-srd.<lang>.md
     npm run dist       # installer for your system in dist/ (electron-builder.yml)
     npm run icon       # build/icon.png from build/icon.svg
@@ -178,6 +179,15 @@ adventure site toolboxes, useful tables), the 15 spells with their recharge, and
 centipede, crow, faerie, frog, ghost, mouse, owl, rat, snake, spider — with their variant tables). The texts are in
 `scripts/mausritter-srd.<lang>.md`; `npm run build-mausritter` builds `resources/srd/mausritter.json` and
 `resources/compendium/mausritter.<lang>.json`. This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
+
+In **Forged in the Dark** adventures the FitD rules are built in (dice pools, the twelve actions and three attributes,
+the action roll with position and effect, the Devil's bargain, consequences, harm, resistance and armor, stress,
+trauma and vice, load, coin and stash, advancement, plans, the engagement roll, flashbacks, teamwork, downtime with
+payoff, heat, wanted level, entanglements and its activities, rituals, crafting, the crew: tier, hold, rep and turf,
+faction status, claims, upgrades, cohorts) together with 58 sample special abilities of scoundrels and crews — a
+retelling of the Blades in the Dark SRD in English and Russian written for the app, without the original setting.
+The texts are in `scripts/fitd.<lang>.md`; `npm run build-fitd` builds `resources/compendium/fitd.<lang>.json` from
+them. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
 
 The compendium is at hand from any tab:
 - spells in stat blocks (in italics, as in the SRD) and in a character sheet's spell lists are links: a click opens

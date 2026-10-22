@@ -94,6 +94,7 @@ Electron-приложение для мастера D&D: окно управле
     npm run import-srd # пересобрать встроенный бестиарий resources/srd/ из SRD (нужен интернет)
     npm run import-compendium # пересобрать встроенный справочник resources/compendium/ (нужен интернет)
     npm run build-fate # встроенный справочник Fate: resources/compendium/fate-core.<lang>.json из scripts/fate-core.<lang>.md
+    npm run build-fitd # встроенный справочник FitD: resources/compendium/fitd.<lang>.json из scripts/fitd.<lang>.md
     npm run dist       # установщик для своей системы в dist/ (настройки — electron-builder.yml)
     npm run icon       # build/icon.png из build/icon.svg (рисует Electron: ImageMagick не умеет градиенты SVG)
 
@@ -277,7 +278,11 @@ Electron-приложение для мастера D&D: окно управле
   Пул к6 — `rollPool` / `poolOutcome` / `resistStress` в `shared/dice.ts` (0 точек — 2к6, меньший, без крита), в журнале —
   `RollEntry.pool`. Свои русские термины (официальный перевод закрыт): Проницательность / Удаль / Решимость; Выслеживать,
   Изучать, Осматривать, Мастерить; Ловкость, Красться, Драться, Крушить; Чуять, Командовать, Знаться, Убеждать.
-  Дальше (план): справочник по SRD, лист банды.
+  Справочник — `resources/compendium/fitd.<lang>.json` (`npm run build-fitd` из `scripts/fitd.<lang>.md`, общий разбор
+  с Fate — `scripts/book-md.ts`; пересказ SRD без мира Blades; тип `fability` — особые способности, `category`
+  персонаж / банда; названия действий, атрибутов и травм — как в карточке, тест сверяет). Свои русские термины: дело,
+  банда, жар, розыск, хватка, ноша, передышка, неприятности (entanglements), подручные, владения, бросок завязки.
+  Дальше (план): лист банды.
 - Аспекты сцены и жетоны судьбы — модуль `modules/fate` (состояние: `aspects` с `invokes` / `hidden`, `holders` —
   персонажи с `points` / `refresh`, `gm` — запас мастера, `show`). Блок правой панели `OnScreen.svelte` и слой игроков
   `Layer.svelte` (order 32; угол — `place`, выбор — `CornerPick.svelte`, в одном углу встают друг под другом) — только в приключениях Fate (`fateHere`; блок

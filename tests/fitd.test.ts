@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { poolOutcome, resistStress, rollPool } from '../src/shared/dice';
-import { attributeRating, blankStats, combatStats, isFitd, rank, subtitle } from '../src/systems/fitd/stats';
+import { ACTION_TITLES, ALL_ACTIONS, ATTRIBUTE_TITLES, ATTRIBUTES, TRAUMA_TITLES, TRAUMAS, attributeRating, blankStats, combatStats, isFitd, rank, subtitle } from '../src/systems/fitd/stats';
+import { entryFamily, TYPES, type BuiltinBook } from '../src/shared/compendium';
+import { setLang } from '../src/shared/i18n';
 import { fitdTracker, harmLines, stressOf, withStress } from '../src/systems/fitd/tracker';
 import { familyOf, systemOf } from '../src/systems';
 import { woundOf } from '../src/modules/initiative/order';
@@ -61,5 +64,33 @@ describe('Forged in the Dark: the tracker', () => {
     expect(stressOf({ ...c, stress: withStress(c, 20) })).toBe(9);
     const hurt = { ...s3, consequences: harmLines(c.consequences).map((h, i) => (i === 4 ? { ...h, text: 'Stabbed' } : h)) };
     expect(woundOf(hurt)).toBeGreaterThan(woundOf(s3));
+  });
+});
+
+describe('Forged in the Dark: the built-in compendium', () => {
+  const read = (lang: string) => JSON.parse(readFileSync(new URL(`../resources/compendium/fitd.${lang}.json`, import.meta.url), 'utf8')) as BuiltinBook;
+  const ru = read('ru');
+  const en = read('en');
+  afterAll(() => setLang('en'));
+
+  it('actions, attributes and traumas are named as on the card, in both languages', () => {
+    for (const [lang, book] of [['ru', ru], ['en', en]] as const) {
+      setLang(lang);
+      const titles = new Set(book.entries.map((e) => e.title));
+      for (const a of ALL_ACTIONS) expect(titles, a).toContain(ACTION_TITLES[a]);
+      for (const a of ATTRIBUTES) expect(titles, a).toContain(ATTRIBUTE_TITLES[a]);
+      const trauma = book.entries.find((e) => e.en === 'Trauma' || e.title === 'Trauma')!;
+      for (const t of TRAUMAS) expect(trauma.fields['aliases'], t).toContain(TRAUMA_TITLES[t]);
+    }
+  });
+  it('known types of the FitD family or any; every English entry has a Russian pair', () => {
+    expect(ru.system).toBe('fitd');
+    for (const e of ru.entries) {
+      expect(TYPES[e.type], e.title).toBeDefined();
+      expect([null, 'fitd']).toContain(entryFamily(e));
+    }
+    expect(en.entries.length).toBe(ru.entries.length);
+    for (const e of en.entries) expect(e.ru, e.title).toBeTruthy();
+    expect(ru.entries.filter((e) => e.type === 'fability').length).toBeGreaterThan(50);
   });
 });

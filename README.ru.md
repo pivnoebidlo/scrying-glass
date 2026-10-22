@@ -46,6 +46,7 @@
     npm run import-srd # пересобрать встроенный бестиарий из SRD (нужен интернет)
     npm run import-compendium # пересобрать встроенный справочник SRD (нужен интернет)
     npm run build-fate # собрать встроенный справочник Fate из scripts/fate-core.<язык>.md
+    npm run build-fitd # собрать встроенный справочник Forged in the Dark из scripts/fitd.<язык>.md
     npm run build-mausritter # встроенные существа и справочник Mausritter из scripts/mausritter-srd.<язык>.md
     npm run dist       # установщик для своей системы в dist/ (electron-builder.yml)
     npm run icon       # иконка build/icon.png из build/icon.svg
@@ -170,6 +171,14 @@ CC BY 3.0). Тексты лежат в `scripts/fate-core.<язык>.md`, `npm r
 лягушка, призрак, мышь, сова, крыса, змея, паук — с таблицами вариантов). Тексты — в
 `scripts/mausritter-srd.<язык>.md`, `npm run build-mausritter` собирает из них `resources/srd/mausritter.json` и
 `resources/compendium/mausritter.<язык>.json`. This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
+
+В приключениях **Forged in the Dark** встроены правила FitD (пул кубов, двенадцать действий и три атрибута, бросок
+действия с позицией и эффектом, сделка с дьяволом, последствия, вред, сопротивление и броня, стресс, травмы и порок,
+ноша, монеты и тайник, развитие, планы, бросок завязки, флешбэки, командная работа, передышка — добыча, жар, розыск,
+неприятности и занятия, ритуалы, ремесло, банда — уровень, хватка, репутация и территория, отношения фракций,
+владения, улучшения, подручные) и 58 примеров особых способностей негодяев и банд — пересказ SRD Blades in the Dark на
+русском и английском, сделанный для приложения, без мира оригинальной игры. Тексты — в `scripts/fitd.<язык>.md`,
+`npm run build-fitd` собирает из них `resources/compendium/fitd.<язык>.json`. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
 
 Справочник под рукой из любой вкладки:
 - заклинания в статблоках (курсивом, как в SRD) и в списках заклинаний листа персонажа — ссылки: щелчок открывает

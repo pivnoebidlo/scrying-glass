@@ -134,6 +134,8 @@ export const TYPES: Record<string, TypeDef> = {
   skill: type('skill', [], 'fate'),
   // Mausritter spells: the effect is the text ([SUM], [DICE]), the recharge requirement — a field.
   mspell: type('mspell', [field('mspell', 'recharge', 'text')], 'mausritter'),
+  // Forged in the Dark special abilities: a scoundrel's or the crew's (category).
+  fability: type('fability', [field('fability', 'category', 'text')], 'fitd'),
   rule: type('rule', [field('rule', 'category', 'text', { hint: true })]),
   note: type('note', []),
 };
