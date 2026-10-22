@@ -1,7 +1,7 @@
 // Что открыто в «Инструментах»: инструмент и записка в редакторе (путь в хранилище).
 import { openTab } from '../../../renderer/lib/nav';
 
-export type ToolId = 'notes' | 'names' | 'npc' | 'tavern' | 'weather' | 'events' | 'treasure' | 'settlement' | 'shop' | 'relic' | 'dungeon' | 'travel' | 'schedule' | 'telegram' | 'difficulty' | 'timer' | 'pointbuy' | 'mouse' | 'mausTables' | 'factions' | 'reshape';
+export type ToolId = 'notes' | 'names' | 'npc' | 'tavern' | 'weather' | 'events' | 'treasure' | 'settlement' | 'shop' | 'relic' | 'dungeon' | 'travel' | 'schedule' | 'telegram' | 'difficulty' | 'timer' | 'pointbuy' | 'mouse' | 'mausTables' | 'factions' | 'reshape' | 'wildMagic';
 
 export const ui = $state({
   tool: 'notes' as ToolId,

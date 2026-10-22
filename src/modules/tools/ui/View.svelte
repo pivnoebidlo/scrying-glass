@@ -27,6 +27,7 @@
   import RelicGenerator from '../relic/RelicGenerator.svelte';
   import DungeonGenerator from '../dungeon/DungeonGenerator.svelte';
   import TravelCalculator from '../travel/TravelCalculator.svelte';
+  import WildMagic from '../wildmagic/WildMagic.svelte';
   import SchedulePage from '../../schedule/ui/SchedulePage.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
 
@@ -43,6 +44,7 @@
     shop: ShopGenerator, settlement: SettlementGenerator, treasure: TreasureGenerator, events: EventsGenerator,
     weather: WeatherGenerator, mouse: MouseGenerator, mausTables: MausTables, factions: Factions, npc: NpcGenerator,
     tavern: TavernGenerator, telegram: TelegramCompose, difficulty: Calculator, timer: TimerTool, pointbuy: PointBuy, reshape: Reshape,
+    wildMagic: WildMagic,
   };
   const Page = $derived(ui.tool !== 'notes' && shown(ui.tool, family) ? PAGES[ui.tool] : undefined);
 
