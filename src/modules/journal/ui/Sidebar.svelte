@@ -1,18 +1,22 @@
-<!-- Боковая панель журнала: поиск и дерево заметок — папки журнала приключения и общие, с подпапками. Заметки
-     переставляются перетаскиванием внутри папки, перетаскивание на папку — перенос в неё. Folders are renamed in
-     place (the pencil or a double click) and dragged onto another folder to move them. -->
+<!-- Боковая панель журнала: поиск и дерево заметок и PDF — папки журнала приключения и общие, с подпапками.
+     Nothing hides until hovered: "New note" and "New folder" are always at the top and create in the selected folder
+     (a clicked folder or the folder of the open note); every row has a context menu (right click, or "⋯" on the
+     selected row): new note or folder here, rename, move to…, pin, trash. Rows are dragged within a folder to reorder
+     and onto a folder (or a place) to move; files from Finder can be dropped onto a folder (FileDrop: data-drop-folder). -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { BookOpen, ChevronDown, ChevronRight, FilePlus, Folder, FolderPlus, Pencil, Search, Trash2 } from '@lucide/svelte';
+  import { BookOpen, ChevronDown, ChevronRight, ExternalLink, FilePlus, Folder, FolderInput, FolderPlus, MoreHorizontal, PanelRight, Pencil, Pin, PinOff, Search, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
+  import ContextMenu, { type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
+  import { movePlace, peekPdf } from '../../../renderer/lib/pdf/pdf.svelte';
   import { draggedFile, sortable } from '../../../renderer/lib/sortable';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { applyOrder } from '../../../shared/order';
-  import { pageTitle } from '../../../shared/journal';
+  import { isPdf, pageTitle } from '../../../shared/journal';
   import { searchKey } from '../../../shared/compendium';
   import { dirname, type VaultFolder } from '../../../shared/vault';
-  import { journal, journalFolder, journalPdfs, journalRoots, loadPages, preview, searchPages } from './store.svelte';
+  import { journal, journalFolder, journalPdfs, journalRoots, loadPages, preview, searchPages, type JournalRoot } from './store.svelte';
   import { openPage, ui } from './ui.svelte';
 
   let { app }: ModuleProps<'journal'> = $props();
@@ -35,6 +39,23 @@
     void tree;
     return journalFolder(adv);
   });
+  // Every visible journal folder (for "Move to…" and the selected folder).
+  const folders = $derived.by(() => {
+    const out: { path: string; name: string; depth: number; root: JournalRoot }[] = [];
+    const walk = (f: VaultFolder, depth: number, root: JournalRoot) => {
+      out.push({ path: f.path, name: depth ? f.name : root.title, depth, root });
+      for (const sub of f.folders) walk(sub, depth + 1, root);
+    };
+    for (const r of roots) walk(r.folder, 0, r);
+    return out;
+  });
+  // Where the buttons at the top create: the selected folder, else the folder of the open note, else the adventure's.
+  const target = $derived.by(() => {
+    const has = (p: string | null | undefined) => (p && folders.some((f) => f.path === p) ? p : null);
+    return has(ui.selected) ?? has(ui.open ? dirname(ui.open) : null) ?? home;
+  });
+  const targetName = $derived(folders.find((f) => f.path === target)?.name ?? pageTitle(target));
+
   const found = $derived((journal.pages, ui.query.trim() ? searchPages(ui.query) : null));
   // PDFs are found by their names.
   const foundPdfs = $derived.by(() => {
@@ -43,6 +64,7 @@
     return q ? journalPdfs().filter((p) => searchKey(p.title).includes(q)) : [];
   });
   const groups = $derived(app.order.groups);
+  const pinned = $derived(app.journal.pinned[adv ?? '']);
 
   async function newPage(folder: string) {
     const path = await window.api.createPage(folder, t('journal.newNoteName'), '');
@@ -68,19 +90,31 @@
 
   const toggle = (path: string) =>
     (ui.collapsed = ui.collapsed.includes(path) ? ui.collapsed.filter((x) => x !== path) : [...ui.collapsed, path]);
+  function clickFolder(path: string) {
+    if (ui.selected === path) toggle(path);
+    else {
+      ui.selected = path;
+      if (ui.collapsed.includes(path)) toggle(path);
+    }
+  }
 
-  // A folder moved or renamed: the open note and the collapsed folders follow it.
+  // A file or folder moved or renamed: the open note, the selection and the collapsed folders follow it.
   const moved = (p: string, from: string, to: string) => (p === from ? to : p.startsWith(from + '/') ? to + p.slice(from.length) : p);
   function follow(from: string, to: string | null) {
     if (!to || to === from) return;
     if (ui.open) ui.open = moved(ui.open, from, to);
+    if (ui.selected) ui.selected = moved(ui.selected, from, to);
     ui.collapsed = ui.collapsed.map((c) => moved(c, from, to));
+    if (isPdf(from)) movePlace(from, to);
+  }
+  async function moveTo(path: string, folder: string) {
+    follow(path, await window.api.movePage(path, folder));
   }
 
   // Rename a folder in place.
   let renaming = $state<string | null>(null);
   let renameTo = $state('');
-  function startRename(f: VaultFolder) {
+  function startRename(f: { path: string; name: string }) {
     renaming = f.path;
     renameTo = f.name;
   }
@@ -91,13 +125,16 @@
     if (from && name) follow(from, await window.api.renamePageFolder(from, name));
   }
 
-  // Перенос заметки (или папки) на папку.
+  // A file or folder can go into a folder that is not its own, not itself and not inside itself.
+  const canMoveInto = (path: string, folder: string) => folder !== dirname(path) && folder !== path && !folder.startsWith(path + '/');
+
+  // Перенос заметки, PDF (или папки) на папку.
   let over = $state<string | null>(null);
   let dragFolder = $state<string | null>(null);
   const movable = (folder: string) => {
-    if (dragFolder) return folder !== dirname(dragFolder) && folder !== dragFolder && !folder.startsWith(dragFolder + '/');
+    if (dragFolder) return canMoveInto(dragFolder, folder);
     const f = draggedFile();
-    return !!f && /\.(md|txt)$/i.test(f) && dirname(f) !== folder && journal.pages.some((p) => p.path === f);
+    return !!f && /\.(md|txt|pdf)$/i.test(f) && canMoveInto(f, folder) && folders.some((x) => x.path === dirname(f));
   };
   function dragover(e: DragEvent, folder: string) {
     if (!movable(folder)) return;
@@ -113,14 +150,67 @@
       dragFolder = null;
       if (!ok) return;
       e.preventDefault();
-      follow(from, await window.api.movePage(from, folder));
+      await moveTo(from, folder);
       return;
     }
     const f = draggedFile();
     if (!f || !movable(folder)) return;
     e.preventDefault();
-    const path = await window.api.movePage(f, folder);
-    if (path && ui.open === f) ui.open = path;
+    await moveTo(f, folder);
+  }
+
+  async function trash(path: string) {
+    const s = await dispatch('vault', 'trash', { paths: [path] });
+    const gone = (p: string | null) => !!p && (p === path || p.startsWith(path + '/'));
+    if (s.vault.tree && !journalRoots().some((r) => r.folder.path === path)) {
+      if (gone(ui.open)) ui.open = null;
+      if (gone(ui.selected)) ui.selected = null;
+      if (gone(pinned ?? null)) dispatch('journal', 'pin', { adventure: adv, path: null });
+    }
+  }
+
+  // ---- Context menu ----
+  let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const moveItems = (path: string): MenuItem[] =>
+    folders.map((f) => ({ label: f.name, depth: f.depth, icon: f.depth ? Folder : undefined, disabled: !canMoveInto(path, f.path), action: () => void moveTo(path, f.path) }));
+  function folderMenu(path: string, name: string, isRoot: boolean): MenuItem[] {
+    return [
+      { label: t('journal.newNoteHere'), icon: FilePlus, action: () => void newPage(path) },
+      { label: t('journal.newSubfolder'), icon: FolderPlus, action: () => startFolder(path) },
+      ...(isRoot
+        ? []
+        : [
+            { label: t('journal.rename'), icon: Pencil, action: () => startRename({ path, name }) },
+            { label: t('journal.moveTo'), icon: FolderInput, items: moveItems(path) },
+            { label: t('journal.deleteFolder'), icon: Trash2, danger: true, action: () => void trash(path) },
+          ]),
+    ];
+  }
+  function fileMenu(path: string): MenuItem[] {
+    const pdf = isPdf(path);
+    const isPinned = pinned === path;
+    return [
+      ...(pdf ? [{ label: t('pdf.peek'), icon: PanelRight, action: () => peekPdf(path) }] : []),
+      {
+        label: t('journal.rename'),
+        icon: Pencil,
+        action: () => {
+          openPage(path);
+          ui.fresh = true;
+        },
+      },
+      { label: t('journal.moveTo'), icon: FolderInput, items: moveItems(path) },
+      { label: isPinned ? t('journal.unpin') : t('journal.pinShort'), icon: isPinned ? PinOff : Pin, action: () => dispatch('journal', 'pin', { adventure: adv, path: isPinned ? null : path }) },
+      { label: t('journal.openExternalShort'), icon: ExternalLink, action: () => window.api.openFile(path) },
+      { label: t(pdf ? 'pdf.delete' : 'journal.deleteNote'), icon: Trash2, danger: true, action: () => void trash(path) },
+    ];
+  }
+  function openMenu(e: MouseEvent, items: MenuItem[]) {
+    e.preventDefault();
+    e.stopPropagation();
+    // From a "⋯" button: under it; from a right click: at the mouse.
+    const b = e.type === 'click' ? (e.currentTarget as HTMLElement).getBoundingClientRect() : null;
+    menu = { x: b ? b.left : e.clientX, y: b ? b.bottom + 2 : e.clientY, items };
   }
 
   const filesOf = (f: VaultFolder) =>
@@ -132,6 +222,10 @@
   const textOf = (path: string) => journal.pages.find((p) => p.path === path);
 </script>
 
+{#snippet more(items: () => MenuItem[])}
+  <button class="icon-btn more" title={t('journal.menu')} onclick={(e) => openMenu(e, items())}><MoreHorizontal size={14} /></button>
+{/snippet}
+
 {#snippet folderNode(f: VaultFolder, depth: number)}
   {@const files = filesOf(f)}
   {@const ids = files.map((x) => x.path)}
@@ -140,11 +234,13 @@
     <div
       class="row folder"
       class:over={over === f.path}
+      class:selected={ui.selected === f.path}
       style:--d={depth - 1}
       role="treeitem"
-      aria-selected="false"
+      aria-selected={ui.selected === f.path}
       aria-expanded={open}
       tabindex="-1"
+      data-drop-folder={f.path}
       draggable={renaming !== f.path}
       ondragstart={(e) => {
         dragFolder = f.path;
@@ -155,6 +251,7 @@
       ondragover={(e) => dragover(e, f.path)}
       ondragleave={() => over === f.path && (over = null)}
       ondrop={(e) => drop(e, f.path)}
+      oncontextmenu={(e) => openMenu(e, folderMenu(f.path, f.name, false))}
     >
       {#if renaming === f.path}
         <!-- svelte-ignore a11y_autofocus -->
@@ -167,18 +264,13 @@
           onblur={finishRename}
         />
       {:else}
-        <button class="name" data-nav data-depth={depth - 1} aria-expanded={open} onclick={() => toggle(f.path)} ondblclick={() => startRename(f)}>
+        <button class="name" data-nav data-depth={depth - 1} aria-expanded={open} onclick={() => clickFolder(f.path)} ondblclick={() => startRename(f)}>
           {#if open}<ChevronDown size={14} />{:else}<ChevronRight size={14} />{/if}
           <Folder size={14} />
           <span class="t">{f.name}</span>
         </button>
+        {#if ui.selected === f.path}{@render more(() => folderMenu(f.path, f.name, false))}{/if}
       {/if}
-      <span class="tools">
-        <button class="icon-btn" title={t('journal.renameFolder')} onclick={() => startRename(f)}><Pencil size={14} /></button>
-        <button class="icon-btn" title={t('journal.newNoteHere')} onclick={() => newPage(f.path)}><FilePlus size={14} /></button>
-        <button class="icon-btn" title={t('journal.newSubfolder')} onclick={() => startFolder(f.path)}><FolderPlus size={14} /></button>
-        <button class="icon-btn" title={t('journal.deleteFolder')} onclick={() => dispatch('vault', 'trash', { paths: [f.path] })}><Trash2 size={14} /></button>
-      </span>
     </div>
   {/if}
   {#if open}
@@ -197,19 +289,26 @@
     {/if}
     {#each f.folders as sub (sub.path)}{@render folderNode(sub, depth + 1)}{/each}
     {#each files as file (file.path)}
-      <button
-        class="row page"
-        data-nav
-        data-depth={depth}
-        class:active={ui.open === file.path}
-        style:--d={depth}
-        title={textOf(file.path) ? preview(textOf(file.path)!) : file.path}
-        onclick={() => openPage(file.path)}
-        use:sortable={{ group: f.path, id: file.path, ids, vertical: true, file: file.path }}
-      >
-        {#if file.kind === 'pdf'}<BookOpen size={13} class="pdf-icon" />{/if}
-        <span class="t">{pageTitle(file.path)}</span>
-      </button>
+      <div class="file" class:active={ui.open === file.path} style:--d={depth} data-drop-folder={f.path} oncontextmenu={(e) => openMenu(e, fileMenu(file.path))} role="none">
+        <button
+          class="row page"
+          data-nav
+          data-depth={depth}
+          class:active={ui.open === file.path}
+          style:--d={depth}
+          title={textOf(file.path) ? preview(textOf(file.path)!) : file.path}
+          onclick={() => {
+            ui.selected = null;
+            openPage(file.path);
+          }}
+          use:sortable={{ group: f.path, id: file.path, ids, vertical: true, file: file.path }}
+        >
+          {#if file.kind === 'pdf'}<BookOpen size={13} class="pdf-icon" />{/if}
+          <span class="t">{pageTitle(file.path)}</span>
+          {#if pinned === file.path}<Pin size={11} class="pin-mark" />{/if}
+        </button>
+        {#if ui.open === file.path}{@render more(() => fileMenu(file.path))}{/if}
+      </div>
     {/each}
   {/if}
 {/snippet}
@@ -220,7 +319,15 @@
       <Search size={14} />
       <input type="text" placeholder={t('journal.search')} bind:value={ui.query} />
     </label>
-    <button class="icon-btn" title={t('journal.newNote')} onclick={() => newPage(home)}><FilePlus size={16} /></button>
+  </div>
+  <div class="actions">
+    <button class="btn" title={t('journal.newNoteIn', { folder: targetName })} onclick={() => newPage(target)}><FilePlus size={14} /> {t('journal.newNoteShort')}</button>
+    <button
+      class="btn"
+      title={t('journal.newFolderIn', { folder: targetName })}
+      disabled={!folders.some((f) => f.path === target)}
+      onclick={() => startFolder(target)}><FolderPlus size={14} /> {t('journal.newFolderShort')}</button
+    >
   </div>
 
   {#if found}
@@ -228,7 +335,7 @@
     <ul class="results">
       {#each foundPdfs as p (p.path)}
         <li>
-          <button data-nav class:active={ui.open === p.path} onclick={() => openPage(p.path)}>
+          <button data-nav class:active={ui.open === p.path} onclick={() => openPage(p.path)} oncontextmenu={(e) => openMenu(e, fileMenu(p.path))}>
             <span class="t"><BookOpen size={12} /> {p.title}</span>
             <span class="s">PDF</span>
           </button>
@@ -236,7 +343,7 @@
       {/each}
       {#each found as p (p.path)}
         <li>
-          <button data-nav class:active={ui.open === p.path} onclick={() => openPage(p.path)}>
+          <button data-nav class:active={ui.open === p.path} onclick={() => openPage(p.path)} oncontextmenu={(e) => openMenu(e, fileMenu(p.path))}>
             <span class="t">{p.title}</span>
             <span class="s">{preview(p) || t('journal.emptyShort')}</span>
           </button>
@@ -249,18 +356,18 @@
         <div
           class="group"
           class:over={over === r.folder.path}
+          class:selected={ui.selected === r.folder.path}
           role="treeitem"
-          aria-selected="false"
+          aria-selected={ui.selected === r.folder.path}
           tabindex="-1"
+          data-drop-folder={r.folder.path}
           ondragover={(e) => dragover(e, r.folder.path)}
           ondragleave={() => over === r.folder.path && (over = null)}
           ondrop={(e) => drop(e, r.folder.path)}
+          oncontextmenu={(e) => openMenu(e, folderMenu(r.folder.path, r.title, true))}
         >
-          <span class="t">{r.title}</span>
-          <span class="tools">
-            <button class="icon-btn" title={t('journal.newNote')} onclick={() => newPage(r.folder.path)}><FilePlus size={14} /></button>
-            <button class="icon-btn" title={t('journal.newFolder')} onclick={() => startFolder(r.folder.path)}><FolderPlus size={14} /></button>
-          </span>
+          <button class="gname" onclick={() => (ui.selected = ui.selected === r.folder.path ? null : r.folder.path)}><span class="t">{r.title}</span></button>
+          {#if ui.selected === r.folder.path}{@render more(() => folderMenu(r.folder.path, r.title, true))}{/if}
         </div>
         <div role="tree">{@render folderNode(r.folder, 0)}</div>
       </section>
@@ -269,9 +376,13 @@
       <p class="faint empty">
         {t('journal.none')}
       </p>
+    {:else}
+      <p class="faint hint">{t('journal.treeHint')}</p>
     {/if}
   {/if}
 </div>
+
+{#if menu}<ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />{/if}
 
 <style>
   .panel {
@@ -283,6 +394,16 @@
   .top {
     display: flex;
     gap: 4px;
+  }
+  .actions {
+    display: flex;
+    gap: 4px;
+  }
+  .actions .btn {
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+    font-size: 12px;
   }
   .search {
     display: flex;
@@ -311,14 +432,20 @@
   .group {
     display: flex;
     align-items: center;
-    padding: 2px 4px 2px 8px;
+    padding: 0 4px 0 0;
     border-radius: var(--radius-s);
+  }
+  .gname {
+    flex: 1;
+    min-width: 0;
+    padding: 3px 8px;
+    border: 0;
+    background: none;
     color: var(--text-muted);
     font-size: 12px;
     font-weight: 600;
-  }
-  .group .t {
-    flex: 1;
+    text-align: left;
+    cursor: pointer;
   }
   .row {
     display: flex;
@@ -332,8 +459,24 @@
     color: var(--text-normal);
     text-align: left;
   }
-  .row:hover {
+  .row:hover,
+  .group:hover {
     background: var(--bg-hover);
+  }
+  .file {
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-s);
+  }
+  .file .row {
+    flex: 1;
+    min-width: 0;
+  }
+  .file.active {
+    background: var(--bg-active);
+  }
+  .file.active .row:hover {
+    background: none;
   }
   .page {
     cursor: pointer;
@@ -343,7 +486,13 @@
     margin-right: 5px;
     color: var(--text-muted);
   }
-  .page.active {
+  .page :global(.pin-mark) {
+    flex: none;
+    margin-left: 4px;
+    color: var(--accent);
+  }
+  .folder.selected,
+  .group.selected {
     background: var(--bg-active);
   }
   .folder .name {
@@ -363,15 +512,8 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .tools {
-    display: none;
-    gap: 2px;
-  }
-  .row:hover .tools,
-  .group:hover .tools {
-    display: flex;
-  }
-  .tools .icon-btn {
+  .more {
+    flex: none;
     padding: 2px;
   }
   .over {
@@ -421,7 +563,11 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .empty {
-    font-size: 13px;
+  .empty,
+  .hint {
+    font-size: 12px;
+  }
+  .hint {
+    margin: 8px 4px 0;
   }
 </style>

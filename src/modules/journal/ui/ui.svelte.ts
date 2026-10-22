@@ -7,6 +7,8 @@ export const ui = $state({
   query: '',
   back: [] as string[],
   collapsed: [] as string[],
+  // The folder clicked in the list: «New note» and «New folder» create there.
+  selected: null as string | null,
   // Только что созданная заметка: сначала — название (поле выделено), Enter — к тексту.
   fresh: false,
 });

@@ -22,6 +22,9 @@
 
   function targetAt(e: DragEvent): Target {
     const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+    // A folder in the journal's tree: the files go right there.
+    const into = el?.closest<HTMLElement>('[data-drop-folder]');
+    if (into?.dataset['dropFolder']) return { module: 'journal', rect: into.getBoundingClientRect(), role: 'journal', folder: into.dataset['dropFolder'], icon: false };
     const icon = el?.closest<HTMLElement>('[data-drop-module]');
     const area = !icon && workspace.active ? el?.closest<HTMLElement>('.workspace') : null;
     const module = icon?.dataset['dropModule'] ?? (area ? workspace.active : null);

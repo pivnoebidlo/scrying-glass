@@ -217,8 +217,10 @@ deleting to trash.
 A section of its own in the left strip: the GM's notes for an adventure — a session plan, read-aloud text, game
 summaries, plot ideas. A note is a plain Markdown file in the adventure's journal / notes folder (or in the vault's
 shared folder), easy to edit in Obsidian too. On the left — the tree of notes: folders ("Sessions", "Locations",
-"Ideas"), new note and folder — buttons on hover, order — by dragging, dragging onto a folder moves the note into it. A folder is renamed with the pencil or a double click and moved by
-dragging it onto another folder.
+"Ideas"). "Note" and "Folder" above the tree create in the selected folder (a clicked folder or the folder of the open
+note). A right click on a note, a PDF or a folder — or "⋯" on the selected one — opens its actions: a new note or
+folder here, rename, move to…, pin, open in another app, trash. Order — by dragging; dragging onto a folder moves a
+note, a PDF or a folder into it; a folder is also renamed with a double click.
 A note opens formatted, "Edit" (⌘E) — the Markdown text, which saves itself. As in Obsidian, Enter carries a ">" quote,
 a list, a task or a number on to the next line (Enter on an empty item ends the list), ⌘B / ⌘I / ⌘⇧X make the
 selection bold, italic or ~~struck through~~ (again — removes it), ⌘⇧. makes the lines a quote, ⌘Z undoes; the
@@ -238,8 +240,8 @@ file), {1d20+2} — a roll into the roll log on click, [[Title]] — a card, ano
 drawer; a card wins over a note or an entry with the same name). A note can be pinned: it appears in the right panel, at hand during the game; the pin travels with the
 adventure file (.sgpack) and comes back with the adventure from the trash. Notes are found by ⌘K.
 
-**PDF books and adventures** live in the journal too: drop a PDF on the Journal tab or its icon (or put it into the
-journal folder) and it shows in the tree next to the notes. It opens right in the app — pages one under another,
+**PDF books and adventures** live in the journal too: drop a PDF on the Journal tab or its icon, or right onto a folder
+of the tree (or put it into the journal folder) and it shows in the tree next to the notes. It opens right in the app — pages one under another,
 selectable text, search (⌘F; Enter — the next match), the page number, zoom and fit to width; each file opens where it
 was left. To look something up during the game without leaving the fight or the map, open it in the side drawer
 over any tab, or pin it to the right panel. [[Book#12]] in a note opens page 12 of the PDF "Book" in the drawer.

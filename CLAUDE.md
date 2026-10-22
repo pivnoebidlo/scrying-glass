@@ -554,7 +554,9 @@ Electron-приложение для мастера D&D: окно управле
   `pinned` (приключение → путь): блок правой панели `OnScreen.svelte`. Заметки — в ⌘K (`QuickSearch` справочника).
   PDF (книги и приключения) — тоже в папках журнала: `FileKind` 'pdf' (`main/scan.ts`, `PDF` в shared/vault.ts),
   переименование и перенос — `textstore` (`other` у `textKind`: файл не читается как текст); перетаскивание и ⌘V на
-  «Журнал» (`roleAccepts` 'journal'). Просмотр — pdf.js (`pdfjs-dist`, точная версия): `renderer/lib/pdf/PdfView.svelte`
+  «Журнал» (`roleAccepts` 'journal'), на папку дерева — `data-drop-folder` (FileDrop). Боковая панель журнала без кнопок
+  при наведении: «Заметка» / «Папка» сверху — в `ui.selected` (или папку открытой), действия строки — контекстное меню
+  `renderer/lib/ContextMenu.svelte` (правый щелчок или «⋯» у выбранной; `items` — вложенный список, «Перенести в…»). Просмотр — pdf.js (`pdfjs-dist`, точная версия): `renderer/lib/pdf/PdfView.svelte`
   (страницы, поиск — `PDFFindController`, масштаб; `compact` — правая панель), место в файле — `pdf.svelte.ts`
   (localStorage окна), выдвижная панель — `pdfPeek` / `peekPdf` → фоновый `journal/ui/PdfDrawer.svelte` (z-index ниже
   карточки и записи). [[Книга#12]] — `pdfLink`, якорь ссылки — `data-anchor` (`entry/markup.ts`). Файл — по
