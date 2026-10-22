@@ -52,6 +52,7 @@ export const en = {
   'scenes.takeAllHint': 'Replace all parts of the scene with what is on screen now',
   'scenes.takeAll': 'Take current',
   'scenes.delete': 'Delete scene',
+  'scenes.edit': 'Open the scene',
   'scenes.adventure': 'Adventure',
   'scenes.shared': 'Shared — visible in all adventures',
   'scenes.partsHint':
@@ -116,6 +117,7 @@ export const ru: Messages<typeof en> = {
   'scenes.takeAllHint': 'Заменить все части сцены тем, что сейчас на экране',
   'scenes.takeAll': 'Взять текущее',
   'scenes.delete': 'Удалить сцену',
+  'scenes.edit': 'Открыть сцену',
   'scenes.adventure': 'Приключение',
   'scenes.shared': 'Общая — видна во всех приключениях',
   'scenes.partsHint':

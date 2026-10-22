@@ -13,6 +13,15 @@
     action?: () => void;
     items?: MenuItem[];
   }
+
+  // Where a menu opens: under a «⋯» button (a click), at the mouse (a right click). Stops the browser's own menu.
+  export function menuAt(e: MouseEvent): { x: number; y: number } {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type !== 'click') return { x: e.clientX, y: e.clientY };
+    const b = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    return { x: b.left, y: b.bottom + 2 };
+  }
 </script>
 
 <script lang="ts">

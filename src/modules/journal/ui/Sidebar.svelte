@@ -7,7 +7,7 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { BookOpen, ChevronDown, ChevronRight, ExternalLink, FilePlus, Folder, FolderInput, FolderPlus, MoreHorizontal, Pencil, Pin, PinOff, Search, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import ContextMenu, { type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { movePlace } from '../../../renderer/lib/pdf/pdf.svelte';
   import { draggedFile, sortable } from '../../../renderer/lib/sortable';
@@ -180,7 +180,7 @@
       ...(isRoot
         ? []
         : [
-            { label: t('journal.rename'), icon: Pencil, action: () => startRename({ path, name }) },
+            { label: t('action.rename'), icon: Pencil, action: () => startRename({ path, name }) },
             { label: t('journal.moveTo'), icon: FolderInput, items: moveItems(path) },
             { label: t('journal.deleteFolder'), icon: Trash2, danger: true, action: () => void trash(path) },
           ]),
@@ -191,7 +191,7 @@
     const isPinned = pinned.includes(path);
     return [
       {
-        label: t('journal.rename'),
+        label: t('action.rename'),
         icon: Pencil,
         action: () => {
           openPage(path);
@@ -204,13 +204,7 @@
       { label: t(pdf ? 'pdf.delete' : 'journal.deleteNote'), icon: Trash2, danger: true, action: () => void trash(path) },
     ];
   }
-  function openMenu(e: MouseEvent, items: MenuItem[]) {
-    e.preventDefault();
-    e.stopPropagation();
-    // From a "⋯" button: under it; from a right click: at the mouse.
-    const b = e.type === 'click' ? (e.currentTarget as HTMLElement).getBoundingClientRect() : null;
-    menu = { x: b ? b.left : e.clientX, y: b ? b.bottom + 2 : e.clientY, items };
-  }
+  const openMenu = (e: MouseEvent, items: MenuItem[]) => (menu = { ...menuAt(e), items });
 
   const filesOf = (f: VaultFolder) =>
     applyOrder(
@@ -222,7 +216,7 @@
 </script>
 
 {#snippet more(items: () => MenuItem[])}
-  <button class="icon-btn more" title={t('journal.menu')} onclick={(e) => openMenu(e, items())}><MoreHorizontal size={14} /></button>
+  <button class="icon-btn more" title={t('action.more')} onclick={(e) => openMenu(e, items())}><MoreHorizontal size={14} /></button>
 {/snippet}
 
 {#snippet folderNode(f: VaultFolder, depth: number)}

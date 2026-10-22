@@ -1,16 +1,19 @@
-<!-- Карточка картинки из хранилища. Кнопки — действия модулей (портрет, на весь экран, …) и «в корзину»
-     (trash={false} — без неё); у кнопки при наведении сразу видна подпись. Щелчок по картинке ничего не выводит
-     игрокам (так бывало случайно), двойной — открывает её крупно (Lightbox). primary — какое действие главное: оно
-     первым в окне просмотра. Нижняя часть карточки — на усмотрение того, кто её показывает. -->
+<!-- Карточка картинки из хранилища. Nothing hides until hovered: the tab's main action (primary — a portrait, a
+     background, show) is always a labelled button at the top, «⋯» next to it — every action of the modules (portrait,
+     full screen, combat, Telegram…), a closer look and «to trash» (trash={false} — without it); a right click opens the
+     same menu. Щелчок по картинке ничего не выводит игрокам (так бывало случайно), двойной — открывает её крупно
+     (Lightbox). Нижняя часть карточки — на усмотрение того, кто её показывает. -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { vaultUrl, thumb } from '../../shared/vault';
   import { imageActions } from './registry';
   import { dispatch, store } from './store.svelte';
-  import { Trash2 } from '@lucide/svelte';
-  import { badgeOf } from './contrib';
+  import { Maximize2, Trash2 } from '@lucide/svelte';
+  import { badgeOf, type FileAction } from './contrib';
   import { viewImage } from './view-image.svelte';
   import { t } from './i18n.svelte';
+  import type { MenuItem } from './ContextMenu.svelte';
+  import TileBar from './TileBar.svelte';
 
   let {
     path,
@@ -21,36 +24,40 @@
   }: { path: string; primary: string; aspect?: string; trash?: boolean; children?: Snippet } = $props();
 
   const app = $derived(store.state);
-  // Главное действие — первым в столбике кнопок.
-  const actions = $derived([...imageActions].filter((a) => a.visible?.(app, path) ?? true).sort((a, b) => Number(b.id === primary) - Number(a.id === primary)));
-  const active = $derived(imageActions.filter((a) => a.active(app, path)));
+  const actions = $derived([...imageActions].filter((a) => a.visible?.(app, path) ?? true));
+  const main = $derived(actions.find((a) => a.id === primary) ?? actions[0]);
+  // Other actions that are on (a portrait in the Backgrounds tab, in combat): a badge.
+  const badges = $derived(actions.filter((a) => a !== main && a.active(app, path)));
+  const active = $derived(actions.some((a) => a.active(app, path)));
+
+  const label = (a: FileAction, on: boolean) => (a.tip ? (on ? a.tip.on : a.tip.off) : on ? t('action.remove', { what: a.title }) : a.title);
+
+  let pic = $state<HTMLElement>();
+  let bar = $state<TileBar>();
+  const items = (): MenuItem[] => [
+    ...[...actions].sort((a, b) => Number(b === main) - Number(a === main)).map((a) => ({ label: label(a, a.active(app, path)), icon: a.icon as MenuItem['icon'], action: () => a.toggle(app, path) })),
+    { label: t('view.zoomShort'), icon: Maximize2, action: () => pic && viewImage(path, pic) },
+    ...(trash ? [{ label: t('action.toTrashLong'), icon: Trash2, danger: true, action: () => dispatch('vault', 'trash', { paths: [path] }) }] : []),
+  ];
 </script>
 
-<div class="card" class:on={active.length > 0}>
+<div class="card" class:on={active} oncontextmenu={(e) => bar?.openMenu(e)} role="none">
   <div class="pic">
-    <button class="thumb" data-view={path} title={t('view.zoom')} ondblclick={(e) => viewImage(path, e.currentTarget)}>
+    <button class="thumb" data-view={path} title={t('view.zoom')} bind:this={pic} ondblclick={(e) => viewImage(path, e.currentTarget)}>
       <img src={thumb(vaultUrl(path), 480)} alt="" loading="lazy" style:aspect-ratio={aspect} />
     </button>
 
-    <div class="badges">
-      {#each active as a (a.id)}<span class="badge">{badgeOf(a, app, path)}</span>{/each}
-    </div>
+    <TileBar
+      bind:this={bar}
+      main={main ? { icon: main.icon as never, label: label(main, main.active(app, path)), title: main.title, on: main.active(app, path), run: () => main.toggle(app, path) } : null}
+      {items}
+    />
 
-    <div class="actions">
-      {#each actions as a (a.id)}
-        {@const on = a.active(app, path)}
-        <button class="action" class:on aria-label={a.title} onclick={() => a.toggle(app, path)}>
-          <a.icon size={13} />
-          <span class="tip">{a.tip ? (on ? a.tip.on : a.tip.off) : on ? t('action.remove', { what: a.title }) : a.title}</span>
-        </button>
-      {/each}
-      {#if trash}
-        <button class="action trash" aria-label={t('action.toTrashLong')} onclick={() => dispatch('vault', 'trash', { paths: [path] })}>
-          <Trash2 size={13} />
-          <span class="tip">{t('action.toTrash')}</span>
-        </button>
-      {/if}
-    </div>
+    {#if badges.length}
+      <div class="badges">
+        {#each badges as a (a.id)}<span class="badge">{badgeOf(a, app, path)}</span>{/each}
+      </div>
+    {/if}
   </div>
 
   {@render children?.()}
@@ -63,17 +70,12 @@
     border-radius: var(--radius-m);
     background: var(--bg-secondary);
   }
-  /* Подпись кнопки может выйти за плитку — поверх соседних. */
-  .card:hover {
-    z-index: 5;
-  }
   .card.on {
     border-color: var(--accent);
   }
   .pic {
     position: relative;
   }
-  /* Картинка скруглена сама: у плитки нет overflow: hidden, иначе подписи кнопок обрезались бы её краем. */
   .thumb {
     display: block;
     width: 100%;
@@ -89,16 +91,14 @@
     width: 100%;
     object-fit: cover;
   }
-  /* Кнопки — столбиком вдоль левого края, метки («портрет», «в бою») — справа напротив них:
-     так они не перекрывают друг друга. */
+  /* What else is on (a portrait in Backgrounds, in combat): along the bottom of the picture. */
   .badges {
     position: absolute;
+    left: 6px;
     right: 6px;
-    top: 6px;
-    left: 40px;
+    bottom: 6px;
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
     gap: 4px;
     pointer-events: none;
   }
@@ -108,67 +108,5 @@
     background: var(--accent);
     color: var(--on-accent);
     font-size: 11px;
-  }
-  .actions {
-    position: absolute;
-    left: 6px;
-    top: 6px;
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    gap: 4px;
-    /* На маленькой плитке кнопки не помещаются в высоту картинки — уходят во второй столбик. */
-    max-height: calc(100% - 12px);
-    opacity: 0;
-    transition: opacity 0.12s ease;
-  }
-  .card:hover .actions {
-    opacity: 1;
-  }
-  .action {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: 0;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.65);
-    color: #fff;
-    cursor: pointer;
-  }
-  .action.trash {
-    margin-top: 6px;
-  }
-  .action.trash:hover {
-    color: var(--danger);
-  }
-  .action:hover {
-    background: rgba(0, 0, 0, 0.85);
-  }
-  .action.on {
-    background: var(--accent);
-  }
-  /* Подпись кнопки — сразу при наведении (системная всплывает с задержкой и часто не успевает). */
-  .tip {
-    position: absolute;
-    left: calc(100% + 6px);
-    top: 50%;
-    z-index: 2;
-    padding: 2px 8px;
-    border-radius: var(--radius-s);
-    background: rgba(0, 0, 0, 0.85);
-    color: #fff;
-    font-size: 11px;
-    white-space: nowrap;
-    transform: translateY(-50%);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.08s ease;
-  }
-  .action:hover .tip {
-    opacity: 1;
   }
 </style>

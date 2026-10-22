@@ -79,12 +79,14 @@
     font-size: 12px;
   }
   .play {
+    flex: none;
     width: 24px;
     height: 24px;
-    opacity: 0;
+    color: var(--text-faint);
   }
-  .item:hover .play {
-    opacity: 1;
+  .play:hover,
+  .item.playing .play {
+    color: var(--accent);
   }
   .hint {
     padding: 0 8px;

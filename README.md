@@ -103,18 +103,21 @@ name under any tile (portrait, background, handout, creature, a file in Files) a
 be edited in place: a portrait with a card and a creature rename the card, everything else renames the file itself.
 Scenes, trays, map markup and card portraits survive the rename.
 
-Clicking a tile shows nothing to the players — only the buttons that appear on hover do (their labels show at once).
+Clicking a tile shows nothing to the players — only its buttons do. Nothing hides until hovered: every tile always
+shows the tab's main action (a portrait, a background, a handout, show) and «⋯» with all the rest (another way to show
+it, combat, Telegram, draw over, a closer look, trash); a right click opens the same menu. Lists (maps, scenes, the
+journal) work alike: the main button is always there, the rest — a right click or «⋯» on the selected row.
 Double-clicking a picture opens it large: ← → — neighbours, Esc — close, the same buttons at the bottom.
 
 ## On the player screen
 
 Any picture can be shown as a **portrait** (with a caption, several at once) or full screen as a **background**:
 a location, a handout, an illustration. The background lies under the portraits and dims while they are on screen.
-Both buttons appear when you hover over a picture.
+Both are on every picture tile: the tab's own as a button, the other in «⋯».
 
 **Handouts**: notes, clues, letters, treasure maps — if you'd rather not print them. The Handouts tab shows pictures
 from handouts / clues folders; the tile button shows the item to the players over the map and portraits (the scene
-behind it darkens), pressing again removes it. Any picture can be shown as a handout with the hover button.
+behind it darkens), pressing again removes it. Any picture can be shown as a handout from its «⋯» menu.
 
 **Notes** — letters, orders, notices, diaries — are made right in the app: Tools → Notes, or "New note" in Handouts.
 Text (headings, italic, bold, a "---" ornament) on parchment, old or light paper or dark leather; a straight, torn or
@@ -732,7 +735,7 @@ crew goes into the .sgpack and to the trash with the adventure. This work is bas
 
 ## Files and trash
 
-Pictures, maps and tracks can be deleted from the app (the trash can button on hover).
+Pictures, maps and tracks can be deleted from the app («⋯» or a right click → Move to trash).
 
 **Trash** — the app's own, like Obsidian's: deleted files, cards, compendium entries and adventures move to the
 hidden `.trash` folder of the vault (or the library — for shared ones) rather than the system trash, which may be

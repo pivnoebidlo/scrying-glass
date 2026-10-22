@@ -4,7 +4,8 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
-  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, Pencil, RefreshCw, RotateCcw, Star, Swords, Trash2, Upload, Wand2, X } from '@lucide/svelte';
+  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, MoreHorizontal, Pencil, RefreshCw, RotateCcw, Star, Swords, Trash2, Upload, Wand2, X } from '@lucide/svelte';
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { reshapeFrom } from '../../tools/reshape/store.svelte';
   import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
   import type { AppState } from '../../../shared/types';
@@ -108,6 +109,18 @@
     await addToInitiative(summary, { count: single ? 1 : count, rollHp: !single && rollHp, side: side ?? summary.side });
     openTab('initiative');
   }
+  // A portrait's actions: the screen button and «⋯» are always on it; a right click opens the same menu.
+  let pmenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  function portraitActions(e: MouseEvent, cref: CardRef, p: string, asset: string, i: number, onScreen: boolean) {
+    pmenu = {
+      ...menuAt(e),
+      items: [
+        { label: onScreen ? t('best.removeFromScreen') : t('best.showToPlayers'), icon: Monitor, action: () => togglePortrait(asset) },
+        ...(i > 0 ? [{ label: t('best.makeMain'), icon: Star, action: () => bestiary.makeMainPortrait(cref, p) }] : []),
+        { label: t('best.removePortrait'), icon: X, danger: true, action: () => bestiary.removePortrait(cref, p) },
+      ],
+    };
+  }
 </script>
 <div class="card-view" class:compact>
   {#if card && summary && Stats}
@@ -205,7 +218,7 @@
           {#each card.portraits as p, i (p)}
             {@const asset = cardAsset(cref.scope, p)}
             {@const onScreen = app.portraits.onScreen.includes(asset)}
-            <div class="portrait" class:main={i === 0} class:on={onScreen}>
+            <div class="portrait" class:main={i === 0} class:on={onScreen} oncontextmenu={(e) => portraitActions(e, cref, p, asset, i, onScreen)} role="none">
               <button class="pic" data-view={asset} title={t('best.zoom')} ondblclick={(e) => viewImage(asset, e.currentTarget)}
                 ><img src={thumb(cardImageUrl(cref.scope, p), 240)} alt="" /></button
               >
@@ -213,8 +226,7 @@
                 <button class="icon-btn" class:on={onScreen} title={onScreen ? t('best.removeFromScreen') : t('best.showToPlayers')} onclick={() => togglePortrait(asset)}
                   ><Monitor size={12} /></button
                 >
-                {#if i > 0}<button class="icon-btn" title={t('best.makeMain')} onclick={() => bestiary.makeMainPortrait(cref, p)}><Star size={12} /></button>{/if}
-                <button class="icon-btn" title={t('best.removePortrait')} onclick={() => bestiary.removePortrait(cref, p)}><X size={12} /></button>
+                <button class="icon-btn" title={t('action.more')} onclick={(e) => portraitActions(e, cref, p, asset, i, onScreen)}><MoreHorizontal size={12} /></button>
               </div>
             </div>
           {/each}
@@ -256,6 +268,7 @@
     <p class="faint placeholder">{empty}</p>
   {/if}
 </div>
+{#if pmenu}<ContextMenu x={pmenu.x} y={pmenu.y} items={pmenu.items} onclose={() => (pmenu = null)} />{/if}
 {#if picking && app.vault.tree && summary}
   {@const target = summary.ref}
   <ImagePicker tree={app.vault.tree} onpick={([p]) => ((picking = false), bestiary.addPortrait(target, p!))} onclose={() => (picking = false)} />
@@ -326,15 +339,13 @@
     object-fit: cover;
   }
   .p-actions {
-    flex-direction: column;
     position: absolute;
     top: 2px;
+    left: 2px;
     right: 2px;
-    display: none;
-    gap: 2px;
-  }
-  .portrait:hover .p-actions {
     display: flex;
+    justify-content: space-between;
+    gap: 2px;
   }
   .p-actions .icon-btn {
     width: 20px;

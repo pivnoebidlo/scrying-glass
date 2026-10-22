@@ -119,7 +119,7 @@
     white-space: nowrap;
   }
   .remove {
-    display: none;
+    display: grid;
     place-items: center;
     width: 18px;
     height: 18px;
@@ -130,9 +130,6 @@
     background: none;
     color: var(--text-faint);
     cursor: pointer;
-  }
-  .chip:hover .remove {
-    display: grid;
   }
   .remove:hover {
     color: var(--danger);

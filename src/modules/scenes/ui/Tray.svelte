@@ -1,10 +1,11 @@
 <!-- Подборка в блоке правой панели (фон, карта, портреты, раздатка): плитки под рукой. Щелчок — вывести на экран,
      ещё щелчок — убрать; на экране — с рамкой. Пополняется само (всё показанное), перетаскиванием плиток из вкладок
-     и кнопкой «+»; крестик убирает из подборки (с экрана — нет). Чья подборка — trayOwner: включённой сцены или
-     приключения. -->
+     и кнопкой «+»; крестик (always visible) убирает из подборки (с экрана — нет); a right click — the same as a menu.
+     Чья подборка — trayOwner: включённой сцены или приключения. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { BookOpen, Eye, Plus, X } from '@lucide/svelte';
+  import { BookOpen, Eye, EyeOff, Plus, X } from '@lucide/svelte';
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import type { Snippet } from 'svelte';
   import FilePicker from '../../../renderer/lib/FilePicker.svelte';
   import { draggedFile, sortable } from '../../../renderer/lib/sortable';
@@ -85,6 +86,17 @@
     e.preventDefault();
     add([path!]);
   }
+  let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const openMenu = (e: MouseEvent, path: string): void => {
+    const on = isOn(path);
+    menu = {
+      ...menuAt(e),
+      items: [
+        { label: on ? t('scenes.removeFromScreen') : t('scenes.showToPlayers'), icon: on ? EyeOff : Eye, action: () => void toggle(path) },
+        { label: t('scenes.removeFromTray'), icon: X, danger: true, action: () => void remove(path) },
+      ],
+    };
+  };
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -93,7 +105,7 @@
     <div class="grid" class:wide>
       {#each items as path (path)}
         {@const on = isOn(path)}
-        <div class="tile" class:on use:sortable={{ group: `tray:${part}`, id: path, ids: tray, disabled: !tray.includes(path), onmove: reorder }}>
+        <div class="tile" class:on use:sortable={{ group: `tray:${part}`, id: path, ids: tray, disabled: !tray.includes(path), onmove: reorder }} oncontextmenu={(e) => openMenu(e, path)} role="none">
           <button class="pick" title={t('scenes.pickHint', { caption: caption(path), action: on ? t('scenes.removeFromScreen') : t('scenes.showToPlayers') })} onclick={() => toggle(path)}>
             {#if isNotePath(path) || isSketchPath(path)}
               <TrayNote {path} />
@@ -133,6 +145,8 @@
   {/each}
   {@render children?.()}
 </div>
+
+{#if menu}<ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />{/if}
 
 {#if picking && app.vault.tree}
   <FilePicker tree={app.vault.tree} {kinds} {prefer} multi skip={tray} onpick={(paths) => ((picking = false), add(paths))} onclose={() => (picking = false)} />
@@ -250,7 +264,7 @@
     position: absolute;
     top: 2px;
     right: 2px;
-    display: none;
+    display: grid;
     place-items: center;
     width: 16px;
     height: 16px;
@@ -260,9 +274,6 @@
     background: rgba(0, 0, 0, 0.7);
     color: #fff;
     cursor: pointer;
-  }
-  .tile:hover .remove {
-    display: grid;
   }
   .remove:hover {
     background: var(--danger);

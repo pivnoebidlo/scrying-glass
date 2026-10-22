@@ -1,8 +1,11 @@
-<!-- Плитка записки (or a canvas — by the file's suffix): лист в миниатюре, название, кнопки «показать игрокам», «править», «в корзину» (подпись кнопки —
-     сразу при наведении). Щелчок по листу игрокам ничего не показывает, двойной — открывает записку в редакторе. -->
+<!-- Плитка записки (or a canvas — by the file's suffix): лист в миниатюре, название; always visible at the top —
+     «Show» (the main action) and «⋯» (show, edit, Telegram, to trash; a right click opens it too). Щелчок по листу
+     игрокам ничего не показывает, двойной — открывает записку в редакторе. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Pencil, Scroll, Send, Trash2 } from '@lucide/svelte';
+  import type { MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import TileBar from '../../../renderer/lib/TileBar.svelte';
   import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
   import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
   import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
@@ -32,38 +35,31 @@
 
   // Подтверждение спросит само действие (системный диалог, файл уходит в корзину приложения).
   const trash = () => dispatch('vault', 'trash', { paths: [path] });
+  const toggle = () => dispatch('handouts', 'toggle', { path });
+  const edit = () => (onopen ? onopen() : editNote(path));
+  const items = (): MenuItem[] => [
+    { label: shown ? t('tools.card.removeFromScreen') : t('tools.card.show'), icon: Scroll, action: toggle },
+    { label: t('tools.card.edit'), icon: Pencil, action: edit },
+    ...(tgReady() ? [{ label: t('tg.sendShort'), icon: Send, action: () => sendToTelegram({ kind: 'note', path, title }) }] : []),
+    { label: t('tools.card.toTrash'), icon: Trash2, danger: true, action: trash },
+  ];
+  let bar = $state<TileBar>();
 </script>
 
-<div class="card" class:on={shown}>
-  <button class="thumb" title={t('tools.card.zoom')} ondblclick={() => (onopen ? onopen() : editNote(path))}>
+<div class="card" class:on={shown} oncontextmenu={(e) => bar?.openMenu(e)} role="none">
+  <button class="thumb" title={t('tools.card.zoom')} ondblclick={edit}>
     {#if sketchy}{#if sketch}<SketchView {sketch} small />{/if}{:else if note}<NotePaper {note} />{/if}
   </button>
-  {#if shown}<span class="badge">{t('tools.card.handout')}</span>{/if}
-  <div class="actions">
-    <button class="act" aria-label={t('tools.card.show')} class:active={shown} onclick={() => dispatch('handouts', 'toggle', { path })}
-      ><Scroll size={14} /><span class="tip">{shown ? t('tools.card.removeFromScreen') : t('tools.card.show')}</span></button
-    >
-    {#if tgReady()}
-      <button class="act" aria-label={t('tg.noteHint')} onclick={() => sendToTelegram({ kind: 'note', path, title })}
-        ><Send size={14} /><span class="tip">{t('tg.sendShort')}</span></button
-      >
-    {/if}
-    <button class="act" aria-label={t('tools.card.edit')} onclick={() => (onopen ? onopen() : editNote(path))}><Pencil size={14} /><span class="tip">{t('tools.card.edit')}</span></button>
-    <button class="act" aria-label={t('tools.card.toTrash')} onclick={trash}><Trash2 size={14} /><span class="tip">{t('tools.card.toTrash')}</span></button>
-  </div>
+  <TileBar bind:this={bar} main={{ icon: Scroll, label: shown ? t('tools.card.removeFromScreen') : t('tools.card.show'), on: shown, run: toggle }} {items} />
   <div class="caption" title={path}>{title}</div>
 </div>
 
 <style>
-  /* Без overflow: hidden — подписи кнопок выходят за плитку (лист скруглён сам). */
   .card {
     position: relative;
     border: 1px solid var(--border);
     border-radius: var(--radius-m);
     background: var(--bg-secondary);
-  }
-  .card:hover {
-    z-index: 5;
   }
   .card.on {
     border-color: var(--accent);
@@ -79,63 +75,6 @@
     cursor: zoom-in;
     border-radius: var(--radius-m) var(--radius-m) 0 0;
     overflow: hidden;
-  }
-  .badge {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    padding: 1px 7px;
-    border-radius: 999px;
-    background: var(--accent);
-    color: var(--on-accent);
-    font-size: 11px;
-  }
-  .actions {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .card:hover .actions {
-    opacity: 1;
-  }
-  .act {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    border: 0;
-    border-radius: var(--radius-s);
-    background: rgba(0, 0, 0, 0.65);
-    color: #fff;
-    cursor: pointer;
-  }
-  .act:hover,
-  .act.active {
-    background: var(--accent);
-  }
-  /* Подпись кнопки — под ней, сразу при наведении. */
-  .tip {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    z-index: 2;
-    padding: 2px 8px;
-    border-radius: var(--radius-s);
-    background: rgba(0, 0, 0, 0.85);
-    color: #fff;
-    font-size: 11px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.08s ease;
-  }
-  .act:hover .tip {
-    opacity: 1;
   }
   .caption {
     padding: 6px 8px;

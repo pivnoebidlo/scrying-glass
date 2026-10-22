@@ -1,7 +1,10 @@
-<!-- Боковая панель: сцены по порядку. Порядок меняется перетаскиванием. -->
+<!-- Боковая панель: сцены по порядку. Порядок меняется перетаскиванием. «Play» is always visible; the rest — a right
+     click or «⋯» on the selected scene. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Clapperboard, FilePlus, GripVertical, Play, Plus } from '@lucide/svelte';
+  import { Clapperboard, FilePlus, GripVertical, MoreHorizontal, Pencil, Play, Plus, Trash2 } from '@lucide/svelte';
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import type { Scene } from '../types';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -23,6 +26,18 @@
     dragged = null;
     over = null;
   }
+
+  const open = (id: string) => {
+    ui.selected = id;
+    openTab('scenes');
+  };
+  let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const items = (sc: Scene): MenuItem[] => [
+    { label: t('scenes.activate'), icon: Play, action: () => activate(app, sc) },
+    { label: t('scenes.edit'), icon: Pencil, action: () => open(sc.id) },
+    { label: t('scenes.delete'), icon: Trash2, danger: true, action: () => confirm(t('scenes.confirmDelete', { name: sc.name })) && dispatch('scenes', 'remove', { id: sc.id }) },
+  ];
+  const openMenu = (e: MouseEvent, sc: Scene) => (menu = { ...menuAt(e), items: items(sc) });
 </script>
 
 <div class="list">
@@ -38,12 +53,14 @@
       ondragend={() => ((dragged = null), (over = null))}
       ondragover={(e) => { e.preventDefault(); over = i; }}
       ondrop={() => drop(i)}
+      oncontextmenu={(e) => openMenu(e, sc)}
     >
       <span class="grip faint"><GripVertical size={12} /></span>
-      <button class="main" data-nav onclick={() => { ui.selected = sc.id; openTab('scenes'); }}>
+      <button class="main" data-nav onclick={() => open(sc.id)}>
         <span class="name">{sc.name}</span>
       </button>
-      <button class="icon-btn play" title={t('scenes.activate')} onclick={() => activate(app, sc)}><Play size={13} /></button>
+      <button class="icon-btn play" class:live={ms.active === sc.id} title={t('scenes.activate')} onclick={() => activate(app, sc)}><Play size={13} /></button>
+      {#if ui.selected === sc.id}<button class="icon-btn more" title={t('action.more')} onclick={(e) => openMenu(e, sc)}><MoreHorizontal size={13} /></button>{/if}
     </div>
   {/each}
   {#if list.length}
@@ -61,6 +78,8 @@
     </p>
   {/if}
 </div>
+
+{#if menu}<ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />{/if}
 
 <div class="actions">
   <button class="btn" title={t('scenes.saveCurrentHint')} onclick={() => saveCurrent()}><Plus size={14} /> {t('scenes.saveCurrent')}</button>
@@ -122,13 +141,18 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .play {
+  .play,
+  .more {
+    flex: none;
     width: 24px;
     height: 24px;
-    opacity: 0;
   }
-  .item:hover .play {
-    opacity: 1;
+  .play {
+    color: var(--text-faint);
+  }
+  .play:hover,
+  .play.live {
+    color: var(--accent);
   }
   .hint {
     padding: 0 8px;

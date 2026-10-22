@@ -376,12 +376,13 @@
     color: var(--text-faint);
     font-size: 11px;
   }
+  /* Always there, quiet until the message is hovered. */
   .actions {
     display: flex;
-    visibility: hidden;
+    opacity: 0.55;
   }
   .msg:hover .actions {
-    visibility: visible;
+    opacity: 1;
   }
   .text {
     margin-top: 2px;

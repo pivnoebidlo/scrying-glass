@@ -65,9 +65,10 @@
   .readonly input {
     cursor: default;
   }
+  /* The pencil says the name can be edited: always there, faint until hovered. */
   .name-field :global(svg) {
     flex: none;
-    opacity: 0;
+    opacity: 0.3;
   }
   .name-field:hover :global(svg) {
     opacity: 1;

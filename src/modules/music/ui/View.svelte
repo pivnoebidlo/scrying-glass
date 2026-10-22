@@ -180,8 +180,9 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  /* The whole row plays the track; the sign says so, faintly until the row is hovered or playing. */
   .state {
-    opacity: 0;
+    opacity: 0.35;
   }
   li:hover .state,
   li.now .state {
