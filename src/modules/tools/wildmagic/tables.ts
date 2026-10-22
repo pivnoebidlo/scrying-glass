@@ -144,3 +144,9 @@ const SURGE: [string, string][] = [
 export const SURGE_ID = 'surge';
 export const surgeRows = (lang: string): SurgeRow[] =>
   SURGE.map(([en, ru], i) => ({ from: i * 2 + 1, to: i * 2 + 2, text: lang === 'ru' ? ru : en }));
+
+// Whether a surge happens at all: the d20 after a sorcerer's spell — in the 2014 rules a surge on a 1, in the 2024 rules
+// on a 20.
+export type Edition = '2014' | '2024';
+export const surgeOn = (edition: Edition) => (edition === '2014' ? 1 : 20);
+export const isSurge = (d20: number, edition: Edition) => d20 === surgeOn(edition);

@@ -3,7 +3,7 @@
      spells in it open the compendium; copy, to Telegram; the table itself and the rolls of this window below. -->
 <script lang="ts">
   import { hint } from '../../../shared/hotkeys';
-  import { Check, Copy, Dices, Minus, Pencil, Plus, Send, Trash2 } from '@lucide/svelte';
+  import { Check, Copy, Dices, Minus, Pencil, Plus, Send, Trash2, Zap } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { entryHtml } from '../../../renderer/lib/entry/markup';
@@ -12,7 +12,9 @@
   import { loadEntries } from '../../compendium/ui/store.svelte';
   import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
   import { newOwnId, own, putOwn, remember, removeOwn, save, tables, wm, loadOwn } from './store.svelte';
-  import { dieOf, parseTable, rangeText, rollDie, rowFor, type SurgeTable } from './tables';
+  import { dieOf, isSurge, parseTable, rangeText, rollDie, rowFor, surgeOn, type Edition, type SurgeTable } from './tables';
+  import { store } from '../../../renderer/lib/store.svelte';
+  import { currentSystem } from '../../../shared/adventures';
 
   onMount(() => {
     void loadEntries();
@@ -40,6 +42,15 @@
   }
   function rollNow() {
     show(rollDie(table.die));
+  }
+
+  // Does a surge happen: the d20 by the rules of the adventure's edition; a surge rolls the table at once.
+  const edition = $derived<Edition>(currentSystem(store.state.adventures) === 'dnd5e-2014' ? '2014' : '2024');
+  let check = $state<{ d20: number; surge: boolean } | null>(null);
+  function checkNow() {
+    const d20 = rollDie(20);
+    check = { d20, surge: isSurge(d20, edition) };
+    if (check.surge) rollNow();
   }
   // − / +: the GM moves the result by one (a bonus, a reroll of a neighbour).
   function shift(by: number) {
@@ -131,6 +142,10 @@
         <button class="icon-btn" title={t('wild.ownEdit')} onclick={startEdit}><Pencil size={15} /></button>
         <button class="icon-btn" title={t('wild.ownDelete')} onclick={remove}><Trash2 size={15} /></button>
       {/if}
+      <button class="btn" title={t(`wild.checkHint${edition}` as never)} onclick={checkNow}><Zap size={15} /> {t('wild.check')}</button>
+      {#if check}
+        <span class="check" class:surge={check.surge}>{t(check.surge ? 'wild.checkSurge' : 'wild.checkCalm', { d20: check.d20, on: surgeOn(edition) })}</span>
+      {/if}
     </div>
 
     {#if roll !== null}
@@ -181,6 +196,13 @@
 </div>
 
 <style>
+  .check {
+    color: var(--text-muted);
+  }
+  .check.surge {
+    color: var(--warning);
+    font-weight: 600;
+  }
   .view {
     max-width: 920px;
     padding: 16px 20px 32px;

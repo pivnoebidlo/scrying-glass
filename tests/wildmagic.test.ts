@@ -3,7 +3,7 @@ import en2014 from '../resources/compendium/dnd5e-2014.en.json';
 import ru2014 from '../resources/compendium/dnd5e-2014.ru.json';
 import en2024 from '../resources/compendium/dnd5e-2024.en.json';
 import ru2024 from '../resources/compendium/dnd5e-2024.ru.json';
-import { dieOf, parseOwnTables, parseTable, rangeText, rowFor, surgeRows } from '../src/modules/tools/wildmagic/tables';
+import { dieOf, isSurge, parseOwnTables, parseTable, rangeText, rowFor, surgeRows } from '../src/modules/tools/wildmagic/tables';
 
 type Book = { entries: { title: string; type: string; body: string; en?: string }[] };
 const covers = (rows: { from: number; to: number }[], die: number) => {
@@ -60,5 +60,12 @@ describe('дикая магия', () => {
     expect(rowFor(t, 51)?.text).toBe('B');
     expect(rangeText(t.rows[0]!, 100)).toBe('01–50');
     expect(parseOwnTables({ tables: [{ id: 'a', title: 'A', text: '1 x' }, { id: 1 }] })).toEqual([{ id: 'a', title: 'A', text: '1 x' }]);
+  });
+
+  it('проверка всплеска: 2014 — на 1, 2024 — на 20', () => {
+    expect(isSurge(1, '2014')).toBe(true);
+    expect(isSurge(20, '2014')).toBe(false);
+    expect(isSurge(20, '2024')).toBe(true);
+    expect(isSurge(1, '2024')).toBe(false);
   });
 });

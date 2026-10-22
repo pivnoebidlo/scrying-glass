@@ -262,7 +262,8 @@ save DC for each extra hour. Ships keep their speed and can sail up to 24 hours 
 **Wild magic** (Tools → Wild magic, D&D only): a d100 on a table of surges — our own (50 effects, written for the app),
 the Wand of Wonder of the adventure's edition (taken from the SRD compendium, your edit of the entry counts) or a table
 of your own: paste lines like "01–02 Effect", a Markdown table or one effect per line (then the die is the number of
-lines); your tables are kept in the library. Space — roll, − and + move the result by one, spells in the text open the
+lines); your tables are kept in the library. "Check for a surge" rolls a d20 by the rules of the adventure's edition (a
+surge on a 1 in 2014, on a 20 in 2024) and on a surge rolls the table at once. Space — roll, − and + move the result by one, spells in the text open the
 compendium; copy, to Telegram, the whole table with the rolled row and the rolls of this window. Tables from the
 Player's Handbook and other books are not open, so they are not built in — paste them as your own.
 
