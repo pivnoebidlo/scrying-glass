@@ -59,6 +59,7 @@ export const HOTKEYS: HotkeyDef[] = [
   { id: 'mapZoom', group: 'maps', combo: 'Wheel' },
   { id: 'mapUndo', group: 'maps', combo: 'Mod+Z' },
   { id: 'mapDelete', group: 'maps', combo: 'Delete' },
+  { id: 'noteUndo', group: 'notes', combo: 'Mod+Z' },
   { id: 'noteDelete', group: 'notes', combo: 'Delete' },
   { id: 'noteStop', group: 'notes', combo: 'Escape' },
   { id: 'noteSize', group: 'notes', combo: 'Wheel' },

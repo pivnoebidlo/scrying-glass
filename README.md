@@ -121,7 +121,8 @@ burnt edge; a sheet, a slip or a scroll; smooth, folded, crumpled or wadded pape
 a click on the sheet and dragged around: splashes and drops of blood, smears, blots, fingerprints, a mug ring, stains,
 wax drops, scorches, burnt holes, claw marks, wax seals (with an emblem or a letter, whole or broken) and ink stamps
 with text around the edge. The pen draws right on the sheet — a map to a treasure, a sketch, arrows: inks of the note,
-three widths, an eraser and undo; the players see the drawing with the text. Nineteen fonts with Cyrillic: handwriting, calligraphy, book faces, Old Russian, chronicle,
+three widths, an eraser and undo (⌘Z); the players see the drawing with the text. The editor is in three parts: the
+text and the sheet, the pen, the marks. Nineteen fonts with Cyrillic: handwriting, calligraphy, book faces, Old Russian, chronicle,
 ancient manuscript, creepy ones (drips, distressed, beastly); "shaky handwriting" makes the letters dance. A note is a
 file "Title.note.json" in the adventure's handouts folder: it sits in Handouts and Files next to the pictures and is
 shown to the players the same way. It saves itself; if the players see it, edits appear at once.
