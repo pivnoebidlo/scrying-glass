@@ -511,7 +511,9 @@ Electron-приложение для мастера D&D: окно управле
   (тексты всех видимых заметок, перечитываются по `notes.rev`), вид — `PageBody.svelte` ([[ссылка]]: карточка системы
   приключения → заметка → `peekEntry` (запись или любая карточка)), правка — `PageEditor.svelte` (сохраняет сам). Клавиши Markdown-полей (журнал, `EntryEditor` справочника, текстовые поля редакторов карточек) — действие
   `use:markdownKeys` (`renderer/lib/markdownKeys.ts`): Enter продолжает «>», списки, задачи и номера — `continueMarkup`,
-  ⌘B / ⌘I / ⌘⇧X — `toggleWrap` из `shared/journal.ts`, Tab — отступ; правки через `execCommand('insertText')` — ⌘Z работает. В состоянии — только
+  ⌘B / ⌘I / ⌘⇧X — `toggleWrap` из `shared/journal.ts`, ⌘⇧. — цитата (`toggleLinePrefix`), Tab — отступ; панель кнопок над
+  текстом — `renderer/lib/MarkdownToolbar.svelte` (журнал и справочник; `journal` — ещё задача и бросок; выключается в
+  «Настройки» → «Журнал», `editorPrefs.toolbar` в localStorage окна); правки через `execCommand('insertText')` — ⌘Z работает. В состоянии — только
   `pinned` (приключение → путь): блок правой панели `OnScreen.svelte`. Заметки — в ⌘K (`QuickSearch` справочника).
   Сам журнал игрокам не показывается; в .sgpack файлы уходят с папкой приключения, `pinned` — тоже
   (`PackSlices.pinned`, и в корзину — `AdventureData.pinned`).

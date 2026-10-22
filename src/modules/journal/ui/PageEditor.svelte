@@ -5,6 +5,8 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { onDestroy, untrack } from 'svelte';
   import { markdownKeys } from '../../../renderer/lib/markdownKeys';
+  import MarkdownToolbar from '../../../renderer/lib/MarkdownToolbar.svelte';
+  import { editorPrefs } from '../../../renderer/lib/editorPrefs.svelte';
   import { journal, type PageItem } from './store.svelte';
   import { ui } from './ui.svelte';
 
@@ -44,6 +46,7 @@
 </script>
 
 <div class="editor">
+  {#if editorPrefs.toolbar}<MarkdownToolbar {area} journal />{/if}
   <textarea
     class="journal-text"
     bind:this={area}

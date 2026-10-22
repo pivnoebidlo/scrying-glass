@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { continueMarkup, toggleLinePrefix, toggleWrap, type TextEdit } from '../src/shared/journal';
+import { continueMarkup, toggleLinePrefix, toggleWrap, wrapWith, type TextEdit } from '../src/shared/journal';
 import { entryHtml } from '../src/renderer/lib/entry/markup';
 
 const apply = (text: string, e: TextEdit | null) => (e ? text.slice(0, e.from) + e.insert + text.slice(e.to) : null);
@@ -50,6 +50,11 @@ describe('журнал: правка текста', () => {
     expect(run('> one\n\n> two', 0, 12).text).toBe('one\n\ntwo');
     expect(run('a\nb\n', 0, 4).text).toBe('> a\n> b\n');
     expect(run('task', 0, 0, '- [ ] ').text).toBe('- [ ] task');
+  });
+
+  it('ссылка и бросок с панели: выделение в скобках, без выделения — заготовка, выделенная для замены', () => {
+    expect(wrapWith('see Goblin here', 4, 10, '[[', ']]')).toEqual({ from: 4, to: 10, insert: '[[Goblin]]', a: 6, b: 12 });
+    expect(wrapWith('roll ', 5, 5, '{', '}', '1d20')).toEqual({ from: 5, to: 5, insert: '{1d20}', a: 6, b: 10 });
   });
 });
 

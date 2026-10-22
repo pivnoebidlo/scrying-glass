@@ -110,3 +110,10 @@ export function toggleLinePrefix(text: string, a: number, b: number, prefix: str
   }
   return { from: start, to: end, insert, a: start, b: start + insert.length };
 }
+
+// The toolbar's [[link]] and {dice}: the selection between an opening and a closing mark; with nothing selected —
+// `empty` placed between them and selected (so typing replaces it).
+export function wrapWith(text: string, a: number, b: number, open: string, close: string, empty = ''): TextEdit {
+  const inside = text.slice(a, b) || empty;
+  return { from: a, to: b, insert: open + inside + close, a: a + open.length, b: a + open.length + inside.length };
+}

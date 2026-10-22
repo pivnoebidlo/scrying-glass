@@ -7,6 +7,7 @@ import type { AppState } from '../../shared/types';
 import OnScreen from './ui/OnScreen.svelte';
 import Sidebar from './ui/Sidebar.svelte';
 import View from './ui/View.svelte';
+import Settings from './ui/Settings.svelte';
 
 // Закреплённая заметка текущего приключения, если файл на месте.
 export function pinnedPage(app: AppState): string | null {
@@ -26,4 +27,5 @@ export default defineControl({
   sidebar: Sidebar,
   screen: OnScreen,
   screenEmpty: (app) => (pinnedPage(app) ? null : t('empty.noPinned')),
+  settings: Settings,
 });

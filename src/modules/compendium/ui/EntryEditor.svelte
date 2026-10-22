@@ -3,6 +3,8 @@
 <script lang="ts">
   import { hotkeyLabel, modKey } from '../../../shared/hotkeys';
   import { markdownKeys } from '../../../renderer/lib/markdownKeys';
+  import MarkdownToolbar from '../../../renderer/lib/MarkdownToolbar.svelte';
+  import { editorPrefs } from '../../../renderer/lib/editorPrefs.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { ImagePlus, Save, X } from '@lucide/svelte';
   import FilePicker from '../../../renderer/lib/FilePicker.svelte';
@@ -93,6 +95,7 @@
       save();
     }
   }
+  let bodyArea = $state<HTMLTextAreaElement>();
 </script>
 
 <svelte:window {onkeydown} />
@@ -153,7 +156,8 @@
       </div>
       <label class="field">
         <span>{t('cmpui.text')}</span>
-        <textarea rows="16" bind:value={draft.body} placeholder={t('cmpui.textPh', { mod: modKey() })} use:markdownKeys></textarea>
+        {#if editorPrefs.toolbar}<MarkdownToolbar area={bodyArea} />{/if}
+        <textarea rows="16" bind:this={bodyArea} bind:value={draft.body} placeholder={t('cmpui.textPh', { mod: modKey() })} use:markdownKeys></textarea>
       </label>
     </form>
     <div class="preview">

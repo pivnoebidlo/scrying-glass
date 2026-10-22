@@ -12,7 +12,8 @@ type Mark = [code: string, shift: boolean, mark: string];
 const MARKS: Mark[] = [['KeyB', false, '**'], ['KeyI', false, '*'], ['KeyX', true, '~~']];
 const TELEGRAM: Mark[] = [...MARKS, ['KeyU', false, '__'], ['KeyM', true, '`'], ['KeyP', true, '||']];
 
-function apply(area: HTMLTextAreaElement, edit: TextEdit) {
+// Also the toolbar's (MarkdownToolbar.svelte): an edit through insertText keeps Cmd+Z working.
+export function apply(area: HTMLTextAreaElement, edit: TextEdit) {
   area.setSelectionRange(edit.from, edit.to);
   if (!document.execCommand('insertText', false, edit.insert)) {
     area.setRangeText(edit.insert, edit.from, edit.to);

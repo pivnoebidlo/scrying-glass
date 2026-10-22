@@ -197,7 +197,9 @@ shared folder), easy to edit in Obsidian too. On the left — the tree of notes:
 dragging it onto another folder.
 A note opens formatted, "Edit" (⌘E) — the Markdown text, which saves itself. As in Obsidian, Enter carries a ">" quote,
 a list, a task or a number on to the next line (Enter on an empty item ends the list), ⌘B / ⌘I / ⌘⇧X make the
-selection bold, italic or ~~struck through~~ (again — removes it), ⌘Z undoes:
+selection bold, italic or ~~struck through~~ (again — removes it), ⌘⇧. makes the lines a quote, ⌘Z undoes; the
+same and more — a heading, a list, a task, a [[link]], a {1d20} roll — are buttons above the text (they can be
+turned off in Settings → Journal; the compendium editor has them too):
 
     ## Arrival in the village
     > The road brings you to a palisade. A faded
