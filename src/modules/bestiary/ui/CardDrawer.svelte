@@ -1,6 +1,7 @@
 <!-- Выдвижная панель карточки: статблок или лист открывается поверх текущей вкладки, у правой панели «Экран игроков»
      (её превью остаётся видно). Открывается из «Персонажей», «Файлов», трекера инициативы; Esc — закрыть. -->
 <script lang="ts">
+  import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { fly } from 'svelte/transition';
   import { BookOpen, X } from '@lucide/svelte';
@@ -31,7 +32,7 @@
       <BookOpen size={14} /> {t('best.inTab')}
     </button>
     <div class="spacer"></div>
-    <button class="icon-btn" title={t('best.closeEsc')} onclick={close}><X size={16} /></button>
+    <button class="icon-btn" title={hint(t('app.close'), 'close')} onclick={close}><X size={16} /></button>
   </header>
   <div class="body">
     <CardView {app} ref={target} compact onselect={(r) => (bestiary.peeked = r)} />

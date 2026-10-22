@@ -2,6 +2,7 @@
      листах). Рисует выдвижную панель записи поверх любой вкладки, у правой панели (как панель карточки): её открывают
      заклинание в статблоке, состояние в трекере, ⌘K. Одновременно открыта одна из двух панелей. -->
 <script lang="ts">
+  import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { fly } from 'svelte/transition';
   import { BookOpen, ChevronLeft, Eye, EyeOff, X } from '@lucide/svelte';
@@ -98,7 +99,7 @@
         <span class="faint where">{it.en ? `${it.group} · ${it.en}` : it.group}</span>
       {/if}
       <div class="spacer"></div>
-      <button class="icon-btn" title={t('cmpui.closeEsc')} onclick={closeEntryPeek}><X size={16} /></button>
+      <button class="icon-btn" title={hint(t('app.close'), 'close')} onclick={closeEntryPeek}><X size={16} /></button>
     </header>
     <div class="body">
       {#if item}

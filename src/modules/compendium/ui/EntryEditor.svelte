@@ -1,6 +1,7 @@
 <!-- Редактор записи справочника: название (= имя файла), тип, поля типа, текст; справа — как будет выглядеть.
      Сохраняется по кнопке или ⌘S. Если запись у игроков, там она тоже обновится. -->
 <script lang="ts">
+  import { hotkeyLabel, modKey } from '../../../shared/hotkeys';
   import { markdownKeys } from '../../../renderer/lib/markdownKeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { ImagePlus, Save, X } from '@lucide/svelte';
@@ -111,7 +112,7 @@
     {#if error}<span class="error">{error}</span>{/if}
     <div class="spacer"></div>
     <button class="btn" onclick={() => (ui.editing = false)}>{t('cmpui.cancel')}</button>
-    <button class="btn primary" disabled={saving} onclick={save} title="⌘S"><Save size={14} /> {t('cmpui.save')}</button>
+    <button class="btn primary" disabled={saving} onclick={save} title={hotkeyLabel('save')}><Save size={14} /> {t('cmpui.save')}</button>
   </header>
 
   <div class="columns">
@@ -152,7 +153,7 @@
       </div>
       <label class="field">
         <span>{t('cmpui.text')}</span>
-        <textarea rows="16" bind:value={draft.body} placeholder={t('cmpui.textPh')} use:markdownKeys></textarea>
+        <textarea rows="16" bind:value={draft.body} placeholder={t('cmpui.textPh', { mod: modKey() })} use:markdownKeys></textarea>
       </label>
     </form>
     <div class="preview">

@@ -1,5 +1,6 @@
 <!-- Лист персонажа D&D 5e для мастера: шапка с главным и вкладки, как в Long Story Short. Только просмотр. -->
 <script lang="ts">
+  import { hotkeyLabel } from '../../shared/hotkeys';
   import { t } from '../../renderer/lib/i18n.svelte';
   import { labels } from '../../shared/i18n';
   import type { Card } from '../../shared/cards';
@@ -135,7 +136,7 @@
               </td>
               <td>
                 {#if dmg}
-                  <button class="roll" title={t('dnd.damageHint')} onclick={(e) => rolls.damage(card.name, a.name, a.damage, e.shiftKey)}>{a.damage}</button>
+                  <button class="roll" title={t('dnd.damageHint', { keys: hotkeyLabel('critical') })} onclick={(e) => rolls.damage(card.name, a.name, a.damage, e.shiftKey)}>{a.damage}</button>
                 {:else}{a.damage}{/if}
               </td>
             </tr>

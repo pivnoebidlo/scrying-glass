@@ -4,11 +4,14 @@
 import type { DisplayInfo } from '../../shared/api';
 import type { ModuleId } from '../../shared/types';
 
+// The shell's own settings sections (Settings.svelte), besides those of the modules.
+export type SettingsSection = ModuleId | 'general' | 'hotkeys' | 'about';
+
 interface Nav {
   openTab(id: ModuleId): void;
   display(): DisplayInfo | null;
-  // Open the settings window on a module's section.
-  openSettings(section: ModuleId): void;
+  // Open the settings window on a module's section or a section of the shell.
+  openSettings(section: SettingsSection): void;
 }
 
 let impl: Nav = { openTab: () => {}, display: () => null, openSettings: () => {} };
@@ -16,5 +19,5 @@ let impl: Nav = { openTab: () => {}, display: () => null, openSettings: () => {}
 export const openTab = (id: ModuleId) => impl.openTab(id);
 // Экран игроков, выбранный в правой панели (размеры нужны, например, чтобы показать, что видят игроки).
 export const playerDisplay = () => impl.display();
-export const openSettings = (section: ModuleId) => impl.openSettings(section);
+export const openSettings = (section: SettingsSection) => impl.openSettings(section);
 export const provideNav = (nav: Nav) => (impl = nav);

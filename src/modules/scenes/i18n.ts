@@ -27,7 +27,7 @@ export const en = {
   'scenes.fadeTitle': 'Transition through black',
   'scenes.fadeDesc': 'When a scene changes, the player screen goes dark for a moment and then shows the new scene as a whole.',
   'scenes.hotkeysTitle': 'Hotkeys',
-  'scenes.hotkeysDesc': '{mod}1 … {mod}9 switch on the first nine scenes. Reorder scenes by dragging them in the list on the left.',
+  'scenes.hotkeysDesc': '{keys} switch on the first nine scenes. Reorder scenes by dragging them in the list on the left.',
   'scenes.activate': 'Switch on the scene',
   'scenes.about':
     'A scene is a set of background, map, portraits, music and ambience. Set up the player screen and save it as a scene to switch it on with one button later.',
@@ -60,7 +60,7 @@ export const en = {
   'scenes.missing': 'These files are no longer in the vault; they will be skipped when the scene is switched on:',
   'scenes.none': 'No scenes yet.',
   'scenes.intro':
-    'A scene remembers the background, map, portraits, handout, music and ambience. Set up the player screen as you need — say, “Tavern”: a tavern picture, the innkeeper as a portrait, tavern music and the hum of voices — and save it. During the game a scene is switched on with one button in the right panel or with ⌘1…⌘9.',
+    'A scene remembers the background, map, portraits, handout, music and ambience. Set up the player screen as you need — say, “Tavern”: a tavern picture, the innkeeper as a portrait, tavern music and the hum of voices — and save it. During the game a scene is switched on with one button in the right panel or with its hotkey (Settings → Hotkeys).',
   'scenes.saveAsScene': 'Save current as a scene',
   'scenes.createEmpty': 'Create an empty one',
 };
@@ -91,7 +91,7 @@ export const ru: Messages<typeof en> = {
   'scenes.fadeTitle': 'Переход через затемнение',
   'scenes.fadeDesc': 'При смене сцены экран игроков на мгновение гаснет, а затем показывает новую сцену целиком.',
   'scenes.hotkeysTitle': 'Горячие клавиши',
-  'scenes.hotkeysDesc': '{mod}1 … {mod}9 включают первые девять сцен. Порядок сцен меняется перетаскиванием в списке слева.',
+  'scenes.hotkeysDesc': '{keys} включают первые девять сцен. Порядок сцен меняется перетаскиванием в списке слева.',
   'scenes.activate': 'Включить сцену',
   'scenes.about':
     'Сцена — это набор фона, карты, портретов, музыки и атмосферы. Настройте экран игроков и сохраните его сценой, чтобы потом включать одной кнопкой.',
@@ -124,7 +124,7 @@ export const ru: Messages<typeof en> = {
   'scenes.missing': 'Этих файлов больше нет в хранилище, при включении сцены они будут пропущены:',
   'scenes.none': 'Сцен пока нет.',
   'scenes.intro':
-    'Сцена запоминает фон, карту, портреты, раздатку, музыку и атмосферу. Настройте экран игроков как нужно — например, «Таверна»: картинка таверны, хозяин таверны портретом, музыка таверны и гул голосов, — и сохраните. На игре сцена включается одной кнопкой на панели справа или клавишами ⌘1…⌘9.',
+    'Сцена запоминает фон, карту, портреты, раздатку, музыку и атмосферу. Настройте экран игроков как нужно — например, «Таверна»: картинка таверны, хозяин таверны портретом, музыка таверны и гул голосов, — и сохраните. На игре сцена включается одной кнопкой на панели справа или сочетанием клавиш («Настройки» → «Горячие клавиши»).',
   'scenes.saveAsScene': 'Сохранить текущее как сцену',
   'scenes.createEmpty': 'Создать пустую',
 };

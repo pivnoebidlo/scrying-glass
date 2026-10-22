@@ -1,5 +1,6 @@
 <!-- Окно управления: полоса модулей | боковая панель | вкладки | экран игроков. -->
 <script lang="ts">
+  import { matches } from '../../shared/hotkeys';
   import Ribbon from './Ribbon.svelte';
   import Sidebar from './Sidebar.svelte';
   import Tabs from './Tabs.svelte';
@@ -28,15 +29,15 @@
   }
 
   function onkeydown(e: KeyboardEvent) {
-    // Cmd/Ctrl + , — настройки, как в Obsidian.
-    if ((e.metaKey || e.ctrlKey) && e.key === ',' && store.state.vault.root) {
+    // ⌘, — настройки, как в Obsidian (shared/hotkeys.ts: сочетания мастер может поменять).
+    if (matches(e, 'settings') && store.state.vault.root) {
       e.preventDefault();
       workspace.openSettings();
     }
-    // Cmd/Ctrl + B — погасить экран игроков и вернуть (не во время ввода текста).
+    // ⌘B — погасить экран игроков и вернуть (не во время ввода текста).
     const t = e.target as HTMLElement | null;
     const typing = t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || !!t?.isContentEditable;
-    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.code === 'KeyB' && store.state.vault.root && !typing) {
+    if (matches(e, 'blackout') && store.state.vault.root && !typing) {
       e.preventDefault();
       dispatch('core', 'toggleBlackout');
     }

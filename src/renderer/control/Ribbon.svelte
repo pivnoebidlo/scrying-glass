@@ -1,5 +1,6 @@
 <!-- Узкая полоса слева: модули сверху, настройки снизу. -->
 <script lang="ts">
+  import { hint } from '../../shared/hotkeys';
   import { Settings } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
   import { workspace } from './workspace.svelte';
@@ -23,7 +24,7 @@
     </button>
   {/each}
   <div class="spacer"></div>
-  <button class="icon-btn" title={t('app.settingsHotkey')} onclick={() => workspace.openSettings()}>
+  <button class="icon-btn" title={hint(t('app.settings'), 'settings')} onclick={() => workspace.openSettings()}>
     <Settings size={18} />
   </button>
 </nav>

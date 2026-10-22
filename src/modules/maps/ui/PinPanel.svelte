@@ -1,6 +1,7 @@
 <!-- Панель меток поверх редактора карты: выбранная метка (название, цвет, видят ли игроки, заметка) или список
      всех меток карты. Заметку видит только мастер. -->
 <script lang="ts">
+  import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronLeft, Eye, EyeOff, Trash2, X } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -70,7 +71,7 @@
           onchange={(e) => update(pin, { title: e.currentTarget.value.trim() })}
           onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
         />
-        <button class="icon-btn" title={t('app.closeEsc')} onclick={close}><X size={15} /></button>
+        <button class="icon-btn" title={hint(t('app.close'), 'close')} onclick={close}><X size={15} /></button>
       </header>
 
       <div class="row">

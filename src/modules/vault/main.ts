@@ -14,7 +14,7 @@ import { deleteWords, discard, trashSettings } from '../../main/trash';
 const openDialog = (ctx: ModuleContext, opts: OpenDialogOptions) =>
   ctx.controlWindow ? ctx.dialog.showOpenDialog(ctx.controlWindow, opts) : ctx.dialog.showOpenDialog(opts);
 
-const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [], language: 'auto', lang: 'en', theme: 'auto' };
+const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [], language: 'auto', lang: 'en', theme: 'auto', hotkeys: {} };
 
 export default defineModule({
   id: 'vault',
@@ -58,6 +58,10 @@ export default defineModule({
     // The control window's colour theme (app settings).
     setTheme(_s, { theme }: { theme: ThemeSetting }, ctx) {
       return ctx.vault.setTheme(theme);
+    },
+    // The GM's own hotkeys (app settings): id → combo; null — all as by default.
+    setHotkeys(_s, { map }: { map: Record<string, string> | null }, ctx) {
+      return ctx.vault.setHotkeys(map);
     },
     // Interface language (app settings): 'auto' or a language.
     setLanguage(_s, { language }: { language: LangSetting }, ctx) {

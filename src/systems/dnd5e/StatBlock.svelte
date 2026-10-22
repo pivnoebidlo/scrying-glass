@@ -1,5 +1,6 @@
 <!-- Статблок D&D 5e. Подписи — на языке карточки, числа и справочные значения переводятся здесь. -->
 <script lang="ts">
+  import { hotkeyLabel } from '../../shared/hotkeys';
   import { locale, t } from '../../renderer/lib/i18n.svelte';
   import type { Card } from '../../shared/cards';
   import { escape, markdown } from '../../renderer/lib/markdown';
@@ -150,7 +151,7 @@
               <Dices size={13} /> {t('dnd.attackBtn', { bonus: signed(atk.bonus) })}
             </button>
             {#each atk.damage as d, j (j)}
-              <button class="roll-btn" title={t('dnd.damageHint')} onclick={(e) => rolls.damage(card.name, b.name, d, e.shiftKey)}>{d}</button>
+              <button class="roll-btn" title={t('dnd.damageHint', { keys: hotkeyLabel('critical') })} onclick={(e) => rolls.damage(card.name, b.name, d, e.shiftKey)}>{d}</button>
             {/each}
           </div>
         {/if}

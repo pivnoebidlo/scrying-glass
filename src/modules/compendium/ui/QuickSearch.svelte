@@ -1,6 +1,7 @@
 <!-- Общий поиск ⌘K (Ctrl+K): записи справочника, карточки (монстры, NPC, персонажи) и заметки журнала из любой
      вкладки. Enter — в выдвижной панели (заметка — всегда во вкладке), ⌘Enter — во вкладке; стрелки — выбор, Esc — закрыть. -->
 <script lang="ts">
+  import { matches, modKey } from '../../../shared/hotkeys';
   import { quickSearch } from '../../../renderer/lib/quicksearch.svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { BookOpen, NotebookPen, Search, Skull } from '@lucide/svelte';
@@ -89,7 +90,7 @@
   }
 
   function onwindowkey(e: KeyboardEvent) {
-    if ((e.metaKey || e.ctrlKey) && e.code === 'KeyK') {
+    if (matches(e, 'search')) {
       e.preventDefault();
       if (open) open = false;
       else void show();
@@ -161,7 +162,7 @@
       {:else if query.trim()}
         <p class="faint hint">{t('cmpui.nothing')}</p>
       {/if}
-      <p class="faint hint">{t('cmpui.searchHint')}</p>
+      <p class="faint hint">{t('cmpui.searchHint', { mod: modKey() })}</p>
     </div>
   </div>
 {/if}

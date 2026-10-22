@@ -1,5 +1,6 @@
 <!-- Вкладка «Карты»: редактор мастера. Туман полупрозрачный, рамкой — то, что видят игроки. -->
 <script lang="ts">
+  import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
@@ -742,7 +743,7 @@
             <label class="opt" title={t('maps.brush')}><span>{t('maps.brushShort')}</span><span class="slider"><Slider value={ui.brush} min={8} max={160} step={1} oninput={(v) => (ui.brush = v)} /></span></label>
           {/if}
           <div class="sep"></div>
-          <button class="icon-btn" title={t('maps.undo')} disabled={!data.fog.ops.length} onclick={() => dispatch('maps', 'undoFog', { path })}>
+          <button class="icon-btn" title={hint(t('maps.undo'), 'mapUndo')} disabled={!data.fog.ops.length} onclick={() => dispatch('maps', 'undoFog', { path })}>
             <Undo2 size={15} />
           </button>
           <button class="btn" onclick={() => resetFog('revealed')}>{t('maps.revealAll')}</button>

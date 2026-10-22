@@ -1,5 +1,6 @@
 <!-- Вкладка «Журнал»: открытая заметка — в оформленном виде или в правке (⌘E); ничего не открыто — подсказка. -->
 <script lang="ts">
+  import { hotkeyLabel } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronLeft, Eye, ExternalLink, Pencil, Pin, PinOff, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -93,7 +94,7 @@
         onchange={rename}
         onkeydown={(e) => e.key === 'Enter' && (e.currentTarget.blur(), document.querySelector<HTMLTextAreaElement>('.journal-text')?.focus())}
       />
-      <button class="btn" class:primary={!ui.editing} title="⌘E" onclick={() => (ui.editing = !ui.editing)}>
+      <button class="btn" class:primary={!ui.editing} title={hotkeyLabel('journalPreview')} onclick={() => (ui.editing = !ui.editing)}>
         {#if ui.editing}<Eye size={14} /> {t('journal.preview')}{:else}<Pencil size={14} /> {t('journal.edit')}{/if}
       </button>
       <button

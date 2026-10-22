@@ -2,6 +2,7 @@
      adventure's edition (from the compendium) or the GM's own, pasted as text. The result (− / + move it by one),
      spells in it open the compendium; copy, to Telegram; the table itself and the rolls of this window below. -->
 <script lang="ts">
+  import { hint } from '../../../shared/hotkeys';
   import { Check, Copy, Dices, Minus, Pencil, Plus, Send, Trash2 } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -125,7 +126,7 @@
     </div>
   {:else}
     <div class="actions">
-      <button class="btn primary big" title={t('wild.rollHint')} onclick={rollNow}><Dices size={16} /> {t('wild.roll', { die: table.die })}</button>
+      <button class="btn primary big" title={hint(t('wild.roll', { die: table.die }), 'generate')} onclick={rollNow}><Dices size={16} /> {t('wild.roll', { die: table.die })}</button>
       {#if isOwn}
         <button class="icon-btn" title={t('wild.ownEdit')} onclick={startEdit}><Pencil size={15} /></button>
         <button class="icon-btn" title={t('wild.ownDelete')} onclick={remove}><Trash2 size={15} /></button>

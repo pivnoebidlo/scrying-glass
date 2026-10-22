@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Карты». -->
 <script lang="ts">
+  import { modKey } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -44,7 +45,7 @@
   <div class="info">
     <div class="name">{t('maps.controlsTitle')}</div>
     <div class="desc">
-      {t('maps.controlsDesc')}
+      {t('maps.controlsDesc', { mod: modKey() })}
     </div>
   </div>
 </div>

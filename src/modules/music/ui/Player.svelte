@@ -1,6 +1,7 @@
 <!-- Проигрыватель: невидимый, живёт в окне управления, пока открыто хранилище.
      Музыка играет на двух «деках», чтобы треки могли плавно переходить друг в друга. -->
 <script lang="ts">
+  import { matches } from '../../../shared/hotkeys';
   import { untrack } from 'svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -175,15 +176,16 @@
     e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement || (e.target as HTMLElement)?.isContentEditable;
 
   function onkeydown(e: KeyboardEvent) {
-    if (!(e.metaKey || e.ctrlKey) || e.altKey || typing(e)) return;
+    if (typing(e)) return;
     const vol = (d: number) => dispatch('music', 'setVolume', { value: Math.round(Math.min(1, Math.max(0, ms.volume + d)) * 100) / 100 });
-    if (!e.shiftKey && e.code === 'KeyP') {
+    // The combos — shared/hotkeys.ts (the GM may change them in Settings → Hotkeys).
+    if (matches(e, 'playPause')) {
       if (ms.queue.length) dispatch('music', 'playPause');
-    } else if (!e.shiftKey && e.key === 'ArrowRight') dispatch('music', 'next');
-    else if (!e.shiftKey && e.key === 'ArrowLeft') dispatch('music', 'prev');
-    else if (!e.shiftKey && e.key === 'ArrowUp') vol(0.1);
-    else if (!e.shiftKey && e.key === 'ArrowDown') vol(-0.1);
-    else if (e.shiftKey && e.code === 'KeyA') {
+    } else if (matches(e, 'nextTrack')) dispatch('music', 'next');
+    else if (matches(e, 'prevTrack')) dispatch('music', 'prev');
+    else if (matches(e, 'volumeUp')) vol(0.1);
+    else if (matches(e, 'volumeDown')) vol(-0.1);
+    else if (matches(e, 'ambience')) {
       if (ms.ambience.length) dispatch('music', 'toggleAmbience');
     } else return;
     e.preventDefault();

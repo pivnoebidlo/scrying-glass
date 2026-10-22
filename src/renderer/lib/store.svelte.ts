@@ -1,4 +1,5 @@
 // Состояние окна: копия состояния ядра, которая обновляется при каждом изменении.
+import { setHotkeys, trackHotkeys } from '../../shared/hotkeys';
 import type { DisplayInfo } from '../../shared/api';
 import type { AppState } from '../../shared/types';
 import { setRoleNames } from '../../shared/vault';
@@ -15,6 +16,8 @@ class Store {
 export const store = new Store();
 
 export const dispatch = window.api.dispatch;
+// Hints with hotkeys (shared/hotkeys.ts) follow the GM's own combos.
+trackHotkeys(() => void store.state.vault?.hotkeys);
 
 
 // The control window's theme: <html data-theme>, read by renderer/lib/theme.css; remembered by the window so the
@@ -50,6 +53,7 @@ export async function connect(opts: { displays?: boolean } = {}) {
   const apply = (s: AppState) => {
     setRoleNames(s.vault.roles);
     setSystemsOff(s.vault.systemsOff);
+    setHotkeys(s.vault.hotkeys);
     applyLang(s.vault.lang);
     applyTheme(s.vault.theme);
     store.state = s;

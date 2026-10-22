@@ -1,6 +1,7 @@
 <!-- A new message from a player: a toast in the corner of the control window (a few seconds; a click opens the
      conversation in Tools). Not shown while the conversation is open. -->
 <script lang="ts">
+  import { hint } from '../../../shared/hotkeys';
   import { MessageCircle, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -39,7 +40,7 @@
         <span class="msg">{m.text || (m.photo ? t('tg.kind.photo') : m.kind ? t(`tg.kind.${m.kind}` as never) : '')}</span>
       </span>
     </button>
-    <button class="icon-btn" title={t('app.closeEsc')} onclick={() => (tg.toast = null)}><X size={14} /></button>
+    <button class="icon-btn" title={hint(t('app.close'), 'close')} onclick={() => (tg.toast = null)}><X size={14} /></button>
   </div>
 {/if}
 

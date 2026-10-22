@@ -1,6 +1,7 @@
 <!-- Окно «Где хранить?»: библиотека (для всех кампаний) или папка бестиария приключения в хранилище.
      Если подходящей папки ещё нет, её можно создать в любой папке хранилища. -->
 <script lang="ts">
+  import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { FolderPlus, Library, Skull, Users, X } from '@lucide/svelte';
   import type { AppState } from '../../../shared/types';
@@ -62,7 +63,7 @@
   <div class="modal" role="dialog" aria-modal="true" aria-label={request.title}>
     <header>
       <h3>{request.title}</h3>
-      <button class="icon-btn" title={t('best.cancelEsc')} onclick={() => request.resolve(null)}><X size={16} /></button>
+      <button class="icon-btn" title={hint(t('lib.cancel'), 'close')} onclick={() => request.resolve(null)}><X size={16} /></button>
     </header>
 
     <div class="body">

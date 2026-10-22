@@ -3,13 +3,14 @@
 // Rebuilt when the language changes. The macOS About panel gets the version, author and license too.
 import { app, Menu, shell, type MenuItemConstructorOptions } from 'electron';
 import { AUTHOR, ISSUES_URL, REPO_URL } from '../shared/about';
+import { accelerator } from '../shared/hotkeys';
 import { t } from '../shared/i18n';
 import { RELEASES_PAGE } from '../shared/updates';
 
 export function buildMenu(openSettings: (section: string) => void) {
   const mac = process.platform === 'darwin';
   const about: MenuItemConstructorOptions = { label: t('core.menu.about'), click: () => openSettings('about') };
-  const settings: MenuItemConstructorOptions = { label: t('core.menu.settings'), accelerator: 'CmdOrCtrl+,', click: () => openSettings('') };
+  const settings: MenuItemConstructorOptions = { label: t('core.menu.settings'), accelerator: accelerator('settings'), click: () => openSettings('') };
   const template: MenuItemConstructorOptions[] = [
     ...(mac
       ? [{ label: app.name, submenu: [about, { type: 'separator' }, settings, { type: 'separator' }, { role: 'services' }, { type: 'separator' }, { role: 'hide' }, { role: 'hideOthers' }, { role: 'unhide' }, { type: 'separator' }, { role: 'quit' }] } as MenuItemConstructorOptions]

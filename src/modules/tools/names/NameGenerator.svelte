@@ -2,6 +2,7 @@
      first letters, 1–20 names at once. Each name can be copied or starred; favorites and history export to TXT / CSV.
      Lists: built-in (in the interface language) and the GM's own from the library (names/<lang>/). -->
 <script lang="ts">
+  import { hint } from '../../../shared/hotkeys';
   import { onMount } from 'svelte';
   import { Check, Copy, Dices, FolderOpen, Star, Trash2, Upload } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -157,7 +158,7 @@
       <div class="seg">
         {#each [1, 5, 10, 20] as n (n)}<button class:active={opts.count === n} onclick={() => set('count', n)}>{n}</button>{/each}
       </div>
-      <button class="btn primary big" disabled={!races.length} title={t('names.generateHint')} onclick={generate}><Dices size={16} /> {t('names.generate')}</button>
+      <button class="btn primary big" disabled={!races.length} title={hint(t('names.generate'), 'generate')} onclick={generate}><Dices size={16} /> {t('names.generate')}</button>
     </div>
   </div>
 

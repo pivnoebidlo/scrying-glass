@@ -1,6 +1,7 @@
 <!-- Редактор записки: слева текст и оформление, справа лист, как его увидят игроки. Сохраняется само
      (через полсекунды после правки); если записка у игроков, она обновляется у них тоже. -->
 <script lang="ts">
+  import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { AlignCenter, AlignJustify, AlignLeft, ArrowUpToLine, ChevronLeft, Dices, Eraser, Eye, EyeOff, Send, Trash2, TriangleAlert } from '@lucide/svelte';
   import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
@@ -294,7 +295,7 @@
           {#each Object.entries(markGroups) as [g, kinds] (g)}
             <div class="palette" aria-label={g}>
               {#each kinds as k (k)}
-                <button type="button" class:active={tool === k} title={tool === k ? t('tools.note.stopPlacing') : t('tools.note.placeHint', { mark: NOTE_MARKS[k].title })} onclick={() => ((tool = tool === k ? null : k), (selected = null))}>
+                <button type="button" class:active={tool === k} title={tool === k ? hint(t('tools.note.stopPlacing'), 'noteStop') : t('tools.note.placeHint', { mark: NOTE_MARKS[k].title })} onclick={() => ((tool = tool === k ? null : k), (selected = null))}>
                   <svg viewBox="-110 -110 220 220" aria-hidden="true">{@html icon(k)}</svg>
                   <span>{NOTE_MARKS[k].title}</span>
                 </button>

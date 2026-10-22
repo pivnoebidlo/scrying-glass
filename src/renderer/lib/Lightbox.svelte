@@ -1,6 +1,7 @@
 <!-- Картинка крупно у мастера: рассмотреть перед тем, как показывать игрокам. Esc или щелчок мимо — закрыть,
      ← → — соседние картинки той же сетки. Внизу — те же действия, что на плитке (портрет, фон, раздатка…). -->
 <script lang="ts">
+  import { hint } from '../../shared/hotkeys';
   import { Check, ChevronLeft, ChevronRight, Copy, X } from '@lucide/svelte';
   import { assetUrl, prettyName } from '../../shared/vault';
   import { badgeOf } from './contrib';
@@ -48,7 +49,7 @@
   <div class="lightbox" onclick={closeLightbox}>
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
     <img src={assetUrl(path)} alt={name} onclick={(e) => e.stopPropagation()} />
-    <button class="close icon-btn" title={t('app.closeEsc')} onclick={closeLightbox}><X size={20} /></button>
+    <button class="close icon-btn" title={hint(t('app.close'), 'close')} onclick={closeLightbox}><X size={20} /></button>
     {#if lightbox.items.length > 1}
       <button class="nav prev icon-btn" title={t('view.prev')} onclick={(e) => (e.stopPropagation(), step(-1))}><ChevronLeft size={28} /></button>
       <button class="nav next icon-btn" title={t('view.next')} onclick={(e) => (e.stopPropagation(), step(1))}><ChevronRight size={28} /></button>
@@ -56,7 +57,7 @@
     <div class="bar" onclick={(e) => e.stopPropagation()}>
       <span class="name" title={path}>{name}</span>
       {#if lightbox.items.length > 1}<span class="count">{lightbox.index + 1} / {lightbox.items.length}</span>{/if}
-      <button class="btn" title={t('view.copyHint')} onclick={copy}>
+      <button class="btn" title={hint(t('view.copyHint'), 'imageCopy')} onclick={copy}>
         {#if copied === 'ok'}<Check size={14} /> {t('view.copied')}{:else}<Copy size={14} /> {copied === 'fail' ? t('view.copyFailed') : t('view.copy')}{/if}
       </button>
       {#each imageActions.filter((a) => a.visible?.(app, path) ?? true) as a (a.id)}

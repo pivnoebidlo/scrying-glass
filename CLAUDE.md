@@ -56,6 +56,15 @@ Electron-приложение для мастера D&D: окно управле
   панель скрывается (`workspace.panelOpen`); состояние экрана игроков — `ScreenStatus.svelte` (точка + быстрые кнопки) в
   её заголовке, а при скрытой панели — в конце полосы вкладок. Windows/Linux: правый край строки отдан системным
   кнопкам — `--controls-w` (theme.css, из `env(titlebar-area-*)`).
+- Горячие клавиши: один реестр — `shared/hotkeys.ts` (`HOTKEYS`: id, группа, сочетание «Mod+Shift+A» по месту клавиши —
+  `e.code`, раскладка не важна; Mod — ⌘ на Mac, Ctrl в остальных, ⌘ и Ctrl оба считаются Mod). Обработчик проверяет
+  `matches(e, id)`; переназначаемые (`edit`: настройки, поиск, затемнение, музыка) мастер меняет в «Настройки» →
+  «Горячие клавиши» (`renderer/control/Hotkeys.svelte`, запись нажатием, `comboProblem` — без модификатора, системные
+  `RESERVED`, занятые; `alsoUsedBy` — предупреждение о местных) → `settings.hotkeys` → `vault.hotkeys` → `setHotkeys`
+  (ядро — и меню: `accelerator('settings')`). Остальные — только для справки; сделать переназначаемым — `edit` и
+  `matches()` в обработчике. Подсказки у кнопок — `hint(подпись, id)` («Поиск · ⌘K»), подпись — `hotkeyLabel` /
+  `comboLabel`; в текстах — `{mod}` (`modKey()`), ⌘ в строки перевода не писать. Окна читают сочетания реактивно
+  (`trackHotkeys` в store.svelte.ts, как `trackLang`).
 - About: `shared/about.ts` (addresses, `CREDITS` — attribution the CC BY licenses require; only these links open,
   IPC `app:openLink`), section `renderer/control/About.svelte` (settings section `about`). The app menu — `main/menu.ts`
   (`buildMenu`, in the interface language, rebuilt on a language change; «About» / «Settings…» → event

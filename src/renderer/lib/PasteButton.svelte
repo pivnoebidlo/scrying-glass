@@ -2,6 +2,7 @@
      текущего приключения (без приключения — в корне хранилища). ⌘V делает то же, пока кнопка на экране и фокус
      не в поле ввода; hotkey={false} — без сочетания (если кнопка не во вкладке, а в боковой панели). -->
 <script lang="ts">
+  import { hint } from '../../shared/hotkeys';
   import { t } from './i18n.svelte';
   import { ClipboardPaste } from '@lucide/svelte';
   import type { AppState } from '../../shared/types';
@@ -14,7 +15,7 @@
   const target = $derived(app.vault.tree ? roleFolderHere(app.vault.tree, app.adventures, role) : null);
   const title = $derived(
     target
-      ? t('lib.pasteInto', { folder: target.path.split('/').join(' / ') }) + (hotkey ? ' (⌘V)' : '')
+      ? (hotkey ? (s: string) => hint(s, 'paste') : (s: string) => s)(t('lib.pasteInto', { folder: target.path.split('/').join(' / ') }))
       : app.adventures.current
         ? t('lib.noFolder')
         : t('lib.pickAdventure')

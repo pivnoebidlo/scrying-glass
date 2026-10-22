@@ -1,6 +1,7 @@
 <!-- Правка заметки журнала: Markdown-текст, сохраняется сам (через полсекунды после последней правки и при выходе).
      Enter, ⌘B / ⌘I / ⌘⇧X and Tab — as in Obsidian (renderer/lib/markdownKeys.ts). -->
 <script lang="ts">
+  import { modKey } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { onDestroy, untrack } from 'svelte';
   import { markdownKeys } from '../../../renderer/lib/markdownKeys';
@@ -54,7 +55,7 @@
     placeholder={t('journal.editorPlaceholder')}
   ></textarea>
   <p class="faint hint">
-    {t('journal.editorHint')}
+    {t('journal.editorHint', { mod: modKey() })}
   </p>
 </div>
 

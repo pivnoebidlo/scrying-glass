@@ -1,6 +1,7 @@
 <!-- Выбор файлов из хранилища (картинки, записки): сначала папки нужной роли, поиск по имени и пути. multi — можно
      отметить несколько и добавить разом. Файлы текущего приключения и общие. -->
 <script lang="ts">
+  import { hint } from '../../shared/hotkeys';
   import { t } from './i18n.svelte';
   import { Check, ScrollText, Search, X } from '@lucide/svelte';
   import { allFiles, folderRole, vaultUrl, type FileKind, type FolderRole, type VaultFolder, thumb, prettyName } from '../../shared/vault';
@@ -58,7 +59,7 @@
         <!-- svelte-ignore a11y_autofocus -->
         <input type="text" placeholder={t('lib.searchFiles')} bind:value={search} autofocus />
       </label>
-      <button class="icon-btn" title={t('app.closeEsc')} onclick={onclose}><X size={16} /></button>
+      <button class="icon-btn" title={hint(t('app.close'), 'close')} onclick={onclose}><X size={16} /></button>
     </header>
     <div class="grid">
       {#each visible as f (f.path)}

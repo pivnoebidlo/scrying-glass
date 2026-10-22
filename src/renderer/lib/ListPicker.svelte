@@ -1,5 +1,6 @@
 <!-- Выбор из списка (плейлисты и треки, заготовки боёв): поиск, отметить несколько и добавить разом. -->
 <script lang="ts" module>
+  import { hint } from '../../shared/hotkeys';
   import { t } from './i18n.svelte';
   export interface PickOption {
     id: string;
@@ -53,7 +54,7 @@
         <!-- svelte-ignore a11y_autofocus -->
         <input type="text" placeholder={title} bind:value={search} autofocus />
       </label>
-      <button class="icon-btn" title={t('app.closeEsc')} onclick={onclose}><X size={16} /></button>
+      <button class="icon-btn" title={hint(t('app.close'), 'close')} onclick={onclose}><X size={16} /></button>
     </header>
     <div class="list">
       {#each visible as o, i (o.id)}

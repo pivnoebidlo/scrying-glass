@@ -19,7 +19,7 @@ export const en = {
   'vault.markHint':
     'Tabs will show this folder’s content separately; missing folders characters, monsters, backgrounds, maps, music will be created',
   'vault.mark': 'Make an adventure',
-  'vault.pasteHint': 'Paste an image from the clipboard (⌘V)',
+  'vault.pasteHint': 'Paste an image from the clipboard',
   'vault.paste': 'Paste',
   'vault.addFiles': 'Add files…',
   'vault.reveal': 'Show in Finder',
@@ -146,7 +146,7 @@ export const ru: Messages<typeof en> = {
   'vault.markHint':
     'Вкладки будут показывать содержимое этой папки отдельно; недостающие папки characters, monsters, backgrounds, maps, music появятся сами',
   'vault.mark': 'Сделать приключением',
-  'vault.pasteHint': 'Вставить картинку из буфера обмена (⌘V)',
+  'vault.pasteHint': 'Вставить картинку из буфера обмена',
   'vault.paste': 'Вставить',
   'vault.addFiles': 'Добавить файлы…',
   'vault.reveal': 'Показать в Finder',

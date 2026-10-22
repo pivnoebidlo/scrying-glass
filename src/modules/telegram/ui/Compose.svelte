@@ -4,6 +4,7 @@
      (Settings → Telegram); an image pasted or dropped into the box goes as a picture with the text as its caption.
      The app's own messages can be deleted for everyone (Telegram allows 48 hours), any message hidden in the app. -->
 <script lang="ts">
+  import { modKey } from '../../../shared/hotkeys';
   import { onDestroy, onMount, tick } from 'svelte';
   import { CornerUpLeft, EyeOff, ImagePlus, Send, Trash2, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
@@ -219,7 +220,7 @@
           <textarea
             rows="3"
             bind:value={text}
-            placeholder={chat === null ? t('tg.composePh') : t('tg.composeTo', { name: nameOf(chat) })}
+            placeholder={chat === null ? t('tg.composePh', { mod: modKey() }) : t('tg.composeTo', { name: nameOf(chat), mod: modKey() })}
             use:markdownKeys={{ enter: !prefs.enterSends, telegram: true }}
             {onkeydown}
             {onpaste}
@@ -231,7 +232,7 @@
           </button>
           <button class="icon-btn" title={t('tg.attach')} onclick={() => picker?.click()}><ImagePlus size={16} /></button>
           <input bind:this={picker} type="file" accept="image/*" hidden onchange={(e) => void takeImage(e.currentTarget.files?.[0]).then(() => picker && (picker.value = ''))} />
-          <span class="faint hint">{prefs.enterSends ? t('tg.hintEnter') : t('tg.hintMod')}</span>
+          <span class="faint hint">{prefs.enterSends ? t('tg.hintEnter') : t('tg.hintMod', { mod: modKey() })}</span>
           {#if error}<span class="error">{error}</span>{/if}
         </div>
       </div>

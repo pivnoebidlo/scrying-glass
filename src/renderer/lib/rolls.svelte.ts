@@ -1,4 +1,5 @@
 // Журнал бросков мастера: броски из статблоков и листов персонажей (к20 и урон D&D, кубы Fate). Только в окне управления, игрокам не виден.
+import { hotkeyLabel } from '../../shared/hotkeys';
 import { t } from './i18n.svelte';
 import { parseDice, rollD20, rollDamage, rollFate, rollSave, type D20Mode, type D20Roll, type DamageRoll, type FateRoll, type SaveRoll } from '../../shared/dice';
 
@@ -68,4 +69,4 @@ export const rolls = new Rolls();
 // Shift — с преимуществом, ⌥/Alt — с помехой.
 export const modeOf = (e: MouseEvent): D20Mode => (e.shiftKey ? 'advantage' : e.altKey ? 'disadvantage' : 'normal');
 
-export const rollHint = () => t('lib.rollHint');
+export const rollHint = () => t('lib.rollHint', { adv: hotkeyLabel('advantage'), dis: hotkeyLabel('disadvantage') });

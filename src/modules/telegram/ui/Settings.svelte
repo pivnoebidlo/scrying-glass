@@ -1,5 +1,6 @@
 <!-- Settings → Telegram: the bot token, its status, the chats it knows (on/off, whose player). -->
 <script lang="ts">
+  import { modKey } from '../../../shared/hotkeys';
   import { onMount } from 'svelte';
   import { Plus, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -68,7 +69,7 @@
     </div>
     <select value={prefs.enterSends ? 'enter' : 'mod'} onchange={(e) => setEnterSends(e.currentTarget.value === 'enter')}>
       <option value="enter">{t('tg.sendKey.enter')}</option>
-      <option value="mod">{t('tg.sendKey.mod')}</option>
+      <option value="mod">{t('tg.sendKey.mod', { mod: modKey() })}</option>
     </select>
   </div>
   <h3>{t('tg.tables')}</h3>

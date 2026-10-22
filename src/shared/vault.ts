@@ -39,6 +39,8 @@ export interface VaultState {
   lang: Lang;
   // The control window's colour theme (app settings); the player screen keeps its own look.
   theme: ThemeSetting;
+  // The GM's own hotkeys (app settings; id → combo, only the changed ones — shared/hotkeys.ts).
+  hotkeys: Record<string, string>;
 }
 
 // Colour themes of the control window (renderer/lib/theme.css): 'auto' follows the system (dark or light); parchment

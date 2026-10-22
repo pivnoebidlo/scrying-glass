@@ -23,6 +23,8 @@ export interface VaultAccess {
   setLanguage(language: LangSetting): VaultState;
   // The control window's colour theme (app settings).
   setTheme(theme: ThemeSetting): VaultState;
+  // The GM's own hotkeys (app settings; null — all as by default).
+  setHotkeys(map: Record<string, string> | null): VaultState;
 }
 
 // Контекст, который получают действия и хуки модулей.

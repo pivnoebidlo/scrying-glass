@@ -2,6 +2,7 @@
      saves the current screen as a scene (asks for a name first); double-click a scene to rename it. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
+  import { comboLabel } from '../../../shared/hotkeys';
   import { Plus, X } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -11,7 +12,6 @@
 
   let { ms, app }: ModuleProps<'scenes'> = $props();
   const list = $derived(scenesFor(ms, app.adventures));
-  const mod = navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl+';
 
   // Поле имени: новая сцена ('new') или переименование (id сцены).
   let editing = $state<string | null>(null);
@@ -52,7 +52,7 @@
     <div class="scene" class:live={ms.active === sc.id}>
       <button
         class="main"
-        title={t('scenes.renameHint', { name: `${sc.name}${i < 9 ? ` (${mod}${i + 1})` : ''}` })}
+        title={t('scenes.renameHint', { name: i < 9 ? `${sc.name} · ${comboLabel(`Mod+${i + 1}`)}` : sc.name })}
         onclick={() => activate(app, sc)}
         ondblclick={() => startRename(sc.id, sc.name)}
       >

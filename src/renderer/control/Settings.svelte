@@ -1,9 +1,11 @@
 <!-- Settings window: the General section (interface language, theme, updates), a section of every module that has
      settings, and About (version, links, license, credits). -->
 <script lang="ts">
+  import { hint } from '../../shared/hotkeys';
   import { THEMES, type ThemeSetting } from '../../shared/vault';
-  import { Globe, Info, X } from '@lucide/svelte';
+  import { Globe, Info, Keyboard, X } from '@lucide/svelte';
   import About from './About.svelte';
+  import Hotkeys from './Hotkeys.svelte';
   import { controlContributions } from '../lib/registry';
   import { dispatch, store } from '../lib/store.svelte';
   import { t } from '../lib/i18n.svelte';
@@ -43,7 +45,9 @@
   const GENERAL = 'general';
   const ABOUT = 'about';
   const moduleSections = controlContributions.filter((c) => c.settings);
+  const HOTKEYS_SECTION = 'hotkeys';
   const about = $derived(workspace.settingsSection === ABOUT);
+  const hotkeys = $derived(workspace.settingsSection === HOTKEYS_SECTION);
   // A section that is not set or gone — the first one.
   const general = $derived(workspace.settingsSection === GENERAL || !workspace.settingsSection);
   const current = $derived(general ? null : (moduleSections.find((c) => c.id === workspace.settingsSection) ?? null));
@@ -62,9 +66,13 @@
   <div class="modal" role="dialog" aria-modal="true" aria-label={t('app.settings')}>
     <nav class="nav">
       <div class="pane-title">{t('app.settings')}</div>
-      <button class="nav-item" class:active={!about && (general || !current)} onclick={() => (workspace.settingsSection = GENERAL)}>
+      <button class="nav-item" class:active={!about && !hotkeys && (general || !current)} onclick={() => (workspace.settingsSection = GENERAL)}>
         <Globe size={14} />
         {t('settings.general')}
+      </button>
+      <button class="nav-item" class:active={hotkeys} onclick={() => (workspace.settingsSection = HOTKEYS_SECTION)}>
+        <Keyboard size={14} />
+        {t('hk.title')}
       </button>
       {#each moduleSections as c (c.id)}
         {@const Icon = c.settingsIcon ?? c.icon}
@@ -80,11 +88,14 @@
     </nav>
 
     <section class="content">
-      <button class="icon-btn close" title={t('app.closeEsc')} onclick={close}><X size={16} /></button>
+      <button class="icon-btn close" title={hint(t('app.close'), 'close')} onclick={close}><X size={16} /></button>
 
       {#if about}
         <h2>{t('settings.about')}</h2>
         <About />
+      {:else if hotkeys}
+        <h2>{t('hk.title')}</h2>
+        <Hotkeys />
       {:else if general || !current}
         <h2>{t('settings.general')}</h2>
         <div class="setting">

@@ -4,6 +4,7 @@
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
+  import { openSettings } from '../../../renderer/lib/nav';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { output, refreshDevices, setSink } from './output.svelte';
 
@@ -11,7 +12,6 @@
   let shown = $state<number | null>(null);
   const seconds = $derived(shown ?? ms.crossfade);
   refreshDevices();
-  const mod = navigator.platform.startsWith('Mac') ? '⌘' : 'Ctrl+';
   // Сохранённое устройство сейчас не подключено — всё равно показываем его в списке.
   const missing = $derived(!!output.sink && !output.devices.some((d) => d.id === output.sink));
 </script>
@@ -50,10 +50,9 @@
 <div class="setting">
   <div class="info">
     <div class="name">{t('music.hotkeysTitle')}</div>
-    <div class="desc">
-      {t('music.hotkeysDesc', { mod })}
-    </div>
+    <div class="desc">{t('music.hotkeysDesc')}</div>
   </div>
+  <button class="btn" onclick={() => openSettings('hotkeys')}>{t('music.hotkeysOpen')}</button>
 </div>
 
 <div class="setting">

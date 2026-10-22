@@ -1,6 +1,7 @@
 <!-- Визуальный редактор карточки: общая часть (название, вид, система, язык, портреты, заметки)
      и характеристики от системы. Справа — как карточка будет выглядеть. -->
 <script lang="ts">
+  import { hotkeyLabel } from '../../../shared/hotkeys';
   import { markdownKeys } from '../../../renderer/lib/markdownKeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
@@ -113,7 +114,7 @@
     {#if error}<span class="error">{error}</span>{/if}
     <div class="spacer"></div>
     <button class="btn" onclick={() => bestiary.cancel()}>{t('best.cancel')}</button>
-    <button class="btn primary" disabled={saving} onclick={save} title="⌘S"><Save size={14} /> {t('best.save')}</button>
+    <button class="btn primary" disabled={saving} onclick={save} title={hotkeyLabel('save')}><Save size={14} /> {t('best.save')}</button>
   </header>
 
   {#if bestiary.external}

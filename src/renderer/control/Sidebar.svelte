@@ -1,5 +1,6 @@
 <!-- Левая боковая панель выбранного модуля. Стрелки в её списках — listNav (пункты помечает модуль). -->
 <script lang="ts">
+  import { hint } from '../../shared/hotkeys';
   import { controlContributions } from '../lib/registry';
   import { store } from '../lib/store.svelte';
   import { listNav } from '../lib/listnav';
@@ -17,7 +18,7 @@
   <!-- The title row (the traffic lights in macOS stand on its left — nothing there): search ⌘K, the roll log, «hide the
        panel»; drags the window (without the system title bar). -->
   <div class="title-row drag">
-    <button class="icon-btn faint-btn" title={t('app.search')} onclick={openQuickSearch}><Search size={17} /></button>
+    <button class="icon-btn faint-btn" title={hint(t('app.search'), 'search')} onclick={openQuickSearch}><Search size={17} /></button>
     <button class="icon-btn faint-btn" class:on={rolls.open} title={t('lib.rolls')} onclick={() => (rolls.open = !rolls.open)}><Dices size={17} /></button>
     <button class="icon-btn faint-btn" title={t('app.hideSidebar')} onclick={() => (workspace.sidebarOpen = false)}><PanelLeftClose size={18} /></button>
   </div>

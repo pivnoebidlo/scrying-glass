@@ -39,6 +39,7 @@ import { isAboutLink } from '../shared/about';
 import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnouncement } from './schedule';
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
+import { setHotkeys } from '../shared/hotkeys';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, recreateControlWindow, TITLE_HEIGHT, watchDisplays,
@@ -82,6 +83,8 @@ interface AppSettings {
   updates?: UpdateSettings;
   // The tab bar as the window's title bar; no field — on in macOS, off (beta) in Windows and Linux.
   titleBar?: boolean;
+  // The GM's own hotkeys (shared/hotkeys.ts): id → combo, only the changed ones.
+  hotkeys?: Record<string, string>;
   // The GM's Telegram bot (main/telegram.ts): the token (encrypted) and the chats it knows.
   telegram?: TgSettings;
 }
@@ -96,6 +99,7 @@ function loadSettings() {
     settings = { ...saved, vault: saved?.vault ?? null, recent: saved?.recent ?? [], library: saved?.library ?? null, roles: saved?.roles ?? null };
     setTrashSettings(settings.trash);
     setSystemsOff(settings.systemsOff);
+    setHotkeys(settings.hotkeys);
   } catch {
     /* не прочитались — начнём с выбора хранилища */
   }
@@ -120,6 +124,7 @@ function vaultState(): VaultState {
     language: settings.language ?? 'auto',
     lang: interfaceLang(),
     theme: isTheme(settings.theme) ? settings.theme : 'auto',
+    hotkeys: setHotkeys(settings.hotkeys),
   };
 }
 
@@ -298,6 +303,14 @@ function setThemeSetting(theme: ThemeSetting): VaultState {
   return vaultState();
 }
 
+// The GM's own hotkeys: kept in settings; the app menu takes «Settings…» from them.
+function setHotkeysSetting(map: Record<string, string> | null): VaultState {
+  settings = { ...settings, hotkeys: setHotkeys(map) };
+  writeJsonAtomic(settingsFile(), settings);
+  menu();
+  return vaultState();
+}
+
 // Отключить ненужные ролевые системы (все сразу нельзя — setSystemsOff оставит хотя бы одну).
 function setSystemsOffSetting(list: string[]): VaultState {
   settings = { ...settings, systemsOff: setSystemsOff(list) };
@@ -324,6 +337,7 @@ const vault: VaultAccess = {
   setSystemsOff: setSystemsOffSetting,
   setLanguage: setLanguageSetting,
   setTheme: setThemeSetting,
+  setHotkeys: setHotkeysSetting,
 };
 
 const ctx: ModuleContext = {

@@ -1,5 +1,6 @@
 <!-- Вкладка «Файлы»: содержимое выбранной папки хранилища. -->
 <script lang="ts">
+  import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronRight, ClipboardPaste, Download, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
   import { badgeOf, type ModuleProps } from '../../../renderer/lib/contrib';
@@ -134,7 +135,7 @@
           onclick={() => dispatch('adventures', 'mark', { path: folder.path })}><Map size={14} /> {t('vault.mark')}</button
         >
       {/if}
-      <button class="btn" title={t('vault.pasteHint')} onclick={() => dispatch('vault', 'pasteImage', { folder: folder.path })}>
+      <button class="btn" title={hint(t('vault.pasteHint'), 'paste')} onclick={() => dispatch('vault', 'pasteImage', { folder: folder.path })}>
         <ClipboardPaste size={14} /> {t('vault.paste')}
       </button>
       <button class="btn" onclick={() => dispatch('vault', 'importFiles', { folder: folder.path })}>
