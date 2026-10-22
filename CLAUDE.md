@@ -41,7 +41,8 @@ Electron-приложение для мастера D&D: окно управле
   localStorage for the next launch). Colours — only tokens in `renderer/lib/theme.css` (incl. `--warning`,
   `--success`, `--on-accent` — text on an accent background: dark on the cyan of space); hard-coded colours only on pictures and on the player screen.
 - Заголовок окна: полоса вкладок — заголовок (`settings.titleBar`, нет — вкл. в macOS, выкл. (бета) в Windows/Linux;
-  IPC `window:titleBar` / `window:setTitleBar`, `app:relaunch` — режим ставится при создании окна). `createControlWindow(frame)`
+  IPC `window:titleBar` / `window:setTitleBar`; режим ставится при создании окна — смена пересоздаёт окно мастера
+  (`recreateControlWindow`, на том же месте; новое окно открывает настройки — `openSettings` в localStorage, App.svelte)). `createControlWindow(frame)`
   в `main/windows.ts`: 'mac' — `titleBarStyle: 'hidden'`, светофор в строке заголовка (`trafficLightPosition`), 'overlay' —
   системные кнопки поверх правого верхнего угла (`titleBarOverlay`, цвета темы шлёт `applyTheme` в store.svelte.ts →
   `window:titleBarColors`). Окно узнаёт режим из `--sg-frame` (`window.api.frame`) → `<html data-frame>`, полноэкранный

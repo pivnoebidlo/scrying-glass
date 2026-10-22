@@ -54,6 +54,7 @@
     justify-content: flex-end;
     height: var(--title-h);
     padding: 0 8px;
+    border-bottom: 1px solid var(--border);
   }
   .title-row .icon-btn {
     width: 26px;

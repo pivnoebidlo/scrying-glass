@@ -46,12 +46,15 @@
   .title-space {
     display: none;
   }
+  /* One strip with the tab bar, as in Obsidian: over the ribbon's border, with the line under the whole title row. */
   :global(:root[data-frame='mac']) .title-space {
     display: block;
     flex: none;
     align-self: stretch;
     height: var(--title-h);
-    margin-top: -10px;
+    margin: -10px -1px 0 0;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
   }
   .icon-btn {
     width: 32px;

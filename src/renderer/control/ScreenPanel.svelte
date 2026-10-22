@@ -102,6 +102,8 @@
     height: var(--title-h);
     padding-top: 0;
     padding-bottom: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
   }
   .panel {
     width: 280px;

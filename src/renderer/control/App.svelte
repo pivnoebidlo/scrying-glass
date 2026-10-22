@@ -16,6 +16,16 @@
   import { workspace } from './workspace.svelte';
   // The app menu's «About» and «Settings…» (main/menu.ts).
   window.api.onOpenSettings((section) => workspace.openSettings(section));
+  // The window made anew by the title bar setting (Settings.svelte) opens the settings where they were.
+  try {
+    const section = localStorage.getItem('openSettings');
+    if (section !== null) {
+      localStorage.removeItem('openSettings');
+      workspace.openSettings(section);
+    }
+  } catch {
+    /* no storage — the settings stay closed */
+  }
 
   function onkeydown(e: KeyboardEvent) {
     // Cmd/Ctrl + , — настройки, как в Obsidian.

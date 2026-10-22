@@ -65,7 +65,6 @@ const api: Api = {
   titleBar: () => ipcRenderer.invoke('window:titleBar'),
   setTitleBar: (on) => ipcRenderer.invoke('window:setTitleBar', on),
   setTitleBarColors: (colors) => ipcRenderer.send('window:titleBarColors', colors),
-  relaunch: () => ipcRenderer.send('app:relaunch'),
   updateSettings: () => ipcRenderer.invoke('updates:settings'),
   setUpdateSettings: (next) => ipcRenderer.invoke('updates:setSettings', next),
   checkForUpdates: () => ipcRenderer.invoke('updates:check'),

@@ -14,7 +14,7 @@ translation for it, otherwise English). The language switches at once, without a
 (as the system), dark, light, parchment (fantasy), space or neon (science fiction, cyberpunk) — is in the same place (⌘, → General → Theme); the player screen keeps its
 own look. The tab bar is the window's title bar, as in Obsidian (drag the window by its empty space): on in macOS,
 a beta in Windows and Linux, where the system buttons go to the top right corner — ⌘, → General → Tabs in the title
-bar (works after a restart). The built-in compendium
+bar (works at once). The built-in compendium
 and the Fate compendium exist in both languages and follow the interface language.
 
 ## Installation

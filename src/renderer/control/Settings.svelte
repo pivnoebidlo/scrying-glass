@@ -18,9 +18,16 @@
   let version = $state('');
   let checking = $state(false);
   let found = $state<UpdateInfo | null>(null);
-  // The title bar: works after a restart; in Windows and Linux — a beta.
+  // The title bar (in Windows and Linux — a beta): the core makes the window anew, it opens these settings again.
   let titleBar = $state<TitleBarSetting | null>(null);
-  const titleBarChanged = $derived(!!titleBar && (titleBar.now !== 'system') !== titleBar.on);
+  async function setTitleBar(on: boolean) {
+    try {
+      localStorage.setItem('openSettings', GENERAL);
+    } catch {
+      /* the new window opens without the settings — not a problem */
+    }
+    titleBar = await window.api.setTitleBar(on);
+  }
   onMount(async () => {
     titleBar = await window.api.titleBar();
     updates = await window.api.updateSettings();
@@ -107,11 +114,8 @@
             <div class="info">
               <div class="name">{t('settings.titleBar')}{#if !titleBar.byDefault}<span class="beta">{t('settings.beta')}</span>{/if}</div>
               <div class="desc">{t(titleBar.byDefault ? 'settings.titleBarDesc' : 'settings.titleBarDescBeta')}</div>
-              {#if titleBarChanged}
-                <div class="desc status">{t('settings.titleBarRestart')} <button class="link" onclick={() => window.api.relaunch()}>{t('settings.restartNow')}</button></div>
-              {/if}
             </div>
-            <label class="check"><input type="checkbox" checked={titleBar.on} onchange={async (e) => (titleBar = await window.api.setTitleBar(e.currentTarget.checked))} /> {t('settings.titleBarOn')}</label>
+            <label class="check"><input type="checkbox" checked={titleBar.on} onchange={(e) => setTitleBar(e.currentTarget.checked)} /> {t('settings.titleBarOn')}</label>
           </div>
         {/if}
         <div class="setting">

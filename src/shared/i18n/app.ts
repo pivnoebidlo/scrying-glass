@@ -44,8 +44,6 @@ export const en = {
   'settings.titleBarDesc': "The tab bar is the window’s title bar, as in Obsidian: drag the window by its empty space. Off — the system title bar above the window.",
   'settings.titleBarDescBeta': "The tab bar is the window’s title bar, as in Obsidian: drag the window by its empty space, the system buttons go to the top right corner. A beta on this system: if something looks wrong, turn it off.",
   'settings.titleBarOn': "On",
-  'settings.titleBarRestart': "Works after a restart.",
-  'settings.restartNow': "Restart now",
   'settings.beta': "beta",
   'settings.themeDesc': "Colours of the GM window. “Automatic” follows the system (dark or light); parchment suits fantasy, space and neon — science fiction and cyberpunk. The player screen keeps its look.",
   'settings.theme.auto': "Automatic",
@@ -53,7 +51,7 @@ export const en = {
   'settings.theme.light': "Light",
   'settings.theme.parchment': "Parchment",
   'settings.theme.space': "Space",
-  'settings.theme.neon': "Neon (cyberpunk)",
+  'settings.theme.neon': "Neon",
 
   'welcome.text':
     'Choose your vault folder: it holds your adventures, characters, maps and music. An empty folder works, and so does one that already has your material. Files are not copied or changed.',
@@ -242,8 +240,6 @@ export const ru: Messages<typeof en> = {
   'settings.titleBarDesc': "Полоса вкладок — это заголовок окна, как в Obsidian: окно перетаскивается за пустое место. Выключено — системный заголовок над окном.",
   'settings.titleBarDescBeta': "Полоса вкладок — это заголовок окна, как в Obsidian: окно перетаскивается за пустое место, системные кнопки — в правом верхнем углу. На этой системе — бета: если что-то выглядит не так, выключите.",
   'settings.titleBarOn': "Включено",
-  'settings.titleBarRestart': "Заработает после перезапуска.",
-  'settings.restartNow': "Перезапустить сейчас",
   'settings.beta': "бета",
   'settings.themeDesc': "Цвета окна мастера. «Автоматически» — как в системе (тёмная или светлая); «Пергамент» — для фэнтези, «Космос» и «Неон» — для научной фантастики и киберпанка. Экран игроков не меняется.",
   'settings.theme.auto': "Автоматически",
@@ -251,7 +247,7 @@ export const ru: Messages<typeof en> = {
   'settings.theme.light': "Светлая",
   'settings.theme.parchment': "Пергамент",
   'settings.theme.space': "Космос",
-  'settings.theme.neon': "Неон (киберпанк)",
+  'settings.theme.neon': "Неон",
 
   'welcome.text':
     'Выберите папку хранилища: в ней лежат ваши приключения, персонажи, карты и музыка. Подойдёт и пустая папка, и та, где материалы уже есть. Файлы не копируются и не изменяются.',

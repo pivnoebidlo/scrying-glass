@@ -41,7 +41,7 @@ import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
-  closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, TITLE_HEIGHT, watchDisplays,
+  closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, recreateControlWindow, TITLE_HEIGHT, watchDisplays,
 } from './windows';
 import type { TitleBarSetting, WindowFrame } from '../shared/api';
 
@@ -1291,19 +1291,22 @@ ipcMain.handle('telegram:sendCapture', async (_event, { chats, rect, caption, na
 // Updates: the setting, a check on demand, opening the release page (only the app's own releases).
 const updateSettings = (): UpdateSettings => ({ check: true, ...settings.updates });
 ipcMain.handle('window:titleBar', () => titleBarSetting());
+// Works at once: the control window is made anew with the other title bar (a moment later — the answer goes first).
 ipcMain.handle('window:setTitleBar', (_event, on: boolean) => {
   settings = { ...settings, titleBar: !!on };
   writeJsonAtomic(settingsFile(), settings);
+  if (frameNow() !== frame) {
+    frame = frameNow();
+    setTimeout(() => {
+      recreateControlWindow(frame, overlayColors());
+      applyTheme();
+    }, 50);
+  }
   return titleBarSetting();
 });
 ipcMain.on('window:titleBarColors', (_event, colors: { color: string; symbolColor: string }) => {
   const win = getControlWindow();
   if (frame === 'overlay' && win && !win.isDestroyed()) win.setTitleBarOverlay({ ...colors, height: TITLE_HEIGHT });
-});
-// Restart to apply the title bar setting: the usual quit (state and a snapshot are saved), then a new launch.
-ipcMain.on('app:relaunch', () => {
-  app.relaunch();
-  app.quit();
 });
 ipcMain.handle('updates:settings', () => updateSettings());
 ipcMain.handle('updates:setSettings', (_event, next: Partial<UpdateSettings>) => {

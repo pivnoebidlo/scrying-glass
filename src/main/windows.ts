@@ -35,10 +35,11 @@ export const TITLE_HEIGHT = 38;
 // frame: 'system' — the system title bar; 'mac' — none, the traffic lights inside the window, in the title row;
 // 'overlay' (Windows, Linux) — none, the system buttons drawn over the top right corner in the theme's colours.
 // The page learns it from --sg-frame (preload: window.api.frame) before it draws anything.
-export function createControlWindow(frame: WindowFrame, overlay: { color: string; symbolColor: string }) {
+export function createControlWindow(frame: WindowFrame, overlay: { color: string; symbolColor: string }, bounds?: Electron.Rectangle) {
   controlWindow = new BrowserWindow({
     width: 1280,
     height: 800,
+    ...bounds,
     minWidth: 900,
     minHeight: 560,
     title: 'Scrying Glass',
@@ -57,6 +58,19 @@ export function createControlWindow(frame: WindowFrame, overlay: { color: string
     controlWindow = null;
     closeDisplay();
   });
+}
+
+// The title bar is set when a window is created: a new control window in the old one's place (same size, maximized
+// or not); the old one goes without its «closed» handler — the player screen and the app stay.
+export function recreateControlWindow(frame: WindowFrame, overlay: { color: string; symbolColor: string }) {
+  const old = controlWindow;
+  if (!old || old.isDestroyed()) return createControlWindow(frame, overlay);
+  const maximized = old.isMaximized();
+  const bounds = old.getNormalBounds();
+  old.removeAllListeners('closed');
+  createControlWindow(frame, overlay, bounds);
+  if (maximized) controlWindow?.maximize();
+  old.destroy();
 }
 
 export function listDisplays(): DisplayInfo[] {
