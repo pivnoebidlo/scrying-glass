@@ -1,5 +1,5 @@
 // Безопасный мост между окнами и ядром.
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import type { Api, WindowFrame } from '../shared/api';
 
 const api: Api = {
@@ -60,6 +60,8 @@ const api: Api = {
   movePage: (path, folder) => ipcRenderer.invoke('journal:move', { path, folder }),
   renamePageFolder: (path, title) => ipcRenderer.invoke('journal:renameFolder', { path, title }),
   trashLibraryEntry: (path) => ipcRenderer.invoke('library:trash', path),
+  // The path of a file dropped from Finder or Explorer (File.path is gone in recent Electron).
+  pathForFile: (file) => webUtils.getPathForFile(file),
   frame: (process.argv.find((a) => a.startsWith('--sg-frame='))?.slice('--sg-frame='.length) ?? 'system') as WindowFrame,
   onFullscreen: (cb) => { ipcRenderer.on('window:fullscreen', (_e, on: boolean) => cb(on)); },
   titleBar: () => ipcRenderer.invoke('window:titleBar'),

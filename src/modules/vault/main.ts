@@ -6,8 +6,8 @@ import * as path from 'node:path';
 import { shell, type OpenDialogOptions } from 'electron';
 import { defineModule, type ModuleContext } from '../../shared/module';
 import type { LangSetting } from '../../shared/i18n/core';
-import { AUDIO_EXT, DEFAULT_ROLES, IMAGE_EXT, type RoleNames, type ThemeSetting, type VaultState } from '../../shared/vault';
-import { clipboardImage, freeName } from '../../main/files';
+import { AUDIO_EXT, DEFAULT_ROLES, IMAGE_EXT, roleAccepts, type FolderRole, type RoleNames, type ThemeSetting, type VaultState } from '../../shared/vault';
+import { clipboardFiles, clipboardImage, freeName } from '../../main/files';
 import { listCards } from '../../main/cards';
 import { deleteWords, discard, trashSettings } from '../../main/trash';
 
@@ -87,15 +87,35 @@ export default defineModule({
     },
 
     // Вставить картинку из буфера обмена в папку хранилища (скриншот, картинка из браузера, файл из Finder).
-    async pasteImage(s, { folder }: { folder: string }, ctx) {
+    // Files dropped from Finder or Explorer onto a tab (renderer/control/FileDrop.svelte): copied into the folder,
+    // under a free name; only pictures and sounds (the window has already kept those the role takes).
+    async addFiles(s, { folder, paths }: { folder: string; paths: string[] }, ctx) {
       const dir = ctx.vault.resolve(folder);
       if (!dir) return s;
-      const img = await clipboardImage();
+      const ok = [...IMAGE_EXT, ...AUDIO_EXT];
+      for (const src of paths) {
+        if (!ok.includes(path.extname(src).toLowerCase()) || !fs.statSync(src, { throwIfNoEntry: false })?.isFile()) continue;
+        await fs.promises.copyFile(src, path.join(dir, freeName(dir, path.basename(src))), fs.constants.COPYFILE_EXCL);
+      }
+      return ctx.vault.rescan();
+    },
+
+    // ⌘V in a tab: files copied in Finder or Explorer that the folder's role takes (all of them), else a picture from
+    // the clipboard (not for music).
+    async pasteImage(s, { folder, role = 'backgrounds' }: { folder: string; role?: FolderRole }, ctx) {
+      const dir = ctx.vault.resolve(folder);
+      if (!dir) return s;
+      const files = (await clipboardFiles()).filter((f) => roleAccepts(role, f));
+      if (files.length) {
+        for (const src of files) await fs.promises.copyFile(src, path.join(dir, freeName(dir, path.basename(src))), fs.constants.COPYFILE_EXCL);
+        return ctx.vault.rescan();
+      }
+      const img = role === 'music' ? null : await clipboardImage();
       if (!img) {
         const opts = {
           type: 'info' as const,
-          message: t('vault.dlg.noImage'),
-          detail: t('vault.dlg.noImageDetail'),
+          message: t(role === 'music' ? 'vault.dlg.noMusic' : 'vault.dlg.noImage'),
+          detail: t(role === 'music' ? 'vault.dlg.noMusicDetail' : 'vault.dlg.noImageDetail'),
         };
         if (ctx.controlWindow) await ctx.dialog.showMessageBox(ctx.controlWindow, opts);
         else await ctx.dialog.showMessageBox(opts);

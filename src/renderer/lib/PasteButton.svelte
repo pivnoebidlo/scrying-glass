@@ -1,6 +1,7 @@
-<!-- «Вставить» во вкладках «Персонажи», «Фоны», «Раздатка», «Карты»: картинка из буфера обмена — в папку роли
-     текущего приключения (без приключения — в корне хранилища). ⌘V делает то же, пока кнопка на экране и фокус
-     не в поле ввода; hotkey={false} — без сочетания (если кнопка не во вкладке, а в боковой панели). -->
+<!-- «Вставить» во вкладках «Персонажи», «Фоны», «Раздатка», «Карты», «Музыка»: файлы, скопированные в Finder или
+     Проводнике, или картинка из буфера — в папку роли текущего приключения (без приключения — в корне хранилища).
+     ⌘V в открытой вкладке делает то же (renderer/control/FileDrop.svelte); hotkey={false} — без сочетания в подсказке
+     (кнопка не во вкладке, а в боковой панели). -->
 <script lang="ts">
   import { hint } from '../../shared/hotkeys';
   import { t } from './i18n.svelte';
@@ -21,19 +22,8 @@
         : t('lib.pickAdventure')
   );
 
-  const paste = () => target && dispatch('vault', 'pasteImage', { folder: target.path });
-
-  function onkeydown(e: KeyboardEvent) {
-    if (!hotkey || !(e.metaKey || e.ctrlKey) || e.code !== 'KeyV' || !target) return;
-    const t = e.target as HTMLElement | null;
-    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
-    if (document.querySelector('.modal')) return;
-    e.preventDefault();
-    paste();
-  }
+  const paste = () => target && dispatch('vault', 'pasteImage', { folder: target.path, role });
 </script>
-
-<svelte:window {onkeydown} />
 
 {#if compact}
   <button class="icon-btn" {title} disabled={!target} onclick={paste}><ClipboardPaste size={14} /></button>

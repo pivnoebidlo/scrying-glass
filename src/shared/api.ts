@@ -138,6 +138,7 @@ export interface Api {
   // A library entry of the compendium — to the trash (asks to confirm). true — removed.
   trashLibraryEntry(path: string): Promise<boolean>;
   // Updates (shared/updates.ts): the setting, a check now, open a release page, a newer version found on launch.
+  pathForFile(file: File): string;
   // The control window's title bar: chosen when the window is made (--sg-frame); the setting makes it anew.
   frame: WindowFrame;
   onFullscreen(cb: (on: boolean) => void): void;

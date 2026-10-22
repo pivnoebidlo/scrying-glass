@@ -5,6 +5,7 @@
   import Sidebar from './Sidebar.svelte';
   import Tabs from './Tabs.svelte';
   import FKeys from './FKeys.svelte';
+  import FileDrop from './FileDrop.svelte';
   import ScreenPanel from './ScreenPanel.svelte';
   import Settings from './Settings.svelte';
   import Welcome from './Welcome.svelte';
@@ -66,6 +67,7 @@
   {/each}
 
   <RollLog />
+  <FileDrop />
   <Lightbox />
   <UpdateBanner />
 

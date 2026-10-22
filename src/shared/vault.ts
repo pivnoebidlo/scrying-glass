@@ -5,6 +5,9 @@ import { builtinSoundTitle } from './sounds';
 
 export const IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
 export const AUDIO_EXT = ['.mp3', '.ogg', '.wav', '.flac', '.m4a'];
+// What a folder of a role takes when files are dropped or pasted into it: music — sounds, the rest — pictures.
+export const extOf = (name: string) => name.slice(name.lastIndexOf('.')).toLowerCase();
+export const roleAccepts = (role: FolderRole, name: string) => (role === 'music' ? AUDIO_EXT : IMAGE_EXT).includes(extOf(name));
 
 // note — записка, сделанная в приложении («….note.json», см. shared/notes.ts); entry — запись справочника (.md в папках справочника,
 // см. shared/compendium.ts); page — заметка журнала (.md в папках журнала, см. shared/journal.ts).

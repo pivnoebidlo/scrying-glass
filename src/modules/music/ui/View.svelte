@@ -1,5 +1,6 @@
 <!-- Вкладка «Музыка»: треки выбранного плейлиста и атмосфера. -->
 <script lang="ts">
+  import PasteButton from '../../../renderer/lib/PasteButton.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { Pause, Play, Shuffle, Trash2, Volume2, Wind, X } from '@lucide/svelte';
@@ -47,6 +48,7 @@
         <Play size={14} /> {t('music.play')}
       </button>
       <button class="btn" onclick={shufflePlay}><Shuffle size={14} /> {t('music.shufflePlay')}</button>
+      <PasteButton {app} role="music" />
     </header>
 
     <ol class="tracks">

@@ -118,6 +118,8 @@ export const en = {
   'vault.dlg.open': 'Open',
   'vault.dlg.addFiles': 'Add files to the vault',
   'vault.dlg.imagesAndMusic': 'Images and music',
+  'vault.dlg.noMusic': 'There is no music in the clipboard',
+  'vault.dlg.noMusicDetail': 'Copy music files (mp3, ogg, wav, flac, m4a) in Finder or Explorer and paste again — or drag them onto the tab.',
   'vault.dlg.noImage': 'There is no image in the clipboard',
   'vault.dlg.noImageDetail': 'Copy an image (in a browser — “Copy image”) or an image file in Finder and try again.',
   'vault.dlg.portraitOf':
@@ -245,6 +247,8 @@ export const ru: Messages<typeof en> = {
   'vault.dlg.open': 'Открыть',
   'vault.dlg.addFiles': 'Добавить файлы в хранилище',
   'vault.dlg.imagesAndMusic': 'Картинки и музыка',
+  'vault.dlg.noMusic': 'В буфере обмена нет музыки',
+  'vault.dlg.noMusicDetail': 'Скопируйте файлы музыки (mp3, ogg, wav, flac, m4a) в Finder или Проводнике и вставьте снова — или перетащите их на вкладку.',
   'vault.dlg.noImage': 'В буфере обмена нет картинки',
   'vault.dlg.noImageDetail': 'Скопируйте картинку (в браузере — «Копировать изображение») или файл картинки в Finder и попробуйте снова.',
   'vault.dlg.portraitOf':

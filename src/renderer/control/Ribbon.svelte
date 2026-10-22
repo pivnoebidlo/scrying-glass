@@ -17,6 +17,7 @@
     <button
       class="icon-btn"
       class:active={workspace.sidebar === c.id && workspace.sidebarOpen}
+      data-drop-module={c.id}
       title={c.title}
       onclick={() => workspace.select(c.id)}
     >

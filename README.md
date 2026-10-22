@@ -695,8 +695,11 @@ trash.
 In card folders (monsters, characters, party) Files shows the cards themselves: they can be opened, moved and deleted
 (with their pictures — optionally), and "New card" and "Import cards…" create and import cards right into the open
 folder. A picture from the clipboard (a screenshot, "Copy image" in a browser, a file copied in Finder) can be pasted
-into the open folder in Files with "Paste" or ⌘V. The Characters, Backgrounds, Handouts and Maps tabs have the same
-button: the picture goes into that tab's folder in the current adventure (without an adventure — into the vault root).
+into the open folder in Files with "Paste" or ⌘V. The Characters, Backgrounds, Handouts, Maps and Music tabs have the
+same button and ⌘V: files copied in Finder or Explorer (all of them; music in Music) or a picture go into that tab's
+folder in the current adventure (without an adventure — into the vault root). No need to know the folders at all:
+drag files from Finder or Explorer onto one of these tabs or onto its icon in the ribbon — they are copied into the
+right folder (what's going to happen is shown while dragging; files of the wrong kind are skipped, with a note).
 The app watches the folder: new and deleted files show up at once. The user's files aren't changed; the app keeps its
 own data (captions, what's on screen) in `.scrying-glass/state.json` inside the vault. Paths there are relative, so the
 vault can be synced between computers.

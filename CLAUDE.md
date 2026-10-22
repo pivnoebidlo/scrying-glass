@@ -535,6 +535,11 @@ Electron-приложение для мастера D&D: окно управле
   поэтому `activate` сцены сначала `markActive`. Перетаскивание из вкладок — `file` в `use:sortable` (`draggedFile`),
   «+» — общий `renderer/lib/FilePicker.svelte` (`multi`). Подборка приключения уходит в .sgpack (`slices.tray`) и в
   корзину (`AdventureData.tray`).
+- Файлы снаружи: перетаскивание из Finder / Проводника и ⌘V — `renderer/control/FileDrop.svelte` (цель — значок
+  модуля `data-drop-module` в полосе или открытая вкладка; модули → роли `ROLE_OF`: scene, portraits, maps, handouts,
+  music; папка — `roleFolderHere`; путь файла — `window.api.pathForFile` через `webUtils`; что роль принимает —
+  `roleAccepts` в shared/vault.ts) → действие `vault/addFiles`; ⌘V — `vault/pasteImage` с `role` (все файлы из буфера —
+  `clipboardFiles` в main/files.ts, иначе картинка). `PasteButton` — только кнопка, сочетание ловит FileDrop.
 - Порядок плиток, заданный перетаскиванием («Персонажи», «Фоны», «Раздатка», «Файлы»): модуль `order` (ключ — группа: путь папки
   или `monsters:<папка>`, значение — id плиток), `applyOrder` в `shared/order.ts`, перетаскивание — действие
   `use:sortable` (`renderer/lib/sortable.ts`), только внутри группы. «Файлы» пишут в те же ключи (путь папки,

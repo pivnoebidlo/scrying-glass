@@ -69,6 +69,32 @@ export function freeName(dir: string, file: string): string {
 // браузера). null — в буфере нет картинки. В Electron 44 буфер читается асинхронно, как в браузере.
 const IMAGE_MIME: Record<string, string> = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/webp': '.webp' };
 
+// Files copied in Finder or Explorer (⌘C / Ctrl+C): their paths, from the clipboard's file:// list.
+export async function clipboardFiles(): Promise<string[]> {
+  let items: Electron.ClipboardItem[] = [];
+  try {
+    items = await clipboard.read();
+  } catch {
+    return [];
+  }
+  const out: string[] = [];
+  for (const item of items) {
+    for (const type of item.types.filter((t) => t === 'text/uri-list' || t.includes('file-url'))) {
+      try {
+        const text = await ((await item.getType(type)) as Blob).text();
+        for (const line of text.split(/\r?\n/)) {
+          if (!line.startsWith('file://')) continue;
+          const file = fileURLToPath(line.trim());
+          if (fs.statSync(file).isFile() && !out.includes(file)) out.push(file);
+        }
+      } catch {
+        /* not a file */
+      }
+    }
+  }
+  return out;
+}
+
 export async function clipboardImage(): Promise<{ name: string; data: Buffer } | null> {
   let items: Electron.ClipboardItem[] = [];
   try {
