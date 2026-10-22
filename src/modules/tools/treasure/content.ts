@@ -12,12 +12,12 @@ export const GEMS: Record<number, Pair[]> = {
 };
 
 export const ART: Record<number, Pair[]> = {
-  10: [['a carved bone dice set', 'резной набор костей для игры'], ['a copper ring with a tiny garnet', 'медное кольцо с крошечным гранатом'], ['a painted wooden icon', 'расписная деревянная икона'], ['a brass hand mirror', 'латунное ручное зеркальце']],
-  50: [['a silver ewer', 'серебряный кувшин'], ['a carved bone statuette', 'статуэтка из резной кости'], ['a small gold bracelet', 'тонкий золотой браслет'], ['embroidered silk vestments', 'облачение из расшитого шёлка'], ['a copper chalice with silver filigree', 'медная чаша с серебряной филигранью']],
-  100: [['a silver comb set with moonstones', 'серебряный гребень с лунными камнями'], ['a carved ivory statuette', 'статуэтка из слоновой кости'], ['a gold locket with a painted portrait', 'золотой медальон с портретом'], ['a brass censer with a pierced lid', 'латунная курильница с ажурной крышкой']],
-  500: [['a gold ring set with bloodstones', 'золотой перстень с гелиотропами'], ['a fine gold chain with a fire opal', 'тонкая золотая цепочка с огненным опалом'], ['an old masterpiece painting', 'старинная картина известного мастера'], ['an embroidered silk and velvet mantle', 'мантия из шёлка и бархата с вышивкой']],
-  1000: [['a jeweled gold crown', 'золотая корона с самоцветами'], ['a platinum bracelet set with a sapphire', 'платиновый браслет с сапфиром'], ['an ornate gold music box', 'золотая музыкальная шкатулка тонкой работы'], ['a gold dragon comb set with red garnets', 'золотой гребень-дракон с гранатами']],
-  5000: [['a jeweled platinum ring of a lost dynasty', 'платиновый перстень с самоцветами угасшей династии'], ['a gold cup set with emeralds', 'золотой кубок с изумрудами'], ['a jeweled gold scepter', 'золотой скипетр с самоцветами']],
+  10: [['a carved bone dice set', 'резной набор костей для игры'], ['a copper ring with a tiny garnet', 'медное кольцо с крошечным гранатом'], ['a painted wooden icon', 'расписная деревянная икона'], ['a brass hand mirror', 'латунное ручное зеркальце'], ['a pewter tankard with a hunting scene', 'оловянная кружка со сценой охоты'], ['a string of glass beads', 'нитка стеклянных бус'], ['a carved wooden comb', 'резной деревянный гребень'], ['a tin brooch shaped like a fox', 'оловянная брошь в виде лисы']],
+  50: [['a silver ewer', 'серебряный кувшин'], ['a carved bone statuette', 'статуэтка из резной кости'], ['a small gold bracelet', 'тонкий золотой браслет'], ['embroidered silk vestments', 'облачение из расшитого шёлка'], ['a copper chalice with silver filigree', 'медная чаша с серебряной филигранью'], ['a silver-plated hand bell', 'посеребрённый колокольчик'], ['a lacquered jewellery box', 'лакированная шкатулка для украшений'], ['a pair of silver earrings', 'пара серебряных серёг'], ['a painted fan of ivory sticks', 'расписной веер на костяных пластинах'], ['a silver-handled walking stick', 'трость с серебряной рукоятью']],
+  100: [['a silver comb set with moonstones', 'серебряный гребень с лунными камнями'], ['a carved ivory statuette', 'статуэтка из слоновой кости'], ['a gold locket with a painted portrait', 'золотой медальон с портретом'], ['a brass censer with a pierced lid', 'латунная курильница с ажурной крышкой'], ['a silver goblet with an engraved crest', 'серебряный кубок с гравированным гербом'], ['a small tapestry of a unicorn hunt', 'небольшой гобелен с охотой на единорога'], ['an enamelled snuffbox', 'табакерка с эмалью'], ['a gold-leaf illuminated psalter', 'псалтырь с золотыми миниатюрами']],
+  500: [['a gold ring set with bloodstones', 'золотой перстень с гелиотропами'], ['a fine gold chain with a fire opal', 'тонкая золотая цепочка с огненным опалом'], ['an old masterpiece painting', 'старинная картина известного мастера'], ['an embroidered silk and velvet mantle', 'мантия из шёлка и бархата с вышивкой'], ['a set of silver plates with gilded rims', 'набор серебряных блюд с позолоченной каймой'], ['a marble bust of a forgotten emperor', 'мраморный бюст забытого императора'], ['a jade figurine of a sleeping dragon', 'нефритовая фигурка спящего дракона'], ['a gold-inlaid lute', 'лютня с золотыми инкрустациями']],
+  1000: [['a jeweled gold crown', 'золотая корона с самоцветами'], ['a platinum bracelet set with a sapphire', 'платиновый браслет с сапфиром'], ['an ornate gold music box', 'золотая музыкальная шкатулка тонкой работы'], ['a gold dragon comb set with red garnets', 'золотой гребень-дракон с гранатами'], ['a crystal decanter set with diamonds', 'хрустальный графин с алмазами'], ['a gold mask of a sun priest', 'золотая маска жреца солнца'], ['a silver astrolabe with star rubies', 'серебряная астролябия со звёздчатыми рубинами'], ['a royal seal ring of white gold', 'королевский перстень-печатка из белого золота']],
+  5000: [['a jeweled platinum ring of a lost dynasty', 'платиновый перстень с самоцветами угасшей династии'], ['a gold cup set with emeralds', 'золотой кубок с изумрудами'], ['a jeweled gold scepter', 'золотой скипетр с самоцветами'], ['a throne-room tapestry woven with gold thread', 'тронный гобелен, тканный золотой нитью'], ['a gem-studded reliquary of a saint', 'усыпанный камнями реликварий святого'], ['the crown of a drowned kingdom', 'корона затонувшего королевства']],
 };
 
 // Goods: valuable but bulky things in a stash or a lair.
@@ -38,6 +38,22 @@ export const GOODS: Pair[] = [
   ['a map of the region with notes in the margins', 'карта края с пометками на полях'],
   ['a lute with a cracked neck', 'лютня с треснувшим грифом'],
   ['bottles of ink and a stack of good parchment', 'склянки чернил и стопка хорошего пергамента'],
+  ['a crate of good glassware packed in straw', 'ящик хорошей посуды из стекла, переложенной соломой'],
+  ['a roll of fine wool cloth', 'рулон тонкого сукна'],
+  ['a sack of salt', 'мешок соли'],
+  ['a cask of brandy', 'бочонок бренди'],
+  ['a box of tea from far away', 'ящик заморского чая'],
+  ['a set of silver cutlery for twelve', 'серебряные столовые приборы на двенадцать персон'],
+  ['a beaver-fur hat', 'бобровая шапка'],
+  ['a pair of brass scales with weights', 'медные весы с гирьками'],
+  ['a chest of candles', 'сундук свечей'],
+  ['a bale of furs', 'тюк мехов'],
+  ['a crate of iron nails', 'ящик железных гвоздей'],
+  ['a small anvil', 'маленькая наковальня'],
+  ['a merchant’s ledger with debts to collect', 'купеческая книга с долгами, которые можно стребовать'],
+  ['a carved chest with an old crest', 'резной сундук со старым гербом'],
+  ['bundles of dried herbs, still fragrant', 'связки сушёных трав, ещё пахнущих'],
+  ['a jar of honey sealed with wax', 'горшок мёда под восковой печатью'],
 ];
 
 // What's in the pockets (from the retired table).
@@ -65,6 +81,29 @@ export const POCKETS: Pair[] = [
   ['a tooth — definitely not human', 'зуб — явно не человеческий'],
   ['a blank sheet of parchment that smells of lemon', 'чистый лист пергамента, пахнущий лимоном'],
   ['a button and a bit of string', 'пуговица и обрывок бечёвки'],
+  ['a half-eaten sausage', 'недоеденная колбаса'],
+  ['a love letter, unsigned', 'любовное письмо без подписи'],
+  ['three copper coins and a button', 'три медяка и пуговица'],
+  ['a lucky rabbit’s foot', 'кроличья лапка на удачу'],
+  ['a pipe and a pinch of tobacco', 'трубка и щепоть табака'],
+  ['a list of names, two crossed out', 'список имён, два зачёркнуты'],
+  ['a small knife with a nicked edge', 'ножик с зазубренным лезвием'],
+  ['a crumpled wanted poster', 'скомканное объявление о розыске'],
+  ['a smooth river stone', 'гладкий речной камешек'],
+  ['a lock of red hair tied with thread', 'рыжий локон, перевязанный ниткой'],
+  ['a pawn ticket from a city pawnshop', 'квитанция городского ломбарда'],
+  ['a bone needle and thread', 'костяная игла с ниткой'],
+  ['a few dried berries', 'горсть сушёных ягод'],
+  ['a tooth, probably the owner’s own', 'зуб — вероятно, самого хозяина'],
+  ['a prayer written on a scrap of cloth', 'молитва, написанная на лоскуте'],
+  ['a cork with a hole bored through it', 'пробка с просверленной дыркой'],
+  ['a guild token of the dockworkers', 'жетон гильдии грузчиков'],
+  ['a page torn from a cookbook', 'вырванная страница из поваренной книги'],
+  ['a small bag of sand', 'мешочек песка'],
+  ['an arrest warrant for someone else', 'ордер на арест кого-то другого'],
+  ['a tin soldier missing an arm', 'оловянный солдатик без руки'],
+  ['a feather from an unknown bird', 'перо неизвестной птицы'],
+  ['a promissory note for a single goat', 'расписка на одну козу'],
 ];
 
 // Trinkets and finds (from the retired table).
@@ -89,6 +128,26 @@ export const TRINKETS: Pair[] = [
   ['a ring that won’t come off on the night of the full moon', 'кольцо, которое не снимается в полнолуние'],
   ['a pouch of seeds from an unknown plant', 'мешочек семян неизвестного растения'],
   ['a letter addressed to whoever finds it', 'письмо, адресованное тому, кто его найдёт'],
+  ['a spoon that is always cold', 'ложка, которая всегда холодная'],
+  ['a snow globe with a tiny castle inside — it snows only at night', 'стеклянный шар с крошечным замком — снег в нём идёт только ночью'],
+  ['a mouse skull with a silver crown', 'мышиный череп в серебряной короне'],
+  ['a button that hums when someone lies nearby', 'пуговица, которая гудит, когда рядом лгут'],
+  ['a map of a city that does not exist', 'карта несуществующего города'],
+  ['a thimble with a face engraved inside', 'напёрсток с выгравированным внутри лицом'],
+  ['a wooden die with seven faces', 'деревянный кубик с семью гранями'],
+  ['a lock of hair that keeps growing', 'локон, который продолжает расти'],
+  ['a seashell that whispers in an old language', 'ракушка, шепчущая на древнем языке'],
+  ['a portrait whose subject sometimes looks away', 'портрет, герой которого иногда отворачивается'],
+  ['a candle stub that relights itself', 'огарок, который сам загорается снова'],
+  ['a ring of keys, none of them the same size', 'связка ключей — все разного размера'],
+  ['a puzzle box with no visible seams', 'шкатулка-головоломка без видимых швов'],
+  ['a stone with a hole that shows a different sky', 'камень с дыркой, сквозь которую видно другое небо'],
+  ['a ticket to a show forty years ago', 'билет на представление сорокалетней давности'],
+  ['a glove that warms whatever hand wears it', 'перчатка, которая греет любую руку'],
+  ['an inkwell that never dries out', 'чернильница, которая никогда не высыхает'],
+  ['a tiny bronze door, the size of a hand', 'крошечная бронзовая дверца размером с ладонь'],
+  ['a jar of fireflies that never die', 'банка светлячков, которые не умирают'],
+  ['a pressed flower that blooms again in moonlight', 'засушенный цветок, распускающийся при луне'],
 ];
 
 const count = (m: Record<number, Pair[]>) => Object.fromEntries(Object.entries(m).map(([k, v]) => [k, v.length]));
