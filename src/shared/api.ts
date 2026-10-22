@@ -9,6 +9,17 @@ import type { UpdateInfo, UpdateSettings } from './updates';
 import type { TgChat, TgMessage, TgStatus, TgTable } from './telegram';
 import type { Game, ScheduleData } from './schedule';
 
+// The control window's title bar (main/windows.ts): the system one, or the tab bar as the title bar — with the
+// traffic lights inside (macOS) or the system buttons over the corner (Windows, Linux).
+export type WindowFrame = 'system' | 'mac' | 'overlay';
+// The setting: on — the tab bar is the title bar; byDefault — what "no setting" means on this system.
+export interface TitleBarSetting {
+  on: boolean;
+  byDefault: boolean;
+  // What the window was created with (a change works after a restart).
+  now: WindowFrame;
+}
+
 export interface DisplayInfo {
   id: number;
   primary: boolean;
@@ -127,6 +138,13 @@ export interface Api {
   // A library entry of the compendium — to the trash (asks to confirm). true — removed.
   trashLibraryEntry(path: string): Promise<boolean>;
   // Updates (shared/updates.ts): the setting, a check now, open a release page, a newer version found on launch.
+  // The control window's title bar: chosen at launch (--sg-frame), the setting, a restart to apply it.
+  frame: WindowFrame;
+  onFullscreen(cb: (on: boolean) => void): void;
+  titleBar(): Promise<TitleBarSetting>;
+  setTitleBar(on: boolean): Promise<TitleBarSetting>;
+  setTitleBarColors(colors: { color: string; symbolColor: string }): void;
+  relaunch(): void;
   updateSettings(): Promise<UpdateSettings>;
   setUpdateSettings(next: Partial<UpdateSettings>): Promise<UpdateSettings>;
   checkForUpdates(): Promise<UpdateInfo>;

@@ -40,6 +40,15 @@ Electron-приложение для мастера D&D: окно управле
   (`applyTheme`), the window — `<html data-theme>` (`applyTheme` in store.svelte.ts, the last one cached in
   localStorage for the next launch). Colours — only tokens in `renderer/lib/theme.css` (incl. `--warning`,
   `--success`, `--on-accent` — text on an accent background: dark on the cyan of space); hard-coded colours only on pictures and on the player screen.
+- Заголовок окна: полоса вкладок — заголовок (`settings.titleBar`, нет — вкл. в macOS, выкл. (бета) в Windows/Linux;
+  IPC `window:titleBar` / `window:setTitleBar`, `app:relaunch` — режим ставится при создании окна). `createControlWindow(frame)`
+  в `main/windows.ts`: 'mac' — `titleBarStyle: 'hidden'`, светофор в строке заголовка (`trafficLightPosition`), 'overlay' —
+  системные кнопки поверх правого верхнего угла (`titleBarOverlay`, цвета темы шлёт `applyTheme` в store.svelte.ts →
+  `window:titleBarColors`). Окно узнаёт режим из `--sg-frame` (`window.api.frame`) → `<html data-frame>`, полноэкранный
+  macOS — `data-fullscreen`. Высота строки — `--title-h` (38px = полоса вкладок); перетаскивают `.drag` (полоса
+  вкладок, строки над полосой модулей и боковой панелью, заголовок правой панели, полоса в `Welcome`), кнопки и поля в
+  них — нет (`theme.css`). Области перетаскивания не видят слоёв: всё `position: fixed` поверх них помечено
+  `-webkit-app-region: no-drag` — новому всплывающему окну нужна та же строка.
 - About: `shared/about.ts` (addresses, `CREDITS` — attribution the CC BY licenses require; only these links open,
   IPC `app:openLink`), section `renderer/control/About.svelte` (settings section `about`). The app menu — `main/menu.ts`
   (`buildMenu`, in the interface language, rebuilt on a language change; «About» / «Settings…» → event

@@ -4,6 +4,7 @@
   import { store } from '../lib/store.svelte';
   import { listNav } from '../lib/listnav';
   import { t } from '../lib/i18n.svelte';
+  import { PanelLeftClose } from '@lucide/svelte';
   import { workspace } from './workspace.svelte';
 
   const c = $derived(controlContributions.find((x) => x.id === workspace.sidebar));
@@ -11,6 +12,10 @@
 </script>
 
 <aside class="sidebar">
+  <!-- macOS without the system title bar: the row of the traffic lights — drags the window, hides the panel. -->
+  <div class="title-row drag">
+    <button class="icon-btn" title={t('app.hideSidebar')} onclick={() => (workspace.sidebarOpen = false)}><PanelLeftClose size={15} /></button>
+  </div>
   {#each headers as h (h.id)}
     {#if h.header}<h.header ms={store.state[h.id]} app={store.state} />{/if}
   {/each}
@@ -38,6 +43,22 @@
   .body {
     flex: 1;
     overflow: auto;
+  }
+  .title-row {
+    display: none;
+  }
+  :global(:root[data-frame='mac']) .title-row {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: flex-end;
+    height: var(--title-h);
+    padding: 0 8px;
+  }
+  .title-row .icon-btn {
+    width: 26px;
+    height: 26px;
+    color: var(--text-faint);
   }
   .empty {
     padding: 0 12px;

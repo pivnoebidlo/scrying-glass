@@ -83,6 +83,7 @@
   }
   .log {
     position: fixed;
+    -webkit-app-region: no-drag;
     right: 292px;
     bottom: 12px;
     z-index: 60;

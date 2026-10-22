@@ -226,6 +226,7 @@
   }
   .modal-back {
     position: fixed;
+    -webkit-app-region: no-drag;
     inset: 0;
     z-index: 100;
     display: grid;
@@ -296,6 +297,7 @@
   }
   .backdrop {
     position: fixed;
+    -webkit-app-region: no-drag;
     inset: 0;
     z-index: 19;
   }

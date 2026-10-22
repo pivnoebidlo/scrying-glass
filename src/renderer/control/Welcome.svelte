@@ -9,6 +9,7 @@
 </script>
 
 <div class="welcome">
+  <div class="title-strip drag"></div>
   <div class="card">
     <div class="logo">🔮</div>
     <h1>Scrying Glass</h1>
@@ -37,6 +38,13 @@
 </div>
 
 <style>
+  .title-strip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--title-h);
+  }
   .welcome {
     display: grid;
     place-items: center;

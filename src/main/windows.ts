@@ -2,7 +2,7 @@
 import { t } from '../shared/i18n';
 import { app, BrowserWindow, screen, type WebPreferences } from 'electron';
 import * as path from 'node:path';
-import type { DisplayInfo } from '../shared/api';
+import type { DisplayInfo, WindowFrame } from '../shared/api';
 
 let controlWindow: BrowserWindow | null = null;
 let displayWindow: BrowserWindow | null = null;
@@ -29,7 +29,13 @@ function notifyDisplayStatus() {
   }
 }
 
-export function createControlWindow() {
+// The height of the title row: the tab bar (Tabs.svelte) is the window's title bar.
+export const TITLE_HEIGHT = 38;
+
+// frame: 'system' — the system title bar; 'mac' — none, the traffic lights inside the window, in the title row;
+// 'overlay' (Windows, Linux) — none, the system buttons drawn over the top right corner in the theme's colours.
+// The page learns it from --sg-frame (preload: window.api.frame) before it draws anything.
+export function createControlWindow(frame: WindowFrame, overlay: { color: string; symbolColor: string }) {
   controlWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -37,10 +43,16 @@ export function createControlWindow() {
     minHeight: 560,
     title: 'Scrying Glass',
     backgroundColor: '#1e1e1e',
+    ...(frame === 'mac' ? { titleBarStyle: 'hidden' as const, trafficLightPosition: { x: 15, y: 13 } } : {}),
+    ...(frame === 'overlay' ? { titleBarStyle: 'hidden' as const, titleBarOverlay: { ...overlay, height: TITLE_HEIGHT } } : {}),
     // Здесь играет музыка: окно не должно притормаживать, даже если его свернули.
-    webPreferences: { ...webPreferences, backgroundThrottling: false },
+    webPreferences: { ...webPreferences, backgroundThrottling: false, additionalArguments: [`--sg-frame=${frame}`] },
   });
   loadPage(controlWindow, 'control');
+  // Full screen on macOS hides the traffic lights: the page drops the room it keeps for them.
+  const fullscreen = (on: boolean) => () => controlWindow?.webContents.send('window:fullscreen', on);
+  controlWindow.on('enter-full-screen', fullscreen(true));
+  controlWindow.on('leave-full-screen', fullscreen(false));
   controlWindow.on('closed', () => {
     controlWindow = null;
     closeDisplay();

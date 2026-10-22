@@ -205,3 +205,12 @@ input[type=checkbox] { accent-color: var(--accent); }
 /* Ссылка на запись справочника в статблоке и листе (renderer/lib/entry/links.ts): видна, но не кричит. */
 a.wikilink.spell { color: inherit; text-decoration: underline dotted color-mix(in srgb, var(--accent) 70%, transparent); text-underline-offset: 2px; cursor: pointer; }
 a.wikilink.spell:hover { color: var(--accent); }
+
+/* The tab bar as the window's title bar (<html data-frame="mac|overlay">, main/windows.ts): the window is dragged by
+   .drag, the controls in it stay clickable. Drag regions ignore layers, so whatever opens over them (dialogs,
+   drawers, menus — position: fixed) is marked no-drag itself. --title-h — the height of the title row. */
+:root { --title-h: 38px; }
+:root:is([data-frame='mac'], [data-frame='overlay']) .drag { -webkit-app-region: drag; }
+:root:is([data-frame='mac'], [data-frame='overlay']) .drag :is(button, input, select, textarea, a, label, [role='button'], .no-drag) {
+  -webkit-app-region: no-drag;
+}

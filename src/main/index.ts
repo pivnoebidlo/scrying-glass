@@ -41,8 +41,9 @@ import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
-  closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, watchDisplays,
+  closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, TITLE_HEIGHT, watchDisplays,
 } from './windows';
+import type { TitleBarSetting, WindowFrame } from '../shared/api';
 
 // Внутри ядра модули обрабатываются одинаково, без привязки к конкретным типам.
 type AnyModule = ModuleDef<string, any, Record<string, Action<any>>>;
@@ -79,6 +80,8 @@ interface AppSettings {
   theme?: ThemeSetting;
   // Update check on launch (shared/updates.ts); no field — on.
   updates?: UpdateSettings;
+  // The tab bar as the window's title bar; no field — on in macOS, off (beta) in Windows and Linux.
+  titleBar?: boolean;
   // The GM's Telegram bot (main/telegram.ts): the token (encrypted) and the chats it knows.
   telegram?: TgSettings;
 }
@@ -274,6 +277,20 @@ function applyTheme() {
   const shown = theme === 'auto' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme;
   getControlWindow()?.setBackgroundColor(THEME_BACKGROUND[shown]);
 }
+// The window's title bar (windows.ts): chosen when the window is created, a change works after a restart.
+const titleBarByDefault = process.platform === 'darwin';
+const frameNow: () => WindowFrame = () =>
+  !(settings.titleBar ?? titleBarByDefault) ? 'system' : process.platform === 'darwin' ? 'mac' : 'overlay';
+let frame: WindowFrame = 'system';
+const titleBarSetting = (): TitleBarSetting => ({ on: settings.titleBar ?? titleBarByDefault, byDefault: titleBarByDefault, now: frame });
+// The system buttons over the corner before the page sends the theme's colours: by the window background.
+function overlayColors() {
+  const theme = isTheme(settings.theme) ? settings.theme : 'auto';
+  const shown = theme === 'auto' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme;
+  const light = shown === 'light' || shown === 'parchment';
+  return { color: THEME_BACKGROUND[shown], symbolColor: light ? '#2e3338' : '#dcddde' };
+}
+
 function setThemeSetting(theme: ThemeSetting): VaultState {
   settings = { ...settings, theme: isTheme(theme) ? theme : 'auto' };
   writeJsonAtomic(settingsFile(), settings);
@@ -1273,6 +1290,21 @@ ipcMain.handle('telegram:sendCapture', async (_event, { chats, rect, caption, na
 
 // Updates: the setting, a check on demand, opening the release page (only the app's own releases).
 const updateSettings = (): UpdateSettings => ({ check: true, ...settings.updates });
+ipcMain.handle('window:titleBar', () => titleBarSetting());
+ipcMain.handle('window:setTitleBar', (_event, on: boolean) => {
+  settings = { ...settings, titleBar: !!on };
+  writeJsonAtomic(settingsFile(), settings);
+  return titleBarSetting();
+});
+ipcMain.on('window:titleBarColors', (_event, colors: { color: string; symbolColor: string }) => {
+  const win = getControlWindow();
+  if (frame === 'overlay' && win && !win.isDestroyed()) win.setTitleBarOverlay({ ...colors, height: TITLE_HEIGHT });
+});
+// Restart to apply the title bar setting: the usual quit (state and a snapshot are saved), then a new launch.
+ipcMain.on('app:relaunch', () => {
+  app.relaunch();
+  app.quit();
+});
 ipcMain.handle('updates:settings', () => updateSettings());
 ipcMain.handle('updates:setSettings', (_event, next: Partial<UpdateSettings>) => {
   settings = { ...settings, updates: { ...updateSettings(), ...next } };
@@ -1345,7 +1377,8 @@ app.whenReady().then(async () => {
   });
   pruneThumbs();
 
-  createControlWindow();
+  frame = frameNow();
+  createControlWindow(frame, overlayColors());
   applyTheme();
   menu();
   watchDisplays();

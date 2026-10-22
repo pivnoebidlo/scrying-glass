@@ -11,13 +11,18 @@
   import { workspace } from './workspace.svelte';
   import { onMount } from 'svelte';
   import type { UpdateInfo, UpdateSettings } from '../../shared/updates';
+  import type { TitleBarSetting } from '../../shared/api';
 
   // Updates: the setting and the result of «Check now».
   let updates = $state<UpdateSettings>({ check: true });
   let version = $state('');
   let checking = $state(false);
   let found = $state<UpdateInfo | null>(null);
+  // The title bar: works after a restart; in Windows and Linux — a beta.
+  let titleBar = $state<TitleBarSetting | null>(null);
+  const titleBarChanged = $derived(!!titleBar && (titleBar.now !== 'system') !== titleBar.on);
   onMount(async () => {
+    titleBar = await window.api.titleBar();
     updates = await window.api.updateSettings();
     version = await window.api.appVersion();
   });
@@ -97,6 +102,18 @@
             {#each THEMES as id (id)}<option value={id}>{t(`settings.theme.${id}` as never)}</option>{/each}
           </select>
         </div>
+        {#if titleBar}
+          <div class="setting">
+            <div class="info">
+              <div class="name">{t('settings.titleBar')}{#if !titleBar.byDefault}<span class="beta">{t('settings.beta')}</span>{/if}</div>
+              <div class="desc">{t(titleBar.byDefault ? 'settings.titleBarDesc' : 'settings.titleBarDescBeta')}</div>
+              {#if titleBarChanged}
+                <div class="desc status">{t('settings.titleBarRestart')} <button class="link" onclick={() => window.api.relaunch()}>{t('settings.restartNow')}</button></div>
+              {/if}
+            </div>
+            <label class="check"><input type="checkbox" checked={titleBar.on} onchange={async (e) => (titleBar = await window.api.setTitleBar(e.currentTarget.checked))} /> {t('settings.titleBarOn')}</label>
+          </div>
+        {/if}
         <div class="setting">
           <div class="info">
             <div class="name">{t('updates.title')}</div>
@@ -123,8 +140,20 @@
 </div>
 
 <style>
+  .beta {
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--accent-soft, var(--bg-active));
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    vertical-align: 1px;
+  }
   .backdrop {
     position: fixed;
+    -webkit-app-region: no-drag;
     inset: 0;
     z-index: 100;
     display: grid;

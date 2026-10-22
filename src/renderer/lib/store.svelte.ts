@@ -26,7 +26,23 @@ export function applyTheme(theme: string) {
   } catch {
     /* not remembered — the state sets it a moment later */
   }
+  titleBarColors();
 }
+
+// The system buttons over the corner of the window (Windows, Linux: window.api.frame 'overlay') take the colours of
+// the theme — sent when they change (the state comes after every action), and when the system theme does («auto»).
+let sentColors = '';
+function titleBarColors() {
+  if (window.api.frame !== 'overlay') return;
+  const css = getComputedStyle(document.documentElement);
+  const colors = { color: css.getPropertyValue('--bg-secondary').trim(), symbolColor: css.getPropertyValue('--text-normal').trim() };
+  const key = `${colors.color} ${colors.symbolColor}`;
+  if (key === sentColors || !colors.color) return;
+  sentColors = key;
+  window.api.setTitleBarColors(colors);
+}
+if (typeof window !== 'undefined' && window.matchMedia)
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => titleBarColors());
 
 // Загружает начальное состояние и подписывается на изменения. Вызывается до монтирования интерфейса.
 export async function connect(opts: { displays?: boolean } = {}) {

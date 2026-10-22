@@ -27,6 +27,7 @@
 <style>
   .banner {
     position: fixed;
+    -webkit-app-region: no-drag;
     top: 10px;
     left: 50%;
     z-index: 90;

@@ -1,6 +1,6 @@
 // Безопасный мост между окнами и ядром.
 import { contextBridge, ipcRenderer } from 'electron';
-import type { Api } from '../shared/api';
+import type { Api, WindowFrame } from '../shared/api';
 
 const api: Api = {
   getState: () => ipcRenderer.invoke('state:get'),
@@ -60,6 +60,12 @@ const api: Api = {
   movePage: (path, folder) => ipcRenderer.invoke('journal:move', { path, folder }),
   renamePageFolder: (path, title) => ipcRenderer.invoke('journal:renameFolder', { path, title }),
   trashLibraryEntry: (path) => ipcRenderer.invoke('library:trash', path),
+  frame: (process.argv.find((a) => a.startsWith('--sg-frame='))?.slice('--sg-frame='.length) ?? 'system') as WindowFrame,
+  onFullscreen: (cb) => { ipcRenderer.on('window:fullscreen', (_e, on: boolean) => cb(on)); },
+  titleBar: () => ipcRenderer.invoke('window:titleBar'),
+  setTitleBar: (on) => ipcRenderer.invoke('window:setTitleBar', on),
+  setTitleBarColors: (colors) => ipcRenderer.send('window:titleBarColors', colors),
+  relaunch: () => ipcRenderer.send('app:relaunch'),
   updateSettings: () => ipcRenderer.invoke('updates:settings'),
   setUpdateSettings: (next) => ipcRenderer.invoke('updates:setSettings', next),
   checkForUpdates: () => ipcRenderer.invoke('updates:check'),

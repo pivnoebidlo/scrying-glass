@@ -10,6 +10,8 @@
 </script>
 
 <nav class="ribbon">
+  <!-- macOS without the system title bar: the traffic lights stand here, in the title row (drags the window). -->
+  <div class="title-space drag"></div>
   {#each items as c (c.id)}
     <button
       class="icon-btn"
@@ -40,6 +42,16 @@
   }
   .spacer {
     flex: 1;
+  }
+  .title-space {
+    display: none;
+  }
+  :global(:root[data-frame='mac']) .title-space {
+    display: block;
+    flex: none;
+    align-self: stretch;
+    height: var(--title-h);
+    margin-top: -10px;
   }
   .icon-btn {
     width: 32px;

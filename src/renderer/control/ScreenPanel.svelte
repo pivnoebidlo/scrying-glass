@@ -28,7 +28,7 @@
 </script>
 
 <aside class="panel">
-  <div class="pane-title">{t('screen.title')}</div>
+  <div class="pane-title panel-title drag">{t('screen.title')}</div>
 
   <div class="section">
     <div class="preview" style:aspect-ratio={ratio} class:closed={!store.displayOpen}>
@@ -95,6 +95,14 @@
 </aside>
 
 <style>
+  /* In the title row: as high as the tab bar. */
+  :global(:root:is([data-frame='mac'], [data-frame='overlay'])) .panel-title {
+    display: flex;
+    align-items: center;
+    height: var(--title-h);
+    padding-top: 0;
+    padding-bottom: 0;
+  }
   .panel {
     width: 280px;
     flex: none;

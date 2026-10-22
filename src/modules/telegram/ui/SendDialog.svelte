@@ -142,6 +142,7 @@
 <style>
   .backdrop {
     position: fixed;
+    -webkit-app-region: no-drag;
     inset: 0;
     z-index: 120;
     display: grid;
@@ -150,6 +151,7 @@
   }
   .shoot {
     position: fixed;
+    -webkit-app-region: no-drag;
     inset: 0;
     z-index: 200;
     display: grid;

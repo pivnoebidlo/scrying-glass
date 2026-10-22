@@ -41,6 +41,7 @@
 <style>
   .drawer {
     position: fixed;
+    -webkit-app-region: no-drag;
     top: 0;
     bottom: 0;
     /* Вплотную к правой панели «Экран игроков» (280 + граница). */

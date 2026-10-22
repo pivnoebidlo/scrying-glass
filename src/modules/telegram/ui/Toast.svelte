@@ -46,6 +46,7 @@
 <style>
   .toast {
     position: fixed;
+    -webkit-app-region: no-drag;
     right: 16px;
     bottom: 16px;
     z-index: 60;

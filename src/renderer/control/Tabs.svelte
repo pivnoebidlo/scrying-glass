@@ -23,13 +23,13 @@
 </script>
 
 <main class="workspace">
-  <div class="tab-bar" bind:this={bar} {onwheel}>
+  <div class="tab-bar drag" class:no-sidebar={!(workspace.sidebarOpen && workspace.sidebar)} bind:this={bar} {onwheel}>
     {#each workspace.tabs as id (id)}
       {@const c = find(id)}
       {#if c}
         <!-- Средняя кнопка мыши закрывает вкладку, как в браузере. -->
         <div
-          class="tab"
+          class="tab no-drag"
           class:active={workspace.active === id}
           data-tab={id}
           role="presentation"
@@ -75,6 +75,10 @@
     border-bottom: 1px solid var(--border);
     overflow-x: auto;
     scrollbar-width: none;
+  }
+  /* macOS: the traffic lights stand over the ribbon and the sidebar; with the sidebar hidden — before the tabs. */
+  :global(:root[data-frame='mac']:not([data-fullscreen='true'])) .tab-bar.no-sidebar {
+    padding-left: 40px;
   }
   .tab-bar::-webkit-scrollbar {
     display: none;
