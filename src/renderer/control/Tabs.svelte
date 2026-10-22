@@ -95,7 +95,7 @@
     align-self: center;
     width: 32px;
     height: 32px;
-    margin: -6px 8px 0 0;
+    margin: 0 8px 0 0;
     color: var(--text-faint);
   }
   .tab-bar::-webkit-scrollbar {

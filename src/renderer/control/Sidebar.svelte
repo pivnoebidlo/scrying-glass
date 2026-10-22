@@ -54,9 +54,11 @@
     padding: 0 6px;
     border-bottom: 1px solid var(--border);
   }
+  /* A little below the middle: in line with the tabs, which sit at the bottom of the row. */
   .title-row .icon-btn {
     width: 32px;
     height: 32px;
+    margin-top: 6px;
   }
   .title-row .faint-btn {
     color: var(--text-faint);
