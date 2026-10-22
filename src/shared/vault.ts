@@ -41,15 +41,21 @@ export interface VaultState {
   theme: ThemeSetting;
   // The GM's own hotkeys (app settings; id → combo, only the changed ones — shared/hotkeys.ts).
   hotkeys: Record<string, string>;
+  // Hidden themes the GM has found (they stay in the list of themes).
+  themesFound: string[];
+  // The theme before the hidden one (its «Exit» goes back to it).
+  themeBefore: ThemeSetting;
 }
 
 // Colour themes of the control window (renderer/lib/theme.css): 'auto' follows the system (dark or light); parchment
 // suits fantasy, space and neon (cyberpunk) — science fiction.
-export const THEMES = ['auto', 'dark', 'light', 'parchment', 'space', 'neon'] as const;
+// 'oldschool' — hidden (an easter egg: typed in Settings → About), in the list only once found.
+export const THEMES = ['auto', 'dark', 'light', 'parchment', 'space', 'neon', 'oldschool'] as const;
+export const HIDDEN_THEMES: readonly string[] = ['oldschool'];
 export type ThemeSetting = (typeof THEMES)[number];
 export const isTheme = (v: unknown): v is ThemeSetting => THEMES.includes(v as ThemeSetting);
 // The window background while the page loads, per theme (as --bg-primary).
-export const THEME_BACKGROUND: Record<Exclude<ThemeSetting, 'auto'>, string> = { dark: '#1e1e1e', light: '#ffffff', parchment: '#f3e9d2', space: '#0c1220', neon: '#0a0a12' };
+export const THEME_BACKGROUND: Record<Exclude<ThemeSetting, 'auto'>, string> = { dark: '#1e1e1e', light: '#ffffff', parchment: '#f3e9d2', space: '#0c1220', neon: '#0a0a12', oldschool: '#0000aa' };
 
 // Назначение папки угадывается по названию. Это подсказка, а не требование.
 export type FolderRole = 'characters' | 'party' | 'maps' | 'music' | 'backgrounds' | 'handouts' | 'bestiary' | 'compendium' | 'journal';

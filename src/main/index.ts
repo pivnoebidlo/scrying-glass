@@ -6,7 +6,7 @@ import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
 import { getLang, isLang, resolveLang, setLang, t, type Lang, type LangSetting } from '../shared/i18n';
-import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, isTheme, THEME_BACKGROUND, type RoleNames, type ThemeSetting, type VaultFolder, type VaultState } from '../shared/vault';
+import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, HIDDEN_THEMES, isTheme, THEME_BACKGROUND, type RoleNames, type ThemeSetting, type VaultFolder, type VaultState } from '../shared/vault';
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
 import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
 import { BACKUP_EXT, backupSizes, placeFiles, readBackup, writeBackup } from './archive';
@@ -85,6 +85,9 @@ interface AppSettings {
   titleBar?: boolean;
   // The GM's own hotkeys (shared/hotkeys.ts): id → combo, only the changed ones.
   hotkeys?: Record<string, string>;
+  // Hidden themes found (an easter egg); the theme before a hidden one — its «Exit» goes back to it.
+  themesFound?: string[];
+  themeBefore?: ThemeSetting;
   // The GM's Telegram bot (main/telegram.ts): the token (encrypted) and the chats it knows.
   telegram?: TgSettings;
 }
@@ -125,6 +128,8 @@ function vaultState(): VaultState {
     lang: interfaceLang(),
     theme: isTheme(settings.theme) ? settings.theme : 'auto',
     hotkeys: setHotkeys(settings.hotkeys),
+    themesFound: settings.themesFound ?? [],
+    themeBefore: isTheme(settings.themeBefore) ? settings.themeBefore : 'auto',
   };
 }
 
@@ -296,8 +301,17 @@ function overlayColors() {
   return { color: THEME_BACKGROUND[shown], symbolColor: light ? '#2e3338' : '#dcddde' };
 }
 
+// A hidden theme is found by switching it on; leaving it for another one — the one before is remembered for its «Exit».
 function setThemeSetting(theme: ThemeSetting): VaultState {
-  settings = { ...settings, theme: isTheme(theme) ? theme : 'auto' };
+  const next = isTheme(theme) ? theme : 'auto';
+  const was = isTheme(settings.theme) ? settings.theme : 'auto';
+  const hidden = HIDDEN_THEMES.includes(next);
+  settings = {
+    ...settings,
+    theme: next,
+    ...(hidden && !(settings.themesFound ?? []).includes(next) ? { themesFound: [...(settings.themesFound ?? []), next] } : {}),
+    ...(hidden && !HIDDEN_THEMES.includes(was) ? { themeBefore: was } : {}),
+  };
   writeJsonAtomic(settingsFile(), settings);
   applyTheme();
   return vaultState();

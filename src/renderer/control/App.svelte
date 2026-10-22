@@ -4,6 +4,7 @@
   import Ribbon from './Ribbon.svelte';
   import Sidebar from './Sidebar.svelte';
   import Tabs from './Tabs.svelte';
+  import FKeys from './FKeys.svelte';
   import ScreenPanel from './ScreenPanel.svelte';
   import Settings from './Settings.svelte';
   import Welcome from './Welcome.svelte';
@@ -57,6 +58,7 @@
     <Tabs />
     {#if workspace.panelOpen}<ScreenPanel />{/if}
   </div>
+  {#if store.state.vault.theme === 'oldschool'}<FKeys />{/if}
 
   <!-- Невидимые части модулей, например проигрыватель музыки. -->
   {#each backgrounds as c (c.id)}
@@ -76,5 +78,9 @@
   .app {
     display: flex;
     height: 100vh;
+  }
+  /* The old school theme: the F-key bar under it (FKeys.svelte). */
+  :global(:root[data-theme='oldschool']) .app {
+    height: calc(100vh - 20px);
   }
 </style>

@@ -6,15 +6,34 @@
   import { AUTHOR, CREDITS, GPL_URL, ISSUES_URL, LICENSE_URL, REPO_URL } from '../../shared/about';
   import { RELEASES_PAGE } from '../../shared/updates';
   import { t } from '../lib/i18n.svelte';
+  import { dispatch, store } from '../lib/store.svelte';
   import icon from '../../../build/icon.png';
 
   let version = $state('');
   onMount(async () => (version = await window.api.appVersion()));
   const open = (url: string) => void window.api.openLink(url);
+
+  // An easter egg: «oldschool» typed here switches on the hidden theme (keys by their place — any layout will do).
+  const WORD = 'oldschool';
+  let typed = '';
+  let egg = $state('');
+  function onkeydown(e: KeyboardEvent) {
+    if (e.metaKey || e.ctrlKey || e.altKey || !/^Key[A-Z]$/.test(e.code)) return;
+    typed = (typed + e.code.slice(3).toLowerCase()).slice(-WORD.length);
+    if (typed !== WORD) return;
+    typed = '';
+    const already = store.state.vault.theme === 'oldschool';
+    if (!already) dispatch('vault', 'setTheme', { theme: 'oldschool' });
+    egg = t(already ? 'about.eggAgain' : 'about.egg');
+    setTimeout(() => (egg = ''), 6000);
+  }
   const year = new Date().getFullYear();
 </script>
 
+<svelte:window {onkeydown} />
+
 <div class="about">
+  {#if egg}<pre class="egg">{egg}</pre>{/if}
   <div class="head">
     <img class="icon" src={icon} alt="" />
     <div>
@@ -52,6 +71,15 @@
 </div>
 
 <style>
+  .egg {
+    margin: 0 0 12px;
+    padding: 8px 10px;
+    background: #000000;
+    color: #c0c0c0;
+    font-family: 'PxPlus IBM VGA', ui-monospace, Menlo, Consolas, monospace;
+    font-size: 16px;
+    white-space: pre-wrap;
+  }
   .about {
     max-width: 640px;
     user-select: text;

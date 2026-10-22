@@ -2,7 +2,7 @@
      settings, and About (version, links, license, credits). -->
 <script lang="ts">
   import { hint } from '../../shared/hotkeys';
-  import { THEMES, type ThemeSetting } from '../../shared/vault';
+  import { HIDDEN_THEMES, THEMES, type ThemeSetting } from '../../shared/vault';
   import { Globe, Info, Keyboard, X } from '@lucide/svelte';
   import About from './About.svelte';
   import Hotkeys from './Hotkeys.svelte';
@@ -42,6 +42,8 @@
     checking = false;
   }
 
+  // Hidden themes are in the list once found (or while on).
+  const themes = $derived(THEMES.filter((id) => !HIDDEN_THEMES.includes(id) || store.state.vault.themesFound.includes(id) || store.state.vault.theme === id));
   const GENERAL = 'general';
   const ABOUT = 'about';
   const moduleSections = controlContributions.filter((c) => c.settings);
@@ -117,7 +119,7 @@
             <div class="desc">{t('settings.themeDesc')}</div>
           </div>
           <select value={store.state.vault.theme} onchange={(e) => dispatch('vault', 'setTheme', { theme: e.currentTarget.value as ThemeSetting })}>
-            {#each THEMES as id (id)}<option value={id}>{t(`settings.theme.${id}` as never)}</option>{/each}
+            {#each themes as id (id)}<option value={id}>{t(`settings.theme.${id}` as never)}</option>{/each}
           </select>
         </div>
         {#if titleBar}

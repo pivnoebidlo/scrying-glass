@@ -104,6 +104,7 @@ export const en = {
   'about.credits': "Included material",
   'about.creditsAbout': "The app includes material by other authors under open licenses — thank you!",
   'about.credit.srd': "D&D System Reference Document 5.1 and 5.2.1 (bestiary, compendium)",
+  'about.credit.vgafont': "The Ultimate Oldschool PC Font Pack — IBM VGA font of one hidden theme",
   'about.credit.omnisgm': "Russian translation of SRD 5.1 and 5.2.1, the compendium texts",
   'about.credit.fivedb': "Bestiary data (numbers, attacks)",
   'about.credit.fate': "Fate Core System and Fate Accelerated Edition (the Fate compendium)",
@@ -127,6 +128,13 @@ export const en = {
   'settings.theme.parchment': "Parchment",
   'settings.theme.space': "Space",
   'settings.theme.neon': "Neon",
+  'settings.theme.oldschool': "Old school",
+  'about.egg': "C:\\SCRYING> oldschool.exe\nWelcome to 1989. The blue panels are back; F10 — exit (or another theme in General).",
+  'about.eggAgain': "C:\\SCRYING> oldschool.exe\nAlready running. Bad command or file name? Never heard of it.",
+  'fkeys.help': "Help",
+  'fkeys.settings': "Setup",
+  'fkeys.search': "Search",
+  'fkeys.exit': "Quit",
 
   'welcome.text':
     'Choose your vault folder: it holds your adventures, characters, maps and music. An empty folder works, and so does one that already has your material. Files are not copied or changed.',
@@ -383,6 +391,7 @@ export const ru: Messages<typeof en> = {
   'about.credits': "Что входит в приложение",
   'about.creditsAbout': "В приложении есть материалы других авторов под открытыми лицензиями — спасибо им!",
   'about.credit.srd': "D&D System Reference Document 5.1 и 5.2.1 (бестиарий, справочник)",
+  'about.credit.vgafont': "The Ultimate Oldschool PC Font Pack — шрифт IBM VGA одной скрытой темы",
   'about.credit.omnisgm': "Русский перевод SRD 5.1 и 5.2.1, тексты справочника",
   'about.credit.fivedb': "Данные бестиария (числа, атаки)",
   'about.credit.fate': "Fate Core System и Fate Accelerated Edition (справочник Fate)",
@@ -406,6 +415,13 @@ export const ru: Messages<typeof en> = {
   'settings.theme.parchment': "Пергамент",
   'settings.theme.space': "Космос",
   'settings.theme.neon': "Неон",
+  'settings.theme.oldschool': "Старая школа",
+  'about.egg': "C:\\SCRYING> oldschool.exe\nДобро пожаловать в 1989-й. Синие панели вернулись; F10 — выход (или другая тема в «Общих»).",
+  'about.eggAgain': "C:\\SCRYING> oldschool.exe\nУже запущено. «Неверная команда или имя файла»? Не слышали.",
+  'fkeys.help': "Помощь",
+  'fkeys.settings': "Настр",
+  'fkeys.search': "Поиск",
+  'fkeys.exit': "Выход",
 
   'welcome.text':
     'Выберите папку хранилища: в ней лежат ваши приключения, персонажи, карты и музыка. Подойдёт и пустая папка, и та, где материалы уже есть. Файлы не копируются и не изменяются.',

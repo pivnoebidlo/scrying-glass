@@ -206,6 +206,55 @@ input[type=checkbox] { accent-color: var(--accent); }
 a.wikilink.spell { color: inherit; text-decoration: underline dotted color-mix(in srgb, var(--accent) 70%, transparent); text-underline-offset: 2px; cursor: pointer; }
 a.wikilink.spell:hover { color: var(--accent); }
 
+/* Old school (hidden — an easter egg, typed in Settings → About): a blue DOS file manager of 1989 — navy panels, cyan
+   text and lines, yellow highlights, a cyan bar on the chosen item, square corners, double lines between panels and the
+   IBM VGA font (VileR, CC BY-SA 4.0: fonts/oldschool). The bottom bar of F-keys — App.svelte (FKeys). */
+@font-face { font-family: 'PxPlus IBM VGA'; src: url('./fonts/oldschool/PxPlus_IBM_VGA_8x16.ttf') format('truetype'); font-display: block; }
+:root[data-theme='oldschool'] {
+  color-scheme: dark;
+  --bg-primary: #0000aa;
+  --bg-secondary: #000080;
+  --bg-hover: #0000d8;
+  --bg-active: #0000d8;
+  --border: #00aaaa;
+  --text-normal: #55ffff;
+  --text-muted: #00c8c8;
+  --text-faint: #8a8aff;
+  --accent: #ffff55;
+  --accent-hover: #ffffaa;
+  --accent-soft: rgba(255, 255, 85, 0.2);
+  --on-accent: #000000;
+  --danger: #ff5555;
+  --warning: #ffff55;
+  --success: #55ff55;
+  --radius-s: 0;
+  --radius-m: 0;
+  --font-ui: 'PxPlus IBM VGA', ui-monospace, Menlo, Consolas, monospace;
+  --font-size: 16px;
+  -webkit-font-smoothing: none;
+}
+:root[data-theme='oldschool'] * { border-radius: 0 !important; box-shadow: none !important; text-shadow: none !important; }
+:root[data-theme='oldschool'] :is(button, input, select, textarea) { font-family: var(--font-ui); }
+:root[data-theme='oldschool'] .pane-title { color: #ffffff; }
+:root[data-theme='oldschool'] h1, :root[data-theme='oldschool'] h2, :root[data-theme='oldschool'] h3 { color: #ffff55; }
+/* The chosen item — the cyan bar with black text. */
+:root[data-theme='oldschool'] :is(.active, .on, .nav-item.active):not(.tab):not(.tab-close) { background: #00aaaa !important; color: #000000 !important; }
+:root[data-theme='oldschool'] .btn { background: #00aaaa; color: #000000; border-color: #00aaaa; }
+:root[data-theme='oldschool'] .btn:hover:not(:disabled) { background: #55ffff; }
+:root[data-theme='oldschool'] .btn.primary { background: #ffff55; border-color: #ffff55; color: #000000; }
+:root[data-theme='oldschool'] :is(input[type=text], input[type=search], input[type=number], select, textarea) { background: #000000; color: #55ffff; border-color: #00aaaa; }
+:root[data-theme='oldschool'] ::selection { background: #00aaaa; color: #000000; }
+:root[data-theme='oldschool'] ::-webkit-scrollbar-thumb { background: #00aaaa; border: 0; }
+:root[data-theme='oldschool'] ::-webkit-scrollbar-track { background: #000080; }
+/* Double lines between the panels and around windows. */
+:root[data-theme='oldschool'] .ribbon { border-right: 3px double #00aaaa; }
+:root[data-theme='oldschool'] .sidebar { border-right: 3px double #00aaaa; }
+:root[data-theme='oldschool'] .panel { border-left: 3px double #00aaaa; }
+:root[data-theme='oldschool'] .tab-bar { border-bottom: 3px double #00aaaa; }
+:root[data-theme='oldschool'] .modal { border: 3px double #55ffff; }
+/* The preview of the player screen keeps its own look, as the player screen does. */
+:root[data-theme='oldschool'] .stage-box { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif; -webkit-font-smoothing: auto; }
+
 /* The tab bar as the window's title bar (<html data-frame="mac|overlay">, main/windows.ts): the window is dragged by
    .drag, the controls in it stay clickable. Drag regions ignore layers, so whatever opens over them (dialogs,
    drawers, menus — position: fixed) is marked no-drag itself. --title-h — the height of the title row. */

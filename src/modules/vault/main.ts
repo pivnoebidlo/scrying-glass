@@ -14,7 +14,7 @@ import { deleteWords, discard, trashSettings } from '../../main/trash';
 const openDialog = (ctx: ModuleContext, opts: OpenDialogOptions) =>
   ctx.controlWindow ? ctx.dialog.showOpenDialog(ctx.controlWindow, opts) : ctx.dialog.showOpenDialog(opts);
 
-const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [], language: 'auto', lang: 'en', theme: 'auto', hotkeys: {} };
+const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [], language: 'auto', lang: 'en', theme: 'auto', hotkeys: {}, themesFound: [], themeBefore: 'auto' };
 
 export default defineModule({
   id: 'vault',

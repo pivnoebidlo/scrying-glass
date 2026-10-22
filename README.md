@@ -734,7 +734,9 @@ Core SRD (Evil Hat Productions, CC BY 3.0); the Mausritter creatures and compend
 Games and Isaac Williams, CC BY 4.0). Note fonts (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
 Neucha, Comforter Brush, Cormorant Garamond, Old Standard TT, Kurale, Forum, Yeseva One, Ruslan Display, Ponomar,
 Monomakh, Underdog, Rubik Wet Paint, Rubik Distressed, Rubik Beastly) — SIL Open Font License 1.1, the license texts
-lie next to the fonts in `src/renderer/lib/note/fonts/`. Seal emblems — Lucide outlines (ISC). Built-in sounds
+lie next to the fonts in `src/renderer/lib/note/fonts/`. The IBM VGA font of one hidden theme (PxPlus IBM VGA 8x16)
+— The Ultimate Oldschool PC Font Pack by VileR (https://int10h.org/oldschool-pc-fonts/), CC BY-SA 4.0, the license
+text in `src/renderer/lib/fonts/oldschool/`. Seal emblems — Lucide outlines (ISC). Built-in sounds
 (`resources/sounds/`): ambience — Nature Ambient Pack Vol 1, JC Sounds, CC BY 4.0; effects — Kenney (RPG Audio),
 artisticdude (RPG Sound Pack), rubberduck (100 CC0 SFX #2), CC0; more ambience and effects — Joseph Sardin,
 BigSoundBank.com, CC0. More in `resources/sounds/README.md`.

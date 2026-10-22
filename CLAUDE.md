@@ -65,6 +65,13 @@ Electron-приложение для мастера D&D: окно управле
   `matches()` в обработчике. Подсказки у кнопок — `hint(подпись, id)` («Поиск · ⌘K»), подпись — `hotkeyLabel` /
   `comboLabel`; в текстах — `{mod}` (`modKey()`), ⌘ в строки перевода не писать. Окна читают сочетания реактивно
   (`trackHotkeys` в store.svelte.ts, как `trackLang`).
+- Пасхалка «Старая школа» (не раскрывать в README): в «Настройки» → «О программе» набрать «oldschool» (по `e.code` —
+  любая раскладка; `About.svelte`) → скрытая тема `oldschool` (`HIDDEN_THEMES` в shared/vault.ts; в списке тем — только
+  найденные: `settings.themesFound` → `vault.themesFound`; `themeBefore` — тема до неё). Вид — `theme.css` (синие
+  панели DOS-менеджера, шрифт PxPlus IBM VGA 8x16 — `renderer/lib/fonts/oldschool/`, VileR, CC BY-SA 4.0, в `CREDITS`),
+  полоса F-клавиш внизу — `control/FKeys.svelte` (F1 — горячие клавиши, F2 — настройки, F7 — поиск, F10 — назад к
+  `themeBefore`). Название «Norton Commander» в интерфейсе не писать (чужая марка). Новые пасхалки — по теме игры
+  (код Konami — дождь к20, три натуральные 20 подряд, «Тарраска» в поиске, 7 щелчков по 🔮, мимик 1 апреля).
 - About: `shared/about.ts` (addresses, `CREDITS` — attribution the CC BY licenses require; only these links open,
   IPC `app:openLink`), section `renderer/control/About.svelte` (settings section `about`). The app menu — `main/menu.ts`
   (`buildMenu`, in the interface language, rebuilt on a language change; «About» / «Settings…» → event
