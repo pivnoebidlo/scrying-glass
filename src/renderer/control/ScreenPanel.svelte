@@ -33,8 +33,9 @@
        stand over its right end (room is kept for them). -->
   <div class="pane-title panel-title drag">
     <span class="panel-name">{t('screen.title')}</span>
+    <ScreenStatus controls={false} />
     <span class="grow"></span>
-    <ScreenStatus />
+    <ScreenStatus dot={false} />
     <button class="icon-btn hide" title={t('app.hidePanel')} onclick={() => (workspace.panelOpen = false)}><PanelRightClose size={16} /></button>
   </div>
   <!-- Only this part scrolls: the title with the screen's status stays in sight. -->

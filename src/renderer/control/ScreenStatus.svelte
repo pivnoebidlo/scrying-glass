@@ -1,13 +1,14 @@
-<!-- The player screen at a glance: a dot (closed — grey, open — green, blacked out — yellow), and with `controls` —
-     open / close it and black it out. In the title of the right panel and, with the panel hidden, at the end of the
-     tab bar. -->
+<!-- The player screen at a glance: a dot (closed — grey, open — green, blacked out — yellow) — a sign, not a button,
+     so it stands right after the title's text; and the buttons (`controls`) — open / close it and black it out. In the
+     title of the right panel (the dot by the name, the buttons on the right) and, with the panel hidden, at the end of
+     the tab bar (the dot). -->
 <script lang="ts">
   import { Monitor, MonitorOff, Moon, Sun } from '@lucide/svelte';
   import { dispatch, store } from '../lib/store.svelte';
   import { t } from '../lib/i18n.svelte';
   import { workspace } from './workspace.svelte';
 
-  let { controls = true }: { controls?: boolean } = $props();
+  let { dot = true, controls = true }: { dot?: boolean; controls?: boolean } = $props();
 
   const display = $derived(workspace.display);
   const status = $derived(!store.displayOpen ? 'closed' : store.state.core.blackout ? 'dark' : 'open');
@@ -20,7 +21,7 @@
 </script>
 
 <span class="status">
-  <span class="dot {status}" title={label} role="img" aria-label={label}></span>
+  {#if dot}<span class="dot {status}" title={label} role="img" aria-label={label}></span>{/if}
   {#if controls}
     <button class="icon-btn" title={store.displayOpen ? t('screen.closeHint') : t('screen.openHint')} disabled={!display} onclick={toggleDisplay}>
       {#if store.displayOpen}<MonitorOff size={16} />{:else}<Monitor size={16} />{/if}
@@ -38,9 +39,11 @@
     gap: 2px;
   }
   .dot {
-    width: 8px;
-    height: 8px;
+    flex: none;
+    width: 7px;
+    height: 7px;
     margin: 0 6px;
+    cursor: default;
     border-radius: 50%;
     background: var(--text-faint);
   }

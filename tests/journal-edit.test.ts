@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { continueMarkup, toggleWrap, type TextEdit } from '../src/shared/journal';
+import { continueMarkup, toggleLinePrefix, toggleWrap, type TextEdit } from '../src/shared/journal';
 import { entryHtml } from '../src/renderer/lib/entry/markup';
 
 const apply = (text: string, e: TextEdit | null) => (e ? text.slice(0, e.from) + e.insert + text.slice(e.to) : null);
@@ -38,4 +38,18 @@ describe('журнал: правка текста', () => {
   it('~~зачёркнутый~~ в разметке', () => {
     expect(entryHtml('было ~~так~~')).toContain('<s>так</s>');
   });
+
+  it('знак в начале строк (цитата ⌘⇧.): одна строка, выделение, снятие, пустые строки не трогает', () => {
+    const run = (text: string, a: number, b: number, p = '> ') => {
+      const e = toggleLinePrefix(text, a, b, p);
+      return { text: text.slice(0, e.from) + e.insert + text.slice(e.to), a: e.a, b: e.b };
+    };
+    expect(run('Hello', 2, 2)).toEqual({ text: '> Hello', a: 4, b: 4 });
+    expect(run('> Hello', 4, 4)).toEqual({ text: 'Hello', a: 2, b: 2 });
+    expect(run('one\n\ntwo\nthree', 0, 9).text).toBe('> one\n\n> two\nthree');
+    expect(run('> one\n\n> two', 0, 12).text).toBe('one\n\ntwo');
+    expect(run('a\nb\n', 0, 4).text).toBe('> a\n> b\n');
+    expect(run('task', 0, 0, '- [ ] ').text).toBe('- [ ] task');
+  });
 });
+

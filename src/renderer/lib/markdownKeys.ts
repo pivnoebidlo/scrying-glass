@@ -1,9 +1,11 @@
 // Markdown text areas (journal notes, compendium entries) behave like Obsidian: Enter carries «>», list, task and
-// number markers on (continueMarkup), Cmd/Ctrl+B / I / Shift+X — bold, italic, strikethrough (toggleWrap); a
+// number markers on (continueMarkup), Cmd/Ctrl+B / I / Shift+X — bold, italic, strikethrough (toggleWrap), Shift+. —
+// a quote (toggleLinePrefix; the combo — shared/hotkeys.ts, «quote»); a
 // Telegram message box adds Telegram Desktop's keys: U — underline, Shift+M — monospace, Shift+P — spoiler; Tab /
 // Shift+Tab — indent or outdent the line. Edits go through insertText: Cmd+Z undoes them and the input event keeps
 // bind:value and autosave in step.
-import { continueMarkup, toggleWrap, type TextEdit } from '../../shared/journal';
+import { matches } from '../../shared/hotkeys';
+import { continueMarkup, toggleLinePrefix, toggleWrap, type TextEdit } from '../../shared/journal';
 
 // [key, with Shift, mark].
 type Mark = [code: string, shift: boolean, mark: string];
@@ -43,6 +45,10 @@ export function markdownKeys(area: HTMLTextAreaElement, opts: Opts = {}) {
       e.preventDefault();
       e.stopPropagation();
       apply(area, toggleWrap(text, a, b, mark[2]));
+    } else if (matches(e, 'quote')) {
+      e.preventDefault();
+      e.stopPropagation();
+      apply(area, toggleLinePrefix(text, a, b, '> '));
     } else if (enter && e.key === 'Enter' && !mod && !e.shiftKey && !e.altKey && !e.isComposing && a === b) {
       const edit = continueMarkup(text, a);
       if (edit) {

@@ -56,8 +56,21 @@
 
   const close = () => (workspace.settingsOpen = false);
 
+  // ↑ ↓ — the previous / next section, as the lists of the side panel (not in a field: there the keys are its own).
+  const order = $derived([GENERAL, HOTKEYS_SECTION, ...moduleSections.map((c) => c.id as string), ABOUT]);
+  const sectionNow = $derived(about ? ABOUT : hotkeys ? HOTKEYS_SECTION : current ? (current.id as string) : GENERAL);
   function onkeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') close();
+    if ((e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || e.defaultPrevented) return;
+    const el = e.target as HTMLElement;
+    if (el.closest('input, textarea, select, [contenteditable="true"]')) return;
+    const i = order.indexOf(sectionNow);
+    const next = order[Math.max(0, Math.min(order.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))];
+    if (!next || next === sectionNow) return;
+    e.preventDefault();
+    workspace.settingsSection = next;
+    // The chosen item stays in sight and takes the focus (Tab goes on from it).
+    requestAnimationFrame(() => document.querySelector<HTMLElement>('.nav .nav-item.active')?.focus());
   }
 </script>
 

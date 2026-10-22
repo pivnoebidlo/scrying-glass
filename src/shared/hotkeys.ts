@@ -23,6 +23,7 @@ export interface HotkeyDef {
 
 export const HOTKEYS: HotkeyDef[] = [
   { id: 'settings', group: 'app', combo: 'Mod+,', edit: true },
+  { id: 'settingsSections', group: 'app', combo: 'ArrowUp ArrowDown' },
   { id: 'search', group: 'search', combo: 'Mod+K', edit: true },
   { id: 'blackout', group: 'screen', combo: 'Mod+B', edit: true },
   { id: 'scene', group: 'screen', combo: 'Mod+1', range: '9', edit: true },
@@ -45,6 +46,7 @@ export const HOTKEYS: HotkeyDef[] = [
   { id: 'bold', group: 'markdown', combo: 'Mod+B' },
   { id: 'italic', group: 'markdown', combo: 'Mod+I' },
   { id: 'strike', group: 'markdown', combo: 'Mod+Shift+X' },
+  { id: 'quote', group: 'markdown', combo: 'Mod+Shift+.' },
   { id: 'indent', group: 'markdown', combo: 'Tab' },
   { id: 'outdent', group: 'markdown', combo: 'Shift+Tab' },
   { id: 'continue', group: 'markdown', combo: 'Enter' },

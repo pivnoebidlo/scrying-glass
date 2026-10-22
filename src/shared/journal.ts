@@ -90,3 +90,23 @@ export function toggleWrap(text: string, a: number, b: number, mark: string): Te
   }
   return { from: a, to: b, insert: mark + inside + mark, a: a + n, b: b + n };
 }
+
+// ⌘⇧. and the editor's toolbar: the lines of the selection (or the caret's line) get a prefix — «> », «- », «- [ ] »,
+// «## » — or lose it if every non-empty line already has it. Empty lines in a selection are left as they are.
+export function toggleLinePrefix(text: string, a: number, b: number, prefix: string): TextEdit {
+  const start = text.lastIndexOf('\n', a - 1) + 1;
+  // A selection ending at the start of a line does not take that line.
+  const last = b > a && text[b - 1] === '\n' ? b - 1 : b;
+  let end = text.indexOf('\n', last);
+  if (end < 0) end = text.length;
+  const lines = text.slice(start, end).split('\n');
+  const filled = lines.filter((l) => l.trim());
+  const off = filled.length > 0 && filled.every((l) => l.startsWith(prefix));
+  const out = lines.map((l) => (off ? (l.startsWith(prefix) ? l.slice(prefix.length) : l) : l.trim() || lines.length === 1 ? prefix + l : l));
+  const insert = out.join('\n');
+  if (a === b) {
+    const pos = Math.max(start, a + (off ? -prefix.length : prefix.length));
+    return { from: start, to: end, insert, a: pos, b: pos };
+  }
+  return { from: start, to: end, insert, a: start, b: start + insert.length };
+}
