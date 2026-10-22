@@ -5,12 +5,12 @@ import type { RelicKind } from './generate';
 type Pair = [en: string, ru: string];
 
 export const OBJECTS: Record<RelicKind, Pair[]> = {
-  weapon: [['Sword', 'Меч'], ['Dagger', 'Кинжал'], ['Axe', 'Топор'], ['Spear', 'Копьё'], ['Bow', 'Лук'], ['Hammer', 'Молот'], ['Mace', 'Булава'], ['Scimitar', 'Ятаган']],
-  armor: [['Shield', 'Щит'], ['Helm', 'Шлем'], ['Breastplate', 'Кираса'], ['Mail', 'Кольчуга'], ['Bracers', 'Наручи'], ['Gauntlets', 'Латные перчатки']],
-  jewelry: [['Ring', 'Кольцо'], ['Amulet', 'Амулет'], ['Crown', 'Венец'], ['Brooch', 'Брошь'], ['Earring', 'Серьга'], ['Pendant', 'Подвеска']],
-  wand: [['Wand', 'Волшебная палочка'], ['Staff', 'Посох'], ['Rod', 'Жезл'], ['Orb', 'Сфера']],
-  clothing: [['Cloak', 'Плащ'], ['Boots', 'Сапоги'], ['Gloves', 'Перчатки'], ['Hat', 'Шляпа'], ['Belt', 'Пояс'], ['Mask', 'Маска']],
-  wondrous: [['Lantern', 'Фонарь'], ['Horn', 'Рог'], ['Mirror', 'Зеркало'], ['Bell', 'Колокольчик'], ['Chalice', 'Чаша'], ['Book', 'Книга'], ['Box', 'Шкатулка'], ['Compass', 'Компас']],
+  weapon: [['Sword', 'Меч'], ['Dagger', 'Кинжал'], ['Axe', 'Топор'], ['Spear', 'Копьё'], ['Bow', 'Лук'], ['Hammer', 'Молот'], ['Mace', 'Булава'], ['Scimitar', 'Ятаган'], ['Glaive', 'Глефа'], ['Rapier', 'Рапира'], ['Flail', 'Цеп'], ['Trident', 'Трезубец'], ['Crossbow', 'Арбалет'], ['Halberd', 'Алебарда'], ['Whip', 'Кнут'], ['Sickle', 'Серп']],
+  armor: [['Shield', 'Щит'], ['Helm', 'Шлем'], ['Breastplate', 'Кираса'], ['Mail', 'Кольчуга'], ['Bracers', 'Наручи'], ['Gauntlets', 'Латные перчатки'], ['Greaves', 'Поножи'], ['Buckler', 'Баклер'], ['Hauberk', 'Хауберк'], ['Pauldrons', 'Наплечники'], ['Visor', 'Забрало'], ['Gorget', 'Горжет']],
+  jewelry: [['Ring', 'Кольцо'], ['Amulet', 'Амулет'], ['Crown', 'Венец'], ['Brooch', 'Брошь'], ['Earring', 'Серьга'], ['Pendant', 'Подвеска'], ['Bracelet', 'Браслет'], ['Torc', 'Гривна'], ['Signet', 'Перстень'], ['Circlet', 'Обруч'], ['Anklet', 'Ножной браслет'], ['Locket', 'Медальон']],
+  wand: [['Wand', 'Волшебная палочка'], ['Staff', 'Посох'], ['Rod', 'Жезл'], ['Orb', 'Сфера'], ['Scepter', 'Скипетр'], ['Crystal', 'Кристалл'], ['Runestone', 'Рунный камень'], ['Branch', 'Ветвь']],
+  clothing: [['Cloak', 'Плащ'], ['Boots', 'Сапоги'], ['Gloves', 'Перчатки'], ['Hat', 'Шляпа'], ['Belt', 'Пояс'], ['Mask', 'Маска'], ['Robe', 'Мантия'], ['Scarf', 'Шарф'], ['Hood', 'Капюшон'], ['Sandals', 'Сандалии'], ['Coat', 'Кафтан'], ['Veil', 'Вуаль']],
+  wondrous: [['Lantern', 'Фонарь'], ['Horn', 'Рог'], ['Mirror', 'Зеркало'], ['Bell', 'Колокольчик'], ['Chalice', 'Чаша'], ['Book', 'Книга'], ['Box', 'Шкатулка'], ['Compass', 'Компас'], ['Lute', 'Лютня'], ['Key', 'Ключ'], ['Hourglass', 'Песочные часы'], ['Chessboard', 'Шахматная доска'], ['Quill', 'Перо'], ['Candle', 'Свеча'], ['Flute', 'Флейта'], ['Map', 'Карта']],
 };
 
 export const OWNERS: Pair[] = [
@@ -20,6 +20,24 @@ export const OWNERS: Pair[] = [
   ['of the Iron Oath', 'Железной клятвы'], ['of the Thousand Eyes', 'Тысячи глаз'], ['of the Silent Bell', 'Немого колокола'],
   ['of the Wolf Prince', 'Волчьего принца'], ['of Long Night', 'Долгой ночи'], ['of the Red Harvest', 'Красной жатвы'],
   ['of the Weeping Saint', 'Плачущей святой'], ['of the Broken Crown', 'Сломанной короны'], ['of the Deep Roads', 'Глубинных дорог'],
+  ['of the Blind Archer', 'Слепого лучника'],
+  ['of the Ember Court', 'Пепельного двора'],
+  ['of the Lost Legion', 'Пропавшего легиона'],
+  ['of the Salt Widow', 'Соляной вдовы'],
+  ['of the Hundred Doors', 'Сотни дверей'],
+  ['of the Mountain King', 'Горного короля'],
+  ['of the Pale Rider', 'Бледного всадника'],
+  ['of the Last Dawn', 'Последнего рассвета'],
+  ['of the Crow Mother', 'Вороньей матери'],
+  ['of the Glass Tower', 'Стеклянной башни'],
+  ['of the Forgotten Oath', 'Забытой клятвы'],
+  ['of the Sleeping Giant', 'Спящего великана'],
+  ['of the Black Tide', 'Чёрного прилива'],
+  ['of the Twin Moons', 'Двух лун'],
+  ['of the Hidden Road', 'Тайной дороги'],
+  ['of the Golden Fool', 'Золотого шута'],
+  ['of the Burning Library', 'Горящей библиотеки'],
+  ['of the Winter Bride', 'Зимней невесты'],
 ];
 
 export const MATERIALS: Pair[] = [
@@ -27,6 +45,18 @@ export const MATERIALS: Pair[] = [
   ['pale green bronze', 'бледно-зелёная бронза'], ['meteoric iron', 'метеоритное железо'], ['milky crystal', 'молочный хрусталь'],
   ['dragon scale', 'драконья чешуя'], ['obsidian', 'обсидиан'], ['mother-of-pearl', 'перламутр'], ['cold blue steel', 'холодная синеватая сталь'],
   ['red gold', 'красное золото'], ['petrified wood', 'окаменелое дерево'],
+  ['greenish glass that never breaks', 'зеленоватое стекло, которое не бьётся'],
+  ['braided horsehair and silver', 'плетёный конский волос с серебром'],
+  ['ivory yellowed with age', 'пожелтевшая от времени слоновая кость'],
+  ['jet black stone', 'чёрный гагат'],
+  ['woven ash branches', 'сплетённые ясеневые ветви'],
+  ['copper gone blue-green', 'позеленевшая медь'],
+  ['a single piece of amber', 'цельный кусок янтаря'],
+  ['silver as thin as paper', 'серебро, тонкое, как бумага'],
+  ['dark leather tooled with stars', 'тёмная кожа с тиснёными звёздами'],
+  ['rose quartz', 'розовый кварц'],
+  ['white bronze', 'белая бронза'],
+  ['ironwood', 'железное дерево'],
 ];
 
 export const DETAILS: Pair[] = [
@@ -36,6 +66,18 @@ export const DETAILS: Pair[] = [
   ['a pattern of waves that seem to move', 'узор из волн, которые будто движутся'], ['tiny bells that never ring', 'крошечные колокольчики, которые никогда не звенят'],
   ['a maker’s mark of a closed eye', 'клеймо мастера — закрытый глаз'], ['frost on it even in summer', 'иней — даже летом'],
   ['scratched tally marks, dozens of them', 'выцарапанные зарубки — их десятки'], ['a lock of hair braided into it', 'вплетённая прядь волос'],
+  ['a hidden compartment that is always empty', 'тайник, в котором всегда пусто'],
+  ['tiny scratches that form a map', 'мелкие царапины, складывающиеся в карту'],
+  ['a name filed off', 'спиленное имя'],
+  ['a hole where a gem used to be', 'гнездо, где когда-то был камень'],
+  ['teeth marks', 'следы зубов'],
+  ['a feather pattern that rustles', 'узор из перьев, который шуршит'],
+  ['a motto: “Not yet”', 'девиз: «Ещё не время»'],
+  ['soot that never wipes off', 'копоть, которая не стирается'],
+  ['a moving image of a door', 'движущееся изображение двери'],
+  ['stitches of red thread', 'стежки красной нитью'],
+  ['a dent from a famous blow', 'вмятина от знаменитого удара'],
+  ['a faint smell of the sea', 'слабый запах моря'],
 ];
 
 // Minor properties: a small magic of its own (in D&D — on top of the SRD item).
@@ -54,6 +96,20 @@ export const PROPERTIES: Pair[] = [
   ['It smells of a different flower every morning.', 'Каждое утро вещь пахнет новым цветком.'],
   ['Undead within sixty feet make it frosty.', 'Рядом с нежитью (до шестидесяти футов) вещь покрывается инеем.'],
   ['It cannot be stolen: it grows too heavy for anyone but its owner.', 'Вещь не украсть: в чужих руках она становится неподъёмной.'],
+  ['Its owner can see in dim light as if it were day.', 'Владелец видит в сумраке, как днём.'],
+  ['It floats in water and pulls its owner to the surface.', 'Вещь держится на воде и тянет владельца к поверхности.'],
+  ['Once a day it can light a small fire.', 'Раз в день вещь может зажечь небольшой огонь.'],
+  ['Its owner leaves no footprints in snow or sand.', 'Владелец не оставляет следов на снегу и песке.'],
+  ['It warns its owner with a shiver before an ambush.', 'Перед засадой вещь предупреждает владельца дрожью.'],
+  ['Insects never bite its owner.', 'Насекомые не кусают владельца.'],
+  ['It can be made as small as a coin and back again.', 'Вещь можно уменьшить до размера монеты и обратно.'],
+  ['Its owner can hold their breath twice as long.', 'Владелец может задерживать дыхание вдвое дольше.'],
+  ['Food kept beside it never spoils.', 'Еда рядом с вещью не портится.'],
+  ['It glows faintly when treasure is within thirty feet.', 'Вещь слабо светится, когда в тридцати футах есть клад.'],
+  ['Its owner can speak with one kind of animal, chosen each dawn.', 'Владелец может говорить с одним видом животных, который выбирает на рассвете.'],
+  ['It never needs repair.', 'Вещь никогда не требует починки.'],
+  ['Its owner always wakes at the hour they choose.', 'Владелец всегда просыпается в выбранный час.'],
+  ['Once a day it can mend a torn cloth or a broken string.', 'Раз в день вещь может починить порванную ткань или лопнувшую струну.'],
 ];
 
 export const CREATORS: Pair[] = [
@@ -62,6 +118,16 @@ export const CREATORS: Pair[] = [
   ['a giant who made it small on purpose', 'великан, нарочно сделавший его маленьким'], ['a fey bargain gone wrong', 'сделка с феями, которая пошла не так'],
   ['a hag who wanted to be loved', 'карга, которой хотелось, чтобы её любили'], ['a guild of thieves, for their best', 'гильдия воров — для лучшего из своих'],
   ['an apprentice who never got to be a master', 'подмастерье, так и не ставший мастером'], ['nobody knows; it was found in a dragon’s hoard', 'неизвестно кто — его нашли в драконьем кладе'],
+  ['a dragon who wanted a toy', 'дракон, которому захотелось игрушку'],
+  ['a blind jeweller who worked by touch', 'слепой ювелир, работавший на ощупь'],
+  ['the moon itself, if the old tales are right', 'сама луна — если верить старым сказкам'],
+  ['a dying archmage, as a last lesson', 'умирающий архимаг — как последний урок'],
+  ['two rival smiths, each half of it', 'два соперничающих кузнеца — каждый свою половину'],
+  ['gnome tinkers on a dare', 'гномы-мастеровые на спор'],
+  ['a saint’s tears and a smith’s patience', 'слёзы святой и терпение кузнеца'],
+  ['a genie who owed someone a favour', 'джинн, задолжавший кому-то услугу'],
+  ['pirates, from the loot of a sunken ship', 'пираты — из добычи затонувшего корабля'],
+  ['a village that pooled all its silver', 'деревня, сложившая всё своё серебро'],
 ];
 
 export const HISTORIES: Pair[] = [
@@ -77,6 +143,18 @@ export const HISTORIES: Pair[] = [
   ['A prophecy mentions it — and its next owner.', 'О ней говорит пророчество — и о её следующем владельце.'],
   ['It was pawned for a meal and never bought back.', 'Вещь заложили за обед и так и не выкупили.'],
   ['It was found inside a fish.', 'Вещь нашли в брюхе рыбы.'],
+  ['It was won in a riddle contest with a sphinx.', 'Вещь выиграли в состязании загадок у сфинкса.'],
+  ['It was the ransom for a kidnapped prince.', 'Вещь была выкупом за похищенного принца.'],
+  ['A famous duel was fought over it.', 'Из-за неё случился знаменитый поединок.'],
+  ['It saved a city once, and the city forgot.', 'Однажды вещь спасла город, и город забыл.'],
+  ['It was hidden in a wall for three generations.', 'Три поколения вещь пролежала замурованной в стене.'],
+  ['A bard sold it to pay for a song.', 'Бард продал её, чтобы оплатить песню.'],
+  ['It fell from the sky during a storm.', 'Вещь упала с неба во время бури.'],
+  ['It was carried by a messenger who never arrived.', 'Её нёс гонец, который так и не добрался.'],
+  ['A dragon kept it as its favourite.', 'Дракон хранил её как любимую.'],
+  ['It was cut from the hand of a statue.', 'Её срезали с руки статуи.'],
+  ['A child found it and kept it secret for years.', 'Ребёнок нашёл её и годами хранил в тайне.'],
+  ['It was blessed and cursed by the same priest.', 'Её благословил и проклял один и тот же жрец.'],
 ];
 
 export const QUIRKS: Pair[] = [
@@ -90,6 +168,16 @@ export const QUIRKS: Pair[] = [
   ['It is jealous of other magic items.', 'Вещь ревнует к другим магическим вещам.'],
   ['Flowers wilt near it.', 'Рядом с вещью вянут цветы.'],
   ['It fogs up whenever someone lies nearby.', 'Вещь запотевает, когда рядом лгут.'],
+  ['It whistles softly in the wind.', 'На ветру вещь тихо посвистывает.'],
+  ['Its owner always knows the time.', 'Владелец всегда знает, который час.'],
+  ['It refuses to work on holy days.', 'По святым дням вещь не работает.'],
+  ['Its owner starts humming an old tune without noticing.', 'Владелец, сам того не замечая, начинает напевать старую мелодию.'],
+  ['Dogs bark at it.', 'Собаки на неё лают.'],
+  ['It gets heavier when its owner lies.', 'Когда владелец лжёт, вещь тяжелеет.'],
+  ['Its owner’s hair slowly turns silver.', 'Волосы владельца понемногу седеют.'],
+  ['It must be spoken to by name, or it sulks.', 'К вещи надо обращаться по имени, иначе она обижается.'],
+  ['Its owner cannot stand the taste of wine any more.', 'Владелец больше не выносит вкуса вина.'],
+  ['It leaves a faint scent of smoke wherever it goes.', 'Там, где побывала вещь, остаётся лёгкий запах дыма.'],
 ];
 
 // A curse (sometimes): what the item does to its owner.
@@ -102,4 +190,12 @@ export const CURSES: Pair[] = [
   ['Its owner can no longer sleep under a roof.', 'Владелец больше не может спать под крышей.'],
   ['Gold its owner touches turns to lead by morning.', 'Золото, которого коснулся владелец, к утру становится свинцом.'],
   ['Its owner speaks only in whispers.', 'Владелец может говорить только шёпотом.'],
+  ['Its owner’s name is forgotten by everyone they meet.', 'Все, кого встречает владелец, забывают его имя.'],
+  ['Its owner feels every wound it inflicts.', 'Владелец чувствует каждую рану, которую наносит вещь.'],
+  ['Coins slip out of its owner’s purse.', 'Монеты сами выскальзывают из кошеля владельца.'],
+  ['Its owner cannot cross running water without help.', 'Владелец не может без помощи перейти проточную воду.'],
+  ['Mirrors crack when its owner looks into them.', 'Зеркала трескаются, когда владелец в них смотрит.'],
+  ['Its owner hears the dead, and they never stop talking.', 'Владелец слышит мёртвых, и они не умолкают.'],
+  ['Its owner ages a year every month.', 'Каждый месяц владелец стареет на год.'],
+  ['Its owner must tell the truth when asked directly.', 'На прямой вопрос владелец обязан говорить правду.'],
 ];
