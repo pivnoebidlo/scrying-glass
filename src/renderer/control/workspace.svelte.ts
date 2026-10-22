@@ -12,6 +12,7 @@ interface Saved {
   active: ModuleId | null;
   sidebar: ModuleId | null;
   sidebarOpen: boolean;
+  panelOpen: boolean;
   displayId: number | null;
   screenClosed: string[];
 }
@@ -31,6 +32,8 @@ class Workspace {
   active = $state<ModuleId | null>(null);
   sidebar = $state<ModuleId | null>(null);
   sidebarOpen = $state(true);
+  // The right panel «Player screen» (hidden — its status and «show» at the end of the tab bar).
+  panelOpen = $state(true);
   settingsOpen = $state(false);
   settingsSection = $state<string>('');
   // Экран, выбранный для игроков (null — подобрать автоматически).
@@ -44,6 +47,7 @@ class Workspace {
     this.active = s.active && this.tabs.includes(s.active) ? s.active : (this.tabs[0] ?? null);
     this.sidebar = s.sidebar && known.has(s.sidebar) ? s.sidebar : null;
     this.sidebarOpen = s.sidebarOpen ?? true;
+    this.panelOpen = s.panelOpen ?? true;
     this.displayId = s.displayId ?? null;
     this.screenClosed = s.screenClosed ?? [];
 
@@ -99,6 +103,7 @@ class Workspace {
       active: this.active,
       sidebar: this.sidebar,
       sidebarOpen: this.sidebarOpen,
+      panelOpen: this.panelOpen,
       displayId: this.displayId,
       screenClosed: this.screenClosed,
     };

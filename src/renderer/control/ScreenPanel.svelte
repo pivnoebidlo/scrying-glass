@@ -1,7 +1,8 @@
 <!-- Правая панель: что сейчас видят игроки, и управление экраном. Блоки модулей сворачиваются нажатием на заголовок;
      пустой блок (на экране от модуля ничего нет) свёрнут в одну строку «Карты · нет», его можно развернуть. -->
 <script lang="ts">
-  import { ChevronDown, ChevronRight, Monitor, MonitorOff, Moon, Sun } from '@lucide/svelte';
+  import { ChevronDown, ChevronRight, Monitor, MonitorOff, Moon, PanelRightClose, Sun } from '@lucide/svelte';
+  import ScreenStatus from './ScreenStatus.svelte';
   import Stage from '../lib/Stage.svelte';
   import { controlContributions } from '../lib/registry';
   import { dispatch, store } from '../lib/store.svelte';
@@ -28,7 +29,14 @@
 </script>
 
 <aside class="panel">
-  <div class="pane-title panel-title drag">{t('screen.title')}</div>
+  <!-- The title row: the screen's status and quick buttons, «hide the panel»; in Windows and Linux the system buttons
+       stand over its right end (room is kept for them). -->
+  <div class="pane-title panel-title drag">
+    <span class="panel-name">{t('screen.title')}</span>
+    <span class="grow"></span>
+    <ScreenStatus />
+    <button class="icon-btn hide" title={t('app.hidePanel')} onclick={() => (workspace.panelOpen = false)}><PanelRightClose size={16} /></button>
+  </div>
 
   <div class="section">
     <div class="preview" style:aspect-ratio={ratio} class:closed={!store.displayOpen}>
@@ -99,11 +107,33 @@
   .panel-title {
     display: flex;
     align-items: center;
+    gap: 2px;
     height: var(--title-h);
     padding-top: 0;
     padding-bottom: 0;
+    padding-right: 6px;
     border-bottom: 1px solid var(--border);
     margin-bottom: 8px;
+  }
+  .panel-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .grow {
+    flex: 1;
+  }
+  .panel-title .hide {
+    width: 28px;
+    height: 28px;
+    color: var(--text-faint);
+  }
+  /* Windows, Linux: the system buttons over the corner — the title gives them its right end (the name goes). */
+  :global(:root[data-frame='overlay']) .panel-title {
+    padding-right: var(--controls-w);
+  }
+  :global(:root[data-frame='overlay']) .panel-name {
+    display: none;
   }
   .panel {
     width: 280px;

@@ -15,7 +15,9 @@ translation for it, otherwise English). The language switches at once, without a
 own look. The tab bar is the window's title bar, as in Obsidian (drag the window by its empty space): on in macOS,
 a beta in Windows and Linux, where the system buttons go to the top right corner — ⌘, → General → Tabs in the title
 bar (works at once). "Hide" is over the side panel; with the panel hidden, "Show" stands at the start of the tab
-bar. The built-in compendium
+bar. At its right end — the list of all tabs with whole titles. The player screen title shows its status (a dot: closed,
+open, blacked out) with quick "Open / Close" and "Black out", and "Hide": the hidden panel leaves its dot and
+"Show" at the end of the tab bar. The built-in compendium
 and the Fate compendium exist in both languages and follow the interface language.
 
 ## Installation

@@ -51,7 +51,10 @@ Electron-приложение для мастера D&D: окно управле
   них — нет (`theme.css`). Области перетаскивания не видят слоёв: всё `position: fixed` поверх них помечено
   `-webkit-app-region: no-drag` — новому всплывающему окну нужна та же строка. Строка заголовка есть во всех режимах:
   над боковой панелью справа — «Скрыть» (слева в macOS — светофор, туда ничего не ставить), при скрытой панели
-  «Показать» — в начале полосы вкладок (`Tabs.svelte`).
+  «Показать» — в начале полосы вкладок (`Tabs.svelte`). В конце полосы — список вкладок (меню под стрелкой). Правая
+  панель скрывается (`workspace.panelOpen`); состояние экрана игроков — `ScreenStatus.svelte` (точка + быстрые кнопки) в
+  её заголовке, а при скрытой панели — в конце полосы вкладок. Windows/Linux: правый край строки отдан системным
+  кнопкам — `--controls-w` (theme.css, из `env(titlebar-area-*)`).
 - About: `shared/about.ts` (addresses, `CREDITS` — attribution the CC BY licenses require; only these links open,
   IPC `app:openLink`), section `renderer/control/About.svelte` (settings section `about`). The app menu — `main/menu.ts`
   (`buildMenu`, in the interface language, rebuilt on a language change; «About» / «Settings…» → event

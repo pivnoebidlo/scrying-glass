@@ -54,7 +54,7 @@
       <Sidebar />
     {/if}
     <Tabs />
-    <ScreenPanel />
+    {#if workspace.panelOpen}<ScreenPanel />{/if}
   </div>
 
   <!-- Невидимые части модулей, например проигрыватель музыки. -->

@@ -209,7 +209,11 @@ a.wikilink.spell:hover { color: var(--accent); }
 /* The tab bar as the window's title bar (<html data-frame="mac|overlay">, main/windows.ts): the window is dragged by
    .drag, the controls in it stay clickable. Drag regions ignore layers, so whatever opens over them (dialogs,
    drawers, menus — position: fixed) is marked no-drag itself. --title-h — the height of the title row. */
-:root { --title-h: 38px; }
+:root {
+  --title-h: 38px;
+  /* Windows, Linux: the width of the system buttons over the top right corner (Window Controls Overlay), and a gap. */
+  --controls-w: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, calc(100vw - 140px)) + 6px);
+}
 :root:is([data-frame='mac'], [data-frame='overlay']) .drag { -webkit-app-region: drag; }
 :root:is([data-frame='mac'], [data-frame='overlay']) .drag :is(button, input, select, textarea, a, label, [role='button'], .no-drag) {
   -webkit-app-region: no-drag;
