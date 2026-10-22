@@ -15,6 +15,8 @@ const TYPES: Record<string, string> = {
   '.wav': 'audio/wav',
   '.flac': 'audio/flac',
   '.m4a': 'audio/mp4',
+  '.pdf': 'application/pdf',
+  '.wasm': 'application/wasm',
 };
 
 export function serveFile(file: string, request: Request): Response {
@@ -30,6 +32,9 @@ export function serveFile(file: string, request: Request): Response {
   const headers: Record<string, string> = {
     'Content-Type': TYPES[path.extname(file).toLowerCase()] ?? 'application/octet-stream',
     'Accept-Ranges': 'bytes',
+    // The windows are file:// (or the dev server): fetch() — pdf.js reading a PDF by ranges — needs these.
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Expose-Headers': 'Accept-Ranges, Content-Range, Content-Length',
   };
 
   // Range: bytes=<начало>-[<конец>]

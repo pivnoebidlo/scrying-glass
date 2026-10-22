@@ -22,7 +22,11 @@ function inline(s: string, opts: MarkupOpts = {}): string {
       /^\s*\d*\s*[dдкk]\s*\d+/iu.test(body) && parseDice(body) ? `<button type="button" class="dice" data-dice="${body.trim()}" title="${t('lib.roll')}">${body.trim()}</button>` : all
     );
   return out
-    .replace(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g, (_all, name: string, label?: string) => `<a class="wikilink" data-link="${name.trim()}">${(label ?? name).trim()}</a>`)
+    // [[Name#anchor|label]]: the anchor goes with the link (a page of a PDF: [[Book#12]]) and, without a label, is shown.
+    .replace(/\[\[([^\]|#]+)(?:#([^\]|]*))?(?:\|([^\]]+))?\]\]/g, (_all, name: string, anchor: string | undefined, label?: string) => {
+      const a = anchor?.trim();
+      return `<a class="wikilink" data-link="${name.trim()}"${a ? ` data-anchor="${a}"` : ''}>${(label ?? (a ? `${name.trim()} › ${a}` : name)).trim()}</a>`;
+    })
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/~~(.+?)~~/g, '<s>$1</s>')
     .replace(/(^|[^*])\*([^*\s][^*]*?)\*/g, '$1<em>$2</em>')

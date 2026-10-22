@@ -3,15 +3,16 @@
      place (the pencil or a double click) and dragged onto another folder to move them. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { ChevronDown, ChevronRight, FilePlus, Folder, FolderPlus, Pencil, Search, Trash2 } from '@lucide/svelte';
+  import { BookOpen, ChevronDown, ChevronRight, FilePlus, Folder, FolderPlus, Pencil, Search, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { draggedFile, sortable } from '../../../renderer/lib/sortable';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { applyOrder } from '../../../shared/order';
   import { pageTitle } from '../../../shared/journal';
+  import { searchKey } from '../../../shared/compendium';
   import { dirname, type VaultFolder } from '../../../shared/vault';
-  import { journal, journalFolder, journalRoots, loadPages, preview, searchPages } from './store.svelte';
+  import { journal, journalFolder, journalPdfs, journalRoots, loadPages, preview, searchPages } from './store.svelte';
   import { openPage, ui } from './ui.svelte';
 
   let { app }: ModuleProps<'journal'> = $props();
@@ -35,6 +36,12 @@
     return journalFolder(adv);
   });
   const found = $derived((journal.pages, ui.query.trim() ? searchPages(ui.query) : null));
+  // PDFs are found by their names.
+  const foundPdfs = $derived.by(() => {
+    void tree, adv;
+    const q = searchKey(ui.query.trim());
+    return q ? journalPdfs().filter((p) => searchKey(p.title).includes(q)) : [];
+  });
   const groups = $derived(app.order.groups);
 
   async function newPage(folder: string) {
@@ -118,7 +125,7 @@
 
   const filesOf = (f: VaultFolder) =>
     applyOrder(
-      f.files.filter((x) => x.kind === 'page'),
+      f.files.filter((x) => x.kind === 'page' || x.kind === 'pdf'),
       (x) => x.path,
       groups[f.path]
     );
@@ -200,6 +207,7 @@
         onclick={() => openPage(file.path)}
         use:sortable={{ group: f.path, id: file.path, ids, vertical: true, file: file.path }}
       >
+        {#if file.kind === 'pdf'}<BookOpen size={13} class="pdf-icon" />{/if}
         <span class="t">{pageTitle(file.path)}</span>
       </button>
     {/each}
@@ -216,8 +224,16 @@
   </div>
 
   {#if found}
-    <div class="count faint">{t('journal.found', { count: found.length })}</div>
+    <div class="count faint">{t('journal.found', { count: found.length + foundPdfs.length })}</div>
     <ul class="results">
+      {#each foundPdfs as p (p.path)}
+        <li>
+          <button data-nav class:active={ui.open === p.path} onclick={() => openPage(p.path)}>
+            <span class="t"><BookOpen size={12} /> {p.title}</span>
+            <span class="s">PDF</span>
+          </button>
+        </li>
+      {/each}
       {#each found as p (p.path)}
         <li>
           <button data-nav class:active={ui.open === p.path} onclick={() => openPage(p.path)}>
@@ -249,7 +265,7 @@
         <div role="tree">{@render folderNode(r.folder, 0)}</div>
       </section>
     {/each}
-    {#if !journal.pages.length && journal.loaded}
+    {#if !journal.pages.length && !journalPdfs().length && journal.loaded}
       <p class="faint empty">
         {t('journal.none')}
       </p>
@@ -321,6 +337,11 @@
   }
   .page {
     cursor: pointer;
+  }
+  .page :global(.pdf-icon) {
+    flex: none;
+    margin-right: 5px;
+    color: var(--text-muted);
   }
   .page.active {
     background: var(--bg-active);

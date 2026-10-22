@@ -34,6 +34,7 @@ import {
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
+import { resolvePdfjs } from './pdfjs';
 import { importNameLists, listNameLists, namesDir } from './names';
 import { checkForUpdates } from './updates';
 import { buildMenu } from './menu';
@@ -57,7 +58,7 @@ if (process.env['SG_USER_DATA']) app.setPath('userData', process.env['SG_USER_DA
 
 // ---- Схема для картинок хранилища: sg-asset://v/<путь> ----
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'sg-asset', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
+  { scheme: 'sg-asset', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } },
 ]);
 
 const state = {} as AppState;
@@ -1421,12 +1422,13 @@ app.whenReady().then(async () => {
   initCards(settings.library ?? defaultLibrary());
 
   // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>,
-  // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>, встроенные звуки: sg-asset://s/<путь>.
+  // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>, встроенные звуки: sg-asset://s/<путь>,
+  // data of pdf.js (CMaps, fonts, wasm): sg-asset://p/<path>.
   // ?w=<ширина> — миниатюра.
   protocol.handle('sg-asset', async (request) => {
     const url = new URL(request.url);
     const rel = decodeURIComponent(url.pathname.slice(1));
-    const file = url.host === 'v' ? resolveInVault(rel) : url.host === 'l' ? resolveInLibrary(rel) : url.host === 's' ? resolveSound(rel) : null;
+    const file = url.host === 'v' ? resolveInVault(rel) : url.host === 'l' ? resolveInLibrary(rel) : url.host === 's' ? resolveSound(rel) : url.host === 'p' ? resolvePdfjs(rel) : null;
     if (!file) return new Response('Not found', { status: 404 });
     const w = Number(url.searchParams.get('w'));
     if (w > 0 && canThumb(file)) {

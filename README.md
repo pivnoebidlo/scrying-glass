@@ -238,12 +238,19 @@ file), {1d20+2} — a roll into the roll log on click, [[Title]] — a card, ano
 drawer; a card wins over a note or an entry with the same name). A note can be pinned: it appears in the right panel, at hand during the game; the pin travels with the
 adventure file (.sgpack) and comes back with the adventure from the trash. Notes are found by ⌘K.
 
+**PDF books and adventures** live in the journal too: drop a PDF on the Journal tab or its icon (or put it into the
+journal folder) and it shows in the tree next to the notes. It opens right in the app — pages one under another,
+selectable text, search (⌘F; Enter — the next match), the page number, zoom and fit to width; each file opens where it
+was left. To look something up during the game without leaving the fight or the map, open it in the side drawer
+over any tab, or pin it to the right panel. [[Book#12]] in a note opens page 12 of the PDF "Book" in the drawer.
+PDFs are renamed, moved between folders and deleted like notes and travel with the adventure in a .sgpack.
+
 ## Tools
 
 The Tools sidebar has the notes and the common tools (schedule, message to players, timer), then a section of the
 current adventure's system: in D&D — the generators (names, NPCs, taverns, settlements, shops, items, dungeons,
 weather, events, treasure), encounter difficulty, point buy, reshaping a stat block and travel; in Mausritter — the mouse generator, the
-Mausritter tables and factions; Fate has no tools of its own yet. Tools of other systems are hidden; Settings → Tools
+Mausritter tables and factions; in Forged in the Dark — the crew; Fate has no tools of its own yet. Tools of other systems are hidden; Settings → Tools
 turns one on for a system where it is needed too (it shows in "Other systems"), remembered by the window.
 
 **Encounter difficulty**: the current combat and every prepared encounter show a badge like "Moderate · 1,100 /
@@ -778,7 +785,7 @@ For testing, the app can run with a separate data folder: `SG_USER_DATA=/path np
 GNU GPL version 3 or later (`LICENSE`). The built-in bestiary and compendium are SRD 5.1 / 5.2 material under CC BY 4.0,
 credits in `resources/srd/README.md` and `resources/compendium/README.md`; the Fate compendium is based on the Fate
 Core SRD (Evil Hat Productions, CC BY 3.0); the Mausritter creatures and compendium — Mausritter SRD 2.3.1 (Losing
-Games and Isaac Williams, CC BY 4.0); Forged in the Dark — the Blades in the Dark SRD (One Seven Design, John Harper, CC BY 3.0). Note fonts (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
+Games and Isaac Williams, CC BY 4.0); Forged in the Dark — the Blades in the Dark SRD (One Seven Design, John Harper, CC BY 3.0). PDFs are shown with pdf.js (Mozilla, Apache 2.0). Note fonts (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
 Neucha, Comforter Brush, Cormorant Garamond, Old Standard TT, Kurale, Forum, Yeseva One, Ruslan Display, Ponomar,
 Monomakh, Underdog, Rubik Wet Paint, Rubik Distressed, Rubik Beastly) — SIL Open Font License 1.1, the license texts
 lie next to the fonts in `src/renderer/lib/note/fonts/`. The IBM VGA font of one hidden theme (PxPlus IBM VGA 8x16)

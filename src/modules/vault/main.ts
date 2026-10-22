@@ -88,11 +88,11 @@ export default defineModule({
 
     // Вставить картинку из буфера обмена в папку хранилища (скриншот, картинка из браузера, файл из Finder).
     // Files dropped from Finder or Explorer onto a tab (renderer/control/FileDrop.svelte): copied into the folder,
-    // under a free name; only pictures and sounds (the window has already kept those the role takes).
+    // under a free name; only pictures, sounds and PDFs (the window has already kept those the role takes).
     async addFiles(s, { folder, paths }: { folder: string; paths: string[] }, ctx) {
       const dir = ctx.vault.resolve(folder);
       if (!dir) return s;
-      const ok = [...IMAGE_EXT, ...AUDIO_EXT];
+      const ok = [...IMAGE_EXT, ...AUDIO_EXT, '.pdf'];
       for (const src of paths) {
         if (!ok.includes(path.extname(src).toLowerCase()) || !fs.statSync(src, { throwIfNoEntry: false })?.isFile()) continue;
         await fs.promises.copyFile(src, path.join(dir, freeName(dir, path.basename(src))), fs.constants.COPYFILE_EXCL);
@@ -110,13 +110,10 @@ export default defineModule({
         for (const src of files) await fs.promises.copyFile(src, path.join(dir, freeName(dir, path.basename(src))), fs.constants.COPYFILE_EXCL);
         return ctx.vault.rescan();
       }
-      const img = role === 'music' ? null : await clipboardImage();
+      const img = role === 'music' || role === 'journal' ? null : await clipboardImage();
       if (!img) {
-        const opts = {
-          type: 'info' as const,
-          message: t(role === 'music' ? 'vault.dlg.noMusic' : 'vault.dlg.noImage'),
-          detail: t(role === 'music' ? 'vault.dlg.noMusicDetail' : 'vault.dlg.noImageDetail'),
-        };
+        const what = role === 'music' ? 'noMusic' : role === 'journal' ? 'noPdf' : 'noImage';
+        const opts = { type: 'info' as const, message: t(`vault.dlg.${what}`), detail: t(`vault.dlg.${what}Detail`) };
         if (ctx.controlWindow) await ctx.dialog.showMessageBox(ctx.controlWindow, opts);
         else await ctx.dialog.showMessageBox(opts);
         return s;

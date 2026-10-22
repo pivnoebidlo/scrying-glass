@@ -1,6 +1,6 @@
 <!-- Заметка журнала в оформленном виде: во вкладке и закреплённая в правой панели. [[Ссылка]] — карточка (монстр,
      NPC: она важнее одноимённой заметки и записи — заметка о NPC не перехватывает ссылку на его статблок), иначе
-     другая заметка (во вкладке) или запись справочника в выдвижной панели; {1d20} — бросок в журнал
+     другая заметка (во вкладке) или запись справочника в выдвижной панели; [[Book#12]] — a PDF of the journal on page 12; {1d20} — бросок в журнал
      бросков; флажок задачи сразу пишется в файл. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -8,8 +8,9 @@
   import { entryHtml } from '../../../renderer/lib/entry/markup';
   import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
   import { rolls } from '../../../renderer/lib/rolls.svelte';
-  import { splitProps, toggleTask } from '../../../shared/journal';
-  import { journal, resolvePage, type PageItem } from './store.svelte';
+  import { pdfLink, splitProps, toggleTask } from '../../../shared/journal';
+  import { journal, resolvePage, resolvePdf, type PageItem } from './store.svelte';
+  import { peekPdf } from '../../../renderer/lib/pdf/pdf.svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { inCurrentFamily } from '../../../shared/adventures';
   import { store } from '../../../renderer/lib/store.svelte';
@@ -28,12 +29,18 @@
 
   // A card of this adventure's system with the name — its panel; otherwise a note (in a tab), otherwise a compendium
   // entry (or any card).
-  async function openLink(name: string) {
+  // [[Book#12]] — page 12 of a PDF of the journal, in the side drawer; [[Book]] — where it was left (after cards and
+  // notes of that name).
+  async function openLink(name: string, anchor: string | null) {
+    const book = resolvePdf(name);
+    const at = anchor ? pdfLink(`${name}#${anchor}`).page : null;
+    if (book && at) return peekPdf(book.path, at);
     await connectCards();
     const found = bestiary.named(name);
     const card = found && inCurrentFamily(store.state.adventures, found.system) ? found : null;
     const p = card ? null : resolvePage(name);
     if (card) bestiary.show(card.ref);
+    else if (!p && book) peekPdf(book.path);
     else if (p) openPage(p.path);
     else peekEntry(name);
   }
@@ -44,7 +51,7 @@
     if (link) {
       e.preventDefault();
       const name = link.dataset['link'] ?? '';
-      void openLink(name);
+      void openLink(name, link.dataset['anchor'] ?? null);
       return;
     }
     const dice = t.closest('button.dice') as HTMLElement | null;

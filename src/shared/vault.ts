@@ -7,11 +7,13 @@ export const IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
 export const AUDIO_EXT = ['.mp3', '.ogg', '.wav', '.flac', '.m4a'];
 // What a folder of a role takes when files are dropped or pasted into it: music — sounds, the rest — pictures.
 export const extOf = (name: string) => name.slice(name.lastIndexOf('.')).toLowerCase();
-export const roleAccepts = (role: FolderRole, name: string) => (role === 'music' ? AUDIO_EXT : IMAGE_EXT).includes(extOf(name));
+export const roleAccepts = (role: FolderRole, name: string) => (role === 'music' ? AUDIO_EXT : role === 'journal' ? ['.pdf'] : IMAGE_EXT).includes(extOf(name));
 
 // note — записка, сделанная в приложении («….note.json», см. shared/notes.ts); sketch — a canvas («….sketch.json», shared/sketch.ts); entry — запись справочника (.md в папках справочника,
 // см. shared/compendium.ts); page — заметка журнала (.md в папках журнала, см. shared/journal.ts).
-export type FileKind = 'image' | 'audio' | 'note' | 'sketch' | 'entry' | 'page';
+export type FileKind = 'image' | 'audio' | 'note' | 'sketch' | 'entry' | 'page' | 'pdf';
+// PDF files: only in journal folders (the GM's books and adventures, read during the game).
+export const PDF = /\.pdf$/i;
 
 // Пути внутри хранилища — относительные, через «/», корень — пустая строка.
 export interface VaultFile {

@@ -228,10 +228,18 @@ CC BY 3.0). Тексты лежат в `scripts/fate-core.<язык>.md`, `npm r
 приключением в файл (.sgpack) и возвращается с ним из корзины. Заметки
 находятся поиском ⌘K.
 
+**Книги и приключения в PDF** тоже живут в журнале: перетащите PDF на вкладку «Журнал» или её значок (или положите в
+папку журнала) — он появится в дереве рядом с заметками. Открывается прямо в приложении: страницы одна под другой,
+текст выделяется, поиск (⌘F; Enter — следующее совпадение), номер страницы, масштаб и «по ширине»; каждый файл
+открывается там, где его оставили. Чтобы подсмотреть на игре, не уходя из боя или с карты, откройте его в выдвижной
+панели поверх любой вкладки или закрепите в правой панели. [[Книга#12]] в заметке открывает 12-ю страницу PDF
+«Книга» в выдвижной панели. PDF переименовываются, переносятся по папкам и удаляются, как заметки, и уходят с
+приключением в .sgpack.
+
 В боковой панели «Инструментов» — записки и общие инструменты (расписание, сообщение игрокам, таймер), ниже — раздел
 системы текущего приключения: в D&D — генераторы (имена, NPC, таверны, поселения, лавки, предметы, подземелья, погода,
 события, сокровища), сложность боя, покупка характеристик, переделка статблока и путь; в Mausritter — генератор мыши, таблицы Mausritter и
-фракции; у Fate своих инструментов пока нет. Инструменты других систем скрыты; настройки → «Инструменты» включают
+фракции; в Forged in the Dark — банда; у Fate своих инструментов пока нет. Инструменты других систем скрыты; настройки → «Инструменты» включают
 нужный и в другой системе (он появится в разделе «Другие системы»), запоминает окно.
 
 Сложность боя: у текущего боя и у каждой заготовки — плашка «Умеренная · 1 100 / 1 500 ОО», по щелчку — шкала и
@@ -713,7 +721,7 @@ TypeScript + Svelte 5 + Electron, сборка через electron-vite. Инт�
 GNU GPL версии 3 или новее (`LICENSE`). Встроенный бестиарий и справочник — материалы SRD 5.1 / 5.2 под CC BY 4.0,
 авторство — в `resources/srd/README.md` и `resources/compendium/README.md`; справочник Fate — по Fate Core SRD
 (Evil Hat Productions, CC BY 3.0); существа и справочник Mausritter — Mausritter SRD 2.3.1 (Losing Games и
-Isaac Williams, CC BY 4.0); Forged in the Dark — SRD Blades in the Dark (One Seven Design, John Harper, CC BY 3.0). Шрифты записок (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
+Isaac Williams, CC BY 4.0); Forged in the Dark — SRD Blades in the Dark (One Seven Design, John Harper, CC BY 3.0). PDF показывает pdf.js (Mozilla, Apache 2.0). Шрифты записок (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
 Neucha, Comforter Brush, Cormorant Garamond, Old Standard TT, Kurale, Forum, Yeseva One, Ruslan Display, Ponomar,
 Monomakh, Underdog, Rubik Wet Paint, Rubik Distressed, Rubik Beastly) — SIL Open Font License 1.1, тексты лицензий
 лежат рядом со шрифтами в `src/renderer/lib/note/fonts/`. Шрифт IBM VGA одной скрытой темы (PxPlus IBM VGA 8x16) —

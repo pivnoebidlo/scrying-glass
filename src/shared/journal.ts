@@ -25,7 +25,14 @@ export function toggleTask(text: string, n: number): string {
 }
 
 // Название заметки — имя файла без .md / .txt.
-export const pageTitle = (path: string) => (path.split('/').pop() ?? path).replace(/\.(md|txt)$/i, '');
+export const pageTitle = (path: string) => (path.split('/').pop() ?? path).replace(/\.(md|txt|pdf)$/i, '');
+export const isPdf = (path: string) => /\.pdf$/i.test(path);
+
+// [[Book#12]] — a link to page 12 of a PDF: the name and the page (null — none).
+export function pdfLink(link: string): { name: string; page: number | null } {
+  const m = /^(.*?)#\s*(?:p\.?\s*)?(\d+)\s*$/i.exec(link);
+  return m ? { name: m[1]!.trim(), page: Number(m[2]) } : { name: link.trim(), page: null };
+}
 
 // Первые строки текста без разметки — подпись в списке и поиск.
 export function pagePreview(text: string, max = 140): string {

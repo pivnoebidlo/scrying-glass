@@ -11,7 +11,7 @@
   import { dispatch, store } from '../lib/store.svelte';
   import { workspace } from './workspace.svelte';
 
-  const ROLE_OF: Record<string, FolderRole> = { scene: 'backgrounds', portraits: 'characters', maps: 'maps', handouts: 'handouts', music: 'music' };
+  const ROLE_OF: Record<string, FolderRole> = { scene: 'backgrounds', portraits: 'characters', maps: 'maps', handouts: 'handouts', music: 'music', journal: 'journal' };
 
   type Target = { module: string | null; rect: DOMRect | null; role: FolderRole | null; folder: string | null; icon: boolean };
   let drag = $state<Target | null>(null);
@@ -60,7 +60,7 @@
     const ok = paths.filter((p) => roleAccepts(tg.role!, p));
     const skipped = paths.length - ok.length;
     const where = tg.folder.split('/').join(' / ');
-    const wrong = t(tg.role === 'music' ? 'drop.needMusic' : 'drop.needImages');
+    const wrong = t(tg.role === 'music' ? 'drop.needMusic' : tg.role === 'journal' ? 'drop.needPdf' : 'drop.needImages');
     if (!ok.length) return show(t('drop.noneFit', { kind: wrong }));
     dispatch('vault', 'addFiles', { folder: tg.folder, paths: ok });
     // Dropped on an icon: the tab opens, the new files are in sight.

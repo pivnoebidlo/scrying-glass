@@ -1,13 +1,17 @@
-<!-- Блок «Журнал» в правой панели: закреплённая заметка приключения под рукой на игре (видит только мастер). -->
+<!-- Блок «Журнал» в правой панели: закреплённая заметка приключения под рукой на игре (видит только мастер); a pinned
+     PDF — a small viewer and the button to look at it in the side drawer. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Maximize2, PinOff } from '@lucide/svelte';
+  import { Maximize2, PanelRight, PinOff } from '@lucide/svelte';
+  import PdfView from '../../../renderer/lib/pdf/PdfView.svelte';
+  import { peekPdf } from '../../../renderer/lib/pdf/pdf.svelte';
+  import { pageTitle } from '../../../shared/journal';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { pinnedPage } from '../control';
   import PageBody from './PageBody.svelte';
-  import { loadPages, pageAt } from './store.svelte';
+  import { loadPages, pageAt, pdfAt } from './store.svelte';
   import { openPage } from './ui.svelte';
 
   let { app }: ModuleProps<'journal'> = $props();
@@ -23,9 +27,20 @@
 
   const path = $derived(pinnedPage(app));
   const page = $derived(pageAt(path));
+  const pdf = $derived((void tree, void adv, pdfAt(path)));
 </script>
 
-{#if page}
+{#if pdf}
+  <div class="pinned">
+    <div class="head">
+      <span class="t" title={pdf.path}>{pageTitle(pdf.path)}</span>
+      <button class="icon-btn" title={t('pdf.drawer')} onclick={() => peekPdf(pdf.path)}><PanelRight size={13} /></button>
+      <button class="icon-btn" title={t('journal.openInTab')} onclick={() => openPage(pdf.path)}><Maximize2 size={13} /></button>
+      <button class="icon-btn" title={t('journal.unpin')} onclick={() => dispatch('journal', 'pin', { adventure: adv, path: null })}><PinOff size={13} /></button>
+    </div>
+    <div class="pdf">{#key pdf.path}<PdfView path={pdf.path} compact />{/key}</div>
+  </div>
+{:else if page}
   <div class="pinned">
     <div class="head">
       <span class="t" title={page.path}>{page.title}</span>
@@ -57,6 +72,9 @@
   }
   .head .icon-btn {
     padding: 3px;
+  }
+  .pdf {
+    height: 45vh;
   }
   .body {
     max-height: 45vh;

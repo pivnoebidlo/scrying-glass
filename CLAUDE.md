@@ -112,7 +112,8 @@ Electron-приложение для мастера D&D: окно управле
   странную версию — чинить запись в lock-файле, а не обходить через `overrides`.
 
 ## Стек и версии (не обновлять вслепую)
-- Electron 44, electron-vite 5 (требует Vite ≤ 7), Svelte 5 + @sveltejs/vite-plugin-svelte 6, Lucide (@lucide/svelte).
+- Electron 44, electron-vite 5 (требует Vite ≤ 7), Svelte 5 + @sveltejs/vite-plugin-svelte 6, Lucide (@lucide/svelte),
+  pdf.js (pdfjs-dist 6.3.289 — точная версия; обновлять — проверить PDF в журнале).
 - TypeScript 6, а не 7: svelte-check пока не поддерживает TS 7 (у него нет старого JS API).
 - Electron 44 не скачивает бинарник при установке, это делает `postinstall` (`node node_modules/electron/install.js`).
 
@@ -551,6 +552,15 @@ Electron-приложение для мастера D&D: окно управле
   текстом — `renderer/lib/MarkdownToolbar.svelte` (журнал и справочник; `journal` — ещё задача и бросок; выключается в
   «Настройки» → «Журнал», `editorPrefs.toolbar` в localStorage окна); правки через `execCommand('insertText')` — ⌘Z работает. В состоянии — только
   `pinned` (приключение → путь): блок правой панели `OnScreen.svelte`. Заметки — в ⌘K (`QuickSearch` справочника).
+  PDF (книги и приключения) — тоже в папках журнала: `FileKind` 'pdf' (`main/scan.ts`, `PDF` в shared/vault.ts),
+  переименование и перенос — `textstore` (`other` у `textKind`: файл не читается как текст); перетаскивание и ⌘V на
+  «Журнал» (`roleAccepts` 'journal'). Просмотр — pdf.js (`pdfjs-dist`, точная версия): `renderer/lib/pdf/PdfView.svelte`
+  (страницы, поиск — `PDFFindController`, масштаб; `compact` — правая панель), место в файле — `pdf.svelte.ts`
+  (localStorage окна), выдвижная панель — `pdfPeek` / `peekPdf` → фоновый `journal/ui/PdfDrawer.svelte` (z-index ниже
+  карточки и записи). [[Книга#12]] — `pdfLink`, якорь ссылки — `data-anchor` (`entry/markup.ts`). Файл — по
+  `sg-asset://v/…` через fetch: в `serveFile` заголовки CORS (окна — file://), в CSP окна мастера `connect-src
+  sg-asset:`; данные pdf.js (CMaps, шрифты, ICC, wasm) — плагин `pdfjsData` в electron.vite.config.ts кладёт их в
+  out/renderer/pdfjs/, ядро отдаёт `sg-asset://p/…` (`main/pdfjs.ts`, в разработке — из node_modules).
   Сам журнал игрокам не показывается; в .sgpack файлы уходят с папкой приключения, `pinned` — тоже
   (`PackSlices.pinned`, и в корзину — `AdventureData.pinned`).
 - Подборка правой панели (`modules/scenes/tray.ts`, вид — `scenes/ui/Tray.svelte` в блоках фона, карты, портретов и

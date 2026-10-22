@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { pagePreview, pageTitle, splitProps, toggleTask } from '../src/shared/journal';
+import { isPdf, pagePreview, pageTitle, pdfLink, splitProps, toggleTask } from '../src/shared/journal';
+import { roleAccepts } from '../src/shared/vault';
 import { entryHtml } from '../src/renderer/lib/entry/markup';
 
 describe('журнал: заметки', () => {
@@ -64,6 +65,44 @@ describe('журнал: папки', () => {
       expect(pages.renameFolder(resolve, 'Strahd/journal', 'Notes')).toBeNull();
       expect(pages.move(resolve, 'Strahd/journal/Places (2)', 'Strahd/journal/Places')).toBe('Strahd/journal/Places/Places (2)');
       expect(pages.move(resolve, 'Strahd/journal/Places', 'Strahd/journal/Places/Places (2)')).toBeNull();
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('журнал: PDF', () => {
+  it('[[Книга#12]] — страница PDF; якорь ссылки сохраняется в разметке', () => {
+    expect(pdfLink('Книга#12')).toEqual({ name: 'Книга', page: 12 });
+    expect(pdfLink('Книга # p. 7')).toEqual({ name: 'Книга', page: 7 });
+    expect(pdfLink('Книга#Глава')).toEqual({ name: 'Книга#Глава', page: null });
+    expect(pageTitle('Strahd/journal/Книга.pdf')).toBe('Книга');
+    expect(isPdf('a/Book.PDF')).toBe(true);
+    expect(entryHtml('[[Книга#12]] и [[Книга#3|третья]]')).toContain('<a class="wikilink" data-link="Книга" data-anchor="12">Книга › 12</a>');
+    expect(entryHtml('[[Книга#3|третья]]')).toContain('data-anchor="3">третья</a>');
+  });
+
+  it('PDF в журнале: виден сканером, переименовывается и переносится, но не читается как текст', async () => {
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+    const { pages } = await import('../src/main/journal');
+    const { scanVault } = await import('../src/main/scan');
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-journal-'));
+    try {
+      const resolve = (rel: string) => path.join(root, rel);
+      fs.mkdirSync(path.join(root, 'Strahd/journal/Books'), { recursive: true });
+      fs.writeFileSync(path.join(root, 'Strahd/journal/Curse.pdf'), '%PDF');
+      fs.writeFileSync(path.join(root, 'Strahd/other.pdf'), '%PDF');
+      const files = (f: ReturnType<typeof scanVault>): { path: string; kind: string }[] => [...f.files, ...f.folders.flatMap(files)];
+      expect(files(scanVault(root)).filter((f) => f.kind === 'pdf').map((f) => f.path)).toEqual(['Strahd/journal/Curse.pdf']);
+      expect(pages.read(resolve, 'Strahd/journal/Curse.pdf')).toBeNull();
+      expect(pages.rename(resolve, 'Strahd/journal/Curse.pdf', 'Curse of Strahd')).toBe('Strahd/journal/Curse of Strahd.pdf');
+      expect(pages.move(resolve, 'Strahd/journal/Curse of Strahd.pdf', 'Strahd/journal/Books')).toBe('Strahd/journal/Books/Curse of Strahd.pdf');
+      expect(fs.existsSync(path.join(root, 'Strahd/journal/Books/Curse of Strahd.pdf'))).toBe(true);
+      expect(pages.rename(resolve, 'Strahd/other.pdf', 'x')).toBeNull();
+      expect(roleAccepts('journal', 'Book.pdf')).toBe(true);
+      expect(roleAccepts('journal', 'map.png')).toBe(false);
     } finally {
       fs.rmSync(root, { recursive: true, force: true });
     }

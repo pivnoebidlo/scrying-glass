@@ -4,7 +4,7 @@ import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
 import { store } from '../../../renderer/lib/store.svelte';
 import { placeOrder, placeTitle, roleFolderHere, visibleIn } from '../../../shared/adventures';
 import { searchKey } from '../../../shared/compendium';
-import { pagePreview, pageTitle, splitProps } from '../../../shared/journal';
+import { isPdf, pagePreview, pageTitle, splitProps } from '../../../shared/journal';
 import { allFiles, dirname, roleFolders, roleNames, type VaultFolder } from '../../../shared/vault';
 
 export interface PageItem {
@@ -49,6 +49,21 @@ export async function loadPages() {
 }
 
 export const pageAt = (path: string | null | undefined) => (path ? journal.pages.find((p) => p.path === path) : undefined);
+
+// PDF files of the visible journal folders (books and adventures to read during the game).
+export interface PdfItem {
+  path: string;
+  title: string;
+}
+export const journalPdfs = (): PdfItem[] => journalRoots().flatMap((r) => allFiles(r.folder, 'pdf').map((f) => ({ path: f.path, title: pageTitle(f.path) })));
+export const pdfAt = (path: string | null | undefined): PdfItem | undefined => (path && isPdf(path) ? journalPdfs().find((p) => p.path === path) : undefined);
+
+// [[Book]] or [[Book#12]] to a PDF — by its name, like a note; the adventure's first.
+export function resolvePdf(name: string): PdfItem | null {
+  const k = searchKey(name.trim());
+  const adv = store.state.adventures;
+  return journalPdfs().filter((p) => searchKey(p.title) === k).sort((a, b) => placeOrder(adv, a.path) - placeOrder(adv, b.path))[0] ?? null;
+}
 
 // [[Ссылка]] на заметку — по названию, без регистра и «ё»; заметка приключения важнее общей.
 export function resolvePage(name: string): PageItem | null {

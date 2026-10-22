@@ -8,11 +8,13 @@ import OnScreen from './ui/OnScreen.svelte';
 import Sidebar from './ui/Sidebar.svelte';
 import View from './ui/View.svelte';
 import Settings from './ui/Settings.svelte';
+import PdfDrawer from './ui/PdfDrawer.svelte';
 
 // Закреплённая заметка текущего приключения, если файл на месте.
+// A note or a PDF.
 export function pinnedPage(app: AppState): string | null {
   const p = app.journal.pinned[app.adventures.current ?? ''];
-  return p && app.vault.tree && allFiles(app.vault.tree, 'page').some((f) => f.path === p) ? p : null;
+  return p && app.vault.tree && allFiles(app.vault.tree).some((f) => f.path === p && (f.kind === 'page' || f.kind === 'pdf')) ? p : null;
 }
 
 export default defineControl({
@@ -28,4 +30,5 @@ export default defineControl({
   screen: OnScreen,
   screenEmpty: (app) => (pinnedPage(app) ? null : t('empty.noPinned')),
   settings: Settings,
+  background: PdfDrawer,
 });

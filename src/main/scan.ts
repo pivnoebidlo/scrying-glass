@@ -1,7 +1,7 @@
 // Сканирование хранилища. Файлы пользователя только читаются.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { fileKind, folderRole, type VaultFile, type VaultFolder } from '../shared/vault';
+import { fileKind, folderRole, PDF, type VaultFile, type VaultFolder } from '../shared/vault';
 
 const MAX_DEPTH = 12;
 const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
@@ -13,7 +13,7 @@ export function scanVault(root: string): VaultFolder {
   return scan(root, '', path.basename(root), 0, null);
 }
 
-// Текстовые файлы — только в папках справочника и журнала (и вложенных в них): остальные заметки хранилища
+// Текстовые файлы — только в папках справочника и журнала (и вложенных в них), PDF — только в папках журнала: остальные заметки хранилища
 // (Obsidian) не нужны.
 const TEXT = /\.(md|txt)$/i;
 type TextRole = 'compendium' | 'journal' | null;
@@ -35,7 +35,7 @@ function scan(abs: string, rel: string, name: string, depth: number, text: TextR
       const next: TextRole = text ?? (role === 'compendium' || role === 'journal' ? role : null);
       if (depth < MAX_DEPTH) folder.folders.push(scan(path.join(abs, e.name), childRel, e.name, depth + 1, next));
     } else if (e.isFile()) {
-      const kind = fileKind(e.name) ?? (text && TEXT.test(e.name) ? TEXT_KIND[text] : null);
+      const kind = fileKind(e.name) ?? (text && TEXT.test(e.name) ? TEXT_KIND[text] : text === 'journal' && PDF.test(e.name) ? 'pdf' : null);
       if (kind) folder.files.push({ path: childRel, name: e.name.normalize('NFC'), kind } satisfies VaultFile);
     }
   }

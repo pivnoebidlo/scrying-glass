@@ -1,8 +1,11 @@
-<!-- Вкладка «Журнал»: открытая заметка — в оформленном виде или в правке (⌘E); ничего не открыто — подсказка. -->
+<!-- Вкладка «Журнал»: открытая заметка — в оформленном виде или в правке (⌘E), PDF — в просмотрщике; ничего не
+     открыто — подсказка. -->
 <script lang="ts">
   import { hotkeyLabel } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { ChevronLeft, Eye, ExternalLink, Pencil, Pin, PinOff, Trash2 } from '@lucide/svelte';
+  import { ChevronLeft, Eye, ExternalLink, PanelRight, Pencil, Pin, PinOff, Trash2 } from '@lucide/svelte';
+  import PdfView from '../../../renderer/lib/pdf/PdfView.svelte';
+  import { movePlace, peekPdf } from '../../../renderer/lib/pdf/pdf.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -10,7 +13,7 @@
   import { allFiles } from '../../../shared/vault';
   import PageBody from './PageBody.svelte';
   import PageEditor from './PageEditor.svelte';
-  import { loadPages, pageAt } from './store.svelte';
+  import { loadPages, pageAt, pdfAt } from './store.svelte';
   import { ui } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'journal'> = $props();
@@ -25,7 +28,8 @@
     void loadPages();
   });
 
-  const page = $derived(pageAt(ui.open));
+  const pdf = $derived((void tree, void adv, pdfAt(ui.open)));
+  const page = $derived(pageAt(ui.open) ?? pdf);
   const pinKey = $derived(adv ?? '');
   const pinned = $derived(!!page && ms.pinned[pinKey] === page.path);
   let editor = $state<PageEditor>();
@@ -50,8 +54,12 @@
     const next = title.trim();
     if (!next || next === page.title) return void (title = page.title);
     await editor?.flush();
-    const path = await window.api.renamePage(page.path, next);
-    if (path) ui.open = path;
+    const from = page.path;
+    const path = await window.api.renamePage(from, next);
+    if (path) {
+      if (pdf) movePlace(from, path);
+      ui.open = path;
+    }
   }
 
   function back() {
@@ -72,7 +80,7 @@
   }
 
   function onkeydown(e: KeyboardEvent) {
-    if (page && (e.metaKey || e.ctrlKey) && e.code === 'KeyE') {
+    if (page && !pdf && (e.metaKey || e.ctrlKey) && e.code === 'KeyE') {
       e.preventDefault();
       ui.editing = !ui.editing;
     }
@@ -94,25 +102,31 @@
         onchange={rename}
         onkeydown={(e) => e.key === 'Enter' && (e.currentTarget.blur(), document.querySelector<HTMLTextAreaElement>('.journal-text')?.focus())}
       />
-      <button class="btn" class:primary={!ui.editing} title={hotkeyLabel('journalPreview')} onclick={() => (ui.editing = !ui.editing)}>
-        {#if ui.editing}<Eye size={14} /> {t('journal.preview')}{:else}<Pencil size={14} /> {t('journal.edit')}{/if}
-      </button>
+      {#if pdf}
+        <button class="icon-btn" title={t('pdf.drawer')} onclick={() => peekPdf(pdf.path)}><PanelRight size={15} /></button>
+      {:else}
+        <button class="btn" class:primary={!ui.editing} title={hotkeyLabel('journalPreview')} onclick={() => (ui.editing = !ui.editing)}>
+          {#if ui.editing}<Eye size={14} /> {t('journal.preview')}{:else}<Pencil size={14} /> {t('journal.edit')}{/if}
+        </button>
+      {/if}
       <button
         class="icon-btn"
         class:on={pinned}
-        title={pinned ? t('journal.unpinHint') : t('journal.pinHint')}
+        title={pinned ? t('journal.unpinHint') : t(pdf ? 'pdf.pinHint' : 'journal.pinHint')}
         onclick={() => dispatch('journal', 'pin', { adventure: adv, path: pinned ? null : page.path })}
       >
         {#if pinned}<PinOff size={15} />{:else}<Pin size={15} />{/if}
       </button>
-      <button class="icon-btn" title={t('journal.openExternal')} onclick={() => window.api.openFile(page.path)}><ExternalLink size={15} /></button>
-      <button class="icon-btn" title={t('journal.deleteNote')} onclick={trash}><Trash2 size={15} /></button>
+      <button class="icon-btn" title={t(pdf ? 'pdf.openExternal' : 'journal.openExternal')} onclick={() => window.api.openFile(page.path)}><ExternalLink size={15} /></button>
+      <button class="icon-btn" title={t(pdf ? 'pdf.delete' : 'journal.deleteNote')} onclick={trash}><Trash2 size={15} /></button>
     </header>
-    <div class="page" class:editing={ui.editing}>
-      {#if ui.editing}
-        {#key page.path}<PageEditor bind:this={editor} {page} />{/key}
+    <div class="page" class:editing={ui.editing} class:pdf={!!pdf}>
+      {#if pdf}
+        {#key pdf.path}<PdfView path={pdf.path} />{/key}
+      {:else if ui.editing && 'text' in page}
+        {#key page.path}<PageEditor bind:this={editor} page={pageAt(page.path)!} />{/key}
       {:else}
-        <PageBody {page} />
+        <PageBody page={pageAt(page.path)!} />
       {/if}
     </div>
   </div>
@@ -125,6 +139,7 @@
     <p class="faint">
       {t('journal.about3')}
     </p>
+    <p class="faint">{t('pdf.about')}</p>
   </div>
 {/if}
 
@@ -164,6 +179,11 @@
     width: 100%;
     padding: 20px 28px;
     overflow: auto;
+  }
+  .page.pdf {
+    max-width: none;
+    padding: 0;
+    overflow: hidden;
   }
   .page.editing {
     padding: 12px 16px;
