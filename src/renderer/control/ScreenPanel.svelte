@@ -37,6 +37,8 @@
     <ScreenStatus />
     <button class="icon-btn hide" title={t('app.hidePanel')} onclick={() => (workspace.panelOpen = false)}><PanelRightClose size={16} /></button>
   </div>
+  <!-- Only this part scrolls: the title with the screen's status stays in sight. -->
+  <div class="scroll">
 
   <div class="section">
     <div class="preview" style:aspect-ratio={ratio} class:closed={!store.displayOpen}>
@@ -100,6 +102,7 @@
       {/if}
     {/if}
   {/each}
+  </div>
 </aside>
 
 <style>
@@ -112,8 +115,12 @@
     padding-top: 0;
     padding-bottom: 0;
     padding-right: 6px;
+    flex: none;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 8px;
+    margin-bottom: 0;
+  }
+  .scroll > :first-child {
+    margin-top: 8px;
   }
   .panel-name {
     overflow: hidden;
@@ -135,10 +142,17 @@
   :global(:root[data-frame='overlay']) .panel-name {
     display: none;
   }
+  .scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
   .panel {
+    display: flex;
+    flex-direction: column;
     width: 280px;
     flex: none;
-    overflow: auto;
+    overflow: hidden;
     background: var(--bg-secondary);
     border-left: 1px solid var(--border);
   }

@@ -49,7 +49,8 @@
     flex: none;
     align-self: stretch;
     height: var(--title-h);
-    margin: -10px -1px 0 0;
+    /* The first button's middle in line with the adventure switcher in the side panel. */
+    margin: -10px -1px 3px 0;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
   }
