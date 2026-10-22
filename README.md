@@ -238,7 +238,7 @@ turned off in Settings → Journal; the compendium editor has them too):
 A ">" quote is read-aloud text (a highlighted box), "- [ ]" — a task with a checkbox (a click checks it right in the
 file), {1d20+2} — a roll into the roll log on click, [[Title]] — a card, another note or a compendium entry (in a side
 drawer; a card wins over a note or an entry with the same name). Notes and PDFs can be pinned — any number of them: the right panel lists their names, at hand during the game; a click
-opens one in the side drawer over any tab, the pin button unpins it. The pins travel with the
+opens one in the side drawer over any tab, a second click closes it, the pin button unpins it. The pins travel with the
 adventure file (.sgpack) and comes back with the adventure from the trash. Notes are found by ⌘K.
 
 **PDF books and adventures** live in the journal too: drop a PDF on the Journal tab or its icon, or right onto a folder

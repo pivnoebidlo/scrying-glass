@@ -552,7 +552,7 @@ Electron-приложение для мастера D&D: окно управле
   текстом — `renderer/lib/MarkdownToolbar.svelte` (журнал и справочник; `journal` — ещё задача и бросок; выключается в
   «Настройки» → «Журнал», `editorPrefs.toolbar` в localStorage окна); правки через `execCommand('insertText')` — ⌘Z работает. В состоянии — только
   `pinned` (приключение → пути, по порядку; до 0.56 — один путь, `init` переводит), действия `pin` / `unpin`: блок
-  правой панели `OnScreen.svelte` — только названия, щелчок — выдвижная панель журнала (`peek` / `peekJournal` в
+  правой панели `OnScreen.svelte` — только названия, щелчок — выдвижная панель журнала (повторный — закрыть) (`peek` / `peekJournal` в
   `journal/ui/ui.svelte.ts` → фоновый `Drawer.svelte`: заметка — `PageBody`, PDF — `PdfView`). Заметки — в ⌘K (`QuickSearch` справочника).
   PDF (книги и приключения) — тоже в папках журнала: `FileKind` 'pdf' (`main/scan.ts`, `PDF` в shared/vault.ts),
   переименование и перенос — `textstore` (`other` у `textKind`: файл не читается как текст); перетаскивание и ⌘V на
