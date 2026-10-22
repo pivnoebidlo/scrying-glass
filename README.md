@@ -138,7 +138,7 @@ Pen, a see-through marker, line, arrow, rectangle and ellipse (outline, see-thro
 background stay as they are; a drag fills an area drawn by hand), text in the notes' fonts, an eraser and undo (⌘Z). A canvas is shown
 like any handout — and while it is on the player screen, the players see every line as you draw it.
 
-**Progress clocks** (as in Blades in the Dark) — a block in the right panel, in any system: a circle of 4, 6, 8 or 12
+**Progress clocks** (as in Blades in the Dark) — a block in the right panel, in Forged in the Dark adventures: a circle of 4, 6, 8 or 12
 segments for a danger drawing near ("The guards raise the alarm") or the party's work ("Picking the vault lock"). A
 click ticks it forward, a right click — back; the eye shows it to the players, in the corner and size you pick; a full
 clock glows. Each adventure has its own; they move with it in a .sgpack and go to the trash with it.
@@ -724,7 +724,7 @@ harm (two lesser, two moderate, one severe), armor, special abilities, items, co
 click on an action — an action roll of its dots (6 — full success, 4–5 — partial, 1–3 — bad outcome, two sixes —
 critical; no dots — 2d6, the lowest), on an attribute — a resistance roll (stress = 6 − the highest die, a critical
 clears one). The tracker has no initiative: the list's order, a stress line of nine boxes and five harm lines, free
-conditions. Progress clocks (the right panel) work in any system. **The crew** of the adventure — Tools → "Crew": name,
+conditions. Progress clocks (the right panel) are part of this system. **The crew** of the adventure — Tools → "Crew": name,
 type, reputation, lair, hunting grounds, contact; tier and hold, rep with turf (a full tracker strengthens hold or buys
 the next tier for tier × 8 coin), heat (at 9 — a wanted level, the excess rolls over) and wanted level, coin against
 the vault, crew xp, special abilities, upgrades, claims, cohorts (gangs and experts with quality, edges, flaws and

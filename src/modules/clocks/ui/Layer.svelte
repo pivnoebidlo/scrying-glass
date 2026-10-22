@@ -1,14 +1,16 @@
-<!-- Player screen: the shown clocks of the current adventure, in the chosen corner; a full clock glows. -->
+<!-- Player screen: the shown clocks of the current adventure, in the chosen corner; a full clock glows. Only in a
+     Forged in the Dark adventure (switched to another system — the clocks are not shown). -->
 <script lang="ts">
   import { fade, fly } from 'svelte/transition';
   import { flip } from 'svelte/animate';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import ClockFace from './ClockFace.svelte';
   import type { ClockTone } from '../types';
+  import { fitdHere } from '../../crew/here';
 
   let { ms, app }: ModuleProps<'clocks'> = $props();
 
-  const clocks = $derived((ms.byAdventure[app.adventures.current ?? ''] ?? []).filter((c) => c.shown));
+  const clocks = $derived(fitdHere(app) ? (ms.byAdventure[app.adventures.current ?? ''] ?? []).filter((c) => c.shown) : []);
   const COLOR: Record<ClockTone, string> = { danger: '#c0392b', progress: '#d9a441', neutral: '#9aa3ad' };
   const SIZE = { small: 7, medium: 10, large: 14 } as const;
 </script>
