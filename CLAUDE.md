@@ -315,7 +315,14 @@ Electron-приложение для мастера D&D: окно управле
   (`marks`: кровь, отпечатки, подпалины, дыры… — виды и цвета `NOTE_MARKS` / `NOTE_TINTS`) и складки (`crease`) рисует
   `note/marks.ts` SVG-строками по зерну (слои multiply и normal поверх текста; дыры — CSS-маска `data:`, поэтому в CSP
   окон `img-src … data:`); ставят и двигают их в редакторе (проп `edit` у `NotePaper`). Перо — `Note.strokes` (`NoteStroke`: чернила `NOTE_INKS`, толщина `STROKE_WIDTHS`, точки
-  в долях листа; линия — `strokePath`), слой SVG между текстом и следами; рисование и ластик — `edit.pen` у `NotePaper`. Печать и штамп — тоже следы
+  в долях листа; линия — `strokePath`), слой SVG между текстом и следами; рисование и ластик — `edit.pen` у `NotePaper`.
+  Холст — `….sketch.json` в папке раздатки (`FileKind` 'sketch', формат и ластик `itemAt` — `shared/sketch.ts`: основа
+  `base` бумага / цвет / картинка, `aspect`, `items` — pen (`marker`), line, arrow, rect, ellipse (`fill`), area, text,
+  всё в долях холста), ядро — `main/sketches.ts` (IPC `sketches:*`, переименование — общий `moveHandout` с записками),
+  вид — `renderer/lib/sketch/SketchView.svelte` (бумага — `NotePaper` без текста; `edit` — рисование), редактор —
+  `tools/ui/SketchEditor.svelte` (`ui.tool = 'sketches'`, `ui.note` — путь; у игроков сохраняется сразу — видно, как
+  рисуют), у игроков — `handouts.sketch` (ядро читает файл, как записку). Плитка и подборка — `NoteCard` / `TrayNote`
+  (по суффиксу), «Рисовать поверх» — `imageActions` модуля tools. Печать и штамп — тоже следы
   (`text`, `emblem` — знаки из `shared/emblems.ts`, собраны из Lucide; `broken`), печать — в слое `top` без обрезки
   краем; старые поля `seal` / `sealLetter` `parseNote` превращает в след. Неровный почерк `shaky` — буквы в
   inline-block с поворотом (`shake` в `NotePaper`), шрифты (OFL,

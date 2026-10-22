@@ -10,7 +10,10 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { prettyName } from '../../../shared/vault';
-  import { isNotePath, noteTitle } from '../../../shared/notes';
+  import { isNotePath as isNote, noteTitle } from '../../../shared/notes';
+  import { isSketchPath, sketchTitle } from '../../../shared/sketch';
+  // Notes and canvases: made in the app, edited in «Tools».
+  const isNotePath = (p: string) => isNote(p) || isSketchPath(p);
   import type { Entry } from '../../../shared/compendium';
   import { forPlayers } from '../../../renderer/lib/entry/types.svelte';
   import { entryAt } from '../../compendium/ui/store.svelte';
@@ -18,11 +21,11 @@
 
   let { ms, app }: ModuleProps<'handouts'> = $props();
 
-  const caption = (p: string) => (isNotePath(p) ? noteTitle(p) : (entryAt(p)?.entry.title ?? prettyName(p)));
+  const caption = (p: string) => (isSketchPath(p) ? sketchTitle(p) : isNote(p) ? noteTitle(p) : (entryAt(p)?.entry.title ?? prettyName(p)));
 
   // What the players see now goes to Telegram: a picture as it is, a note as a picture, an entry as text.
   function send(path: string) {
-    if (isNotePath(path)) return sendToTelegram({ kind: 'note', path, title: noteTitle(path) });
+    if (isNotePath(path)) return sendToTelegram({ kind: 'note', path, title: caption(path) });
     const e = entryAt(path)?.entry ?? (ms.entry ? ($state.snapshot(ms.entry) as Entry) : null);
     if (e && /\.md$|^srd:/i.test(path)) return sendToTelegram({ kind: 'text', title: e.title, html: entryToTelegram(e, e.def ?? typeDef(e.type)) });
     sendToTelegram({ kind: 'file', path, title: prettyName(path) });
@@ -39,7 +42,7 @@
   {app}
   part="handout"
   prefer="handouts"
-  kinds={['image', 'note', 'entry']}
+  kinds={['image', 'note', 'sketch', 'entry']}
   {caption}
   isOn={(p) => ms.current === p}
   {toggle}

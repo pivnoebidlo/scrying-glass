@@ -43,7 +43,7 @@
   // Порядок плиток — общий с вкладками («Персонажи», «Фоны», «Раздатка»): группа — путь папки. Записки
   // (раздатка из «Инструментов») — плитками вместе с картинками.
   const images = $derived(
-    folder ? applyOrder(folder.files.filter((f) => f.kind === 'image' || f.kind === 'note'), (f) => f.path, app.order.groups[folder.path]) : []
+    folder ? applyOrder(folder.files.filter((f) => f.kind === 'image' || f.kind === 'note' || f.kind === 'sketch'), (f) => f.path, app.order.groups[folder.path]) : []
   );
 
   // Карточки (*.json) этой папки — их знает бестиарий, дерево хранилища показывает только картинки и музыку.
@@ -169,7 +169,7 @@
 
     {#if images.length}
       <div class="images-head">
-        <h3>{images.some((f) => f.kind === 'note') ? t('vault.imagesAndNotes') : t('vault.images')} <span class="faint">{images.length}</span></h3>
+        <h3>{images.some((f) => f.kind === 'note' || f.kind === 'sketch') ? t('vault.imagesAndNotes') : t('vault.images')} <span class="faint">{images.length}</span></h3>
         <ThumbSize grid="files" />
       </div>
       <p class="faint hint">
@@ -178,7 +178,7 @@
       <div class="grid" style:--thumb="{thumbs.files}px">
         {#each images as f (f.path)}
           <div use:sortable={{ group: folder.path, id: f.path, ids: images.map((x) => x.path), file: f.path }}>
-            {#if f.kind === 'note'}
+            {#if f.kind === 'note' || f.kind === 'sketch'}
               <NoteCard path={f.path} />
             {:else}
               <ImageCard path={f.path} {primary} aspect={role === 'characters' || role === 'party' || role === 'handouts' ? '3 / 4' : '4 / 3'}>

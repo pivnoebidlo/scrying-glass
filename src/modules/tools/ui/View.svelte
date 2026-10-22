@@ -1,12 +1,15 @@
 <!-- Вкладка «Инструменты»: открытый инструмент. Записки — список записок приключения или редактор одной. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { FilePlus2 } from '@lucide/svelte';
+  import { Brush, FilePlus2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { connectNotes, createNote } from '../../../renderer/lib/note/notes.svelte';
   import NoteCard from './NoteCard.svelte';
   import NoteEditor from './NoteEditor.svelte';
+  import SketchEditor from './SketchEditor.svelte';
+  import { createSketch } from '../../../renderer/lib/sketch/sketches.svelte';
+  import { isSketchPath } from '../../../shared/sketch';
   import { noteGroups } from './library';
   import { ui } from './ui.svelte';
   import Calculator from '../difficulty/Calculator.svelte';
@@ -46,15 +49,17 @@
     tavern: TavernGenerator, telegram: TelegramCompose, difficulty: Calculator, timer: TimerTool, pointbuy: PointBuy, reshape: Reshape,
     wildMagic: WildMagic,
   };
-  const Page = $derived(ui.tool !== 'notes' && shown(ui.tool, family) ? PAGES[ui.tool] : undefined);
+  const Page = $derived(ui.tool !== 'notes' && ui.tool !== 'sketches' && shown(ui.tool, family) ? PAGES[ui.tool] : undefined);
 
   connectNotes();
-  const groups = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures) : []);
+  // The notes' page or the canvases' (both live in the handouts folders).
+  const sketches = $derived(ui.tool === 'sketches');
+  const groups = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures, sketches ? 'sketch' : 'note') : []);
   // Открытая записка пропала (удалили, переименовали снаружи) — возвращаемся к списку.
   const exists = $derived(!ui.note || groups.some((g) => g.items.some((f) => f.path === ui.note)));
 
   async function create() {
-    const path = await createNote(app.vault.tree, app.adventures);
+    const path = sketches ? await createSketch(app.vault.tree, app.adventures) : await createNote(app.vault.tree, app.adventures);
     if (path) ui.note = path;
   }
 </script>
@@ -62,16 +67,20 @@
 {#if Page}
   <Page />
 {:else if ui.note && exists}
-  {#key ui.note}<NoteEditor path={ui.note} />{/key}
+  {#key ui.note}{#if isSketchPath(ui.note)}<SketchEditor path={ui.note} />{:else}<NoteEditor path={ui.note} />{/if}{/key}
 {:else}
   <div class="view">
     <header class="head">
-      <h2>{t('tools.notes.title')}</h2>
+      <h2>{t(sketches ? 'sketch.list.title' : 'tools.notes.title')}</h2>
       <div class="spacer"></div>
-      <button class="btn primary" onclick={create}><FilePlus2 size={14} /> {t('tools.notes.new')}</button>
+      {#if sketches}
+        <button class="btn primary" onclick={create}><Brush size={14} /> {t('handouts.newSketch')}</button>
+      {:else}
+        <button class="btn primary" onclick={create}><FilePlus2 size={14} /> {t('tools.notes.new')}</button>
+      {/if}
     </header>
     <p class="faint intro">
-      {t('tools.notes.about1')} <RoleFolderNames role="handouts" /> {t('tools.notes.about2')}
+      {t(sketches ? 'sketch.list.about1' : 'tools.notes.about1')} <RoleFolderNames role="handouts" /> {t(sketches ? 'sketch.list.about2' : 'tools.notes.about2')}
     </p>
 
     {#each groups as g (g.key)}
@@ -82,7 +91,7 @@
         </div>
       </section>
     {:else}
-      <p class="faint empty">{t('tools.notes.none')}</p>
+      <p class="faint empty">{t(sketches ? 'sketch.list.none' : 'tools.notes.none')}</p>
     {/each}
   </div>
 {/if}

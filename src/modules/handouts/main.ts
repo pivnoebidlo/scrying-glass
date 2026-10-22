@@ -5,6 +5,8 @@ import { isNotePath } from '../../shared/notes';
 import { BUILTIN, type Entry } from '../../shared/compendium';
 import { LIBRARY } from '../../shared/vault';
 import { readNoteFile } from '../../main/notes';
+import { isSketchPath } from '../../shared/sketch';
+import { readSketchFile } from '../../main/sketches';
 import type { HandoutsState } from './types';
 
 // Записка у игроков — её содержимое с диска (перечитывается при каждом изменении файлов хранилища).
@@ -13,7 +15,11 @@ function withNote(s: HandoutsState, ctx: ModuleContext): HandoutsState {
   if (s.entry && !s.current) s = { ...s, entry: null };
   const abs = s.current && isNotePath(s.current) ? ctx.vault.resolve(s.current) : null;
   const note = abs ? readNoteFile(abs) : null;
-  return note === null && s.note === null ? s : { ...s, note };
+  // A canvas: the same (it changes while the GM draws — the file is reread after every line).
+  const sAbs = s.current && isSketchPath(s.current) ? ctx.vault.resolve(s.current) : null;
+  const sketch = sAbs ? readSketchFile(sAbs) : null;
+  if (note === null && s.note === null && sketch === null && !s.sketch) return s;
+  return { ...s, note, sketch };
 }
 
 // Если файл удалили из хранилища, убираем его с экрана.
@@ -22,7 +28,7 @@ function prune(s: HandoutsState, ctx: ModuleContext): HandoutsState {
   if (!tree || !s.current) return withNote(s, ctx);
   // Запись справочника из библиотеки — вне хранилища, её не проверяем.
   if ((s.current.startsWith(LIBRARY) || s.current.startsWith(BUILTIN)) && s.entry) return s;
-  const exists = allFiles(tree).some((f) => f.path === s.current && (f.kind === 'image' || f.kind === 'note' || f.kind === 'entry'));
+  const exists = allFiles(tree).some((f) => f.path === s.current && (f.kind === 'image' || f.kind === 'note' || f.kind === 'sketch' || f.kind === 'entry'));
   return withNote(exists ? s : { ...s, current: null }, ctx);
 }
 
@@ -44,7 +50,7 @@ export default defineModule({
 
     // Запись справочника: показать (та же — убрать). Окно передаёт запись целиком.
     toggleEntry(s, { path, entry }: { path: string; entry: Entry }) {
-      return s.current === path ? { ...s, current: null, entry: null, note: null } : { ...s, current: path, entry, note: null };
+      return s.current === path ? { ...s, current: null, entry: null, note: null, sketch: null } : { ...s, current: path, entry, note: null, sketch: null };
     },
 
     // Файл раздатки переименовали: показ остаётся (с той же запиской или записью).
@@ -63,7 +69,7 @@ export default defineModule({
     },
 
     clear(s) {
-      return { ...s, current: null, note: null, entry: null };
+      return { ...s, current: null, note: null, sketch: null, entry: null };
     },
   },
 });

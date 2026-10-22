@@ -1,4 +1,4 @@
-<!-- Плитка записки: лист в миниатюре, название, кнопки «показать игрокам», «править», «в корзину» (подпись кнопки —
+<!-- Плитка записки (or a canvas — by the file's suffix): лист в миниатюре, название, кнопки «показать игрокам», «править», «в корзину» (подпись кнопки —
      сразу при наведении). Щелчок по листу игрокам ничего не показывает, двойной — открывает записку в редакторе. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -8,17 +8,23 @@
   import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import { noteTitle, type Note } from '../../../shared/notes';
+  import { isSketchPath, sketchTitle, type Sketch } from '../../../shared/sketch';
+  import SketchView from '../../../renderer/lib/sketch/SketchView.svelte';
   import { editNote } from './ui.svelte';
 
   let { path, onopen }: { path: string; onopen?: () => void } = $props();
 
   connectNotes();
+  const sketchy = $derived(isSketchPath(path));
+  const title = $derived(sketchy ? sketchTitle(path) : noteTitle(path));
   let note = $state.raw<Note | null>(null);
+  let sketch = $state.raw<Sketch | null>(null);
   $effect(() => {
     const p = path;
     void notes.rev;
     let stale = false;
-    window.api.readNote(p).then((n) => !stale && (note = n));
+    if (isSketchPath(p)) window.api.readSketch(p).then((s) => !stale && (sketch = s));
+    else window.api.readNote(p).then((n) => !stale && (note = n));
     return () => (stale = true);
   });
 
@@ -30,7 +36,7 @@
 
 <div class="card" class:on={shown}>
   <button class="thumb" title={t('tools.card.zoom')} ondblclick={() => (onopen ? onopen() : editNote(path))}>
-    {#if note}<NotePaper {note} />{/if}
+    {#if sketchy}{#if sketch}<SketchView {sketch} small />{/if}{:else if note}<NotePaper {note} />{/if}
   </button>
   {#if shown}<span class="badge">{t('tools.card.handout')}</span>{/if}
   <div class="actions">
@@ -38,14 +44,14 @@
       ><Scroll size={14} /><span class="tip">{shown ? t('tools.card.removeFromScreen') : t('tools.card.show')}</span></button
     >
     {#if tgReady()}
-      <button class="act" aria-label={t('tg.noteHint')} onclick={() => sendToTelegram({ kind: 'note', path, title: noteTitle(path) })}
+      <button class="act" aria-label={t('tg.noteHint')} onclick={() => sendToTelegram({ kind: 'note', path, title })}
         ><Send size={14} /><span class="tip">{t('tg.sendShort')}</span></button
       >
     {/if}
     <button class="act" aria-label={t('tools.card.edit')} onclick={() => (onopen ? onopen() : editNote(path))}><Pencil size={14} /><span class="tip">{t('tools.card.edit')}</span></button>
     <button class="act" aria-label={t('tools.card.toTrash')} onclick={trash}><Trash2 size={14} /><span class="tip">{t('tools.card.toTrash')}</span></button>
   </div>
-  <div class="caption" title={path}>{noteTitle(path)}</div>
+  <div class="caption" title={path}>{title}</div>
 </div>
 
 <style>

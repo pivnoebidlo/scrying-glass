@@ -3,7 +3,8 @@
 <script lang="ts">
   import { unread } from '../../telegram/ui/tg.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { FileText, ScrollText } from '@lucide/svelte';
+  import { Brush, FileText, ScrollText } from '@lucide/svelte';
+  import { sketchTitle } from '../../../shared/sketch';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { noteTitle } from '../../../shared/notes';
   import { noteGroups } from './library';
@@ -17,6 +18,7 @@
   const familyTitle = $derived(FAMILIES.find((f) => f.id === family)?.title ?? family);
   const at = (place: Place) => TOOLS.filter((d) => placeOf(d, family) === place);
   const notes = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures).flatMap((g) => g.items) : []);
+  const sketches = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures, 'sketch').flatMap((g) => g.items) : []);
   // A count next to a tool: unread messages, a running timer.
   const badge = (d: ToolDef) => (d.id === 'telegram' ? unread() || '' : d.id === 'timer' && app.timer.active ? t('tools.side.running') : '');
 </script>
@@ -40,6 +42,17 @@
     <button class="item sub" data-nav data-depth="1" class:active={ui.note === f.path} title={f.path} onclick={() => ((ui.tool = 'notes'), (ui.note = f.path))}>
       <FileText size={13} />
       <span class="name">{noteTitle(f.path)}</span>
+    </button>
+  {/each}
+  <button class="item" data-nav class:active={ui.tool === 'sketches' && !ui.note} onclick={() => pickTool('sketches')}>
+    <Brush size={14} />
+    <span class="name">{t('tools.side.sketches')}</span>
+    <span class="count">{sketches.length}</span>
+  </button>
+  {#each ui.tool === 'sketches' && ui.folded !== 'sketches' ? sketches : [] as f (f.path)}
+    <button class="item sub" data-nav data-depth="1" class:active={ui.note === f.path} title={f.path} onclick={() => ((ui.tool = 'sketches'), (ui.note = f.path))}>
+      <Brush size={13} />
+      <span class="name">{sketchTitle(f.path)}</span>
     </button>
   {/each}
   {#each at('common') as d (d.id)}{@render item(d)}{/each}

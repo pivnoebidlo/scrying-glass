@@ -11,6 +11,7 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { allFiles, assetUrl, prettyName, thumb, type FileKind, type FolderRole } from '../../../shared/vault';
   import { isNotePath } from '../../../shared/notes';
+  import { isSketchPath } from '../../../shared/sketch';
   import { BUILTIN, entryImage } from '../../../shared/compendium';
   import { entryAt } from '../../compendium/ui/store.svelte';
   import TrayNote from './TrayNote.svelte';
@@ -94,7 +95,7 @@
         {@const on = isOn(path)}
         <div class="tile" class:on use:sortable={{ group: `tray:${part}`, id: path, ids: tray, disabled: !tray.includes(path), onmove: reorder }}>
           <button class="pick" title={t('scenes.pickHint', { caption: caption(path), action: on ? t('scenes.removeFromScreen') : t('scenes.showToPlayers') })} onclick={() => toggle(path)}>
-            {#if isNotePath(path)}
+            {#if isNotePath(path) || isSketchPath(path)}
               <TrayNote {path} />
             {:else if isEntry(path)}
               {@const found = entryAt(path)}

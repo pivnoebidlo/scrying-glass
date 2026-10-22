@@ -23,6 +23,8 @@ import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
 import { createNote, readNote, renameNote, writeNote } from './notes';
+import { createSketch, readSketch, renameSketch, writeSketch } from './sketches';
+import type { Sketch } from '../shared/sketch';
 import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
 import { pages } from './journal';
 import { resolver } from './textstore';
@@ -421,6 +423,18 @@ ipcMain.handle('notes:create', async (_event, { folder, title, note }: { folder:
   if (rel) await afterNoteWrite();
   return rel;
 });
+// Canvases: the same way (on the players' screen it is updated after every line — the core rereads the file).
+ipcMain.handle('sketches:read', (_event, rel: string) => readSketch(resolveInVault, rel));
+ipcMain.handle('sketches:write', async (_event, { path: rel, sketch }: { path: string; sketch: Sketch }) => {
+  const ok = writeSketch(resolveInVault, rel, sketch);
+  if (ok) await afterNoteWrite();
+  return ok;
+});
+ipcMain.handle('sketches:create', async (_event, { folder, title, sketch }: { folder: string; title: string; sketch: Sketch }) => {
+  const rel = createSketch(resolveInVault, folder, title, sketch);
+  if (rel) await afterNoteWrite();
+  return rel;
+});
 // Text files (compendium entries) in the vault or the library («library:…»).
 const resolveText = resolver(resolveInVault, resolveInLibrary);
 // Справочник: записи в папках справочника хранилища и в библиотеке («library:compendium/…»).
@@ -529,7 +543,7 @@ function appVaultFiles(): string[] {
   const out: string[] = [];
   if (!vaultRoot) return out;
   if (fs.existsSync(vaultStateFile())) out.push(`${DATA_DIR}/state.json`);
-  if (vaultTree) out.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'entry' || f.kind === 'page').map((f) => f.path));
+  if (vaultTree) out.push(...allFiles(vaultTree).filter((f) => f.kind === 'note' || f.kind === 'sketch' || f.kind === 'entry' || f.kind === 'page').map((f) => f.path));
   out.push(...listCards().filter((c) => c.ref.scope === 'vault' && c.file).map((c) => c.file!));
   return out;
 }
@@ -1074,8 +1088,9 @@ ipcMain.handle('vault:openFile', async (_event, rel: string) => {
 });
 
 // Переименование меняет путь: раздатка у игроков и сцены, где была эта записка, переходят на новый.
-ipcMain.handle('notes:rename', async (_event, { path: rel, title }: { path: string; title: string }) => {
-  const next = renameNote(resolveInVault, rel, title);
+ipcMain.handle('notes:rename', async (_event, { path: rel, title }: { path: string; title: string }) => moveHandout(rel, renameNote(resolveInVault, rel, title)));
+ipcMain.handle('sketches:rename', async (_event, { path: rel, title }: { path: string; title: string }) => moveHandout(rel, renameSketch(resolveInVault, rel, title)));
+async function moveHandout(rel: string, next: string | null) {
   if (!next || next === rel) return next;
   if (state.handouts.current === rel) await runAction('handouts', 'set', { path: next });
   for (const sc of state.scenes.scenes) {
@@ -1083,7 +1098,7 @@ ipcMain.handle('notes:rename', async (_event, { path: rel, title }: { path: stri
   }
   await afterNoteWrite();
   return next;
-});
+}
 
 // Карточки (бестиарий): краткий список и полная карточка по ссылке, сохранение, картинки, папка библиотеки.
 ipcMain.handle('cards:list', () => listCards());

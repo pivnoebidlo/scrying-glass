@@ -13,7 +13,7 @@
     app.vault.tree
       ? imageGroups(app.vault.tree, app.vault.name, 'handouts', app.adventures).map((g) => {
           const f = findFolder(app.vault.tree!, g.key);
-          return { ...g, items: [...g.items, ...(f ? allFiles(f, 'note') : [])] };
+          return { ...g, items: [...g.items, ...(f ? allFiles(f).filter((x) => x.kind === 'note' || x.kind === 'sketch') : [])] };
         })
       : []
   );

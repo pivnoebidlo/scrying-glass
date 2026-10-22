@@ -4,9 +4,11 @@
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
-  import { FilePlus2, Search } from '@lucide/svelte';
+  import { Brush, FilePlus2, Search } from '@lucide/svelte';
   import { allFiles, findFolder } from '../../../shared/vault';
   import { createNote } from '../../../renderer/lib/note/notes.svelte';
+  import { createSketch } from '../../../renderer/lib/sketch/sketches.svelte';
+  import { sketchTitle } from '../../../shared/sketch';
   import NoteCard from '../../tools/ui/NoteCard.svelte';
   import { editNote } from '../../tools/ui/ui.svelte';
   import { noteTitle } from '../../../shared/notes';
@@ -27,14 +29,18 @@
   const groups = $derived(
     (app.vault.tree ? imageGroups(app.vault.tree, app.vault.name, 'handouts', app.adventures) : []).map((g) => {
       const folder = findFolder(app.vault.tree!, g.key);
-      const notes = folder ? allFiles(folder, 'note') : [];
+      const notes = folder ? allFiles(folder).filter((f) => f.kind === 'note' || f.kind === 'sketch') : [];
       return { ...g, items: applyOrder([...notes, ...g.items], (f) => f.path, app.order.groups[g.key]) };
     })
   );
-  const label = (path: string, kind: string) => (kind === 'note' ? noteTitle(path) : prettyName(path));
+  const label = (path: string, kind: string) => (kind === 'note' ? noteTitle(path) : kind === 'sketch' ? sketchTitle(path) : prettyName(path));
 
   async function newNote() {
     const path = await createNote(app.vault.tree, app.adventures);
+    if (path) editNote(path);
+  }
+  async function newCanvas() {
+    const path = await createSketch(app.vault.tree, app.adventures);
     if (path) editNote(path);
   }
   const visible = $derived.by(() => {
@@ -55,6 +61,7 @@
     </label>
     <PasteButton {app} role="handouts" />
     <button class="btn" title={t('handouts.newNoteHint')} onclick={newNote}><FilePlus2 size={14} /> {t('handouts.newNote')}</button>
+    <button class="btn" title={t('handouts.newSketchHint')} onclick={newCanvas}><Brush size={14} /> {t('handouts.newSketch')}</button>
     <div class="spacer"></div>
     <ThumbSize grid="handouts" />
   </header>
@@ -79,7 +86,7 @@
         <div class="grid" style:--thumb="{thumbs.handouts}px">
           {#each g.items as f (f.path)}
             <div use:sortable={{ group: g.key, id: f.path, ids: g.items.map((x) => x.path), disabled: !!ui.search.trim(), file: f.path }}>
-              {#if f.kind === 'note'}
+              {#if f.kind === 'note' || f.kind === 'sketch'}
                 <NoteCard path={f.path} />
               {:else}
                 <ImageCard path={f.path} primary="handout" aspect="3 / 4">

@@ -6,6 +6,8 @@
   import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
   import { isNotePath } from '../../../shared/notes';
+  import { isSketchPath } from '../../../shared/sketch';
+  import SketchView from '../../../renderer/lib/sketch/SketchView.svelte';
   import { vaultUrl } from '../../../shared/vault';
 
   let { ms }: ModuleProps<'handouts'> = $props();
@@ -17,6 +19,10 @@
     <div class="backdrop" transition:fade|global={{ duration: 400 }}>
       {#if ms.entry}
         <div class="entry" transition:scale|global={{ start: 0.94, duration: 400 }}><EntryCard entry={ms.entry} players /></div>
+      {:else if isSketchPath(ms.current)}
+        {#if ms.sketch}
+          <div class="note" transition:scale|global={{ start: 0.94, duration: 400 }}><SketchView sketch={ms.sketch} shadow /></div>
+        {/if}
       {:else if isNotePath(ms.current)}
         {#if ms.note}
           <div class="note" transition:scale|global={{ start: 0.94, duration: 400 }}><NotePaper note={ms.note} shadow /></div>

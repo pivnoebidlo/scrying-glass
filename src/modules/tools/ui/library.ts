@@ -11,12 +11,13 @@ export interface NoteGroup {
 
 const collator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
 
-export function noteGroups(tree: VaultFolder, vaultName: string, adv: AdventuresState): NoteGroup[] {
+// kind — notes or canvases (both live in the handouts folders).
+export function noteGroups(tree: VaultFolder, vaultName: string, adv: AdventuresState, kind: 'note' | 'sketch' = 'note'): NoteGroup[] {
   return roleFolders(tree, 'handouts', vaultName)
     .filter((r) => visibleIn(adv, r.folder.path))
     .map((r) => {
       const dir = dirname(r.folder.path);
-      return { key: r.folder.path, title: placeTitle(adv, dir, vaultName), order: placeOrder(adv, dir), items: allFiles(r.folder, 'note') };
+      return { key: r.folder.path, title: placeTitle(adv, dir, vaultName), order: placeOrder(adv, dir), items: allFiles(r.folder, kind) };
     })
     .filter((g) => g.items.length)
     .sort((a, b) => a.order - b.order || collator.compare(a.title, b.title));

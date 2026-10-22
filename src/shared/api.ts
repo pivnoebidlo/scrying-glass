@@ -3,6 +3,7 @@ import type { BuiltinSounds } from './sounds';
 import type { Card, CardRef, CardScope, CardSummary, LssMatch, LssPreview } from './cards';
 import type { BuiltinBook } from './compendium';
 import type { Note } from './notes';
+import type { Sketch } from './sketch';
 import type { TrashItem, TrashKind, TrashPlace, TrashSettings } from './trash';
 import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 import type { UpdateInfo, UpdateSettings } from './updates';
@@ -111,6 +112,11 @@ export interface Api {
   createNote(folder: string, title: string, note: Note): Promise<string | null>;
   // Новое название = новое имя файла. Новый путь или null.
   renameNote(path: string, title: string): Promise<string | null>;
+  // Canvases (shared/sketch.ts): the same, only «….sketch.json».
+  readSketch(path: string): Promise<Sketch | null>;
+  writeSketch(path: string, sketch: Sketch): Promise<boolean>;
+  createSketch(folder: string, title: string, sketch: Sketch): Promise<string | null>;
+  renameSketch(path: string, title: string): Promise<string | null>;
 
   // Справочник (shared/compendium.ts): Markdown-записи в папках справочника хранилища и в библиотеке
   // («library:compendium/…»). Удаление записи библиотеки — trashLibraryEntry.

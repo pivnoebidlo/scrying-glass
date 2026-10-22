@@ -10,6 +10,8 @@
   import { chatName, markdownToTelegram, sortChats, titleHtml } from '../../../shared/telegram';
   import NotePaper from '../../../renderer/lib/note/NotePaper.svelte';
   import type { Note } from '../../../shared/notes';
+  import { isSketchPath, type Sketch } from '../../../shared/sketch';
+  import SketchView from '../../../renderer/lib/sketch/SketchView.svelte';
   import { enabledChats, lastSelected, loadTg, rememberSelected, sending, tg, tgReady } from './tg.svelte';
 
   // Standard module props; nothing here uses them.
@@ -65,18 +67,21 @@
     if (r.sent && !r.errors.length) setTimeout(() => sending.job === j && close(), 1200);
   }
 
-  // A note: drawn large over the window (the dialog hidden; the sheet fits the box keeping its shape), captured, removed.
-  let shooting = $state.raw<Note | null>(null);
+  // A note (or a canvas): drawn large over the window (the dialog hidden; the sheet fits the box keeping its shape),
+  // captured, removed.
+  let shooting = $state.raw<Note | Sketch | null>(null);
   let page = $state<HTMLElement | null>(null);
   const frame = () => new Promise((res) => setTimeout(res, 120));
   async function sendNote(path: string, title: string, cap?: string) {
-    const note = await window.api.readNote(path);
+    const note = isSketchPath(path) ? await window.api.readSketch(path) : await window.api.readNote(path);
     if (!note) return { sent: 0, errors: [title] };
     const j = sending.job;
     sending.job = null;
     shooting = note;
     await tick();
     await document.fonts.ready;
+    // A canvas over a picture: the picture has to be loaded.
+    await Promise.all([...(page?.querySelectorAll('img') ?? [])].map((img) => img.decode().catch(() => {})));
     await frame();
     await frame();
     const sheet = page?.querySelector('.sheet') as HTMLElement | null;
@@ -95,7 +100,7 @@
 <svelte:window {onkeydown} />
 
 {#if shooting}
-  <div class="shoot"><div class="page" bind:this={page}><NotePaper note={shooting} /></div></div>
+  <div class="shoot"><div class="page" bind:this={page}>{#if shooting.scryingGlass === 'sketch'}<SketchView sketch={shooting} />{:else}<NotePaper note={shooting} />{/if}</div></div>
 {/if}
 
 {#if job}

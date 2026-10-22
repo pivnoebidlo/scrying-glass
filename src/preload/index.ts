@@ -43,6 +43,10 @@ const api: Api = {
   writeNote: (path, note) => ipcRenderer.invoke('notes:write', { path, note }),
   createNote: (folder, title, note) => ipcRenderer.invoke('notes:create', { folder, title, note }),
   renameNote: (path, title) => ipcRenderer.invoke('notes:rename', { path, title }),
+  readSketch: (path) => ipcRenderer.invoke('sketches:read', path),
+  writeSketch: (path, sketch) => ipcRenderer.invoke('sketches:write', { path, sketch }),
+  createSketch: (folder, title, sketch) => ipcRenderer.invoke('sketches:create', { folder, title, sketch }),
+  renameSketch: (path, title) => ipcRenderer.invoke('sketches:rename', { path, title }),
 
   readEntry: (path) => ipcRenderer.invoke('compendium:read', path),
   listLibraryEntries: () => ipcRenderer.invoke('compendium:listLibrary'),

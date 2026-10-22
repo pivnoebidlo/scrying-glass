@@ -9,9 +9,9 @@ export const AUDIO_EXT = ['.mp3', '.ogg', '.wav', '.flac', '.m4a'];
 export const extOf = (name: string) => name.slice(name.lastIndexOf('.')).toLowerCase();
 export const roleAccepts = (role: FolderRole, name: string) => (role === 'music' ? AUDIO_EXT : IMAGE_EXT).includes(extOf(name));
 
-// note — записка, сделанная в приложении («….note.json», см. shared/notes.ts); entry — запись справочника (.md в папках справочника,
+// note — записка, сделанная в приложении («….note.json», см. shared/notes.ts); sketch — a canvas («….sketch.json», shared/sketch.ts); entry — запись справочника (.md в папках справочника,
 // см. shared/compendium.ts); page — заметка журнала (.md в папках журнала, см. shared/journal.ts).
-export type FileKind = 'image' | 'audio' | 'note' | 'entry' | 'page';
+export type FileKind = 'image' | 'audio' | 'note' | 'sketch' | 'entry' | 'page';
 
 // Пути внутри хранилища — относительные, через «/», корень — пустая строка.
 export interface VaultFile {
@@ -111,6 +111,7 @@ export function folderRole(name: string): FolderRole | null {
 
 export function fileKind(name: string): FileKind | null {
   if (name.toLowerCase().endsWith('.note.json')) return 'note';
+  if (name.toLowerCase().endsWith('.sketch.json')) return 'sketch';
   const ext = extname(name);
   if (IMAGE_EXT.includes(ext)) return 'image';
   if (AUDIO_EXT.includes(ext)) return 'audio';
@@ -191,7 +192,8 @@ export function allFiles(folder: VaultFolder, kind?: FileKind): VaultFile[] {
 // «Глава 1/characters/староста_гилберт.jpg» -> «Староста Гилберт». Имя, где уже есть заглавные буквы («Таверна
 // Сытый гусь.png» — так его назвал мастер), остаётся как написано.
 export function prettyName(path: string): string {
-  const file = basename(path);
+  // A note or a canvas: «Name.note.json» — the double extension goes too.
+  const file = basename(path).replace(/\.(note|sketch)\.json$/i, '.json');
   const i = file.lastIndexOf('.');
   const name = (i > 0 ? file.slice(0, i) : file)
     .normalize('NFC')

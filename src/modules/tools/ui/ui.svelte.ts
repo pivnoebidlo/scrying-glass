@@ -1,7 +1,8 @@
 // Что открыто в «Инструментах»: инструмент и записка в редакторе (путь в хранилище).
 import { openTab } from '../../../renderer/lib/nav';
+import { isSketchPath } from '../../../shared/sketch';
 
-export type ToolId = 'notes' | 'names' | 'npc' | 'tavern' | 'weather' | 'events' | 'treasure' | 'settlement' | 'shop' | 'relic' | 'dungeon' | 'travel' | 'schedule' | 'telegram' | 'difficulty' | 'timer' | 'pointbuy' | 'mouse' | 'mausTables' | 'factions' | 'reshape' | 'wildMagic';
+export type ToolId = 'notes' | 'sketches' | 'names' | 'npc' | 'tavern' | 'weather' | 'events' | 'treasure' | 'settlement' | 'shop' | 'relic' | 'dungeon' | 'travel' | 'schedule' | 'telegram' | 'difficulty' | 'timer' | 'pointbuy' | 'mouse' | 'mausTables' | 'factions' | 'reshape' | 'wildMagic';
 
 export const ui = $state({
   tool: 'notes' as ToolId,
@@ -19,9 +20,9 @@ export function pickTool(tool: ToolId) {
   ui.note = null;
 }
 
-// Открыть записку в редакторе (из «Раздатки», правой панели или списка записок).
+// Открыть записку в редакторе (из «Раздатки», правой панели или списка записок); a canvas — in its own.
 export function editNote(path: string) {
-  ui.tool = 'notes';
+  ui.tool = isSketchPath(path) ? 'sketches' : 'notes';
   ui.note = path;
   ui.folded = null;
   openTab('tools');
