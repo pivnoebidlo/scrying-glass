@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aspectOf, itemAt, isSketchPath, newSketch, parseSketch, sketchTitle, SKETCH_FRAMES, type SketchItem } from '../src/shared/sketch';
+import { aspectOf, bucketArea, traceOutline, fillTargetAt, inArea, itemAt, isSketchPath, newSketch, parseSketch, sketchTitle, SKETCH_FRAMES, type SketchItem } from '../src/shared/sketch';
 import { fileKind, prettyName } from '../src/shared/vault';
 
 describe('canvas files', () => {
@@ -64,5 +64,54 @@ describe('itemAt (the eraser)', () => {
   });
   it('takes the topmost one', () => {
     expect(itemAt([...items, { t: 'pen', color: '#000000', width: 0.01, points: [0.4, 0.5, 0.6, 0.5] }], 0.5, 0.5, 1000, 800)).toBe(5);
+  });
+});
+
+describe('the bucket', () => {
+  // A 40 × 30 grid with a closed square room (walls at 10…20 × 10…20).
+  const w = 40;
+  const h = 30;
+  const walls = new Uint8Array(w * h);
+  for (let i = 10; i <= 20; i++) {
+    walls[10 * w + i] = walls[20 * w + i] = walls[i * w + 10] = walls[i * w + 20] = 1;
+  }
+  const area = (a: { points: number[]; holes: number[][] }) => ({ t: 'area' as const, color: '#000000', points: a.points, holes: a.holes, bucket: true });
+
+  it('fills the closed room up to its walls', () => {
+    const a = bucketArea(walls, w, h, 15 / w, 15 / h)!;
+    const xs = a.points.filter((_, i) => i % 2 === 0);
+    expect(Math.min(...xs)).toBeGreaterThan(9 / w);
+    expect(Math.max(...xs)).toBeLessThan(22 / w);
+    expect(a.holes).toEqual([]);
+    expect(inArea(area(a), 15 / w, 15 / h)).toBe(true);
+    expect(inArea(area(a), 30 / w, 5 / h)).toBe(false);
+  });
+
+  it('fills the outside to the edges, the room stays an island', () => {
+    const a = bucketArea(walls, w, h, 2 / w, 2 / h)!;
+    expect(a.points).toContain(0);
+    expect(a.points).toContain(1);
+    expect(a.holes).toHaveLength(1);
+    expect(inArea(area(a), 30 / w, 5 / h)).toBe(true);
+    expect(inArea(area(a), 15 / w, 15 / h)).toBe(false);
+  });
+
+  it('goes round an outline once', () => {
+    const room = new Uint8Array(w * h);
+    for (let y = 11; y < 20; y++) for (let x = 11; x < 20; x++) room[y * w + x] = 1;
+    expect(traceOutline(room, w, h).length / 2).toBe(32);
+  });
+
+  it('does nothing on a wall', () => {
+    expect(bucketArea(walls, w, h, 10.5 / w, 15.5 / h)).toBeNull();
+  });
+
+  it('recolours a filled shape or an area under the point, not an outline', () => {
+    const items: SketchItem[] = [
+      { t: 'rect', color: '#000000', width: 0.003, x1: 0.1, y1: 0.1, x2: 0.4, y2: 0.4, fill: 'none' },
+      { t: 'ellipse', color: '#000000', width: 0.003, x1: 0.5, y1: 0.5, x2: 0.9, y2: 0.9, fill: 'tint' },
+    ];
+    expect(fillTargetAt(items, 0.2, 0.2)).toBe(-1);
+    expect(fillTargetAt(items, 0.7, 0.7)).toBe(1);
   });
 });

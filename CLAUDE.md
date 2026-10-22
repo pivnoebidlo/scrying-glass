@@ -317,8 +317,9 @@ Electron-приложение для мастера D&D: окно управле
   окон `img-src … data:`); ставят и двигают их в редакторе (проп `edit` у `NotePaper`). Перо — `Note.strokes` (`NoteStroke`: чернила `NOTE_INKS`, толщина `STROKE_WIDTHS`, точки
   в долях листа; линия — `strokePath`), слой SVG между текстом и следами; рисование и ластик — `edit.pen` у `NotePaper`.
   Холст — `….sketch.json` в папке раздатки (`FileKind` 'sketch', формат и ластик `itemAt` — `shared/sketch.ts`: основа
-  `base` бумага / цвет / картинка, `aspect`, `items` — pen (`marker`), line, arrow, rect, ellipse (`fill`), area, text,
-  всё в долях холста), ядро — `main/sketches.ts` (IPC `sketches:*`, переименование — общий `moveHandout` с записками),
+  `base` бумага / цвет / картинка, `aspect`, `items` — pen (`marker`), line, arrow, rect, ellipse (`fill`, `fillColor`), area (`fill`, `bucket`,
+  `holes`), text, всё в долях холста, рисуется и вводится только внутри холста; ведёрко — `walls` в `SketchView` (линии в сетку 600 клеток)
+  → `bucketArea` (`floodFill`, `grow`, `traceOutline`, `holesOf`, `simplify`), залитое под рисунком, перекраска — `fillTargetAt`), ядро — `main/sketches.ts` (IPC `sketches:*`, переименование — общий `moveHandout` с записками),
   вид — `renderer/lib/sketch/SketchView.svelte` (бумага — `NotePaper` без текста; `edit` — рисование), редактор —
   `tools/ui/SketchEditor.svelte` (`ui.tool = 'sketches'`, `ui.note` — путь; у игроков сохраняется сразу — видно, как
   рисуют), у игроков — `handouts.sketch` (ядро читает файл, как записку). Плитка и подборка — `NoteCard` / `TrayNote`

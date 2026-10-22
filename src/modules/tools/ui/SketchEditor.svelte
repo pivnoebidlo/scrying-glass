@@ -83,6 +83,7 @@
   let color = $state<string>(SKETCH_COLORS[0]);
   let width = $state<SketchWidth>('medium');
   let fill = $state<SketchFill>('none');
+  let areaFill = $state<'tint' | 'solid'>('solid');
   let font = $state<NoteFont>('marck');
   let size = $state<TextSize>('medium');
 
@@ -106,10 +107,12 @@
           color,
           width: SKETCH_WIDTHS[width],
           fill,
+          areaFill,
           font,
           size: TEXT_SIZES[size],
           onadd: (it: SketchItem) => sketch && sketch.items.length < MAX_ITEMS && setItems([...sketch.items, it]),
           onerase: (i: number) => sketch && setItems(sketch.items.filter((_, j) => j !== i)),
+          onset: (items: SketchItem[]) => setItems(items.slice(0, MAX_ITEMS)),
         }
       : null,
   );
@@ -199,6 +202,13 @@
         <div class="seg text">
           {#each ['none', 'tint', 'solid'] as f (f)}
             <button type="button" class:active={fill === f} onclick={() => (fill = f as SketchFill)}>{t(`sketch.fill.${f}` as never)}</button>
+          {/each}
+        </div>
+      {/if}
+      {#if tool === 'area'}
+        <div class="seg text">
+          {#each ['solid', 'tint'] as f (f)}
+            <button type="button" class:active={areaFill === f} onclick={() => (areaFill = f as 'tint' | 'solid')}>{t(`sketch.fill.${f}` as never)}</button>
           {/each}
         </div>
       {/if}

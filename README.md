@@ -127,7 +127,8 @@ text and the sheet, the pen, the marks.
 **Canvases** (Tools → Canvases, "New canvas" in Handouts, or "Draw over" on any picture) are handouts you draw: on a
 sheet of the notes' paper, on a plain colour or over a picture of the vault (the picture itself does not change).
 Pen, a see-through marker, line, arrow, rectangle and ellipse (outline, see-through or solid; Shift — square, circle,
-15° steps), a freehand area filled see-through, text in the notes' fonts, an eraser and undo (⌘Z). A canvas is shown
+15° steps), a bucket (a click fills a shape or a part closed by lines, under the drawing — rooms inside a filled
+background stay as they are; a drag fills an area drawn by hand), text in the notes' fonts, an eraser and undo (⌘Z). A canvas is shown
 like any handout — and while it is on the player screen, the players see every line as you draw it. Nineteen fonts with Cyrillic: handwriting, calligraphy, book faces, Old Russian, chronicle,
 ancient manuscript, creepy ones (drips, distressed, beastly); "shaky handwriting" makes the letters dance. A note is a
 file "Title.note.json" in the adventure's handouts folder: it sits in Handouts and Files next to the pictures and is

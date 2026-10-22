@@ -11,10 +11,14 @@
     color: string;
     width: number;
     fill: SketchFill;
+    // The bucket and hand-drawn areas: see-through or solid.
+    areaFill: 'tint' | 'solid';
     font: NoteFont;
     size: number;
     onadd: (item: SketchItem) => void;
     onerase: (i: number) => void;
+    // The bucket: the whole list changes (a fill goes under the drawing, a fill shape gets recoloured).
+    onset: (items: SketchItem[]) => void;
   }
 </script>
 
@@ -24,7 +28,7 @@
   import { NOTE_FONTS, newNote } from '../../../shared/notes';
   import { assetUrl, thumb } from '../../../shared/vault';
   import {
-    areaPath, arrowPath, itemAt, MARKER_WIDTH, strokePath, TEXT_MAX, TINT_ALPHA,
+    areaPath, arrowPath, bucketArea, bucketPath, fillTargetAt, itemAt, MARKER_WIDTH, strokePath, TEXT_MAX, TINT_ALPHA,
     type Sketch,
   } from '../../../shared/sketch';
 
@@ -60,7 +64,9 @@
     if (!ed || e.button !== 0) return;
     e.preventDefault();
     const box = (e.currentTarget as Element).getBoundingClientRect();
-    const at = (ev: PointerEvent) => [(ev.clientX - box.left) / box.width, (ev.clientY - box.top) / box.height] as [number, number];
+    // Within the canvas: what goes past its edge stops at the edge.
+    const clamp = (v: number) => Math.min(1, Math.max(0, v));
+    const at = (ev: PointerEvent) => [clamp((ev.clientX - box.left) / box.width), clamp((ev.clientY - box.top) / box.height)] as [number, number];
     const [x0, y0] = at(e);
     const r4 = (v: number) => +v.toFixed(4);
     const track = (move: (ev: PointerEvent) => void, up: () => void) => {
@@ -91,7 +97,7 @@
       const pts = [r4(x0), r4(y0)];
       const make = (): SketchItem =>
         ed.tool === 'area'
-          ? { t: 'area', color: ed.color, points: [...pts] }
+          ? { t: 'area', color: ed.color, points: [...pts], ...(ed.areaFill === 'solid' ? { fill: 'solid' as const } : {}) }
           : { t: 'pen', color: ed.color, width: ed.tool === 'marker' ? MARKER_WIDTH : ed.width, points: [...pts], ...(ed.tool === 'marker' ? { marker: true } : {}) };
       live = make();
       return track(
@@ -103,7 +109,8 @@
         },
         () => {
           live = null;
-          if (ed.tool === 'area' && pts.length < 6) return;
+          // The bucket: a click (no outline drawn) fills the closed part around the point.
+          if (ed.tool === 'area' && pts.length < 6) return bucket(ed, x0, y0);
           if (pts.length < 4) pts.push(r4(x0 + 0.0005), r4(y0));
           ed.onadd(make());
         },
@@ -141,6 +148,55 @@
     );
   }
 
+  // The bucket: a filled shape or area under the point gets the new colour; otherwise the part of the canvas closed
+  // by the lines around the point is filled — under all the drawing.
+  function bucket(ed: SketchEdit, x: number, y: number) {
+    const items = sketch.items;
+    const solid = ed.areaFill === 'solid';
+    const hit = fillTargetAt(items, x, y);
+    if (hit >= 0) {
+      const it = items[hit]!;
+      const next =
+        it.t === 'area'
+          ? { ...it, color: ed.color, fill: ed.areaFill }
+          : { ...(it as Extract<SketchItem, { fillColor?: string }>), fill: ed.areaFill, fillColor: ed.color };
+      return ed.onset(items.map((x, i) => (i === hit ? (next as SketchItem) : x)));
+    }
+    const gw = 600;
+    const gh = Math.max(1, Math.round(gw / sketch.aspect));
+    const area = bucketArea(walls(items, gw, gh), gw, gh, x, y);
+    if (!area) return;
+    const item: SketchItem = { t: 'area', color: ed.color, points: area.points, bucket: true, ...(solid ? { fill: 'solid' as const } : {}), ...(area.holes.length ? { holes: area.holes } : {}) };
+    ed.onset([item, ...items]);
+  }
+
+  // The lines as cells of a gw × gh grid (1 — a line): what the bucket stops at. Texts and the marker do not stop it.
+  function walls(items: SketchItem[], gw: number, gh: number): Uint8Array {
+    const cv = document.createElement('canvas');
+    cv.width = gw;
+    cv.height = gh;
+    const g = cv.getContext('2d', { willReadFrequently: true })!;
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    for (const it of items) {
+      if (it.t === 'text' || (it.t === 'pen' && it.marker) || it.t === 'area') continue;
+      g.lineWidth = Math.max(1.5, it.width * gw);
+      if (it.t === 'pen') g.stroke(new Path2D(strokePath(it.points, gw, gh)));
+      else if (it.t === 'line') g.stroke(new Path2D(`M${it.x1 * gw} ${it.y1 * gh}L${it.x2 * gw} ${it.y2 * gh}`));
+      else if (it.t === 'arrow') g.stroke(new Path2D(arrowPath(it.x1 * gw, it.y1 * gh, it.x2 * gw, it.y2 * gh, it.width * gw)));
+      else if (it.t === 'rect') g.strokeRect(Math.min(it.x1, it.x2) * gw, Math.min(it.y1, it.y2) * gh, Math.abs(it.x2 - it.x1) * gw, Math.abs(it.y2 - it.y1) * gh);
+      else {
+        g.beginPath();
+        g.ellipse(((it.x1 + it.x2) / 2) * gw, ((it.y1 + it.y2) / 2) * gh, (Math.abs(it.x2 - it.x1) / 2) * gw, (Math.abs(it.y2 - it.y1) / 2) * gh, 0, 0, Math.PI * 2);
+        g.stroke();
+      }
+    }
+    const px = g.getImageData(0, 0, gw, gh).data;
+    const out = new Uint8Array(gw * gh);
+    for (let i = 0; i < out.length; i++) out[i] = px[i * 4 + 3]! > 60 ? 1 : 0;
+    return out;
+  }
+
   function commitText() {
     const tx = typing;
     typing = null;
@@ -164,8 +220,10 @@
 {#snippet draw(it: SketchItem)}
   {#if it.t === 'pen'}
     <path d={strokePath(it.points, W, H)} fill="none" stroke={it.color} stroke-width={it.width * W} opacity={it.marker ? 0.42 : 1} stroke-linecap={it.marker ? 'butt' : 'round'} />
+  {:else if it.t === 'area' && it.bucket}
+    <path d={bucketPath(it, W, H)} fill={it.color} fill-rule="evenodd" fill-opacity={it.fill === 'solid' ? 1 : TINT_ALPHA} stroke="none" />
   {:else if it.t === 'area'}
-    <path d={areaPath(it.points, W, H)} fill={it.color} fill-opacity={TINT_ALPHA} stroke={it.color} stroke-opacity="0.6" stroke-width="2" />
+    <path d={areaPath(it.points, W, H)} fill={it.color} fill-opacity={it.fill === 'solid' ? 1 : TINT_ALPHA} stroke={it.color} stroke-opacity="0.6" stroke-width="2" />
   {:else if it.t === 'line'}
     <line x1={it.x1 * W} y1={it.y1 * H} x2={it.x2 * W} y2={it.y2 * H} stroke={it.color} stroke-width={it.width * W} />
   {:else if it.t === 'arrow'}
@@ -176,7 +234,7 @@
       y={Math.min(it.y1, it.y2) * H}
       width={Math.abs(it.x2 - it.x1) * W}
       height={Math.abs(it.y2 - it.y1) * H}
-      fill={fillOf(it.color, it.fill)}
+      fill={fillOf(it.fillColor ?? it.color, it.fill)}
       fill-opacity={fillOpacity(it.fill)}
       stroke={it.color}
       stroke-width={it.width * W}
@@ -187,7 +245,7 @@
       cy={((it.y1 + it.y2) / 2) * H}
       rx={(Math.abs(it.x2 - it.x1) / 2) * W}
       ry={(Math.abs(it.y2 - it.y1) / 2) * H}
-      fill={fillOf(it.color, it.fill)}
+      fill={fillOf(it.fillColor ?? it.color, it.fill)}
       fill-opacity={fillOpacity(it.fill)}
       stroke={it.color}
       stroke-width={it.width * W}
@@ -291,7 +349,7 @@
   }
   svg {
     pointer-events: none;
-    overflow: visible;
+    overflow: hidden;
   }
   .edit {
     cursor: crosshair;
