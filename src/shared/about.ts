@@ -29,6 +29,7 @@ export const CREDITS: Credit[] = [
     licenseUrl: 'https://creativecommons.org/licenses/by/3.0/',
   },
   { id: 'mausritter', who: 'Losing Games and Isaac Williams', license: 'CC BY 4.0', url: 'https://mausritter.com', licenseUrl: CC_BY_4 },
+  { id: 'fitd', who: 'One Seven Design — John Harper', license: 'CC BY 3.0', url: 'http://www.bladesinthedark.com/', licenseUrl: 'https://creativecommons.org/licenses/by/3.0/' },
   { id: 'ambience', who: 'JC Sounds — Nature Ambient Pack Vol 1', license: 'CC BY 4.0', url: 'https://opengameart.org/node/180349', licenseUrl: CC_BY_4 },
   { id: 'sfx', who: 'Kenney, artisticdude, rubberduck', license: 'CC0', url: 'https://opengameart.org', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/' },
   { id: 'bigsoundbank', who: 'Joseph Sardin — BigSoundBank.com', license: 'CC0', url: 'https://bigsoundbank.com', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/' },

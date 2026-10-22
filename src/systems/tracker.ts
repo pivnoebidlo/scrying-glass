@@ -19,9 +19,11 @@ export interface TrackerDef {
   // from — the key of a field that sets the bonus (Mausritter: DEX): no separate input, shown without a sign.
   bonus: { label: string; short: string; title: string; from?: string };
   // Кнопка «Бросить за NPC»: результат для участника с этим бонусом.
-  roll: { label: string; title: string; value(bonus: number): number };
+  // none — nothing to roll (Forged in the Dark has no initiative): no button.
+  roll: { label: string; title: string; value(bonus: number): number; none?: boolean };
   // Состояния: готовый список (у D&D) или свободный ввод (аспекты Fate).
-  conditions: { label: string; list: string[]; free: boolean; entry?(c: string): string[] };
+  // add — the placeholder of the free input ("+ aspect" by default).
+  conditions: { label: string; list: string[]; free: boolean; add?: string; entry?(c: string): string[] };
   fields: CombatField[];
   // Участник из карточки: всё, кроме имени, стороны и картинки.
   fromCard(combat: CombatStats): Partial<Combatant>;

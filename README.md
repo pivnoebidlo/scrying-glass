@@ -2,7 +2,7 @@
 
 **English** · [Русский](README.ru.md)
 
-A game master's screen for tabletop sessions (D&D 5e, Fate Core and Mausritter). The GM has a control window; the players see a
+A game master's screen for tabletop sessions (D&D 5e, Fate Core, Mausritter and Forged in the Dark). The GM has a control window; the players see a
 second monitor with portraits, backgrounds, maps with fog of war, handouts and the initiative tracker. On top of
 that: music and ambience, scenes, a compendium, a GM journal and a bestiary with character sheets.
 
@@ -647,7 +647,7 @@ trash the adventure comes back together with them. A snapshot is taken before de
 
 ## Role-playing systems
 
-The adventure switcher also sets the adventure's **system** (D&D 5e 2024 or 2014, Fate Core, Mausritter; for "Whole vault" — the
+The adventure switcher also sets the adventure's **system** (D&D 5e 2024 or 2014, Fate Core, Mausritter, Forged in the Dark; for "Whole vault" — the
 default system). Cards, combat suggestions, ⌘K search and the compendium show what fits that system (both D&D editions
 together); the built-in SRD and the D&D tools (encounter difficulty, point buy) — only in D&D adventures. A compendium
 entry is tied to a system with the `system:` field in the header (`fate-core`, `dnd5e` …); without it spells, items,
@@ -695,6 +695,14 @@ counts turns in an adventure site (every third — an encounter roll: 1 — an e
 torches mark usage) and watches of travel (four a day; morning and evening start with an encounter roll and its hour).
 Factions and the clock belong to the adventure: they go into the .sgpack and to the trash with it.
 
+**Forged in the Dark** (the Blades in the Dark SRD; not the Blades setting). One card for the scoundrels and for NPCs:
+playbook, heritage, background, vice; twelve actions rated 0–4 under Insight, Prowess and Resolve; stress 0–9, traumas,
+harm (two lesser, two moderate, one severe), armor, special abilities, items, coin, stash and XP; an NPC's tier. A
+click on an action — an action roll of its dots (6 — full success, 4–5 — partial, 1–3 — bad outcome, two sixes —
+critical; no dots — 2d6, the lowest), on an attribute — a resistance roll (stress = 6 − the highest die, a critical
+clears one). The tracker has no initiative: the list's order, a stress line of nine boxes and five harm lines, free
+conditions. Progress clocks (the right panel) work in any system. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
+
 ## Files and trash
 
 Pictures, maps and tracks can be deleted from the app (the trash can button on hover).
@@ -740,7 +748,7 @@ side panel, tabs, the player screen preview on the right. Settings: ⌘, (Ctrl+,
   - display.ts: a layer on the player screen (defineDisplay)
   - i18n.ts: the module's messages (English and Russian)
   - ui/: the module's Svelte components
-- src/systems/<system>/: role-playing systems for cards: stats, stat block, editor, tracker (D&D 5e, Fate Core, Mausritter)
+- src/systems/<system>/: role-playing systems for cards: stats, stat block, editor, tracker (D&D 5e, Fate Core, Mausritter, Forged in the Dark)
 - resources/srd/: the built-in bestiary, built by scripts/import-srd.ts
 - resources/compendium/: the built-in compendium (`<system>.<lang>.json`)
 - src/modules/index.ts: the list of core modules, a new module is added here; the windows pick up control.ts and
@@ -753,7 +761,7 @@ For testing, the app can run with a separate data folder: `SG_USER_DATA=/path np
 GNU GPL version 3 or later (`LICENSE`). The built-in bestiary and compendium are SRD 5.1 / 5.2 material under CC BY 4.0,
 credits in `resources/srd/README.md` and `resources/compendium/README.md`; the Fate compendium is based on the Fate
 Core SRD (Evil Hat Productions, CC BY 3.0); the Mausritter creatures and compendium — Mausritter SRD 2.3.1 (Losing
-Games and Isaac Williams, CC BY 4.0). Note fonts (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
+Games and Isaac Williams, CC BY 4.0); Forged in the Dark — the Blades in the Dark SRD (One Seven Design, John Harper, CC BY 3.0). Note fonts (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
 Neucha, Comforter Brush, Cormorant Garamond, Old Standard TT, Kurale, Forum, Yeseva One, Ruslan Display, Ponomar,
 Monomakh, Underdog, Rubik Wet Paint, Rubik Distressed, Rubik Beastly) — SIL Open Font License 1.1, the license texts
 lie next to the fonts in `src/renderer/lib/note/fonts/`. The IBM VGA font of one hidden theme (PxPlus IBM VGA 8x16)

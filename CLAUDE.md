@@ -267,6 +267,17 @@ Electron-приложение для мастера D&D: окно управле
   `add` / `update` / `tick` / `remove` / `reorder`. Блок правой панели `ui/OnScreen.svelte` (щелчок — вперёд, правый —
   назад), слой игроков `ui/Layer.svelte` (order 33), круг — `ui/ClockFace.svelte` + `draw.ts`. В .sgpack —
   `PackSlices.clocks`, в корзину — `AdventureData.clocks`.
+- Forged in the Dark (четвёртая система, `fitd`, семейство `fitd`; SRD Blades in the Dark, CC BY 3.0 — атрибуция дословно в
+  `about.credit.fitd`; нельзя: «Blades in the Dark» в названии, их логотип, мир Даскволла и всё вне SRD):
+  `systems/fitd/` — `stats.ts` (`FitdStats`: роль, происхождение, прошлое, порок, `actions` 0–4 по `ACTIONS` трёх
+  атрибутов, `attributeRating` — сколько действий с точками; стресс 0–9, `traumas`, `harm` — 5 строк по `HARM_LEVELS`
+  1,1,2,2,3; способности, снаряжение, `tier` NPC, монеты / тайник / опыт), `Sheet.svelte` (щелчок по действию —
+  `rolls.pool` на точки, по атрибуту — сопротивление), `Editor.svelte`, `tracker.ts` (без инициативы: `roll.none`;
+  стресс — `stress` из 9 клеток, вред — `consequences`; `conditions.add` — своя подпись) + `TrackerCells.svelte`.
+  Пул к6 — `rollPool` / `poolOutcome` / `resistStress` в `shared/dice.ts` (0 точек — 2к6, меньший, без крита), в журнале —
+  `RollEntry.pool`. Свои русские термины (официальный перевод закрыт): Проницательность / Удаль / Решимость; Выслеживать,
+  Изучать, Осматривать, Мастерить; Ловкость, Красться, Драться, Крушить; Чуять, Командовать, Знаться, Убеждать.
+  Дальше (план): справочник по SRD, лист банды.
 - Аспекты сцены и жетоны судьбы — модуль `modules/fate` (состояние: `aspects` с `invokes` / `hidden`, `holders` —
   персонажи с `points` / `refresh`, `gm` — запас мастера, `show`). Блок правой панели `OnScreen.svelte` и слой игроков
   `Layer.svelte` (order 32; угол — `place`, выбор — `CornerPick.svelte`, в одном углу встают друг под другом) — только в приключениях Fate (`fateHere`; блок

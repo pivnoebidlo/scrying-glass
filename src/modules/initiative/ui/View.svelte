@@ -75,9 +75,11 @@
     {/if}
     <div class="spacer"></div>
     {#if isDnd(system)}<Difficulty list={ms.combatants} />{/if}
-    <button class="btn" title={tracker.roll.title} onclick={() => dispatch('initiative', 'rollNpcs', { system })}>
-      <Dices size={14} /> {tracker.roll.label}
-    </button>
+    {#if !tracker.roll.none}
+      <button class="btn" title={tracker.roll.title} onclick={() => dispatch('initiative', 'rollNpcs', { system })}>
+        <Dices size={14} /> {tracker.roll.label}
+      </button>
+    {/if}
     <StripControls d={ms.display} />
     <label class="show" title={t('init.stripHint')}>
       <input type="checkbox" checked={ms.showToPlayers} onchange={(e) => dispatch('initiative', 'setShowToPlayers', { value: e.currentTarget.checked })} />
@@ -134,7 +136,7 @@
                 <input
                   class="add-aspect"
                   type="text"
-                  placeholder={t('init.aspect')}
+                  placeholder={tracker.conditions.add ?? t('init.aspect')}
                   title={t('init.aspectHint')}
                   onkeydown={(e) => e.key === 'Enter' && addAspect(c, e.currentTarget)}
                   onblur={(e) => addAspect(c, e.currentTarget)}

@@ -102,3 +102,30 @@ export function rollSave(target: number, mode: D20Mode = 'normal'): SaveRoll {
   const natural = mode === 'advantage' ? Math.min(...rolls) : mode === 'disadvantage' ? Math.max(...rolls) : rolls[0]!;
   return { rolls, mode, natural, target, success: natural <= target };
 }
+
+// Forged in the Dark: a pool of d6 — the highest counts (6 — full success, 4–5 — partial, 1–3 — bad, two sixes —
+// critical). A pool of 0 — two dice, the lowest counts (and no critical).
+export type PoolOutcome = 'critical' | 'success' | 'partial' | 'bad';
+export interface PoolRoll {
+  dice: number[];
+  // Zero dots: 2d6, take the lowest.
+  zero: boolean;
+  result: number;
+  outcome: PoolOutcome;
+}
+
+export function poolOutcome(dice: number[], zero: boolean): { result: number; outcome: PoolOutcome } {
+  const result = zero ? Math.min(...dice) : Math.max(...dice);
+  const sixes = dice.filter((d) => d === 6).length;
+  const outcome: PoolOutcome = !zero && sixes >= 2 ? 'critical' : result === 6 ? 'success' : result >= 4 ? 'partial' : 'bad';
+  return { result, outcome };
+}
+
+export function rollPool(n: number): PoolRoll {
+  const zero = n <= 0;
+  const dice = Array.from({ length: zero ? 2 : Math.min(10, n) }, () => die(6));
+  return { dice, zero, ...poolOutcome(dice, zero) };
+}
+
+// A resistance roll: stress taken = 6 − the result; a critical clears 1 stress (−1).
+export const resistStress = (r: PoolRoll) => (r.outcome === 'critical' ? -1 : 6 - r.result);

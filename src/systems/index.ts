@@ -9,6 +9,8 @@ import { fateTracker } from './fate/tracker';
 import * as fateStats from './fate/stats';
 import { mausTracker } from './mausritter/tracker';
 import * as maus from './mausritter/stats';
+import { fitdTracker } from './fitd/tracker';
+import * as fitd from './fitd/stats';
 
 export interface SystemDef {
   id: string;
@@ -62,13 +64,26 @@ const mausritter: SystemDef = {
   tracker: mausTracker,
 };
 
-export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)'), fate, mausritter];
+// Forged in the Dark (the Blades in the Dark SRD): one card for scoundrels and NPCs; stress and harm in the tracker.
+const forged: SystemDef = {
+  id: 'fitd',
+  title: 'Forged in the Dark',
+  family: 'fitd',
+  subtitle: (s) => (fitd.isFitd(s) ? fitd.subtitle(s) : ''),
+  rank: (s) => (fitd.isFitd(s) ? fitd.rank(s) : null),
+  combat: (s) => (fitd.isFitd(s) ? fitd.combatStats(s) : { hp: null, ac: null, initiative: 0 }),
+  blank: (kind) => fitd.blankStats(kind),
+  tracker: fitdTracker,
+};
+
+export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)'), fate, mausritter, forged];
 
 // Семейства систем по порядку (для выбора системы приключения — группами).
 export const FAMILIES: { id: string; title: string }[] = [
   { id: 'dnd5e', title: 'D&D 5e' },
   { id: 'fate', title: 'Fate' },
   { id: 'mausritter', title: 'Mausritter' },
+  { id: 'fitd', title: 'Forged in the Dark' },
 ];
 
 // Система, если для приключения она не выбрана.

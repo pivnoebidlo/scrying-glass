@@ -2,7 +2,7 @@
 <script lang="ts">
   import { t } from './i18n.svelte';
   import { Dices, Trash2, X } from '@lucide/svelte';
-  import { diceText } from '../../shared/dice';
+  import { diceText, resistStress } from '../../shared/dice';
   import { rolls, type RollEntry } from './rolls.svelte';
   import { ladderText } from '../../systems/fate/ladder';
 
@@ -61,6 +61,18 @@
                 >{t('lib.d20')}: {e.save.rolls.join(' | ')}{e.save.mode === 'advantage' ? ` (${t('lib.adv')})` : e.save.mode === 'disadvantage' ? ` (${t('lib.dis')})` : ''} ≤ {e.save.target}</span
               >
               <span class="tag" class:crit={e.save.success} class:fumble={!e.save.success}>{e.save.success ? t('lib.saved') : t('lib.failed')}</span>
+            </div>
+          {/if}
+          {#if e.pool}
+            {@const p = e.pool}
+            <div class="line">
+              <span class="total" class:crit={p.outcome === 'critical' || p.outcome === 'success'} class:fumble={p.outcome === 'bad'}>{p.result}</span>
+              <span class="note">{p.zero ? t('lib.poolZero') : t('lib.pool', { n: p.dice.length })}: <span class="faces">{p.dice.join(' ')}</span></span>
+              {#if p.resist}
+                <span class="tag" class:crit={resistStress(p) <= 0}>{resistStress(p) < 0 ? t('lib.resistClear') : t('lib.resistStress', { n: resistStress(p) })}</span>
+              {:else}
+                <span class="tag" class:crit={p.outcome === 'critical' || p.outcome === 'success'} class:fumble={p.outcome === 'bad'}>{t(`lib.pool.${p.outcome}`)}</span>
+              {/if}
             </div>
           {/if}
           {#each e.damage as d, i (i)}
