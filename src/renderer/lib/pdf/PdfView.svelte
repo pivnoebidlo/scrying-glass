@@ -6,12 +6,20 @@
   import * as pdfjs from 'pdfjs-dist';
   import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
   import { EventBus, PDFFindController, PDFLinkService, PDFViewer } from 'pdfjs-dist/web/pdf_viewer.mjs';
-  import 'pdfjs-dist/web/pdf_viewer.css';
+  // Not a global import: pdf.js styles have general class names (.sidebar, .toolbar, .dialog) that would restyle the
+  // window. They are applied only inside the viewer (@scope; their :root variables go to the scope root).
+  import viewerCss from 'pdfjs-dist/web/pdf_viewer.css?inline';
   import { assetUrl } from '../../../shared/vault';
   import { t } from '../i18n.svelte';
   import { placeOf, savePlace } from './pdf.svelte';
 
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  if (!document.getElementById('sg-pdfjs-css')) {
+    const style = document.createElement('style');
+    style.id = 'sg-pdfjs-css';
+    style.textContent = `@scope (.sg-pdf) {\n${viewerCss.replace(/:root\b/g, ':scope')}\n}`;
+    document.head.append(style);
+  }
 
   let { path, page = null, rev = 0, compact = false }: { path: string; page?: number | null; rev?: number; compact?: boolean } = $props();
 
@@ -110,7 +118,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="pdf" class:compact {onkeydown}>
+<div class="pdf sg-pdf" class:compact {onkeydown}>
   <div class="bar">
     <label class="page" title={t('pdf.page')}>
       <input type="number" min="1" max={total || 1} value={current} onchange={(e) => goTo(Number(e.currentTarget.value))} />

@@ -621,6 +621,9 @@ Electron-приложение для мастера D&D: окно управле
   (POSIX file "…") as «class PNGf»)'`, файл как из Finder — JXA с `NSPasteboard.writeObjects([NSURL…])`;
   главный процесс смотреть через `--inspect=9229` и `process.mainModule.require('electron')`.
 - canvas с картинками из `sg-asset://` «заражён» (другой источник): пиксели читать нельзя, и это нормально.
+- Чужой CSS глобально не подключать: в `pdf_viewer.css` pdf.js есть `.sidebar`, `.toolbar`, `.dialog` — в 0.55.0 он
+  перекрасил левую панель (рамка, скругление, сдвиг на светофор). Стили pdf.js — `?inline` внутри `@scope (.sg-pdf)`
+  (`PdfView.svelte`, `:root` → `:scope`).
 
 ## Как проверять изменения
 - Тестовый набор — `.dev/` в проекте (в .gitignore): `.dev/vault` — хранилище, `.dev/ud` — папка данных
