@@ -96,7 +96,7 @@
 
 <style>
   /* In the title row: as high as the tab bar. */
-  :global(:root:is([data-frame='mac'], [data-frame='overlay'])) .panel-title {
+  .panel-title {
     display: flex;
     align-items: center;
     height: var(--title-h);

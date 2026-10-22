@@ -1,10 +1,10 @@
 <!-- Рабочая область: вкладки модулей. Когда вкладки не помещаются, они сжимаются (название обрезается, до одной
      иконки); если и так тесно — полоса прокручивается колёсиком без полосы прокрутки, активная вкладка всегда видна. -->
 <script lang="ts">
-  import { X } from '@lucide/svelte';
+  import { PanelLeftOpen, X } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
   import { store } from '../lib/store.svelte';
-  import { workspace } from './workspace.svelte';
+  import { TITLE_ROW, workspace } from './workspace.svelte';
   import { t } from '../lib/i18n.svelte';
 
   const find = (id: string) => controlContributions.find((x) => x.id === id);
@@ -20,10 +20,20 @@
   function onwheel(e: WheelEvent) {
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) bar.scrollLeft += e.deltaY;
   }
+
+  // The side panel hidden: «show» at the start of the tab bar (as in Obsidian); no module chosen yet — Files.
+  const sidebarShown = $derived(workspace.sidebarOpen && !!workspace.sidebar);
+  function showSidebar() {
+    if (workspace.sidebar) workspace.sidebarOpen = true;
+    else workspace.select(TITLE_ROW[0]!);
+  }
 </script>
 
 <main class="workspace">
-  <div class="tab-bar drag" class:no-sidebar={!(workspace.sidebarOpen && workspace.sidebar)} bind:this={bar} {onwheel}>
+  <div class="tab-bar drag" class:no-sidebar={!sidebarShown} bind:this={bar} {onwheel}>
+    {#if !sidebarShown}
+      <button class="icon-btn show-sidebar" title={t('app.showSidebar')} onclick={showSidebar}><PanelLeftOpen size={15} /></button>
+    {/if}
     {#each workspace.tabs as id (id)}
       {@const c = find(id)}
       {#if c}
@@ -78,7 +88,15 @@
   }
   /* macOS: the traffic lights stand over the ribbon and the sidebar; with the sidebar hidden — before the tabs. */
   :global(:root[data-frame='mac']:not([data-fullscreen='true'])) .tab-bar.no-sidebar {
-    padding-left: 40px;
+    padding-left: 30px;
+  }
+  .show-sidebar {
+    flex: none;
+    align-self: center;
+    width: 28px;
+    height: 28px;
+    margin: -6px 6px 0 0;
+    color: var(--text-faint);
   }
   .tab-bar::-webkit-scrollbar {
     display: none;

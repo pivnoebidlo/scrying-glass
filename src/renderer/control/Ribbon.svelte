@@ -1,16 +1,16 @@
-<!-- Узкая полоса слева: модули сверху, настройки снизу. -->
+<!-- Узкая полоса слева: модули сверху, настройки снизу. «Файлы» — в строке заголовка над боковой панелью (Sidebar). -->
 <script lang="ts">
   import { Settings } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
-  import { workspace } from './workspace.svelte';
+  import { TITLE_ROW, workspace } from './workspace.svelte';
   import { t } from '../lib/i18n.svelte';
 
   // В полосе только модули, у которых есть вкладка или боковая панель.
-  const items = controlContributions.filter((c) => c.view || c.sidebar);
+  const items = controlContributions.filter((c) => (c.view || c.sidebar) && !TITLE_ROW.includes(c.id));
 </script>
 
 <nav class="ribbon">
-  <!-- macOS without the system title bar: the traffic lights stand here, in the title row (drags the window). -->
+  <!-- The title row (the traffic lights stand here in macOS without the system title bar; drags the window). -->
   <div class="title-space drag"></div>
   {#each items as c (c.id)}
     <button
@@ -43,11 +43,8 @@
   .spacer {
     flex: 1;
   }
-  .title-space {
-    display: none;
-  }
   /* One strip with the tab bar, as in Obsidian: over the ribbon's border, with the line under the whole title row. */
-  :global(:root[data-frame='mac']) .title-space {
+  .title-space {
     display: block;
     flex: none;
     align-self: stretch;

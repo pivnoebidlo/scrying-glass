@@ -49,7 +49,9 @@ Electron-приложение для мастера D&D: окно управле
   macOS — `data-fullscreen`. Высота строки — `--title-h` (38px = полоса вкладок); перетаскивают `.drag` (полоса
   вкладок, строки над полосой модулей и боковой панелью, заголовок правой панели, полоса в `Welcome`), кнопки и поля в
   них — нет (`theme.css`). Области перетаскивания не видят слоёв: всё `position: fixed` поверх них помечено
-  `-webkit-app-region: no-drag` — новому всплывающему окну нужна та же строка.
+  `-webkit-app-region: no-drag` — новому всплывающему окну нужна та же строка. Строка заголовка есть во всех режимах:
+  над боковой панелью — модули `TITLE_ROW` (workspace.svelte.ts: «Файлы», их нет в полосе модулей) и «Скрыть», при
+  скрытой панели «Показать» — в начале полосы вкладок (`Tabs.svelte`).
 - About: `shared/about.ts` (addresses, `CREDITS` — attribution the CC BY licenses require; only these links open,
   IPC `app:openLink`), section `renderer/control/About.svelte` (settings section `about`). The app menu — `main/menu.ts`
   (`buildMenu`, in the interface language, rebuilt on a language change; «About» / «Settings…» → event
