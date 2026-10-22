@@ -22,6 +22,7 @@
   import MouseGenerator from '../mouse/MouseGenerator.svelte';
   import MausTables from '../maus/MausTables.svelte';
   import Factions from '../../mausritter/ui/Factions.svelte';
+  import CrewSheet from '../../crew/ui/CrewSheet.svelte';
   import WeatherGenerator from '../weather/WeatherGenerator.svelte';
   import EventsGenerator from '../events/EventsGenerator.svelte';
   import TreasureGenerator from '../treasure/TreasureGenerator.svelte';
@@ -47,7 +48,7 @@
     shop: ShopGenerator, settlement: SettlementGenerator, treasure: TreasureGenerator, events: EventsGenerator,
     weather: WeatherGenerator, mouse: MouseGenerator, mausTables: MausTables, factions: Factions, npc: NpcGenerator,
     tavern: TavernGenerator, telegram: TelegramCompose, difficulty: Calculator, timer: TimerTool, pointbuy: PointBuy, reshape: Reshape,
-    wildMagic: WildMagic,
+    wildMagic: WildMagic, crew: CrewSheet,
   };
   const Page = $derived(ui.tool !== 'notes' && ui.tool !== 'sketches' && shown(ui.tool, family) ? PAGES[ui.tool] : undefined);
 

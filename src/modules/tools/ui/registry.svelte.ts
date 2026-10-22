@@ -2,7 +2,7 @@
 // common (any system); a system's tools show only in its adventures, unless the GM turned one on for another system in
 // the settings (Tools → "Tools of other systems", remembered by the window).
 import type { Component } from 'svelte';
-import { Beer, CalendarClock, Calculator, Castle, CloudSun, DoorOpen, Flag, Footprints, Gauge, Gem, Hourglass, Rat, Send, Signature, Signpost, Sparkles, Store, Table2, UserRound, Wand2, Zap } from '@lucide/svelte';
+import { Beer, CalendarClock, Calculator, Castle, CloudSun, DoorOpen, Flag, Footprints, Gauge, Gem, Hourglass, Rat, Send, Signature, Signpost, Sparkles, Swords, Store, Table2, UserRound, Wand2, Zap } from '@lucide/svelte';
 import { t } from '../../../renderer/lib/i18n.svelte';
 import type { ToolId } from './ui.svelte';
 
@@ -25,6 +25,7 @@ const tool = (id: ToolDef['id'], icon: ToolDef['icon'], key: string, families?: 
 
 const DND = ['dnd5e'];
 const MAUS = ['mausritter'];
+const FITD = ['fitd'];
 
 // In the order of the sidebar (notes come first and are drawn apart: they have their list).
 export const TOOLS: ToolDef[] = [
@@ -49,6 +50,7 @@ export const TOOLS: ToolDef[] = [
   tool('mouse', Rat, 'tools.side.mouse', MAUS),
   tool('mausTables', Table2, 'tools.side.mausTables', MAUS),
   tool('factions', Flag, 'tools.side.factions', MAUS),
+  tool('crew', Swords, 'tools.side.crew', FITD),
 ];
 
 // Tools turned on by hand for a family: { mausritter: ['names'] }.

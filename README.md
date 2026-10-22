@@ -711,7 +711,14 @@ harm (two lesser, two moderate, one severe), armor, special abilities, items, co
 click on an action — an action roll of its dots (6 — full success, 4–5 — partial, 1–3 — bad outcome, two sixes —
 critical; no dots — 2d6, the lowest), on an attribute — a resistance roll (stress = 6 − the highest die, a critical
 clears one). The tracker has no initiative: the list's order, a stress line of nine boxes and five harm lines, free
-conditions. Progress clocks (the right panel) work in any system. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
+conditions. Progress clocks (the right panel) work in any system. **The crew** of the adventure — Tools → "Crew": name,
+type, reputation, lair, hunting grounds, contact; tier and hold, rep with turf (a full tracker strengthens hold or buys
+the next tier for tier × 8 coin), heat (at 9 — a wanted level, the excess rolls over) and wanted level, coin against
+the vault, crew xp, special abilities, upgrades, claims, cohorts (gangs and experts with quality, edges, flaws and
+harm) and factions (tier, hold, status −3…+3; war is flagged). "After the score" counts rep by the target's tier, heat
+by exposure and circumstances, coin from the loot; "Entanglement" rolls wanted-level dice in the heat column and links
+the result to the rules. The right panel keeps heat, wanted level, rep, coin and the entanglement roll at hand. The
+crew goes into the .sgpack and to the trash with the adventure. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
 
 ## Files and trash
 

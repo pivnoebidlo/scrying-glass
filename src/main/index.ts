@@ -716,6 +716,8 @@ interface AdventureData {
   mausritter?: AnyRec;
   // Progress clocks (none before 0.54).
   clocks?: unknown[];
+  // The Forged in the Dark crew (none before 0.54).
+  crew?: AnyRec;
 }
 
 ipcMain.handle('packs:export', async (_event, adventure: string) => {
@@ -755,6 +757,7 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
     pinned: (state as unknown as { journal: { pinned: Record<string, string> } }).journal.pinned[adventure],
     mausritter: (state as unknown as { mausritter: { byAdventure: Record<string, unknown> } }).mausritter.byAdventure[adventure],
     clocks: state.clocks.byAdventure[adventure],
+    crew: state.crew.byAdventure[adventure] as unknown as AnyRec | undefined,
   };
   // Общие карточки, на которые ссылаются заготовки и метки карт приключения.
   const refs = new Set<string>();
@@ -833,6 +836,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     pinned: (st['journal']!['pinned'] as Record<string, string>)[name],
     mausritter: (st['mausritter']!['byAdventure'] as Record<string, AnyRec>)[name],
     clocks: (st['clocks']!['byAdventure'] as Record<string, unknown[]>)[name],
+    crew: (st['crew']!['byAdventure'] as Record<string, AnyRec>)[name],
   };
   try {
     discard(vaultRoot, [name], { title: name, kind: 'adventure', data });
@@ -852,6 +856,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
   await merge('journal', (st) => ({ ...st, pinned: drop(st['pinned'] as AnyRec, (k) => k !== name) }));
   await merge('mausritter', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
   await merge('clocks', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
+  await merge('crew', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
   await merge('initiative', (st) => ({ ...st, encounters: (st['encounters'] as AnyRec[]).filter((x) => x['adventure'] !== name) }));
   await merge('maps', (st) => ({ ...st, maps: drop(st['maps'] as AnyRec, (k) => !inAdventure(name, k)) }));
   await merge('order', (st) => ({ ...st, groups: drop(st['groups'] as AnyRec, (k) => !mine(k)) }));
@@ -929,6 +934,7 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
     if (data.pinned) await merge('journal', (st) => ({ ...st, pinned: { ...(st['pinned'] as AnyRec), [main.to]: data.pinned } }));
     if (data.mausritter) await merge('mausritter', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.mausritter } }));
     if (data.clocks) await merge('clocks', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.clocks } }));
+    if (data.crew) await merge('crew', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.crew } }));
     saveVault();
   }
   if (place === 'vault') {
@@ -1064,6 +1070,7 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
     if (sl.pinned) await merge('journal', (s) => ({ ...s, pinned: { ...(s['pinned'] as AnyRec), [name]: sl.pinned } }));
     if (sl.mausritter) await merge('mausritter', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.mausritter } }));
     if (sl.clocks) await merge('clocks', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.clocks } }));
+    if (sl.crew) await merge('crew', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.crew } }));
     saveVault();
     await enqueue('vault', async () => rescanVault());
     await runAction('adventures', 'mark', { path: name });
