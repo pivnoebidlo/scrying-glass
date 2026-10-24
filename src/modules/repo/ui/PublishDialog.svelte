@@ -41,7 +41,7 @@
   let author = $state('');
   let rights = $state(false);
   let picking = $state(false);
-  let sizes = $state<{ total: number; music: number; pdf: number } | null>(null);
+  let sizes = $state<{ total: number; music: number; pdf: number; images: number } | null>(null);
 
   let shownFor: string | null = null;
   $effect(() => {
@@ -85,7 +85,9 @@
 
   const size = $derived(sizes ? sizes.total - (pdf ? 0 : sizes.pdf) - (music ? 0 : sizes.music) : 0);
   const max = $derived(catalog?.maxSize ?? 0);
-  const tooBig = $derived(!!max && size > max);
+  // Pictures are made lighter on the way (shrink.ts in the core): how much — unknown before, so only what surely
+  // stays counts (PNGs from image generators lose ~85%).
+  const tooBig = $derived(!!max && size - (sizes?.images ?? 0) * 0.8 > max);
   const ready = $derived(!!source && !!title.trim() && rights && !tooBig && !repo.busy);
 
   const close = () => (repo.publish = null);
@@ -158,7 +160,7 @@
         {#if sizes.pdf}
           <label class="check"><input type="checkbox" bind:checked={pdf} /> {t('repo.dialog.pdf', { size: mb(sizes.pdf) })}</label>
         {/if}
-        <p class="faint small">{t('repo.dialog.size', { size: mb(size) })}</p>
+        <p class="faint small">{t(sizes.images ? 'repo.dialog.sizeImages' : 'repo.dialog.size', { size: mb(size) })}</p>
         {#if tooBig}<p class="warn">{t('repo.dialog.tooBig', { max: mb(max) })}</p>{/if}
       {/if}
 

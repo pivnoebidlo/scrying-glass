@@ -229,7 +229,7 @@ export interface Api {
   // A cover as a data: URL (null — none or not reachable).
   repoCover(source: string, author: string, id: string, version: number): Promise<string | null>;
   // What an adventure weighs: all of it, its music, its PDFs (bytes).
-  repoSizes(adventure: string): Promise<{ total: number; music: number; pdf: number } | null>;
+  repoSizes(adventure: string): Promise<{ total: number; music: number; pdf: number; images: number } | null>;
   // Publish or update (the same entry if this vault published it before); cover — a picture of the vault.
   // id — the entry to update when the vault has no mark of it (null — a new one).
   repoPublish(p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string; id?: string | null }): Promise<RepoEntry | null>;

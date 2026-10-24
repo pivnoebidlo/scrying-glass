@@ -552,7 +552,7 @@ Electron-приложение для мастера D&D: окно управле
   Приложение: `main/repo.ts` (источники — официальный `OFFICIAL_SOURCE` (`DEFAULT_REPO_URL`, можно только выключить —
   `officialOff`) и свои репозитории `settings.repo.sources` (`addSource` проверяет каталог по адресу; у источника `kind` —
   пока только 'repo', дальше — облачные диски); каждый вызов называет источник; ключ в `settings.repo`, закрытая часть
-  через `safeStorage`; каталог, обложки — кэш `<userData>/repo/covers` (с хэшем адреса), публикация: `buildPack` (музыка и PDF — галочками) → publish → PUT в S3 → commit; скачивание во временную
+  через `safeStorage`; каталог, обложки — кэш `<userData>/repo/covers` (с хэшем адреса), публикация: `buildPack` (музыка и PDF — галочками; картинки легче — `shrinker` из `main/shrink.ts`: PNG без прозрачности → JPEG 85, сторона до 4096, копия только если легче на 20 %; новое имя `writePack` переписывает в срезах состояния (`renameFiles`) и в .json / .md папки (`renameInText`); файлы мастера не меняются; в окне — «до {size}», `tooBig` считает картинки за 20 %) → publish → PUT в S3 → commit; скачивание во временную
   папку → `importPack`), IPC `repo:*`, ошибки — `repo:<код>` → `repo.err.<код>`. Модуль `modules/repo`:
   `published` / `installed` по папке приключения, с `source` (нет — официальный; id приключения один во всех
   источниках, пометка — последний; в .sgpack — `PackSlices.repo`; при установке чужого — снимается). Каталог — окно

@@ -670,7 +670,7 @@ trash the adventure comes back together with them. A snapshot is taken before de
 
 **Adventure repository** ("Find adventures…" and "Publish “…” to the repository…" in the adventure menu, or Settings →
 Community → Browse): share an adventure with other GMs and download theirs. The catalog shows every source
-turned on: the app's own repository and any other you add by address (say, your group's or club's). A published adventure is a `.sgpack` (music and PDFs — if you choose)
+turned on: the app's own repository and any other you add by address (say, your group's or club's). A published adventure is a `.sgpack` (music and PDFs — if you choose; pictures go lighter: an opaque PNG as a JPEG, sides up to 4096 px — your files stay as they are)
 with a title, description, language and cover; a new version replaces the old one, you can take it
 down any time. Something wrong with someone's adventure? "Complain…" sends it to the repository's admin (who
 sees complaints in the catalog after entering the admin token in Settings → Community). Downloaded adventures are offered their new versions (the old copy goes to the trash). Your

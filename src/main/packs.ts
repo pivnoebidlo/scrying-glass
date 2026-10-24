@@ -62,15 +62,70 @@ export const folderFiles = (dir: string, music: boolean, pdf = true) =>
     return !isDir && ((!music && AUDIO_EXT.includes(ext)) || (!pdf && ext === '.pdf'));
   });
 
+// A lighter copy of a picture for the pack (shrink.ts): where it was written and its new name (another extension —
+// an opaque PNG becomes a JPEG), or null — the picture goes as it is.
+export type Shrink = (abs: string, rel: string) => { abs: string; rel: string } | null;
+
+const SHRINKABLE = ['.png', '.jpg', '.jpeg', '.webp'];
+// Text files of the folder that name pictures by path: cards, notes, sketches (JSON), journal and compendium (Markdown).
+const NAMING = ['.json', '.md'];
+
+// Paths renamed in everything of the pack's state: strings and keys equal to an old path (scenes, maps, trays, order…).
+export function renameFiles<T>(value: T, names: Map<string, string>): T {
+  if (!names.size) return value;
+  const fix = (s: string) => names.get(s) ?? s;
+  const walk = (v: unknown): unknown => {
+    if (typeof v === 'string') return fix(v);
+    if (Array.isArray(v)) return v.map(walk);
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [fix(k), walk(x)]));
+    return v;
+  };
+  return walk(value) as T;
+}
+
+// The same in a text file: a JSON string with the old path, or the path as it is in Markdown (the `image:` field).
+export function renameInText(text: string, ext: string, names: Map<string, string>): string {
+  let out = text;
+  for (const [from, to] of names) {
+    out = ext === '.json' ? out.split(JSON.stringify(from)).join(JSON.stringify(to)) : out.split(from).join(to);
+  }
+  return out;
+}
+
+// A free name next to the others: «x.jpg», else «x (2).jpg»…
+function freeName(rel: string, taken: Set<string>): string {
+  const ext = path.posix.extname(rel);
+  const base = rel.slice(0, -ext.length);
+  let name = rel;
+  for (let i = 2; taken.has(name.toLowerCase()); i++) name = `${base} (${i})${ext}`;
+  return name;
+}
+
 export async function writePack(
   out: string,
-  p: { folder: string; manifest: PackManifest; slices: PackSlices; library: LibraryCard[]; pdf?: boolean },
+  p: { folder: string; manifest: PackManifest; slices: PackSlices; library: LibraryCard[]; pdf?: boolean; shrink?: Shrink },
   onProgress?: (done: number, total: number) => void,
 ) {
   const enc = (v: unknown) => new TextEncoder().encode(JSON.stringify(v, null, 2));
+  const files = folderFiles(p.folder, p.manifest.music, p.pdf);
+  // Lighter pictures (publishing): a renamed one is renamed in the state and in the folder's text files too.
+  const names = new Map<string, string>();
+  const swapped = new Map<string, { abs: string; rel: string }>();
+  if (p.shrink) {
+    const taken = new Set(files.map((f) => f.rel.toLowerCase()));
+    for (const f of files) {
+      if (!SHRINKABLE.includes(path.extname(f.rel).toLowerCase())) continue;
+      const small = p.shrink(f.abs, f.rel);
+      if (!small) continue;
+      const rel = small.rel === f.rel ? f.rel : freeName(small.rel, taken);
+      taken.add(rel.toLowerCase());
+      swapped.set(f.rel, { abs: small.abs, rel });
+      if (rel !== f.rel) names.set(`${p.manifest.name}/${f.rel}`, `${p.manifest.name}/${rel}`);
+    }
+  }
   const entries: ZipEntry[] = [
     { name: 'manifest.json', data: enc(p.manifest) },
-    { name: 'state.json', data: enc(p.slices) },
+    { name: 'state.json', data: enc(renameFiles(p.slices, names)) },
   ];
   for (const c of p.library) {
     entries.push({ name: `library/cards/${c.id}.json`, data: enc(c.json) });
@@ -78,7 +133,17 @@ export async function writePack(
   }
   // Папки — тоже (пустые стандартные папки приключения должны вернуться).
   for (const d of folderDirs(p.folder)) entries.push({ name: `files/${p.manifest.name}/${d}/`, data: new Uint8Array(0) });
-  for (const f of folderFiles(p.folder, p.manifest.music, p.pdf)) entries.push({ name: `files/${p.manifest.name}/${f.rel}`, abs: f.abs });
+  for (const f of files) {
+    const small = swapped.get(f.rel);
+    const name = `files/${p.manifest.name}/${small?.rel ?? f.rel}`;
+    const ext = path.extname(f.rel).toLowerCase();
+    if (small) entries.push({ name, abs: small.abs });
+    else if (names.size && NAMING.includes(ext)) {
+      const text = fs.readFileSync(f.abs, 'utf8');
+      const fixed = renameInText(text, ext, names);
+      entries.push(fixed === text ? { name, abs: f.abs } : { name, data: new TextEncoder().encode(fixed) });
+    } else entries.push({ name, abs: f.abs });
+  }
   await writeZip(out, entries, onProgress);
 }
 

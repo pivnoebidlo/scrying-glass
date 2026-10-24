@@ -8,7 +8,8 @@ import type { AppState } from '../shared/types';
 import { getLang, isLang, resolveLang, setLang, t, type Lang, type LangSetting } from '../shared/i18n';
 import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, HIDDEN_THEMES, isTheme, THEME_BACKGROUND, type RoleNames, type ThemeSetting, type VaultFolder, type VaultState } from '../shared/vault';
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
-import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
+import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices, type Shrink } from './packs';
+import { shrinker } from './shrink';
 import { BACKUP_EXT, backupSizes, placeFiles, readBackup, writeBackup } from './archive';
 import { safeEntry } from './zip';
 import { randomUUID } from 'node:crypto';
@@ -813,7 +814,7 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
 
 // The adventure into one .sgpack file: its folder (music and PDFs — if asked), what the app knows of it and the
 // library cards it refers to. For the export and for the repository.
-async function buildPack(adventure: string, out: string, opts: { music: boolean; pdf?: boolean }, onProgress?: (done: number, total: number) => void) {
+async function buildPack(adventure: string, out: string, opts: { music: boolean; pdf?: boolean; shrink?: Shrink }, onProgress?: (done: number, total: number) => void) {
   const folder = resolveInVault(adventure);
   if (!folder || !isDir(folder)) throw new Error(t('core.notAdventure'));
   const s = state as unknown as AnyRec & { scenes: { scenes: AnyRec[]; trays?: AnyRec }; maps: { maps: Record<string, AnyRec> }; initiative: { encounters: AnyRec[] }; order: { groups: Record<string, string[]> }; portraits: { names: Record<string, string> } };
@@ -863,6 +864,7 @@ async function buildPack(adventure: string, out: string, opts: { music: boolean;
     slices,
     library,
     pdf: opts.pdf,
+    shrink: opts.shrink,
   }, onProgress);
 }
 
@@ -1189,7 +1191,7 @@ ipcMain.handle('repo:sizes', (_event, adventure: string) => {
   if (!folder || !isDir(folder)) return null;
   const all = folderFiles(folder, true);
   const sum = (re: RegExp) => all.filter((f) => re.test(f.rel)).reduce((n, f) => n + f.size, 0);
-  return { total: all.reduce((n, f) => n + f.size, 0), music: sum(/\.(mp3|ogg|wav|flac|m4a)$/i), pdf: sum(/\.pdf$/i) };
+  return { total: all.reduce((n, f) => n + f.size, 0), music: sum(/\.(mp3|ogg|wav|flac|m4a)$/i), pdf: sum(/\.pdf$/i), images: sum(/\.(png|jpe?g)$/i) };
 });
 // Publish (or update) an adventure: pack it into a temporary file, upload, remember the entry.
 ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf?: boolean; cover?: string; id?: string | null }) => {
@@ -1200,7 +1202,9 @@ ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: st
   const tmp = path.join(app.getPath('userData'), 'repo', `publish-${randomUUID().slice(0, 8)}.${PACK_EXT}`);
   fs.mkdirSync(path.dirname(tmp), { recursive: true });
   try {
-    await buildPack(p.adventure, tmp, { music: p.music, pdf: !!p.pdf }, (done, total) => repoProgress({ phase: 'pack', done, total }));
+    // Lighter pictures: the repository keeps every adventure (shrink.ts).
+    const shrink = shrinker(tmp + '.images');
+    await buildPack(p.adventure, tmp, { music: p.music, pdf: !!p.pdf, shrink }, (done, total) => repoProgress({ phase: 'pack', done, total }));
     const entry = await repoPublish(p.source, tmp, {
       // The window found the GM's own entry (no mark in the vault) or asked for a new one (null).
       id: p.id === null ? newAdventureId() : p.id && ID_RE.test(p.id) ? p.id : (known?.id ?? newAdventureId()),
@@ -1215,6 +1219,7 @@ ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: st
     return entry;
   } finally {
     fs.rmSync(tmp, { force: true });
+    fs.rmSync(tmp + '.images', { recursive: true, force: true });
   }
 });
 ipcMain.handle('repo:unpublish', async (_event, { source, id }: { source: string; id: string }) => {
