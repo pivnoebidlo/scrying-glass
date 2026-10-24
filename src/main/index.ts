@@ -1225,7 +1225,13 @@ ipcMain.handle('repo:unpublish', async (_event, { source, id }: { source: string
 ipcMain.handle('repo:publishSystem', async (_event, p: { source: string; pack: string; title: string; description: string; lang: string }) => {
   const pack = systemPacks().find((x) => x.id === p.pack && x.own);
   if (!pack) return null;
-  const known = repoInfo().systems.published[p.pack];
+  // Published before (from here, or with this key elsewhere — the mark is in another settings.json): the catalog has
+  // this author's entry of this pack, and a new version goes there instead of a second entry.
+  const info = repoInfo();
+  const mark = info.systems.published[p.pack];
+  const known =
+    (mark?.source === p.source ? mark : undefined) ??
+    (await repoCatalog(p.source).then((c) => c.entries.find((e) => e.kind === 'system' && e.system === p.pack && e.author === info.author), () => undefined));
   const tmp = path.join(app.getPath('userData'), 'repo', `system-${randomUUID().slice(0, 8)}.json`);
   fs.mkdirSync(path.dirname(tmp), { recursive: true });
   try {
