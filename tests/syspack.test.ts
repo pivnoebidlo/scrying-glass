@@ -125,8 +125,8 @@ describe('system packs', () => {
   });
 });
 
-describe('built-in system packs', () => {
-  const dir = path.join(__dirname, '../resources/systems');
+describe('sample system packs', () => {
+  const dir = path.join(__dirname, '../samples/systems');
   const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
 
   it.each(files)('%s is a valid pack whose formulas name its own fields', (file) => {

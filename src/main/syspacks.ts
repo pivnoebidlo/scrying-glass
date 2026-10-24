@@ -1,4 +1,4 @@
-// System packs from the core's side: the built-in ones (resources/systems/*.json, read only) and the GM's own
+// System packs from the core's side: the built-in ones (resources/systems/*.json, read only; none yet) and the GM's own
 // (<library>/systems/*.json). Each file is checked (validatePack) — a pack may come from a stranger; a broken one is
 // skipped with a line in the log. The GM's own pack with the id of a built-in one takes its place.
 import * as fs from 'node:fs';

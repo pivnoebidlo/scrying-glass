@@ -19,7 +19,7 @@
   let lang = $state('');
   let show = $state<'all' | 'updates' | 'installed' | 'mine' | 'reported' | 'blocked'>(repo.startShow);
   // Adventures or system packs.
-  let what = $state<'adventures' | 'systems'>('adventures');
+  let what = $state<'adventures' | 'systems'>(repo.startWhat);
   let chosen = $state<string | null>(null);
 
   const app = $derived(store.state);

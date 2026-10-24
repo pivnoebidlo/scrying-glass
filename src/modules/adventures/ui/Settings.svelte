@@ -6,7 +6,8 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { FAMILIES, systems } from '../../../systems';
   import { systemFor } from '../../../shared/adventures';
-  import { Blocks } from '@lucide/svelte';
+  import { Blocks, Globe, Trash2 } from '@lucide/svelte';
+  import { openRepo } from '../../repo/ui/repo.svelte';
   import { closeSettings } from '../../../renderer/lib/nav';
   import { openBuilder } from '../../tools/syspack/store.svelte';
   import { packOf } from '../../../systems/packs';
@@ -14,7 +15,13 @@
   let { ms, app }: ModuleProps<'adventures'> = $props();
 
   const off = $derived(new Set(app.vault.systemsOff));
-  const onCount = $derived(systems.length - off.size);
+  // The list of systems changes with the packs (installed, deleted): read again with them.
+  const all = $derived((app.vault.systems, [...systems]));
+  const onCount = $derived(all.length - off.size);
+  const own = (id: string) => app.vault.systems.some((p) => p.id === id && p.own);
+  async function remove(id: string, title: string) {
+    if (confirm(t('sb.deleteAsk', { name: title }))) await window.api.deleteSystem(id);
+  }
 
   // Что даёт система — строка под названием.
   const about = (id: string) => (['dnd5e-2024', 'dnd5e-2014', 'fate-core', 'mausritter', 'fitd'].includes(id) ? t(`adv.about.${id as 'fate-core'}`) : '');
@@ -37,11 +44,14 @@
 </p>
 <div class="builder">
   <span class="faint">{t('adv.builderDesc')}</span>
-  <button class="btn" onclick={() => (closeSettings(), openBuilder())}><Blocks size={14} /> {t('sb.title')}</button>
+  <span class="buttons">
+    <button class="btn" onclick={() => (closeSettings(), openRepo('all', 'systems'))}><Globe size={14} /> {t('adv.findSystems')}</button>
+    <button class="btn" onclick={() => (closeSettings(), openBuilder())}><Blocks size={14} /> {t('sb.title')}</button>
+  </span>
 </div>
 
 {#each FAMILIES as f (f.id)}
-  {#each systems.filter((s) => s.family === f.id) as s (s.id)}
+  {#each all.filter((s) => s.family === f.id) as s (s.id)}
     {@const on = !off.has(s.id)}
     {@const used = usedBy(s.id)}
     <label class="setting">
@@ -49,6 +59,9 @@
         <div class="name">
           {s.title}
           {#if packOf(s.id)}<button class="link" onclick={(e) => (e.preventDefault(), closeSettings(), openBuilder(s.id))}>{t('adv.openInBuilder')}</button>{/if}
+          {#if own(s.id)}
+            <button class="icon-btn del" title={t('adv.deleteSystem')} onclick={(e) => (e.preventDefault(), remove(s.id, s.title))}><Trash2 size={13} /></button>
+          {/if}
         </div>
         <div class="desc">
           {about(s.id)}
@@ -87,6 +100,15 @@
     gap: 12px;
     margin: 0 0 12px;
     font-size: 13px;
+  }
+  .buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .del {
+    margin-left: 4px;
+    vertical-align: middle;
   }
   .link {
     margin-left: 6px;

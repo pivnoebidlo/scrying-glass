@@ -1,6 +1,7 @@
 // System packs: a role-playing system described by a file, not by code — the sections and fields of its cards, the
 // rolls on them, what the initiative tracker shows. The app draws the card, the editor, the rolls and the tracker
-// from it. Built-in packs are in resources/systems/, the GM's own in <library>/systems/. Only pure functions here:
+// from it. Packs come from the Community or the builder into <library>/systems/ (resources/systems/ — built-in ones,
+// none yet; samples/systems/ — the samples published in the official repository). Only pure functions here:
 // the core, the windows and the tests use them.
 //
 // A pack may come from a stranger (the Community): `validatePack` takes only what it knows, with sizes capped, and

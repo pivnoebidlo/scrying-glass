@@ -46,7 +46,7 @@ import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
 import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
-import type { RepoEntry, RepoProgress } from '../shared/repo';
+import { ID_RE, type RepoEntry, type RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, recreateControlWindow, TITLE_HEIGHT, watchDisplays,
@@ -101,6 +101,7 @@ interface AppSettings {
   repo?: RepoSettings;
 }
 const RECENT_MAX = 10;
+const FIRST_LAUNCH_OFF = ['fate-core', 'mausritter', 'fitd'];
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 let settings: AppSettings = { vault: null, recent: [] };
 
@@ -109,6 +110,9 @@ function loadSettings() {
     const saved = readJson(settingsFile()) as Partial<AppSettings> | undefined;
     // Остальные поля (папка снимков, корзина) — как сохранены.
     settings = { ...saved, vault: saved?.vault ?? null, recent: saved?.recent ?? [], library: saved?.library ?? null, roles: saved?.roles ?? null };
+    // The very first launch: only D&D is on, the other systems wait in Settings → Game systems (a GM who has used the
+    // app keeps what they had — their adventures on those systems must not disappear).
+    if (!saved) settings.systemsOff = [...FIRST_LAUNCH_OFF];
     setTrashSettings(settings.trash);
     setSystemsOff(settings.systemsOff);
     setHotkeys(settings.hotkeys);
@@ -164,6 +168,44 @@ function saveVault() {
 }
 
 // Открывает хранилище (null — закрыть): загружает сохранённое состояние модулей и начинает следить за папкой.
+// Two copies of the app on one vault (a stable one and a test one) write state.json over each other. Opening a
+// vault leaves a mark (the process and the app's version); a mark of a process still running — a warning.
+const lockFile = (root: string) => path.join(root, DATA_DIR, 'lock.json');
+let lockedRoot: string | null = null;
+function claimVault(root: string) {
+  try {
+    const other = readJson(lockFile(root)) as { pid?: number; version?: string } | undefined;
+    if (other?.pid && other.pid !== process.pid && alive(other.pid)) {
+      const win = getControlWindow();
+      const opts = { type: 'warning' as const, message: t('core.vaultTwice'), detail: t('core.vaultTwiceDetail', { version: other.version ?? '?' }), buttons: ['OK'] };
+      void (win ? dialog.showMessageBox(win, opts) : dialog.showMessageBox(opts));
+    }
+    fs.mkdirSync(path.join(root, DATA_DIR), { recursive: true });
+    fs.writeFileSync(lockFile(root), JSON.stringify({ pid: process.pid, version: app.getVersion() }));
+    lockedRoot = root;
+  } catch {
+    /* a read-only vault — no mark, no warning */
+  }
+}
+function releaseVault() {
+  if (!lockedRoot) return;
+  try {
+    const mark = readJson(lockFile(lockedRoot)) as { pid?: number } | undefined;
+    if (mark?.pid === process.pid) fs.rmSync(lockFile(lockedRoot), { force: true });
+  } catch {
+    /* gone already */
+  }
+  lockedRoot = null;
+}
+function alive(pid: number) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return (e as NodeJS.ErrnoException).code === 'EPERM';
+  }
+}
+
 async function openVault(root: string | null): Promise<VaultState> {
   if (root && !isDir(root)) {
     dialog.showErrorBox(t('core.folderNotFound'), t('core.folderMoved', { root }));
@@ -184,6 +226,8 @@ async function openVault(root: string | null): Promise<VaultState> {
 
   watcher?.close();
   watcher = null;
+  releaseVault();
+  if (root) claimVault(root);
   vaultRoot = root;
   vaultTree = root ? scanVault(root) : null;
   // Карточки версии 0.9 лежали в скрытой папке — переносим их в видимую папку бестиария.
@@ -579,6 +623,7 @@ setInterval(() => vaultRoot && snapshotNow('auto'), 30 * 60 * 1000);
 app.on('before-quit', () => {
   if (vaultRoot) snapshotNow('quit');
   stopTelegram();
+  releaseVault();
 });
 
 ipcMain.handle('backups:list', () => listSnapshots(backupsDir()));
@@ -1146,7 +1191,7 @@ ipcMain.handle('repo:sizes', (_event, adventure: string) => {
   return { total: all.reduce((n, f) => n + f.size, 0), music: sum(/\.(mp3|ogg|wav|flac|m4a)$/i), pdf: sum(/\.pdf$/i) };
 });
 // Publish (or update) an adventure: pack it into a temporary file, upload, remember the entry.
-ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf?: boolean; cover?: string }) => {
+ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf?: boolean; cover?: string; id?: string | null }) => {
   if (!vaultRoot || !state.adventures.list.includes(p.adventure)) return null;
   // The same id in every source: publishing again anywhere updates that source's entry.
   const known = state.repo.published[p.adventure];
@@ -1156,7 +1201,8 @@ ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: st
   try {
     await buildPack(p.adventure, tmp, { music: p.music, pdf: !!p.pdf }, (done, total) => repoProgress({ phase: 'pack', done, total }));
     const entry = await repoPublish(p.source, tmp, {
-      id: known?.id ?? newAdventureId(),
+      // The window found the GM's own entry (no mark in the vault) or asked for a new one (null).
+      id: p.id === null ? newAdventureId() : p.id && ID_RE.test(p.id) ? p.id : (known?.id ?? newAdventureId()),
       title: p.title,
       description: p.description,
       system: systemFor(state.adventures, p.adventure),
@@ -1309,6 +1355,7 @@ ipcMain.handle('systems:delete', (_event, id: string) => {
   const rel = lib ? ownPackFile(lib, id) : null;
   if (!lib || !rel) return false;
   discard(lib, [rel], { title: id, kind: 'file' });
+  setSystemMark('installed', id, null);
   reloadSystems();
   return true;
 });

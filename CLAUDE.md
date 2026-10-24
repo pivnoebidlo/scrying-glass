@@ -255,8 +255,9 @@ Electron-приложение для мастера D&D: окно управле
   bands (PbtA), pool (`success` — счёт успехов, `best` — FitD, `push` — переброс YZE), fate, sum, explode; `tracker` —
   `init` roll / value / none, `hp`, `cells`, `conditions`; `validatePack` берёт только известное — пакет может быть чужим;
   формулы — свой маленький язык `parseFormula` / `evalFormula`: числа, поля, `row.<колонка>`, + − × ÷, floor/ceil/round/
-  abs/min/max). Статы карточки — плоский объект по ключам полей. Встроенные пакеты — `resources/systems/<id>.json`
-  (тест сверяет формулы с полями), свои — `<библиотека>/systems/`; читает ядро `main/syspacks.ts` (`loadSystemPacks`,
+  abs/min/max). Статы карточки — плоский объект по ключам полей. Встроенных пакетов сейчас нет (`resources/systems/` читается,
+  если появится); пробные — `samples/systems/` (в приложение не входят, публикуются в официальном репозитории; тест
+  сверяет формулы с полями), свои и скачанные — `<библиотека>/systems/` (удалить — «Настройки» → «Ролевые системы»); читает ядро `main/syspacks.ts` (`loadSystemPacks`,
   при смене библиотеки — `useLibrary`), отдаёт в `vault.systems`; регистрирует `systems/packs.ts` (`registerPacks`:
   `SystemDef` и семейство в `systems` / `FAMILIES`, `packOf`, `isPackFamily`, `packTracker`) — ядро и окна
   (`store.svelte.ts`, до `setSystemsOff`). Вид — `systems/pack/Sheet.svelte`, редактор — `pack/Editor.svelte` (`kind` из
@@ -275,7 +276,11 @@ Electron-приложение для мастера D&D: окно управле
 репозитории с `features` 'systems'), установка — `repo:installSystem` (`savePack`, чужая поверх своей — с вопросом);
 пометки — `settings.repo.systems` (`published` / `installed`, `RepoInfo.systems`, `setSystemMark`); в каталоге —
 «Приключения / Системы», `systemVersion`, у приключения без системы — «Нужна система» (`missingSystem`); обновления
-систем — в той же плашке (`updatesHere`, ключ `system:<id>`). Сервис 0.5.0 (тег `repo-v0.5.0`) нужен до выпуска.
+систем — в той же плашке (`updatesHere`, ключ `system:<id>`). Сервис 0.5.0 (тег `repo-v0.5.0`) нужен до выпуска. Публикация без пометки в хранилище ищет свою запись в каталоге по
+  названию (`byName` в `PublishDialog`, «как новое» — галочка; ядру уходит `id`). Две копии приложения на одном
+  хранилище затирают `state.json` друг друга: открывая хранилище, ядро кладёт метку `.scrying-glass/lock.json` (pid,
+  версия; `claimVault` / `releaseVault`), метка живого чужого процесса — предупреждение. Первый запуск (нет
+  settings.json) — включены только D&D (`FIRST_LAUNCH_OFF`).
 - Mausritter (третья система, в работе; SRD 2.3.1, CC BY 4.0 — атрибуция дословно в `about.credit.mausritter`):
   `systems/mausritter/` — `stats.ts` (`MausStats`: hp — Hit Protection, str/dex/wil, armour, attacks `d6/d8`,
   critical, abilities, wants, `warband`; у мыши `sheet` — уровень, XP, пипсы, 10 клеток `slots` (лапы 2, тело 2,

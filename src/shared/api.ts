@@ -231,7 +231,8 @@ export interface Api {
   // What an adventure weighs: all of it, its music, its PDFs (bytes).
   repoSizes(adventure: string): Promise<{ total: number; music: number; pdf: number } | null>;
   // Publish or update (the same entry if this vault published it before); cover — a picture of the vault.
-  repoPublish(p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string }): Promise<RepoEntry | null>;
+  // id — the entry to update when the vault has no mark of it (null — a new one).
+  repoPublish(p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string; id?: string | null }): Promise<RepoEntry | null>;
   repoUnpublish(source: string, id: string): Promise<void>;
   // System packs in the Community: publish one of the GM's own, download one into the library (its id).
   repoPublishSystem(p: { source: string; pack: string; title: string; description: string; lang: string }): Promise<RepoEntry | null>;

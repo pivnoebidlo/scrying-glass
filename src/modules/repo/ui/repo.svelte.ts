@@ -22,6 +22,7 @@ export const repo = $state({
   // The catalog window is open; the filter it opens with.
   browsing: false,
   startShow: 'all' as 'all' | 'updates',
+  startWhat: 'adventures' as 'adventures' | 'systems',
   // New versions of what this vault downloaded, found on launch and not announced yet.
   updates: [] as { key: string; entry: Found }[],
   covers: {} as Record<string, string | null>,
@@ -118,8 +119,9 @@ async function work<T>(what: string, fn: () => Promise<T>): Promise<T | undefine
 }
 
 // Open the catalog window (on the updates of what was downloaded — after the launch notice).
-export function openRepo(show: 'all' | 'updates' = 'all') {
+export function openRepo(show: 'all' | 'updates' = 'all', what: 'adventures' | 'systems' = 'adventures') {
   repo.startShow = show;
+  repo.startWhat = what;
   repo.browsing = true;
   void loadCatalogs();
 }
@@ -189,7 +191,7 @@ export function updatesSeen() {
   repo.updates = [];
 }
 
-export async function publish(p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string }) {
+export async function publish(p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string; id?: string | null }) {
   const entry = await work(t('repo.publishing', { name: p.title }), () => window.api.repoPublish(p));
   if (!entry) return false;
   notice(t('repo.published', { name: entry.title, version: entry.version }));

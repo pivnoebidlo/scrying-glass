@@ -12,7 +12,7 @@
   import { openSettings } from '../../../renderer/lib/nav';
   import FilePicker from '../../../renderer/lib/FilePicker.svelte';
   import { loadCatalogs, loadInfo, mb, publish, repo, sourceName, sourcesOn } from './repo.svelte';
-  import { sourceOf } from '../../../shared/repo';
+  import { sourceOf, type RepoEntry } from '../../../shared/repo';
 
   const adventure = $derived(repo.publish);
   const app = $derived(store.state);
@@ -21,8 +21,16 @@
   const targets = $derived(repo.info ? sourcesOn().filter((s) => s.kind === 'repo') : []);
   let source = $state('');
   const catalog = $derived(repo.catalogs[source]?.catalog ?? null);
-  // The entry as it is in that catalog: an update (to start from its texts).
-  const entry = $derived(mark && repo.info?.author ? catalog?.entries.find((e) => e.author === repo.info!.author && e.id === mark.id) : undefined);
+  // The entry as it is in that catalog: an update (to start from its texts). No mark in the vault (another copy of
+  // the app wrote state.json over it, the folder was renamed) — the GM's own adventure of the same name is it, unless
+  // they want a new entry.
+  const mine = (e: RepoEntry) => e.author === repo.info?.author && e.kind !== 'system';
+  const byMark = $derived(mark ? catalog?.entries.find((e) => mine(e) && e.id === mark.id) : undefined);
+  const byName = $derived(
+    !byMark && adventure ? catalog?.entries.find((e) => mine(e) && [adventure, title.trim()].some((n) => n && e.title.toLowerCase() === n.toLowerCase())) : undefined,
+  );
+  let asNew = $state(false);
+  const entry = $derived(byMark ?? (asNew ? undefined : byName));
 
   let title = $state('');
   let description = $state('');
@@ -50,6 +58,7 @@
     pdf = true;
     cover = null;
     rights = false;
+    asNew = false;
     sizes = null;
     filledFrom = null;
     void loadInfo().then(() => {
@@ -86,7 +95,9 @@
     const a = adventure;
     if (author.trim() !== (repo.info?.name ?? '')) repo.info = await window.api.setRepoName(author);
     close();
-    await publish({ source, adventure: a, title: title.trim(), description: description.trim(), lang, music, pdf, ...(cover ? { cover } : {}) });
+    // The id of the entry to update when the vault has no mark of it (null — a new entry).
+    const id = byMark ? undefined : asNew ? null : byName?.id;
+    await publish({ source, adventure: a, title: title.trim(), description: description.trim(), lang, music, pdf, ...(cover ? { cover } : {}), ...(id !== undefined ? { id } : {}) });
   }
 </script>
 
@@ -151,6 +162,12 @@
         {#if tooBig}<p class="warn">{t('repo.dialog.tooBig', { max: mb(max) })}</p>{/if}
       {/if}
 
+      {#if byName && !byMark}
+        <label class="check found">
+          <input type="checkbox" bind:checked={asNew} />
+          {t('repo.dialog.asNew', { name: byName.title, n: byName.version })}
+        </label>
+      {/if}
       <label class="check rights"><input type="checkbox" bind:checked={rights} /> {t('repo.dialog.rights')}</label>
       <p class="faint small">
         {t('repo.dialog.public')}
@@ -233,6 +250,9 @@
     align-items: flex-start;
     gap: 6px;
     margin: 6px 0;
+  }
+  .found {
+    color: var(--warning);
   }
   .rights {
     margin-top: 10px;
