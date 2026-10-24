@@ -1,14 +1,15 @@
 // The repository's rules: the catalog (one JSON in the bucket), publishing in two steps (ask → upload straight to S3
 // → commit), versions, downloads. Who is asking is already checked (http.ts): `author` is a verified key.
 import { randomUUID } from 'node:crypto';
-import { LIMITS, REPO_API, REPORT_REASONS, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type Report, type ReportedEntry } from '../../src/shared/repo.ts';
+import { LIMITS, REPO_API, REPORT_REASONS, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type Report, type ReportedEntry, type BlockedEntry } from '../../src/shared/repo.ts';
 import type { Storage } from './s3.ts';
 
 // What the catalog keeps beyond what everyone sees: the files of the versions still in the bucket.
 interface Stored extends RepoEntry {
   files: { version: number; key: string }[];
-  // Removed by the admin: hidden, the author can't publish it again.
+  // Removed by the admin: hidden, the author can't publish it again; when.
   blocked?: boolean;
+  blockedAt?: number;
   // Complaints (only the admin sees them); `from` — a hash of the sender's address, one complaint each.
   reports?: (Report & { from: string })[];
 }
@@ -91,7 +92,7 @@ export class Repo {
   }
 
   catalog(): RepoCatalog {
-    const entries = this.entries.filter((e) => !e.blocked).map(({ files: _f, blocked: _b, reports: _r, ...e }) => e);
+    const entries = this.entries.filter((e) => !e.blocked).map(({ files: _f, blocked: _b, blockedAt: _a, reports: _r, ...e }) => e);
     return { api: REPO_API, maxSize: this.opts.maxSize, entries };
   }
 
@@ -180,7 +181,7 @@ export class Repo {
       if (!e) return false;
       for (const f of e.files) await this.store.del(f.key).catch(() => undefined);
       this.entries = this.entries.filter((x) => x !== e);
-      if (block) this.entries.push({ ...e, files: [], blocked: true });
+      if (block) this.entries.push({ ...e, files: [], blocked: true, blockedAt: this.now() });
       return true;
     });
   }
@@ -203,6 +204,24 @@ export class Repo {
       .filter((e) => !e.blocked && e.reports?.length)
       .map((e) => ({ author: e.author, id: e.id, title: e.title, authorName: e.authorName, reports: e.reports!.map(({ from: _f, ...r }) => r) }))
       .sort((a, b) => b.reports.length - a.reports.length);
+  }
+
+  // For the admin: blocked entries, the latest first.
+  blockedList(): BlockedEntry[] {
+    return this.entries
+      .filter((e) => e.blocked)
+      .map((e) => ({ author: e.author, id: e.id, title: e.title, authorName: e.authorName, blocked: e.blockedAt ?? 0 }))
+      .sort((a, b) => b.blocked - a.blocked);
+  }
+
+  // The admin lifts a block: the author may publish the adventure again (its files are gone for good).
+  unblock(author: string, id: string): Promise<boolean> {
+    return this.change(async () => {
+      const e = this.find(author, id);
+      if (!e?.blocked) return false;
+      this.entries = this.entries.filter((x) => x !== e);
+      return true;
+    });
   }
 
   // The admin found nothing wrong: the complaints go.

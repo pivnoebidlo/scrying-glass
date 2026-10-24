@@ -32,6 +32,8 @@ presigned links, so the service itself carries no big traffic.
 | `GET /api/v1/admin/reports` | the admin: entries with complaints (`Authorization: Bearer <ADMIN_TOKEN>`) |
 | `POST /api/v1/admin/remove` | the admin removes an entry: `Authorization: Bearer <ADMIN_TOKEN>`, body `{"author":"…","id":"…"}`; it stays blocked (`"block": false` — just removed) |
 | `POST /api/v1/admin/dismiss` | the admin dismisses the complaints about an entry: `{"author":"…","id":"…"}` |
+| `GET /api/v1/admin/blocked` | the admin: blocked entries |
+| `POST /api/v1/admin/unblock` | the admin lifts a block: `{"author":"…","id":"…"}` — the author may publish it again |
 | `GET /healthz` | liveness |
 
 ## Installing with Helm
@@ -67,7 +69,7 @@ the key prefix in the bucket (`s3.prefix`). An ingress in front of the service m
 (the rate limit counts by it).
 
 The admin can do all of this in the app too: Settings → Community → Admin, with the admin token — the catalog then
-shows complaints and the buttons to take any entry down.
+shows complaints, the buttons to take any entry down and the blocked ones to unblock.
 
 ## Environment
 

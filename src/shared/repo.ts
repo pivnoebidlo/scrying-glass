@@ -77,6 +77,15 @@ export interface Report {
   text: string;
   at: number;
 }
+// What the admin sees: blocked entries (taken down, the author can't publish them again) — to lift the block.
+export interface BlockedEntry {
+  author: string;
+  id: string;
+  title: string;
+  authorName: string;
+  // When it was blocked (0 — before the service kept the time).
+  blocked: number;
+}
 // What the admin sees: entries with complaints.
 export interface ReportedEntry {
   author: string;
@@ -174,7 +183,7 @@ export const updateFor = (entries: RepoEntry[], m: InstalledMark | undefined) =>
   m ? entries.find((e) => e.author === m.author && e.id === m.id && e.version > m.version) : undefined;
 
 // Search over the catalog: every word of the query in the title, description or author's name.
-export function matchesQuery(e: RepoEntry, query: string): boolean {
+export function matchesQuery(e: Pick<RepoEntry, 'title' | 'description' | 'authorName'>, query: string): boolean {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   const text = `${e.title}\n${e.description}\n${e.authorName}`.toLowerCase();
   return words.every((w) => text.includes(w));

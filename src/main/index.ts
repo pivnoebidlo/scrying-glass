@@ -44,7 +44,7 @@ import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnounc
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
-import { addSource, adminDismiss, adminRemove, adminReports, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
+import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
 import type { RepoEntry, RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
@@ -1123,6 +1123,8 @@ ipcMain.handle('repo:report', (_event, { source, author, id, reason, text }: { s
 ipcMain.handle('repo:setAdmin', (_event, { source, token }: { source: string; token: string }) => setAdmin(source, token));
 ipcMain.handle('repo:adminReports', (_event, source: string) => adminReports(source));
 ipcMain.handle('repo:adminRemove', (_event, { source, author, id, block }: { source: string; author: string; id: string; block: boolean }) => adminRemove(source, author, id, block));
+ipcMain.handle('repo:adminBlocked', (_event, source: string) => adminBlocked(source));
+ipcMain.handle('repo:adminUnblock', (_event, { source, author, id }: { source: string; author: string; id: string }) => adminUnblock(source, author, id));
 ipcMain.handle('repo:adminDismiss', (_event, { source, author, id }: { source: string; author: string; id: string }) => adminDismiss(source, author, id));
 ipcMain.handle('repo:cover', (_event, { source, author, id, version }: { source: string; author: string; id: string; version: number }) => repoCover(source, author, id, version));
 // What an adventure weighs: all of it, its music, its PDFs (both optional in a publish).

@@ -3,7 +3,7 @@
 // flow. The work is the core's (main/repo.ts); here — the window's side and the words for its errors.
 import { t } from '../../../renderer/lib/i18n.svelte';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
-import { sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type Report, type ReportedEntry, type ReportReason, type SourceInfo } from '../../../shared/repo';
+import { sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type BlockedEntry, type Report, type ReportedEntry, type ReportReason, type SourceInfo } from '../../../shared/repo';
 
 // An entry of a catalog with the source it is in.
 export type Found = RepoEntry & { source: string };
@@ -14,6 +14,8 @@ export const repo = $state({
   catalogs: {} as Record<string, { catalog: RepoCatalog | null; error: string; loading: boolean }>,
   // Complaints, by source id — only of the repositories the GM is the admin of.
   reports: {} as Record<string, ReportedEntry[]>,
+  // Blocked entries, by source id — same.
+  blocked: {} as Record<string, BlockedEntry[]>,
   // The complaint dialog: about which entry.
   reporting: null as Found | null,
   // The catalog window is open.
@@ -60,8 +62,11 @@ async function loadSource(id: string) {
     repo.catalogs[id] = { catalog: null, error: errorText(e), loading: false };
   }
   if (repo.info?.sources.find((s) => s.id === id)?.admin) {
-    repo.reports[id] = await window.api.repoAdminReports(id).catch(() => []);
-  } else delete repo.reports[id];
+    [repo.reports[id], repo.blocked[id]] = await Promise.all([window.api.repoAdminReports(id).catch(() => []), window.api.repoAdminBlocked(id).catch(() => [])]);
+  } else {
+    delete repo.reports[id];
+    delete repo.blocked[id];
+  }
 }
 
 export const isAdmin = (source: string) => !!repo.info?.sources.find((s) => s.id === source)?.admin;
@@ -150,6 +155,18 @@ export async function adminRemove(e: Found, block: boolean) {
 export async function dismiss(e: Found) {
   const ok = await work(t('repo.admin.dismissing'), async () => (await window.api.repoAdminDismiss(e.source, e.author, e.id), true));
   if (ok) void loadCatalogs(e.source);
+}
+
+// A blocked entry with its source.
+export type Blocked = BlockedEntry & { source: string };
+
+export async function unblock(b: Blocked) {
+  if (!confirm(t('repo.admin.unblockAsk', { name: b.title }))) return;
+  const ok = await work(t('repo.admin.unblocking'), async () => (await window.api.repoAdminUnblock(b.source, b.author, b.id), true));
+  if (ok) {
+    notice(t('repo.admin.unblocked', { name: b.title }));
+    void loadCatalogs(b.source);
+  }
 }
 
 // The vault's folder an entry was installed to (the newest if several).

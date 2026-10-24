@@ -7,7 +7,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { generateKeyPairSync, sign, type KeyObject } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { checkPublish, matchesQuery, signedText, updateFor, type PublishTicket, type RepoCatalog, type RepoEntry, type ReportedEntry } from '../src/shared/repo';
+import { checkPublish, matchesQuery, signedText, updateFor, type PublishTicket, type RepoCatalog, type RepoEntry, type ReportedEntry, type BlockedEntry } from '../src/shared/repo';
 import { Repo } from '../server/src/repo';
 import { handler } from '../server/src/http';
 import { sign as sigv4 } from '../server/src/s3';
@@ -199,6 +199,15 @@ describe('repository service', () => {
     expect((await catalog()).entries.map((e) => e.author)).toEqual([me.x]);
     const again = await call('/api/v1/publish', { ...meta, size: 10 }, other);
     expect(again.body).toEqual({ error: 'blocked' });
+    // The admin lifts the block: the author may publish it again.
+    const admin2 = (p: string, data?: object) => fetch(base + p, { method: data ? 'POST' : 'GET', ...(data ? { body: JSON.stringify(data) } : {}), headers: { authorization: 'Bearer secret' } });
+    expect((await fetch(`${base}/api/v1/admin/blocked`)).status).toBe(401);
+    const blocked = (await (await admin2('/api/v1/admin/blocked')).json()) as BlockedEntry[];
+    expect(blocked).toEqual([{ author: other.x, id: 'mine-adventure', title: 'Mine', authorName: 'Me', blocked: now }]);
+    expect(JSON.stringify(await catalog())).not.toContain('blocked');
+    expect((await admin2('/api/v1/admin/unblock', { author: other.x, id: 'mine-adventure' })).status).toBe(200);
+    expect(await (await admin2('/api/v1/admin/blocked')).json()).toEqual([]);
+    expect((await call('/api/v1/publish', { ...meta, size: 10 }, other)).status).toBe(200);
   });
 
   it('keeps the catalog in the bucket', async () => {

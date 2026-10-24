@@ -1,5 +1,5 @@
 // API, который preload открывает окнам как window.api.
-import type { RepoCatalog, RepoEntry, RepoInfo, RepoProgress, ReportedEntry, ReportReason } from './repo';
+import type { BlockedEntry, RepoCatalog, RepoEntry, RepoInfo, RepoProgress, ReportedEntry, ReportReason } from './repo';
 import type { BuiltinSounds } from './sounds';
 import type { Card, CardRef, CardScope, CardSummary, LssMatch, LssPreview } from './cards';
 import type { BuiltinBook } from './compendium';
@@ -223,6 +223,9 @@ export interface Api {
   repoAdminReports(source: string): Promise<ReportedEntry[]>;
   repoAdminRemove(source: string, author: string, id: string, block: boolean): Promise<void>;
   repoAdminDismiss(source: string, author: string, id: string): Promise<void>;
+  // Blocked entries and lifting a block (the author may publish it again).
+  repoAdminBlocked(source: string): Promise<BlockedEntry[]>;
+  repoAdminUnblock(source: string, author: string, id: string): Promise<void>;
   // A cover as a data: URL (null — none or not reachable).
   repoCover(source: string, author: string, id: string, version: number): Promise<string | null>;
   // What an adventure weighs: all of it, its music, its PDFs (bytes).

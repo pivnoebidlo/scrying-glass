@@ -3,7 +3,7 @@
      description, download or update; the GM's own — take down; others' — complain. The admin of a repository sees
      complaints and takes any entry down. Opens on repo.browsing (openRepo). -->
 <script lang="ts">
-  import { Ban, Check, CloudUpload, Download, Flag, ImageOff, RefreshCw, Settings, ShieldCheck, Trash2, TriangleAlert, X } from '@lucide/svelte';
+  import { Ban, Check, LockOpen, CloudUpload, Download, Flag, ImageOff, RefreshCw, Settings, ShieldCheck, Trash2, TriangleAlert, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
   import { store } from '../../../renderer/lib/store.svelte';
@@ -11,13 +11,13 @@
   import { enabledSystems, systems } from '../../../systems';
   import { LANGS } from '../../../shared/i18n/core';
   import { matchesQuery, shortKey } from '../../../shared/repo';
-  import { adminRemove, allFound, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
+  import { adminRemove, allFound, unblock, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
 
   let query = $state('');
   let source = $state('');
   let system = $state('');
   let lang = $state('');
-  let show = $state<'all' | 'installed' | 'mine' | 'reported'>('all');
+  let show = $state<'all' | 'installed' | 'mine' | 'reported' | 'blocked'>('all');
   let chosen = $state<string | null>(null);
 
   const app = $derived(store.state);
@@ -29,6 +29,12 @@
   const failed = $derived(on.filter((s) => repo.catalogs[s.id]?.error));
   const admin = $derived(on.some((s) => s.admin));
   const reportedCount = $derived(on.reduce((n, s) => n + (repo.reports[s.id]?.length ?? 0), 0));
+  // Blocked entries of the repositories the GM is the admin of (they are not in the catalog).
+  const blocked = $derived<Blocked[]>(
+    on
+      .flatMap((s) => (repo.blocked[s.id] ?? []).map((b) => ({ ...b, source: s.id })))
+      .filter((b) => (!source || b.source === source) && matchesQuery({ ...b, description: '' }, query)),
+  );
 
   const found = $derived(repo.info ? allFound() : []);
   const entries = $derived(
@@ -108,6 +114,7 @@
         <button class:on={show === 'mine'} onclick={() => (show = 'mine')}>{t('repo.showMine')}</button>
         {#if admin}
           <button class:on={show === 'reported'} onclick={() => (show = 'reported')}>{t('repo.showReported', { count: reportedCount })}</button>
+          <button class:on={show === 'blocked'} onclick={() => (show = 'blocked')}>{t('repo.showBlocked', { count: blocked.length })}</button>
         {/if}
       </div>
     </div>
@@ -125,6 +132,28 @@
         <p class="faint">{t('repo.noSources')}</p>
         <button class="btn" onclick={settings}>{t('repo.openSettings')}</button>
       </div>
+    {:else if show === 'blocked'}
+      {#if !blocked.length}
+        <div class="empty"><p class="faint">{t('repo.admin.noBlocked')}</p></div>
+      {:else}
+        <div class="blocked">
+          <p class="faint">{t('repo.admin.blockedAbout')}</p>
+          {#each blocked as b (`${b.source}/${b.author}/${b.id}`)}
+            <div class="blocked-row">
+              <Ban size={16} />
+              <span class="text">
+                <span class="title">{b.title}</span>
+                <span class="meta faint">
+                  {t('repo.by', { name: b.authorName || t('repo.anonymous') })} <code>{shortKey(b.author)}</code>
+                  {#if b.blocked} · {t('repo.admin.blockedOn', { date: date(b.blocked) })}{/if}
+                  {#if on.length > 1} · {sourceTitle(b.source)}{/if}
+                </span>
+              </span>
+              <button class="btn" disabled={!!repo.busy} onclick={() => unblock(b)}><LockOpen size={14} /> {t('repo.admin.unblock')}</button>
+            </div>
+          {/each}
+        </div>
+      {/if}
     {:else if !entries.length}
       <div class="empty">
         <p class="faint">{loading ? t('repo.loading') : found.length ? t('repo.nothingFound') : failed.length < on.length ? t('repo.emptyCatalog') : ''}</p>
@@ -419,6 +448,25 @@
   }
   .admin .actions {
     margin: 10px 0 0;
+  }
+  .blocked {
+    flex: 1;
+    padding: 12px 18px;
+    overflow-y: auto;
+  }
+  .blocked > p {
+    margin: 0 0 10px;
+  }
+  .blocked-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-faint);
+  }
+  .blocked-row .text {
+    color: var(--text-normal);
   }
   .details {
     padding: 18px 22px;

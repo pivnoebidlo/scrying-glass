@@ -11,7 +11,7 @@ import * as https from 'node:https';
 import { Readable } from 'node:stream';
 import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, randomBytes, sign } from 'node:crypto';
 import { nativeImage, safeStorage } from 'electron';
-import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, OFFICIAL_SOURCE, REPO_API, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type ReportedEntry, type SourceInfo } from '../shared/repo';
+import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, OFFICIAL_SOURCE, REPO_API, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type ReportedEntry, type BlockedEntry, type SourceInfo } from '../shared/repo';
 
 export interface RepoSettings {
   // The GM's own sources (the official one is always there).
@@ -209,6 +209,8 @@ export async function setAdmin(source: string, token: string) {
 export const adminReports = (source: string) => adminCall<ReportedEntry[]>(source, '/api/v1/admin/reports', adminToken(source));
 export const adminRemove = (source: string, author: string, id: string, block: boolean) => adminCall(source, '/api/v1/admin/remove', adminToken(source), { author, id, block });
 export const adminDismiss = (source: string, author: string, id: string) => adminCall(source, '/api/v1/admin/dismiss', adminToken(source), { author, id });
+export const adminBlocked = (source: string) => adminCall<BlockedEntry[]>(source, '/api/v1/admin/blocked', adminToken(source));
+export const adminUnblock = (source: string, author: string, id: string) => adminCall(source, '/api/v1/admin/unblock', adminToken(source), { author, id });
 
 export async function catalog(source: string): Promise<RepoCatalog> {
   const res = await request(`${base(source)}/api/v1/catalog`);

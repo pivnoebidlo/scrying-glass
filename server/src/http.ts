@@ -11,6 +11,8 @@
 //   GET  /api/v1/admin/reports (admin)        ReportedEntry[] (also the check of the token)
 //   POST /api/v1/admin/remove (admin)         { author, id, block? }
 //   POST /api/v1/admin/dismiss (admin)        { author, id } — the complaints go
+//   GET  /api/v1/admin/blocked (admin)        BlockedEntry[]
+//   POST /api/v1/admin/unblock (admin)        { author, id } — the author may publish it again
 //   GET  /healthz
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { createHash, createPublicKey, timingSafeEqual, verify } from 'node:crypto';
@@ -97,6 +99,10 @@ export function handler(repo: Repo, opts: HttpOptions) {
           if (!isAdmin(req)) throw new RepoError(401, 'admin');
           return json(res, 200, repo.reported());
         }
+        if (path === '/api/v1/admin/blocked') {
+          if (!isAdmin(req)) throw new RepoError(401, 'admin');
+          return json(res, 200, repo.blockedList());
+        }
         const m = /^\/api\/v1\/(packs|covers)\/([^/]+)\/([^/]+)$/.exec(path);
         if (m && AUTHOR_RE.test(m[2]!) && ID_RE.test(m[3]!)) {
           const link = repo.link(m[2]!, m[3]!, m[1] === 'packs' ? 'pack' : 'cover');
@@ -123,6 +129,13 @@ export function handler(repo: Repo, opts: HttpOptions) {
         const done = await repo.dismiss(String(b.author), String(b.id));
         opts.log?.(`admin dismiss ${b.author}/${b.id}: ${done}`);
         return json(res, done ? 200 : 404, { dismissed: done });
+      }
+      if (path === '/api/v1/admin/unblock') {
+        if (!isAdmin(req)) throw new RepoError(401, 'admin');
+        const b = JSON.parse(body) as { author?: string; id?: string };
+        const done = await repo.unblock(String(b.author), String(b.id));
+        opts.log?.(`admin unblock ${b.author}/${b.id}: ${done}`);
+        return json(res, done ? 200 : 404, { unblocked: done });
       }
       if (path === '/api/v1/report') {
         const b = JSON.parse(body) as { author?: unknown; id?: unknown; reason?: unknown; text?: unknown };
