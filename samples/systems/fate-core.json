@@ -1,0 +1,1914 @@
+{
+ "scryingGlass": "system",
+ "version": 1,
+ "id": "fate-core",
+ "family": "fate",
+ "release": 1,
+ "title": "Fate Core",
+ "author": "Scrying Glass",
+ "license": "Fate Core System and Fate Accelerated Edition — Evil Hat Productions, LLC (Leonard Balsera, Brian Engard, Jeremy Keller, Ryan Macklin, Mike Olson, Clark Valentine, Amanda Valentine, Fred Hicks, Rob Donoghue), CC BY 3.0 (http://www.faterpg.com/). The card's structure and the Russian names are our own.",
+ "url": "http://www.faterpg.com/",
+ "subtitle": "{high_concept}",
+ "rank": "max(athletics, burglary, contacts, crafts, deceive, drive, empathy, fight, investigate, lore, notice, physique, provoke, rapport, resources, shoot, stealth, will)",
+ "sections": [
+  {
+   "id": "aspects",
+   "title": {
+    "en": "Aspects",
+    "ru": "Аспекты"
+   },
+   "fields": [
+    {
+     "key": "tier",
+     "type": "select",
+     "title": {
+      "en": "Importance",
+      "ru": "Важность"
+     },
+     "options": [
+      {
+       "en": "Nameless",
+       "ru": "Безымянный"
+      },
+      {
+       "en": "Supporting",
+       "ru": "Второстепенный"
+      },
+      {
+       "en": "Main",
+       "ru": "Главный"
+      }
+     ],
+     "hint": {
+      "en": "For NPCs: a nameless one has a couple of skills and a box of stress, a main one is built like a character",
+      "ru": "Для NPC: у безымянного пара навыков и клетка стресса, главный — как персонаж"
+     }
+    },
+    {
+     "key": "high_concept",
+     "type": "text",
+     "title": {
+      "en": "High concept",
+      "ru": "Концепция"
+     }
+    },
+    {
+     "key": "trouble",
+     "type": "text",
+     "title": {
+      "en": "Trouble",
+      "ru": "Проблема"
+     }
+    },
+    {
+     "key": "aspects",
+     "type": "tags",
+     "title": {
+      "en": "Other aspects",
+      "ru": "Другие аспекты"
+     }
+    }
+   ]
+  },
+  {
+   "id": "skills",
+   "title": {
+    "en": "Skills",
+    "ru": "Навыки"
+   },
+   "fields": [
+    {
+     "key": "athletics",
+     "type": "number",
+     "title": {
+      "en": "Athletics",
+      "ru": "Атлетика"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "athletics",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "burglary",
+     "type": "number",
+     "title": {
+      "en": "Burglary",
+      "ru": "Кража"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "burglary",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "contacts",
+     "type": "number",
+     "title": {
+      "en": "Contacts",
+      "ru": "Связи"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "contacts",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "crafts",
+     "type": "number",
+     "title": {
+      "en": "Crafts",
+      "ru": "Ремесло"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "crafts",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "deceive",
+     "type": "number",
+     "title": {
+      "en": "Deceive",
+      "ru": "Обман"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "deceive",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "drive",
+     "type": "number",
+     "title": {
+      "en": "Drive",
+      "ru": "Вождение"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "drive",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "empathy",
+     "type": "number",
+     "title": {
+      "en": "Empathy",
+      "ru": "Эмпатия"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "empathy",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "fight",
+     "type": "number",
+     "title": {
+      "en": "Fight",
+      "ru": "Драка"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "fight",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "investigate",
+     "type": "number",
+     "title": {
+      "en": "Investigate",
+      "ru": "Расследование"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "investigate",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "lore",
+     "type": "number",
+     "title": {
+      "en": "Lore",
+      "ru": "Знания"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "lore",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "notice",
+     "type": "number",
+     "title": {
+      "en": "Notice",
+      "ru": "Внимательность"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "notice",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "physique",
+     "type": "number",
+     "title": {
+      "en": "Physique",
+      "ru": "Телосложение"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "physique",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "provoke",
+     "type": "number",
+     "title": {
+      "en": "Provoke",
+      "ru": "Провокация"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "provoke",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "rapport",
+     "type": "number",
+     "title": {
+      "en": "Rapport",
+      "ru": "Общение"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "rapport",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "resources",
+     "type": "number",
+     "title": {
+      "en": "Resources",
+      "ru": "Ресурсы"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "resources",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "shoot",
+     "type": "number",
+     "title": {
+      "en": "Shoot",
+      "ru": "Стрельба"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "shoot",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "stealth",
+     "type": "number",
+     "title": {
+      "en": "Stealth",
+      "ru": "Скрытность"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "stealth",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "will",
+     "type": "number",
+     "title": {
+      "en": "Will",
+      "ru": "Воля"
+     },
+     "min": 0,
+     "max": 8,
+     "hideZero": true,
+     "roll": {
+      "type": "fate",
+      "bonus": "will",
+      "labels": [
+       {
+        "min": 8,
+        "title": {
+         "en": "Legendary",
+         "ru": "Легендарно"
+        }
+       },
+       {
+        "min": 7,
+        "title": {
+         "en": "Epic",
+         "ru": "Эпично"
+        }
+       },
+       {
+        "min": 6,
+        "title": {
+         "en": "Fantastic",
+         "ru": "Фантастично"
+        }
+       },
+       {
+        "min": 5,
+        "title": {
+         "en": "Superb",
+         "ru": "Превосходно"
+        }
+       },
+       {
+        "min": 4,
+        "title": {
+         "en": "Great",
+         "ru": "Отлично"
+        }
+       },
+       {
+        "min": 3,
+        "title": {
+         "en": "Good",
+         "ru": "Хорошо"
+        }
+       },
+       {
+        "min": 2,
+        "title": {
+         "en": "Fair",
+         "ru": "Неплохо"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Average",
+         "ru": "Средне"
+        }
+       },
+       {
+        "min": 0,
+        "title": {
+         "en": "Mediocre",
+         "ru": "Посредственно"
+        }
+       },
+       {
+        "min": -1,
+        "title": {
+         "en": "Poor",
+         "ru": "Плохо"
+        }
+       },
+       {
+        "min": -99,
+        "title": {
+         "en": "Terrible",
+         "ru": "Ужасно"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "stunts",
+   "title": {
+    "en": "Stunts and refresh",
+    "ru": "Трюки и восстановление"
+   },
+   "fields": [
+    {
+     "key": "stunts",
+     "type": "textarea",
+     "title": {
+      "en": "Stunts",
+      "ru": "Трюки"
+     }
+    },
+    {
+     "key": "refresh",
+     "type": "number",
+     "title": {
+      "en": "Refresh",
+      "ru": "Восстановление"
+     },
+     "min": 0,
+     "max": 10,
+     "default": 3,
+     "hint": {
+      "en": "Fate points at the start of a session",
+      "ru": "Жетоны судьбы в начале сессии"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stress",
+   "title": {
+    "en": "Stress and consequences",
+    "ru": "Стресс и последствия"
+   },
+   "fields": [
+    {
+     "key": "physical_boxes",
+     "type": "formula",
+     "title": {
+      "en": "Physical stress boxes",
+      "ru": "Клеток физического стресса"
+     },
+     "formula": "2 + min(1, physique) + min(1, floor(physique / 3))"
+    },
+    {
+     "key": "physical",
+     "type": "track",
+     "title": {
+      "en": "Physical stress",
+      "ru": "Физический стресс"
+     },
+     "boxes": "physical_boxes"
+    },
+    {
+     "key": "mental_boxes",
+     "type": "formula",
+     "title": {
+      "en": "Mental stress boxes",
+      "ru": "Клеток ментального стресса"
+     },
+     "formula": "2 + min(1, will) + min(1, floor(will / 3))"
+    },
+    {
+     "key": "mental",
+     "type": "track",
+     "title": {
+      "en": "Mental stress",
+      "ru": "Ментальный стресс"
+     },
+     "boxes": "mental_boxes"
+    },
+    {
+     "key": "mild",
+     "type": "text",
+     "title": {
+      "en": "Mild (2)",
+      "ru": "Лёгкое (2)"
+     }
+    },
+    {
+     "key": "moderate",
+     "type": "text",
+     "title": {
+      "en": "Moderate (4)",
+      "ru": "Среднее (4)"
+     }
+    },
+    {
+     "key": "severe",
+     "type": "text",
+     "title": {
+      "en": "Severe (6)",
+      "ru": "Тяжёлое (6)"
+     }
+    }
+   ]
+  },
+  {
+   "id": "notes",
+   "title": {
+    "en": "Notes",
+    "ru": "Заметки"
+   },
+   "kinds": [
+    "monster",
+    "npc"
+   ],
+   "fields": [
+    {
+     "key": "notes",
+     "type": "textarea",
+     "title": {
+      "en": "For the GM",
+      "ru": "Для мастера"
+     }
+    }
+   ]
+  }
+ ],
+ "tracker": {
+  "init": {
+   "type": "value",
+   "value": "notice"
+  },
+  "cells": [
+   "physical",
+   "mental",
+   "mild",
+   "moderate",
+   "severe"
+  ],
+  "conditions": {
+   "list": [],
+   "free": true
+  }
+ }
+}

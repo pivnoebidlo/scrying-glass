@@ -101,7 +101,7 @@ interface AppSettings {
   repo?: RepoSettings;
 }
 const RECENT_MAX = 10;
-const FIRST_LAUNCH_OFF = ['fate-core', 'mausritter', 'fitd'];
+const FIRST_LAUNCH_OFF = ['mausritter', 'fitd'];
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 let settings: AppSettings = { vault: null, recent: [] };
 

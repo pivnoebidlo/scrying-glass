@@ -3,6 +3,12 @@ import { adventureHidden, currentSystem, inCurrentFamily, shownAdventures, syste
 import { scenesFor, type ScenesState } from '../src/modules/scenes/types';
 import { entryFamily, parseEntry } from '../src/shared/compendium';
 import { DEFAULT_SYSTEM, enabledSystems, familyOf, isDnd, setSystemsOff, systems } from '../src/systems';
+import { readFileSync } from 'node:fs';
+import { validatePack, type SystemPack } from '../src/shared/syspack';
+import { registerPacks } from '../src/systems/packs';
+
+// Fate Core is a system pack: registered as the app does with an installed one.
+registerPacks([validatePack(JSON.parse(readFileSync(new URL('../samples/systems/fate-core.json', import.meta.url), 'utf8'))) as SystemPack]);
 
 const adv = (systems: Record<string, string> | undefined, current: string | null): AdventuresState => ({
   list: ['Страд', 'Дрезден'],
@@ -79,7 +85,9 @@ describe('отключённые системы', () => {
     setSystemsOff(['dnd5e-2024', 'dnd5e-2014']);
     const a = adv(undefined, null);
     expect(adventureHidden(a, 'Страд')).toBe(true);
-    expect(currentSystem(a)).toBe('fate-core');
+    // The first system turned on (the order of the list: built-in ones, then packs).
+    expect(currentSystem(a)).toBe(enabledSystems()[0]!.id);
+    expect(isDnd(currentSystem(a))).toBe(false);
     // Система хранилища наследуется приключениями без своей.
     expect(adventureHidden(adv({ '': 'fate-core' }, null), 'Страд')).toBe(false);
   });

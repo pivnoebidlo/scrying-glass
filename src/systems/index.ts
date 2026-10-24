@@ -5,8 +5,6 @@ import * as dnd5e from './dnd5e/stats';
 import * as character from './dnd5e/character';
 import type { TrackerDef } from './tracker';
 import { dndTracker } from './dnd5e/tracker';
-import { fateTracker } from './fate/tracker';
-import * as fateStats from './fate/stats';
 import { mausTracker } from './mausritter/tracker';
 import * as maus from './mausritter/stats';
 import { fitdTracker } from './fitd/tracker';
@@ -39,19 +37,6 @@ const dnd = (id: string, title: string): SystemDef => ({
   tracker: dndTracker,
 });
 
-// Fate Core: один вид карточки для персонажей и NPC (аспекты, навыки, трюки, стресс, последствия).
-const fate: SystemDef = {
-  id: 'fate-core',
-  title: 'Fate Core',
-  family: 'fate',
-  subtitle: (s) => (fateStats.isFate(s) ? fateStats.subtitle(s) : ''),
-  // Для сортировки — лучший навык.
-  rank: (s) => (fateStats.isFate(s) ? fateStats.topRating(s) : null),
-  combat: (s) => (fateStats.isFate(s) ? fateStats.combatStats(s) : { hp: null, ac: null, initiative: 0 }),
-  blank: (kind) => fateStats.blankStats(kind),
-  tracker: fateTracker,
-};
-
 // Mausritter: one card for creatures and mice; a player mouse also has a sheet (inventory, level, pips).
 const mausritter: SystemDef = {
   id: 'mausritter',
@@ -76,12 +61,11 @@ const forged: SystemDef = {
   tracker: fitdTracker,
 };
 
-export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)'), fate, mausritter, forged];
+export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)'), mausritter, forged];
 
 // Семейства систем по порядку (для выбора системы приключения — группами).
 export const FAMILIES: { id: string; title: string }[] = [
   { id: 'dnd5e', title: 'D&D 5e' },
-  { id: 'fate', title: 'Fate' },
   { id: 'mausritter', title: 'Mausritter' },
   { id: 'fitd', title: 'Forged in the Dark' },
 ];

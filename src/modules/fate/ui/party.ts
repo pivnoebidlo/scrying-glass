@@ -3,7 +3,6 @@
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import { visibleIn, inCurrentFamily } from '../../../shared/adventures';
 import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
-import { isFate } from '../../../systems/fate/stats';
 
 // Возвращает, сколько персонажей в списке после добавления (новых и обновлённых).
 export async function addParty(): Promise<number> {
@@ -15,7 +14,9 @@ export async function addParty(): Promise<number> {
   const list = [];
   for (const c of cards) {
     const card = await window.api.getCard(c.ref);
-    const refresh = card && isFate(card.stats) ? (card.stats.refresh ?? 3) : 3;
+    // The pack's «refresh» field (none — 3, as the rules start a character).
+    const r = (card?.stats as { refresh?: unknown } | undefined)?.refresh;
+    const refresh = typeof r === 'number' ? r : 3;
     list.push({ name: c.name, portrait: c.images[0] ?? null, card: c.ref, refresh });
   }
   if (list.length) await dispatch('fate', 'addHolders', { list });

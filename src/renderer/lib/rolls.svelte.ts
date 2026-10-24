@@ -1,7 +1,7 @@
 // Журнал бросков мастера: броски из статблоков и листов персонажей (к20 и урон D&D, кубы Fate). Только в окне управления, игрокам не виден.
 import { hotkeyLabel } from '../../shared/hotkeys';
 import { t } from './i18n.svelte';
-import { die, parseDice, rollD20, rollDamage, rollFate, rollPool, rollSave, type D20Mode, type D20Roll, type DamageRoll, type FateRoll, type PoolRoll, type SaveRoll } from '../../shared/dice';
+import { die, parseDice, rollD20, rollDamage, rollPool, rollSave, type D20Mode, type D20Roll, type DamageRoll, type PoolRoll, type SaveRoll } from '../../shared/dice';
 import { getLang } from '../../shared/i18n';
 import { pushPool, rollPack, type PackRollResult, type RollSpec, type RollWords } from '../../shared/syspack';
 
@@ -12,8 +12,6 @@ export interface RollEntry {
   who: string;
   what: string;
   d20?: D20Roll;
-  // Кубы Fate (4dF) + навык.
-  fate?: FateRoll;
   // Roll-under save (Mausritter): d20 ≤ the attribute.
   save?: SaveRoll;
   // Forged in the Dark: a pool of d6; `resist` — a resistance roll (stress taken instead of the outcome).
@@ -48,11 +46,6 @@ class Rolls {
     const crit = d20.natural === 20;
     const dmg = damage.map(parseDice).filter((x) => x !== null).map((x) => rollDamage(x, crit));
     this.push({ who, what, d20, attack: true, damage: dmg });
-  }
-
-  // Fate: 4dF + навык.
-  fate(who: string, what: string, bonus: number) {
-    this.push({ who, what, fate: rollFate(bonus), damage: [] });
   }
 
   // Mausritter: a save against STR, DEX or WIL.

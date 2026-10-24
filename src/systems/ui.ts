@@ -8,9 +8,6 @@ import CharacterEditor from './dnd5e/CharacterEditor.svelte';
 import { isCharacter } from './dnd5e/character';
 import GenericStats from './GenericStats.svelte';
 import GenericEditor from './GenericEditor.svelte';
-import FateSheet from './fate/Sheet.svelte';
-import FateEditor from './fate/Editor.svelte';
-import { isFate } from './fate/stats';
 import MausSheet from './mausritter/Sheet.svelte';
 import MausEditor from './mausritter/Editor.svelte';
 import MausTrackerCells from './mausritter/TrackerCells.svelte';
@@ -20,7 +17,6 @@ import FitdEditor from './fitd/Editor.svelte';
 import FitdTrackerCells from './fitd/TrackerCells.svelte';
 import { isFitd } from './fitd/stats';
 import DndTrackerCells from './dnd5e/TrackerCells.svelte';
-import FateTrackerCells from './fate/TrackerCells.svelte';
 import PackSheet from './pack/Sheet.svelte';
 import PackEditor from './pack/Editor.svelte';
 import PackTrackerCells from './pack/TrackerCells.svelte';
@@ -37,7 +33,6 @@ type StatsEditor = Component<{ stats: any; system: string; lang?: string; kind?:
 const views: Record<string, StatsView> = {
   'dnd5e-2014': Dnd5eStatBlock,
   'dnd5e-2024': Dnd5eStatBlock,
-  'fate-core': FateSheet,
   mausritter: MausSheet,
   fitd: FitdSheet,
 };
@@ -45,14 +40,13 @@ const views: Record<string, StatsView> = {
 const editors: Record<string, StatsEditor> = {
   'dnd5e-2014': Dnd5eEditor,
   'dnd5e-2024': Dnd5eEditor,
-  'fate-core': FateEditor,
   mausritter: MausEditor,
   fitd: FitdEditor,
 };
 
 // stats нужен, чтобы отличить лист персонажа игрока от статблока.
 // Карточка Fate (Mausritter) с чужим блоком stats (например, старая «поле — значение») — общий вид, чтобы ничего не потерять.
-const guards: Record<string, (stats: unknown) => boolean> = { 'fate-core': isFate, mausritter: isMaus, fitd: isFitd };
+const guards: Record<string, (stats: unknown) => boolean> = { mausritter: isMaus, fitd: isFitd };
 const fits = (system: string, stats: unknown) => stats === undefined || (guards[system]?.(stats) ?? true);
 // A system described by a pack: its own generic view and editor (stats of another shape too — the editor starts
 // from the pack's blank values).
@@ -63,6 +57,6 @@ export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
 
 // Ячейки строки участника в трекере инициативы (хиты и КД, стресс и последствия): по семейству системы.
 type TrackerCells = Component<{ c?: Combatant; head?: boolean }>;
-const trackers: Record<string, TrackerCells> = { fate: FateTrackerCells, mausritter: MausTrackerCells, fitd: FitdTrackerCells };
+const trackers: Record<string, TrackerCells> = { mausritter: MausTrackerCells, fitd: FitdTrackerCells };
 export const trackerCells = (system: string): TrackerCells =>
   isPackFamily(familyOf(system)) ? PackTrackerCells : (trackers[familyOf(system)] ?? DndTrackerCells);

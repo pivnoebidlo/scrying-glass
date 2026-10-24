@@ -9,21 +9,31 @@ import { entryFamily, TYPES, type BuiltinBook } from '../src/shared/compendium';
 import initiative from '../src/modules/initiative/main';
 import { defeated, ordered, refreshed, woundOf } from '../src/modules/initiative/order';
 import type { Combatant, InitiativeState } from '../src/modules/initiative/types';
-import { rollFate } from '../src/shared/dice';
+import { die, rollFate } from '../src/shared/dice';
+import { evalFormula, fieldMap, loc, rollPack, validatePack, type SystemPack } from '../src/shared/syspack';
 import { systemOf } from '../src/systems';
-import { ladderText } from '../src/systems/fate/ladder';
-import { fateTracker } from '../src/systems/fate/tracker';
+import { registerPacks } from '../src/systems/packs';
 import { dndTracker } from '../src/systems/dnd5e/tracker';
 import { fromFields } from '../src/systems/tracker';
-import { blankStats, consequencesOf, DEFAULT_SKILLS, pyramid, stressOf, type FateStats } from '../src/systems/fate/stats';
 import { run } from './helpers';
 import fate from '../src/modules/fate/main';
 import type { FateState } from '../src/modules/fate/types';
 
+// Fate Core is a system pack now (samples/systems/fate-core.json, published in the Community).
+const pack = validatePack(JSON.parse(readFileSync(new URL('../samples/systems/fate-core.json', import.meta.url), 'utf8'))) as SystemPack;
+registerPacks([pack]);
+const fateSys = () => systemOf('fate-core');
+const skillTitles = (lang: string) => pack.sections.find((x) => x.id === 'skills')!.fields.map((f) => loc(f.title, lang));
+
 const S0 = initiative.initialState;
 const act = (s: InitiativeState, a: string, p?: unknown) => run(initiative, s, a, p);
 const fight = (list: Partial<Combatant>[]) => list.reduce((s, c) => act(s, 'add', { c }), S0);
-const fateNumbers = (values: Record<string, number | null> = {}) => fromFields(fateTracker.fields, values);
+// A Fate combatant as the tracker makes it: two stress tracks, three consequences.
+const fateNumbers = (): Partial<Combatant> => ({
+  ...fromFields(fateSys().tracker.fields, { physical: 2, mental: 2 }),
+  consequences: [2, 4, 6].map((shift) => ({ shift, text: '' })),
+});
+const words = { success: 'Успех', failure: 'Провал', successes: (n: number) => `${n}`, critical: 'Крит' };
 
 describe('кубы и лестница Fate', () => {
   it('4dF: четыре грани от −1 до +1, итог — сумма и навык', () => {
@@ -35,49 +45,49 @@ describe('кубы и лестница Fate', () => {
     }
   });
 
-  it('названия ступеней и числа за краем лестницы', () => {
-    expect(ladderText(3)).toBe('Хорошо (+3)');
-    expect(ladderText(0)).toBe('Посредственно (0)');
-    expect(ladderText(-2)).toBe('Ужасно (−2)');
-    expect(ladderText(10)).toBe('+10');
+  it('бросок навыка называет итог по лестнице', () => {
+    const roll = fieldMap(pack).get('fight')!.roll!;
+    const at = (total: number) => {
+      for (;;) {
+        const r = rollPack(roll, () => 0, 'ru', words, die);
+        if (r.total === total) return r.outcome;
+      }
+    };
+    expect(at(3)).toBe('Хорошо');
+    expect(at(0)).toBe('Посредственно');
+    expect(at(-2)).toBe('Ужасно');
+    expect(at(-4)).toBe('Ужасно');
   });
 });
 
 describe('трекер системы', () => {
-  it('у Fate и D&D свой трекер, неизвестная система — как D&D', () => {
-    expect(systemOf('fate-core').tracker).toBe(fateTracker);
+  it('у Fate — трекер пакета, неизвестная система — как D&D', () => {
+    expect(fateSys().tracker).not.toBe(dndTracker);
+    expect(fateSys().family).toBe('fate');
     expect(systemOf('dnd5e-2014').tracker).toBe(dndTracker);
     expect(systemOf('нечто').tracker).toBe(dndTracker);
   });
 
-  it('поля Fate: пусто — по две клетки и три последствия, дорожки не затирают друг друга', () => {
-    const c = fateNumbers();
+  it('поля Fate: дорожки стресса, не затирают друг друга; последствия пишутся в трекере', () => {
+    const c = fromFields(fateSys().tracker.fields, { physical: 3, mental: 2 });
     expect(c.stress).toEqual([
-      { id: 'physical', boxes: [false, false] },
+      { id: 'physical', boxes: [false, false, false] },
       { id: 'mental', boxes: [false, false] },
     ]);
-    expect(c.consequences!.map((q) => q.shift)).toEqual([2, 4, 6]);
-    const mook = fateNumbers({ physical: 1, mental: 0, consequences: 0 });
-    expect(mook.stress!.map((t) => t.boxes.length)).toEqual([1, 0]);
-    expect(mook.consequences).toEqual([]);
+    expect(fateSys().tracker.fields.map((f) => f.key)).toEqual(['physical', 'mental']);
   });
 
   it('смена числа клеток сохраняет отмеченные', () => {
-    const c = { ...fateNumbers(), stress: [{ id: 'physical', boxes: [true, false] }, { id: 'mental', boxes: [false, false] }] } as Combatant;
-    const next = fromFields([fateTracker.fields[0]!], { physical: 4 }, c);
+    const c = { stress: [{ id: 'physical', boxes: [true, false] }, { id: 'mental', boxes: [false, false] }] } as Combatant;
+    const next = fromFields([fateSys().tracker.fields[0]!], { physical: 4 }, c);
     expect(next.stress).toEqual([
-      { id: 'physical', boxes: [true, false, false, false] },
       { id: 'mental', boxes: [false, false] },
+      { id: 'physical', boxes: [true, false, false, false] },
     ]);
   });
 
   it('поля D&D: хиты и КД', () => {
     expect(fromFields(dndTracker.fields, { hp: 12, ac: 15 })).toEqual({ maxHp: 12, hp: 12, ac: 15 });
-  });
-
-  it('из карточки Fate: навык очерёдности, без хитов', () => {
-    const c = fateTracker.fromCard({ hp: null, ac: null, initiative: 3, stress: [{ id: 'physical', boxes: 3 }], consequences: [2] });
-    expect(c).toMatchObject({ bonus: 3, maxHp: null, stress: [{ id: 'physical', boxes: [false, false, false] }], consequences: [{ shift: 2, text: '' }] });
   });
 });
 
@@ -126,43 +136,22 @@ describe('бой в Fate', () => {
   });
 });
 
-describe('карточка Fate', () => {
-  const card = (over: Partial<FateStats> = {}): FateStats => ({ ...blankStats('npc'), ...over });
-
-  it('стресс по Телосложению и Воле, последствия по важности', () => {
-    const s = card({ skills: [{ name: 'Телосложение', rating: 3 }, { name: 'Воля', rating: 1 }] });
-    expect(stressOf(s)).toEqual([{ id: 'physical', boxes: 4 }, { id: 'mental', boxes: 3 }]);
-    expect(consequencesOf(s)).toEqual([2, 4, 6]);
-    expect(consequencesOf(card({ skills: [{ name: 'Will', rating: 5 }] }))).toEqual([2, 4, 6, 2]);
-    expect(consequencesOf(card({ tier: 'supporting' }))).toEqual([2, 4]);
+describe('карточка Fate (пакет)', () => {
+  it('стресс по Телосложению и Воле: 2, при Средне и Неплохо — 3, от Хорошо — 4', () => {
+    const boxes = (physique: number) => evalFormula(pack, { physique }, 'physical_boxes');
+    expect([0, 1, 2, 3, 5].map(boxes)).toEqual([2, 3, 3, 4, 4]);
   });
 
-  it('безымянный NPC: клетки по лучшему навыку, без последствий', () => {
-    const s = card({ tier: 'nameless', skills: [{ name: 'Драка', rating: 2 }] });
-    expect(stressOf(s)).toEqual([{ id: 'physical', boxes: 1 }]);
-    expect(consequencesOf(s)).toEqual([]);
-  });
-
-  it('заданные вручную стресс и последствия важнее правил', () => {
-    const s = card({ stress: [{ id: 'physical', boxes: 1 }], consequences: [2] });
-    expect(stressOf(s)).toEqual([{ id: 'physical', boxes: 1 }]);
-    expect(consequencesOf(s)).toEqual([2]);
-  });
-
-  it('очерёдность — Внимательность или выбранный навык; в бой — через систему', () => {
-    const s = card({ skills: [{ name: 'Внимательность', rating: 2 }, { name: 'Эмпатия', rating: 4 }] });
-    expect(systemOf('fate-core').combat(s).initiative).toBe(2);
-    expect(systemOf('fate-core').combat({ ...s, initiativeSkill: 'эмпатия' }).initiative).toBe(4);
-    const c = fateTracker.fromCard(systemOf('fate-core').combat(s));
+  it('в бой: очерёдность — Внимательность, дорожки по навыкам, последствия — ячейками трекера', () => {
+    const c = fateSys().tracker.fromCard(fateSys().combat({ notice: 2, physique: 3, will: 1 }));
     expect(c.bonus).toBe(2);
-    expect(c.stress!.map((t) => t.boxes.length)).toEqual([2, 2]);
+    expect(c.maxHp).toBeNull();
+    expect(c.stress!.map((t) => [t.id, t.boxes.length])).toEqual([['physical', 4], ['mental', 3]]);
   });
 
-  it('пирамида навыков — ступенями сверху вниз; строка под названием — концепция', () => {
-    const s = card({ highConcept: 'Сыщица', skills: [{ name: 'А', rating: 1 }, { name: 'Б', rating: 3 }, { name: 'В', rating: 1 }] });
-    expect(pyramid(s).map(([r, l]) => [r, l.map((x) => x.name)])).toEqual([[3, ['Б']], [1, ['А', 'В']]]);
-    expect(systemOf('fate-core').subtitle(s, 'ru')).toBe('Сыщица');
-    expect(systemOf('fate-core').subtitle(card(), 'ru')).toBe('Главный');
+  it('строка под названием — концепция; сортировка — лучший навык', () => {
+    expect(fateSys().subtitle({ high_concept: 'Сыщица из Ист-Энда' }, 'ru')).toBe('Сыщица из Ист-Энда');
+    expect(fateSys().rank({ fight: 2, lore: 4 })).toBe(4);
   });
 });
 
@@ -213,11 +202,11 @@ describe('углы аспектов и жетонов', () => {
 describe('встроенный справочник Fate', () => {
   const book = JSON.parse(readFileSync(new URL('../resources/compendium/fate-core.ru.json', import.meta.url), 'utf8')) as BuiltinBook;
 
-  it('навыки — те же, что в карточке Fate; типы записей известны и привязаны к Fate или общие', () => {
+  it('навыки — те же, что в пакете Fate; типы записей известны и привязаны к Fate или общие', () => {
     expect(book.system).toBe('fate-core');
     const skills = book.entries.filter((e) => e.type === 'skill');
-    expect(skills.map((e) => e.title).sort()).toEqual([...DEFAULT_SKILLS['ru']!].sort());
-    expect(skills.map((e) => e.en).sort()).toEqual([...DEFAULT_SKILLS['en']!].sort());
+    expect(skills.map((e) => e.title).sort()).toEqual(skillTitles('ru').sort());
+    expect(skills.map((e) => e.en).sort()).toEqual(skillTitles('en').sort());
     for (const e of book.entries) {
       expect(TYPES[e.type], e.title).toBeDefined();
       expect([null, 'fate']).toContain(entryFamily(e));
@@ -227,7 +216,7 @@ describe('встроенный справочник Fate', () => {
   it('английская книга: навыки из карточки, у каждой записи — русская пара', () => {
     const en = JSON.parse(readFileSync(new URL('../resources/compendium/fate-core.en.json', import.meta.url), 'utf8')) as BuiltinBook;
     expect(en.lang).toBe('en');
-    expect(en.entries.filter((e) => e.type === 'skill').map((e) => e.title).sort()).toEqual([...DEFAULT_SKILLS['en']!].sort());
+    expect(en.entries.filter((e) => e.type === 'skill').map((e) => e.title).sort()).toEqual(skillTitles('en').sort());
     expect(en.entries.length).toBe(book.entries.length);
     for (const e of en.entries) expect(e.ru, e.title).toBeTruthy();
   });
