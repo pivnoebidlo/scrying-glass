@@ -518,7 +518,7 @@ Electron-приложение для мастера D&D: окно управле
   `published` / `installed` по папке приключения (в .sgpack — `PackSlices.repo`; при установке чужого — снимается),
   страница «Инструменты» → `repo` (`RepoPage.svelte`), окно публикации и вопрос названия — фоновый `Background.svelte`,
   ход работы — плашка `Busy.svelte`, пункт в меню приключения — `Switcher.svelte`. Адрес по умолчанию —
-  `DEFAULT_REPO_URL` (пока пусто). Пакет из чужих рук: `validManifest` (название — одна часть пути), пути портретов
+  `DEFAULT_REPO_URL` (https://sg.sbin.ru). Пакет из чужих рук: `validManifest` (название — одна часть пути), пути портретов
   карточек — `safeEntry`. Локально: S3 — `chrislusf/seaweedfs server -s3` в Docker (образы MinIO с Docker Hub
   недоступны), сервис — `node server/src/main.ts`.
 - Справочник (`modules/compendium`, без состояния): запись — Markdown с YAML-шапкой (`shared/compendium.ts`: свой

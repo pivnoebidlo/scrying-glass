@@ -9,7 +9,7 @@
 
 export const REPO_API = 1;
 // The repository the app uses unless the GM sets another one (Settings → Repository).
-export const DEFAULT_REPO_URL = '';
+export const DEFAULT_REPO_URL = 'https://sg.sbin.ru';
 
 export interface RepoEntry {
   // The author's public key (Ed25519, base64url, 43 characters) and the name they chose.
