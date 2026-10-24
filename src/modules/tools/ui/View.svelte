@@ -1,5 +1,6 @@
 <!-- Вкладка «Инструменты»: открытый инструмент. Записки — список записок приключения или редактор одной. -->
 <script lang="ts">
+  import RepoPage from '../../repo/ui/RepoPage.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Brush, FilePlus2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -48,7 +49,7 @@
     shop: ShopGenerator, settlement: SettlementGenerator, treasure: TreasureGenerator, events: EventsGenerator,
     weather: WeatherGenerator, mouse: MouseGenerator, mausTables: MausTables, factions: Factions, npc: NpcGenerator,
     tavern: TavernGenerator, telegram: TelegramCompose, difficulty: Calculator, timer: TimerTool, pointbuy: PointBuy, reshape: Reshape,
-    wildMagic: WildMagic, crew: CrewSheet,
+    wildMagic: WildMagic, crew: CrewSheet, repo: RepoPage,
   };
   const Page = $derived(ui.tool !== 'notes' && ui.tool !== 'sketches' && shown(ui.tool, family) ? PAGES[ui.tool] : undefined);
 

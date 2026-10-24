@@ -2,7 +2,7 @@
 // common (any system); a system's tools show only in its adventures, unless the GM turned one on for another system in
 // the settings (Tools → "Tools of other systems", remembered by the window).
 import type { Component } from 'svelte';
-import { Beer, CalendarClock, Calculator, Castle, CloudSun, DoorOpen, Flag, Footprints, Gauge, Gem, Hourglass, Rat, Send, Signature, Signpost, Sparkles, Swords, Store, Table2, UserRound, Wand2, Zap } from '@lucide/svelte';
+import { Beer, CalendarClock, Calculator, Castle, CloudSun, DoorOpen, Flag, Footprints, Gauge, Gem, Globe, Hourglass, Rat, Send, Signature, Signpost, Sparkles, Swords, Store, Table2, UserRound, Wand2, Zap } from '@lucide/svelte';
 import { t } from '../../../renderer/lib/i18n.svelte';
 import type { ToolId } from './ui.svelte';
 
@@ -32,6 +32,7 @@ export const TOOLS: ToolDef[] = [
   tool('schedule', CalendarClock, 'tools.side.schedule'),
   tool('telegram', Send, 'tg.compose'),
   tool('timer', Hourglass, 'tools.side.timer'),
+  tool('repo', Globe, 'repo.title'),
   tool('names', Signature, 'tools.side.names', DND),
   tool('npc', UserRound, 'tools.side.npc', DND),
   tool('tavern', Beer, 'tools.side.tavern', DND),

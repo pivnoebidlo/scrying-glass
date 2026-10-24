@@ -1,0 +1,61 @@
+# The adventure repository service of Scrying Glass. See server/README.md.
+
+image:
+  repository: ghcr.io/pivnoebidlo/scrying-glass-repo
+  # Empty — the chart's appVersion.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# The service keeps the catalog in memory and writes it to the bucket: exactly one replica.
+s3:
+  # Where the service reaches S3 (inside the cluster it may be a Service address).
+  endpoint: "https://rfs3.sbin.ru"
+  # Where the GMs' apps reach S3 to upload and download files; empty — the same as endpoint.
+  publicEndpoint: ""
+  region: "us-east-1"
+  bucket: ""
+  # Keys of the repository go under this prefix (the bucket may hold other things).
+  prefix: "scrying-glass/"
+
+# The S3 keys and the admin token. Either an existing Secret with the keys
+# S3_ACCESS_KEY, S3_SECRET_KEY, ADMIN_TOKEN — or the values below (the chart makes the Secret).
+existingSecret: ""
+secret:
+  accessKey: ""
+  secretKey: ""
+  adminToken: ""
+
+limits:
+  # The largest adventure, MB.
+  maxPackMb: 300
+  # Adventures one author may have.
+  maxPerAuthor: 30
+  # Signed requests a minute from one address.
+  ratePerMinute: 30
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt
+  host: ""
+  # Path prefix of the API on that host: the app calls <host><path>/api/v1/…
+  path: /
+  tls:
+    enabled: true
+    secretName: ""
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 48Mi
+  limits:
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

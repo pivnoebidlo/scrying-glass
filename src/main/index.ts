@@ -10,6 +10,7 @@ import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, HID
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
 import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices } from './packs';
 import { BACKUP_EXT, backupSizes, placeFiles, readBackup, writeBackup } from './archive';
+import { safeEntry } from './zip';
 import { randomUUID } from 'node:crypto';
 import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
@@ -43,6 +44,8 @@ import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnounc
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
+import { catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, repoInfo, setRepoSettings, unpublish as repoUnpublish, type RepoSettings } from './repo';
+import type { RepoEntry, RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, recreateControlWindow, TITLE_HEIGHT, watchDisplays,
@@ -93,6 +96,8 @@ interface AppSettings {
   themeBefore?: ThemeSetting;
   // The GM's Telegram bot (main/telegram.ts): the token (encrypted) and the chats it knows.
   telegram?: TgSettings;
+  // The adventure repository (main/repo.ts): its address, the author's name and key.
+  repo?: RepoSettings;
 }
 const RECENT_MAX = 10;
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
@@ -745,7 +750,16 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
     filters: [{ name: t('core.adventureFilter'), extensions: [PACK_EXT] }],
   });
   if (save.canceled || !save.filePath) return null;
+  await buildPack(adventure, save.filePath, { music: !!ask.checkboxChecked });
+  shell.showItemInFolder(save.filePath);
+  return save.filePath;
+});
 
+// The adventure into one .sgpack file: its folder (music and PDFs — if asked), what the app knows of it and the
+// library cards it refers to. For the export and for the repository.
+async function buildPack(adventure: string, out: string, opts: { music: boolean; pdf?: boolean }, onProgress?: (done: number, total: number) => void) {
+  const folder = resolveInVault(adventure);
+  if (!folder || !isDir(folder)) throw new Error(t('core.notAdventure'));
   const s = state as unknown as AnyRec & { scenes: { scenes: AnyRec[]; trays?: AnyRec }; maps: { maps: Record<string, AnyRec> }; initiative: { encounters: AnyRec[] }; order: { groups: Record<string, string[]> }; portraits: { names: Record<string, string> } };
   const pick = <T,>(o: Record<string, T>, keep: (k: string) => boolean) => Object.fromEntries(Object.entries(o).filter(([k]) => keep(k)));
   const slices: PackSlices = {
@@ -759,6 +773,7 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
     mausritter: (state as unknown as { mausritter: { byAdventure: Record<string, unknown> } }).mausritter.byAdventure[adventure],
     clocks: state.clocks.byAdventure[adventure],
     crew: state.crew.byAdventure[adventure] as unknown as AnyRec | undefined,
+    repo: state.repo.published[adventure],
   };
   // Общие карточки, на которые ссылаются заготовки и метки карт приключения.
   const refs = new Set<string>();
@@ -778,7 +793,7 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
     if (!card || !lib) continue;
     library.push({ id, json: card, images: (card.portraits ?? []).map((rel) => ({ rel, abs: path.join(lib, ...rel.split('/')) })) });
   }
-  await writePack(save.filePath, {
+  await writePack(out, {
     folder,
     manifest: {
       scryingGlass: 'adventure',
@@ -786,15 +801,14 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
       name: adventure,
       exported: Date.now(),
       app: app.getVersion(),
-      music: !!ask.checkboxChecked,
+      music: opts.music,
       system: systemFor(state.adventures, adventure),
     },
     slices,
     library,
-  });
-  shell.showItemInFolder(save.filePath);
-  return save.filePath;
-});
+    pdf: opts.pdf,
+  }, onProgress);
+}
 
 // Удалить приключение: папка — в корзину приложения, из приложения — его сцены, заготовки боёв, разметка карт,
 // порядок плиток и подписи портретов (они сохраняются в корзине вместе с папкой и возвращаются с ней — AdventureData).
@@ -1015,7 +1029,11 @@ ipcMain.handle('packs:nameFree', (_event, name: string) => {
 });
 
 // Шаг 2: импорт под выбранным названием (занятое не принимается).
-ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: string; name: string }) => {
+ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: string; name: string }) => importPack(file, wanted));
+
+// Unpack an adventure file into the vault under the name given (a taken one is refused) and merge what the app knew
+// of it into the state. For the import and for the repository.
+async function importPack(file: string, wanted: string) {
   if (!vaultRoot) return null;
   const root = vaultRoot;
   const target = cleanName(wanted);
@@ -1037,7 +1055,9 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
       for (const c of pack.cards) {
         if (getCard({ scope: 'library', id: c.id })) continue;
         writeJsonAtomic(path.join(lib, 'cards', `${c.id}.json`), c.json);
-        for (const rel of ((c.json as { portraits?: string[] })?.portraits ?? [])) {
+        for (const rel of ((c.json as { portraits?: unknown[] })?.portraits ?? [])) {
+          // A pack may come from a stranger (the repository): a portrait path must stay inside the library.
+          if (typeof rel !== 'string' || !safeEntry(rel)) continue;
           const from = path.join(tmp, 'library', ...rel.split('/'));
           const to = path.join(lib, ...rel.split('/'));
           if (fs.existsSync(from) && !fs.existsSync(to)) {
@@ -1072,6 +1092,7 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
     if (sl.mausritter) await merge('mausritter', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.mausritter } }));
     if (sl.clocks) await merge('clocks', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.clocks } }));
     if (sl.crew) await merge('crew', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.crew } }));
+    if (sl.repo) await merge('repo', (s) => ({ ...s, published: { ...(s['published'] as AnyRec), [name]: sl.repo } }));
     saveVault();
     await enqueue('vault', async () => rescanVault());
     await runAction('adventures', 'mark', { path: name });
@@ -1081,6 +1102,110 @@ ipcMain.handle('packs:import', async (_event, { file, name: wanted }: { file: st
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
+}
+
+// ---- The adventure repository (main/repo.ts, shared/repo.ts) ----
+// Progress of packing, uploading and downloading — to the control window, at most a few times a second.
+let progressAt = 0;
+function repoProgress(p: RepoProgress) {
+  const now = Date.now();
+  if (now - progressAt < 150 && p.done < p.total) return;
+  progressAt = now;
+  getControlWindow()?.webContents.send('repo:progress', p);
+}
+ipcMain.handle('repo:info', () => repoInfo());
+ipcMain.handle('repo:setSettings', (_event, next: { url?: string; name?: string }) => setRepoSettings(next));
+ipcMain.handle('repo:catalog', () => repoCatalog());
+ipcMain.handle('repo:cover', (_event, { author, id, version }: { author: string; id: string; version: number }) => repoCover(author, id, version));
+// What an adventure weighs: all of it, its music, its PDFs (the repository leaves them out).
+ipcMain.handle('repo:sizes', (_event, adventure: string) => {
+  const folder = resolveInVault(adventure);
+  if (!folder || !isDir(folder)) return null;
+  const all = folderFiles(folder, true);
+  const sum = (re: RegExp) => all.filter((f) => re.test(f.rel)).reduce((n, f) => n + f.size, 0);
+  return { total: all.reduce((n, f) => n + f.size, 0), music: sum(/\.(mp3|ogg|wav|flac|m4a)$/i), pdf: sum(/\.pdf$/i) };
+});
+// Publish (or update) an adventure: pack it without PDFs into a temporary file, upload, remember the entry.
+ipcMain.handle('repo:publish', async (_event, p: { adventure: string; title: string; description: string; lang: string; music: boolean; cover?: string }) => {
+  if (!vaultRoot || !state.adventures.list.includes(p.adventure)) return null;
+  const known = state.repo.published[p.adventure];
+  const jpeg = p.cover ? coverFrom(resolveInVault(p.cover) ?? '') : null;
+  const tmp = path.join(app.getPath('userData'), 'repo', `publish-${randomUUID().slice(0, 8)}.${PACK_EXT}`);
+  fs.mkdirSync(path.dirname(tmp), { recursive: true });
+  try {
+    await buildPack(p.adventure, tmp, { music: p.music, pdf: false }, (done, total) => repoProgress({ phase: 'pack', done, total }));
+    const entry = await repoPublish(tmp, {
+      id: known?.id ?? newAdventureId(),
+      title: p.title,
+      description: p.description,
+      system: systemFor(state.adventures, p.adventure),
+      lang: p.lang,
+      music: p.music,
+      app: app.getVersion(),
+    }, jpeg);
+    await runAction('repo', 'published', { folder: p.adventure, mark: { id: entry.id, version: entry.version } });
+    return entry;
+  } finally {
+    fs.rmSync(tmp, { force: true });
+  }
+});
+ipcMain.handle('repo:unpublish', async (_event, id: string) => {
+  await repoUnpublish(id);
+  await runAction('repo', 'unpublished', { id });
+});
+// Download: the file waits in a temporary folder; the answer is like packs:pick (the name, taken or not).
+ipcMain.handle('repo:download', async (_event, { author, id }: { author: string; id: string }) => {
+  if (!vaultRoot) return null;
+  const file = await repoDownload(author, id);
+  try {
+    const m = await packManifest(file);
+    return { file, name: m.name, exists: fs.existsSync(path.join(vaultRoot, m.name)), suggestion: freeFolder(vaultRoot, m.name) };
+  } catch (e) {
+    discardDownload(file);
+    throw e;
+  }
+});
+ipcMain.handle('repo:install', async (_event, { file, name, entry }: { file: string; name: string; entry: RepoEntry }) => {
+  try {
+    const r = await importPack(file, name);
+    if (!r) return null;
+    await runAction('repo', 'installed', { folder: r.name, mark: { author: entry.author, id: entry.id, version: entry.version } });
+    // Someone else's adventure: publishing it from here makes an entry of this GM's own.
+    if (entry.author !== repoInfo().author) await runAction('repo', 'published', { folder: r.name, mark: null });
+    return r;
+  } finally {
+    discardDownload(file);
+  }
+});
+ipcMain.handle('repo:discard', (_event, file: string) => discardDownload(file));
+ipcMain.handle('repo:exportKey', async () => {
+  const win = getControlWindow();
+  const save = await dialog.showSaveDialog(win!, {
+    title: t('core.repoKeySave'),
+    defaultPath: path.join(app.getPath('documents'), 'scrying-glass-author-key.json'),
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+  });
+  if (save.canceled || !save.filePath) return false;
+  fs.writeFileSync(save.filePath, keyFile(), { mode: 0o600 });
+  return true;
+});
+ipcMain.handle('repo:importKey', async () => {
+  const win = getControlWindow();
+  const pick = await dialog.showOpenDialog(win!, { title: t('core.repoKeyLoad'), filters: [{ name: 'JSON', extensions: ['json'] }], properties: ['openFile'] });
+  const file = pick.filePaths[0];
+  if (pick.canceled || !file) return null;
+  if (repoInfo().author) {
+    const ask = await dialog.showMessageBox(win!, {
+      type: 'warning',
+      message: t('core.repoKeyReplace'),
+      detail: t('core.repoKeyReplaceDetail'),
+      buttons: [t('core.repoKeyReplaceYes'), t('core.cancel')],
+      defaultId: 1,
+      cancelId: 1,
+    });
+    if (ask.response !== 0) return null;
+  }
+  return loadKeyFile(fs.readFileSync(file, 'utf8'));
 });
 
 // Небольшие данные инструментов, общие для всех кампаний: JSON-файлы в библиотеке (только из списка).
@@ -1457,6 +1582,15 @@ app.whenReady().then(async () => {
     dir: path.join(app.getPath('userData'), 'telegram'),
     received: (m) => getControlWindow()?.webContents.send('telegram:inbox', m),
     pressed,
+  });
+  initRepo({
+    get: () => settings.repo ?? {},
+    save: (next) => {
+      settings = { ...settings, repo: next };
+      writeJsonAtomic(settingsFile(), settings);
+    },
+    progress: repoProgress,
+    dir: path.join(app.getPath('userData'), 'repo'),
   });
   initSchedule({
     file: path.join(app.getPath('userData'), 'schedule.json'),

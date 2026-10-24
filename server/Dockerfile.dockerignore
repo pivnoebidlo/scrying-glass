@@ -1,0 +1,4 @@
+*
+!server/package.json
+!server/src
+!src/shared/repo.ts

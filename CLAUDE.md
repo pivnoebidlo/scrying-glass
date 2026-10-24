@@ -507,6 +507,20 @@ Electron-приложение для мастера D&D: окно управле
   восстановление — в текущее хранилище или выбранную папку (`placeFiles`, затем `openVault`), из настроек — только
   роли папок. Партия: «Экспорт партии…» / «Импорт персонажей…» в `Switcher.svelte` — через `exportCards` и
   `bestiary.importFiles` в папку партии приключения. ZIP потоком — общий `main/zip.ts` (`writeZip`, `readZip` с проверкой путей, `folderFiles`, `folderDirs`).
+- Репозиторий приключений: протокол — `shared/repo.ts` (без импортов: сервис запускает его как есть), сервис —
+  `server/` (Node 24 без зависимостей, type stripping: в коде сервера — без параметров-свойств и enum, импорты с `.ts`;
+  `s3.ts` — свой SigV4 и presigned-ссылки, `repo.ts` — каталог `catalog.json` в бакете, версии, `http.ts` — API v1,
+  подпись Ed25519 `x-sg-key` / `x-sg-sig` по `signedText`; Dockerfile из корня, Helm-чарт `server/chart`, образ —
+  `.github/workflows/repo-image.yml`, тег `repo-v<версия>`). Автор = открытый ключ, запись = автор + id; одна реплика.
+  Приложение: `main/repo.ts` (ключ в `settings.repo`, закрытая часть через `safeStorage`; каталог, обложки — кэш
+  `<userData>/repo/covers`, публикация: `buildPack` без PDF → publish → PUT в S3 → commit; скачивание во временную
+  папку → `importPack`), IPC `repo:*`, ошибки — `repo:<код>` → `repo.err.<код>`. Модуль `modules/repo`:
+  `published` / `installed` по папке приключения (в .sgpack — `PackSlices.repo`; при установке чужого — снимается),
+  страница «Инструменты» → `repo` (`RepoPage.svelte`), окно публикации и вопрос названия — фоновый `Background.svelte`,
+  ход работы — плашка `Busy.svelte`, пункт в меню приключения — `Switcher.svelte`. Адрес по умолчанию —
+  `DEFAULT_REPO_URL` (пока пусто). Пакет из чужих рук: `validManifest` (название — одна часть пути), пути портретов
+  карточек — `safeEntry`. Локально: S3 — `chrislusf/seaweedfs server -s3` в Docker (образы MinIO с Docker Hub
+  недоступны), сервис — `node server/src/main.ts`.
 - Справочник (`modules/compendium`, без состояния): запись — Markdown с YAML-шапкой (`shared/compendium.ts`: свой
   разбор подмножества YAML — скаляры, «[a, b]», списки «- a»; ключи полей английские, подписи и типы — `TYPES`;
   название = имя файла). Роль папок `compendium`, `FileKind` 'entry' (.md только в таких папках, `main/scan.ts`).

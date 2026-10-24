@@ -11,7 +11,8 @@ import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { AUDIO_EXT } from '../shared/vault';
-import { folderDirs, folderFiles as walkFolder, readEntry, readZip, writeZip, type ZipEntry } from './zip';
+import type { PublishedMark } from '../shared/repo';
+import { folderDirs, folderFiles as walkFolder, readEntry, readZip, safeEntry, writeZip, type ZipEntry } from './zip';
 
 export const PACK_EXT = 'sgpack';
 
@@ -31,6 +32,8 @@ export interface PackSlices {
   clocks?: unknown;
   // The Forged in the Dark crew (none before 0.54).
   crew?: unknown;
+  // The adventure's entry in the repository, if its author published it (shared/repo.ts; none before 0.57).
+  repo?: PublishedMark;
 }
 
 export interface PackManifest {
@@ -51,13 +54,17 @@ export interface LibraryCard {
   images: { rel: string; abs: string }[];
 }
 
-// Файлы папки (пути от неё), без скрытых; без музыки, если music = false.
-export const folderFiles = (dir: string, music: boolean) =>
-  walkFolder(dir, (rel, isDir) => !isDir && !music && AUDIO_EXT.includes(path.extname(rel).toLowerCase()));
+// Файлы папки (пути от неё), без скрытых; без музыки, если music = false; without PDFs if pdf = false (the
+// repository: books in a journal are seldom the GM's to share).
+export const folderFiles = (dir: string, music: boolean, pdf = true) =>
+  walkFolder(dir, (rel, isDir) => {
+    const ext = path.extname(rel).toLowerCase();
+    return !isDir && ((!music && AUDIO_EXT.includes(ext)) || (!pdf && ext === '.pdf'));
+  });
 
 export async function writePack(
   out: string,
-  p: { folder: string; manifest: PackManifest; slices: PackSlices; library: LibraryCard[] },
+  p: { folder: string; manifest: PackManifest; slices: PackSlices; library: LibraryCard[]; pdf?: boolean },
   onProgress?: (done: number, total: number) => void,
 ) {
   const enc = (v: unknown) => new TextEncoder().encode(JSON.stringify(v, null, 2));
@@ -71,7 +78,7 @@ export async function writePack(
   }
   // Папки — тоже (пустые стандартные папки приключения должны вернуться).
   for (const d of folderDirs(p.folder)) entries.push({ name: `files/${p.manifest.name}/${d}/`, data: new Uint8Array(0) });
-  for (const f of folderFiles(p.folder, p.manifest.music)) entries.push({ name: `files/${p.manifest.name}/${f.rel}`, abs: f.abs });
+  for (const f of folderFiles(p.folder, p.manifest.music, p.pdf)) entries.push({ name: `files/${p.manifest.name}/${f.rel}`, abs: f.abs });
   await writeZip(out, entries, onProgress);
 }
 
@@ -84,10 +91,14 @@ export interface ReadPack {
 }
 
 // Описание приключения из файла — без распаковки (для вопроса о названии).
+// The adventure's name is a folder name inside the pack and the vault: one plain path part, nothing like «..».
+const validManifest = (m: PackManifest | null): m is PackManifest =>
+  m?.scryingGlass === 'adventure' && typeof m.name === 'string' && safeEntry(m.name) && !m.name.includes('/') && !m.name.startsWith('.');
+
 export async function packManifest(file: string): Promise<PackManifest> {
   const b = await readEntry(file, 'manifest.json');
   const m = b ? (JSON.parse(new TextDecoder().decode(b)) as PackManifest) : null;
-  if (m?.scryingGlass !== 'adventure' || typeof m.name !== 'string') throw new Error(t('core.notAdventure'));
+  if (!validManifest(m)) throw new Error(t('core.notAdventure'));
   return m;
 }
 
@@ -99,18 +110,23 @@ export async function readPack(file: string, tmp: string): Promise<ReadPack> {
     return b ? JSON.parse(new TextDecoder().decode(b)) : null;
   };
   const manifest = json('manifest.json') as PackManifest | null;
-  if (manifest?.scryingGlass !== 'adventure' || typeof manifest.name !== 'string') throw new Error(t('core.notAdventure'));
+  if (!validManifest(manifest)) throw new Error(t('core.notAdventure'));
   const slices = (json('state.json') ?? {}) as Partial<PackSlices>;
   const cards = [...small.keys()]
     .filter((n) => n.startsWith('library/cards/'))
     .map((n) => ({ id: path.basename(n, '.json'), json: json(n) }));
   return {
     manifest,
-    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' || Array.isArray(slices.pinned) ? slices.pinned : undefined, mausritter: slices.mausritter, clocks: Array.isArray(slices.clocks) ? slices.clocks : undefined, crew: slices.crew },
+    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' || Array.isArray(slices.pinned) ? slices.pinned : undefined, mausritter: slices.mausritter, clocks: Array.isArray(slices.clocks) ? slices.clocks : undefined, crew: slices.crew, repo: validMark(slices.repo) },
     dir: tmp,
     cards,
   };
 }
+
+const validMark = (m: unknown): PublishedMark | undefined => {
+  const o = m as PublishedMark | undefined;
+  return o && typeof o.id === 'string' && typeof o.version === 'number' ? { id: o.id, version: o.version } : undefined;
+};
 
 // Пути приключения from -> to во всём, что пришло из архива: строки «from/…» и «monsters:from/…», поле adventure.
 // Названия и прочие тексты не трогаем.

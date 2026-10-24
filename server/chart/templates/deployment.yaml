@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sgrepo.name" . }}
+  labels: {{- include "sgrepo.labels" . | nindent 4 }}
+spec:
+  # One replica, and the old one stops before the new one starts: the catalog lives in one process.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels: {{- include "sgrepo.selector" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "sgrepo.selector" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ toJson .Values | sha256sum }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: repo
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: S3_ENDPOINT
+              value: {{ required "s3.endpoint is required" .Values.s3.endpoint | quote }}
+            - name: S3_PUBLIC_ENDPOINT
+              value: {{ .Values.s3.publicEndpoint | quote }}
+            - name: S3_REGION
+              value: {{ .Values.s3.region | quote }}
+            - name: S3_BUCKET
+              value: {{ required "s3.bucket is required" .Values.s3.bucket | quote }}
+            - name: S3_PREFIX
+              value: {{ .Values.s3.prefix | quote }}
+            - name: MAX_PACK_MB
+              value: {{ .Values.limits.maxPackMb | quote }}
+            - name: MAX_PER_AUTHOR
+              value: {{ .Values.limits.maxPerAuthor | quote }}
+            - name: RATE_PER_MINUTE
+              value: {{ .Values.limits.ratePerMinute | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ include "sgrepo.secret" . }}
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,9 @@
+{
+  "name": "scrying-glass-repo",
+  "private": true,
+  "type": "module",
+  "description": "The adventure repository service of Scrying Glass",
+  "license": "GPL-3.0-or-later",
+  "engines": { "node": ">=24" },
+  "scripts": { "start": "node src/main.ts" }
+}

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: scrying-glass-repo
+description: The adventure repository service of Scrying Glass (catalog and S3 links for .sgpack files)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -2,7 +2,8 @@
      одним файлом (.sgpack). -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Check, ChevronsUpDown, Download, Map, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
+  import { Check, ChevronsUpDown, CloudUpload, Download, Globe, Map, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
+  import { openRepo, repo } from '../../repo/ui/repo.svelte';
   import { currentSystem, roleFolderHere, shownAdventures, visibleIn } from '../../../shared/adventures';
   import SystemSelect from './SystemSelect.svelte';
   import { roleNames } from '../../../shared/vault';
@@ -175,6 +176,14 @@
         </button>
       {/if}
       <button onclick={importPack} title={t('adv.importHint')}><span class="mark"><Upload size={13} /></span> {t('adv.import')}</button>
+      <div class="sep"></div>
+      {#if ms.current}
+        {@const name = ms.current}
+        <button onclick={() => ((open = false), (repo.publish = name))} title={t('repo.menuPublishHint')}>
+          <span class="mark"><CloudUpload size={13} /></span> {t(app.repo.published[name] ? 'repo.menuUpdate' : 'repo.menuPublish', { name })}
+        </button>
+      {/if}
+      <button onclick={() => ((open = false), openRepo())} title={t('repo.menuBrowseHint')}><span class="mark"><Globe size={13} /></span> {t('repo.menuBrowse')}</button>
       <div class="sep"></div>
       {#if ms.current}
         <button class="danger" onclick={remove} title={t('adv.deleteHint')}>

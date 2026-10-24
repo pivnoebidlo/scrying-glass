@@ -112,6 +112,11 @@ export const en = {
   'core.menu.edit': "Edit",
   'core.menu.view': "View",
   'core.menu.window': "Window",
+  'core.repoKeySave': "Save the author key",
+  'core.repoKeyLoad': "Load an author key",
+  'core.repoKeyReplace': "Replace your author key?",
+  'core.repoKeyReplaceDetail': "With another key you can no longer update the adventures published with the current one. Save the current key first if you may need it.",
+  'core.repoKeyReplaceYes': "Replace",
 };
 
 export const ru: Messages<typeof en> = {
@@ -225,4 +230,9 @@ export const ru: Messages<typeof en> = {
   'core.menu.edit': "Правка",
   'core.menu.view': "Вид",
   'core.menu.window': "Окно",
+  'core.repoKeySave': "Сохранить ключ автора",
+  'core.repoKeyLoad': "Загрузить ключ автора",
+  'core.repoKeyReplace': "Заменить ключ автора?",
+  'core.repoKeyReplaceDetail': "С другим ключом не получится обновить приключения, опубликованные с текущим. Если он может понадобиться, сначала сохраните его.",
+  'core.repoKeyReplaceYes': "Заменить",
 };

@@ -1,0 +1,2 @@
+The adventure repository is at https://{{ .Values.ingress.host }}{{ trimSuffix "/" .Values.ingress.path }}
+Check: curl https://{{ .Values.ingress.host }}{{ trimSuffix "/" .Values.ingress.path }}/api/v1/catalog
