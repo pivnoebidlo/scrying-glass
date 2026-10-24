@@ -748,8 +748,10 @@ them (d20 + bonus, d100 under a value with hard and extreme successes, 2d6 with 
 successes or the best die and a push, 4dF, sums, exploding dice) and what the initiative tracker shows. The app draws
 the card, its editor, the rolls and the tracker from it. Two sample packs come with the app: **Pool of Sixes** (in the
 style of Year Zero: attributes and skills roll a pool of d6, sixes count, a roll can be pushed) and **Percentile
-Horror** (d100 under characteristics and skills). Your own packs go to `systems/` in the library; an editor for them
-is coming.
+Horror** (d100 under characteristics and skills). Your own systems are made in **Tools → System builder** (also from Settings → Game
+systems): sections and fields, the roll of each field, the tracker, with a live preview of the card where rolls can be
+tried; a built-in system can be copied and changed. They are saved to `systems/` in the library (every vault sees
+them) and can be exported to a file and imported.
 
 ## Files and trash
 

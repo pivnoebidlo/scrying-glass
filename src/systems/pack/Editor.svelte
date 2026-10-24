@@ -9,9 +9,16 @@
   import { blankStats, boxesOf, evalFormula, loc, sectionsFor, type ColumnDef, type FieldDef, type PackStats, type SystemPack } from '../../shared/syspack';
   import { packOf } from '../packs';
 
-  let { stats = $bindable(), system, lang = 'en', kind = 'monster' }: { stats: PackStats; system: string; lang?: string; kind?: CardKind } = $props();
+  let {
+    stats = $bindable(),
+    system,
+    lang = 'en',
+    kind = 'monster',
+    draft,
+  }: { stats: PackStats; system: string; lang?: string; kind?: CardKind; draft?: SystemPack } = $props();
 
-  const pack = $derived(packOf(system) as SystemPack);
+  // draft — a pack not saved yet (the builder's preview).
+  const pack = $derived(draft ?? (packOf(system) as SystemPack));
   // A card of another system (or an older one) — start from the pack's blank values, keep what fits.
   $effect.pre(() => {
     if (pack && (!stats || typeof stats !== 'object' || Array.isArray(stats))) stats = blankStats(pack, kind);

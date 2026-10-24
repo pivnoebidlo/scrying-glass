@@ -8,9 +8,10 @@
   import { boxesOf, evalFormula, loc, sectionsFor, type FieldDef, type PackStats, type SystemPack } from '../../shared/syspack';
   import { packOf } from '../packs';
 
-  let { card }: { card: Card<PackStats> } = $props();
+  // draft — a pack not saved yet (the builder's preview); otherwise the card's system.
+  let { card, draft }: { card: Card<PackStats>; draft?: SystemPack } = $props();
 
-  const pack = $derived(packOf(card.system) as SystemPack);
+  const pack = $derived(draft ?? (packOf(card.system) as SystemPack));
   const s = $derived(card.stats ?? {});
   const lang = $derived(card.lang);
   const L = (x: Parameters<typeof loc>[0]) => loc(x, lang);

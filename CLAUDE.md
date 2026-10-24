@@ -262,7 +262,12 @@ Electron-приложение для мастера D&D: окно управле
   (`store.svelte.ts`, до `setSystemsOff`). Вид — `systems/pack/Sheet.svelte`, редактор — `pack/Editor.svelte` (`kind` из
   `CardEditor`), трекер — `pack/TrackerCells.svelte` (хиты — `hp`/`maxHp`, дорожки — `stress` по ключу, числа — `attrs`);
   броски — `rolls.packRoll` / `pushRoll`, в журнале — `RollEntry.pack`. Встроенные системы остаются кодом (решение
-  пользователя). Дальше: визуальный редактор пакетов, справочник в пакете, публикация через «Сообщество».
+  пользователя). Конструктор — «Инструменты» → «Конструктор систем» (`tools/syspack/`: `SystemBuilder.svelte` — дерево,
+панели `FieldPanel` / `TrackerPanel`, предпросмотр `pack/Sheet` и `pack/Editor` с `draft`; `FormulaInput` проверяет
+формулы на лету, `LocInput` правит текст на языке интерфейса; состояние — `store.svelte.ts`, `openBuilder(id?)` — и из
+настроек систем); ядро — IPC `systems:save` / `delete` / `import` / `export` (`savePack`, свой пакет — `own`, встроенный —
+только копией), ошибки `syspack:<код>` → `sb.err.*`. `fieldMap` не кэшируется: конструктор правит пакет на месте.
+Дальше: справочник в пакете, публикация через «Сообщество».
 - Mausritter (третья система, в работе; SRD 2.3.1, CC BY 4.0 — атрибуция дословно в `about.credit.mausritter`):
   `systems/mausritter/` — `stats.ts` (`MausStats`: hp — Hit Protection, str/dex/wil, armour, attacks `d6/d8`,
   critical, abilities, wants, `warband`; у мыши `sheet` — уровень, XP, пипсы, 10 клеток `slots` (лапы 2, тело 2,

@@ -237,6 +237,12 @@ export interface Api {
   repoDownload(source: string, author: string, id: string): Promise<{ file: string; name: string; exists: boolean; suggestion: string } | null>;
   repoInstall(file: string, name: string, entry: RepoEntry, source: string): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number } | null>;
   repoDiscard(file: string): Promise<void>;
+  // System packs of the GM's own (in the library): save from the builder (`was` — the id before an edit), delete
+  // (to the trash), import a file (asks before replacing), export one. Errors come as `syspack:<what>`.
+  saveSystem(pack: unknown, was?: string): Promise<string>;
+  deleteSystem(id: string): Promise<boolean>;
+  importSystem(): Promise<string | null>;
+  exportSystem(id: string): Promise<boolean>;
   // The author key to a file and back (asks where; true / the new info — done).
   repoExportKey(): Promise<boolean>;
   repoImportKey(): Promise<RepoInfo | null>;

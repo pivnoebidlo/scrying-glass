@@ -18,7 +18,7 @@ import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtom
 import { scanVault } from './scan';
 import { systemFor } from '../shared/adventures';
 import { setSystemsOff } from '../systems';
-import { loadSystemPacks, systemPacks } from './syspacks';
+import { loadSystemPacks, ownPackFile, savePack, systemPacks } from './syspacks';
 import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
 import type { TrashPlace, TrashSettings } from '../shared/trash';
 import { migrateOldCampaign } from './migrate';
@@ -1227,6 +1227,62 @@ ipcMain.handle('repo:importKey', async () => {
     if (ask.response !== 0) return null;
   }
   return loadKeyFile(fs.readFileSync(file, 'utf8'));
+});
+
+// ---- System packs: the GM's own (the builder, files) ----
+function reloadSystems() {
+  loadSystemPacks(libraryPath());
+  stateById['vault'] = vaultState();
+  broadcastState();
+}
+ipcMain.handle('systems:save', (_event, { pack, was }: { pack: unknown; was?: string }) => {
+  const lib = libraryPath();
+  if (!lib) throw new Error('syspack:no-library');
+  const p = savePack(lib, pack, was);
+  reloadSystems();
+  return p.id;
+});
+ipcMain.handle('systems:delete', (_event, id: string) => {
+  const lib = libraryPath();
+  const rel = lib ? ownPackFile(lib, id) : null;
+  if (!lib || !rel) return false;
+  discard(lib, [rel], { title: id, kind: 'file' });
+  reloadSystems();
+  return true;
+});
+ipcMain.handle('systems:import', async () => {
+  const lib = libraryPath();
+  const win = getControlWindow();
+  if (!lib || !win) return null;
+  const pick = await dialog.showOpenDialog(win, { title: t('core.systemImport'), filters: [{ name: 'JSON', extensions: ['json'] }], properties: ['openFile'] });
+  const file = pick.filePaths[0];
+  if (pick.canceled || !file) return null;
+  const raw = JSON.parse(fs.readFileSync(file, 'utf8')) as { id?: unknown };
+  const old = systemPacks().find((p) => p.id === raw.id && p.own);
+  if (old) {
+    const ask = await dialog.showMessageBox(win, {
+      type: 'question',
+      message: t('core.systemReplace', { name: String(raw.id) }),
+      detail: t('core.systemReplaceDetail'),
+      buttons: [t('core.systemReplaceYes'), t('core.cancel')],
+      defaultId: 1,
+      cancelId: 1,
+    });
+    if (ask.response !== 0) return null;
+  }
+  const p = savePack(lib, raw);
+  reloadSystems();
+  return p.id;
+});
+ipcMain.handle('systems:export', async (_event, id: string) => {
+  const win = getControlWindow();
+  const p = systemPacks().find((x) => x.id === id);
+  if (!p || !win) return false;
+  const save = await dialog.showSaveDialog(win, { title: t('core.systemExport'), defaultPath: path.join(app.getPath('documents'), `${id}.json`), filters: [{ name: 'JSON', extensions: ['json'] }] });
+  if (save.canceled || !save.filePath) return false;
+  const { own: _own, ...clean } = p;
+  fs.writeFileSync(save.filePath, JSON.stringify(clean, null, 1));
+  return true;
 });
 
 // Небольшие данные инструментов, общие для всех кампаний: JSON-файлы в библиотеке (только из списка).

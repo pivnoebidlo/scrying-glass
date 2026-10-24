@@ -6,6 +6,10 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { FAMILIES, systems } from '../../../systems';
   import { systemFor } from '../../../shared/adventures';
+  import { Blocks } from '@lucide/svelte';
+  import { closeSettings } from '../../../renderer/lib/nav';
+  import { openBuilder } from '../../tools/syspack/store.svelte';
+  import { packOf } from '../../../systems/packs';
 
   let { ms, app }: ModuleProps<'adventures'> = $props();
 
@@ -31,6 +35,10 @@
 <p class="desc faint">
   {t('adv.systemsDesc')}
 </p>
+<div class="builder">
+  <span class="faint">{t('adv.builderDesc')}</span>
+  <button class="btn" onclick={() => (closeSettings(), openBuilder())}><Blocks size={14} /> {t('sb.title')}</button>
+</div>
 
 {#each FAMILIES as f (f.id)}
   {#each systems.filter((s) => s.family === f.id) as s (s.id)}
@@ -38,7 +46,10 @@
     {@const used = usedBy(s.id)}
     <label class="setting">
       <div class="info">
-        <div class="name">{s.title}</div>
+        <div class="name">
+          {s.title}
+          {#if packOf(s.id)}<button class="link" onclick={(e) => (e.preventDefault(), closeSettings(), openBuilder(s.id))}>{t('adv.openInBuilder')}</button>{/if}
+        </div>
         <div class="desc">
           {about(s.id)}
           {#if used.length}<div class="used">{t('adv.usedBy', { list: used.join(', ') })}</div>{/if}
@@ -68,5 +79,22 @@
   }
   .used {
     color: var(--text-faint);
+  }
+  .builder {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 12px;
+    font-size: 13px;
+  }
+  .link {
+    margin-left: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font-size: 12px;
+    cursor: pointer;
   }
 </style>

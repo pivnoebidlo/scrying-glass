@@ -2,7 +2,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { blankStats, evalFormula, fieldMap, parseFormula as parse, packCombat, packSubtitle, parseFormula, pushPool, rollPack, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
+import { blankStats, evalFormula, fieldMap, formulaProblems, packCombat, packSubtitle, parseFormula, pushPool, rollPack, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
 
 const words: RollWords = { success: 'Success', failure: 'Failure', successes: (n) => `${n} successes`, critical: 'Critical' };
 // Dice that fall as told, in order.
@@ -72,6 +72,16 @@ describe('system packs', () => {
     expect(parseFormula('this.constructor')).toBeNull();
   });
 
+  it('finds formulas that name unknown fields or do not parse', () => {
+    const p = validatePack(raw) as SystemPack;
+    expect(formulaProblems(p)).toEqual([]);
+    const bad = { ...p, rank: 'strength + 1', sections: [{ ...p.sections[0]!, fields: [...p.sections[0]!.fields, { key: 'broken', type: 'formula' as const, title: 'B', formula: '1 +' }] }] };
+    expect(formulaProblems(bad)).toEqual([
+      { where: 'rank', text: 'strength + 1', unknown: ['strength'], broken: false },
+      { where: 'broken', text: '1 +', unknown: [], broken: true },
+    ]);
+  });
+
   it('cards: blank stats, the subtitle, what the tracker takes', () => {
     const p = validatePack(raw) as SystemPack;
     expect(blankStats(p, 'character')).toEqual({ str: 1, agility: 0, gear: 0, stress: 0, hp: 0, skills: [] });
@@ -118,8 +128,6 @@ describe('system packs', () => {
 describe('built-in system packs', () => {
   const dir = path.join(__dirname, '../resources/systems');
   const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
-  // The names a formula uses (row.* — a list row's columns).
-  const names = (text: string): string[] => (text.match(/row\.[a-z_][a-z0-9_]*|[a-z_][a-z0-9_]*/gi) ?? []).filter((w) => !['floor', 'ceil', 'round', 'abs', 'min', 'max'].includes(w));
 
   it.each(files)('%s is a valid pack whose formulas name its own fields', (file) => {
     const raw = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
@@ -130,23 +138,7 @@ describe('built-in system packs', () => {
     expect(pack.id).toBe(file.replace(/\.json$/, ''));
     // Nothing the file has was dropped by the check (same number of fields).
     expect(keys.size).toBe(raw.sections.reduce((n: number, s: { fields: unknown[] }) => n + s.fields.length, 0));
-    const formulas: { text: string; row?: string[] }[] = [];
-    if (pack.rank) formulas.push({ text: pack.rank });
-    for (const f of keys.values()) {
-      if (f.formula) formulas.push({ text: f.formula });
-      if (typeof f.boxes === 'string') formulas.push({ text: f.boxes });
-      const r = f.roll as Record<string, unknown> | undefined;
-      const cols = f.columns?.map((c) => c.key);
-      for (const k of ['bonus', 'target', 'count', 'sides']) if (typeof r?.[k] === 'string') formulas.push({ text: r[k] as string, row: cols });
-    }
-    if (pack.tracker.init.type === 'value') formulas.push({ text: pack.tracker.init.value });
-    for (const { text, row } of formulas) {
-      expect(parse(text), text).not.toBeNull();
-      for (const n of names(text)) {
-        if (n.startsWith('row.')) expect(row, text).toContain(n.slice(4));
-        else expect(keys.has(n), `${text}: ${n}`).toBe(true);
-      }
-    }
+    expect(formulaProblems(pack)).toEqual([]);
     for (const k of [pack.tracker.hp, ...(pack.tracker.cells ?? [])]) if (k) expect(keys.has(k), k).toBe(true);
   });
 });

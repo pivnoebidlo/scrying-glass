@@ -103,10 +103,79 @@ export interface SystemPack {
   rank?: string;
   sections: SectionDef[];
   tracker: TrackerSpec;
+  // Set by the core, never read from a file: the GM's own pack (in the library), not a built-in one.
+  own?: boolean;
 }
 
 // A card's block of stats in a pack system: values by field key (a list — rows of values by column key).
 export type PackStats = Record<string, unknown>;
+
+// ---- Building a pack (the builder in the app) ----
+// Formulas that don't parse or name what the pack hasn't: where (a field's key or 'rank', 'tracker'), the text and
+// the unknown names. The builder shows them; a pack with them still works (unknown names count as 0).
+export function formulaProblems(pack: SystemPack): { where: string; text: string; unknown: string[]; broken: boolean }[] {
+  const keys = fieldMap(pack);
+  const out: { where: string; text: string; unknown: string[]; broken: boolean }[] = [];
+  const check = (where: string, text: string, row?: string[]) => {
+    if (!text.trim()) return;
+    const broken = !parseFormula(text);
+    const names = (text.match(/row\.[a-z_][a-z0-9_]*|[a-z_][a-z0-9_]*/gi) ?? []).filter((w) => !(w in FNS));
+    const unknown = names.filter((n) => (n.startsWith('row.') ? !row?.includes(n.slice(4)) : !keys.has(n)));
+    if (broken || unknown.length) out.push({ where, text, unknown: [...new Set(unknown)], broken });
+  };
+  if (pack.rank) check('rank', pack.rank);
+  for (const f of keys.values()) {
+    if (f.formula !== undefined) check(f.key, f.formula);
+    if (typeof f.boxes === 'string') check(f.key, f.boxes);
+    const r = f.roll as Record<string, unknown> | undefined;
+    for (const k of ['bonus', 'target', 'count', 'sides']) if (typeof r?.[k] === 'string') check(f.key, r[k] as string, f.columns?.map((c) => c.key));
+  }
+  if (pack.tracker.init.type === 'roll' && pack.tracker.init.bonus) check('tracker', pack.tracker.init.bonus);
+  if (pack.tracker.init.type === 'value') check('tracker', pack.tracker.init.value);
+  return out;
+}
+
+// A new field of a type, with what that type needs.
+export function newField(type: FieldType, key: string, title: Loc): FieldDef {
+  const f: FieldDef = { key, type, title };
+  if (type === 'dots') f.max = 5;
+  if (type === 'track') f.boxes = 5;
+  if (type === 'select') f.options = ['A', 'B'];
+  if (type === 'list') f.columns = [{ key: 'name', type: 'text', title: 'Name' }, { key: 'value', type: 'number', title: 'Value' }];
+  if (type === 'formula') f.formula = '0';
+  return f;
+}
+
+// A roll of a type for a field, its numbers taken from that field (a list row — its value column).
+export function newRoll(type: RollSpec['type'], f: FieldDef): RollSpec {
+  const v = f.type === 'list' ? `row.${f.columns?.find((c) => c.type === 'number' || c.type === 'dots')?.key ?? 'value'}` : f.key;
+  switch (type) {
+    case 'd20':
+      return { type, bonus: v };
+    case 'under':
+      return { type, sides: 100, target: v };
+    case 'bands':
+      return { type, dice: '2d6', bonus: v, bands: [{ min: 10, title: '10+' }, { min: 7, title: '7–9' }, { min: -99, title: '6−' }] };
+    case 'pool':
+      return { type, sides: 6, count: v, success: 6 };
+    case 'fate':
+      return { type, bonus: v };
+    case 'sum':
+      return { type, dice: '1d6', bonus: v };
+    case 'explode':
+      return { type, sides: v, wild: 6 };
+  }
+}
+
+export const blankPack = (id: string, title: Loc): SystemPack => ({
+  scryingGlass: 'system',
+  version: 1,
+  id,
+  title,
+  release: 1,
+  sections: [{ id: 'main', title: { en: 'Main', ru: 'Основное' }, fields: [] }],
+  tracker: { init: { type: 'roll', dice: '1d20' } },
+});
 
 // ---- Checking a pack ----
 const KEY_RE = /^[a-z][a-z0-9_]{0,31}$/;
@@ -391,12 +460,8 @@ function fieldNumber(f: FieldDef, v: unknown): number {
   return toNum(v);
 }
 
-const maps = new WeakMap<SystemPack, Map<string, FieldDef>>();
-export function fieldMap(pack: SystemPack): Map<string, FieldDef> {
-  let m = maps.get(pack);
-  if (!m) maps.set(pack, (m = new Map(pack.sections.flatMap((s) => s.fields.map((f) => [f.key, f] as const)))));
-  return m;
-}
+// The fields by key. Not cached: the builder edits a pack in place, and a pack has only dozens of fields.
+export const fieldMap = (pack: SystemPack): Map<string, FieldDef> => new Map(pack.sections.flatMap((s) => s.fields.map((f) => [f.key, f] as const)));
 
 // The sections a kind of card has.
 export const sectionsFor = (pack: SystemPack, kind: CardKind) => pack.sections.filter((s) => !s.kinds || s.kinds.includes(kind));
