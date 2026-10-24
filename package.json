@@ -1,7 +1,7 @@
 {
   "name": "scrying-glass",
   "productName": "Scrying Glass",
-  "version": "0.56.0",
+  "version": "0.57.0",
   "description": "A game master screen for tabletop sessions: portraits, maps, bestiary and initiative on a second monitor",
   "license": "GPL-3.0-or-later",
   "author": "pivnoebidlo <dima@niktokro.me>",
