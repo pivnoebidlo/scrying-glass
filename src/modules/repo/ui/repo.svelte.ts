@@ -149,7 +149,7 @@ export function missingSystem(e: Found): Found | null {
 }
 export const systemKnown = (id: string) => systems.some((s) => s.id === id);
 
-export async function publishSystem(p: { source: string; pack: string; title: string; description: string; lang: string }) {
+export async function publishSystem(p: { source: string; pack: string; title: string; description: string; lang: string; cover?: string }) {
   const entry = await work(t('repo.publishing', { name: p.title }), () => window.api.repoPublishSystem(p));
   if (!entry) return false;
   notice(t('repo.published', { name: entry.title, version: entry.version }));

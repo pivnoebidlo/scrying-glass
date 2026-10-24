@@ -235,7 +235,8 @@ export interface Api {
   repoPublish(p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string; id?: string | null }): Promise<RepoEntry | null>;
   repoUnpublish(source: string, id: string): Promise<void>;
   // System packs in the Community: publish one of the GM's own, download one into the library (its id).
-  repoPublishSystem(p: { source: string; pack: string; title: string; description: string; lang: string }): Promise<RepoEntry | null>;
+  // cover — a picture of the vault (none — the entry keeps the one it has).
+  repoPublishSystem(p: { source: string; pack: string; title: string; description: string; lang: string; cover?: string }): Promise<RepoEntry | null>;
   repoInstallSystem(source: string, entry: RepoEntry): Promise<string | null>;
   // Download into a temporary file, then install under a name (like the import of a file) or discard it.
   repoDownload(source: string, author: string, id: string): Promise<{ file: string; name: string; exists: boolean; suggestion: string } | null>;

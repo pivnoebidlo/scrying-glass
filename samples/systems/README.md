@@ -8,5 +8,8 @@ official repository of the Community, where any GM can install them (Find advent
   count, a roll can be pushed; health and mind as tracks; a small compendium of conditions.
 - `d100-horror.json` — Percentile Horror: d100 under characteristics and skills, with hard and extreme successes.
 
+Their covers are `<id>.jpg`, drawn by `covers.cjs` (`npx electron samples/systems/covers.cjs`). They are published
+under the author «Scrying Glass» (its key is kept by the project's owner, not in git).
+
 No rules text of other games is in them — only the structure of a card and the dice. `tests/syspack.test.ts` checks
 that every pack here is valid and that its formulas name its own fields.
