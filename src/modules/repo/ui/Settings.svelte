@@ -89,7 +89,8 @@
   <label class="setting">
     <div class="info">
       <div class="name">{sourceName(s)}</div>
-      <div class="desc">{s.official ? t('repo.set.officialAbout') : t('repo.set.repoAbout')} <code>{s.url}</code></div>
+      <!-- The official one goes without its address. -->
+      <div class="desc">{#if s.official}{t('repo.set.officialAbout')}{:else}{t('repo.set.repoAbout')} <code>{s.url}</code>{/if}</div>
     </div>
     {#if !s.official}
       <button class="icon-btn" title={t('repo.set.remove')} onclick={(e) => (e.preventDefault(), remove(s))}><Trash2 size={14} /></button>
