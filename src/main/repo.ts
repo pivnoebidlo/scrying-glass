@@ -11,12 +11,14 @@ import * as https from 'node:https';
 import { Readable } from 'node:stream';
 import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, randomBytes, sign } from 'node:crypto';
 import { nativeImage, safeStorage } from 'electron';
-import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, OFFICIAL_SOURCE, REPO_API, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type SourceInfo } from '../shared/repo';
+import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, OFFICIAL_SOURCE, REPO_API, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type ReportedEntry, type SourceInfo } from '../shared/repo';
 
 export interface RepoSettings {
   // The GM's own sources (the official one is always there).
   sources?: { id: string; kind: 'repo'; name: string; url: string; off?: boolean }[];
   officialOff?: boolean;
+  // Admin tokens of the repositories the GM keeps, by source id (encrypted like the key).
+  admin?: Record<string, { token: string; enc: boolean }>;
   // Before 0.57: one repository instead of the official one (becomes a source of its own).
   url?: string;
   // The author's name shown in the catalog.
@@ -53,8 +55,8 @@ const cleanUrl = (url: string) => url.trim().replace(/\/+$/, '');
 function sources(): SourceInfo[] {
   const s = deps?.get() ?? {};
   return [
-    { id: OFFICIAL_SOURCE, kind: 'repo', name: '', url: DEFAULT_REPO_URL, off: !!s.officialOff, official: true },
-    ...(s.sources ?? []).map((x) => ({ id: x.id, kind: x.kind, name: x.name, url: x.url, off: !!x.off, official: false })),
+    { id: OFFICIAL_SOURCE, kind: 'repo', name: '', url: DEFAULT_REPO_URL, off: !!s.officialOff, official: true, admin: !!s.admin?.[OFFICIAL_SOURCE] },
+    ...(s.sources ?? []).map((x) => ({ id: x.id, kind: x.kind, name: x.name, url: x.url, off: !!x.off, official: false, admin: !!s.admin?.[x.id] })),
   ];
 }
 
@@ -89,7 +91,8 @@ export async function addSource(name: string, address: string) {
 
 export function removeSource(id: string) {
   const s = deps!.get();
-  deps!.save({ ...s, sources: (s.sources ?? []).filter((x) => x.id !== id) });
+  const { [id]: _gone, ...admin } = s.admin ?? {};
+  deps!.save({ ...s, sources: (s.sources ?? []).filter((x) => x.id !== id), admin });
   return repoInfo();
 }
 
@@ -163,6 +166,49 @@ async function post<T>(source: string, p: string, data: object, makeKey = false)
   if (!res.ok) throw await errorOf(res);
   return (await res.json()) as T;
 }
+
+// ---- Complaints and the admin ----
+export async function report(source: string, author: string, id: string, reason: string, text: string) {
+  const res = await request(`${base(source)}/api/v1/report`, { method: 'POST', body: JSON.stringify({ author, id, reason, text }), headers: { 'content-type': 'application/json' } });
+  if (!res.ok) throw await errorOf(res);
+}
+
+function adminToken(source: string): string {
+  const a = deps!.get().admin?.[source];
+  if (!a) throw fail('admin');
+  try {
+    return a.enc ? safeStorage.decryptString(Buffer.from(a.token, 'base64')) : a.token;
+  } catch {
+    throw fail('admin');
+  }
+}
+
+async function adminCall<T>(source: string, p: string, token: string, data?: object): Promise<T> {
+  const res = await request(base(source) + p, {
+    method: data ? 'POST' : 'GET',
+    ...(data ? { body: JSON.stringify(data) } : {}),
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+  });
+  if (!res.ok) throw await errorOf(res);
+  return (await res.json()) as T;
+}
+
+// The admin's token of a repository: checked by the service before it is kept; '' — forget it.
+export async function setAdmin(source: string, token: string) {
+  const s = deps!.get();
+  const { [source]: _old, ...rest } = s.admin ?? {};
+  if (token.trim()) {
+    await adminCall(source, '/api/v1/admin/reports', token.trim());
+    const enc = safeStorage.isEncryptionAvailable();
+    rest[source] = { token: enc ? safeStorage.encryptString(token.trim()).toString('base64') : token.trim(), enc };
+  }
+  deps!.save({ ...s, admin: rest });
+  return repoInfo();
+}
+
+export const adminReports = (source: string) => adminCall<ReportedEntry[]>(source, '/api/v1/admin/reports', adminToken(source));
+export const adminRemove = (source: string, author: string, id: string, block: boolean) => adminCall(source, '/api/v1/admin/remove', adminToken(source), { author, id, block });
+export const adminDismiss = (source: string, author: string, id: string) => adminCall(source, '/api/v1/admin/dismiss', adminToken(source), { author, id });
 
 export async function catalog(source: string): Promise<RepoCatalog> {
   const res = await request(`${base(source)}/api/v1/catalog`);

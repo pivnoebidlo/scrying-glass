@@ -7,10 +7,13 @@
 //   POST /api/v1/publish     (signed)         PublishRequest → PublishTicket
 //   POST /api/v1/commit      (signed)         { ts, upload } → RepoEntry
 //   POST /api/v1/unpublish   (signed)         { ts, id }
+//   POST /api/v1/report                       { author, id, reason, text } — a complaint (anyone, one per address)
+//   GET  /api/v1/admin/reports (admin)        ReportedEntry[] (also the check of the token)
 //   POST /api/v1/admin/remove (admin)         { author, id, block? }
+//   POST /api/v1/admin/dismiss (admin)        { author, id } — the complaints go
 //   GET  /healthz
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { createPublicKey, timingSafeEqual, verify } from 'node:crypto';
+import { createHash, createPublicKey, timingSafeEqual, verify } from 'node:crypto';
 import { AUTHOR_RE, checkPublish, ID_RE, MAX_SKEW, signedText } from '../../src/shared/repo.ts';
 import { RepoError, type Repo } from './repo.ts';
 
@@ -90,6 +93,10 @@ export function handler(repo: Repo, opts: HttpOptions) {
       if (req.method === 'GET') {
         if (path === '/healthz') return json(res, 200, { ok: true });
         if (path === '/api/v1/catalog') return json(res, 200, repo.catalog());
+        if (path === '/api/v1/admin/reports') {
+          if (!isAdmin(req)) throw new RepoError(401, 'admin');
+          return json(res, 200, repo.reported());
+        }
         const m = /^\/api\/v1\/(packs|covers)\/([^/]+)\/([^/]+)$/.exec(path);
         if (m && AUTHOR_RE.test(m[2]!) && ID_RE.test(m[3]!)) {
           const link = repo.link(m[2]!, m[3]!, m[1] === 'packs' ? 'pack' : 'cover');
@@ -109,6 +116,22 @@ export function handler(repo: Repo, opts: HttpOptions) {
         const done = await repo.remove(String(b.author), String(b.id), b.block !== false);
         opts.log?.(`admin remove ${b.author}/${b.id}: ${done}`);
         return json(res, done ? 200 : 404, { removed: done });
+      }
+      if (path === '/api/v1/admin/dismiss') {
+        if (!isAdmin(req)) throw new RepoError(401, 'admin');
+        const b = JSON.parse(body) as { author?: string; id?: string };
+        const done = await repo.dismiss(String(b.author), String(b.id));
+        opts.log?.(`admin dismiss ${b.author}/${b.id}: ${done}`);
+        return json(res, done ? 200 : 404, { dismissed: done });
+      }
+      if (path === '/api/v1/report') {
+        const b = JSON.parse(body) as { author?: unknown; id?: unknown; reason?: unknown; text?: unknown };
+        if (typeof b.author !== 'string' || !AUTHOR_RE.test(b.author) || typeof b.id !== 'string' || !ID_RE.test(b.id)) throw new RepoError(400, 'bad-id');
+        // The address is kept only as a hash: enough to count one complaint per sender.
+        const from = createHash('sha256').update(`${opts.admin}:${clientIp(req)}`).digest('base64url').slice(0, 16);
+        await repo.report(b.author, b.id, from, b.reason, b.text);
+        opts.log?.(`report ${b.author}/${b.id}: ${String(b.reason)}`);
+        return json(res, 200, { reported: true });
       }
 
       const author = verifySigned(req, path, body, now());

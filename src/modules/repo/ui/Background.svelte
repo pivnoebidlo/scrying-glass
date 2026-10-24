@@ -5,6 +5,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Catalog from './Catalog.svelte';
   import PublishDialog from './PublishDialog.svelte';
+  import ReportDialog from './ReportDialog.svelte';
   import Busy from './Busy.svelte';
   import { cancelNaming, finishInstall, repo } from './repo.svelte';
 
@@ -27,6 +28,7 @@
 
 {#if repo.browsing}<Catalog />{/if}
 <PublishDialog />
+<ReportDialog />
 <Busy />
 
 {#if repo.naming}

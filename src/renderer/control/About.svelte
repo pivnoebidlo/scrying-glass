@@ -87,7 +87,6 @@
   }
   .about {
     max-width: 640px;
-    user-select: text;
   }
   .head {
     display: flex;

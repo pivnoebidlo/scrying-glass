@@ -67,7 +67,24 @@ export interface PublishTicket {
   cover?: string;
 }
 
-export const LIMITS = { title: 120, description: 4000, authorName: 60, cover: 512 * 1024 } as const;
+export const LIMITS = { title: 120, description: 4000, authorName: 60, cover: 512 * 1024, report: 1000 } as const;
+
+// A complaint about an entry: anyone may send one (one per address and entry), only the admin sees them.
+export const REPORT_REASONS = ['rights', 'content', 'broken', 'other'] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+export interface Report {
+  reason: ReportReason;
+  text: string;
+  at: number;
+}
+// What the admin sees: entries with complaints.
+export interface ReportedEntry {
+  author: string;
+  id: string;
+  title: string;
+  authorName: string;
+  reports: Report[];
+}
 // A signed request is good for this long (the clocks of the GM and the service may differ a little).
 export const MAX_SKEW = 10 * 60 * 1000;
 
@@ -125,6 +142,8 @@ export interface SourceInfo {
   url: string;
   off: boolean;
   official: boolean;
+  // The GM keeps this repository: complaints, taking down any entry.
+  admin: boolean;
 }
 
 export interface RepoProgress {

@@ -7,7 +7,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { generateKeyPairSync, sign, type KeyObject } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { checkPublish, matchesQuery, signedText, updateFor, type PublishTicket, type RepoCatalog, type RepoEntry } from '../src/shared/repo';
+import { checkPublish, matchesQuery, signedText, updateFor, type PublishTicket, type RepoCatalog, type RepoEntry, type ReportedEntry } from '../src/shared/repo';
 import { Repo } from '../server/src/repo';
 import { handler } from '../server/src/http';
 import { sign as sigv4 } from '../server/src/s3';
@@ -166,6 +166,28 @@ describe('repository service', () => {
     await publish(10, me, { id: 'second-adventure' });
     expect((await call('/api/v1/publish', { ...meta, id: 'third-adventure', size: 10 })).body).toEqual({ error: 'too-many' });
     expect((await call('/api/v1/commit', { upload: 'nope' })).body).toEqual({ error: 'no-upload' });
+  });
+
+  it('anyone complains, once per address; only the admin sees complaints and dismisses them', async () => {
+    const report = (data: object) => fetch(`${base}/api/v1/report`, { method: 'POST', body: JSON.stringify(data) });
+    const reports = (auth: string) => fetch(`${base}/api/v1/admin/reports`, { headers: { authorization: auth } });
+    expect((await report({ author: me.x, id: 'mine-adventure', reason: 'rights', text: 'a book scan' })).status).toBe(200);
+    expect((await report({ author: me.x, id: 'mine-adventure', reason: 'content', text: 'changed my mind' })).status).toBe(200);
+    expect((await (await report({ author: me.x, id: 'mine-adventure', reason: 'spam' })).json())).toEqual({ error: 'bad-reason' });
+    expect((await report({ author: me.x, id: 'no-such-adventure', reason: 'other' })).status).toBe(404);
+    expect((await reports('Bearer wrong')).status).toBe(401);
+    const list = (await (await reports('Bearer secret')).json()) as ReportedEntry[];
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({ author: me.x, id: 'mine-adventure', title: 'Mine', reports: [{ reason: 'content', text: 'changed my mind' }] });
+    expect(list[0]!.reports[0]).not.toHaveProperty('from');
+    expect(JSON.stringify(await catalog())).not.toContain('reports');
+    // A new version keeps them, and the author doesn't see them.
+    const v = await publish(100);
+    expect(v.body).not.toHaveProperty('reports');
+    expect(((await (await reports('Bearer secret')).json()) as ReportedEntry[])[0]!.reports).toHaveLength(1);
+    const dismiss = await fetch(`${base}/api/v1/admin/dismiss`, { method: 'POST', body: JSON.stringify({ author: me.x, id: 'mine-adventure' }), headers: { authorization: 'Bearer secret' } });
+    expect(dismiss.status).toBe(200);
+    expect(await (await reports('Bearer secret')).json()).toEqual([]);
   });
 
   it('the author takes an adventure down; the admin removes and blocks', async () => {

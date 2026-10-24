@@ -3,7 +3,7 @@
 // flow. The work is the core's (main/repo.ts); here — the window's side and the words for its errors.
 import { t } from '../../../renderer/lib/i18n.svelte';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
-import { sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type SourceInfo } from '../../../shared/repo';
+import { sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type Report, type ReportedEntry, type ReportReason, type SourceInfo } from '../../../shared/repo';
 
 // An entry of a catalog with the source it is in.
 export type Found = RepoEntry & { source: string };
@@ -12,6 +12,10 @@ export const repo = $state({
   info: null as RepoInfo | null,
   // By source id: its catalog, or why there is none.
   catalogs: {} as Record<string, { catalog: RepoCatalog | null; error: string; loading: boolean }>,
+  // Complaints, by source id — only of the repositories the GM is the admin of.
+  reports: {} as Record<string, ReportedEntry[]>,
+  // The complaint dialog: about which entry.
+  reporting: null as Found | null,
   // The catalog window is open.
   browsing: false,
   covers: {} as Record<string, string | null>,
@@ -55,7 +59,13 @@ async function loadSource(id: string) {
   } catch (e) {
     repo.catalogs[id] = { catalog: null, error: errorText(e), loading: false };
   }
+  if (repo.info?.sources.find((s) => s.id === id)?.admin) {
+    repo.reports[id] = await window.api.repoAdminReports(id).catch(() => []);
+  } else delete repo.reports[id];
 }
+
+export const isAdmin = (source: string) => !!repo.info?.sources.find((s) => s.id === source)?.admin;
+export const reportsOf = (e: Found): Report[] => repo.reports[e.source]?.find((r) => r.author === e.author && r.id === e.id)?.reports ?? [];
 
 // The catalogs of every source turned on (one source — only it).
 export async function loadCatalogs(only?: string) {
@@ -119,6 +129,27 @@ export async function unpublish(e: Found) {
     notice(t('repo.unpublished', { name: e.title }));
     void loadCatalogs(e.source);
   }
+}
+
+export async function report(e: Found, reason: ReportReason, text: string) {
+  repo.reporting = null;
+  const ok = await work(t('repo.reporting'), async () => (await window.api.repoReport(e.source, e.author, e.id, reason, text), true));
+  if (ok) notice(t('repo.reported'));
+}
+
+// The admin takes an entry down (blocked — the author can't publish it again).
+export async function adminRemove(e: Found, block: boolean) {
+  if (!confirm(t(block ? 'repo.admin.blockAsk' : 'repo.admin.removeAsk', { name: e.title }))) return;
+  const ok = await work(t('repo.unpublishing'), async () => (await window.api.repoAdminRemove(e.source, e.author, e.id, block), true));
+  if (ok) {
+    notice(t('repo.unpublished', { name: e.title }));
+    void loadCatalogs(e.source);
+  }
+}
+
+export async function dismiss(e: Found) {
+  const ok = await work(t('repo.admin.dismissing'), async () => (await window.api.repoAdminDismiss(e.source, e.author, e.id), true));
+  if (ok) void loadCatalogs(e.source);
 }
 
 // The vault's folder an entry was installed to (the newest if several).

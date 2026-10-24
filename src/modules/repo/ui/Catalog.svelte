@@ -1,8 +1,9 @@
 <!-- «Find adventures» — the catalog window, as Obsidian's community plugins: the entries of every source turned on on
      the left (search, source, system, language, downloaded / mine), the chosen one on the right — cover,
-     description, download or update; the GM's own — take down. Opens on repo.browsing (openRepo). -->
+     description, download or update; the GM's own — take down; others' — complain. The admin of a repository sees
+     complaints and takes any entry down. Opens on repo.browsing (openRepo). -->
 <script lang="ts">
-  import { CloudUpload, Download, ImageOff, RefreshCw, Settings, Trash2, TriangleAlert, X } from '@lucide/svelte';
+  import { Ban, Check, CloudUpload, Download, Flag, ImageOff, RefreshCw, Settings, ShieldCheck, Trash2, TriangleAlert, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
   import { store } from '../../../renderer/lib/store.svelte';
@@ -10,13 +11,13 @@
   import { enabledSystems, systems } from '../../../systems';
   import { LANGS } from '../../../shared/i18n/core';
   import { matchesQuery, shortKey } from '../../../shared/repo';
-  import { allFound, coverOf, install, installedFolder, loadCatalogs, mb, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
+  import { adminRemove, allFound, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
 
   let query = $state('');
   let source = $state('');
   let system = $state('');
   let lang = $state('');
-  let show = $state<'all' | 'installed' | 'mine'>('all');
+  let show = $state<'all' | 'installed' | 'mine' | 'reported'>('all');
   let chosen = $state<string | null>(null);
 
   const app = $derived(store.state);
@@ -26,6 +27,8 @@
   const on = $derived(repo.info ? sourcesOn() : []);
   const loading = $derived(on.some((s) => repo.catalogs[s.id]?.loading));
   const failed = $derived(on.filter((s) => repo.catalogs[s.id]?.error));
+  const admin = $derived(on.some((s) => s.admin));
+  const reportedCount = $derived(on.reduce((n, s) => n + (repo.reports[s.id]?.length ?? 0), 0));
 
   const found = $derived(repo.info ? allFound() : []);
   const entries = $derived(
@@ -37,6 +40,7 @@
       .filter((e) => !lang || e.lang === lang)
       .filter((e) => show !== 'mine' || e.author === me)
       .filter((e) => show !== 'installed' || installedFolder(e) !== null)
+      .filter((e) => show !== 'reported' || reportsOf(e).length > 0)
       .filter((e) => matchesQuery(e, query))
       .sort((a, b) => b.updated - a.updated),
   );
@@ -58,7 +62,8 @@
   const close = () => (repo.browsing = false);
   const settings = () => (close(), openSettings('repo'));
   // Esc closes the window, unless a dialog above it is open.
-  const onkey = (e: KeyboardEvent) => e.key === 'Escape' && !repo.publish && !repo.naming && close();
+  const onkey = (e: KeyboardEvent) => e.key === 'Escape' && !repo.publish && !repo.naming && !repo.reporting && close();
+  const reasonDate = (ms: number) => new Date(ms).toLocaleDateString(getLang(), { day: 'numeric', month: 'short' });
 </script>
 
 <svelte:window onkeydown={onkey} />
@@ -101,6 +106,9 @@
         <button class:on={show === 'all'} onclick={() => (show = 'all')}>{t('repo.showAll')}</button>
         <button class:on={show === 'installed'} onclick={() => (show = 'installed')}>{t('repo.showInstalled')}</button>
         <button class:on={show === 'mine'} onclick={() => (show = 'mine')}>{t('repo.showMine')}</button>
+        {#if admin}
+          <button class:on={show === 'reported'} onclick={() => (show = 'reported')}>{t('repo.showReported', { count: reportedCount })}</button>
+        {/if}
       </div>
     </div>
 
@@ -133,6 +141,7 @@
                 <span class="title">{e.title}</span>
                 <span class="meta faint">{systemTitle(e.system)} · {langTitle(e.lang)} · {mb(e.size)}</span>
               </span>
+              {#if reportsOf(e).length}<span class="badge warn" title={t('repo.admin.reports')}><Flag size={10} /> {reportsOf(e).length}</span>{/if}
               {#if have && have < e.version}<span class="badge new">{t('repo.newVersion')}</span>
               {:else if have}<span class="badge">{t('repo.haveIt')}</span>
               {:else if e.author === me}<span class="badge">{t('repo.you')}</span>{/if}
@@ -171,8 +180,30 @@
               {/if}
               {#if e.author === me}
                 <button class="btn danger" disabled={!!repo.busy} onclick={() => unpublish(e)}><Trash2 size={14} /> {t('repo.unpublish')}</button>
+              {:else}
+                <button class="btn link" disabled={!!repo.busy} onclick={() => (repo.reporting = e)}><Flag size={13} /> {t('repo.report.button')}</button>
               {/if}
             </div>
+            {#if isAdmin(e.source)}
+              {@const reports = reportsOf(e)}
+              <div class="admin">
+                <div class="admin-head"><ShieldCheck size={14} /> {t('repo.admin.title')}</div>
+                {#if reports.length}
+                  <ul>
+                    {#each reports as r, i (i)}
+                      <li><b>{t(`repo.report.${r.reason}`)}</b> <span class="faint">· {reasonDate(r.at)}</span>{#if r.text}<div class="said">{r.text}</div>{/if}</li>
+                    {/each}
+                  </ul>
+                {:else}
+                  <p class="faint">{t('repo.admin.noReports')}</p>
+                {/if}
+                <div class="actions">
+                  {#if reports.length}<button class="btn" disabled={!!repo.busy} onclick={() => dismiss(e)}><Check size={14} /> {t('repo.admin.dismiss')}</button>{/if}
+                  <button class="btn" disabled={!!repo.busy} onclick={() => adminRemove(e, false)}><Trash2 size={14} /> {t('repo.admin.remove')}</button>
+                  <button class="btn danger" disabled={!!repo.busy} onclick={() => adminRemove(e, true)}><Ban size={14} /> {t('repo.admin.block')}</button>
+                </div>
+              </div>
+            {/if}
             {#if e.description}<p class="desc">{e.description}</p>{/if}
           </section>
         {/if}
@@ -347,6 +378,47 @@
   .badge.new {
     background: var(--accent);
     color: var(--on-accent);
+  }
+  .badge.warn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--warning);
+  }
+  .btn.link {
+    border-color: transparent;
+    background: none;
+    color: var(--text-muted);
+  }
+  .admin {
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    background: var(--bg-secondary);
+  }
+  .admin-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .admin ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+  .admin li {
+    margin-bottom: 6px;
+  }
+  .admin p {
+    margin: 0;
+  }
+  .said {
+    white-space: pre-line;
+  }
+  .admin .actions {
+    margin: 10px 0 0;
   }
   .details {
     padding: 18px 22px;

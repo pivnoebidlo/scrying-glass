@@ -523,7 +523,11 @@ Electron-приложение для мастера D&D: окно управле
   источников — `allFound`, `Found` = запись + источник), открывается из меню приключения (`Switcher.svelte`) и
   настроек; раздел настроек «Сообщество» (`Settings.svelte`; там же будут авторские системы, `settingsTitle`); окно публикации («Куда» —
   при нескольких источниках) и вопрос названия — фоновый `Background.svelte`, ход работы — плашка `Busy.svelte`.
-  Адрес официального — `DEFAULT_REPO_URL` (https://sg.sbin.ru). Пакет из чужих рук: `validManifest` (название — одна часть пути), пути портретов
+  Адрес официального — `DEFAULT_REPO_URL` (https://sg.sbin.ru). Жалобы: `POST /api/v1/report` (любой, одна с адреса — хэш; хранятся у
+  записи в `catalog.json`, наружу не отдаются, переживают новую версию), администратор — `admin/reports`, `admin/remove`,
+  `admin/dismiss`; в приложении — токен администратора у источника (`settings.repo.admin`, `safeStorage`; `setAdmin`
+  проверяет его вызовом `admin/reports`), окно жалобы `ReportDialog.svelte`, в каталоге — фильтр «Жалобы» и блок
+  «Администратор» (`isAdmin`, `reportsOf`, `adminRemove`, `dismiss`). Версия сервиса — `appVersion` чарта (тег `repo-v…`). Пакет из чужих рук: `validManifest` (название — одна часть пути), пути портретов
   карточек — `safeEntry`. Локально: S3 — `chrislusf/seaweedfs server -s3` в Docker (образы MinIO с Docker Hub
   недоступны), сервис — `node server/src/main.ts`.
 - Справочник (`modules/compendium`, без состояния): запись — Markdown с YAML-шапкой (`shared/compendium.ts`: свой

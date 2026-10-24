@@ -242,7 +242,6 @@
     flex: 1;
     padding: 20px 28px;
     overflow: auto;
-    user-select: text;
   }
   .close {
     position: absolute;

@@ -1,6 +1,6 @@
 <!-- Settings → Community: «Browse» opens the catalog; the sources (the official repository — can be turned
      off; the GM's own repositories — added by address, turned off, removed); the author's name and key (save it to a
-     file, load one). -->
+     file, load one); the admin's token of a repository the GM keeps. -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Globe, Trash2 } from '@lucide/svelte';
@@ -17,6 +17,8 @@
   let newName = $state('');
   let newUrl = $state('');
   let adding = $state(false);
+  let adminSource = $state('');
+  let adminToken = $state('');
   let error = $state('');
   let saved = $state('');
   onMount(async () => {
@@ -52,6 +54,19 @@
         adding = false;
       }
     });
+  const repos = $derived((repo.info?.sources ?? []).filter((s) => s.kind === 'repo'));
+  const admins = $derived(repos.filter((s) => s.admin));
+  // The list starts on the first repository the GM isn't the admin of yet.
+  $effect(() => {
+    if (!repos.some((s) => s.id === adminSource)) adminSource = (repos.find((s) => !s.admin) ?? repos[0])?.id ?? '';
+  });
+  const becomeAdmin = () =>
+    run(async () => {
+      repo.info = await window.api.repoSetAdmin(adminSource, adminToken);
+      adminToken = '';
+      flash(t('repo.set.adminSaved'));
+    });
+  const stopAdmin = (s: SourceInfo) => run(async () => (repo.info = await window.api.repoSetAdmin(s.id, '')));
   const saveName = () => run(async () => ((repo.info = await window.api.setRepoName(name)), flash(t('repo.set.saved'))));
   const exportKey = () => run(async () => (await window.api.repoExportKey()) && ((repo.info = await window.api.repoInfo()), flash(t('repo.set.keySaved'))));
   const importKey = () =>
@@ -120,6 +135,27 @@
   <button class="btn" onclick={exportKey}>{t('repo.set.exportKey')}</button>
   <button class="btn" onclick={importKey}>{t('repo.set.importKey')}</button>
 </div>
+
+<h4>{t('repo.set.adminTitle')}</h4>
+<div class="setting">
+  <div class="info">
+    <div class="name">{t('repo.set.admin')}</div>
+    <div class="desc">{t('repo.set.adminAbout')}</div>
+  </div>
+</div>
+{#each admins as s (s.id)}
+  <div class="row admin-on">
+    <span>{t('repo.set.adminOn', { name: sourceName(s) })}</span>
+    <button class="btn" onclick={() => stopAdmin(s)}>{t('repo.set.adminOff')}</button>
+  </div>
+{/each}
+<form class="row" onsubmit={(e) => (e.preventDefault(), adminToken.trim() && becomeAdmin())}>
+  {#if repos.length > 1}
+    <select class="short" bind:value={adminSource}>{#each repos as s (s.id)}<option value={s.id}>{sourceName(s)}</option>{/each}</select>
+  {/if}
+  <input type="password" bind:value={adminToken} placeholder={t('repo.set.adminToken')} autocomplete="off" />
+  <button class="btn" type="submit" disabled={!adminToken.trim()}>{t('repo.set.adminBtn')}</button>
+</form>
 {#if error}<p class="err">{error}</p>{:else if saved}<p class="faint">{saved}</p>{/if}
 
 <style>
@@ -143,8 +179,13 @@
     flex: 1;
     min-width: 0;
   }
-  .row input.short {
+  .row input.short,
+  .row select.short {
     flex: 0 1 180px;
+  }
+  .admin-on {
+    align-items: center;
+    justify-content: space-between;
   }
   code {
     font-size: 11px;

@@ -1,7 +1,7 @@
 // The repository's rules: the catalog (one JSON in the bucket), publishing in two steps (ask → upload straight to S3
 // → commit), versions, downloads. Who is asking is already checked (http.ts): `author` is a verified key.
 import { randomUUID } from 'node:crypto';
-import { LIMITS, REPO_API, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry } from '../../src/shared/repo.ts';
+import { LIMITS, REPO_API, REPORT_REASONS, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type Report, type ReportedEntry } from '../../src/shared/repo.ts';
 import type { Storage } from './s3.ts';
 
 // What the catalog keeps beyond what everyone sees: the files of the versions still in the bucket.
@@ -9,6 +9,8 @@ interface Stored extends RepoEntry {
   files: { version: number; key: string }[];
   // Removed by the admin: hidden, the author can't publish it again.
   blocked?: boolean;
+  // Complaints (only the admin sees them); `from` — a hash of the sender's address, one complaint each.
+  reports?: (Report & { from: string })[];
 }
 
 interface Pending {
@@ -42,6 +44,8 @@ const CATALOG = 'catalog.json';
 // The cover in use: the newest picture among the entry's files.
 const coverFile = (e: Stored) => (e.cover ? e.files.filter((f) => f.key.endsWith('.jpg')).sort((a, b) => b.version - a.version)[0]?.key : undefined);
 const LINK_SECONDS = 3600;
+// Complaints kept per entry (the newest).
+const MAX_REPORTS = 50;
 const PENDING_MS = 3 * 3600 * 1000;
 
 export class Repo {
@@ -87,7 +91,7 @@ export class Repo {
   }
 
   catalog(): RepoCatalog {
-    const entries = this.entries.filter((e) => !e.blocked).map(({ files: _f, blocked: _b, ...e }) => e);
+    const entries = this.entries.filter((e) => !e.blocked).map(({ files: _f, blocked: _b, reports: _r, ...e }) => e);
     return { api: REPO_API, maxSize: this.opts.maxSize, entries };
   }
 
@@ -160,9 +164,11 @@ export class Repo {
         updated: now,
         downloads: old?.downloads ?? 0,
         files: keep,
+        // A new version doesn't wipe complaints: the admin decides.
+        ...(old?.reports ? { reports: old.reports } : {}),
       };
       this.entries = [...this.entries.filter((e) => e !== old), entry];
-      const { files: _f, ...pub } = entry;
+      const { files: _f, reports: _r, ...pub } = entry;
       return pub;
     });
   }
@@ -175,6 +181,36 @@ export class Repo {
       for (const f of e.files) await this.store.del(f.key).catch(() => undefined);
       this.entries = this.entries.filter((x) => x !== e);
       if (block) this.entries.push({ ...e, files: [], blocked: true });
+      return true;
+    });
+  }
+
+  // A complaint about an entry; a second one from the same address replaces the first.
+  report(author: string, id: string, from: string, reason: unknown, text: unknown): Promise<void> {
+    if (typeof reason !== 'string' || !(REPORT_REASONS as readonly string[]).includes(reason)) throw new RepoError(400, 'bad-reason');
+    const words = typeof text === 'string' ? text.trim().slice(0, LIMITS.report) : '';
+    return this.change(async () => {
+      const e = this.find(author, id);
+      if (!e || e.blocked) throw new RepoError(404, 'not-found');
+      const others = (e.reports ?? []).filter((r) => r.from !== from);
+      e.reports = [...others, { reason: reason as Report['reason'], text: words, at: this.now(), from }].slice(-MAX_REPORTS);
+    });
+  }
+
+  // For the admin: entries with complaints, the most complained about first.
+  reported(): ReportedEntry[] {
+    return this.entries
+      .filter((e) => !e.blocked && e.reports?.length)
+      .map((e) => ({ author: e.author, id: e.id, title: e.title, authorName: e.authorName, reports: e.reports!.map(({ from: _f, ...r }) => r) }))
+      .sort((a, b) => b.reports.length - a.reports.length);
+  }
+
+  // The admin found nothing wrong: the complaints go.
+  dismiss(author: string, id: string): Promise<boolean> {
+    return this.change(async () => {
+      const e = this.find(author, id);
+      if (!e?.reports) return false;
+      delete e.reports;
       return true;
     });
   }

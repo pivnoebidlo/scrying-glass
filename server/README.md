@@ -28,7 +28,10 @@ presigned links, so the service itself carries no big traffic.
 | `POST /api/v1/publish` (signed) | asks to publish; answers with upload links |
 | `POST /api/v1/commit` (signed) | the files are uploaded: put the version into the catalog |
 | `POST /api/v1/unpublish` (signed) | the author takes an adventure down |
+| `POST /api/v1/report` | a complaint about an entry, anyone may send one: `{"author":"…","id":"…","reason":"rights\|content\|broken\|other","text":"…"}`; one per address and entry (the address is kept only as a hash) |
+| `GET /api/v1/admin/reports` | the admin: entries with complaints (`Authorization: Bearer <ADMIN_TOKEN>`) |
 | `POST /api/v1/admin/remove` | the admin removes an entry: `Authorization: Bearer <ADMIN_TOKEN>`, body `{"author":"…","id":"…"}`; it stays blocked (`"block": false` — just removed) |
+| `POST /api/v1/admin/dismiss` | the admin dismisses the complaints about an entry: `{"author":"…","id":"…"}` |
 | `GET /healthz` | liveness |
 
 ## Installing with Helm
@@ -62,6 +65,9 @@ The other settings are in [`chart/values.yaml`](chart/values.yaml): the largest 
 adventures per author (`limits.maxPerAuthor`), signed requests a minute from one address (`limits.ratePerMinute`),
 the key prefix in the bucket (`s3.prefix`). An ingress in front of the service must pass `X-Forwarded-For`
 (the rate limit counts by it).
+
+The admin can do all of this in the app too: Settings → Community → Admin, with the admin token — the catalog then
+shows complaints and the buttons to take any entry down.
 
 ## Environment
 
