@@ -267,7 +267,15 @@ Electron-приложение для мастера D&D: окно управле
 формулы на лету, `LocInput` правит текст на языке интерфейса; состояние — `store.svelte.ts`, `openBuilder(id?)` — и из
 настроек систем); ядро — IPC `systems:save` / `delete` / `import` / `export` (`savePack`, свой пакет — `own`, встроенный —
 только копией), ошибки `syspack:<код>` → `sb.err.*`. `fieldMap` не кэшируется: конструктор правит пакет на месте.
-Дальше: справочник в пакете, публикация через «Сообщество».
+Справочник пакета — `compendium` (`PackEntry`: title, category, text): ядро отдаёт его встроенными книгами
+(`packBooks`, тип `rule` с `category`, по языкам `packLangs`), `reloadSystems` шлёт `compendium:changed`; состояние в
+трекере с записью того же названия открывает её (`conditions.entry`); в конструкторе — `CompendiumPanel`. В «Сообществе»:
+запись `kind: 'system'` (`system` — id пакета), сервис отдаёт системы только по `?kinds=all` (`features: ['systems']`;
+старые приложения их не видят); публикация — IPC `repo:publishSystem` (окно `SystemPublishDialog.svelte` — только
+репозитории с `features` 'systems'), установка — `repo:installSystem` (`savePack`, чужая поверх своей — с вопросом);
+пометки — `settings.repo.systems` (`published` / `installed`, `RepoInfo.systems`, `setSystemMark`); в каталоге —
+«Приключения / Системы», `systemVersion`, у приключения без системы — «Нужна система» (`missingSystem`); обновления
+систем — в той же плашке (`updatesHere`, ключ `system:<id>`). Сервис 0.5.0 (тег `repo-v0.5.0`) нужен до выпуска.
 - Mausritter (третья система, в работе; SRD 2.3.1, CC BY 4.0 — атрибуция дословно в `about.credit.mausritter`):
   `systems/mausritter/` — `stats.ts` (`MausStats`: hp — Hit Protection, str/dex/wil, armour, attacks `d6/d8`,
   critical, abilities, wants, `warband`; у мыши `sheet` — уровень, XP, пипсы, 10 клеток `slots` (лапы 2, тело 2,

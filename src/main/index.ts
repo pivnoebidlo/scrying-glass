@@ -18,7 +18,7 @@ import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtom
 import { scanVault } from './scan';
 import { systemFor } from '../shared/adventures';
 import { setSystemsOff } from '../systems';
-import { loadSystemPacks, ownPackFile, savePack, systemPacks } from './syspacks';
+import { loadSystemPacks, ownPackFile, packBooks, savePack, systemPacks } from './syspacks';
 import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
 import type { TrashPlace, TrashSettings } from '../shared/trash';
 import { migrateOldCampaign } from './migrate';
@@ -45,7 +45,7 @@ import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnounc
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
-import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
+import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
 import type { RepoEntry, RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
@@ -460,7 +460,7 @@ const afterEntryWrite = async (rel: string) => {
 };
 ipcMain.handle('compendium:read', (_event, rel: string) => entries.read(resolveText, rel));
 ipcMain.handle('compendium:listLibrary', () => entries.listLibrary(libraryPath()));
-ipcMain.handle('compendium:builtin', () => builtinEntries());
+ipcMain.handle('compendium:builtin', () => [...builtinEntries(), ...packBooks()]);
 ipcMain.handle('compendium:write', async (_event, { path: rel, text }: { path: string; text: string }) => {
   const ok = entries.write(resolveText, rel, text);
   if (ok) await afterEntryWrite(rel);
@@ -1173,6 +1173,66 @@ ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: st
 ipcMain.handle('repo:unpublish', async (_event, { source, id }: { source: string; id: string }) => {
   await repoUnpublish(source, id);
   await runAction('repo', 'unpublished', { id, source });
+  for (const [pack, m] of Object.entries(repoInfo().systems.published)) if (m.id === id && m.source === source) setSystemMark('published', pack, null);
+});
+// Publish (or update) a system pack of the GM's own: the pack's file as it is in the library.
+ipcMain.handle('repo:publishSystem', async (_event, p: { source: string; pack: string; title: string; description: string; lang: string }) => {
+  const pack = systemPacks().find((x) => x.id === p.pack && x.own);
+  if (!pack) return null;
+  const known = repoInfo().systems.published[p.pack];
+  const tmp = path.join(app.getPath('userData'), 'repo', `system-${randomUUID().slice(0, 8)}.json`);
+  fs.mkdirSync(path.dirname(tmp), { recursive: true });
+  try {
+    const { own: _own, ...clean } = pack;
+    fs.writeFileSync(tmp, JSON.stringify(clean));
+    const entry = await repoPublish(p.source, tmp, {
+      id: known?.id ?? newAdventureId(),
+      title: p.title,
+      description: p.description,
+      system: pack.id,
+      lang: p.lang,
+      music: false,
+      app: app.getVersion(),
+      kind: 'system',
+    }, null);
+    setSystemMark('published', pack.id, { source: p.source, id: entry.id, version: entry.version });
+    return entry;
+  } finally {
+    fs.rmSync(tmp, { force: true });
+  }
+});
+// Download a system pack into the library. A system of the GM's own with that id (not one downloaded from this
+// entry) is replaced only if they agree.
+ipcMain.handle('repo:installSystem', async (_event, { source, entry }: { source: string; entry: RepoEntry }) => {
+  const lib = libraryPath();
+  const win = getControlWindow();
+  if (!lib || !win) return null;
+  const file = await repoDownload(source, entry.author, entry.id);
+  try {
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8')) as { id?: unknown };
+    const mark = repoInfo().systems.installed[String(raw.id)];
+    const mine = systemPacks().find((x) => x.id === raw.id && x.own);
+    if (mine && !(mark && mark.author === entry.author && mark.id === entry.id)) {
+      const ask = await dialog.showMessageBox(win, {
+        type: 'question',
+        message: t('core.systemReplace', { name: String(raw.id) }),
+        detail: t('core.systemReplaceDetail'),
+        buttons: [t('core.systemReplaceYes'), t('core.cancel')],
+        defaultId: 1,
+        cancelId: 1,
+      });
+      if (ask.response !== 0) return null;
+    }
+    const p = savePack(lib, raw);
+    setSystemMark('installed', p.id, { source, author: entry.author, id: entry.id, version: entry.version });
+    reloadSystems();
+    return p.id;
+  } catch (e) {
+    if (e instanceof SyntaxError) throw new Error('repo:not-a-system');
+    throw e;
+  } finally {
+    discardDownload(file);
+  }
 });
 // Download: the file waits in a temporary folder; the answer is like packs:pick (the name, taken or not).
 ipcMain.handle('repo:download', async (_event, { source, author, id }: { source: string; author: string; id: string }) => {
@@ -1234,6 +1294,8 @@ function reloadSystems() {
   loadSystemPacks(libraryPath());
   stateById['vault'] = vaultState();
   broadcastState();
+  // Their compendiums are built-in books: the windows read them again.
+  for (const win of BrowserWindow.getAllWindows()) win.webContents.send('compendium:changed');
 }
 ipcMain.handle('systems:save', (_event, { pack, was }: { pack: unknown; was?: string }) => {
   const lib = libraryPath();

@@ -4,7 +4,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { app } from 'electron';
-import { validatePack, type SystemPack } from '../shared/syspack';
+import { loc, packLangs, validatePack, type SystemPack } from '../shared/syspack';
+import type { BuiltinBook } from '../shared/compendium';
 import { systems } from '../systems';
 import { registerPacks } from '../systems/packs';
 import { writeJsonAtomic } from './files';
@@ -60,6 +61,25 @@ export function savePack(library: string, raw: unknown, was?: string): SystemPac
   writeJsonAtomic(fileOf(library, p.id), clean);
   if (was && was !== p.id) fs.rmSync(fileOf(library, was), { force: true });
   return p;
+}
+
+// The compendiums of the packs as built-in books, one per language: entries of the type «rule» with their category.
+export function packBooks(): BuiltinBook[] {
+  return list
+    .filter((p) => p.compendium?.length)
+    .flatMap((p) =>
+      packLangs(p).map((lang) => ({
+        system: p.id,
+        lang,
+        source: { title: loc(p.title, lang), attribution: p.license ?? '', url: p.url ?? '', license: '' },
+        entries: p.compendium!.map((e) => ({
+          title: loc(e.title, lang),
+          type: 'rule',
+          fields: (e.category ? { category: loc(e.category, lang) } : {}) as Record<string, string>,
+          body: loc(e.text, lang),
+        })),
+      })),
+    );
 }
 
 export const ownPackFile = (library: string, id: string) => (list.some((p) => p.id === id && p.own) ? `systems/${id}.json` : null);

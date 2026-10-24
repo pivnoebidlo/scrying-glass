@@ -103,8 +103,17 @@ export interface SystemPack {
   rank?: string;
   sections: SectionDef[];
   tracker: TrackerSpec;
+  // Its own compendium: rules, conditions, gear… (Markdown), shown in adventures of this system as built-in entries.
+  compendium?: PackEntry[];
   // Set by the core, never read from a file: the GM's own pack (in the library), not a built-in one.
   own?: boolean;
+}
+
+export interface PackEntry {
+  title: Loc;
+  // A heading to group entries by («Conditions», «Gear»).
+  category?: Loc;
+  text: Loc;
 }
 
 // A card's block of stats in a pack system: values by field key (a list — rows of values by column key).
@@ -181,7 +190,7 @@ export const blankPack = (id: string, title: Loc): SystemPack => ({
 const KEY_RE = /^[a-z][a-z0-9_]{0,31}$/;
 const ID_RE = /^[a-z][a-z0-9-]{1,31}$/;
 const KINDS: CardKind[] = ['monster', 'npc', 'character'];
-const LIMIT = { sections: 40, fields: 80, options: 60, columns: 8, text: 200, long: 4000, formula: 200 };
+const LIMIT = { sections: 40, fields: 80, options: 60, columns: 8, text: 200, long: 4000, formula: 200, entries: 500, entry: 30000 };
 
 const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
 function locOf(x: unknown, max = LIMIT.text): Loc | null {
@@ -330,6 +339,15 @@ export function validatePack(x: unknown): SystemPack | string {
       : {}),
   };
   const kinds = Array.isArray(x['kinds']) ? x['kinds'].filter((k): k is CardKind => KINDS.includes(k as CardKind)) : [];
+  const compendium = Array.isArray(x['compendium'])
+    ? x['compendium'].slice(0, LIMIT.entries).flatMap((e) => {
+        if (!isObj(e)) return [];
+        const title = locOf(e['title']);
+        const text = locOf(e['text'], LIMIT.entry) ?? '';
+        const category = locOf(e['category']);
+        return title ? [{ title, text, ...(category ? { category } : {}) }] : [];
+      })
+    : [];
   const str = (k: string, max = LIMIT.text) => (typeof x[k] === 'string' ? { [k]: (x[k] as string).slice(0, max) } : {});
   return {
     scryingGlass: 'system',
@@ -346,7 +364,17 @@ export function validatePack(x: unknown): SystemPack | string {
     ...(formulaOf(x['rank']) ? { rank: x['rank'] as string } : {}),
     sections,
     tracker,
+    ...(compendium.length ? { compendium } : {}),
   };
+}
+
+// The languages a pack's texts are in (a text in one string — for any language: 'en', the window's fallback).
+export function packLangs(pack: SystemPack): string[] {
+  const langs = new Set<string>();
+  const add = (l: Loc | undefined) => l && typeof l !== 'string' && Object.keys(l).forEach((k) => langs.add(k));
+  add(pack.title);
+  for (const e of pack.compendium ?? []) (add(e.title), add(e.text));
+  return langs.size ? [...langs] : ['en'];
 }
 
 // ---- Formulas ----

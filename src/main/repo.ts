@@ -11,7 +11,7 @@ import * as https from 'node:https';
 import { Readable } from 'node:stream';
 import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, randomBytes, sign } from 'node:crypto';
 import { nativeImage, safeStorage } from 'electron';
-import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, OFFICIAL_SOURCE, REPO_API, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type ReportedEntry, type BlockedEntry, type SourceInfo } from '../shared/repo';
+import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, OFFICIAL_SOURCE, REPO_API, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type ReportedEntry, type BlockedEntry, type SourceInfo, type SystemMark } from '../shared/repo';
 
 export interface RepoSettings {
   // The GM's own sources (the official one is always there).
@@ -23,6 +23,8 @@ export interface RepoSettings {
   url?: string;
   // The author's name shown in the catalog.
   name?: string;
+  // System packs published from here and downloaded (by pack id).
+  systems?: RepoInfo['systems'];
   key?: { x: string; d: string; enc: boolean };
 }
 
@@ -68,7 +70,16 @@ function base(source: string): string {
 
 export function repoInfo(): RepoInfo {
   const s = deps?.get() ?? {};
-  return { sources: sources(), name: s.name ?? '', author: s.key?.x ?? null };
+  return { sources: sources(), name: s.name ?? '', author: s.key?.x ?? null, systems: { published: s.systems?.published ?? {}, installed: s.systems?.installed ?? {} } };
+}
+
+// Remember (or forget — null) that a system pack was published from here or downloaded.
+export function setSystemMark(which: 'published' | 'installed', pack: string, mark: (SystemMark & { author?: string }) | null) {
+  const s = deps!.get();
+  const sys = { published: { ...(s.systems?.published ?? {}) }, installed: { ...(s.systems?.installed ?? {}) } };
+  if (mark) (sys[which] as Record<string, unknown>)[pack] = mark;
+  else delete sys[which][pack];
+  deps!.save({ ...s, systems: sys });
 }
 
 export function setAuthorName(name: string) {
@@ -213,7 +224,7 @@ export const adminBlocked = (source: string) => adminCall<BlockedEntry[]>(source
 export const adminUnblock = (source: string, author: string, id: string) => adminCall(source, '/api/v1/admin/unblock', adminToken(source), { author, id });
 
 export async function catalog(source: string): Promise<RepoCatalog> {
-  const res = await request(`${base(source)}/api/v1/catalog`);
+  const res = await request(`${base(source)}/api/v1/catalog?kinds=all`);
   if (!res.ok) throw await errorOf(res);
   return (await res.json()) as RepoCatalog;
 }

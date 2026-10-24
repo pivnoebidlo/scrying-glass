@@ -9,7 +9,7 @@ import { blankPack, blankStats, loc, type PackStats, type SystemPack } from '../
 import { systems } from '../../../systems';
 import { ui as tools } from '../ui/ui.svelte';
 
-export type Selection = { kind: 'system' } | { kind: 'tracker' } | { kind: 'section'; s: number } | { kind: 'field'; s: number; f: number };
+export type Selection = { kind: 'system' } | { kind: 'tracker' } | { kind: 'compendium' } | { kind: 'section'; s: number } | { kind: 'field'; s: number; f: number };
 
 export const builder = $state({
   draft: null as SystemPack | null,

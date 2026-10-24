@@ -1,7 +1,7 @@
 // The service's HTTP API (v1). Reads are open; writes are signed by the author's key (headers x-sg-key and
 // x-sg-sig: Ed25519 over signedText(method, path, body)); the admin's calls carry `Authorization: Bearer <token>`.
 //
-//   GET  /api/v1/catalog                      the catalog
+//   GET  /api/v1/catalog                      the catalog (?kinds=all — with system packs)
 //   GET  /api/v1/packs/<author>/<id>          302 → the current version's .sgpack (counts a download)
 //   GET  /api/v1/covers/<author>/<id>         302 → its cover
 //   POST /api/v1/publish     (signed)         PublishRequest → PublishTicket
@@ -94,7 +94,7 @@ export function handler(repo: Repo, opts: HttpOptions) {
     try {
       if (req.method === 'GET') {
         if (path === '/healthz') return json(res, 200, { ok: true });
-        if (path === '/api/v1/catalog') return json(res, 200, repo.catalog());
+        if (path === '/api/v1/catalog') return json(res, 200, repo.catalog(url.searchParams.get('kinds') === 'all'));
         if (path === '/api/v1/admin/reports') {
           if (!isAdmin(req)) throw new RepoError(401, 'admin');
           return json(res, 200, repo.reported());

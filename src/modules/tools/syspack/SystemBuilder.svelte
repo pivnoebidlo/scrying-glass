@@ -3,7 +3,8 @@
      will look (and its values to try rolls with). Saved to the library by the core; a built-in pack is read only
      («Make a copy»). -->
 <script lang="ts">
-  import { ArrowDown, ArrowUp, Copy, Download, FilePlus, Save, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import { ArrowDown, ArrowUp, BookOpen, CloudUpload, Copy, Download, FilePlus, Save, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import { repo } from '../../repo/ui/repo.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { Card, CardKind } from '../../../shared/cards';
   import { getLang } from '../../../shared/i18n';
@@ -14,6 +15,7 @@
   import FormulaInput from './FormulaInput.svelte';
   import LocInput from './LocInput.svelte';
   import TrackerPanel from './TrackerPanel.svelte';
+  import CompendiumPanel from './CompendiumPanel.svelte';
   import { builder, copySystem, deleteSystem, freeKey, importSystem, isDirty, newSystem, packError, packs, pickSystem, saveSystem } from './store.svelte';
 
   const KINDS: CardKind[] = ['monster', 'npc', 'character'];
@@ -128,6 +130,7 @@
     <div class="spacer"></div>
     {#if d && ro}<button class="btn" onclick={copySystem}><Copy size={14} /> {t('sb.copy')}</button>{/if}
     {#if d && builder.was}
+      <button class="btn" disabled={dirty} title={dirty ? t('sb.publishSaveFirst') : t('sb.publishHint')} onclick={() => (repo.publishSystem = builder.was)}><CloudUpload size={14} /> {t('sb.publish')}</button>
       <button class="icon-btn" title={t('sb.export')} onclick={() => window.api.exportSystem(builder.was!)}><Download size={15} /></button>
       <button class="icon-btn" title={t('sb.delete')} onclick={deleteSystem}><Trash2 size={15} /></button>
     {/if}
@@ -174,6 +177,9 @@
         {/each}
         {#if !ro}<button class="add" onclick={addSection}>{t('sb.addSection')}</button>{/if}
         <button class="item tracker" class:on={builder.sel.kind === 'tracker'} onclick={() => select({ kind: 'tracker' })}><Swords size={13} /> {t('sb.tracker')}</button>
+        <button class="item tracker" class:on={builder.sel.kind === 'compendium'} onclick={() => select({ kind: 'compendium' })}>
+          <BookOpen size={13} /> {t('sb.compendium')}<span class="faint type">{d.compendium?.length ?? 0}</span>
+        </button>
       </nav>
 
       <section class="middle">
@@ -220,6 +226,9 @@
         {:else if builder.sel.kind === 'tracker'}
           <h3>{t('sb.tracker')}</h3>
           <TrackerPanel bind:pack={builder.draft!} disabled={ro} />
+        {:else if builder.sel.kind === 'compendium'}
+          <h3>{t('sb.compendium')}</h3>
+          <CompendiumPanel bind:pack={builder.draft!} disabled={ro} />
         {/if}
         {#if problems.length}
           <div class="problems">

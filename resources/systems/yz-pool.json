@@ -602,5 +602,105 @@
    ],
    "free": true
   }
- }
+ },
+ "compendium": [
+  {
+   "title": {
+    "en": "Broken",
+    "ru": "Сломлен"
+   },
+   "category": {
+    "en": "Conditions",
+    "ru": "Состояния"
+   },
+   "text": {
+    "en": "Health or mind is at zero: the character can't act on their own until someone helps them up or calms them down.",
+    "ru": "Здоровье или рассудок на нуле: персонаж не может действовать сам, пока ему не помогут подняться или не успокоят."
+   }
+  },
+  {
+   "title": {
+    "en": "Exhausted",
+    "ru": "Измотан"
+   },
+   "category": {
+    "en": "Conditions",
+    "ru": "Состояния"
+   },
+   "text": {
+    "en": "No proper rest for too long. Tired characters roll with fewer dice until they sleep.",
+    "ru": "Слишком долго без отдыха. Уставший персонаж бросает меньше кубов, пока не выспится."
+   }
+  },
+  {
+   "title": {
+    "en": "Hungry",
+    "ru": "Голоден"
+   },
+   "category": {
+    "en": "Conditions",
+    "ru": "Состояния"
+   },
+   "text": {
+    "en": "A day or more without food. Health doesn't come back until the character eats.",
+    "ru": "День или больше без еды. Здоровье не восстанавливается, пока персонаж не поест."
+   }
+  },
+  {
+   "title": {
+    "en": "Thirsty",
+    "ru": "Жажда"
+   },
+   "category": {
+    "en": "Conditions",
+    "ru": "Состояния"
+   },
+   "text": {
+    "en": "Without water the character weakens fast: decide with the table how soon it starts to hurt.",
+    "ru": "Без воды персонаж слабеет быстро: решите вместе за столом, как скоро это начнёт ранить."
+   }
+  },
+  {
+   "title": {
+    "en": "Freezing",
+    "ru": "Замерзает"
+   },
+   "category": {
+    "en": "Conditions",
+    "ru": "Состояния"
+   },
+   "text": {
+    "en": "Cold without shelter or warm clothes; staying out too long hurts.",
+    "ru": "Холод без укрытия и тёплой одежды; долгое пребывание на нём ранит."
+   }
+  },
+  {
+   "title": {
+    "en": "Sleepless",
+    "ru": "Не спал"
+   },
+   "category": {
+    "en": "Conditions",
+    "ru": "Состояния"
+   },
+   "text": {
+    "en": "A night without sleep. The next one decides whether the character becomes exhausted.",
+    "ru": "Ночь без сна. Следующая решит, станет ли персонаж измотанным."
+   }
+  },
+  {
+   "title": {
+    "en": "Pushing a roll",
+    "ru": "Переброс"
+   },
+   "category": {
+    "en": "Rules",
+    "ru": "Правила"
+   },
+   "text": {
+    "en": "After a roll the player may push it once: the dice without a six are rolled again. Pushing has a price — the table decides what it is (stress, damage, a worse position).",
+    "ru": "После броска игрок может один раз перебросить его: кубы без шестёрки бросаются снова. У переброса есть цена — за столом решают, какая (стресс, урон, положение хуже)."
+   }
+  }
+ ]
 }

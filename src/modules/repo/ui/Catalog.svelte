@@ -11,13 +11,15 @@
   import { enabledSystems, systems } from '../../../systems';
   import { LANGS } from '../../../shared/i18n/core';
   import { matchesQuery, shortKey } from '../../../shared/repo';
-  import { adminRemove, allFound, unblock, updatesHere, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
+  import { adminRemove, allFound, installSystem, missingSystem, systemVersion, unblock, updatesHere, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
 
   let query = $state('');
   let source = $state('');
   let system = $state('');
   let lang = $state('');
   let show = $state<'all' | 'updates' | 'installed' | 'mine' | 'reported' | 'blocked'>(repo.startShow);
+  // Adventures or system packs.
+  let what = $state<'adventures' | 'systems'>('adventures');
   let chosen = $state<string | null>(null);
 
   const app = $derived(store.state);
@@ -38,15 +40,18 @@
 
   const found = $derived(repo.info ? allFound() : []);
   const updates = $derived(repo.info ? updatesHere().map((u) => key(u.entry)) : []);
+  const hasSystems = $derived(found.some((e) => e.kind === 'system'));
   const entries = $derived(
     found
+      // Updates are of both kinds; otherwise — the kind chosen.
+      .filter((e) => show === 'updates' || (what === 'systems') === (e.kind === 'system'))
       // Adventures of systems turned off are nowhere to be seen (but the GM's own are).
-      .filter((e) => e.author === me || enabled.some((s) => s.id === e.system) || !systems.some((s) => s.id === e.system))
+      .filter((e) => e.kind === 'system' || e.author === me || enabled.some((s) => s.id === e.system) || !systems.some((s) => s.id === e.system))
       .filter((e) => !source || e.source === source)
-      .filter((e) => !system || e.system === system)
+      .filter((e) => e.kind === 'system' || !system || e.system === system)
       .filter((e) => !lang || e.lang === lang)
       .filter((e) => show !== 'mine' || e.author === me)
-      .filter((e) => show !== 'installed' || installedFolder(e) !== null)
+      .filter((e) => show !== 'installed' || installedVersion(e) > 0)
       .filter((e) => show !== 'updates' || updates.includes(key(e)))
       .filter((e) => show !== 'reported' || reportsOf(e).length > 0)
       .filter((e) => matchesQuery(e, query))
@@ -55,7 +60,8 @@
 
   const key = (e: Found) => `${e.source}/${e.author}/${e.id}`;
   const picked = $derived(entries.find((e) => key(e) === chosen) ?? entries[0]);
-  const systemTitle = (id: string) => systems.find((s) => s.id === id)?.title ?? id;
+  // A system this app hasn't: the title of its pack in a catalog, if one is there.
+  const systemTitle = (id: string) => systems.find((s) => s.id === id)?.title ?? found.find((e) => e.kind === 'system' && e.system === id)?.title ?? id;
   const langTitle = (id: string) => LANGS[id as keyof typeof LANGS] ?? id;
   const sourceTitle = (id: string) => {
     const s = repo.info?.sources.find((x) => x.id === id);
@@ -63,6 +69,7 @@
   };
   const date = (ms: number) => new Date(ms).toLocaleDateString(getLang(), { day: 'numeric', month: 'short', year: 'numeric' });
   const installedVersion = (e: Found) => {
+    if (e.kind === 'system') return systemVersion(e);
     const f = installedFolder(e);
     return f ? (app.repo.installed[f]?.version ?? 0) : 0;
   };
@@ -102,10 +109,18 @@
           {#each on as s (s.id)}<option value={s.id}>{sourceName(s)}</option>{/each}
         </select>
       {/if}
-      <select bind:value={system}>
-        <option value="">{t('repo.allSystems')}</option>
-        {#each enabled as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
-      </select>
+      {#if hasSystems || what === 'systems'}
+        <div class="seg">
+          <button class:on={what === 'adventures'} onclick={() => (what = 'adventures')}>{t('repo.whatAdventures')}</button>
+          <button class:on={what === 'systems'} onclick={() => (what = 'systems')}>{t('repo.whatSystems')}</button>
+        </div>
+      {/if}
+      {#if what === 'adventures'}
+        <select bind:value={system}>
+          <option value="">{t('repo.allSystems')}</option>
+          {#each enabled as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
+        </select>
+      {/if}
       <select bind:value={lang}>
         <option value="">{t('repo.allLangs')}</option>
         {#each Object.entries(LANGS) as [id, title] (id)}<option value={id}>{title}</option>{/each}
@@ -173,7 +188,7 @@
               <span class="thumb">{#if cover}<img src={cover} alt="" />{:else}<ImageOff size={16} />{/if}</span>
               <span class="text">
                 <span class="title">{e.title}</span>
-                <span class="meta faint">{systemTitle(e.system)} · {langTitle(e.lang)} · {mb(e.size)}</span>
+                <span class="meta faint">{e.kind === 'system' ? t('repo.kindSystem') : systemTitle(e.system)} · {langTitle(e.lang)} · {mb(e.size)}</span>
               </span>
               {#if reportsOf(e).length}<span class="badge warn" title={t('repo.admin.reports')}><Flag size={10} /> {reportsOf(e).length}</span>{/if}
               {#if have && have < e.version}<span class="badge new">{t('repo.newVersion')}</span>
@@ -195,7 +210,7 @@
               {#if e.author === me}<span class="mine">{t('repo.you')}</span>{/if}
             </div>
             <div class="meta faint">
-              <span>{systemTitle(e.system)}</span>
+              <span>{e.kind === 'system' ? t('repo.kindSystem') : systemTitle(e.system)}</span>
               <span>{langTitle(e.lang)}</span>
               <span>{t('repo.version', { n: e.version })}</span>
               <span>{mb(e.size)}{e.music ? ` · ${t('repo.withMusic')}` : ''}</span>
@@ -210,7 +225,7 @@
               {:else if have}
                 <button class="btn primary" disabled={!!repo.busy} onclick={() => install(e)}><Download size={14} /> {t('repo.update', { n: e.version })}</button>
               {:else}
-                <button class="btn primary" disabled={!!repo.busy} onclick={() => install(e)}><Download size={14} /> {t('repo.download')}</button>
+                <button class="btn primary" disabled={!!repo.busy} onclick={() => install(e)}><Download size={14} /> {e.kind === 'system' ? t('repo.installSystem') : t('repo.download')}</button>
               {/if}
               {#if e.author === me}
                 <button class="btn danger" disabled={!!repo.busy} onclick={() => unpublish(e)}><Trash2 size={14} /> {t('repo.unpublish')}</button>
@@ -218,6 +233,13 @@
                 <button class="btn link" disabled={!!repo.busy} onclick={() => (repo.reporting = e)}><Flag size={13} /> {t('repo.report.button')}</button>
               {/if}
             </div>
+            {#if e.kind !== 'system' && !systems.some((s) => s.id === e.system)}
+              {@const need = missingSystem(e)}
+              <p class="needs">
+                {t('repo.needsSystem', { system: need?.title ?? e.system })}
+                {#if need}<button class="btn" disabled={!!repo.busy} onclick={() => installSystem(need)}><Download size={14} /> {t('repo.installSystem')}</button>{/if}
+              </p>
+            {/if}
             {#if isAdmin(e.source)}
               {@const reports = reportsOf(e)}
               <div class="admin">
@@ -450,6 +472,14 @@
   }
   .said {
     white-space: pre-line;
+  }
+  .needs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 14px;
+    color: var(--warning);
   }
   .admin .actions {
     margin: 10px 0 0;

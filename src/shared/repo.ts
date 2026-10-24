@@ -20,8 +20,10 @@ export interface RepoEntry {
   id: string;
   title: string;
   description: string;
-  // Role-playing system (systems/index.ts) and language of the adventure.
+  // Role-playing system (systems/index.ts) and language of the adventure; of a system pack — its own id.
   system: string;
+  // What it is: a system pack (shared/syspack.ts); none — an adventure (.sgpack).
+  kind?: 'system';
   lang: string;
   // 1, 2, … — each publish of the same adventure is a new version.
   version: number;
@@ -38,6 +40,9 @@ export interface RepoEntry {
 
 export interface RepoCatalog {
   api: number;
+  // What the service knows beyond adventures: 'systems' — system packs (the catalog lists them when asked:
+  // ?kinds=all — older apps don't, they would take a system for an adventure).
+  features?: string[];
   // The largest pack the service takes, bytes.
   maxSize: number;
   entries: RepoEntry[];
@@ -57,6 +62,7 @@ export interface PublishRequest {
   authorName: string;
   // Bytes of the cover picture (JPEG), none — no cover.
   cover?: number;
+  kind?: 'system';
 }
 
 export interface PublishTicket {
@@ -132,6 +138,7 @@ export function checkPublish(x: unknown): PublishRequest | string {
     app: str(o['app'], 32),
     authorName: str(o['authorName'], LIMITS.authorName),
     ...(typeof cover === 'number' ? { cover } : {}),
+    ...(o['kind'] === 'system' ? { kind: 'system' as const } : {}),
   };
 }
 
@@ -140,6 +147,13 @@ export interface RepoInfo {
   sources: SourceInfo[];
   name: string;
   author: string | null;
+  // System packs published from here and downloaded (by pack id): systems live in the library, not in a vault.
+  systems: { published: Record<string, SystemMark>; installed: Record<string, SystemMark & { author: string }> };
+}
+export interface SystemMark {
+  source: string;
+  id: string;
+  version: number;
 }
 
 // A place to find adventures. Only repositories (this protocol) so far; other kinds (cloud drives) will come.

@@ -3,6 +3,7 @@
 // flow. The work is the core's (main/repo.ts); here — the window's side and the words for its errors.
 import { t } from '../../../renderer/lib/i18n.svelte';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
+import { systems } from '../../../systems';
 import { sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type BlockedEntry, type Report, type ReportedEntry, type ReportReason, type SourceInfo } from '../../../shared/repo';
 
 // An entry of a catalog with the source it is in.
@@ -22,12 +23,13 @@ export const repo = $state({
   browsing: false,
   startShow: 'all' as 'all' | 'updates',
   // New versions of what this vault downloaded, found on launch and not announced yet.
-  updates: [] as { folder: string; entry: Found }[],
+  updates: [] as { key: string; entry: Found }[],
   covers: {} as Record<string, string | null>,
   // What is going on and how far (null — nothing).
   busy: null as { what: string; progress: RepoProgress | null } | null,
-  // The publish dialog: for which adventure.
+  // The publish dialog: for which adventure; for which system pack (its id).
   publish: null as string | null,
+  publishSystem: null as string | null,
   // A download waits for a name: the adventure of that name is already there.
   naming: null as { file: string; name: string; suggestion: string; entry: Found } | null,
   // The last result to show (done or failed).
@@ -122,15 +124,44 @@ export function openRepo(show: 'all' | 'updates' = 'all') {
   void loadCatalogs();
 }
 
-// The downloaded adventures that have a newer version in their source, by folder.
-export function updatesHere(): { folder: string; entry: Found }[] {
+// What was downloaded and has a newer version in its source: the adventures of this vault (key — the folder) and
+// the system packs of the library (key — the pack's id).
+export function updatesHere(): { key: string; entry: Found }[] {
   const found = allFound();
-  return Object.entries(store.state.repo.installed)
+  const newer = (m: { author: string; id: string; version: number; source?: string }) =>
+    found.find((e) => e.source === sourceOf(m) && e.author === m.author && e.id === m.id && e.version > m.version);
+  const adventures = Object.entries(store.state.repo.installed)
     .filter(([folder]) => store.state.adventures.list.includes(folder))
-    .flatMap(([folder, m]) => {
-      const entry = found.find((e) => e.source === sourceOf(m) && e.author === m.author && e.id === m.id && e.version > m.version);
-      return entry ? [{ folder, entry }] : [];
-    });
+    .flatMap(([folder, m]) => (newer(m) ? [{ key: folder, entry: newer(m)! }] : []));
+  const packs = Object.entries(repo.info?.systems.installed ?? {}).flatMap(([pack, m]) => (newer(m) ? [{ key: `system:${pack}`, entry: newer(m)! }] : []));
+  return [...adventures, ...packs];
+}
+
+// A system pack downloaded: which version this library has (0 — none).
+export const systemVersion = (e: Found) =>
+  Object.values(repo.info?.systems.installed ?? {}).find((m) => m.source === e.source && m.author === e.author && m.id === e.id)?.version ?? 0;
+// The system an adventure needs and this app doesn't have: its entry in a catalog (null — known, or nowhere to get).
+export function missingSystem(e: Found): Found | null {
+  if (e.kind === 'system' || systems.some((s) => s.id === e.system)) return null;
+  return allFound().find((x) => x.kind === 'system' && x.system === e.system) ?? null;
+}
+export const systemKnown = (id: string) => systems.some((s) => s.id === id);
+
+export async function publishSystem(p: { source: string; pack: string; title: string; description: string; lang: string }) {
+  const entry = await work(t('repo.publishing', { name: p.title }), () => window.api.repoPublishSystem(p));
+  if (!entry) return false;
+  notice(t('repo.published', { name: entry.title, version: entry.version }));
+  repo.info = await window.api.repoInfo();
+  void loadCatalogs(p.source);
+  return true;
+}
+
+export async function installSystem(e: Found) {
+  const { source, ...entry } = $state.snapshot(e) as Found;
+  const id = await work(t('repo.downloading', { name: e.title }), () => window.api.repoInstallSystem(source, entry));
+  if (!id) return;
+  repo.info = await window.api.repoInfo();
+  notice(t('repo.systemInstalled', { name: e.title }));
 }
 
 // On launch (if the GM didn't turn it off): what has a new version since the last time it was told. A version is
@@ -142,7 +173,9 @@ export const checkOnLaunch = () => localStorage.getItem(CHECK) !== 'off';
 export const setCheckOnLaunch = (on: boolean) => localStorage.setItem(CHECK, on ? 'on' : 'off');
 
 export async function checkUpdates() {
-  if (!checkOnLaunch() || !Object.keys(store.state.repo.installed).length) return;
+  if (!checkOnLaunch()) return;
+  if (!repo.info) await loadInfo();
+  if (!Object.keys(store.state.repo.installed).length && !Object.keys(repo.info?.systems.installed ?? {}).length) return;
   await loadCatalogs();
   const told = new Set<string>(JSON.parse(localStorage.getItem(ANNOUNCED) ?? '[]'));
   repo.updates = updatesHere().filter((u) => !told.has(stamp(u)));
@@ -215,6 +248,7 @@ export function installedFolder(e: Found): string | null {
 
 // Download and install. An update first offers to move the old copy to the trash (and takes its name).
 export async function install(e: Found) {
+  if (e.kind === 'system') return installSystem(e);
   const old = installedFolder(e);
   const got = await work(t('repo.downloading', { name: e.title }), () => window.api.repoDownload(e.source, e.author, e.id));
   if (!got) return;
@@ -236,7 +270,8 @@ export async function finishInstall(file: string, name: string, e: Found) {
   const { source, ...entry } = $state.snapshot(e) as Found;
   const r = await work(t('repo.installing'), () => window.api.repoInstall(file, name, entry, source));
   if (r) {
-    notice(t('repo.installed', { name: r.name }));
+    const need = systemKnown(e.system) ? null : e.system;
+    notice(need ? t('repo.installedNeeds', { name: r.name, system: missingSystem(e)?.title ?? need }) : t('repo.installed', { name: r.name }));
     await dispatch('adventures', 'select', { path: r.name });
   }
 }

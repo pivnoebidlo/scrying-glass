@@ -210,6 +210,16 @@ describe('repository service', () => {
     expect((await call('/api/v1/publish', { ...meta, size: 10 }, other)).status).toBe(200);
   });
 
+  it('system packs: published with their kind, listed only for those who ask', async () => {
+    const r = await publish(50, me, { id: 'my-system-pack', title: 'My system', system: 'my-sys', kind: 'system' });
+    expect(r.body).toMatchObject({ kind: 'system', system: 'my-sys' });
+    expect((await catalog()).entries.some((e) => e.id === 'my-system-pack')).toBe(false);
+    const all = (await (await fetch(base + '/api/v1/catalog?kinds=all')).json()) as RepoCatalog;
+    expect(all.features).toContain('systems');
+    expect(all.entries.find((e) => e.id === 'my-system-pack')).toMatchObject({ kind: 'system' });
+    expect((await call('/api/v1/unpublish', { id: 'my-system-pack' })).status).toBe(200);
+  });
+
   it('uploads never committed are swept away with their files, but not before they expire', async () => {
     const t = await call<PublishTicket>('/api/v1/publish', { ...meta, id: 'abandoned-one', size: 10 });
     bucket.upload(t.body.pack, 10);

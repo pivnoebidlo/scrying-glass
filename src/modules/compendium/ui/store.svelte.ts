@@ -72,11 +72,12 @@ export function setEdition(e: Edition) {
   }
 }
 
-// Loaded for this interface language: group and source labels are taken at load time.
+// Loaded for this interface language (group and source labels are taken at load time) and this state of the
+// library (system packs bring books of their own).
 let builtinLoaded = '';
 async function loadBuiltin() {
-  if (builtinLoaded === locale.lang) return;
-  builtinLoaded = locale.lang;
+  if (builtinLoaded === `${locale.lang}|${book.rev}`) return;
+  builtinLoaded = `${locale.lang}|${book.rev}`;
   const books = await window.api.listBuiltinEntries();
   builtinLangs = {};
   for (const b of books) (builtinLangs[b.system] ??= []).push(b.lang);

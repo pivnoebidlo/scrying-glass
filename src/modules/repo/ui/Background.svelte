@@ -6,6 +6,7 @@
   import Catalog from './Catalog.svelte';
   import PublishDialog from './PublishDialog.svelte';
   import ReportDialog from './ReportDialog.svelte';
+  import SystemPublishDialog from './SystemPublishDialog.svelte';
   import UpdatesNotice from './UpdatesNotice.svelte';
   import Busy from './Busy.svelte';
   import { cancelNaming, finishInstall, repo } from './repo.svelte';
@@ -30,6 +31,7 @@
 {#if repo.browsing}<Catalog />{/if}
 <PublishDialog />
 <ReportDialog />
+<SystemPublishDialog />
 <UpdatesNotice />
 <Busy />
 

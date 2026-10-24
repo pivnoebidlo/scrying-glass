@@ -150,6 +150,10 @@ export function packTracker(p: SystemPack): TrackerDef {
       get add() {
         return t('pack.tr.addCondition');
       },
+      // A condition with an entry of the same name in the pack's compendium opens it.
+      ...(p.compendium?.length
+        ? { entry: (c: string) => (p.compendium!.some((e) => loc(e.title, getLang()).toLowerCase() === c.toLowerCase()) ? [c] : []) }
+        : {}),
     },
     fields: [...hp, ...cells],
     fromCard(s: CombatStats) {

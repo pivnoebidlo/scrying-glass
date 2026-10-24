@@ -23,7 +23,7 @@
       <button class="icon-btn" title={t('repo.close')} onclick={updatesSeen}><X size={14} /></button>
     </div>
     <ul>
-      {#each shown as u (u.folder)}
+      {#each shown as u (u.key)}
         <li>{t('repo.updates.item', { name: u.entry.title, n: u.entry.version })}</li>
       {/each}
       {#if repo.updates.length > shown.length}<li class="faint">{t('repo.updates.more', { count: repo.updates.length - shown.length })}</li>{/if}

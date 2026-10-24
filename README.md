@@ -751,7 +751,11 @@ style of Year Zero: attributes and skills roll a pool of d6, sixes count, a roll
 Horror** (d100 under characteristics and skills). Your own systems are made in **Tools → System builder** (also from Settings → Game
 systems): sections and fields, the roll of each field, the tracker, with a live preview of the card where rolls can be
 tried; a built-in system can be copied and changed. They are saved to `systems/` in the library (every vault sees
-them) and can be exported to a file and imported.
+them) and can be exported to a file and imported. A system can have its own **compendium** (rules, conditions, gear —
+Markdown entries shown in its adventures like built-in ones; a condition in the tracker opens its entry) and can be
+**published in the Community** («Publish…» in the builder): Find adventures → Systems lists them, «Install the system»
+puts one in your library, new versions are announced on launch. An adventure made on a system you don't have says so
+and offers to install it.
 
 ## Files and trash
 
