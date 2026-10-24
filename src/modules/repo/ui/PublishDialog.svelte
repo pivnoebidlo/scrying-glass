@@ -11,13 +11,18 @@
   import { store } from '../../../renderer/lib/store.svelte';
   import { openSettings } from '../../../renderer/lib/nav';
   import FilePicker from '../../../renderer/lib/FilePicker.svelte';
-  import { loadInfo, mb, publish, repo } from './repo.svelte';
+  import { loadCatalogs, loadInfo, mb, publish, repo, sourceName, sourcesOn } from './repo.svelte';
+  import { sourceOf } from '../../../shared/repo';
 
   const adventure = $derived(repo.publish);
   const app = $derived(store.state);
   const mark = $derived(adventure ? app.repo.published[adventure] : undefined);
-  // The entry as it is in the catalog (to start from its texts on an update).
-  const entry = $derived(mark && repo.info?.author ? repo.catalog?.entries.find((e) => e.author === repo.info!.author && e.id === mark.id) : undefined);
+  // Where to: the sources that take publishing (repositories), turned on.
+  const targets = $derived(repo.info ? sourcesOn().filter((s) => s.kind === 'repo') : []);
+  let source = $state('');
+  const catalog = $derived(repo.catalogs[source]?.catalog ?? null);
+  // The entry as it is in that catalog: an update (to start from its texts).
+  const entry = $derived(mark && repo.info?.author ? catalog?.entries.find((e) => e.author === repo.info!.author && e.id === mark.id) : undefined);
 
   let title = $state('');
   let description = $state('');
@@ -38,31 +43,50 @@
       return;
     }
     shownFor = a;
-    title = entry?.title ?? a;
-    description = entry?.description ?? '';
-    lang = entry?.lang ?? getLang();
-    music = entry?.music ?? false;
+    title = a;
+    description = '';
+    lang = getLang();
+    music = false;
     pdf = true;
     cover = null;
     rights = false;
     sizes = null;
-    void loadInfo().then(() => (author = repo.info?.name ?? ''));
+    filledFrom = null;
+    void loadInfo().then(() => {
+      author = repo.info?.name ?? '';
+      const m = app.repo.published[a];
+      const on = sourcesOn().filter((s) => s.kind === 'repo');
+      source = (m && on.find((s) => s.id === sourceOf(m))?.id) ?? on[0]?.id ?? '';
+      void loadCatalogs();
+    });
     void window.api.repoSizes(a).then((s) => (sizes = s));
   });
 
+  // An update starts from the texts the entry has in that source (once it is known).
+  let filledFrom: string | null = null;
+  $effect(() => {
+    const e = entry;
+    if (!e || filledFrom === `${source}/${e.id}`) return;
+    filledFrom = `${source}/${e.id}`;
+    title = e.title;
+    description = e.description;
+    lang = e.lang;
+    music = e.music;
+  });
+
   const size = $derived(sizes ? sizes.total - (pdf ? 0 : sizes.pdf) - (music ? 0 : sizes.music) : 0);
-  const max = $derived(repo.catalog?.maxSize ?? 0);
+  const max = $derived(catalog?.maxSize ?? 0);
   const tooBig = $derived(!!max && size > max);
-  const ready = $derived(!!title.trim() && rights && !tooBig && !repo.busy);
+  const ready = $derived(!!source && !!title.trim() && rights && !tooBig && !repo.busy);
 
   const close = () => (repo.publish = null);
 
   async function send() {
     if (!adventure || !ready) return;
     const a = adventure;
-    if (author.trim() !== (repo.info?.name ?? '')) await window.api.setRepoSettings({ name: author });
+    if (author.trim() !== (repo.info?.name ?? '')) repo.info = await window.api.setRepoName(author);
     close();
-    await publish({ adventure: a, title: title.trim(), description: description.trim(), lang, music, pdf, ...(cover ? { cover } : {}) });
+    await publish({ source, adventure: a, title: title.trim(), description: description.trim(), lang, music, pdf, ...(cover ? { cover } : {}) });
   }
 </script>
 
@@ -71,10 +95,18 @@
   <div class="backdrop" onclick={(e) => e.target === e.currentTarget && close()}>
     <form class="modal" onsubmit={(e) => (e.preventDefault(), send())}>
       <header>
-        <h3>{mark ? t('repo.dialog.update', { n: mark.version + 1 }) : t('repo.dialog.title')}</h3>
+        <h3>{entry ? t('repo.dialog.update', { n: entry.version + 1 }) : t('repo.dialog.title')}</h3>
         <button type="button" class="icon-btn" onclick={close} title={t('repo.cancel')}><X size={14} /></button>
       </header>
 
+      {#if targets.length > 1}
+        <label class="field">
+          <span>{t('repo.dialog.where')}</span>
+          <select bind:value={source}>{#each targets as s (s.id)}<option value={s.id}>{sourceName(s)}</option>{/each}</select>
+        </label>
+      {:else if repo.info && !targets.length}
+        <p class="warn">{t('repo.dialog.noTargets')}</p>
+      {/if}
       <label class="field">
         <span>{t('repo.dialog.name')}</span>
         <!-- svelte-ignore a11y_autofocus -->
@@ -103,7 +135,7 @@
             <button type="button" class="btn" onclick={() => (cover = null)}>{t('repo.dialog.noCover')}</button>
           {:else}
             <button type="button" class="btn" onclick={() => (picking = true)} disabled={!app.vault.tree}><ImagePlus size={14} /> {t('repo.dialog.pickCover')}</button>
-            {#if mark}<span class="faint small">{t('repo.dialog.coverKeep')}</span>{/if}
+            {#if entry?.cover}<span class="faint small">{t('repo.dialog.coverKeep')}</span>{/if}
           {/if}
         </div>
       </div>
@@ -127,7 +159,7 @@
 
       <div class="row">
         <button class="btn" type="button" onclick={close}>{t('repo.cancel')}</button>
-        <button class="btn primary" type="submit" disabled={!ready}><CloudUpload size={14} /> {mark ? t('repo.dialog.sendUpdate') : t('repo.dialog.send')}</button>
+        <button class="btn primary" type="submit" disabled={!ready}><CloudUpload size={14} /> {entry ? t('repo.dialog.sendUpdate') : t('repo.dialog.send')}</button>
       </div>
     </form>
     <!-- Inside the backdrop: the picker's own z-index is below this dialog's. -->

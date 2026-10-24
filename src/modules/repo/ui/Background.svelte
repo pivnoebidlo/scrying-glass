@@ -1,8 +1,9 @@
-<!-- Always there while a vault is open: the publish dialog, what the repository is doing (wherever it was started) and the question of a name for a downloaded adventure whose
+<!-- Always there while a vault is open: the catalog window, the publish dialog, what the repository is doing (wherever it was started) and the question of a name for a downloaded adventure whose
      name is taken (an update offers to replace the old copy before that, see install()). -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
+  import Catalog from './Catalog.svelte';
   import PublishDialog from './PublishDialog.svelte';
   import Busy from './Busy.svelte';
   import { cancelNaming, finishInstall, repo } from './repo.svelte';
@@ -24,6 +25,7 @@
   });
 </script>
 
+{#if repo.browsing}<Catalog />{/if}
 <PublishDialog />
 <Busy />
 

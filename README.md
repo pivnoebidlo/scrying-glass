@@ -668,12 +668,13 @@ the library (yours aren't overwritten). A snapshot is taken before the import. A
 as well: the adventure folder goes to trash, its scenes, encounters and map markup are removed from the app; from the
 trash the adventure comes back together with them. A snapshot is taken before deleting.
 
-**Adventure repository** (Tools → Adventure repository; "Publish “…” to the repository…" in the adventure menu): share
-an adventure with other GMs and download theirs. A published adventure is a `.sgpack` (music and PDFs — if you choose)
+**Adventure repository** ("Find adventures…" and "Publish “…” to the repository…" in the adventure menu, or Settings →
+Adventure sources → Browse): share an adventure with other GMs and download theirs. The catalog shows every source
+turned on: the app's own repository and any other you add by address (say, your group's or club's). A published adventure is a `.sgpack` (music and PDFs — if you choose)
 with a title, description, language and cover; a new version replaces the old one, you can take it
 down any time. Downloaded adventures are offered their new versions (the old copy goes to the trash). Your
 adventures are tied to your author key, made on the first publish: save a copy of it in Settings → Adventure
-repository to update them from another computer. The repository service lives in `server/` (Helm chart included).
+sources to update them from another computer. The repository service lives in `server/` (Helm chart included).
 
 ## Role-playing systems
 

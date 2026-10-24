@@ -512,13 +512,18 @@ Electron-приложение для мастера D&D: окно управле
   `s3.ts` — свой SigV4 и presigned-ссылки, `repo.ts` — каталог `catalog.json` в бакете, версии, `http.ts` — API v1,
   подпись Ed25519 `x-sg-key` / `x-sg-sig` по `signedText`; Dockerfile из корня, Helm-чарт `server/chart`, образ —
   `.github/workflows/repo-image.yml`, тег `repo-v<версия>`). Автор = открытый ключ, запись = автор + id; одна реплика.
-  Приложение: `main/repo.ts` (ключ в `settings.repo`, закрытая часть через `safeStorage`; каталог, обложки — кэш
-  `<userData>/repo/covers`, публикация: `buildPack` (музыка и PDF — галочками) → publish → PUT в S3 → commit; скачивание во временную
+  Приложение: `main/repo.ts` (источники — официальный `OFFICIAL_SOURCE` (`DEFAULT_REPO_URL`, можно только выключить —
+  `officialOff`) и свои репозитории `settings.repo.sources` (`addSource` проверяет каталог по адресу; у источника `kind` —
+  пока только 'repo', дальше — облачные диски); каждый вызов называет источник; ключ в `settings.repo`, закрытая часть
+  через `safeStorage`; каталог, обложки — кэш `<userData>/repo/covers` (с хэшем адреса), публикация: `buildPack` (музыка и PDF — галочками) → publish → PUT в S3 → commit; скачивание во временную
   папку → `importPack`), IPC `repo:*`, ошибки — `repo:<код>` → `repo.err.<код>`. Модуль `modules/repo`:
-  `published` / `installed` по папке приключения (в .sgpack — `PackSlices.repo`; при установке чужого — снимается),
-  страница «Инструменты» → `repo` (`RepoPage.svelte`), окно публикации и вопрос названия — фоновый `Background.svelte`,
-  ход работы — плашка `Busy.svelte`, пункт в меню приключения — `Switcher.svelte`. Адрес по умолчанию —
-  `DEFAULT_REPO_URL` (https://sg.sbin.ru). Пакет из чужих рук: `validManifest` (название — одна часть пути), пути портретов
+  `published` / `installed` по папке приключения, с `source` (нет — официальный; id приключения один во всех
+  источниках, пометка — последний; в .sgpack — `PackSlices.repo`; при установке чужого — снимается). Каталог — окно
+  «Найти приключения» как в Obsidian (`Catalog.svelte`, `repo.browsing` / `openRepo`; записи всех включённых
+  источников — `allFound`, `Found` = запись + источник), открывается из меню приключения (`Switcher.svelte`) и
+  настроек; раздел настроек «Источники приключений» (`Settings.svelte`, `settingsTitle`); окно публикации («Куда» —
+  при нескольких источниках) и вопрос названия — фоновый `Background.svelte`, ход работы — плашка `Busy.svelte`.
+  Адрес официального — `DEFAULT_REPO_URL` (https://sg.sbin.ru). Пакет из чужих рук: `validManifest` (название — одна часть пути), пути портретов
   карточек — `safeEntry`. Локально: S3 — `chrislusf/seaweedfs server -s3` в Docker (образы MinIO с Docker Hub
   недоступны), сервис — `node server/src/main.ts`.
 - Справочник (`modules/compendium`, без состояния): запись — Markdown с YAML-шапкой (`shared/compendium.ts`: свой

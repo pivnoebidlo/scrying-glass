@@ -44,7 +44,7 @@ import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnounc
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
-import { catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, repoInfo, setRepoSettings, unpublish as repoUnpublish, type RepoSettings } from './repo';
+import { addSource, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, repoInfo, setAuthorName, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
 import type { RepoEntry, RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
@@ -1114,10 +1114,13 @@ function repoProgress(p: RepoProgress) {
   getControlWindow()?.webContents.send('repo:progress', p);
 }
 ipcMain.handle('repo:info', () => repoInfo());
-ipcMain.handle('repo:setSettings', (_event, next: { url?: string; name?: string }) => setRepoSettings(next));
-ipcMain.handle('repo:catalog', () => repoCatalog());
-ipcMain.handle('repo:cover', (_event, { author, id, version }: { author: string; id: string; version: number }) => repoCover(author, id, version));
-// What an adventure weighs: all of it, its music, its PDFs (the repository leaves them out).
+ipcMain.handle('repo:setName', (_event, name: string) => setAuthorName(name));
+ipcMain.handle('repo:addSource', (_event, { name, url }: { name: string; url: string }) => addSource(name, url));
+ipcMain.handle('repo:removeSource', (_event, id: string) => removeSource(id));
+ipcMain.handle('repo:setSourceOff', (_event, { id, off }: { id: string; off: boolean }) => setSourceOff(id, off));
+ipcMain.handle('repo:catalog', (_event, source: string) => repoCatalog(source));
+ipcMain.handle('repo:cover', (_event, { source, author, id, version }: { source: string; author: string; id: string; version: number }) => repoCover(source, author, id, version));
+// What an adventure weighs: all of it, its music, its PDFs (both optional in a publish).
 ipcMain.handle('repo:sizes', (_event, adventure: string) => {
   const folder = resolveInVault(adventure);
   if (!folder || !isDir(folder)) return null;
@@ -1126,15 +1129,16 @@ ipcMain.handle('repo:sizes', (_event, adventure: string) => {
   return { total: all.reduce((n, f) => n + f.size, 0), music: sum(/\.(mp3|ogg|wav|flac|m4a)$/i), pdf: sum(/\.pdf$/i) };
 });
 // Publish (or update) an adventure: pack it into a temporary file, upload, remember the entry.
-ipcMain.handle('repo:publish', async (_event, p: { adventure: string; title: string; description: string; lang: string; music: boolean; pdf?: boolean; cover?: string }) => {
+ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf?: boolean; cover?: string }) => {
   if (!vaultRoot || !state.adventures.list.includes(p.adventure)) return null;
+  // The same id in every source: publishing again anywhere updates that source's entry.
   const known = state.repo.published[p.adventure];
   const jpeg = p.cover ? coverFrom(resolveInVault(p.cover) ?? '') : null;
   const tmp = path.join(app.getPath('userData'), 'repo', `publish-${randomUUID().slice(0, 8)}.${PACK_EXT}`);
   fs.mkdirSync(path.dirname(tmp), { recursive: true });
   try {
     await buildPack(p.adventure, tmp, { music: p.music, pdf: !!p.pdf }, (done, total) => repoProgress({ phase: 'pack', done, total }));
-    const entry = await repoPublish(tmp, {
+    const entry = await repoPublish(p.source, tmp, {
       id: known?.id ?? newAdventureId(),
       title: p.title,
       description: p.description,
@@ -1143,20 +1147,20 @@ ipcMain.handle('repo:publish', async (_event, p: { adventure: string; title: str
       music: p.music,
       app: app.getVersion(),
     }, jpeg);
-    await runAction('repo', 'published', { folder: p.adventure, mark: { id: entry.id, version: entry.version } });
+    await runAction('repo', 'published', { folder: p.adventure, mark: { id: entry.id, version: entry.version, source: p.source } });
     return entry;
   } finally {
     fs.rmSync(tmp, { force: true });
   }
 });
-ipcMain.handle('repo:unpublish', async (_event, id: string) => {
-  await repoUnpublish(id);
-  await runAction('repo', 'unpublished', { id });
+ipcMain.handle('repo:unpublish', async (_event, { source, id }: { source: string; id: string }) => {
+  await repoUnpublish(source, id);
+  await runAction('repo', 'unpublished', { id, source });
 });
 // Download: the file waits in a temporary folder; the answer is like packs:pick (the name, taken or not).
-ipcMain.handle('repo:download', async (_event, { author, id }: { author: string; id: string }) => {
+ipcMain.handle('repo:download', async (_event, { source, author, id }: { source: string; author: string; id: string }) => {
   if (!vaultRoot) return null;
-  const file = await repoDownload(author, id);
+  const file = await repoDownload(source, author, id);
   try {
     const m = await packManifest(file);
     return { file, name: m.name, exists: fs.existsSync(path.join(vaultRoot, m.name)), suggestion: freeFolder(vaultRoot, m.name) };
@@ -1165,11 +1169,11 @@ ipcMain.handle('repo:download', async (_event, { author, id }: { author: string;
     throw e;
   }
 });
-ipcMain.handle('repo:install', async (_event, { file, name, entry }: { file: string; name: string; entry: RepoEntry }) => {
+ipcMain.handle('repo:install', async (_event, { file, name, entry, source }: { file: string; name: string; entry: RepoEntry; source: string }) => {
   try {
     const r = await importPack(file, name);
     if (!r) return null;
-    await runAction('repo', 'installed', { folder: r.name, mark: { author: entry.author, id: entry.id, version: entry.version } });
+    await runAction('repo', 'installed', { folder: r.name, mark: { author: entry.author, id: entry.id, version: entry.version, source } });
     // Someone else's adventure: publishing it from here makes an entry of this GM's own.
     if (entry.author !== repoInfo().author) await runAction('repo', 'published', { folder: r.name, mark: null });
     return r;

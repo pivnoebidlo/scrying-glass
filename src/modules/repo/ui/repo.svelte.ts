@@ -1,24 +1,26 @@
-// The adventure repository in the control window: the catalog, covers, what is being done right now (packing,
-// uploading, downloading — with progress), the publish dialog and the download flow. The work is the core's
-// (main/repo.ts); here — the window's side and the words for its errors.
+// Adventure sources in the control window: the catalogs of every source turned on, covers, what is being done right
+// now (packing, uploading, downloading — with progress), the catalog window, the publish dialog and the download
+// flow. The work is the core's (main/repo.ts); here — the window's side and the words for its errors.
 import { t } from '../../../renderer/lib/i18n.svelte';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
-import { openTab } from '../../../renderer/lib/nav';
-import type { RepoCatalog, RepoEntry, RepoInfo, RepoProgress } from '../../../shared/repo';
-import { ui as tools } from '../../tools/ui/ui.svelte';
+import { sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type SourceInfo } from '../../../shared/repo';
+
+// An entry of a catalog with the source it is in.
+export type Found = RepoEntry & { source: string };
 
 export const repo = $state({
   info: null as RepoInfo | null,
-  catalog: null as RepoCatalog | null,
-  loading: false,
-  error: '',
+  // By source id: its catalog, or why there is none.
+  catalogs: {} as Record<string, { catalog: RepoCatalog | null; error: string; loading: boolean }>,
+  // The catalog window is open.
+  browsing: false,
   covers: {} as Record<string, string | null>,
   // What is going on and how far (null — nothing).
   busy: null as { what: string; progress: RepoProgress | null } | null,
   // The publish dialog: for which adventure.
   publish: null as string | null,
   // A download waits for a name: the adventure of that name is already there.
-  naming: null as { file: string; name: string; suggestion: string; entry: RepoEntry } | null,
+  naming: null as { file: string; name: string; suggestion: string; entry: Found } | null,
   // The last result to show (done or failed).
   notice: '',
 });
@@ -32,35 +34,47 @@ export async function loadInfo() {
   repo.info = await window.api.repoInfo();
 }
 
-// An error of the core in words: `repo:<code>` → repo.err.<code>, anything else as it is.
+// An error of the core in words: `repo:<code>` → repo.err.<code>, anything else as it is. The code is the last
+// `repo:…` of the message: before it Electron names the call (`Error invoking remote method 'repo:publish'`).
 export function errorText(e: unknown): string {
-  const m = /repo:([a-z0-9-]+)/.exec(String(e));
+  const m = [...String(e).matchAll(/repo:([a-z0-9-]+)(?![A-Za-z])/g)].at(-1);
   if (!m) return String(e).replace(/^Error: (Error invoking remote method '[^']+': )?(Error: )?/, '');
   const key = `repo.err.${m[1]}`;
   const text = t(key as never);
   return text === key ? t('repo.err.other', { code: m[1]! }) : text;
 }
 
-export async function loadCatalog() {
-  repo.loading = true;
-  repo.error = '';
+export const sourceName = (s: SourceInfo) => (s.official ? t('repo.official') : s.name);
+export const sourcesOn = () => (repo.info?.sources ?? []).filter((s) => !s.off);
+
+async function loadSource(id: string) {
+  const was = repo.catalogs[id];
+  repo.catalogs[id] = { catalog: was?.catalog ?? null, error: '', loading: true };
   try {
-    if (!repo.info) await loadInfo();
-    repo.catalog = await window.api.repoCatalog();
+    repo.catalogs[id] = { catalog: await window.api.repoCatalog(id), error: '', loading: false };
   } catch (e) {
-    repo.error = errorText(e);
-  } finally {
-    repo.loading = false;
+    repo.catalogs[id] = { catalog: null, error: errorText(e), loading: false };
   }
+}
+
+// The catalogs of every source turned on (one source — only it).
+export async function loadCatalogs(only?: string) {
+  if (!repo.info) await loadInfo();
+  await Promise.all(sourcesOn().filter((s) => !only || s.id === only).map((s) => loadSource(s.id)));
+}
+
+// Every entry of the sources turned on.
+export function allFound(): Found[] {
+  return sourcesOn().flatMap((s) => (repo.catalogs[s.id]?.catalog?.entries ?? []).map((e) => ({ ...e, source: s.id })));
 }
 
 // Covers are asked for once each; the answer comes later (state is not changed while a page is drawn).
 const asked = new Set<string>();
-export function coverOf(e: RepoEntry): string | null {
-  const k = `${e.author}/${e.id}/${e.version}`;
+export function coverOf(e: Found): string | null {
+  const k = `${e.source}/${e.author}/${e.id}/${e.version}`;
   if (!asked.has(k)) {
     asked.add(k);
-    void window.api.repoCover(e.author, e.id, e.version).then((url) => (repo.covers[k] = url));
+    void window.api.repoCover(e.source, e.author, e.id, e.version).then((url) => (repo.covers[k] = url));
   }
   return repo.covers[k] ?? null;
 }
@@ -83,41 +97,40 @@ async function work<T>(what: string, fn: () => Promise<T>): Promise<T | undefine
   }
 }
 
-// Open the repository page in Tools.
+// Open the catalog window.
 export function openRepo() {
-  tools.tool = 'repo';
-  tools.note = null;
-  openTab('tools');
+  repo.browsing = true;
+  void loadCatalogs();
 }
 
-export async function publish(p: { adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string }) {
+export async function publish(p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string }) {
   const entry = await work(t('repo.publishing', { name: p.title }), () => window.api.repoPublish(p));
   if (!entry) return false;
   notice(t('repo.published', { name: entry.title, version: entry.version }));
   repo.info = await window.api.repoInfo();
-  void loadCatalog();
+  void loadCatalogs(p.source);
   return true;
 }
 
-export async function unpublish(e: RepoEntry) {
+export async function unpublish(e: Found) {
   if (!confirm(t('repo.unpublishAsk', { name: e.title }))) return;
-  const ok = await work(t('repo.unpublishing'), async () => (await window.api.repoUnpublish(e.id), true));
+  const ok = await work(t('repo.unpublishing'), async () => (await window.api.repoUnpublish(e.source, e.id), true));
   if (ok) {
     notice(t('repo.unpublished', { name: e.title }));
-    void loadCatalog();
+    void loadCatalogs(e.source);
   }
 }
 
 // The vault's folder an entry was installed to (the newest if several).
-export function installedFolder(e: RepoEntry): string | null {
-  const marks = Object.entries(store.state.repo.installed).filter(([, m]) => m.author === e.author && m.id === e.id);
+export function installedFolder(e: Found): string | null {
+  const marks = Object.entries(store.state.repo.installed).filter(([, m]) => m.author === e.author && m.id === e.id && sourceOf(m) === e.source);
   return marks.sort(([, a], [, b]) => b.version - a.version)[0]?.[0] ?? null;
 }
 
 // Download and install. An update first offers to move the old copy to the trash (and takes its name).
-export async function install(e: RepoEntry) {
+export async function install(e: Found) {
   const old = installedFolder(e);
-  const got = await work(t('repo.downloading', { name: e.title }), () => window.api.repoDownload(e.author, e.id));
+  const got = await work(t('repo.downloading', { name: e.title }), () => window.api.repoDownload(e.source, e.author, e.id));
   if (!got) return;
   let name = got.name;
   let exists = got.exists;
@@ -132,9 +145,10 @@ export async function install(e: RepoEntry) {
   await finishInstall(got.file, name, e);
 }
 
-export async function finishInstall(file: string, name: string, e: RepoEntry) {
+export async function finishInstall(file: string, name: string, e: Found) {
   repo.naming = null;
-  const r = await work(t('repo.installing'), () => window.api.repoInstall(file, name, $state.snapshot(e) as RepoEntry));
+  const { source, ...entry } = $state.snapshot(e) as Found;
+  const r = await work(t('repo.installing'), () => window.api.repoInstall(file, name, entry, source));
   if (r) {
     notice(t('repo.installed', { name: r.name }));
     await dispatch('adventures', 'select', { path: r.name });

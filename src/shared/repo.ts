@@ -8,8 +8,9 @@
 // No imports here: the service runs this file as is (Node type stripping).
 
 export const REPO_API = 1;
-// The repository the app uses unless the GM sets another one (Settings → Repository).
+// The app's own repository (Settings → Adventure sources: the GM may turn it off and add others).
 export const DEFAULT_REPO_URL = 'https://sg.sbin.ru';
+export const OFFICIAL_SOURCE = 'official';
 
 export interface RepoEntry {
   // The author's public key (Ed25519, base64url, 43 characters) and the name they chose.
@@ -108,12 +109,22 @@ export function checkPublish(x: unknown): PublishRequest | string {
   };
 }
 
-// The app's side: which repository, the author's name and key (null — nothing published from here yet).
+// The app's side: where adventures come from, the author's name and key (null — nothing published from here yet).
 export interface RepoInfo {
-  url: string;
-  custom: boolean;
+  sources: SourceInfo[];
   name: string;
   author: string | null;
+}
+
+// A place to find adventures. Only repositories (this protocol) so far; other kinds (cloud drives) will come.
+export interface SourceInfo {
+  id: string;
+  kind: 'repo';
+  // Empty for the official one (the window names it in its language).
+  name: string;
+  url: string;
+  off: boolean;
+  official: boolean;
 }
 
 export interface RepoProgress {
@@ -123,18 +134,23 @@ export interface RepoProgress {
 }
 
 // What the app remembers in the vault (state.json, module repo): its own published adventures and the ones it
-// downloaded, by adventure folder.
+// downloaded, by adventure folder. `source` — where (none — the official repository, as before 0.57). An adventure
+// keeps its id in every source it is published to; the mark tells the last one.
 export interface PublishedMark {
   id: string;
   version: number;
+  source?: string;
 }
 export interface InstalledMark {
   author: string;
   id: string;
   version: number;
+  source?: string;
 }
 
-// The entry an installed adventure came from, if it has a newer version.
+export const sourceOf = (m: { source?: string }) => m.source ?? OFFICIAL_SOURCE;
+
+// The entry an installed adventure came from (entries of that source), if it has a newer version.
 export const updateFor = (entries: RepoEntry[], m: InstalledMark | undefined) =>
   m ? entries.find((e) => e.author === m.author && e.id === m.id && e.version > m.version) : undefined;
 

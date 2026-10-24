@@ -28,7 +28,7 @@
     -webkit-app-region: no-drag;
     bottom: 16px;
     left: 50%;
-    z-index: 110;
+    z-index: 130;
     width: min(460px, calc(100vw - 32px));
     margin: 0;
     padding: 10px 14px;

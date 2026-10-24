@@ -1,5 +1,5 @@
-// The adventure repository in the control window: the settings section and the publish / download dialogs (always
-// there). The page itself is in Tools (tools/ui/registry), «Publish…» — in the adventure menu.
+// Adventure sources in the control window: the settings section («Adventure sources») and, always there, the catalog
+// window, the publish and download dialogs. «Find adventures…» and «Publish…» are in the adventure menu.
 import { Globe } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
@@ -12,6 +12,9 @@ export default defineControl({
     return t('repo.title');
   },
   icon: Globe,
+  get settingsTitle() {
+    return t('repo.sources');
+  },
   order: 96,
   settings: Settings,
   background: Background,

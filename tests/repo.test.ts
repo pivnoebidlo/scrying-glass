@@ -232,4 +232,16 @@ describe('repo module', () => {
     s = a.installed(s, { folder: 'Чужое', mark: null });
     expect(s.installed).toEqual({});
   });
+  it('takes an adventure down only from the source it was taken down from', () => {
+    const a = repoModule.actions;
+    let s = repoModule.initialState;
+    s = a.published(s, { folder: 'Страд', mark: { id: 'x1', version: 2 } });
+    s = a.published(s, { folder: 'Шахты', mark: { id: 'x2', version: 1, source: 'club' } });
+    s = a.unpublished(s, { id: 'x2' });
+    s = a.unpublished(s, { id: 'x1', source: 'club' });
+    expect(Object.keys(s.published)).toEqual(['Страд', 'Шахты']);
+    s = a.unpublished(s, { id: 'x2', source: 'club' });
+    s = a.unpublished(s, { id: 'x1', source: 'official' });
+    expect(s.published).toEqual({});
+  });
 });

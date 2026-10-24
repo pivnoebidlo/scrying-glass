@@ -12,12 +12,14 @@ interface Nav {
   display(): DisplayInfo | null;
   // Open the settings window on a module's section or a section of the shell.
   openSettings(section: SettingsSection): void;
+  closeSettings(): void;
 }
 
-let impl: Nav = { openTab: () => {}, display: () => null, openSettings: () => {} };
+let impl: Nav = { openTab: () => {}, display: () => null, openSettings: () => {}, closeSettings: () => {} };
 
 export const openTab = (id: ModuleId) => impl.openTab(id);
 // Экран игроков, выбранный в правой панели (размеры нужны, например, чтобы показать, что видят игроки).
 export const playerDisplay = () => impl.display();
 export const openSettings = (section: SettingsSection) => impl.openSettings(section);
+export const closeSettings = () => impl.closeSettings();
 export const provideNav = (nav: Nav) => (impl = nav);

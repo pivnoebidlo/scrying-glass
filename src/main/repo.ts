@@ -1,5 +1,6 @@
-// The adventure repository from the app's side (shared/repo.ts — the protocol, server/ — the service): the author's
-// key, the catalog and covers, publishing a pack (ask → upload straight to S3 → commit), downloading one.
+// The adventure repository from the app's side (shared/repo.ts — the protocol, server/ — the service): the sources
+// (the official repository and the GM's own ones), the author's key, catalogs and covers, publishing a pack (ask →
+// upload straight to S3 → commit), downloading one. Every call names its source.
 // - The key (Ed25519) is made on the first publish and kept in settings.json, the private part encrypted with the
 //   system keychain (safeStorage) when it is available; the GM can save it to a file and load it on another computer.
 // - Errors go to the window as `repo:<code>` (the service's code or network / no-url / key), the window words them.
@@ -8,12 +9,15 @@ import * as path from 'node:path';
 import * as http from 'node:http';
 import * as https from 'node:https';
 import { Readable } from 'node:stream';
-import { createPrivateKey, createPublicKey, generateKeyPairSync, randomBytes, sign } from 'node:crypto';
+import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, randomBytes, sign } from 'node:crypto';
 import { nativeImage, safeStorage } from 'electron';
-import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress } from '../shared/repo';
+import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, OFFICIAL_SOURCE, REPO_API, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type SourceInfo } from '../shared/repo';
 
 export interface RepoSettings {
-  // Another repository than the app's own (empty — DEFAULT_REPO_URL).
+  // The GM's own sources (the official one is always there).
+  sources?: { id: string; kind: 'repo'; name: string; url: string; off?: boolean }[];
+  officialOff?: boolean;
+  // Before 0.57: one repository instead of the official one (becomes a source of its own).
   url?: string;
   // The author's name shown in the catalog.
   name?: string;
@@ -33,28 +37,66 @@ let deps: Deps | null = null;
 export function initRepo(d: Deps) {
   deps = d;
   fs.rmSync(downloadsDir(), { recursive: true, force: true });
+  const s = d.get();
+  if (s.url) {
+    const { url, ...rest } = s;
+    d.save({ ...rest, sources: [...(s.sources ?? []), { id: newSourceId(), kind: 'repo', name: hostOf(url), url }] });
+  }
 }
 
 const fail = (code: string) => new Error(`repo:${code}`);
 const downloadsDir = () => path.join(deps!.dir, 'downloads');
+const newSourceId = () => randomBytes(6).toString('base64url');
+const hostOf = (url: string) => URL.canParse(url) ? new URL(url).host : url;
+const cleanUrl = (url: string) => url.trim().replace(/\/+$/, '');
 
-function base(): string {
-  const url = (deps?.get().url || DEFAULT_REPO_URL).trim().replace(/\/+$/, '');
-  if (!url) throw fail('no-url');
+function sources(): SourceInfo[] {
+  const s = deps?.get() ?? {};
+  return [
+    { id: OFFICIAL_SOURCE, kind: 'repo', name: '', url: DEFAULT_REPO_URL, off: !!s.officialOff, official: true },
+    ...(s.sources ?? []).map((x) => ({ id: x.id, kind: x.kind, name: x.name, url: x.url, off: !!x.off, official: false })),
+  ];
+}
+
+function base(source: string): string {
+  const url = sources().find((x) => x.id === source)?.url;
+  if (!url) throw fail('no-source');
   return url;
 }
 
 export function repoInfo(): RepoInfo {
   const s = deps?.get() ?? {};
-  return { url: s.url || DEFAULT_REPO_URL, custom: !!s.url, name: s.name ?? '', author: s.key?.x ?? null };
+  return { sources: sources(), name: s.name ?? '', author: s.key?.x ?? null };
 }
 
-export function setRepoSettings(next: { url?: string; name?: string }) {
-  if (!deps) return repoInfo();
-  const s = deps.get();
-  const url = next.url === undefined ? s.url : next.url.trim().replace(/\/+$/, '');
-  if (url && !/^https?:\/\/[^\s/]+/.test(url)) throw fail('bad-url');
-  deps.save({ ...s, ...(next.name !== undefined ? { name: next.name.trim().slice(0, LIMITS.authorName) } : {}), url: url || undefined });
+export function setAuthorName(name: string) {
+  if (deps) deps.save({ ...deps.get(), name: name.trim().slice(0, LIMITS.authorName) });
+  return repoInfo();
+}
+
+// A repository of the GM's (a group's, a club's): it must answer as one before it is added.
+export async function addSource(name: string, address: string) {
+  const url = cleanUrl(address);
+  if (!/^https?:\/\/[^\s/]+/.test(url)) throw fail('bad-url');
+  if (sources().some((x) => x.url === url)) throw fail('source-exists');
+  const res = await request(`${url}/api/v1/catalog`);
+  const body = res.ok ? await res.json().catch(() => null) as RepoCatalog | null : null;
+  if (body?.api !== REPO_API || !Array.isArray(body.entries)) throw fail('not-repo');
+  const s = deps!.get();
+  deps!.save({ ...s, sources: [...(s.sources ?? []), { id: newSourceId(), kind: 'repo', name: name.trim().slice(0, 60) || hostOf(url), url }] });
+  return repoInfo();
+}
+
+export function removeSource(id: string) {
+  const s = deps!.get();
+  deps!.save({ ...s, sources: (s.sources ?? []).filter((x) => x.id !== id) });
+  return repoInfo();
+}
+
+export function setSourceOff(id: string, off: boolean) {
+  const s = deps!.get();
+  if (id === OFFICIAL_SOURCE) deps!.save({ ...s, officialOff: off || undefined });
+  else deps!.save({ ...s, sources: (s.sources ?? []).map((x) => (x.id === id ? { ...x, off: off || undefined } : x)) });
   return repoInfo();
 }
 
@@ -113,27 +155,29 @@ async function errorOf(res: Response) {
   return fail(code && /^[a-z-]+$/.test(code) ? code : `http-${res.status}`);
 }
 
-async function post<T>(p: string, data: object, makeKey = false): Promise<T> {
+async function post<T>(source: string, p: string, data: object, makeKey = false): Promise<T> {
   const { x, key } = privateKey(makeKey);
   const body = JSON.stringify({ ts: Date.now(), ...data });
   const sig = sign(null, Buffer.from(signedText('POST', p, body)), key).toString('base64url');
-  const res = await request(base() + p, { method: 'POST', body, headers: { 'content-type': 'application/json', 'x-sg-key': x, 'x-sg-sig': sig } });
+  const res = await request(base(source) + p, { method: 'POST', body, headers: { 'content-type': 'application/json', 'x-sg-key': x, 'x-sg-sig': sig } });
   if (!res.ok) throw await errorOf(res);
   return (await res.json()) as T;
 }
 
-export async function catalog(): Promise<RepoCatalog> {
-  const res = await request(`${base()}/api/v1/catalog`);
+export async function catalog(source: string): Promise<RepoCatalog> {
+  const res = await request(`${base(source)}/api/v1/catalog`);
   if (!res.ok) throw await errorOf(res);
   return (await res.json()) as RepoCatalog;
 }
 
-// A cover as a data: URL (the windows show data: pictures), cached by version.
-export async function cover(author: string, id: string, version: number): Promise<string | null> {
+// A cover as a data: URL (the windows show data: pictures), cached by source address and version.
+export async function cover(source: string, author: string, id: string, version: number): Promise<string | null> {
   if (!AUTHOR_RE.test(author) || !ID_RE.test(id)) return null;
-  const file = path.join(deps!.dir, 'covers', `${author}-${id}-${Math.floor(version)}.jpg`);
+  const url = base(source);
+  const where = createHash('sha256').update(url).digest('hex').slice(0, 8);
+  const file = path.join(deps!.dir, 'covers', `${where}-${author}-${id}-${Math.floor(version)}.jpg`);
   if (!fs.existsSync(file)) {
-    const res = await request(`${base()}/api/v1/covers/${author}/${id}`).catch(() => null);
+    const res = await request(`${url}/api/v1/covers/${author}/${id}`).catch(() => null);
     if (!res?.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
     if (buf.length > LIMITS.cover) return null;
@@ -181,22 +225,22 @@ export const newAdventureId = () => randomBytes(12).toString('base64url');
 
 export type PublishMeta = Omit<PublishRequest, 'ts' | 'size' | 'cover' | 'authorName'>;
 
-export async function publish(pack: string, meta: PublishMeta, coverJpeg: Buffer | null): Promise<RepoEntry> {
+export async function publish(source: string, pack: string, meta: PublishMeta, coverJpeg: Buffer | null): Promise<RepoEntry> {
   const size = fs.statSync(pack).size;
-  const ticket = await post<PublishTicket>('/api/v1/publish', { ...meta, size, authorName: deps!.get().name ?? '', ...(coverJpeg ? { cover: coverJpeg.length } : {}) }, true);
+  const ticket = await post<PublishTicket>(source, '/api/v1/publish', { ...meta, size, authorName: deps!.get().name ?? '', ...(coverJpeg ? { cover: coverJpeg.length } : {}) }, true);
   await put(ticket.pack, { file: pack }, (done, total) => deps!.progress({ phase: 'upload', done, total }));
   if (coverJpeg && ticket.cover) await put(ticket.cover, { bytes: coverJpeg }).catch(() => undefined);
-  return post<RepoEntry>('/api/v1/commit', { upload: ticket.upload });
+  return post<RepoEntry>(source, '/api/v1/commit', { upload: ticket.upload });
 }
 
-export async function unpublish(id: string) {
-  await post('/api/v1/unpublish', { id });
+export async function unpublish(source: string, id: string) {
+  await post(source, '/api/v1/unpublish', { id });
 }
 
 // Download the current version into a temporary file (the import takes it from there).
-export async function download(author: string, id: string): Promise<string> {
+export async function download(source: string, author: string, id: string): Promise<string> {
   if (!AUTHOR_RE.test(author) || !ID_RE.test(id)) throw fail('not-found');
-  const res = await fetch(`${base()}/api/v1/packs/${author}/${id}`).catch(() => {
+  const res = await fetch(`${base(source)}/api/v1/packs/${author}/${id}`).catch(() => {
     throw fail('network');
   });
   if (!res.ok || !res.body) throw await errorOf(res);

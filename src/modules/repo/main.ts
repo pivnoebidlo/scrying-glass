@@ -1,7 +1,7 @@
 // The adventure repository (shared/repo.ts): what the vault knows of it — the adventures the GM published (to update
 // the same entry) and the ones downloaded from it (to offer their new versions). Keys are adventure folders.
 import { defineModule } from '../../shared/module';
-import type { InstalledMark, PublishedMark } from '../../shared/repo';
+import { sourceOf, type InstalledMark, type PublishedMark } from '../../shared/repo';
 
 export interface RepoState {
   published: Record<string, PublishedMark>;
@@ -26,9 +26,10 @@ export default defineModule({
       return { ...s, installed: mark ? { ...s.installed, [folder]: mark } : without(s.installed, folder) };
     },
 
-    // The GM took an adventure off the repository: none of the vault's folders is published under that id any more.
-    unpublished(s, { id }: { id: string }) {
-      return { ...s, published: Object.fromEntries(Object.entries(s.published).filter(([, m]) => m.id !== id)) };
+    // The GM took an adventure off a source: none of the vault's folders is published there under that id any more.
+    unpublished(s, { id, source }: { id: string; source?: string }) {
+      const gone = (m: PublishedMark) => m.id === id && sourceOf(m) === (source ?? sourceOf({}));
+      return { ...s, published: Object.fromEntries(Object.entries(s.published).filter(([, m]) => !gone(m))) };
     },
   },
 });

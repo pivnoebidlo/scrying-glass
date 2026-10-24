@@ -92,5 +92,5 @@ shared protocol `src/shared/repo.ts`). Node 24, no dependencies.
 S3_ENDPOINT=http://127.0.0.1:9000 S3_BUCKET=test S3_ACCESS_KEY=… S3_SECRET_KEY=… node server/src/main.ts
 ```
 
-Then in the app: Settings → Adventure repository → address `http://127.0.0.1:8080`. Tests: `npm test` (the service
+Then in the app: Settings → Adventure sources → Add a repository, address `http://127.0.0.1:8080`. Tests: `npm test` (the service
 with an in-memory bucket, `tests/repo.test.ts`).

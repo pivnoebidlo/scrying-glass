@@ -123,6 +123,7 @@ provideNav({
     workspace.settingsSection = section;
     workspace.settingsOpen = true;
   },
+  closeSettings: () => (workspace.settingsOpen = false),
 });
 
 $effect.root(() => {

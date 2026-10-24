@@ -125,7 +125,8 @@ export async function readPack(file: string, tmp: string): Promise<ReadPack> {
 
 const validMark = (m: unknown): PublishedMark | undefined => {
   const o = m as PublishedMark | undefined;
-  return o && typeof o.id === 'string' && typeof o.version === 'number' ? { id: o.id, version: o.version } : undefined;
+  if (!o || typeof o.id !== 'string' || typeof o.version !== 'number') return undefined;
+  return { id: o.id, version: o.version, ...(typeof o.source === 'string' ? { source: o.source } : {}) };
 };
 
 // Пути приключения from -> to во всём, что пришло из архива: строки «from/…» и «monsters:from/…», поле adventure.

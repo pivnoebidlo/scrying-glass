@@ -210,18 +210,22 @@ export interface Api {
   importAdventure(file: string, name: string): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number } | null>;
   // The adventure repository (main/repo.ts, shared/repo.ts). Errors come as `repo:<code>` in the message.
   repoInfo(): Promise<RepoInfo>;
-  setRepoSettings(next: { url?: string; name?: string }): Promise<RepoInfo>;
-  repoCatalog(): Promise<RepoCatalog>;
+  setRepoName(name: string): Promise<RepoInfo>;
+  // Sources of adventures: a repository is checked before it is added; the official one can only be turned off.
+  repoAddSource(name: string, url: string): Promise<RepoInfo>;
+  repoRemoveSource(id: string): Promise<RepoInfo>;
+  repoSetSourceOff(id: string, off: boolean): Promise<RepoInfo>;
+  repoCatalog(source: string): Promise<RepoCatalog>;
   // A cover as a data: URL (null — none or not reachable).
-  repoCover(author: string, id: string, version: number): Promise<string | null>;
+  repoCover(source: string, author: string, id: string, version: number): Promise<string | null>;
   // What an adventure weighs: all of it, its music, its PDFs (bytes).
   repoSizes(adventure: string): Promise<{ total: number; music: number; pdf: number } | null>;
   // Publish or update (the same entry if this vault published it before); cover — a picture of the vault.
-  repoPublish(p: { adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string }): Promise<RepoEntry | null>;
-  repoUnpublish(id: string): Promise<void>;
+  repoPublish(p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string }): Promise<RepoEntry | null>;
+  repoUnpublish(source: string, id: string): Promise<void>;
   // Download into a temporary file, then install under a name (like the import of a file) or discard it.
-  repoDownload(author: string, id: string): Promise<{ file: string; name: string; exists: boolean; suggestion: string } | null>;
-  repoInstall(file: string, name: string, entry: RepoEntry): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number } | null>;
+  repoDownload(source: string, author: string, id: string): Promise<{ file: string; name: string; exists: boolean; suggestion: string } | null>;
+  repoInstall(file: string, name: string, entry: RepoEntry, source: string): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number } | null>;
   repoDiscard(file: string): Promise<void>;
   // The author key to a file and back (asks where; true / the new info — done).
   repoExportKey(): Promise<boolean>;
