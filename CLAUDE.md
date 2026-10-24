@@ -521,7 +521,7 @@ Electron-приложение для мастера D&D: окно управле
   источниках, пометка — последний; в .sgpack — `PackSlices.repo`; при установке чужого — снимается). Каталог — окно
   «Найти приключения» как в Obsidian (`Catalog.svelte`, `repo.browsing` / `openRepo`; записи всех включённых
   источников — `allFound`, `Found` = запись + источник), открывается из меню приключения (`Switcher.svelte`) и
-  настроек; раздел настроек «Источники приключений» (`Settings.svelte`, `settingsTitle`); окно публикации («Куда» —
+  настроек; раздел настроек «Сообщество» (`Settings.svelte`; там же будут авторские системы, `settingsTitle`); окно публикации («Куда» —
   при нескольких источниках) и вопрос названия — фоновый `Background.svelte`, ход работы — плашка `Busy.svelte`.
   Адрес официального — `DEFAULT_REPO_URL` (https://sg.sbin.ru). Пакет из чужих рук: `validManifest` (название — одна часть пути), пути портретов
   карточек — `safeEntry`. Локально: S3 — `chrislusf/seaweedfs server -s3` в Docker (образы MinIO с Docker Hub

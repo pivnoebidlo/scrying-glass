@@ -8,7 +8,7 @@
 // No imports here: the service runs this file as is (Node type stripping).
 
 export const REPO_API = 1;
-// The app's own repository (Settings → Adventure sources: the GM may turn it off and add others).
+// The app's own repository (Settings → Community: the GM may turn it off and add others).
 export const DEFAULT_REPO_URL = 'https://sg.sbin.ru';
 export const OFFICIAL_SOURCE = 'official';
 

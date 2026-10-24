@@ -1,4 +1,4 @@
-<!-- Settings → Adventure sources: «Browse» opens the catalog; the sources (the official repository — can be turned
+<!-- Settings → Community: «Browse» opens the catalog; the sources (the official repository — can be turned
      off; the GM's own repositories — added by address, turned off, removed); the author's name and key (save it to a
      file, load one). -->
 <script lang="ts">

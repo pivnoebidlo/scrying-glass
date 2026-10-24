@@ -1,6 +1,6 @@
-// Adventure sources in the control window: the settings section («Adventure sources») and, always there, the catalog
+// Adventure sources in the control window: the settings section («Community») and, always there, the catalog
 // window, the publish and download dialogs. «Find adventures…» and «Publish…» are in the adventure menu.
-import { Globe } from '@lucide/svelte';
+import { UsersRound } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import Settings from './ui/Settings.svelte';
@@ -11,7 +11,7 @@ export default defineControl({
   get title() {
     return t('repo.title');
   },
-  icon: Globe,
+  icon: UsersRound,
   get settingsTitle() {
     return t('repo.sources');
   },
