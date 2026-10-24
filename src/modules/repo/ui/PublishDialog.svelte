@@ -128,10 +128,11 @@
         <button class="btn primary" type="submit" disabled={!ready}><CloudUpload size={14} /> {mark ? t('repo.dialog.sendUpdate') : t('repo.dialog.send')}</button>
       </div>
     </form>
+    <!-- Inside the backdrop: the picker's own z-index is below this dialog's. -->
+    {#if picking && app.vault.tree}
+      <FilePicker tree={app.vault.tree} prefer="backgrounds" onpick={(p) => ((cover = p[0] ?? null), (picking = false))} onclose={() => (picking = false)} />
+    {/if}
   </div>
-  {#if picking && app.vault.tree}
-    <FilePicker tree={app.vault.tree} prefer="backgrounds" onpick={(p) => ((cover = p[0] ?? null), (picking = false))} onclose={() => (picking = false)} />
-  {/if}
 {/if}
 
 <style>
