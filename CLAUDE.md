@@ -249,6 +249,20 @@ Electron-приложение для мастера D&D: окно управле
   текстом с числом, трюки, восстановление; стресс и последствия — по правилам `stressOf` / `consequencesOf`, если не
   заданы явно; очерёдность — Внимательность или `initiativeSkill`), вид `Sheet.svelte` (броски `rolls.fate`),
   редактор `Editor.svelte`; один вид для всех `kind`. Чужой блок stats у карточки Fate — общий вид (`fits` в `systems/ui.ts`).
+- Пакеты систем (система — JSON-файл, не код; первая версия): формат, проверка, формулы и броски — `shared/syspack.ts`
+  (`SystemPack`: `sections` → поля `FieldDef` типов number / text / textarea / select / dots / track (`boxes` — число или
+  ключ поля) / tags / list (`columns`) / formula; `roll` у поля — `RollSpec`: d20, under (к100 со ступенями `levels`),
+  bands (PbtA), pool (`success` — счёт успехов, `best` — FitD, `push` — переброс YZE), fate, sum, explode; `tracker` —
+  `init` roll / value / none, `hp`, `cells`, `conditions`; `validatePack` берёт только известное — пакет может быть чужим;
+  формулы — свой маленький язык `parseFormula` / `evalFormula`: числа, поля, `row.<колонка>`, + − × ÷, floor/ceil/round/
+  abs/min/max). Статы карточки — плоский объект по ключам полей. Встроенные пакеты — `resources/systems/<id>.json`
+  (тест сверяет формулы с полями), свои — `<библиотека>/systems/`; читает ядро `main/syspacks.ts` (`loadSystemPacks`,
+  при смене библиотеки — `useLibrary`), отдаёт в `vault.systems`; регистрирует `systems/packs.ts` (`registerPacks`:
+  `SystemDef` и семейство в `systems` / `FAMILIES`, `packOf`, `isPackFamily`, `packTracker`) — ядро и окна
+  (`store.svelte.ts`, до `setSystemsOff`). Вид — `systems/pack/Sheet.svelte`, редактор — `pack/Editor.svelte` (`kind` из
+  `CardEditor`), трекер — `pack/TrackerCells.svelte` (хиты — `hp`/`maxHp`, дорожки — `stress` по ключу, числа — `attrs`);
+  броски — `rolls.packRoll` / `pushRoll`, в журнале — `RollEntry.pack`. Встроенные системы остаются кодом (решение
+  пользователя). Дальше: визуальный редактор пакетов, справочник в пакете, публикация через «Сообщество».
 - Mausritter (третья система, в работе; SRD 2.3.1, CC BY 4.0 — атрибуция дословно в `about.credit.mausritter`):
   `systems/mausritter/` — `stats.ts` (`MausStats`: hp — Hit Protection, str/dex/wil, armour, attacks `d6/d8`,
   critical, abilities, wants, `warband`; у мыши `sheet` — уровень, XP, пипсы, 10 клеток `slots` (лапы 2, тело 2,

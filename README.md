@@ -742,6 +742,15 @@ by exposure and circumstances, coin from the loot; "Entanglement" rolls wanted-l
 the result to the rules. The right panel keeps heat, wanted level, rep, coin and the entanglement roll at hand. The
 crew goes into the .sgpack and to the trash with the adventure. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
 
+**Systems described by a file** (system packs, a first version): a system can be a JSON file instead of code — the
+sections and fields of its cards (numbers, texts, choices, dots, tracks of boxes, tags, lists, formulas), the rolls on
+them (d20 + bonus, d100 under a value with hard and extreme successes, 2d6 with bands of outcome, a pool of dice with
+successes or the best die and a push, 4dF, sums, exploding dice) and what the initiative tracker shows. The app draws
+the card, its editor, the rolls and the tracker from it. Two sample packs come with the app: **Pool of Sixes** (in the
+style of Year Zero: attributes and skills roll a pool of d6, sixes count, a roll can be pushed) and **Percentile
+Horror** (d100 under characteristics and skills). Your own packs go to `systems/` in the library; an editor for them
+is coming.
+
 ## Files and trash
 
 Pictures, maps and tracks can be deleted from the app («⋯» or a right click → Move to trash).

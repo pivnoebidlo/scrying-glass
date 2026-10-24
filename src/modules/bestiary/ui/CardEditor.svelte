@@ -236,7 +236,7 @@
         ></textarea>
       </section>
 
-      <Editor bind:stats={card.stats} system={card.system} lang={card.lang} />
+      <Editor bind:stats={card.stats} system={card.system} lang={card.lang} kind={card.kind} />
 
       <section>
         <h4>{t('best.gmNotes')}</h4>

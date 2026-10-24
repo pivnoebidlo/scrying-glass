@@ -1,0 +1,619 @@
+{
+ "scryingGlass": "system",
+ "version": 1,
+ "id": "d100-horror",
+ "release": 1,
+ "title": {
+  "en": "Percentile Horror (d100)",
+  "ru": "Ужасы на к100"
+ },
+ "author": "Scrying Glass",
+ "license": "A sample pack of the app: the structure of an investigator and d100 roll-under checks with hard and extreme successes, as in percentile horror games. No rules text is included.",
+ "subtitle": "{occupation}",
+ "rank": "floor((con + siz) / 10)",
+ "sections": [
+  {
+   "id": "who",
+   "title": {
+    "en": "Who",
+    "ru": "Кто"
+   },
+   "fields": [
+    {
+     "key": "occupation",
+     "type": "text",
+     "title": {
+      "en": "Occupation",
+      "ru": "Род занятий"
+     }
+    },
+    {
+     "key": "age",
+     "type": "number",
+     "title": {
+      "en": "Age",
+      "ru": "Возраст"
+     },
+     "min": 0,
+     "max": 120
+    }
+   ]
+  },
+  {
+   "id": "characteristics",
+   "title": {
+    "en": "Characteristics",
+    "ru": "Характеристики"
+   },
+   "fields": [
+    {
+     "key": "str",
+     "type": "number",
+     "title": {
+      "en": "STR",
+      "ru": "СИЛ"
+     },
+     "min": 0,
+     "max": 99,
+     "default": 50,
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "str",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     }
+    },
+    {
+     "key": "con",
+     "type": "number",
+     "title": {
+      "en": "CON",
+      "ru": "ВЫН"
+     },
+     "min": 0,
+     "max": 99,
+     "default": 50,
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "con",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     }
+    },
+    {
+     "key": "siz",
+     "type": "number",
+     "title": {
+      "en": "SIZ",
+      "ru": "ТЕЛ"
+     },
+     "min": 0,
+     "max": 99,
+     "default": 50,
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "siz",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     }
+    },
+    {
+     "key": "dex",
+     "type": "number",
+     "title": {
+      "en": "DEX",
+      "ru": "ЛОВ"
+     },
+     "min": 0,
+     "max": 99,
+     "default": 50,
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "dex",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     }
+    },
+    {
+     "key": "app",
+     "type": "number",
+     "title": {
+      "en": "APP",
+      "ru": "НАР"
+     },
+     "min": 0,
+     "max": 99,
+     "default": 50,
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "app",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     }
+    },
+    {
+     "key": "int",
+     "type": "number",
+     "title": {
+      "en": "INT",
+      "ru": "ИНТ"
+     },
+     "min": 0,
+     "max": 99,
+     "default": 50,
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "int",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     }
+    },
+    {
+     "key": "pow",
+     "type": "number",
+     "title": {
+      "en": "POW",
+      "ru": "МОЩ"
+     },
+     "min": 0,
+     "max": 99,
+     "default": 50,
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "pow",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     }
+    },
+    {
+     "key": "edu",
+     "type": "number",
+     "title": {
+      "en": "EDU",
+      "ru": "ОБР"
+     },
+     "min": 0,
+     "max": 99,
+     "default": 50,
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "edu",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "derived",
+   "title": {
+    "en": "Derived",
+    "ru": "Производные"
+   },
+   "fields": [
+    {
+     "key": "hp_max",
+     "type": "formula",
+     "title": {
+      "en": "Hit points (max)",
+      "ru": "Пункты здоровья (макс.)"
+     },
+     "formula": "floor((con + siz) / 10)"
+    },
+    {
+     "key": "mp",
+     "type": "formula",
+     "title": {
+      "en": "Magic points",
+      "ru": "Пункты магии"
+     },
+     "formula": "floor(pow / 5)"
+    },
+    {
+     "key": "san",
+     "type": "number",
+     "title": {
+      "en": "Sanity",
+      "ru": "Рассудок"
+     },
+     "min": 0,
+     "max": 99,
+     "default": 50,
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "san",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     }
+    },
+    {
+     "key": "luck",
+     "type": "number",
+     "title": {
+      "en": "Luck",
+      "ru": "Удача"
+     },
+     "min": 0,
+     "max": 99,
+     "default": 50,
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "luck",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     }
+    },
+    {
+     "key": "damage_bonus",
+     "type": "text",
+     "title": {
+      "en": "Damage bonus",
+      "ru": "Бонус к урону"
+     }
+    },
+    {
+     "key": "move",
+     "type": "number",
+     "title": {
+      "en": "Move",
+      "ru": "Скорость"
+     },
+     "min": 0,
+     "max": 20,
+     "default": 8
+    }
+   ]
+  },
+  {
+   "id": "skills",
+   "title": {
+    "en": "Skills",
+    "ru": "Навыки"
+   },
+   "fields": [
+    {
+     "key": "skills",
+     "type": "list",
+     "title": {
+      "en": "Skills",
+      "ru": "Навыки"
+     },
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "row.value",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     },
+     "columns": [
+      {
+       "key": "name",
+       "type": "text",
+       "title": {
+        "en": "Skill",
+        "ru": "Навык"
+       }
+      },
+      {
+       "key": "value",
+       "type": "number",
+       "title": {
+        "en": "Value",
+        "ru": "Значение"
+       },
+       "max": 99
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "combat",
+   "title": {
+    "en": "Combat",
+    "ru": "Бой"
+   },
+   "fields": [
+    {
+     "key": "weapons",
+     "type": "list",
+     "title": {
+      "en": "Weapons",
+      "ru": "Оружие"
+     },
+     "roll": {
+      "type": "under",
+      "sides": 100,
+      "target": "row.skill",
+      "levels": [
+       {
+        "title": {
+         "en": "Hard success",
+         "ru": "Трудный успех"
+        },
+        "divide": 2
+       },
+       {
+        "title": {
+         "en": "Extreme success",
+         "ru": "Экстремальный успех"
+        },
+        "divide": 5
+       }
+      ]
+     },
+     "columns": [
+      {
+       "key": "name",
+       "type": "text",
+       "title": {
+        "en": "Weapon",
+        "ru": "Оружие"
+       }
+      },
+      {
+       "key": "skill",
+       "type": "number",
+       "title": {
+        "en": "Skill %",
+        "ru": "Навык %"
+       },
+       "max": 99
+      },
+      {
+       "key": "damage",
+       "type": "dice",
+       "title": {
+        "en": "Damage",
+        "ru": "Урон"
+       }
+      },
+      {
+       "key": "range",
+       "type": "text",
+       "title": {
+        "en": "Range",
+        "ru": "Дальность"
+       }
+      }
+     ]
+    },
+    {
+     "key": "armor",
+     "type": "number",
+     "title": {
+      "en": "Armor",
+      "ru": "Броня"
+     },
+     "min": 0,
+     "max": 20
+    }
+   ]
+  },
+  {
+   "id": "notes",
+   "title": {
+    "en": "Notes",
+    "ru": "Заметки"
+   },
+   "fields": [
+    {
+     "key": "backstory",
+     "type": "textarea",
+     "title": {
+      "en": "Backstory",
+      "ru": "Предыстория"
+     }
+    },
+    {
+     "key": "phobias",
+     "type": "tags",
+     "title": {
+      "en": "Phobias and manias",
+      "ru": "Фобии и мании"
+     }
+    }
+   ]
+  }
+ ],
+ "tracker": {
+  "init": {
+   "type": "value",
+   "value": "dex"
+  },
+  "hp": "hp_max",
+  "cells": [
+   "san",
+   "luck"
+  ],
+  "conditions": {
+   "list": [
+    {
+     "en": "Major wound",
+     "ru": "Тяжёлая рана"
+    },
+    {
+     "en": "Dying",
+     "ru": "При смерти"
+    },
+    {
+     "en": "Unconscious",
+     "ru": "Без сознания"
+    },
+    {
+     "en": "Temporary insanity",
+     "ru": "Временное безумие"
+    },
+    {
+     "en": "Indefinite insanity",
+     "ru": "Бессрочное безумие"
+    }
+   ],
+   "free": true
+  }
+ }
+}

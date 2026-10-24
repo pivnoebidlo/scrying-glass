@@ -75,6 +75,17 @@
               {/if}
             </div>
           {/if}
+          {#if e.pack}
+            {@const p = e.pack}
+            <div class="line">
+              <span class="total" class:crit={p.tone === 'good'} class:fumble={p.tone === 'bad'}>{p.total}</span>
+              <span class="note">{p.note}: <span class="faces">{p.dice.map((g) => g.join(' ')).join(' | ')}</span></span>
+              {#if p.outcome}<span class="tag" class:crit={p.tone === 'good'} class:fumble={p.tone === 'bad'}>{p.outcome}</span>{/if}
+            </div>
+            {#if p.push && !p.pushed}
+              <button class="push" title={t('pack.pushHint')} onclick={() => rolls.pushRoll(e)}>{t('pack.push')}</button>
+            {/if}
+          {/if}
           {#each e.damage as d, i (i)}
             <div class="line dmg">
               <span class="total">{d.total}</span>
@@ -178,6 +189,20 @@
   }
   .fumble {
     color: var(--text-faint);
+  }
+  .push {
+    margin: 2px 0 4px;
+    padding: 1px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .push:hover {
+    border-color: var(--accent);
+    color: var(--text-normal);
   }
   .tag {
     margin-left: auto;

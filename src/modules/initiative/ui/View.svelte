@@ -133,14 +133,19 @@
                 </span>
               {/each}
               {#if tracker.conditions.free}
+                <!-- Free text, with the system's own list (if it has one) as suggestions. -->
                 <input
                   class="add-aspect"
                   type="text"
+                  list={tracker.conditions.list.length ? `cond-${c.id}` : undefined}
                   placeholder={tracker.conditions.add ?? t('init.aspect')}
                   title={t('init.aspectHint')}
                   onkeydown={(e) => e.key === 'Enter' && addAspect(c, e.currentTarget)}
                   onblur={(e) => addAspect(c, e.currentTarget)}
                 />
+                {#if tracker.conditions.list.length}
+                  <datalist id="cond-{c.id}">{#each tracker.conditions.list.filter((x) => !c.conditions.includes(x)) as cond (cond)}<option value={cond}></option>{/each}</datalist>
+                {/if}
               {:else}
                 <select
                   class="add-cond"

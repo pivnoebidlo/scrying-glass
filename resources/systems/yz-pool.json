@@ -1,0 +1,606 @@
+{
+ "scryingGlass": "system",
+ "version": 1,
+ "id": "yz-pool",
+ "release": 1,
+ "title": {
+  "en": "Pool of Sixes (Year Zero style)",
+  "ru": "Пул шестёрок (по мотивам Year Zero)"
+ },
+ "author": "Scrying Glass",
+ "license": "A sample pack of the app: the structure of a card and the dice of a d6 pool in the style of the Year Zero Engine (Free League Publishing). No rules text is included.",
+ "subtitle": "{concept} · {role}",
+ "rank": "strength + agility + wits + empathy",
+ "sections": [
+  {
+   "id": "who",
+   "title": {
+    "en": "Who",
+    "ru": "Кто"
+   },
+   "fields": [
+    {
+     "key": "concept",
+     "type": "text",
+     "title": {
+      "en": "Concept",
+      "ru": "Концепция"
+     }
+    },
+    {
+     "key": "role",
+     "type": "select",
+     "title": {
+      "en": "Role",
+      "ru": "Роль"
+     },
+     "options": [
+      {
+       "en": "Character",
+       "ru": "Персонаж"
+      },
+      {
+       "en": "Minor NPC",
+       "ru": "Второстепенный"
+      },
+      {
+       "en": "Major NPC",
+       "ru": "Важный"
+      },
+      {
+       "en": "Creature",
+       "ru": "Существо"
+      }
+     ]
+    },
+    {
+     "key": "drive",
+     "type": "text",
+     "title": {
+      "en": "Drive",
+      "ru": "Стремление"
+     }
+    }
+   ]
+  },
+  {
+   "id": "attributes",
+   "title": {
+    "en": "Attributes",
+    "ru": "Атрибуты"
+   },
+   "fields": [
+    {
+     "key": "strength",
+     "type": "number",
+     "title": {
+      "en": "Strength",
+      "ru": "Сила"
+     },
+     "min": 1,
+     "max": 5,
+     "default": 2,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "strength",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "agility",
+     "type": "number",
+     "title": {
+      "en": "Agility",
+      "ru": "Ловкость"
+     },
+     "min": 1,
+     "max": 5,
+     "default": 2,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "agility",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "wits",
+     "type": "number",
+     "title": {
+      "en": "Wits",
+      "ru": "Смекалка"
+     },
+     "min": 1,
+     "max": 5,
+     "default": 2,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "wits",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "empathy",
+     "type": "number",
+     "title": {
+      "en": "Empathy",
+      "ru": "Эмпатия"
+     },
+     "min": 1,
+     "max": 5,
+     "default": 2,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "empathy",
+      "success": 6,
+      "push": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "skills",
+   "title": {
+    "en": "Skills",
+    "ru": "Навыки"
+   },
+   "fields": [
+    {
+     "key": "force",
+     "type": "dots",
+     "title": {
+      "en": "Force",
+      "ru": "Мощь"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: strength + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "strength + force",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "melee",
+     "type": "dots",
+     "title": {
+      "en": "Close combat",
+      "ru": "Ближний бой"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: strength + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "strength + melee",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "stamina",
+     "type": "dots",
+     "title": {
+      "en": "Stamina",
+      "ru": "Выносливость"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: strength + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "strength + stamina",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "dexterity",
+     "type": "dots",
+     "title": {
+      "en": "Dexterity",
+      "ru": "Ловкость рук"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: agility + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "agility + dexterity",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "ranged",
+     "type": "dots",
+     "title": {
+      "en": "Ranged combat",
+      "ru": "Стрельба"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: agility + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "agility + ranged",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "stealth",
+     "type": "dots",
+     "title": {
+      "en": "Stealth",
+      "ru": "Скрытность"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: agility + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "agility + stealth",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "observation",
+     "type": "dots",
+     "title": {
+      "en": "Observation",
+      "ru": "Наблюдательность"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: wits + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "wits + observation",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "survival",
+     "type": "dots",
+     "title": {
+      "en": "Survival",
+      "ru": "Выживание"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: wits + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "wits + survival",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "tech",
+     "type": "dots",
+     "title": {
+      "en": "Technology",
+      "ru": "Техника"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: wits + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "wits + tech",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "manipulation",
+     "type": "dots",
+     "title": {
+      "en": "Manipulation",
+      "ru": "Убеждение"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: empathy + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "empathy + manipulation",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "medicine",
+     "type": "dots",
+     "title": {
+      "en": "Medical aid",
+      "ru": "Медицина"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: empathy + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "empathy + medicine",
+      "success": 6,
+      "push": true
+     }
+    },
+    {
+     "key": "command",
+     "type": "dots",
+     "title": {
+      "en": "Command",
+      "ru": "Командование"
+     },
+     "max": 5,
+     "hint": {
+      "en": "Pool: empathy + skill",
+      "ru": "Пул: атрибут + навык"
+     },
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "empathy + command",
+      "success": 6,
+      "push": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "condition",
+   "title": {
+    "en": "Health and mind",
+    "ru": "Здоровье и рассудок"
+   },
+   "fields": [
+    {
+     "key": "health_max",
+     "type": "formula",
+     "title": {
+      "en": "Health",
+      "ru": "Здоровье"
+     },
+     "formula": "strength + agility"
+    },
+    {
+     "key": "health",
+     "type": "track",
+     "title": {
+      "en": "Damage",
+      "ru": "Урон"
+     },
+     "boxes": "health_max",
+     "hint": {
+      "en": "Marked boxes — damage taken",
+      "ru": "Отмеченные клетки — полученный урон"
+     }
+    },
+    {
+     "key": "mind_max",
+     "type": "formula",
+     "title": {
+      "en": "Mind",
+      "ru": "Рассудок"
+     },
+     "formula": "wits + empathy"
+    },
+    {
+     "key": "mind",
+     "type": "track",
+     "title": {
+      "en": "Mind damage",
+      "ru": "Урон рассудку"
+     },
+     "boxes": "mind_max"
+    },
+    {
+     "key": "stress",
+     "type": "number",
+     "title": {
+      "en": "Stress",
+      "ru": "Стресс"
+     },
+     "min": 0,
+     "max": 10,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "stress",
+      "success": 1
+     }
+    },
+    {
+     "key": "conditions",
+     "type": "tags",
+     "title": {
+      "en": "Conditions",
+      "ru": "Состояния"
+     }
+    },
+    {
+     "key": "injuries",
+     "type": "textarea",
+     "title": {
+      "en": "Critical injuries",
+      "ru": "Критические травмы"
+     }
+    }
+   ]
+  },
+  {
+   "id": "gear",
+   "title": {
+    "en": "Gear",
+    "ru": "Снаряжение"
+   },
+   "fields": [
+    {
+     "key": "weapons",
+     "type": "list",
+     "title": {
+      "en": "Weapons",
+      "ru": "Оружие"
+     },
+     "columns": [
+      {
+       "key": "name",
+       "type": "text",
+       "title": {
+        "en": "Weapon",
+        "ru": "Оружие"
+       }
+      },
+      {
+       "key": "bonus",
+       "type": "number",
+       "title": {
+        "en": "Gear bonus",
+        "ru": "Бонус"
+       }
+      },
+      {
+       "key": "damage",
+       "type": "number",
+       "title": {
+        "en": "Damage",
+        "ru": "Урон"
+       }
+      },
+      {
+       "key": "range",
+       "type": "text",
+       "title": {
+        "en": "Range",
+        "ru": "Дальность"
+       }
+      }
+     ]
+    },
+    {
+     "key": "items",
+     "type": "tags",
+     "title": {
+      "en": "Items",
+      "ru": "Вещи"
+     }
+    },
+    {
+     "key": "talents",
+     "type": "textarea",
+     "title": {
+      "en": "Talents",
+      "ru": "Таланты"
+     }
+    }
+   ]
+  },
+  {
+   "id": "gm",
+   "title": {
+    "en": "For the GM",
+    "ru": "Для мастера"
+   },
+   "kinds": [
+    "monster",
+    "npc"
+   ],
+   "fields": [
+    {
+     "key": "notes",
+     "type": "textarea",
+     "title": {
+      "en": "Notes",
+      "ru": "Заметки"
+     }
+    }
+   ]
+  }
+ ],
+ "tracker": {
+  "init": {
+   "type": "roll",
+   "dice": "1d10"
+  },
+  "hp": "health_max",
+  "cells": [
+   "mind",
+   "stress"
+  ],
+  "conditions": {
+   "list": [
+    {
+     "en": "Broken",
+     "ru": "Сломлен"
+    },
+    {
+     "en": "Exhausted",
+     "ru": "Измотан"
+    },
+    {
+     "en": "Hungry",
+     "ru": "Голоден"
+    },
+    {
+     "en": "Thirsty",
+     "ru": "Жажда"
+    },
+    {
+     "en": "Freezing",
+     "ru": "Замерзает"
+    },
+    {
+     "en": "Sleepless",
+     "ru": "Не спал"
+    }
+   ],
+   "free": true
+  }
+ }
+}

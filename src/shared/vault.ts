@@ -1,5 +1,6 @@
 import type { Lang, LangSetting } from './i18n/core';
 import { builtinSoundTitle } from './sounds';
+import type { SystemPack } from './syspack';
 // Хранилище: папка на диске, внутри которой лежит всё (приключения, главы, персонажи, карты, музыка).
 // Здесь только типы и чистые функции: модуль используется и ядром, и окнами.
 
@@ -39,6 +40,8 @@ export interface VaultState {
   roles: RoleNames;
   // Отключённые в настройках ролевые системы (id).
   systemsOff: string[];
+  // Systems described by packs (built-in and the GM's own, shared/syspack.ts): the windows register them.
+  systems: SystemPack[];
   // Interface language: the setting ('auto' or a language) and what it resolved to.
   language: LangSetting;
   lang: Lang;

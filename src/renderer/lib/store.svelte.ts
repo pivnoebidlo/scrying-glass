@@ -4,6 +4,7 @@ import type { DisplayInfo } from '../../shared/api';
 import type { AppState } from '../../shared/types';
 import { setRoleNames } from '../../shared/vault';
 import { setSystemsOff } from '../../systems';
+import { registerPacks } from '../../systems/packs';
 import { applyLang } from './i18n.svelte';
 
 class Store {
@@ -52,6 +53,8 @@ export async function connect(opts: { displays?: boolean } = {}) {
   // Названия папок ролей нужны folderRole() и прочим функциям shared/vault.ts — ставим их до нового состояния.
   const apply = (s: AppState) => {
     setRoleNames(s.vault.roles);
+    // System packs before the systems turned off: those may be packs too.
+    registerPacks(s.vault.systems);
     setSystemsOff(s.vault.systemsOff);
     setHotkeys(s.vault.hotkeys);
     applyLang(s.vault.lang);

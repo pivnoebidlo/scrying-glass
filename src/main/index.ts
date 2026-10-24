@@ -18,6 +18,7 @@ import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtom
 import { scanVault } from './scan';
 import { systemFor } from '../shared/adventures';
 import { setSystemsOff } from '../systems';
+import { loadSystemPacks, systemPacks } from './syspacks';
 import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
 import type { TrashPlace, TrashSettings } from '../shared/trash';
 import { migrateOldCampaign } from './migrate';
@@ -132,6 +133,7 @@ function vaultState(): VaultState {
     recent: settings.recent,
     roles: setRoleNames(settings.roles),
     systemsOff: setSystemsOff(settings.systemsOff),
+    systems: systemPacks(),
     language: settings.language ?? 'auto',
     lang: interfaceLang(),
     theme: isTheme(settings.theme) ? settings.theme : 'auto',
@@ -338,6 +340,14 @@ function setSystemsOffSetting(list: string[]): VaultState {
   settings = { ...settings, systemsOff: setSystemsOff(list) };
   writeJsonAtomic(settingsFile(), settings);
   return vaultState();
+}
+
+// The library changed: its system packs are read again and the windows get them.
+function useLibrary(dir: string) {
+  setLibrary(dir);
+  loadSystemPacks(dir);
+  stateById['vault'] = vaultState();
+  broadcastState();
 }
 
 // ---------- Рассылка состояния ----------
@@ -627,7 +637,7 @@ ipcMain.handle('backups:restore', async (_event, { id, vault, library }: { id: s
   snapshotNow('before-restore', true);
   const n = restoreSnapshot(backupsDir(), id, { vaultRoot, library: libraryPath() }, { vault: toVault, library });
   if (library) {
-    setLibrary(libraryPath()!);
+    useLibrary(libraryPath()!);
     for (const w of BrowserWindow.getAllWindows()) w.webContents.send('compendium:changed');
   }
   if (toVault && vaultRoot) await enqueue('vault', () => openVault(vaultRoot));
@@ -693,7 +703,7 @@ ipcMain.handle('archive:restore', async () => {
     if (lib && isDir(path.join(tmp, 'library'))) files += placeFiles(path.join(tmp, 'library'), lib);
     const roles = (saved as { roles?: Partial<RoleNames> | null } | null)?.roles;
     if (roles) setRoles(roles);
-    if (lib) setLibrary(lib);
+    if (lib) useLibrary(lib);
     for (const w of BrowserWindow.getAllWindows()) w.webContents.send('compendium:changed');
     await enqueue('vault', () => openVault(target));
     return { files, vault: path.basename(target) };
@@ -1067,7 +1077,7 @@ async function importPack(file: string, wanted: string) {
         }
         cards++;
       }
-      if (cards) setLibrary(lib);
+      if (cards) useLibrary(lib);
     }
 
     // Состояние приключения: пути — под новое название папки, сцены и заготовки — с новыми id.
@@ -1540,7 +1550,7 @@ ipcMain.handle('cards:chooseLibrary', async (_event, { reset }: { reset?: boolea
   }
   settings = { ...settings, library: dir };
   writeJsonAtomic(settingsFile(), settings);
-  setLibrary(dir ?? defaultLibrary());
+  useLibrary(dir ?? defaultLibrary());
   watchLibraryCompendium(libraryPath());
   for (const win of BrowserWindow.getAllWindows()) win.webContents.send('compendium:changed');
 });
@@ -1554,6 +1564,7 @@ ipcMain.handle('display:status', () => isDisplayOpen());
 app.whenReady().then(async () => {
   for (const mod of Object.values(modules)) stateById[mod.id] = mod.initialState;
   loadSettings();
+  loadSystemPacks(settings.library ?? defaultLibrary());
   stateById['vault'] = vaultState();
   initCards(settings.library ?? defaultLibrary());
 

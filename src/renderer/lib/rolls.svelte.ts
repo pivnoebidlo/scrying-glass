@@ -1,7 +1,9 @@
 // Журнал бросков мастера: броски из статблоков и листов персонажей (к20 и урон D&D, кубы Fate). Только в окне управления, игрокам не виден.
 import { hotkeyLabel } from '../../shared/hotkeys';
 import { t } from './i18n.svelte';
-import { parseDice, rollD20, rollDamage, rollFate, rollPool, rollSave, type D20Mode, type D20Roll, type DamageRoll, type FateRoll, type PoolRoll, type SaveRoll } from '../../shared/dice';
+import { die, parseDice, rollD20, rollDamage, rollFate, rollPool, rollSave, type D20Mode, type D20Roll, type DamageRoll, type FateRoll, type PoolRoll, type SaveRoll } from '../../shared/dice';
+import { getLang } from '../../shared/i18n';
+import { pushPool, rollPack, type PackRollResult, type RollSpec, type RollWords } from '../../shared/syspack';
 
 export interface RollEntry {
   id: number;
@@ -16,6 +18,8 @@ export interface RollEntry {
   save?: SaveRoll;
   // Forged in the Dark: a pool of d6; `resist` — a resistance roll (stress taken instead of the outcome).
   pool?: PoolRoll & { resist?: boolean };
+  // A roll of a system pack (shared/syspack.ts); `pushed` — it was pushed already.
+  pack?: PackRollResult & { pushed?: boolean };
   // Попадание проверяется по натуральной 20/1 только у атак.
   attack?: boolean;
   damage: DamageRoll[];
@@ -61,6 +65,19 @@ class Rolls {
     this.push({ who, what, pool: { ...rollPool(n), ...(resist ? { resist: true } : {}) }, damage: [] });
   }
 
+  // A roll of a system pack: the spec of the field, its numbers from the card.
+  packRoll(who: string, what: string, spec: RollSpec, value: (formula: string) => number, mode: D20Mode = 'normal') {
+    this.push({ who, what, pack: rollPack(spec, value, getLang(), packWords(), die, mode), damage: [] });
+  }
+
+  // Push a pack's pool roll: a new line, the old one can't be pushed again.
+  pushRoll(e: RollEntry) {
+    if (!e.pack?.push || e.pack.pushed) return;
+    this.list = this.list.map((x) => (x.id === e.id ? { ...x, pack: { ...x.pack!, pushed: true } } : x));
+    const r = pushPool(e.pack.push, packWords(), die);
+    this.push({ who: e.who, what: `${e.what} · ${t('pack.pushed')}`, pack: { ...r, pushed: true }, damage: [] });
+  }
+
   damage(who: string, what: string, damage: string, crit = false) {
     const e = parseDice(damage);
     if (e) this.push({ who, what, damage: [rollDamage(e, crit)] });
@@ -72,6 +89,13 @@ class Rolls {
 }
 
 export const rolls = new Rolls();
+
+const packWords = (): RollWords => ({
+  success: t('pack.success'),
+  failure: t('pack.failure'),
+  successes: (count) => t('pack.successes', { count }),
+  critical: t('pack.critical'),
+});
 
 // Shift — с преимуществом, ⌥/Alt — с помехой.
 export const modeOf = (e: MouseEvent): D20Mode => (e.shiftKey ? 'advantage' : e.altKey ? 'disadvantage' : 'normal');
