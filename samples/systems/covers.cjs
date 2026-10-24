@@ -111,11 +111,80 @@ function horror() {
 </svg>`;
 }
 
+// A Fate die: a rounded square with «+», «−» or nothing.
+function dF(x, y, size, angle, face) {
+  const mark = face > 0
+    ? `<rect x="${size * 0.22}" y="${size * 0.44}" width="${size * 0.56}" height="${size * 0.12}" rx="4" fill="#3b1d0a"/><rect x="${size * 0.44}" y="${size * 0.22}" width="${size * 0.12}" height="${size * 0.56}" rx="4" fill="#3b1d0a"/>`
+    : face < 0
+      ? `<rect x="${size * 0.22}" y="${size * 0.44}" width="${size * 0.56}" height="${size * 0.12}" rx="4" fill="#3b1d0a"/>`
+      : '';
+  return `<g transform="translate(${x} ${y}) rotate(${angle}) translate(${-size / 2} ${-size / 2})" filter="url(#shadow)">
+    <rect width="${size}" height="${size}" rx="${size * 0.16}" fill="url(#cream)" stroke="#f7e6c4" stroke-width="2"/>${mark}
+  </g>`;
+}
+
+function fate() {
+  const ladder = [['+4', 'Отлично'], ['+3', 'Хорошо'], ['+2', 'Неплохо'], ['+1', 'Средне'], ['0', 'Посредственно']];
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <radialGradient id="bg" cx="0.35" cy="0.3" r="1"><stop offset="0" stop-color="#e8672a"/><stop offset="0.5" stop-color="#9c2f1c"/><stop offset="1" stop-color="#2a0c0a"/></radialGradient>
+    <linearGradient id="cream" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6e3"/><stop offset="1" stop-color="#e7cfa3"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity="0.5"/></filter>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0606" stop-opacity="0"/><stop offset="1" stop-color="#1a0606" stop-opacity="0.92"/></linearGradient>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#bg)"/>
+  ${ladder.map(([n, w], i) => `<text x="${W - 90}" y="${150 + i * 74}" text-anchor="end" font-family="Georgia, serif" font-size="${i === 1 ? 46 : 34}" fill="#ffe6c8" opacity="${i === 1 ? 0.95 : 0.45}">${w} (${n})</text>`).join('')}
+  ${dF(210, 330, 170, -12, 1)}
+  ${dF(420, 300, 170, 8, 1)}
+  ${dF(630, 350, 170, -4, 0)}
+  ${dF(330, 520, 150, 18, 1)}
+  <rect y="560" width="${W}" height="340" fill="url(#fade)"/>
+  <text x="70" y="760" font-family="Georgia, 'Palatino', serif" font-size="112" font-weight="700" fill="#fff1dc">Fate Core</text>
+  <text x="74" y="828" font-family="Georgia, 'Palatino', serif" font-size="44" fill="#f2b98f">аспекты · навыки на лестнице · жетоны судьбы</text>
+  <text x="${W - 70}" y="80" text-anchor="end" font-family="-apple-system, 'Helvetica Neue', sans-serif" font-size="26" letter-spacing="3" fill="#ffd9b8" opacity="0.8">SCRYING GLASS · СИСТЕМА</text>
+</svg>`;
+}
+
+function maus() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.35" r="0.9"><stop offset="0" stop-color="#e9dcb4"/><stop offset="0.6" stop-color="#b9a173"/><stop offset="1" stop-color="#4c3b22"/></radialGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8e7b6a"/><stop offset="1" stop-color="#5e4e42"/></linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f4f4f4"/><stop offset="1" stop-color="#9aa3ad"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#2a1d0c" flood-opacity="0.55"/></filter>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1d0c" stop-opacity="0"/><stop offset="1" stop-color="#2a1d0c" stop-opacity="0.92"/></linearGradient>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#bg)"/>
+  <!-- grass blades, big as trees for a mouse -->
+  ${Array.from({ length: 14 }, (_, i) => `<path d="M${40 + i * 85} 640 Q${60 + i * 85 + (i % 2 ? 30 : -30)} ${320 + (i % 4) * 40} ${50 + i * 85 + (i % 3) * 20} ${150 + (i % 5) * 30}" stroke="#6f7f3a" stroke-width="${10 + (i % 3) * 4}" fill="none" opacity="0.55" stroke-linecap="round"/>`).join('')}
+  <g transform="translate(600 410)" filter="url(#shadow)">
+    <!-- the needle sword -->
+    <path d="M150 -240 L170 -240 L175 120 L145 120 Z" fill="url(#steel)" transform="rotate(18)"/>
+    <rect x="120" y="110" width="80" height="18" rx="6" fill="#7a4b22" transform="rotate(18)"/>
+    <!-- ears, head, eye, nose, whiskers -->
+    <circle cx="-120" cy="-150" r="95" fill="url(#fur)"/><circle cx="-120" cy="-150" r="60" fill="#e6a9a0"/>
+    <circle cx="110" cy="-160" r="95" fill="url(#fur)"/><circle cx="110" cy="-160" r="60" fill="#e6a9a0"/>
+    <ellipse cx="0" cy="0" rx="190" ry="170" fill="url(#fur)"/>
+    <path d="M-40 60 Q0 175 40 60 Z" fill="#7b6757"/>
+    <circle cx="-70" cy="-20" r="22" fill="#1b130e"/><circle cx="-63" cy="-27" r="7" fill="#fff"/>
+    <circle cx="70" cy="-20" r="22" fill="#1b130e"/><circle cx="77" cy="-27" r="7" fill="#fff"/>
+    <ellipse cx="0" cy="70" rx="22" ry="16" fill="#d77d78"/>
+    <path d="M-30 80 L-170 60 M-30 90 L-170 110 M30 80 L170 60 M30 90 L170 110" stroke="#2a1d0c" stroke-width="4" opacity="0.6"/>
+    <!-- a red cloak -->
+    <path d="M-150 120 Q0 230 150 120 L170 220 Q0 280 -170 220 Z" fill="#9d2b21"/>
+  </g>
+  <rect y="560" width="${W}" height="340" fill="url(#fade)"/>
+  <text x="70" y="760" font-family="Georgia, 'Palatino', serif" font-size="112" font-weight="700" fill="#fbf1d6">Mausritter</text>
+  <text x="74" y="828" font-family="Georgia, 'Palatino', serif" font-size="44" fill="#e3c99a">мыши-рыцари · спасброски к20 · инвентарь клетками</text>
+  <text x="${W - 70}" y="80" text-anchor="end" font-family="-apple-system, 'Helvetica Neue', sans-serif" font-size="26" letter-spacing="3" fill="#4c3b22" opacity="0.8">SCRYING GLASS · СИСТЕМА</text>
+</svg>`;
+}
+
 app.disableHardwareAcceleration();
 // One window after another: closing the first one must not end the app.
 app.on('window-all-closed', () => {});
 app.whenReady().then(async () => {
-  for (const [id, svg] of [['yz-pool', pool()], ['d100-horror', horror()]]) {
+  for (const [id, svg] of [['yz-pool', pool()], ['d100-horror', horror()], ['fate-core', fate()], ['mausritter', maus()]]) {
     const w = new BrowserWindow({ width: W, height: H, show: false, frame: false, webPreferences: { offscreen: true } });
     w.webContents.setFrameRate(1);
     await w.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`<html><body style='margin:0;background:#000'>${svg}</body></html>`));
