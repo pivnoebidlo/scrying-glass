@@ -187,7 +187,7 @@ Electron-приложение для мастера D&D: окно управле
   у них колдовство — текстом (в английском SRD 2024 списки дописывает `import-srd.ts` из структуры `spellcasting`
   базы 5e-database — `spellLines`; в `desc` там только вступление).
 - Броски: `shared/dice.ts` (разбор «2d6+5», к20 с преимуществом/помехой, крит, 4dF — `rollFate`; лестница Fate —
-  `systems/fate/ladder.ts`), журнал `renderer/lib/rolls.svelte.ts`
+  `labels` броска пакета), журнал `renderer/lib/rolls.svelte.ts`
   + `RollLog.svelte` — только в окне управления, вне `AppState` (игрокам не показываются). Кнопки — в `StatBlock` и
   `CharacterSheet` (атака — `Block.attack`, у персонажа бонус и урон разбираются из строк листа).
 - Картинки вне хранилища (библиотека карточек) в портретах и инициативе — строки «library:<путь>», адрес даёт
@@ -245,10 +245,10 @@ Electron-приложение для мастера D&D: окно управле
   Встроенный справочник Fate — `resources/compendium/fate-core.<lang>.json` (`npm run build-fate` из
   `scripts/fate-core.<lang>.md`, тексты свои по Fate Core SRD, CC BY 3.0; тип `skill` — семейство fate); встроенные записи показываются по семейству
   системы приключения (`editionShown` в store справочника), выбор редакции SRD — только у D&D.
-  Fate Core: карточка — `systems/fate/stats.ts` (`FateStats`: `tier`, концепция, проблема, аспекты, навыки
-  текстом с числом, трюки, восстановление; стресс и последствия — по правилам `stressOf` / `consequencesOf`, если не
-  заданы явно; очерёдность — Внимательность или `initiativeSkill`), вид `Sheet.svelte` (броски `rolls.fate`),
-  редактор `Editor.svelte`; один вид для всех `kind`. Чужой блок stats у карточки Fate — общий вид (`fits` в `systems/ui.ts`).
+  Fate Core — пакет системы (`samples/systems/fate-core.json`, id `fate-core`, семейство `fate`; кода системы больше
+  нет): аспекты, 18 навыков числами (`hideZero`, бросок `fate` с `labels` — лестница), трюки, восстановление, дорожки
+  стресса по формулам от Телосложения и Воли, последствия текстом (ячейки трекера — `Combatant.texts`); «Партия»
+  модуля fate берёт `refresh` из полей карточки.
 - Пакеты систем (система — JSON-файл, не код; первая версия): формат, проверка, формулы и броски — `shared/syspack.ts`
   (`SystemPack`: `sections` → поля `FieldDef` типов number / text / textarea / select / dots / track (`boxes` — число или
   ключ поля) / tags / list (`columns`) / formula; `roll` у поля — `RollSpec`: d20, under (к100 со ступенями `levels`),
@@ -287,16 +287,14 @@ Electron-приложение для мастера D&D: окно управле
   своего — `settings.repo.bestiaries.published[id]` с карточками), `repo:installBestiary` (`importCards` в библиотеку,
   отдаёт `refs`; новая версия — старые карточки в корзину), `repo:removeBestiary`; пометки установленных —
   `bestiaries.installed["источник/автор/id"]`. Пункты — в «+» «Карточек». Сервис 0.6.0 (тег `repo-v0.6.0`).
-- Mausritter (третья система, в работе; SRD 2.3.1, CC BY 4.0 — атрибуция дословно в `about.credit.mausritter`):
-  `systems/mausritter/` — `stats.ts` (`MausStats`: hp — Hit Protection, str/dex/wil, armour, attacks `d6/d8`,
-  critical, abilities, wants, `warband`; у мыши `sheet` — уровень, XP, пипсы, 10 клеток `slots` (лапы 2, тело 2,
-  рюкзак 6; сверх — перегружена), состояния в клетках, `grit`; `parseStatBlock` — статблок SRD текстом), `Sheet.svelte`
-  (щелчок по СИЛ/ЛОВ/ВОЛ — спасбросок `rolls.save` / `rollSave`: к20 ≤ хар., преимущество — меньший), `Editor.svelte`,
-  трекер `tracker.ts` + `TrackerCells.svelte`: у участника `attrs` (сейчас / максимум), урон сверх защиты уходит в
-  СИЛ (`changeHp`), `setAttr`; выбыл при СИЛ 0 (`down`); очерёдность 2 / 1 (противники) / 0, бонус — ЛОВ
-  (`bonus.from`: отдельного поля нет); состояния ведут в запись «Conditions».
+- Mausritter — пакет системы (`samples/systems/mausritter.json`, id и семейство `mausritter`; кода системы больше нет;
+  SRD 2.3.1, CC BY 4.0 — атрибуция дословно в `about.credit.mausritter`): hp, str/dex/wil (бросок `under` к20 с
+  преимуществом и помехой), armour, warband, attacks (строки name/dice, бросок `sum` с `dice: 'row.dice'`), critical,
+  abilities, wants; у мыши (`kinds: character`) — level, xp, pips, прошлое и прочее, inventory (поле `slots`: лапы 2,
+  тело 2, рюкзак 6), grit. Трекер — без инициативы, hp и ячейки str/dex/wil (`attrs`): урон сверх защиты уходит в
+  `str` (`changeHp`), выбыл при СИЛ 0 (`down`).
   Встроенное: `npm run build-mausritter` (`scripts/build-mausritter.ts` из `scripts/mausritter-srd.<lang>.md` — SRD
-  2.3.1 целиком, CC BY 4.0, и наш перевод) → `resources/srd/mausritter.json` (11 существ × 2 языка, русские —
+  2.3.1 целиком, CC BY 4.0, и наш перевод) → `resources/srd/mausritter.json` (поля пакета — `toPack` в скрипте; 11 существ × 2 языка, русские —
   `<id>.ru` с `origin`, числа и кубы — из английского статблока; таблицы вариантов — в `description` жирными
   строками: заголовков разметка карточек не знает) и `resources/compendium/mausritter.<lang>.json` (главы →
   `category`, разделы `##` → записи, у главы — запись-оглавление; заклинания — тип `mspell` с `recharge`; «Terms of

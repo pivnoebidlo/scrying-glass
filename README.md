@@ -688,27 +688,26 @@ in settings (Game systems): their content disappears everywhere — cards, SRD e
 with that system (together with their scenes and encounters). The files stay in place: turn the system back on and
 everything returns. Adventures created before systems existed count as D&D 5e (2024).
 
-**Fate Core.** The card (one for player characters and NPCs): NPC importance (nameless, supporting, main), high concept,
-trouble and other aspects, skills in a pyramid on the ladder (a click on a skill rolls 4dF + skill into the log; the
-total is named by the ladder: "Good (+3)"), stunts, refresh. Stress and consequences follow the rules (from Physique
-and Will, for NPCs — by importance) or are set by hand. The tracker in a Fate adventure: turn order by Notice (or the
-chosen skill) without a roll, stress boxes with a click, consequences as text, "take out", aspects on participants
-instead of conditions; a portrait turns red for the players with the checked stress and consequences. The "Aspects &
+**Fate Core** is a system pack: install it from Community → Systems (Settings → Game systems → Find systems), it
+can be deleted and installed again. The card (one for player characters and NPCs): NPC importance, high concept,
+trouble and other aspects, the eighteen skills (only those above 0 are shown; a click rolls 4dF + skill into the log,
+the total named by the ladder: "Good"), stunts, refresh, physical and mental stress (boxes by Physique and Will),
+mild, moderate and severe consequences. The tracker in a Fate adventure: turn order by Notice without a roll, both
+stress tracks with a click, the consequences as text, "take out", aspects on participants instead of conditions; a portrait turns red for the players with the checked stress and consequences. The "Aspects &
 fate points" block in the right panel (Fate only): scene aspects with free invokes (the players don't see hidden ones
 until they are revealed) and fate points — for the party's characters ("Party" button, refresh from the card; "New
 session" — up to refresh) and for the GM ("new scene" — one point per character). The players see aspects and points
 (by the portraits) in the chosen corners of the screen — by default bottom left and right; the corner is picked with
 the diagram by the title, next to it — the eye: show or not.
 
-**Mausritter.** One card for creatures and mice: HP (Hit Protection), STR, DEX, WIL, armour, attacks (a click on a die
-rolls damage), critical damage, other features, wants, warband scale; "Paste stat block" fills the card from a stat
-block written as in the SRD. A mouse also gets a sheet: level, XP to the next level, Grit, pips, background, birthsign,
-coat, physical detail and ten inventory slots (two paws, two body, six pack) with usage dots; Conditions take slots,
-items past the ten make the mouse encumbered. A click on STR, DEX or WIL rolls a save: d20 at or under the attribute
-(Shift — advantage, the lower of 2d20; ⌥ — disadvantage). The tracker in a Mausritter adventure: HP, STR / DEX / WIL
-now and maximum, armour; damage past HP goes to STR, STR 0 takes the combatant out; turn order 2 — before the
-opponents (a passed DEX save or an ambush), 1 — the opponents ("Opponents' order"), 0 — after them, DEX breaks ties;
-the Mausritter Conditions (a click opens the Conditions entry). **Tools → Mouse** (Mausritter adventures only) makes a
+**Mausritter** is a system pack too (Community → Systems). One card for creatures and mice: HP (Hit Protection), STR,
+DEX, WIL, armour, attacks (a click on the row rolls its damage die), critical damage, abilities, wants, warband scale.
+A mouse also gets a sheet: level, XP, pips, background, birthsign, coat, physical detail, Grit and ten inventory slots
+(two paws, two body, six pack) with usage dots; a condition takes a slot. A click on STR, DEX or WIL rolls a save:
+d20 at or under the attribute (Shift — advantage, the lower of 2d20; ⌥ — disadvantage). The tracker in a Mausritter
+adventure: HP, STR / DEX / WIL now and maximum; damage past HP goes to STR, STR 0 takes the combatant out; no
+initiative roll (mice act before or after the opponents by a DEX save — the list's order); the Mausritter
+Conditions. **Tools → Mouse** (Mausritter adventures only) makes a
 new mouse by the SRD procedure: attributes (3d6, the two highest — the dice are shown, two attributes can be swapped),
 HP and pips, the background with its two items (a weak mouse gets items of another background), torches, rations, a
 weapon, birthsign, coat, physical detail and a name; "Create card" opens a mouse sheet with the inventory laid out

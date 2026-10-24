@@ -107,8 +107,8 @@ export interface SystemPack {
   release?: number;
   // The kinds of cards the system has (none — all three).
   kinds?: CardKind[];
-  // The line under a card's name: «{role} · {tier}» (fields by key).
-  subtitle?: string;
+  // The line under a card's name: «{role} · {tier}» (fields by key; one for every language or per language).
+  subtitle?: Loc;
   // A number to sort cards by (a formula).
   rank?: string;
   sections: SectionDef[];
@@ -400,7 +400,7 @@ export function validatePack(x: unknown): SystemPack | string {
     ...str('url'),
     ...(num(x['release']) ? { release: Math.floor(num(x['release'])!) } : {}),
     ...(kinds.length ? { kinds } : {}),
-    ...str('subtitle'),
+    ...(locOf(x['subtitle']) ? { subtitle: locOf(x['subtitle'])! } : {}),
     ...(formulaOf(x['rank']) ? { rank: x['rank'] as string } : {}),
     sections,
     tracker,
@@ -555,7 +555,7 @@ export function blankStats(pack: SystemPack, kind: CardKind): PackStats {
 export function packSubtitle(pack: SystemPack, stats: PackStats, lang: string): string {
   if (!pack.subtitle) return '';
   const fields = fieldMap(pack);
-  return pack.subtitle
+  return loc(pack.subtitle, lang)
     .replace(/\{([a-z][a-z0-9_]*)\}/g, (_, k: string) => {
       const f = fields.get(k);
       if (!f) return '';

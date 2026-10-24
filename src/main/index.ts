@@ -32,7 +32,7 @@ import { pages } from './journal';
 import { resolver } from './textstore';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, readLss, updateFromLss, lssSpellTable, importLssSpells, clearLssSpells, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, systemsChanged as cardsSystemsChanged, readLss, updateFromLss, lssSpellTable, importLssSpells, clearLssSpells, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
@@ -101,7 +101,7 @@ interface AppSettings {
   repo?: RepoSettings;
 }
 const RECENT_MAX = 10;
-const FIRST_LAUNCH_OFF = ['mausritter', 'fitd'];
+const FIRST_LAUNCH_OFF = ['fitd'];
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 let settings: AppSettings = { vault: null, recent: [] };
 
@@ -388,8 +388,9 @@ function setSystemsOffSetting(list: string[]): VaultState {
 
 // The library changed: its system packs are read again and the windows get them.
 function useLibrary(dir: string) {
-  setLibrary(dir);
+  // Systems first: the cards' lines are made by them.
   loadSystemPacks(dir);
+  setLibrary(dir);
   stateById['vault'] = vaultState();
   broadcastState();
 }
@@ -1409,6 +1410,7 @@ ipcMain.handle('repo:importKey', async () => {
 // ---- System packs: the GM's own (the builder, files) ----
 function reloadSystems() {
   loadSystemPacks(libraryPath());
+  cardsSystemsChanged();
   stateById['vault'] = vaultState();
   broadcastState();
   // Their compendiums are built-in books: the windows read them again.

@@ -1,9 +1,17 @@
 // A generated mouse in words (the interface language): what it carries, the card for the bestiary and Markdown.
 // The rules of an item (armour, a weapon's die, a hireling) are read from the English text of the same table row,
 // so they don't depend on the translation.
-import { t } from '../../../shared/i18n';
-import type { MausAttack, MausSlot, MausStats } from '../../../systems/mausritter/stats';
-import { SLOT_COUNT, SLOTS } from '../../../systems/mausritter/stats';
+import { labels, t } from '../../../shared/i18n';
+import type { PackSlot } from '../../../shared/syspack';
+
+// The Mausritter pack (samples/systems/mausritter.json): its inventory field — paws 2, body 2, pack 6.
+export const SLOTS = { paw: 2, body: 2, pack: 6 };
+export const SLOT_COUNT = SLOTS.paw + SLOTS.body + SLOTS.pack;
+// STR, DEX, WIL and their names in the interface language.
+export const ATTR_SHORT = labels<Attr>(['str', 'dex', 'wil'], 'maus.attr');
+export const ATTR_TITLES = labels<Attr>(['str', 'dex', 'wil'], 'maus.attrTitle');
+type MausSlot = PackSlot;
+type MausAttack = { dice: string; name: string };
 import { NAMES, WEAPONS } from './content';
 import type { Attr, Mouse } from './generate';
 import { TABLES } from './tables';
@@ -103,12 +111,11 @@ export function mouseSlots(m: Mouse, lang: MouseLang): MausSlot[] {
 
 export const ATTR_ORDER: Attr[] = ['str', 'dex', 'wil'];
 
-// The mouse's card: a Mausritter character with its sheet filled in; hirelings go to the notes.
-export function mouseCard(m: Mouse, lang: MouseLang): { name: string; notes: string; stats: MausStats } {
+// The mouse's card: the fields of the Mausritter pack, the sheet filled in; hirelings go to the notes.
+export function mouseCard(m: Mouse, lang: MouseLang): { name: string; notes: string; stats: Record<string, unknown> } {
   const v = mouseView(m, lang);
   const w = WEAPONS[lang][m.weapon]!;
-  const attacks: MausAttack[] = [{ dice: w.dice, name: w.name.toLowerCase() }, ...v.items.flatMap((i) => (i.attack ? [i.attack] : []))];
-  const armour = v.items.some((i) => i.armour) ? 1 : 0;
+  const attacks = [{ dice: w.dice, name: w.name.toLowerCase() }, ...v.items.flatMap((i) => (i.attack ? [i.attack] : []))];
   return {
     name: v.name,
     notes: v.items.filter((i) => i.hireling).map((i) => i.text).join('\n'),
@@ -117,22 +124,20 @@ export function mouseCard(m: Mouse, lang: MouseLang): { name: string; notes: str
       str: m.str,
       dex: m.dex,
       wil: m.wil,
-      armour,
-      attacks,
+      armour: v.items.some((i) => i.armour) ? 1 : 0,
+      attacks: attacks.map((a) => ({ name: a.name, dice: a.dice })),
       critical: '',
-      abilities: [],
+      abilities: '',
       wants: '',
-      sheet: {
-        level: 1,
-        xp: 0,
-        pips: m.pips,
-        background: v.background,
-        birthsign: `${v.birthsign} (${v.disposition.toLowerCase()})`,
-        coat: v.coat,
-        look: v.detail,
-        slots: mouseSlots(m, lang),
-        grit: [],
-      },
+      level: 1,
+      xp: 0,
+      pips: m.pips,
+      background: v.background,
+      birthsign: `${v.birthsign} (${v.disposition.toLowerCase()})`,
+      coat: v.coat,
+      look: v.detail,
+      inventory: mouseSlots(m, lang),
+      grit: [],
     },
   };
 }

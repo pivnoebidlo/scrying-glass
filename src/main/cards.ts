@@ -234,6 +234,9 @@ function loadVault() {
   loadFiles('vault', vaultRoot ?? '', list);
 }
 
+// Systems came or went (packs installed, deleted): the cards' lines are made by them — made again.
+export const systemsChanged = () => changed();
+
 function changed() {
   summaries = null;
   for (const win of BrowserWindow.getAllWindows()) win.webContents.send('cards:changed');

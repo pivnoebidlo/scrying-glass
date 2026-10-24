@@ -3,7 +3,7 @@
 import { t } from '../../../shared/i18n';
 import { NAMES } from '../mouse/content';
 import type { Cell, Hireling, Line, Result } from './generate';
-import { ATTR_SHORT } from '../../../systems/mausritter/stats';
+import { ATTR_SHORT } from '../mouse/text';
 import { SRD_TABLES } from './srd';
 
 export type TablesLang = 'en' | 'ru';

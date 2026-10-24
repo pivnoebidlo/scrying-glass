@@ -1,0 +1,367 @@
+{
+ "scryingGlass": "system",
+ "version": 1,
+ "id": "mausritter",
+ "family": "mausritter",
+ "release": 1,
+ "title": "Mausritter",
+ "author": "Scrying Glass",
+ "license": "This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.",
+ "url": "https://mausritter.com",
+ "subtitle": {
+  "en": "{hp} HP · STR {str} · DEX {dex} · WIL {wil}",
+  "ru": "Защ. {hp} · СИЛ {str} · ЛОВ {dex} · ВОЛ {wil}"
+ },
+ "rank": "hp",
+ "sections": [
+  {
+   "id": "stats",
+   "title": {
+    "en": "Stat block",
+    "ru": "Статблок"
+   },
+   "fields": [
+    {
+     "key": "hp",
+     "type": "number",
+     "title": {
+      "en": "HP",
+      "ru": "Защита"
+     },
+     "min": 0,
+     "max": 99,
+     "hint": {
+      "en": "Hit Protection: damage is taken here first, then from STR",
+      "ru": "Защита (Hit Protection): урон сначала снимается с неё, потом с СИЛ"
+     }
+    },
+    {
+     "key": "str",
+     "type": "number",
+     "title": {
+      "en": "STR",
+      "ru": "СИЛ"
+     },
+     "min": 0,
+     "max": 20,
+     "default": 10,
+     "hint": {
+      "en": "Strength save: d20 ≤ STR (Shift — advantage, Alt — disadvantage)",
+      "ru": "Спасбросок Силы: к20 ≤ СИЛ (Shift — преимущество, Alt — помеха)"
+     },
+     "roll": {
+      "type": "under",
+      "sides": 20,
+      "target": "str"
+     }
+    },
+    {
+     "key": "dex",
+     "type": "number",
+     "title": {
+      "en": "DEX",
+      "ru": "ЛОВ"
+     },
+     "min": 0,
+     "max": 20,
+     "default": 10,
+     "hint": {
+      "en": "Dexterity save: d20 ≤ DEX (Shift — advantage, Alt — disadvantage)",
+      "ru": "Спасбросок Ловкости: к20 ≤ ЛОВ (Shift — преимущество, Alt — помеха)"
+     },
+     "roll": {
+      "type": "under",
+      "sides": 20,
+      "target": "dex"
+     }
+    },
+    {
+     "key": "wil",
+     "type": "number",
+     "title": {
+      "en": "WIL",
+      "ru": "ВОЛ"
+     },
+     "min": 0,
+     "max": 20,
+     "default": 10,
+     "hint": {
+      "en": "Will save: d20 ≤ WIL (Shift — advantage, Alt — disadvantage)",
+      "ru": "Спасбросок Воли: к20 ≤ ВОЛ (Shift — преимущество, Alt — помеха)"
+     },
+     "roll": {
+      "type": "under",
+      "sides": 20,
+      "target": "wil"
+     }
+    },
+    {
+     "key": "armour",
+     "type": "number",
+     "title": {
+      "en": "Armour",
+      "ru": "Броня"
+     },
+     "min": 0,
+     "max": 5,
+     "hideZero": true,
+     "hint": {
+      "en": "Subtracted from the damage of each hit",
+      "ru": "Вычитается из урона каждого удара"
+     }
+    },
+    {
+     "key": "warband",
+     "type": "select",
+     "title": {
+      "en": "Scale",
+      "ru": "Масштаб"
+     },
+     "options": [
+      {
+       "en": "Warband scale",
+       "ru": "Масштаб отряда"
+      }
+     ],
+     "hint": {
+      "en": "Fights a whole warband; mice on their own can do it no harm",
+      "ru": "Сражается с целым отрядом; мыши поодиночке ему не вредят"
+     }
+    },
+    {
+     "key": "attacks",
+     "type": "list",
+     "title": {
+      "en": "Attacks",
+      "ru": "Атаки"
+     },
+     "columns": [
+      {
+       "key": "name",
+       "type": "text",
+       "title": {
+        "en": "Attack",
+        "ru": "Атака"
+       }
+      },
+      {
+       "key": "dice",
+       "type": "dice",
+       "title": {
+        "en": "Damage",
+        "ru": "Урон"
+       }
+      }
+     ],
+     "roll": {
+      "type": "sum",
+      "dice": "row.dice"
+     }
+    },
+    {
+     "key": "critical",
+     "type": "text",
+     "title": {
+      "en": "Critical damage",
+      "ru": "Критический урон"
+     }
+    },
+    {
+     "key": "abilities",
+     "type": "textarea",
+     "title": {
+      "en": "Abilities",
+      "ru": "Особенности"
+     }
+    },
+    {
+     "key": "wants",
+     "type": "text",
+     "title": {
+      "en": "Wants",
+      "ru": "Хочет"
+     }
+    }
+   ]
+  },
+  {
+   "id": "mouse",
+   "title": {
+    "en": "Mouse",
+    "ru": "Мышь"
+   },
+   "kinds": [
+    "character"
+   ],
+   "fields": [
+    {
+     "key": "level",
+     "type": "number",
+     "title": {
+      "en": "Level",
+      "ru": "Уровень"
+     },
+     "min": 1,
+     "max": 20,
+     "default": 1
+    },
+    {
+     "key": "xp",
+     "type": "number",
+     "title": {
+      "en": "XP",
+      "ru": "Опыт"
+     },
+     "min": 0,
+     "max": 999999
+    },
+    {
+     "key": "pips",
+     "type": "number",
+     "title": {
+      "en": "Pips",
+      "ru": "Пипсы"
+     },
+     "min": 0,
+     "max": 99999
+    },
+    {
+     "key": "background",
+     "type": "text",
+     "title": {
+      "en": "Background",
+      "ru": "Прошлое"
+     }
+    },
+    {
+     "key": "birthsign",
+     "type": "text",
+     "title": {
+      "en": "Birthsign",
+      "ru": "Знак рождения"
+     }
+    },
+    {
+     "key": "coat",
+     "type": "text",
+     "title": {
+      "en": "Coat",
+      "ru": "Шёрстка"
+     }
+    },
+    {
+     "key": "look",
+     "type": "text",
+     "title": {
+      "en": "Physical detail",
+      "ru": "Примета"
+     }
+    },
+    {
+     "key": "inventory",
+     "type": "slots",
+     "title": {
+      "en": "Inventory",
+      "ru": "Инвентарь"
+     },
+     "slots": [
+      {
+       "title": {
+        "en": "Paws",
+        "ru": "Лапы"
+       },
+       "count": 2
+      },
+      {
+       "title": {
+        "en": "Body",
+        "ru": "Тело"
+       },
+       "count": 2
+      },
+      {
+       "title": {
+        "en": "Pack",
+        "ru": "Рюкзак"
+       },
+       "count": 6
+      }
+     ],
+     "hint": {
+      "en": "Usage dots: all three marked — depleted; a condition takes a slot too",
+      "ru": "Отметки износа: все три — вещь истрачена; состояние тоже занимает клетку"
+     }
+    },
+    {
+     "key": "grit",
+     "type": "tags",
+     "title": {
+      "en": "Grit",
+      "ru": "Стойкость"
+     },
+     "hint": {
+      "en": "Conditions placed here are ignored until cleared",
+      "ru": "Состояния здесь не действуют, пока их не снимут"
+     }
+    }
+   ]
+  },
+  {
+   "id": "notes",
+   "title": {
+    "en": "For the GM",
+    "ru": "Для мастера"
+   },
+   "kinds": [
+    "monster",
+    "npc"
+   ],
+   "fields": [
+    {
+     "key": "notes",
+     "type": "textarea",
+     "title": {
+      "en": "Notes",
+      "ru": "Заметки"
+     }
+    }
+   ]
+  }
+ ],
+ "tracker": {
+  "init": {
+   "type": "none"
+  },
+  "hp": "hp",
+  "cells": [
+   "str",
+   "dex",
+   "wil"
+  ],
+  "conditions": {
+   "list": [
+    {
+     "en": "Exhausted",
+     "ru": "Измотан"
+    },
+    {
+     "en": "Frightened",
+     "ru": "Напуган"
+    },
+    {
+     "en": "Hungry",
+     "ru": "Голоден"
+    },
+    {
+     "en": "Injured",
+     "ru": "Ранен"
+    },
+    {
+     "en": "Drained",
+     "ru": "Опустошён"
+    }
+   ],
+   "free": true
+  }
+ }
+}

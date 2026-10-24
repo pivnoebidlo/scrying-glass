@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { bestAttribute, extraFor, generateMouse, swap, type Mouse } from '../src/modules/tools/mouse/generate';
-import { mouseCard, mouseSlots, mouseView } from '../src/modules/tools/mouse/text';
+import { mouseCard, mouseSlots, mouseView, SLOT_COUNT } from '../src/modules/tools/mouse/text';
 import { TABLES } from '../src/modules/tools/mouse/tables';
 import { NAMES, WEAPONS } from '../src/modules/tools/mouse/content';
-import { isMaus, SLOT_COUNT } from '../src/systems/mausritter/stats';
 
 // Rolls in a fixed order (then 1 forever).
 const seq = (...values: number[]) => {
@@ -50,13 +49,12 @@ describe('mouse generator', () => {
   it('the card: heavy armour on the body, the background spell in the pack, a sheet the app reads', () => {
     // Test subject: Spell: Magic missile, Lead coat (Heavy armour); a sword in the main paw.
     const card = mouseCard(base, 'en');
-    expect(isMaus(card.stats)).toBe(true);
-    expect(card.stats.armour).toBe(1);
-    const slots = card.stats.sheet!.slots;
+    expect(card.stats).toMatchObject({ armour: 1, level: 1, background: expect.any(String) });
+    const slots = card.stats['inventory'] as { name: string }[];
     expect(slots).toHaveLength(SLOT_COUNT);
     expect(slots.slice(0, 4).map((x) => x.name)).toEqual(['Sword (d6/d8)', '', 'Lead coat (Heavy armour)', 'Lead coat (Heavy armour)']);
     expect(slots.slice(4).map((x) => x.name).filter(Boolean)).toEqual(['Torches', 'Rations', 'Spell: Magic missile']);
-    expect(card.stats.attacks).toEqual([{ dice: 'd6/d8', name: 'sword' }]);
+    expect(card.stats['attacks']).toEqual([{ dice: 'd6/d8', name: 'sword' }]);
   });
 
   it('a two-paw weapon fills both paws; a background weapon is an attack; a hireling goes to the notes', () => {
@@ -66,7 +64,7 @@ describe('mouse generator', () => {
     expect(slots[0]!.name).toBe('Копьё (к10)');
     expect(slots[1]!.name).toBe('Копьё (к10)');
     const card = mouseCard(m, 'en');
-    expect(card.stats.attacks.map((a) => a.dice)).toEqual(['d10', 'd6']);
+    expect((card.stats['attacks'] as { dice: string }[]).map((a) => a.dice)).toEqual(['d10', 'd6']);
     expect(card.notes).toBe('Hireling: Loyal beetle');
     expect(mouseView(m, 'ru').weak).toBe('one');
   });

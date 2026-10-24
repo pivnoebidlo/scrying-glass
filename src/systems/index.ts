@@ -5,8 +5,6 @@ import * as dnd5e from './dnd5e/stats';
 import * as character from './dnd5e/character';
 import type { TrackerDef } from './tracker';
 import { dndTracker } from './dnd5e/tracker';
-import { mausTracker } from './mausritter/tracker';
-import * as maus from './mausritter/stats';
 import { fitdTracker } from './fitd/tracker';
 import * as fitd from './fitd/stats';
 
@@ -37,18 +35,6 @@ const dnd = (id: string, title: string): SystemDef => ({
   tracker: dndTracker,
 });
 
-// Mausritter: one card for creatures and mice; a player mouse also has a sheet (inventory, level, pips).
-const mausritter: SystemDef = {
-  id: 'mausritter',
-  title: 'Mausritter',
-  family: 'mausritter',
-  subtitle: (s) => (maus.isMaus(s) ? maus.subtitle(s) : ''),
-  rank: (s) => (maus.isMaus(s) ? maus.rank(s) : null),
-  combat: (s) => (maus.isMaus(s) ? maus.combatStats(s) : { hp: null, ac: null, initiative: 0 }),
-  blank: (kind) => maus.blankStats(kind),
-  tracker: mausTracker,
-};
-
 // Forged in the Dark (the Blades in the Dark SRD): one card for scoundrels and NPCs; stress and harm in the tracker.
 const forged: SystemDef = {
   id: 'fitd',
@@ -61,12 +47,11 @@ const forged: SystemDef = {
   tracker: fitdTracker,
 };
 
-export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)'), mausritter, forged];
+export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)'), forged];
 
 // Семейства систем по порядку (для выбора системы приключения — группами).
 export const FAMILIES: { id: string; title: string }[] = [
   { id: 'dnd5e', title: 'D&D 5e' },
-  { id: 'mausritter', title: 'Mausritter' },
   { id: 'fitd', title: 'Forged in the Dark' },
 ];
 

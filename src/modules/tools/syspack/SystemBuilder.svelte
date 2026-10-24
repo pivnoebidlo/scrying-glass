@@ -92,7 +92,9 @@
       }
     }
     if (d.rank) d.rank = fix(d.rank);
-    if (d.subtitle) d.subtitle = d.subtitle.replaceAll(`{${from}}`, `{${to}}`);
+    const sub = (x: string) => x.replaceAll(`{${from}}`, `{${to}}`);
+    if (typeof d.subtitle === 'string') d.subtitle = sub(d.subtitle);
+    else if (d.subtitle) d.subtitle = Object.fromEntries(Object.entries(d.subtitle).map(([k, v]) => [k, sub(v)]));
     const tr = d.tracker;
     if (tr.hp === from) tr.hp = to;
     tr.cells = tr.cells?.map((k) => (k === from ? to : k));
@@ -190,7 +192,7 @@
           <p class="faint small">{t('sb.idHint')}</p>
           <label class="row"><span>{t('sb.author')}</span><input type="text" disabled={ro} value={d.author ?? ''} oninput={(e) => (d.author = e.currentTarget.value || undefined)} /></label>
           <label class="row"><span>{t('sb.license')}</span><textarea rows="3" disabled={ro} placeholder={t('sb.licensePh')} value={d.license ?? ''} oninput={(e) => (d.license = e.currentTarget.value || undefined)}></textarea></label>
-          <label class="row"><span>{t('sb.subtitle')}</span><input type="text" class="mono" disabled={ro} placeholder={t('sb.subtitleHint')} value={d.subtitle ?? ''} oninput={(e) => (d.subtitle = e.currentTarget.value || undefined)} /></label>
+          <label class="row"><span>{t('sb.subtitle')}</span><LocInput value={d.subtitle} set={(v) => (d.subtitle = v || undefined)} placeholder={t('sb.subtitleHint')} disabled={ro} /></label>
           <div class="row"><span>{t('sb.rank')}</span><FormulaInput value={d.rank ?? ''} set={(v) => (d.rank = v || undefined)} keys={allKeys} disabled={ro} /></div>
         {:else if builder.sel.kind === 'section' && d.sections[builder.sel.s]}
           {@const sec = d.sections[builder.sel.s]!}

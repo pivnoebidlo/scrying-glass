@@ -12,7 +12,38 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { Card, CardSource } from '../src/shared/cards';
-import type { MausAttack, MausStats } from '../src/systems/mausritter/stats';
+
+// The SRD stat block as this script reads it; a card gets it as the fields of the Mausritter system pack
+// (samples/systems/mausritter.json): hp, str, dex, wil, armour, warband (0 — warband scale), attacks (rows: name,
+// dice), critical, abilities (lines), wants.
+interface MausAttack {
+  dice: string;
+  name: string;
+}
+interface MausStats {
+  hp: number | null;
+  str: number | null;
+  dex: number | null;
+  wil: number | null;
+  armour: number;
+  attacks: MausAttack[];
+  critical: string;
+  abilities: string[];
+  wants: string;
+  warband?: boolean;
+}
+const toPack = (s: MausStats): Record<string, unknown> => ({
+  hp: s.hp,
+  str: s.str,
+  dex: s.dex,
+  wil: s.wil,
+  armour: s.armour,
+  ...(s.warband ? { warband: 0 } : {}),
+  attacks: s.attacks.map((a) => ({ name: a.name, dice: a.dice })),
+  critical: s.critical,
+  abilities: s.abilities.join('\n'),
+  wants: s.wants,
+});
 
 const RES = path.resolve(import.meta.dirname, '../resources');
 const source = (lang: string) => path.resolve(import.meta.dirname, `mausritter-srd.${lang}.md`);
@@ -239,7 +270,7 @@ en.entries.forEach((e, i) => {
 });
 
 const id = (name: string) => `maus-${name.toLowerCase().replace(/[^a-z]+/g, '-')}`;
-const card = (lang: string, c: ReturnType<typeof creature>, cid: string, stats: MausStats, origin?: string): Card<MausStats> => ({
+const card = (lang: string, c: ReturnType<typeof creature>, cid: string, stats: MausStats, origin?: string): Card<Record<string, unknown>> => ({
   format: 1,
   id: cid,
   kind: 'monster',
@@ -253,9 +284,9 @@ const card = (lang: string, c: ReturnType<typeof creature>, cid: string, stats: 
   ...(c.description ? { description: c.description } : {}),
   side: 'enemy',
   notes: '',
-  stats,
+  stats: toPack(stats),
 });
-const cards: Card<MausStats>[] = [];
+const cards: Card<Record<string, unknown>>[] = [];
 en.creatures.forEach((c, i) => {
   const r = ru.creatures[i]!;
   const base = id(c.name);

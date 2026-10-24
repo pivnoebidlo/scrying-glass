@@ -7,61 +7,53 @@ import type { Combatant, InitiativeState } from '../src/modules/initiative/types
 import { rollSave } from '../src/shared/dice';
 import { familyOf, systemOf } from '../src/systems';
 import { fromFields } from '../src/systems/tracker';
-import { mausTracker, ORDER } from '../src/systems/mausritter/tracker';
-import { blankStats, parseAttacks, encumbered, gritFor, isMaus, levelFor, parseStatBlock, SLOT_COUNT, statLine, xpFor } from '../src/systems/mausritter/stats';
+import { blankStats, fieldMap, rollPack, sectionsFor, slotGroups, validatePack, type SystemPack } from '../src/shared/syspack';
+import { registerPacks } from '../src/systems/packs';
+import { die } from '../src/shared/dice';
 import { run } from './helpers';
+
+// Mausritter is a system pack now (samples/systems/mausritter.json, published in the Community).
+const pack = validatePack(JSON.parse(readFileSync('samples/systems/mausritter.json', 'utf8'))) as SystemPack;
+registerPacks([pack]);
+const sys = () => systemOf('mausritter');
 
 const S0 = initiative.initialState;
 const act = (s: InitiativeState, a: string, p?: unknown) => run(initiative, s, a, p);
 const only = (s: InitiativeState) => s.combatants[0]!;
 
-const CROW = `12hp, STR 12, DEX 15, WIL 15, Armour 1
-Attacks: d8 peck
-Flies 3x normal speed, knows two songs`;
+type Stats = Record<string, unknown> & { attacks: { name: string; dice: string }[] };
+const all = JSON.parse(readFileSync('resources/srd/mausritter.json', 'utf8')) as { id: string; name: string; lang: string; system: string; stats: Stats; origin?: { id: string } }[];
+const CROW = all.find((c) => c.id === 'maus-crow')!.stats;
 
 describe('Mausritter: card', () => {
-  it('parses an SRD stat block', () => {
-    const s = parseStatBlock(CROW);
-    expect(s).toMatchObject({ hp: 12, str: 12, dex: 15, wil: 15, armour: 1, attacks: [{ dice: 'd8', name: 'peck' }] });
-    expect(s.abilities).toEqual(['Flies 3x normal speed, knows two songs']);
-    expect(statLine(s)).toBe('12 HP, STR 12, DEX 15, WIL 15, Armour 1');
-  });
-
-  it('warband scale, several attacks, critical damage', () => {
-    const cat = parseStatBlock('**Warband scale**  \n15hp, STR 15, DEX 15, WIL 10, Armour 1  \nAttacks: d6 swipe, d8 bite');
-    expect(cat.warband).toBe(true);
-    expect(cat.attacks.map((a) => a.dice)).toEqual(['d6', 'd8']);
-    const centipede = parseStatBlock('8hp, STR 10, DEX 12, WIL 8, Armour 1\nAttacks: d6 venomous bite (damages DEX instead of STR)\nCritical damage: Venom takes effect, d12 damage to STR');
-    expect(centipede.attacks[0]!.name).toBe('venomous bite (damages DEX instead of STR)');
-    expect(centipede.critical).toBe('Venom takes effect, d12 damage to STR');
-  });
-
-  it('a player mouse has a sheet with ten slots; more — encumbered', () => {
-    const s = blankStats('character');
-    expect(isMaus(s)).toBe(true);
-    expect(s.sheet!.slots).toHaveLength(SLOT_COUNT);
-    expect(encumbered(s.sheet!)).toBe(false);
-    s.sheet!.slots.push({ name: 'Exhausted', condition: true });
-    expect(encumbered(s.sheet!)).toBe(true);
-    expect(blankStats('monster').sheet).toBeUndefined();
-  });
-
-  it('levels: XP, Grit', () => {
-    expect([1, 2, 3, 4, 5, 6].map(xpFor)).toEqual([0, 1000, 3000, 6000, 11000, 16000]);
-    expect([0, 999, 1000, 5999, 6000, 11000].map(levelFor)).toEqual([1, 1, 2, 3, 4, 5]);
-    expect([1, 2, 3, 4, 7].map(gritFor)).toEqual([0, 1, 2, 2, 3]);
-  });
-
-  it('the system: family, combat numbers from the card', () => {
-    const sys = systemOf('mausritter');
+  it('the pack: family, saves under the attribute, damage from the attack row', () => {
     expect(familyOf('mausritter')).toBe('mausritter');
-    const combat = sys.combat(parseStatBlock(CROW));
-    expect(combat).toMatchObject({ hp: 12, ac: 1, initiative: 15 });
-    expect(mausTracker.fromCard(combat).attrs).toEqual([
+    expect(fieldMap(pack).get('str')!.roll).toEqual({ type: 'under', sides: 20, target: 'str' });
+    const hit = fieldMap(pack).get('attacks')!.roll!;
+    const r = rollPack(hit, () => 0, 'en', { success: '', failure: '', successes: () => '', critical: '' }, die, 'normal', { name: 'peck', dice: 'd8' });
+    expect(r.note).toBe('1d8');
+    expect(r.total).toBeGreaterThanOrEqual(1);
+    expect(r.total).toBeLessThanOrEqual(8);
+  });
+
+  it('a player mouse has the sheet: ten slots in paws, body and pack; a creature has none', () => {
+    const inv = fieldMap(pack).get('inventory')!;
+    expect(slotGroups(inv, []).map((g) => g.cells.length)).toEqual([2, 2, 6]);
+    expect(sectionsFor(pack, 'character').map((x) => x.id)).toContain('mouse');
+    expect(sectionsFor(pack, 'monster').map((x) => x.id)).not.toContain('mouse');
+    expect(blankStats(pack, 'character')).toMatchObject({ level: 1, str: 10, inventory: [] });
+  });
+
+  it('combat numbers from the card: HP, STR, DEX, WIL; the line under the name — the stat line', () => {
+    const combat = sys().combat(CROW);
+    expect(combat).toMatchObject({ hp: 12 });
+    expect(sys().tracker.fromCard(combat).attrs).toEqual([
       { id: 'str', value: 12, max: 12 },
       { id: 'dex', value: 15, max: 15 },
       { id: 'wil', value: 15, max: 15 },
     ]);
+    expect(sys().subtitle(CROW, 'en')).toBe('12 HP · STR 12 · DEX 15 · WIL 15');
+    expect(sys().subtitle(CROW, 'ru')).toBe('Защ. 12 · СИЛ 12 · ЛОВ 15 · ВОЛ 15');
   });
 });
 
@@ -78,7 +70,7 @@ describe('Mausritter: saves', () => {
 });
 
 describe('Mausritter: tracker', () => {
-  const crow = () => act(S0, 'add', { c: { name: 'Crow', ...mausTracker.fromCard(systemOf('mausritter').combat(parseStatBlock(CROW))) } });
+  const crow = () => act(S0, 'add', { c: { name: 'Crow', ...sys().tracker.fromCard(sys().combat(CROW)) } });
 
   it('damage past HP goes to STR; STR 0 — out', () => {
     let s = crow();
@@ -109,13 +101,11 @@ describe('Mausritter: tracker', () => {
     expect(refreshed(only(s)).attrs![2]!.value).toBe(15);
   });
 
-  it('fields: attributes and DEX as the tie-break; the opponents get the middle order', () => {
-    const numbers = fromFields(mausTracker.fields, { hp: 4, dex: 13 });
-    expect(numbers).toMatchObject({ maxHp: 4, hp: 4, bonus: 13 });
-    expect(numbers.attrs!.map((a) => [a.id, a.max])).toEqual([['str', 10], ['dex', 13], ['wil', 10]]);
-    expect(mausTracker.roll.value(13)).toBe(ORDER.foes);
-    const s = act(crow(), 'rollNpcs', { system: 'mausritter' });
-    expect(only(s).init).toBe(1);
+  it('fields: HP and the attributes; no initiative roll (mice act before or after the opponents by a DEX save)', () => {
+    const numbers = fromFields(sys().tracker.fields, { hp: 4, str: 8, dex: 13, wil: 9 });
+    expect(numbers).toMatchObject({ maxHp: 4, hp: 4 });
+    expect(numbers.attrs!.map((a) => [a.id, a.max])).toEqual([['str', 8], ['dex', 13], ['wil', 9]]);
+    expect(sys().tracker.roll.none).toBe(true);
   });
 
   it('D&D combatants are not affected', () => {
@@ -128,7 +118,6 @@ describe('Mausritter: tracker', () => {
 });
 
 describe('Mausritter: built-in content', () => {
-  const all = JSON.parse(readFileSync('resources/srd/mausritter.json', 'utf8')) as { id: string; name: string; lang: string; system: string; stats: unknown; origin?: { id: string } }[];
   const cards = all.filter((c) => c.lang === 'en');
   const book = JSON.parse(readFileSync('resources/compendium/mausritter.en.json', 'utf8')) as BuiltinBook;
   const ruBook = JSON.parse(readFileSync('resources/compendium/mausritter.ru.json', 'utf8')) as BuiltinBook;
@@ -137,9 +126,9 @@ describe('Mausritter: built-in content', () => {
     const ru = all.filter((c) => c.lang === 'ru');
     expect(ru).toHaveLength(11);
     for (const r of ru) {
-      const orig = cards.find((c) => c.id === r.origin?.id)!;
-      const [a, b] = [r.stats, orig.stats] as ReturnType<typeof parseStatBlock>[];
-      expect([a!.hp, a!.str, a!.dex, a!.wil, a!.armour, a!.attacks.map((x) => x.dice)]).toEqual([b!.hp, b!.str, b!.dex, b!.wil, b!.armour, b!.attacks.map((x) => x.dice)]);
+      const [a, b] = [r.stats, cards.find((c) => c.id === r.origin?.id)!.stats];
+      const nums = (x: Stats) => [x['hp'], x['str'], x['dex'], x['wil'], x['armour'], x.attacks.map((y) => y.dice)];
+      expect(nums(a)).toEqual(nums(b));
     }
     expect(ru.find((c) => c.id === 'maus-owl.ru')!.name).toBe('Сова');
     expect(ruBook.entries).toHaveLength(book.entries.length);
@@ -147,14 +136,16 @@ describe('Mausritter: built-in content', () => {
     expect(ruBook.entries.filter((e) => e.type === 'mspell').map((e) => e.title)).toContain('Огненный шар');
   });
 
-  it('eleven creatures, each a Mausritter stat block the app reads', () => {
+  it('eleven creatures, each with the fields of the Mausritter pack', () => {
     expect(cards.map((c) => c.name)).toEqual(['Cat', 'Centipede', 'Crow', 'Faerie', 'Frog', 'Ghost', 'Mouse', 'Owl', 'Rat', 'Snake', 'Spider']);
-    for (const c of cards) {
+    const keys = fieldMap(pack);
+    for (const c of all) {
       expect(c.system).toBe('mausritter');
-      expect(isMaus(c.stats)).toBe(true);
+      for (const k of Object.keys(c.stats)) expect(keys.has(k), `${c.name}: ${k}`).toBe(true);
     }
-    const ghost = cards.find((c) => c.name === 'Ghost')!.stats as ReturnType<typeof parseStatBlock>;
-    expect(ghost.attacks).toEqual([{ dice: '', name: 'ghostly power' }, { dice: 'd8', name: 'chilling touch (damages WIL)' }]);
+    const ghost = cards.find((c) => c.name === 'Ghost')!.stats;
+    expect(ghost.attacks).toEqual([{ name: 'ghostly power', dice: '' }, { name: 'chilling touch (damages WIL)', dice: 'd8' }]);
+    expect(cards.find((c) => c.name === 'Cat')!.stats['warband']).toBe(0);
   });
 
   it('the book: spells with their recharge, links lead to entries or creatures, no licence chapter', () => {
@@ -165,9 +156,5 @@ describe('Mausritter: built-in content', () => {
     for (const e of book.entries) for (const m of e.body.matchAll(/\[\[([^\]|#]+)/g)) expect(names.has(m[1]!.toLowerCase())).toBe(true);
     expect(book.entries.some((e) => /Terms of use|Third Party/i.test(e.title))).toBe(false);
     expect(book.entries.some((e) => e.title === 'Conditions')).toBe(true);
-  });
-
-  it('the app parses attacks like the build script', () => {
-    expect(parseAttacks('d10 spear or d6 tongue').map((a) => a.dice)).toEqual(['d10', 'd6']);
   });
 });

@@ -8,10 +8,6 @@ import CharacterEditor from './dnd5e/CharacterEditor.svelte';
 import { isCharacter } from './dnd5e/character';
 import GenericStats from './GenericStats.svelte';
 import GenericEditor from './GenericEditor.svelte';
-import MausSheet from './mausritter/Sheet.svelte';
-import MausEditor from './mausritter/Editor.svelte';
-import MausTrackerCells from './mausritter/TrackerCells.svelte';
-import { isMaus } from './mausritter/stats';
 import FitdSheet from './fitd/Sheet.svelte';
 import FitdEditor from './fitd/Editor.svelte';
 import FitdTrackerCells from './fitd/TrackerCells.svelte';
@@ -33,20 +29,18 @@ type StatsEditor = Component<{ stats: any; system: string; lang?: string; kind?:
 const views: Record<string, StatsView> = {
   'dnd5e-2014': Dnd5eStatBlock,
   'dnd5e-2024': Dnd5eStatBlock,
-  mausritter: MausSheet,
   fitd: FitdSheet,
 };
 
 const editors: Record<string, StatsEditor> = {
   'dnd5e-2014': Dnd5eEditor,
   'dnd5e-2024': Dnd5eEditor,
-  mausritter: MausEditor,
   fitd: FitdEditor,
 };
 
 // stats нужен, чтобы отличить лист персонажа игрока от статблока.
 // Карточка Fate (Mausritter) с чужим блоком stats (например, старая «поле — значение») — общий вид, чтобы ничего не потерять.
-const guards: Record<string, (stats: unknown) => boolean> = { mausritter: isMaus, fitd: isFitd };
+const guards: Record<string, (stats: unknown) => boolean> = { fitd: isFitd };
 const fits = (system: string, stats: unknown) => stats === undefined || (guards[system]?.(stats) ?? true);
 // A system described by a pack: its own generic view and editor (stats of another shape too — the editor starts
 // from the pack's blank values).
@@ -57,6 +51,6 @@ export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
 
 // Ячейки строки участника в трекере инициативы (хиты и КД, стресс и последствия): по семейству системы.
 type TrackerCells = Component<{ c?: Combatant; head?: boolean }>;
-const trackers: Record<string, TrackerCells> = { mausritter: MausTrackerCells, fitd: FitdTrackerCells };
+const trackers: Record<string, TrackerCells> = { fitd: FitdTrackerCells };
 export const trackerCells = (system: string): TrackerCells =>
   isPackFamily(familyOf(system)) ? PackTrackerCells : (trackers[familyOf(system)] ?? DndTrackerCells);

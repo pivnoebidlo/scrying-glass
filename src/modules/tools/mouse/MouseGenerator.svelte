@@ -6,7 +6,7 @@
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { store } from '../../../renderer/lib/store.svelte';
-  import { ATTR_SHORT, ATTR_TITLES } from '../../../systems/mausritter/stats';
+  import { ATTR_SHORT, ATTR_TITLES } from './text';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import { journalFolder } from '../../journal/ui/store.svelte';
   import { openPage } from '../../journal/ui/ui.svelte';
