@@ -11,13 +11,13 @@
   import { enabledSystems, systems } from '../../../systems';
   import { LANGS } from '../../../shared/i18n/core';
   import { matchesQuery, shortKey } from '../../../shared/repo';
-  import { adminRemove, allFound, unblock, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
+  import { adminRemove, allFound, unblock, updatesHere, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
 
   let query = $state('');
   let source = $state('');
   let system = $state('');
   let lang = $state('');
-  let show = $state<'all' | 'installed' | 'mine' | 'reported' | 'blocked'>('all');
+  let show = $state<'all' | 'updates' | 'installed' | 'mine' | 'reported' | 'blocked'>(repo.startShow);
   let chosen = $state<string | null>(null);
 
   const app = $derived(store.state);
@@ -37,6 +37,7 @@
   );
 
   const found = $derived(repo.info ? allFound() : []);
+  const updates = $derived(repo.info ? updatesHere().map((u) => key(u.entry)) : []);
   const entries = $derived(
     found
       // Adventures of systems turned off are nowhere to be seen (but the GM's own are).
@@ -46,6 +47,7 @@
       .filter((e) => !lang || e.lang === lang)
       .filter((e) => show !== 'mine' || e.author === me)
       .filter((e) => show !== 'installed' || installedFolder(e) !== null)
+      .filter((e) => show !== 'updates' || updates.includes(key(e)))
       .filter((e) => show !== 'reported' || reportsOf(e).length > 0)
       .filter((e) => matchesQuery(e, query))
       .sort((a, b) => b.updated - a.updated),
@@ -110,6 +112,9 @@
       </select>
       <div class="seg">
         <button class:on={show === 'all'} onclick={() => (show = 'all')}>{t('repo.showAll')}</button>
+        {#if updates.length || show === 'updates'}
+          <button class:on={show === 'updates'} onclick={() => (show = 'updates')}>{t('repo.showUpdates', { count: updates.length })}</button>
+        {/if}
         <button class:on={show === 'installed'} onclick={() => (show = 'installed')}>{t('repo.showInstalled')}</button>
         <button class:on={show === 'mine'} onclick={() => (show = 'mine')}>{t('repo.showMine')}</button>
         {#if admin}

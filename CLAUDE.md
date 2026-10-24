@@ -511,7 +511,8 @@ Electron-приложение для мастера D&D: окно управле
   `server/` (Node 24 без зависимостей, type stripping: в коде сервера — без параметров-свойств и enum, импорты с `.ts`;
   `s3.ts` — свой SigV4 и presigned-ссылки, `repo.ts` — каталог `catalog.json` в бакете, версии, `http.ts` — API v1,
   подпись Ed25519 `x-sg-key` / `x-sg-sig` по `signedText`; Dockerfile из корня, Helm-чарт `server/chart`, образ —
-  `.github/workflows/repo-image.yml`, тег `repo-v<версия>`). Автор = открытый ключ, запись = автор + id; одна реплика.
+  `.github/workflows/repo-image.yml`, тег `repo-v<версия>`). Автор = открытый ключ, запись = автор + id; одна реплика; в бакете — только текущая версия (`currentFiles`; старые
+  версии чистит `load`), брошенные загрузки — `sweep` (раз в минуту, через 3 часа).
   Приложение: `main/repo.ts` (источники — официальный `OFFICIAL_SOURCE` (`DEFAULT_REPO_URL`, можно только выключить —
   `officialOff`) и свои репозитории `settings.repo.sources` (`addSource` проверяет каталог по адресу; у источника `kind` —
   пока только 'repo', дальше — облачные диски); каждый вызов называет источник; ключ в `settings.repo`, закрытая часть
@@ -527,7 +528,9 @@ Electron-приложение для мастера D&D: окно управле
   записи в `catalog.json`, наружу не отдаются, переживают новую версию), администратор — `admin/reports`, `admin/remove`,
   `admin/dismiss`, `admin/blocked` / `admin/unblock` (снять блокировку; файлы снятого не возвращаются); в приложении — токен администратора у источника (`settings.repo.admin`, `safeStorage`; `setAdmin`
   проверяет его вызовом `admin/reports`), окно жалобы `ReportDialog.svelte`, в каталоге — фильтры «Жалобы», «Заблокированные» (`unblock`) и блок
-  «Администратор» (`isAdmin`, `reportsOf`, `adminRemove`, `dismiss`). Версия сервиса — `appVersion` чарта (тег `repo-v…`). Пакет из чужих рук: `validManifest` (название — одна часть пути), пути портретов
+  «Администратор» (`isAdmin`, `reportsOf`, `adminRemove`, `dismiss`). Обновления скачанного — при запуске (`checkUpdates` через 6 с, плашка
+  `UpdatesNotice.svelte`, о версии — один раз: localStorage `sg.repo.announced`; выключить — `sg.repo.checkUpdates`),
+  фильтр «Обновления» каталога (`updatesHere`). Версия сервиса — `appVersion` чарта (тег `repo-v…`). Пакет из чужих рук: `validManifest` (название — одна часть пути), пути портретов
   карточек — `safeEntry`. Локально: S3 — `chrislusf/seaweedfs server -s3` в Docker (образы MinIO с Docker Hub
   недоступны), сервис — `node server/src/main.ts`.
 - Справочник (`modules/compendium`, без состояния): запись — Markdown с YAML-шапкой (`shared/compendium.ts`: свой

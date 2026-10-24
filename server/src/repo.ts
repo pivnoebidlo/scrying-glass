@@ -44,6 +44,11 @@ const CATALOG = 'catalog.json';
 
 // The cover in use: the newest picture among the entry's files.
 const coverFile = (e: Stored) => (e.cover ? e.files.filter((f) => f.key.endsWith('.jpg')).sort((a, b) => b.version - a.version)[0]?.key : undefined);
+// What stays in the bucket: the current version's pack and the cover in use (the disk is not endless).
+const currentFiles = (e: Stored) => {
+  const cover = coverFile(e);
+  return e.files.filter((f) => (f.version === e.version && f.key.endsWith('.sgpack')) || f.key === cover);
+};
 const LINK_SECONDS = 3600;
 // Complaints kept per entry (the newest).
 const MAX_REPORTS = 50;
@@ -67,6 +72,15 @@ export class Repo {
   async load() {
     const raw = await this.store.get(CATALOG);
     this.entries = raw ? ((JSON.parse(new TextDecoder().decode(raw)) as { entries?: Stored[] }).entries ?? []) : [];
+    // Before 0.4 the version before the current one stayed in the bucket: only the current one is kept now.
+    let old = false;
+    for (const e of this.entries) {
+      const keep = currentFiles(e);
+      for (const f of e.files) if (!keep.includes(f)) await this.store.del(f.key).catch(() => undefined);
+      old ||= keep.length !== e.files.length;
+      e.files = keep;
+    }
+    if (old) await this.save();
   }
 
   // Changes of the catalog go one by one; each ends with the catalog written.
@@ -105,7 +119,6 @@ export class Repo {
     if (old?.blocked) throw new RepoError(403, 'blocked');
     if (req.size > this.opts.maxSize) throw new RepoError(413, 'too-big');
     if (!old && this.entries.filter((e) => e.author === author).length >= this.opts.maxPerAuthor) throw new RepoError(429, 'too-many');
-    this.prune();
     // A version number nobody has taken: the catalog's and the ones being uploaded right now.
     const taken = [old?.version ?? 0, ...[...this.pending.values()].filter((p) => p.author === author && p.req.id === req.id).map((p) => p.version)];
     const version = Math.max(...taken) + 1;
@@ -121,17 +134,24 @@ export class Repo {
     };
   }
 
-  private prune() {
+  // Uploads never committed: their files go (unless an entry uses them), then the upload is forgotten — not before,
+  // so that its version number isn't given out again while the files are still there.
+  async sweep() {
     const now = this.now();
-    for (const [k, p] of this.pending) if (p.expires < now) this.pending.delete(k);
+    const used = new Set(this.entries.flatMap((e) => e.files.map((f) => f.key)));
+    for (const [k, p] of this.pending) {
+      if (p.expires >= now) continue;
+      for (const key of [p.pack, p.cover]) if (key && !used.has(key)) await this.store.del(key).catch(() => undefined);
+      this.pending.delete(k);
+    }
   }
 
-  // The files are in the bucket: check them and put the version into the catalog. The version before stays a while
-  // (someone may be downloading it right now), older ones go.
+  // The files are in the bucket: check them and put the version into the catalog. Only this version stays (and the
+  // cover in use): nobody can download older ones anyway.
   commit(author: string, upload: string): Promise<RepoEntry> {
     return this.change(async () => {
       const p = this.pending.get(upload);
-      if (!p || p.author !== author) throw new RepoError(404, 'no-upload');
+      if (!p || p.author !== author || p.expires < this.now()) throw new RepoError(404, 'no-upload');
       const pack = await this.store.head(p.pack);
       if (!pack) throw new RepoError(409, 'not-uploaded');
       if (pack.size > this.opts.maxSize) {
@@ -152,7 +172,7 @@ export class Repo {
       const now = this.now();
       const { ts: _ts, size: _size, cover: _cover, ...meta } = p.req;
       const files = [{ version: p.version, key: p.pack }, ...(coverKey === p.cover && coverKey ? [{ version: p.version, key: coverKey }] : []), ...(old?.files ?? [])];
-      const keep = files.filter((f) => f.version >= p.version - 1 || f.key === coverKey);
+      const keep = files.filter((f) => (f.version === p.version && f.key === p.pack) || f.key === coverKey);
       const cover = !!coverKey;
       for (const f of files) if (!keep.includes(f)) await this.store.del(f.key).catch(() => undefined);
       const entry: Stored = {

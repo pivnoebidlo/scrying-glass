@@ -18,8 +18,11 @@ export const repo = $state({
   blocked: {} as Record<string, BlockedEntry[]>,
   // The complaint dialog: about which entry.
   reporting: null as Found | null,
-  // The catalog window is open.
+  // The catalog window is open; the filter it opens with.
   browsing: false,
+  startShow: 'all' as 'all' | 'updates',
+  // New versions of what this vault downloaded, found on launch and not announced yet.
+  updates: [] as { folder: string; entry: Found }[],
   covers: {} as Record<string, string | null>,
   // What is going on and how far (null — nothing).
   busy: null as { what: string; progress: RepoProgress | null } | null,
@@ -112,10 +115,45 @@ async function work<T>(what: string, fn: () => Promise<T>): Promise<T | undefine
   }
 }
 
-// Open the catalog window.
-export function openRepo() {
+// Open the catalog window (on the updates of what was downloaded — after the launch notice).
+export function openRepo(show: 'all' | 'updates' = 'all') {
+  repo.startShow = show;
   repo.browsing = true;
   void loadCatalogs();
+}
+
+// The downloaded adventures that have a newer version in their source, by folder.
+export function updatesHere(): { folder: string; entry: Found }[] {
+  const found = allFound();
+  return Object.entries(store.state.repo.installed)
+    .filter(([folder]) => store.state.adventures.list.includes(folder))
+    .flatMap(([folder, m]) => {
+      const entry = found.find((e) => e.source === sourceOf(m) && e.author === m.author && e.id === m.id && e.version > m.version);
+      return entry ? [{ folder, entry }] : [];
+    });
+}
+
+// On launch (if the GM didn't turn it off): what has a new version since the last time it was told. A version is
+// announced once (the window remembers which, localStorage); things other than adventures will join this list.
+const CHECK = 'sg.repo.checkUpdates';
+const ANNOUNCED = 'sg.repo.announced';
+const stamp = (u: { entry: Found }) => `${u.entry.source}/${u.entry.author}/${u.entry.id}/${u.entry.version}`;
+export const checkOnLaunch = () => localStorage.getItem(CHECK) !== 'off';
+export const setCheckOnLaunch = (on: boolean) => localStorage.setItem(CHECK, on ? 'on' : 'off');
+
+export async function checkUpdates() {
+  if (!checkOnLaunch() || !Object.keys(store.state.repo.installed).length) return;
+  await loadCatalogs();
+  const told = new Set<string>(JSON.parse(localStorage.getItem(ANNOUNCED) ?? '[]'));
+  repo.updates = updatesHere().filter((u) => !told.has(stamp(u)));
+}
+
+// The notice is seen (closed or followed): these versions aren't announced again.
+export function updatesSeen() {
+  const told = new Set<string>(JSON.parse(localStorage.getItem(ANNOUNCED) ?? '[]'));
+  for (const u of repo.updates) told.add(stamp(u));
+  localStorage.setItem(ANNOUNCED, JSON.stringify([...told].slice(-500)));
+  repo.updates = [];
 }
 
 export async function publish(p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string }) {

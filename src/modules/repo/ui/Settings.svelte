@@ -8,7 +8,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { closeSettings } from '../../../renderer/lib/nav';
   import { shortKey, type SourceInfo } from '../../../shared/repo';
-  import { errorText, loadInfo, openRepo, repo, sourceName } from './repo.svelte';
+  import { checkOnLaunch, errorText, loadInfo, openRepo, repo, setCheckOnLaunch, sourceName } from './repo.svelte';
 
   // Standard module props; nothing here uses them.
   let {}: ModuleProps<'repo'> = $props();
@@ -83,6 +83,14 @@
   </div>
   <button class="btn primary" onclick={browse}><Globe size={14} /> {t('repo.set.browseBtn')}</button>
 </div>
+
+<label class="setting">
+  <div class="info">
+    <div class="name">{t('repo.set.checkUpdates')}</div>
+    <div class="desc">{t('repo.set.checkUpdatesAbout')}</div>
+  </div>
+  <input type="checkbox" checked={checkOnLaunch()} onchange={(e) => setCheckOnLaunch(e.currentTarget.checked)} />
+</label>
 
 <h4>{t('repo.set.sources')}</h4>
 {#each repo.info?.sources ?? [] as s (s.id)}

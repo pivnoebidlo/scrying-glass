@@ -11,8 +11,8 @@ presigned links, so the service itself carries no big traffic.
 - **Authors** are key pairs (Ed25519) the app makes on the first publish. Every write request is signed; the public
   key is the author's id. No accounts, no passwords.
 - **An adventure in the repository** is «author + adventure id». The same adventure published by two authors is
-  two entries. A new version from the same author replaces the old one; the version before stays a while (someone
-  may be downloading it), older ones are deleted.
+  two entries. A new version from the same author replaces the old one: only the current version stays in the
+  bucket (and the cover in use); uploads never committed are deleted after three hours.
 - **The catalog** is one JSON file in the bucket (`<prefix>catalog.json`), kept in memory by the service, so it runs
   as **exactly one replica**.
 - **Files** are at `<prefix>packs/<author>/<id>/<version>.sgpack` (and `.jpg` covers). The bucket stays private:

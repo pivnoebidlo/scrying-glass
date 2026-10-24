@@ -39,7 +39,7 @@ const server = createServer(handler(repo, {
 const port = num('PORT', 8080);
 server.listen(port, () => log(`listening on ${port}, ${repo.catalog().entries.length} adventures`));
 
-const timer = setInterval(() => void repo.flush().catch((e) => log(`flush: ${e}`)), 60_000);
+const timer = setInterval(() => void repo.sweep().then(() => repo.flush()).catch((e) => log(`flush: ${e}`)), 60_000);
 async function stop() {
   clearInterval(timer);
   server.close();

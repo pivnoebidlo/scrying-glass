@@ -123,15 +123,15 @@ describe('repository service', () => {
   });
   afterAll(() => server.close());
 
-  it('publishes, and a new version replaces the old one; the version before stays a while', async () => {
+  it('publishes, and a new version replaces the old one; only the current version stays in the bucket', async () => {
     const v1 = await publish(100, me, { cover: 100 });
     expect(v1.body).toMatchObject({ version: 1, size: 100, cover: true, author: me.x, downloads: 0 });
     await publish(200);
     const v3 = await publish(300);
     expect(v3.body).toMatchObject({ version: 3, size: 300, cover: true });
     const keys = [...bucket.files.keys()].filter((k) => k.startsWith('packs/')).sort();
-    // Versions 2 and 3 of the pack and the cover of version 1 (no new cover since).
-    expect(keys).toEqual([`packs/${me.x}/mine-adventure/1.jpg`, `packs/${me.x}/mine-adventure/2.sgpack`, `packs/${me.x}/mine-adventure/3.sgpack`]);
+    // Version 3 of the pack and the cover of version 1 (no new cover since).
+    expect(keys).toEqual([`packs/${me.x}/mine-adventure/1.jpg`, `packs/${me.x}/mine-adventure/3.sgpack`]);
     const c = await catalog();
     expect(c.entries).toHaveLength(1);
     expect(c.entries[0]).not.toHaveProperty('files');
@@ -210,11 +210,41 @@ describe('repository service', () => {
     expect((await call('/api/v1/publish', { ...meta, size: 10 }, other)).status).toBe(200);
   });
 
+  it('uploads never committed are swept away with their files, but not before they expire', async () => {
+    const t = await call<PublishTicket>('/api/v1/publish', { ...meta, id: 'abandoned-one', size: 10 });
+    bucket.upload(t.body.pack, 10);
+    const key = t.body.pack.replace('mem://PUT/', '');
+    await repo.sweep();
+    expect(bucket.files.has(key)).toBe(true);
+    now += 4 * 3600 * 1000;
+    expect((await call('/api/v1/commit', { upload: t.body.upload })).body).toEqual({ error: 'no-upload' });
+    await repo.sweep();
+    expect(bucket.files.has(key)).toBe(false);
+    // The files of the catalog stay.
+    const v = (await catalog()).entries.find((e) => e.author === me.x)!.version;
+    expect(bucket.files.has(`packs/${me.x}/mine-adventure/${v}.sgpack`)).toBe(true);
+  });
+
   it('keeps the catalog in the bucket', async () => {
     await repo.flush();
     const copy = new Repo(bucket, { maxSize: 1000, maxPerAuthor: 2 });
     await copy.load();
     expect(copy.catalog().entries).toEqual((await catalog()).entries);
+  });
+});
+
+describe('a bucket of an older service', () => {
+  it('loses the versions before the current one on start', async () => {
+    const bucket = new MemoryBucket();
+    const e = { author: 'a'.repeat(43), authorName: '', id: 'old-adventure', title: 'Old', description: '', system: 'dnd5e-2024', lang: 'en', version: 3, size: 1, music: false, app: 't', cover: true, published: 1, updated: 1, downloads: 0 };
+    const files = [1, 2, 3].map((v) => ({ version: v, key: `packs/x/${v}.sgpack` })).concat([{ version: 1, key: 'packs/x/1.jpg' }]);
+    for (const f of files) await bucket.put(f.key, new Uint8Array(1));
+    await bucket.put('catalog.json', new TextEncoder().encode(JSON.stringify({ api: 1, entries: [{ ...e, files }] })));
+    const repo = new Repo(bucket, { maxSize: 1000, maxPerAuthor: 2 });
+    await repo.load();
+    expect([...bucket.files.keys()].filter((k) => k.startsWith('packs/')).sort()).toEqual(['packs/x/1.jpg', 'packs/x/3.sgpack']);
+    const saved = JSON.parse(new TextDecoder().decode(bucket.files.get('catalog.json')!)) as { entries: { files: unknown[] }[] };
+    expect(saved.entries[0]!.files).toHaveLength(2);
   });
 });
 
