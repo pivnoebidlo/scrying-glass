@@ -2,7 +2,8 @@
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
-  import { Download, FilePlus, Plus, Search, Upload, Wand2 } from '@lucide/svelte';
+  import { CloudUpload, Download, FilePlus, Globe, Plus, Search, Upload, Wand2 } from '@lucide/svelte';
+  import { openRepo, repo } from '../../repo/ui/repo.svelte';
   import { reshapeNew } from '../../tools/reshape/store.svelte';
   import { langName, sameRef } from '../../../shared/cards';
   import { familyOf, isDnd, isEnabled, systems } from '../../../systems';
@@ -94,6 +95,9 @@
           <div class="sep"></div>
           <button onclick={importCards}><Download size={14} /> {t('best.importFile')}</button>
           <button onclick={exportCards}><Upload size={14} /> {t('best.exportFile')}</button>
+          <div class="sep"></div>
+          <button onclick={() => ((menu = false), (repo.publishBestiary = true))}><CloudUpload size={14} /> {t('repo.publishBestiary')}</button>
+          <button onclick={() => ((menu = false), openRepo('all', 'bestiaries'))}><Globe size={14} /> {t('repo.findBestiaries')}</button>
         </div>
       {/if}
     </div>

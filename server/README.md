@@ -22,7 +22,7 @@ presigned links, so the service itself carries no big traffic.
 
 | Request | |
 |---|---|
-| `GET /api/v1/catalog` | the catalog of adventures; `?kinds=all` — with system packs (`kind: "system"`, `features: ["systems"]`) |
+| `GET /api/v1/catalog` | the catalog of adventures; `?kinds=adventure,system,bestiary` — those kinds (`kind: "system"` / `"bestiary"`, `features: ["systems", "bestiaries"]`); `?kinds=all` — adventures and systems, as the app 0.59 asks |
 | `GET /api/v1/packs/<author>/<id>` | 302 to the current version (counts a download) |
 | `GET /api/v1/covers/<author>/<id>` | 302 to the cover |
 | `POST /api/v1/publish` (signed) | asks to publish; answers with upload links |

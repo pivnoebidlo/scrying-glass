@@ -238,6 +238,11 @@ export interface Api {
   // cover — a picture of the vault (none — the entry keeps the one it has).
   repoPublishSystem(p: { source: string; pack: string; title: string; description: string; lang: string; cover?: string }): Promise<RepoEntry | null>;
   repoInstallSystem(source: string, entry: RepoEntry): Promise<string | null>;
+  // Bestiaries: publish the chosen cards (id — update that entry), download into the library (a newer version
+  // replaces the cards of the old one; the number of cards), remove a downloaded one (key «source/author/id»).
+  repoPublishBestiary(p: { source: string; refs: CardRef[]; title: string; description: string; lang: string; cover?: string; id?: string }): Promise<RepoEntry | null>;
+  repoInstallBestiary(source: string, entry: RepoEntry): Promise<number>;
+  repoRemoveBestiary(key: string): Promise<boolean>;
   // Download into a temporary file, then install under a name (like the import of a file) or discard it.
   repoDownload(source: string, author: string, id: string): Promise<{ file: string; name: string; exists: boolean; suggestion: string } | null>;
   repoInstall(file: string, name: string, entry: RepoEntry, source: string): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number } | null>;

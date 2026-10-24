@@ -781,11 +781,13 @@ export async function importCards(
   to: CardScope,
   folder?: string,
   newLss = false
-): Promise<{ count: number; errors: string[]; matches: LssMatch[] }> {
+): Promise<{ count: number; errors: string[]; matches: LssMatch[]; refs: CardRef[] }> {
   const dir = targetDir(to, folder);
   const imgDir = imagesDir(to, folder);
   const matches: LssMatch[] = [];
-  if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: [t('core.nowhere')], matches };
+  // The cards made (a bestiary of the Community remembers them to replace on an update).
+  const refs: CardRef[] = [];
+  if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: [t('core.nowhere')], matches, refs };
   let count = 0;
   const errors: string[] = [];
   for (const file of list) {
@@ -848,12 +850,13 @@ export async function importCards(
       const out = path.join(dir, fileName(dir, c.name));
       writeJsonAtomic(out, card);
       remember(to, out);
+      refs.push({ scope: to, id });
       count++;
     }
   }
   reload(to);
   changed();
-  return { count, errors, matches };
+  return { count, errors, matches, refs };
 }
 
 // Карточки места хранения целиком (для экспорта библиотеки или карточек хранилища; folder — одной папки).

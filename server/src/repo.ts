@@ -105,10 +105,11 @@ export class Repo {
     if (this.dirty) await this.change(() => undefined);
   }
 
-  // The public catalog; system packs only for those who ask (older apps would take them for adventures).
-  catalog(withSystems = false): RepoCatalog {
-    const entries = this.entries.filter((e) => !e.blocked && (withSystems || e.kind !== 'system')).map(({ files: _f, blocked: _b, blockedAt: _a, reports: _r, ...e }) => e);
-    return { api: REPO_API, features: ['systems'], maxSize: this.opts.maxSize, entries };
+  // The public catalog: adventures, and the other kinds only for those who ask for them (an older app would take one
+  // for an adventure). `kinds` — what to list besides adventures.
+  catalog(kinds: string[] = []): RepoCatalog {
+    const entries = this.entries.filter((e) => !e.blocked && (!e.kind || kinds.includes(e.kind))).map(({ files: _f, blocked: _b, blockedAt: _a, reports: _r, ...e }) => e);
+    return { api: REPO_API, features: ['systems', 'bestiaries'], maxSize: this.opts.maxSize, entries };
   }
 
   private find(author: string, id: string) {

@@ -759,6 +759,11 @@ Markdown entries shown in its adventures like built-in ones; a condition in the 
 puts one in your library, new versions are announced on launch. An adventure made on a system you don't have says so
 and offers to install it.
 
+**Bestiaries in the Community**: your own cards (monsters, NPCs, with their pictures) can be shared as a bestiary —
+Cards → «+» → «Publish a bestiary…» (or Community → Bestiaries): tick the cards, give it a title, a description and a
+cover. «Add to the library» puts another GM's bestiary into your library (Cards, every campaign); a new version
+replaces its cards, «Remove from the library» sends them to the library's trash.
+
 ## Files and trash
 
 Pictures, maps and tracks can be deleted from the app («⋯» or a right click → Move to trash).

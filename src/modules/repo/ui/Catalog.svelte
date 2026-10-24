@@ -11,7 +11,7 @@
   import { enabledSystems, systems } from '../../../systems';
   import { LANGS } from '../../../shared/i18n/core';
   import { matchesQuery, shortKey } from '../../../shared/repo';
-  import { adminRemove, allFound, installSystem, missingSystem, systemVersion, unblock, updatesHere, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
+  import { adminRemove, allFound, bestiaryVersion, installSystem, missingSystem, removeBestiary, systemVersion, type What, unblock, updatesHere, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
 
   let query = $state('');
   let source = $state('');
@@ -19,7 +19,7 @@
   let lang = $state('');
   let show = $state<'all' | 'updates' | 'installed' | 'mine' | 'reported' | 'blocked'>(repo.startShow);
   // Adventures or system packs.
-  let what = $state<'adventures' | 'systems'>(repo.startWhat);
+  let what = $state<What>(repo.startWhat);
   let chosen = $state<string | null>(null);
 
   const app = $derived(store.state);
@@ -41,13 +41,20 @@
   const found = $derived(repo.info ? allFound() : []);
   const updates = $derived(repo.info ? updatesHere().map((u) => key(u.entry)) : []);
   // The kinds of things in the Community (bestiaries and more will come here).
-  const KINDS: { id: 'adventures' | 'systems'; title: string; fits: (e: Found) => boolean }[] = [
+  const KINDS: { id: What; title: string; fits: (e: Found) => boolean }[] = [
     {
       id: 'adventures',
       get title() {
         return t('repo.whatAdventures');
       },
-      fits: (e) => e.kind !== 'system',
+      fits: (e) => !e.kind,
+    },
+    {
+      id: 'bestiaries',
+      get title() {
+        return t('repo.whatBestiaries');
+      },
+      fits: (e) => e.kind === 'bestiary',
     },
     {
       id: 'systems',
@@ -60,7 +67,7 @@
   const entries = $derived(
     found
       // Updates are of both kinds; otherwise — the kind chosen.
-      .filter((e) => show === 'updates' || (what === 'systems') === (e.kind === 'system'))
+      .filter((e) => show === 'updates' || !!KINDS.find((k) => k.id === what)?.fits(e))
       // Adventures of systems turned off are nowhere to be seen (but the GM's own are).
       .filter((e) => e.kind === 'system' || e.author === me || enabled.some((s) => s.id === e.system) || !systems.some((s) => s.id === e.system))
       .filter((e) => !source || e.source === source)
@@ -84,8 +91,11 @@
     return s ? sourceName(s) : id;
   };
   const date = (ms: number) => new Date(ms).toLocaleDateString(getLang(), { day: 'numeric', month: 'short', year: 'numeric' });
+  // Under the title: the system of an adventure, «Game system», «Bestiary · its system».
+  const kindLine = (e: Found) => (e.kind === 'system' ? t('repo.kindSystem') : e.kind === 'bestiary' ? `${t('repo.kindBestiary')} · ${systemTitle(e.system)}` : systemTitle(e.system));
   const installedVersion = (e: Found) => {
     if (e.kind === 'system') return systemVersion(e);
+    if (e.kind === 'bestiary') return bestiaryVersion(e);
     const f = installedFolder(e);
     return f ? (app.repo.installed[f]?.version ?? 0) : 0;
   };
@@ -105,7 +115,9 @@
     <header>
       <h2>{t('repo.browse')}</h2>
       <div class="spacer"></div>
-      {#if current}
+      {#if what === 'bestiaries'}
+        <button class="btn" onclick={() => (repo.publishBestiary = true)} disabled={!!repo.busy || !on.length}><CloudUpload size={14} /> {t('repo.publishBestiary')}</button>
+      {:else if current}
         <button class="btn" onclick={() => (repo.publish = current)} disabled={!!repo.busy || !on.length}>
           <CloudUpload size={14} />
           {app.repo.published[current] ? t('repo.updateMine', { name: current }) : t('repo.publishThis', { name: current })}
@@ -197,7 +209,7 @@
               <span class="thumb">{#if cover}<img src={cover} alt="" />{:else}<ImageOff size={16} />{/if}</span>
               <span class="text">
                 <span class="title">{e.title}</span>
-                <span class="meta faint">{e.kind === 'system' ? t('repo.kindSystem') : systemTitle(e.system)} · {langTitle(e.lang)} · {mb(e.size)}</span>
+                <span class="meta faint">{kindLine(e)} · {langTitle(e.lang)} · {mb(e.size)}</span>
               </span>
               {#if reportsOf(e).length}<span class="badge warn" title={t('repo.admin.reports')}><Flag size={10} /> {reportsOf(e).length}</span>{/if}
               {#if have && have < e.version}<span class="badge new">{t('repo.newVersion')}</span>
@@ -219,7 +231,7 @@
               {#if e.author === me}<span class="mine">{t('repo.you')}</span>{/if}
             </div>
             <div class="meta faint">
-              <span>{e.kind === 'system' ? t('repo.kindSystem') : systemTitle(e.system)}</span>
+              <span>{kindLine(e)}</span>
               <span>{langTitle(e.lang)}</span>
               <span>{t('repo.version', { n: e.version })}</span>
               <span>{mb(e.size)}{e.music ? ` · ${t('repo.withMusic')}` : ''}</span>
@@ -234,7 +246,10 @@
               {:else if have}
                 <button class="btn primary" disabled={!!repo.busy} onclick={() => install(e)}><Download size={14} /> {t('repo.update', { n: e.version })}</button>
               {:else}
-                <button class="btn primary" disabled={!!repo.busy} onclick={() => install(e)}><Download size={14} /> {e.kind === 'system' ? t('repo.installSystem') : t('repo.download')}</button>
+                <button class="btn primary" disabled={!!repo.busy} onclick={() => install(e)}><Download size={14} /> {e.kind === 'system' ? t('repo.installSystem') : e.kind === 'bestiary' ? t('repo.installBestiary') : t('repo.download')}</button>
+              {/if}
+              {#if e.kind === 'bestiary' && have}
+                <button class="btn" disabled={!!repo.busy} onclick={() => removeBestiary(e)}><Trash2 size={14} /> {t('repo.removeBestiary')}</button>
               {/if}
               {#if e.author === me}
                 <button class="btn danger" disabled={!!repo.busy} onclick={() => unpublish(e)}><Trash2 size={14} /> {t('repo.unpublish')}</button>
@@ -242,7 +257,7 @@
                 <button class="btn link" disabled={!!repo.busy} onclick={() => (repo.reporting = e)}><Flag size={13} /> {t('repo.report.button')}</button>
               {/if}
             </div>
-            {#if e.kind !== 'system' && !systems.some((s) => s.id === e.system)}
+            {#if !e.kind && !systems.some((s) => s.id === e.system)}
               {@const need = missingSystem(e)}
               <p class="needs">
                 {t('repo.needsSystem', { system: need?.title ?? e.system })}

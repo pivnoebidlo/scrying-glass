@@ -45,8 +45,8 @@ import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnounc
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
-import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
-import { ID_RE, type RepoEntry, type RepoProgress } from '../shared/repo';
+import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
+import { ID_RE, type BestiaryMark, type RepoEntry, type RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, recreateControlWindow, TITLE_HEIGHT, watchDisplays,
@@ -1220,6 +1220,8 @@ ipcMain.handle('repo:unpublish', async (_event, { source, id }: { source: string
   await repoUnpublish(source, id);
   await runAction('repo', 'unpublished', { id, source });
   for (const [pack, m] of Object.entries(repoInfo().systems.published)) if (m.id === id && m.source === source) setSystemMark('published', pack, null);
+  const b = repoInfo().bestiaries.published[id];
+  if (b && b.source === source) setBestiaryMark('published', id, null);
 });
 // Publish (or update) a system pack of the GM's own: the pack's file as it is in the library.
 ipcMain.handle('repo:publishSystem', async (_event, p: { source: string; pack: string; title: string; description: string; lang: string; cover?: string }) => {
@@ -1252,6 +1254,69 @@ ipcMain.handle('repo:publishSystem', async (_event, p: { source: string; pack: s
   } finally {
     fs.rmSync(tmp, { force: true });
   }
+});
+// ---- Bestiaries: cards shared in the Community ----
+// The system of a bestiary: the one most of its cards have.
+function bestiarySystem(refs: CardRef[]): string {
+  const n = new Map<string, number>();
+  for (const r of refs) {
+    const c = getCard(r);
+    if (c) n.set(c.system, (n.get(c.system) ?? 0) + 1);
+  }
+  return [...n].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'dnd5e-2024';
+}
+// Publish (or update — `id`) a bestiary: the cards chosen, as one «export cards» file.
+ipcMain.handle('repo:publishBestiary', async (_event, p: { source: string; refs: CardRef[]; title: string; description: string; lang: string; cover?: string; id?: string }) => {
+  const refs = p.refs.filter((r) => r.scope !== 'srd' && getCard(r));
+  if (!refs.length) return null;
+  const tmp = path.join(app.getPath('userData'), 'repo', `bestiary-${randomUUID().slice(0, 8)}.json`);
+  fs.mkdirSync(path.dirname(tmp), { recursive: true });
+  try {
+    exportCards(refs, tmp);
+    const entry = await repoPublish(p.source, tmp, {
+      id: p.id && ID_RE.test(p.id) ? p.id : newAdventureId(),
+      title: p.title,
+      description: p.description,
+      system: bestiarySystem(refs),
+      lang: p.lang,
+      music: false,
+      app: app.getVersion(),
+      kind: 'bestiary',
+    }, p.cover ? coverFrom(resolveInVault(p.cover) ?? '') : null);
+    setBestiaryMark('published', entry.id, { source: p.source, id: entry.id, version: entry.version, title: entry.title, cards: refs as BestiaryMark['cards'] });
+    return entry;
+  } finally {
+    fs.rmSync(tmp, { force: true });
+  }
+});
+// The cards a downloaded bestiary became go (to the library's trash, with their pictures).
+function dropBestiaryCards(cards: CardRef[]) {
+  for (const ref of cards) {
+    const c = getCard(ref);
+    if (c) deleteCard(ref, ref.scope === 'library' ? c.portraits.filter((x) => !x.includes(':')) : []);
+  }
+}
+// Download a bestiary into the library; a newer version replaces the cards of the one before.
+ipcMain.handle('repo:installBestiary', async (_event, { source, entry }: { source: string; entry: RepoEntry }) => {
+  const file = await repoDownload(source, entry.author, entry.id);
+  try {
+    const key = `${source}/${entry.author}/${entry.id}`;
+    const old = repoInfo().bestiaries.installed[key];
+    const r = await importCards([file], 'library');
+    if (!r.refs.length) throw new Error(r.errors[0] ?? 'repo:not-a-bestiary');
+    if (old) dropBestiaryCards(old.cards);
+    setBestiaryMark('installed', key, { source, author: entry.author, id: entry.id, version: entry.version, title: entry.title, cards: r.refs as BestiaryMark['cards'] });
+    return r.refs.length;
+  } finally {
+    discardDownload(file);
+  }
+});
+ipcMain.handle('repo:removeBestiary', (_event, key: string) => {
+  const mark = repoInfo().bestiaries.installed[key];
+  if (!mark) return false;
+  dropBestiaryCards(mark.cards);
+  setBestiaryMark('installed', key, null);
+  return true;
 });
 // Download a system pack into the library. A system of the GM's own with that id (not one downloaded from this
 // entry) is replaced only if they agree.

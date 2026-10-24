@@ -4,10 +4,13 @@
 import { t } from '../../../renderer/lib/i18n.svelte';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import { systems } from '../../../systems';
+import type { CardRef } from '../../../shared/cards';
 import { sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type BlockedEntry, type Report, type ReportedEntry, type ReportReason, type SourceInfo } from '../../../shared/repo';
 
 // An entry of a catalog with the source it is in.
 export type Found = RepoEntry & { source: string };
+// The kinds of things in the Community (the «What» of the window).
+export type What = 'adventures' | 'systems' | 'bestiaries';
 
 export const repo = $state({
   info: null as RepoInfo | null,
@@ -22,7 +25,7 @@ export const repo = $state({
   // The catalog window is open; the filter it opens with.
   browsing: false,
   startShow: 'all' as 'all' | 'updates',
-  startWhat: 'adventures' as 'adventures' | 'systems',
+  startWhat: 'adventures' as What,
   // New versions of what this vault downloaded, found on launch and not announced yet.
   updates: [] as { key: string; entry: Found }[],
   covers: {} as Record<string, string | null>,
@@ -31,6 +34,8 @@ export const repo = $state({
   // The publish dialog: for which adventure; for which system pack (its id).
   publish: null as string | null,
   publishSystem: null as string | null,
+  // The bestiary publish dialog is open.
+  publishBestiary: false,
   // A download waits for a name: the adventure of that name is already there.
   naming: null as { file: string; name: string; suggestion: string; entry: Found } | null,
   // The last result to show (done or failed).
@@ -119,7 +124,7 @@ async function work<T>(what: string, fn: () => Promise<T>): Promise<T | undefine
 }
 
 // Open the catalog window (on the updates of what was downloaded — after the launch notice).
-export function openRepo(show: 'all' | 'updates' = 'all', what: 'adventures' | 'systems' = 'adventures') {
+export function openRepo(show: 'all' | 'updates' = 'all', what: What = 'adventures') {
   repo.startShow = show;
   repo.startWhat = what;
   repo.browsing = true;
@@ -136,7 +141,8 @@ export function updatesHere(): { key: string; entry: Found }[] {
     .filter(([folder]) => store.state.adventures.list.includes(folder))
     .flatMap(([folder, m]) => (newer(m) ? [{ key: folder, entry: newer(m)! }] : []));
   const packs = Object.entries(repo.info?.systems.installed ?? {}).flatMap(([pack, m]) => (newer(m) ? [{ key: `system:${pack}`, entry: newer(m)! }] : []));
-  return [...adventures, ...packs];
+  const beasts = Object.entries(repo.info?.bestiaries.installed ?? {}).flatMap(([key, m]) => (newer(m) ? [{ key: `bestiary:${key}`, entry: newer(m)! }] : []));
+  return [...adventures, ...packs, ...beasts];
 }
 
 // A system pack downloaded: which version this library has (0 — none).
@@ -148,6 +154,35 @@ export function missingSystem(e: Found): Found | null {
   return allFound().find((x) => x.kind === 'system' && x.system === e.system) ?? null;
 }
 export const systemKnown = (id: string) => systems.some((s) => s.id === id);
+
+// A downloaded bestiary: which version the library has (0 — none).
+const bestiaryKey = (e: Found) => `${e.source}/${e.author}/${e.id}`;
+export const bestiaryVersion = (e: Found) => repo.info?.bestiaries.installed[bestiaryKey(e)]?.version ?? 0;
+
+export async function installBestiary(e: Found) {
+  const { source, ...entry } = $state.snapshot(e) as Found;
+  const n = await work(t('repo.downloading', { name: e.title }), () => window.api.repoInstallBestiary(source, entry));
+  if (!n) return;
+  repo.info = await window.api.repoInfo();
+  notice(t('repo.bestiaryInstalled', { name: e.title, count: n }));
+}
+
+export async function removeBestiary(e: Found) {
+  if (!confirm(t('repo.bestiaryRemoveAsk', { name: e.title }))) return;
+  if (await window.api.repoRemoveBestiary(bestiaryKey(e))) {
+    repo.info = await window.api.repoInfo();
+    notice(t('repo.bestiaryRemoved', { name: e.title }));
+  }
+}
+
+export async function publishBestiary(p: { source: string; refs: CardRef[]; title: string; description: string; lang: string; cover?: string; id?: string }) {
+  const entry = await work(t('repo.publishing', { name: p.title }), () => window.api.repoPublishBestiary(p));
+  if (!entry) return false;
+  notice(t('repo.published', { name: entry.title, version: entry.version }));
+  repo.info = await window.api.repoInfo();
+  void loadCatalogs(p.source);
+  return true;
+}
 
 export async function publishSystem(p: { source: string; pack: string; title: string; description: string; lang: string; cover?: string }) {
   const entry = await work(t('repo.publishing', { name: p.title }), () => window.api.repoPublishSystem(p));
@@ -177,7 +212,8 @@ export const setCheckOnLaunch = (on: boolean) => localStorage.setItem(CHECK, on 
 export async function checkUpdates() {
   if (!checkOnLaunch()) return;
   if (!repo.info) await loadInfo();
-  if (!Object.keys(store.state.repo.installed).length && !Object.keys(repo.info?.systems.installed ?? {}).length) return;
+  const have = [store.state.repo.installed, repo.info?.systems.installed ?? {}, repo.info?.bestiaries.installed ?? {}];
+  if (!have.some((m) => Object.keys(m).length)) return;
   await loadCatalogs();
   const told = new Set<string>(JSON.parse(localStorage.getItem(ANNOUNCED) ?? '[]'));
   repo.updates = updatesHere().filter((u) => !told.has(stamp(u)));
@@ -251,6 +287,7 @@ export function installedFolder(e: Found): string | null {
 // Download and install. An update first offers to move the old copy to the trash (and takes its name).
 export async function install(e: Found) {
   if (e.kind === 'system') return installSystem(e);
+  if (e.kind === 'bestiary') return installBestiary(e);
   const old = installedFolder(e);
   const got = await work(t('repo.downloading', { name: e.title }), () => window.api.repoDownload(e.source, e.author, e.id));
   if (!got) return;

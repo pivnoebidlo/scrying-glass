@@ -220,6 +220,16 @@ describe('repository service', () => {
     expect((await call('/api/v1/unpublish', { id: 'my-system-pack' })).status).toBe(200);
   });
 
+  it('bestiaries: listed only when asked by name; «all» stays adventures and systems (the app 0.59)', async () => {
+    const r = await publish(50, me, { id: 'my-bestiary-01', title: 'My beasts', system: 'dnd5e-2024', kind: 'bestiary' });
+    expect(r.body).toMatchObject({ kind: 'bestiary' });
+    const ids = async (q: string) => ((await (await fetch(base + '/api/v1/catalog' + q)).json()) as RepoCatalog).entries.map((e) => e.id);
+    expect(await ids('')).not.toContain('my-bestiary-01');
+    expect(await ids('?kinds=all')).not.toContain('my-bestiary-01');
+    expect(await ids('?kinds=adventure,system,bestiary')).toContain('my-bestiary-01');
+    expect((await call('/api/v1/unpublish', { id: 'my-bestiary-01' })).status).toBe(200);
+  });
+
   it('uploads never committed are swept away with their files, but not before they expire', async () => {
     const t = await call<PublishTicket>('/api/v1/publish', { ...meta, id: 'abandoned-one', size: 10 });
     bucket.upload(t.body.pack, 10);

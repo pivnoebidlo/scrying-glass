@@ -11,7 +11,7 @@ import * as https from 'node:https';
 import { Readable } from 'node:stream';
 import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, randomBytes, sign } from 'node:crypto';
 import { nativeImage, safeStorage } from 'electron';
-import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, OFFICIAL_SOURCE, REPO_API, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type ReportedEntry, type BlockedEntry, type SourceInfo, type SystemMark } from '../shared/repo';
+import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, OFFICIAL_SOURCE, REPO_API, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type ReportedEntry, type BlockedEntry, type SourceInfo, type SystemMark, type BestiaryMark } from '../shared/repo';
 
 export interface RepoSettings {
   // The GM's own sources (the official one is always there).
@@ -25,6 +25,7 @@ export interface RepoSettings {
   name?: string;
   // System packs published from here and downloaded (by pack id).
   systems?: RepoInfo['systems'];
+  bestiaries?: RepoInfo['bestiaries'];
   key?: { x: string; d: string; enc: boolean };
 }
 
@@ -70,7 +71,22 @@ function base(source: string): string {
 
 export function repoInfo(): RepoInfo {
   const s = deps?.get() ?? {};
-  return { sources: sources(), name: s.name ?? '', author: s.key?.x ?? null, systems: { published: s.systems?.published ?? {}, installed: s.systems?.installed ?? {} } };
+  return {
+    sources: sources(),
+    name: s.name ?? '',
+    author: s.key?.x ?? null,
+    systems: { published: s.systems?.published ?? {}, installed: s.systems?.installed ?? {} },
+    bestiaries: { published: s.bestiaries?.published ?? {}, installed: s.bestiaries?.installed ?? {} },
+  };
+}
+
+// Remember (or forget — null) a bestiary published from here (key — the entry id) or downloaded («source/author/id»).
+export function setBestiaryMark(which: 'published' | 'installed', key: string, mark: (BestiaryMark & { author?: string }) | null) {
+  const s = deps!.get();
+  const b = { published: { ...(s.bestiaries?.published ?? {}) }, installed: { ...(s.bestiaries?.installed ?? {}) } };
+  if (mark) (b[which] as Record<string, unknown>)[key] = mark;
+  else delete b[which][key];
+  deps!.save({ ...s, bestiaries: b });
 }
 
 // Remember (or forget — null) that a system pack was published from here or downloaded.
@@ -224,7 +240,7 @@ export const adminBlocked = (source: string) => adminCall<BlockedEntry[]>(source
 export const adminUnblock = (source: string, author: string, id: string) => adminCall(source, '/api/v1/admin/unblock', adminToken(source), { author, id });
 
 export async function catalog(source: string): Promise<RepoCatalog> {
-  const res = await request(`${base(source)}/api/v1/catalog?kinds=all`);
+  const res = await request(`${base(source)}/api/v1/catalog?kinds=adventure,system,bestiary`);
   if (!res.ok) throw await errorOf(res);
   return (await res.json()) as RepoCatalog;
 }

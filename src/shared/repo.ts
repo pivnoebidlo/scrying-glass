@@ -22,8 +22,9 @@ export interface RepoEntry {
   description: string;
   // Role-playing system (systems/index.ts) and language of the adventure; of a system pack — its own id.
   system: string;
-  // What it is: a system pack (shared/syspack.ts); none — an adventure (.sgpack).
-  kind?: 'system';
+  // What it is: a system pack (shared/syspack.ts), a bestiary (cards, the file of «export cards»); none — an
+  // adventure (.sgpack). `system` of a bestiary — the system of its cards.
+  kind?: EntryKind;
   lang: string;
   // 1, 2, … — each publish of the same adventure is a new version.
   version: number;
@@ -40,8 +41,9 @@ export interface RepoEntry {
 
 export interface RepoCatalog {
   api: number;
-  // What the service knows beyond adventures: 'systems' — system packs (the catalog lists them when asked:
-  // ?kinds=all — older apps don't, they would take a system for an adventure).
+  // What the service knows beyond adventures: 'systems', 'bestiaries'. The catalog lists other kinds only when
+  // asked: ?kinds=adventure,system,bestiary (`all` — adventures and systems, as 0.59 asks: an older app would take an
+  // unknown kind for an adventure).
   features?: string[];
   // The largest pack the service takes, bytes.
   maxSize: number;
@@ -62,8 +64,11 @@ export interface PublishRequest {
   authorName: string;
   // Bytes of the cover picture (JPEG), none — no cover.
   cover?: number;
-  kind?: 'system';
+  kind?: EntryKind;
 }
+
+export type EntryKind = 'system' | 'bestiary';
+export const ENTRY_KINDS: EntryKind[] = ['system', 'bestiary'];
 
 export interface PublishTicket {
   upload: string;
@@ -138,7 +143,7 @@ export function checkPublish(x: unknown): PublishRequest | string {
     app: str(o['app'], 32),
     authorName: str(o['authorName'], LIMITS.authorName),
     ...(typeof cover === 'number' ? { cover } : {}),
-    ...(o['kind'] === 'system' ? { kind: 'system' as const } : {}),
+    ...(ENTRY_KINDS.includes(o['kind'] as EntryKind) ? { kind: o['kind'] as EntryKind } : {}),
   };
 }
 
@@ -149,6 +154,13 @@ export interface RepoInfo {
   author: string | null;
   // System packs published from here and downloaded (by pack id): systems live in the library, not in a vault.
   systems: { published: Record<string, SystemMark>; installed: Record<string, SystemMark & { author: string }> };
+  // Bestiaries published from here (by entry id: its title and cards) and downloaded into the library (by
+  // «source/author/id»: the cards they became — an update replaces them).
+  bestiaries: { published: Record<string, BestiaryMark>; installed: Record<string, BestiaryMark & { author: string }> };
+}
+export interface BestiaryMark extends SystemMark {
+  title: string;
+  cards: { scope: 'library' | 'vault'; id: string }[];
 }
 export interface SystemMark {
   source: string;

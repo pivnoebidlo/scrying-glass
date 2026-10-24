@@ -7,6 +7,7 @@
   import PublishDialog from './PublishDialog.svelte';
   import ReportDialog from './ReportDialog.svelte';
   import SystemPublishDialog from './SystemPublishDialog.svelte';
+  import BestiaryPublishDialog from './BestiaryPublishDialog.svelte';
   import UpdatesNotice from './UpdatesNotice.svelte';
   import Busy from './Busy.svelte';
   import { cancelNaming, finishInstall, repo } from './repo.svelte';
@@ -32,6 +33,7 @@
 <PublishDialog />
 <ReportDialog />
 <SystemPublishDialog />
+<BestiaryPublishDialog />
 <UpdatesNotice />
 <Busy />
 

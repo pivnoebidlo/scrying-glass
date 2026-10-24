@@ -280,7 +280,13 @@ Electron-приложение для мастера D&D: окно управле
   названию (`byName` в `PublishDialog`, «как новое» — галочка; ядру уходит `id`). Две копии приложения на одном
   хранилище затирают `state.json` друг друга: открывая хранилище, ядро кладёт метку `.scrying-glass/lock.json` (pid,
   версия; `claimVault` / `releaseVault`), метка живого чужого процесса — предупреждение. Первый запуск (нет
-  settings.json) — включены только D&D (`FIRST_LAUNCH_OFF`).
+  settings.json) — включены только D&D (`FIRST_LAUNCH_OFF`). Бестиарии: запись `kind: 'bestiary'` (`system` — система
+  большинства карточек), файл — формат «экспорта карточек» (`exportCards`); каталог просит виды явно
+  (`?kinds=adventure,system,bestiary`, `all` для 0.59 — только приключения и системы; приключения — записи без `kind`);
+  IPC `repo:publishBestiary` (окно `BestiaryPublishDialog.svelte`: свои карточки галочками, новое или новая версия
+  своего — `settings.repo.bestiaries.published[id]` с карточками), `repo:installBestiary` (`importCards` в библиотеку,
+  отдаёт `refs`; новая версия — старые карточки в корзину), `repo:removeBestiary`; пометки установленных —
+  `bestiaries.installed["источник/автор/id"]`. Пункты — в «+» «Карточек». Сервис 0.6.0 (тег `repo-v0.6.0`).
 - Mausritter (третья система, в работе; SRD 2.3.1, CC BY 4.0 — атрибуция дословно в `about.credit.mausritter`):
   `systems/mausritter/` — `stats.ts` (`MausStats`: hp — Hit Protection, str/dex/wil, armour, attacks `d6/d8`,
   critical, abilities, wants, `warband`; у мыши `sheet` — уровень, XP, пипсы, 10 клеток `slots` (лапы 2, тело 2,
