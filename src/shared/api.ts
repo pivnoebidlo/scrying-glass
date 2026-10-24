@@ -217,7 +217,7 @@ export interface Api {
   // What an adventure weighs: all of it, its music, its PDFs (bytes).
   repoSizes(adventure: string): Promise<{ total: number; music: number; pdf: number } | null>;
   // Publish or update (the same entry if this vault published it before); cover — a picture of the vault.
-  repoPublish(p: { adventure: string; title: string; description: string; lang: string; music: boolean; cover?: string }): Promise<RepoEntry | null>;
+  repoPublish(p: { adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string }): Promise<RepoEntry | null>;
   repoUnpublish(id: string): Promise<void>;
   // Download into a temporary file, then install under a name (like the import of a file) or discard it.
   repoDownload(author: string, id: string): Promise<{ file: string; name: string; exists: boolean; suggestion: string } | null>;

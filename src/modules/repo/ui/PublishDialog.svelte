@@ -1,6 +1,6 @@
 <!-- Publish an adventure to the repository (or a new version of the GM's own entry): title, description, language,
-     cover, music; PDFs never go (books in a journal are seldom the GM's to share). The author confirms the content is
-     theirs to share. Opens on repo.publish = <adventure>. -->
+     cover, music, PDFs (the adventure's text is often a PDF in the journal). The author confirms the content is theirs
+     to share. Opens on repo.publish = <adventure>. -->
 <script lang="ts">
   import { CloudUpload, ImagePlus, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -23,6 +23,7 @@
   let description = $state('');
   let lang = $state('en');
   let music = $state(false);
+  let pdf = $state(true);
   let cover = $state<string | null>(null);
   let author = $state('');
   let rights = $state(false);
@@ -41,6 +42,7 @@
     description = entry?.description ?? '';
     lang = entry?.lang ?? getLang();
     music = entry?.music ?? false;
+    pdf = true;
     cover = null;
     rights = false;
     sizes = null;
@@ -48,7 +50,7 @@
     void window.api.repoSizes(a).then((s) => (sizes = s));
   });
 
-  const size = $derived(sizes ? sizes.total - sizes.pdf - (music ? 0 : sizes.music) : 0);
+  const size = $derived(sizes ? sizes.total - (pdf ? 0 : sizes.pdf) - (music ? 0 : sizes.music) : 0);
   const max = $derived(repo.catalog?.maxSize ?? 0);
   const tooBig = $derived(!!max && size > max);
   const ready = $derived(!!title.trim() && rights && !tooBig && !repo.busy);
@@ -60,7 +62,7 @@
     const a = adventure;
     if (author.trim() !== (repo.info?.name ?? '')) await window.api.setRepoSettings({ name: author });
     close();
-    await publish({ adventure: a, title: title.trim(), description: description.trim(), lang, music, ...(cover ? { cover } : {}) });
+    await publish({ adventure: a, title: title.trim(), description: description.trim(), lang, music, pdf, ...(cover ? { cover } : {}) });
   }
 </script>
 
@@ -110,10 +112,10 @@
         {#if sizes.music}
           <label class="check"><input type="checkbox" bind:checked={music} /> {t('repo.dialog.music', { size: mb(sizes.music) })}</label>
         {/if}
-        <p class="faint small">
-          {t('repo.dialog.size', { size: mb(size) })}
-          {#if sizes.pdf}{t('repo.dialog.noPdf', { size: mb(sizes.pdf) })}{/if}
-        </p>
+        {#if sizes.pdf}
+          <label class="check"><input type="checkbox" bind:checked={pdf} /> {t('repo.dialog.pdf', { size: mb(sizes.pdf) })}</label>
+        {/if}
+        <p class="faint small">{t('repo.dialog.size', { size: mb(size) })}</p>
         {#if tooBig}<p class="warn">{t('repo.dialog.tooBig', { max: mb(max) })}</p>{/if}
       {/if}
 

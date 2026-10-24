@@ -513,7 +513,7 @@ Electron-приложение для мастера D&D: окно управле
   подпись Ed25519 `x-sg-key` / `x-sg-sig` по `signedText`; Dockerfile из корня, Helm-чарт `server/chart`, образ —
   `.github/workflows/repo-image.yml`, тег `repo-v<версия>`). Автор = открытый ключ, запись = автор + id; одна реплика.
   Приложение: `main/repo.ts` (ключ в `settings.repo`, закрытая часть через `safeStorage`; каталог, обложки — кэш
-  `<userData>/repo/covers`, публикация: `buildPack` без PDF → publish → PUT в S3 → commit; скачивание во временную
+  `<userData>/repo/covers`, публикация: `buildPack` (музыка и PDF — галочками) → publish → PUT в S3 → commit; скачивание во временную
   папку → `importPack`), IPC `repo:*`, ошибки — `repo:<код>` → `repo.err.<код>`. Модуль `modules/repo`:
   `published` / `installed` по папке приключения (в .sgpack — `PackSlices.repo`; при установке чужого — снимается),
   страница «Инструменты» → `repo` (`RepoPage.svelte`), окно публикации и вопрос названия — фоновый `Background.svelte`,

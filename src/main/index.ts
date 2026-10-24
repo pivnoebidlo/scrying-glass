@@ -1125,15 +1125,15 @@ ipcMain.handle('repo:sizes', (_event, adventure: string) => {
   const sum = (re: RegExp) => all.filter((f) => re.test(f.rel)).reduce((n, f) => n + f.size, 0);
   return { total: all.reduce((n, f) => n + f.size, 0), music: sum(/\.(mp3|ogg|wav|flac|m4a)$/i), pdf: sum(/\.pdf$/i) };
 });
-// Publish (or update) an adventure: pack it without PDFs into a temporary file, upload, remember the entry.
-ipcMain.handle('repo:publish', async (_event, p: { adventure: string; title: string; description: string; lang: string; music: boolean; cover?: string }) => {
+// Publish (or update) an adventure: pack it into a temporary file, upload, remember the entry.
+ipcMain.handle('repo:publish', async (_event, p: { adventure: string; title: string; description: string; lang: string; music: boolean; pdf?: boolean; cover?: string }) => {
   if (!vaultRoot || !state.adventures.list.includes(p.adventure)) return null;
   const known = state.repo.published[p.adventure];
   const jpeg = p.cover ? coverFrom(resolveInVault(p.cover) ?? '') : null;
   const tmp = path.join(app.getPath('userData'), 'repo', `publish-${randomUUID().slice(0, 8)}.${PACK_EXT}`);
   fs.mkdirSync(path.dirname(tmp), { recursive: true });
   try {
-    await buildPack(p.adventure, tmp, { music: p.music, pdf: false }, (done, total) => repoProgress({ phase: 'pack', done, total }));
+    await buildPack(p.adventure, tmp, { music: p.music, pdf: !!p.pdf }, (done, total) => repoProgress({ phase: 'pack', done, total }));
     const entry = await repoPublish(tmp, {
       id: known?.id ?? newAdventureId(),
       title: p.title,

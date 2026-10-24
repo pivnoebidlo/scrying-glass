@@ -90,7 +90,7 @@ export function openRepo() {
   openTab('tools');
 }
 
-export async function publish(p: { adventure: string; title: string; description: string; lang: string; music: boolean; cover?: string }) {
+export async function publish(p: { adventure: string; title: string; description: string; lang: string; music: boolean; pdf: boolean; cover?: string }) {
   const entry = await work(t('repo.publishing', { name: p.title }), () => window.api.repoPublish(p));
   if (!entry) return false;
   notice(t('repo.published', { name: entry.title, version: entry.version }));
