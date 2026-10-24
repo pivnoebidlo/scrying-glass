@@ -46,6 +46,20 @@
   };
 </script>
 
+{#snippet labelsEditor(r: { labels?: { min: number; title: Loc }[] })}
+  <div class="row">
+    <span>{t('sb.labels')}</span>
+    {#each r.labels ?? [] as l, i (i)}
+      <div class="col">
+        <input type="number" class="n" {disabled} value={l.min} onchange={(e) => (l.min = num(e.currentTarget.value) ?? 0)} />
+        <LocInput value={l.title} set={(v) => (l.title = v)} {disabled} />
+        <button type="button" class="icon-btn" title={t('sb.remove')} {disabled} onclick={() => (r.labels = r.labels!.filter((_, j) => j !== i))}><X size={13} /></button>
+      </div>
+    {/each}
+    <button type="button" class="btn small" {disabled} onclick={() => (r.labels = [...(r.labels ?? []), { min: 0, title: '' }])}>{t('sb.addLabel')}</button>
+  </div>
+{/snippet}
+
 <div class="panel">
   <label class="row"><span>{t('sb.name')}</span><LocInput value={f.title} set={(v) => (f.title = v)} {disabled} /></label>
   <label class="row" title={t('sb.idHint')}>
@@ -75,6 +89,18 @@
       <label class="row"><span>{t('sb.min')}</span><input type="number" {disabled} value={f.min ?? ''} onchange={(e) => (f.min = num(e.currentTarget.value))} /></label>
       <label class="row"><span>{t('sb.max')}</span><input type="number" {disabled} value={f.max ?? ''} onchange={(e) => (f.max = num(e.currentTarget.value))} /></label>
       <label class="row"><span>{t('sb.default')}</span><input type="number" {disabled} value={typeof f.default === 'number' ? f.default : ''} onchange={(e) => (f.default = num(e.currentTarget.value))} /></label>
+    </div>
+  {:else if f.type === 'slots'}
+    <div class="row">
+      <span>{t('sb.slotGroups')}</span>
+      {#each f.slots ?? [] as g, i (i)}
+        <div class="col">
+          <LocInput value={g.title} set={(v) => (g.title = v)} {disabled} />
+          <input type="number" min="1" max="20" class="n" {disabled} value={g.count} onchange={(e) => (g.count = Math.max(1, Math.min(20, num(e.currentTarget.value) ?? 1)))} />
+          <button type="button" class="icon-btn" title={t('sb.remove')} {disabled} onclick={() => (f.slots = f.slots!.filter((_, j) => j !== i))}><X size={13} /></button>
+        </div>
+      {/each}
+      <button type="button" class="btn small" {disabled} onclick={() => (f.slots = [...(f.slots ?? []), { title: '', count: 2 }])}>{t('sb.addSlotGroup')}</button>
     </div>
   {:else if f.type === 'dots'}
     <label class="row"><span>{t('sb.dots')}</span><input type="number" min="1" max="12" {disabled} value={f.max ?? 5} onchange={(e) => (f.max = Math.max(1, Math.min(12, num(e.currentTarget.value) ?? 5)))} /></label>
@@ -119,7 +145,11 @@
     <p class="faint small">{t('sb.formulaHint')}</p>
   {/if}
 
-  {#if f.type !== 'text' && f.type !== 'textarea' && f.type !== 'tags'}
+  {#if f.type === 'number' || f.type === 'dots'}
+    <label class="check"><input type="checkbox" {disabled} checked={!!f.hideZero} onchange={(e) => (e.currentTarget.checked ? (f.hideZero = true) : delete f.hideZero)} /> {t('sb.hideZero')}</label>
+  {/if}
+
+  {#if f.type !== 'text' && f.type !== 'textarea' && f.type !== 'tags' && f.type !== 'slots'}
     <div class="roll">
       <label class="row">
         <span>{t('sb.roll')}</span>
@@ -132,6 +162,7 @@
         {@const r = f.roll}
         {#if r.type === 'd20' || r.type === 'fate'}
           <div class="row"><span>{t('sb.bonus')}</span><FormulaInput value={r.bonus} set={(v) => (r.bonus = v)} keys={keys} row={cols} {disabled} /></div>
+          {@render labelsEditor(r)}
         {:else if r.type === 'under'}
           <div class="two">
             <label class="row"><span>{t('sb.sides')}</span><input type="number" min="2" {disabled} value={r.sides} onchange={(e) => (r.sides = Math.max(2, num(e.currentTarget.value) ?? 100))} /></label>
@@ -190,6 +221,7 @@
             <label class="row"><span>{t('sb.dice')}</span><input type="text" class="mono" {disabled} value={r.dice} onchange={(e) => (r.dice = e.currentTarget.value.trim() || '1d6')} /></label>
           </div>
           <div class="row"><span>{t('sb.bonus')}</span><FormulaInput value={r.bonus ?? ''} set={(v) => (r.bonus = v)} keys={keys} row={cols} {disabled} /></div>
+          {@render labelsEditor(r)}
         {:else if r.type === 'explode'}
           <div class="row"><span>{t('sb.sides')}</span><FormulaInput value={r.sides} set={(v) => (r.sides = v)} keys={keys} row={cols} {disabled} /></div>
           <div class="row"><span>{t('sb.bonus')}</span><FormulaInput value={r.bonus ?? ''} set={(v) => (r.bonus = v)} keys={keys} row={cols} {disabled} /></div>

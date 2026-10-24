@@ -16,7 +16,12 @@
   const pack = $derived(packOf(currentSystem(store.state.adventures)));
   const fields = $derived(pack ? fieldMap(pack) : new Map());
   const hp = $derived(!!pack?.tracker.hp);
-  const cells = $derived((pack?.tracker.cells ?? []).filter((k) => k !== pack?.tracker.hp).map((k) => ({ key: k, track: fields.get(k)?.type === 'track', title: loc(fields.get(k)?.title, getLang()) })));
+  const cells = $derived(
+    (pack?.tracker.cells ?? [])
+      .filter((k) => k !== pack?.tracker.hp)
+      .map((k) => ({ key: k, track: fields.get(k)?.type === 'track', text: ['text', 'textarea'].includes(fields.get(k)?.type ?? ''), title: loc(fields.get(k)?.title, getLang()) })),
+  );
+  const setText = (c: Combatant, key: string, v: string) => update(c, { texts: { ...(c.texts ?? {}), [key]: v.trim() } });
 
   const num = (v: string) => (v.trim() === '' || isNaN(Number(v)) ? null : Number(v));
   const update = (c: Combatant, changes: Partial<Omit<Combatant, 'id'>>) => dispatch('initiative', 'update', { id: c.id, changes });
@@ -69,7 +74,9 @@
   {/if}
   {#each cells as cell (cell.key)}
     <td class="c-cell">
-      {#if cell.track}
+      {#if cell.text}
+        <input type="text" class="txt" class:filled={!!c.texts?.[cell.key]} value={c.texts?.[cell.key] ?? ''} placeholder={cell.title} onchange={(e) => setText(it, cell.key, e.currentTarget.value)} />
+      {:else if cell.track}
         {@const line = c.stress?.find((s) => s.id === cell.key)}
         <span class="track">
           {#each line?.boxes ?? [] as on, i (i)}<button class="box" class:on aria-label={String(i + 1)} onclick={() => setBoxes(it, cell.key, i + 1)}></button>{/each}
@@ -104,6 +111,13 @@
   }
   .n {
     width: 44px;
+  }
+  .txt {
+    width: 110px;
+    font-size: 12px;
+  }
+  .txt.filled {
+    color: var(--danger);
   }
   .track {
     display: inline-flex;

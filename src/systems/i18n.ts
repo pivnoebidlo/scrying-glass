@@ -534,6 +534,8 @@ export const en = {
   'pack.addTag': "+ tag",
   'pack.empty': "—",
   'pack.of': "of {n}",
+  'pack.usage': "Usage",
+  'pack.slotCondition': "A condition (not an item)",
 };
 
 export const ru: Messages<typeof en> = {
@@ -559,6 +561,8 @@ export const ru: Messages<typeof en> = {
   'pack.addTag': "+ метка",
   'pack.empty': "—",
   'pack.of': "из {n}",
+  'pack.usage': "Износ",
+  'pack.slotCondition': "Состояние (а не вещь)",
   'dnd.ability.str': "Сила",
   'dnd.ability.dex': "Ловкость",
   'dnd.ability.con': "Телосложение",

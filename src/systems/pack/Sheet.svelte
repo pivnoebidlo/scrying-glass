@@ -5,7 +5,7 @@
   import { t } from '../../renderer/lib/i18n.svelte';
   import type { Card } from '../../shared/cards';
   import { modeOf, rolls } from '../../renderer/lib/rolls.svelte';
-  import { boxesOf, evalFormula, loc, sectionsFor, type FieldDef, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { boxesOf, evalFormula, loc, sectionsFor, slotGroups, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
   import { packOf } from '../packs';
 
   // draft — a pack not saved yet (the builder's preview); otherwise the card's system.
@@ -20,15 +20,24 @@
   const tags = (f: FieldDef) => (Array.isArray(s[f.key]) ? (s[f.key] as string[]) : []);
   const text = (f: FieldDef) => (typeof s[f.key] === 'string' ? (s[f.key] as string) : '');
   // A field shows if it has something (an empty text or list isn't drawn; numbers always are).
+  const slots = (f: FieldDef) => (Array.isArray(s[f.key]) ? (s[f.key] as PackSlot[]) : []);
   const filled = (f: FieldDef) =>
-    f.type === 'text' || f.type === 'textarea' ? !!text(f).trim() : f.type === 'list' || f.type === 'tags' ? (f.type === 'list' ? rows(f) : tags(f)).length > 0 : f.type === 'select' ? typeof s[f.key] === 'number' : true;
-  const wide = (f: FieldDef) => f.type === 'textarea' || f.type === 'list' || f.type === 'tags';
+    f.type === 'text' || f.type === 'textarea'
+      ? !!text(f).trim()
+      : f.type === 'list' || f.type === 'tags'
+        ? (f.type === 'list' ? rows(f) : tags(f)).length > 0
+        : f.type === 'slots'
+          ? slots(f).some((x) => x?.name?.trim())
+          : f.type === 'select'
+            ? typeof s[f.key] === 'number'
+            : !(f.hideZero && num(f) === 0);
+  const wide = (f: FieldDef) => f.type === 'textarea' || f.type === 'list' || f.type === 'tags' || f.type === 'slots';
   const sections = $derived(sectionsFor(pack, card.kind).map((sec) => ({ ...sec, fields: sec.fields.filter(filled) })).filter((sec) => sec.fields.length));
 
   function roll(f: FieldDef, e: MouseEvent, row?: Record<string, unknown>) {
     if (!f.roll) return;
     const label = row ? String(Object.values(row).find((v) => typeof v === 'string' && v.trim()) ?? L(f.title)) : L(f.title);
-    rolls.packRoll(card.name, label, f.roll, (formula) => evalFormula(pack, s, formula, row), modeOf(e));
+    rolls.packRoll(card.name, label, f.roll, (formula) => evalFormula(pack, s, formula, row), modeOf(e), row);
   }
   const cell = (v: unknown) => (v === undefined || v === null || v === '' ? t('pack.empty') : String(v));
 </script>
@@ -71,6 +80,21 @@
             <p class="long"><b>{L(f.title)}.</b> {text(f)}</p>
           {:else if f.type === 'tags'}
             <p class="long"><b>{L(f.title)}:</b> {#each tags(f) as tag, i (i)}<span class="tag">{tag}</span>{/each}</p>
+          {:else if f.type === 'slots'}
+            <div class="slots">
+              <b>{L(f.title)}</b>
+              {#each slotGroups(f, s[f.key]) as g, gi (gi)}
+                <div class="group">
+                  <span class="faint gname">{L(g.title)}</span>
+                  {#each g.cells as c (c.i)}
+                    <span class="slot" class:cond={c.slot.condition} class:empty={!c.slot.name?.trim()}>
+                      {c.slot.name || '—'}
+                      {#if c.slot.usage}<i class="usage">{'●'.repeat(c.slot.usage)}</i>{/if}
+                    </span>
+                  {/each}
+                </div>
+              {/each}
+            </div>
           {:else}
             <table>
               <thead>
@@ -176,6 +200,41 @@
   .long {
     margin: 8px 0 0;
     white-space: pre-line;
+  }
+  .slots {
+    margin-top: 8px;
+  }
+  .group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .gname {
+    width: 70px;
+    font-size: 11px;
+  }
+  .slot {
+    min-width: 90px;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: var(--bg-secondary);
+    font-size: 13px;
+  }
+  .slot.empty {
+    color: var(--text-faint);
+  }
+  .slot.cond {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  .usage {
+    margin-left: 4px;
+    font-size: 9px;
+    font-style: normal;
+    letter-spacing: 1px;
   }
   .tag {
     display: inline-block;

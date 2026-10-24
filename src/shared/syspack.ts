@@ -13,16 +13,20 @@ export type Loc = string | Record<string, string>;
 export const loc = (l: Loc | undefined, lang: string): string =>
   l === undefined ? '' : typeof l === 'string' ? l : (l[lang] ?? l['en'] ?? Object.values(l)[0] ?? '');
 
-export type FieldType = 'number' | 'text' | 'textarea' | 'select' | 'dots' | 'track' | 'tags' | 'list' | 'formula';
-export const FIELD_TYPES: FieldType[] = ['number', 'text', 'textarea', 'select', 'dots', 'track', 'tags', 'list', 'formula'];
+export type FieldType = 'number' | 'text' | 'textarea' | 'select' | 'dots' | 'track' | 'tags' | 'list' | 'formula' | 'slots';
+export const FIELD_TYPES: FieldType[] = ['number', 'text', 'textarea', 'select', 'dots', 'track', 'tags', 'list', 'formula', 'slots'];
 export type ColumnType = 'text' | 'number' | 'dots' | 'dice';
 export const COLUMN_TYPES: ColumnType[] = ['text', 'number', 'dots', 'dice'];
+
+// Names of a total: the highest one whose `min` it reaches (the Fate ladder: +3 — «Good»).
+export type RollLabels = { min: number; title: Loc }[];
 
 // How a roll goes. Numbers are formulas over the card's fields (and `row.<key>` in a list row).
 export type RollSpec =
   // d20 + bonus (advantage and disadvantage with Shift / Alt).
-  | { type: 'd20'; bonus: string }
-  // A die (d100, d20) under the target; levels — harder successes at a fraction of it («hard» — half).
+  | { type: 'd20'; bonus: string; labels?: RollLabels }
+  // A die (d100, d20) under the target; levels — harder successes at a fraction of it («hard» — half). Advantage —
+  // the lower of two dice, disadvantage — the higher (a Mausritter save).
   | { type: 'under'; sides: number; target: string; levels?: { title: Loc; divide: number }[] }
   // Dice + bonus against bands of outcome (PbtA: 10+, 7–9, 6−), the highest band that fits.
   | { type: 'bands'; dice: string; bonus: string; bands: { min: number; title: Loc }[] }
@@ -30,9 +34,10 @@ export type RollSpec =
   // push — the roll can be pushed once (the dice that aren't successes are rolled again).
   | { type: 'pool'; sides: number; count: string; success?: number; best?: boolean; push?: boolean }
   // 4dF + bonus.
-  | { type: 'fate'; bonus: string }
-  // A plain sum: dice + bonus (damage, a table).
-  | { type: 'sum'; dice: string; bonus?: string }
+  | { type: 'fate'; bonus: string; labels?: RollLabels }
+  // A plain sum: dice + bonus (damage, a table); dice — «2d6» or a column of the list row: «row.damage» (its text,
+  // «d6/d8» — the first one).
+  | { type: 'sum'; dice: string; bonus?: string; labels?: RollLabels }
   // One die of `sides` that explodes on its maximum (Savage Worlds), plus a wild die if set; the better counts.
   | { type: 'explode'; sides: string; bonus?: string; wild?: number };
 export const ROLL_TYPES = ['d20', 'under', 'bands', 'pool', 'fate', 'sum', 'explode'] as const;
@@ -60,6 +65,10 @@ export interface FieldDef {
   columns?: ColumnDef[];
   // formula: the value (read only).
   formula?: string;
+  // slots: groups of cells (paws 2, body 2, pack 6); a cell holds an item (usage dots 0–3) or a condition.
+  slots?: { title: Loc; count: number }[];
+  // number, dots: not shown on the card while 0 (eighteen skills of Fate, most of them none).
+  hideZero?: boolean;
   // A roll by a click on the field (on a row of a list).
   roll?: RollSpec;
 }
@@ -119,6 +128,18 @@ export interface PackEntry {
 
 // A card's block of stats in a pack system: values by field key (a list — rows of values by column key).
 export type PackStats = Record<string, unknown>;
+// A cell of a «slots» field: an item (usage dots marked) or a condition.
+export interface PackSlot {
+  name: string;
+  condition?: boolean;
+  usage?: number;
+}
+// The cells of a slots field by group: [title, cells with their place in the value].
+export function slotGroups(f: FieldDef, value: unknown): { title: Loc; cells: { i: number; slot: PackSlot }[] }[] {
+  const list = Array.isArray(value) ? (value as PackSlot[]) : [];
+  let i = 0;
+  return (f.slots ?? []).map((g) => ({ title: g.title, cells: Array.from({ length: g.count }, () => ({ i, slot: list[i++] ?? { name: '' } })) }));
+}
 
 // ---- Building a pack (the builder in the app) ----
 // Formulas that don't parse or name what the pack hasn't: where (a field's key or 'rank', 'tracker'), the text and
@@ -153,6 +174,7 @@ export function newField(type: FieldType, key: string, title: Loc): FieldDef {
   if (type === 'select') f.options = ['A', 'B'];
   if (type === 'list') f.columns = [{ key: 'name', type: 'text', title: 'Name' }, { key: 'value', type: 'number', title: 'Value' }];
   if (type === 'formula') f.formula = '0';
+  if (type === 'slots') f.slots = [{ title: 'Slots', count: 6 }];
   return f;
 }
 
@@ -204,12 +226,21 @@ function locOf(x: unknown, max = LIMIT.text): Loc | null {
 const formulaOf = (x: unknown) => (typeof x === 'string' && x.length <= LIMIT.formula && parseFormula(x) ? x : null);
 const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined);
 
+function labelsOf(x: unknown): RollLabels | undefined {
+  if (!Array.isArray(x)) return undefined;
+  const out = x.flatMap((b) => (isObj(b) && num(b['min']) !== undefined && locOf(b['title']) ? [{ min: b['min'] as number, title: locOf(b['title'])! }] : [])).slice(0, 24);
+  return out.length ? out.sort((a, b) => b.min - a.min) : undefined;
+}
+const ROW_DICE = /^row\.[a-z][a-z0-9_]*$/;
+
 function rollOf(x: unknown): RollSpec | null {
   if (!isObj(x)) return null;
+  const labels = labelsOf(x['labels']);
+  const withLabels = labels ? { labels } : {};
   const f = (k: string, need = true) => (x[k] === undefined && !need ? '' : formulaOf(x[k]));
   switch (x['type']) {
     case 'd20':
-      return f('bonus') !== null ? { type: 'd20', bonus: x['bonus'] as string } : null;
+      return f('bonus') !== null ? { type: 'd20', bonus: x['bonus'] as string, ...withLabels } : null;
     case 'under': {
       const sides = num(x['sides']);
       if (!sides || sides < 2 || sides > 1000 || f('target') === null) return null;
@@ -232,10 +263,10 @@ function rollOf(x: unknown): RollSpec | null {
       return { type: 'pool', sides, count: x['count'] as string, ...(success ? { success } : {}), ...(x['best'] === true ? { best: true } : {}), ...(x['push'] === true ? { push: true } : {}) };
     }
     case 'fate':
-      return f('bonus') !== null ? { type: 'fate', bonus: x['bonus'] as string } : null;
+      return f('bonus') !== null ? { type: 'fate', bonus: x['bonus'] as string, ...withLabels } : null;
     case 'sum':
-      if (typeof x['dice'] !== 'string' || !diceOf(x['dice']) || f('bonus', false) === null) return null;
-      return { type: 'sum', dice: x['dice'], ...(x['bonus'] ? { bonus: x['bonus'] as string } : {}) };
+      if (typeof x['dice'] !== 'string' || !(diceOf(x['dice']) || ROW_DICE.test(x['dice'])) || f('bonus', false) === null) return null;
+      return { type: 'sum', dice: x['dice'], ...(x['bonus'] ? { bonus: x['bonus'] as string } : {}), ...withLabels };
     case 'explode': {
       const wild = num(x['wild']);
       if (f('sides') === null || f('bonus', false) === null) return null;
@@ -283,6 +314,14 @@ function fieldOf(x: unknown): FieldDef | null {
     if (!formula) return null;
     f.formula = formula;
   }
+  if (type === 'slots') {
+    const groups = Array.isArray(x['slots'])
+      ? x['slots'].flatMap((g) => (isObj(g) && locOf(g['title']) && num(g['count']) && (g['count'] as number) >= 1 ? [{ title: locOf(g['title'])!, count: Math.min(20, Math.round(g['count'] as number)) }] : [])).slice(0, 6)
+      : [];
+    if (!groups.length) return null;
+    f.slots = groups;
+  }
+  if (x['hideZero'] === true && (type === 'number' || type === 'dots')) f.hideZero = true;
   if (x['roll'] !== undefined) {
     const roll = rollOf(x['roll']);
     if (roll) f.roll = roll;
@@ -506,7 +545,7 @@ export function blankStats(pack: SystemPack, kind: CardKind): PackStats {
     for (const f of s.fields) {
       if (f.type === 'formula') continue;
       if (f.default !== undefined) out[f.key] = f.default;
-      else if (f.type === 'list' || f.type === 'tags') out[f.key] = [];
+      else if (f.type === 'list' || f.type === 'tags' || f.type === 'slots') out[f.key] = [];
       else if (f.type === 'number' || f.type === 'dots' || f.type === 'track') out[f.key] = f.type === 'number' ? (f.min ?? 0) : 0;
     }
   }
@@ -542,7 +581,7 @@ export function packCombat(pack: SystemPack, stats: PackStats): CombatStats {
     ac: null,
     initiative: Math.round(initiative),
     stress: cells.filter((f) => f.type === 'track').map((f) => ({ id: f.key, boxes: boxesOf(pack, stats, f) })),
-    attrs: cells.filter((f) => f.type !== 'track').map((f) => ({ id: f.key, value: Math.round(evalFormula(pack, stats, f.key)) })),
+    attrs: cells.filter((f) => f.type === 'number' || f.type === 'dots' || f.type === 'formula').map((f) => ({ id: f.key, value: Math.round(evalFormula(pack, stats, f.key)) })),
   };
 }
 
@@ -589,6 +628,23 @@ export function rollPack(
   words: RollWords,
   die: Die,
   mode: 'normal' | 'advantage' | 'disadvantage' = 'normal',
+  row?: Record<string, unknown>,
+): PackRollResult {
+  const r = rollRaw(spec, value, lang, words, die, mode, row);
+  // A name of the total (the Fate ladder), unless the roll has one already.
+  const labels = 'labels' in spec ? spec.labels : undefined;
+  const label = !r.outcome && labels ? labels.find((l) => r.total >= l.min) : undefined;
+  return label ? { ...r, outcome: loc(label.title, lang) } : r;
+}
+
+function rollRaw(
+  spec: RollSpec,
+  value: (formula: string) => number,
+  lang: string,
+  words: RollWords,
+  die: Die,
+  mode: 'normal' | 'advantage' | 'disadvantage',
+  row?: Record<string, unknown>,
 ): PackRollResult {
   switch (spec.type) {
     case 'd20': {
@@ -599,11 +655,12 @@ export function rollPack(
     }
     case 'under': {
       const target = Math.round(value(spec.target));
-      const r = die(spec.sides);
+      const two = mode === 'normal' ? [die(spec.sides)] : [die(spec.sides), die(spec.sides)];
+      const r = mode === 'advantage' ? Math.min(...two) : mode === 'disadvantage' ? Math.max(...two) : two[0]!;
       const levels = [...(spec.levels ?? [])].sort((a, b) => b.divide - a.divide);
       const level = levels.find((l) => r <= Math.floor(target / l.divide));
       const ok = r <= target;
-      return { dice: [[r]], total: r, outcome: level ? loc(level.title, lang) : ok ? words.success : words.failure, tone: ok ? 'good' : 'bad', note: `d${spec.sides} ≤ ${target}` };
+      return { dice: [two], total: r, outcome: level ? loc(level.title, lang) : ok ? words.success : words.failure, tone: ok ? 'good' : 'bad', note: `d${spec.sides} ≤ ${target}` };
     }
     case 'bands': {
       const d = diceOf(spec.dice)!;
@@ -629,7 +686,9 @@ export function rollPack(
       return { dice: [faces], total, outcome: '', tone: 'none', note: `4dF ${signed(bonus)}` };
     }
     case 'sum': {
-      const d = diceOf(spec.dice)!;
+      // Dice from the row: «d6/d8» — the first; nothing that reads — 1d6.
+      const text = ROW_DICE.test(spec.dice) ? String(row?.[spec.dice.slice(4)] ?? '').split('/')[0]!.trim() : spec.dice;
+      const d = diceOf(text) ?? diceOf(`d${text.replace(/^[dк]/i, '')}`) ?? { count: 1, sides: 6, bonus: 0 };
       const rolls = Array.from({ length: d.count }, () => die(d.sides));
       const bonus = (spec.bonus ? Math.round(value(spec.bonus)) : 0) + d.bonus;
       return { dice: [rolls], total: rolls.reduce((a, b) => a + b, 0) + bonus, outcome: '', tone: 'none', note: `${d.count}d${d.sides}${bonus ? ` ${signed(bonus)}` : ''}` };

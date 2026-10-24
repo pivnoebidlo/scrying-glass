@@ -6,7 +6,7 @@
   import { markdownKeys } from '../../renderer/lib/markdownKeys';
   import { t } from '../../renderer/lib/i18n.svelte';
   import type { CardKind } from '../../shared/cards';
-  import { blankStats, boxesOf, evalFormula, loc, sectionsFor, type ColumnDef, type FieldDef, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { blankStats, boxesOf, evalFormula, loc, sectionsFor, slotGroups, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
   import { packOf } from '../packs';
 
   let {
@@ -37,6 +37,13 @@
   function setRow(f: FieldDef, i: number, key: string, v: unknown) {
     stats[f.key] = rows(f).map((r, j) => (j === i ? { ...r, [key]: v } : r));
   }
+  // A cell of a slots field changed (the list grows to that place).
+  function setSlot(f: FieldDef, i: number, change: Partial<PackSlot>) {
+    const list = Array.isArray(stats[f.key]) ? [...(stats[f.key] as PackSlot[])] : [];
+    while (list.length <= i) list.push({ name: '' });
+    list[i] = { ...list[i]!, ...change };
+    stats[f.key] = list;
+  }
   let newTag = $state<Record<string, string>>({});
   function addTag(f: FieldDef) {
     const v = (newTag[f.key] ?? '').trim();
@@ -50,7 +57,7 @@
     <section>
       <h4>{L(sec.title)}</h4>
       <div class="grid">
-        {#each sec.fields.filter((f) => !['textarea', 'list', 'tags'].includes(f.type)) as f (f.key)}
+        {#each sec.fields.filter((f) => !['textarea', 'list', 'tags', 'slots'].includes(f.type)) as f (f.key)}
           <label class="field" class:small={f.type === 'number' || f.type === 'formula'} title={L(f.hint)}>
             <span>{L(f.title)}</span>
             {#if f.type === 'number'}
@@ -80,11 +87,28 @@
           </label>
         {/each}
       </div>
-      {#each sec.fields.filter((f) => ['textarea', 'list', 'tags'].includes(f.type)) as f (f.key)}
+      {#each sec.fields.filter((f) => ['textarea', 'list', 'tags', 'slots'].includes(f.type)) as f (f.key)}
         <div class="wide">
           <span class="lbl">{L(f.title)}</span>
           {#if f.type === 'textarea'}
             <textarea rows="4" use:markdownKeys value={str(f.key)} oninput={(e) => (stats[f.key] = e.currentTarget.value)}></textarea>
+          {:else if f.type === 'slots'}
+            {#each slotGroups(f, stats[f.key]) as g, gi (gi)}
+              <div class="slot-group">
+                <span class="lbl">{L(g.title)}</span>
+                {#each g.cells as c (c.i)}
+                  <span class="slot" class:cond={c.slot.condition}>
+                    <input type="text" value={c.slot.name ?? ''} oninput={(e) => setSlot(f, c.i, { name: e.currentTarget.value })} />
+                    <span class="usage" title={t('pack.usage')}>
+                      {#each [1, 2, 3] as u (u)}
+                        <button type="button" class="dot" class:on={(c.slot.usage ?? 0) >= u} aria-label={String(u)} onclick={() => setSlot(f, c.i, { usage: (c.slot.usage ?? 0) === u ? u - 1 : u })}></button>
+                      {/each}
+                    </span>
+                    <button type="button" class="cond-btn" class:on={c.slot.condition} title={t('pack.slotCondition')} onclick={() => setSlot(f, c.i, { condition: !c.slot.condition })}>!</button>
+                  </span>
+                {/each}
+              </div>
+            {/each}
           {:else if f.type === 'tags'}
             <div class="tags">
               {#each tags(f) as tag, i (i)}
@@ -199,6 +223,53 @@
   }
   textarea {
     resize: vertical;
+  }
+  .slot-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 2px 0;
+  }
+  .slot-group .lbl {
+    width: 70px;
+  }
+  .slot {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+  }
+  .slot.cond {
+    border-color: var(--danger);
+  }
+  .slot input {
+    width: 120px;
+  }
+  .usage {
+    display: inline-flex;
+    gap: 2px;
+  }
+  .usage .dot {
+    width: 9px;
+    height: 9px;
+  }
+  .cond-btn {
+    width: 18px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: none;
+    color: var(--text-faint);
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .cond-btn.on {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: var(--bg-primary);
   }
   .tags {
     display: flex;

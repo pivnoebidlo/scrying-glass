@@ -83,8 +83,9 @@ export function packTracker(p: SystemPack): TrackerDef {
         },
       ]
     : [];
+  // Text cells (consequences) are written in the tracker itself, not entered on adding.
   const cells: CombatField[] = (p.tracker.cells ?? [])
-    .filter((k) => k !== p.tracker.hp)
+    .filter((k) => k !== p.tracker.hp && !['text', 'textarea'].includes(fields.get(k)?.type ?? ''))
     .map((key) => {
       const track = fields.get(key)?.type === 'track';
       return {

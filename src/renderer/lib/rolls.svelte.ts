@@ -66,8 +66,8 @@ class Rolls {
   }
 
   // A roll of a system pack: the spec of the field, its numbers from the card.
-  packRoll(who: string, what: string, spec: RollSpec, value: (formula: string) => number, mode: D20Mode = 'normal') {
-    this.push({ who, what, pack: rollPack(spec, value, getLang(), packWords(), die, mode), damage: [] });
+  packRoll(who: string, what: string, spec: RollSpec, value: (formula: string) => number, mode: D20Mode = 'normal', row?: Record<string, unknown>) {
+    this.push({ who, what, pack: rollPack(spec, value, getLang(), packWords(), die, mode, row), damage: [] });
   }
 
   // Push a pack's pool roll: a new line, the old one can't be pushed again.

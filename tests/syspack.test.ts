@@ -2,7 +2,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { blankStats, evalFormula, fieldMap, formulaProblems, packCombat, packSubtitle, parseFormula, pushPool, rollPack, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
+import { blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, pushPool, rollPack, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
 
 const words: RollWords = { success: 'Success', failure: 'Failure', successes: (n) => `${n} successes`, critical: 'Critical' };
 // Dice that fall as told, in order.
@@ -122,6 +122,58 @@ describe('system packs', () => {
     expect(rollPack({ type: 'sum', dice: '2d6+1', bonus: 'gear' }, v({ gear: 2 }), 'en', words, fixed(3, 4))).toMatchObject({ total: 10 });
     // A d6 that aces twice, against a wild d6 of 4.
     expect(rollPack({ type: 'explode', sides: '6', wild: 6 }, v({}), 'en', words, fixed(6, 6, 2, 4))).toMatchObject({ total: 14, dice: [[6, 6, 2], [4]] });
+  });
+});
+
+describe('format extensions for Fate and Mausritter', () => {
+  const pack = validatePack({
+    scryingGlass: 'system',
+    version: 1,
+    id: 'ext-test',
+    title: 'Ext',
+    sections: [
+      {
+        id: 'main',
+        title: 'Main',
+        fields: [
+          { key: 'fight', type: 'number', title: 'Fight', hideZero: true, roll: { type: 'fate', bonus: 'fight', labels: [{ min: 1, title: 'Average' }, { min: 3, title: 'Good' }, { min: -99, title: 'Mediocre' }] } },
+          { key: 'str', type: 'number', title: 'STR', roll: { type: 'under', sides: 20, target: 'str' } },
+          { key: 'attacks', type: 'list', title: 'Attacks', columns: [{ key: 'name', type: 'text', title: 'Name' }, { key: 'dice', type: 'dice', title: 'Dice' }], roll: { type: 'sum', dice: 'row.dice' } },
+          { key: 'inventory', type: 'slots', title: 'Inventory', slots: [{ title: 'Paws', count: 2 }, { title: 'Pack', count: 6 }] },
+          { key: 'mild', type: 'text', title: 'Mild' },
+        ],
+      },
+    ],
+    tracker: { init: { type: 'value', value: 'fight' }, cells: ['mild', 'str'] },
+  }) as SystemPack;
+
+  it('takes the new parts', () => {
+    expect(typeof pack).toBe('object');
+    const f = fieldMap(pack);
+    expect(f.get('fight')).toMatchObject({ hideZero: true, roll: { labels: [{ min: 3 }, { min: 1 }, { min: -99 }] } });
+    expect(f.get('inventory')?.slots).toEqual([{ title: 'Paws', count: 2 }, { title: 'Pack', count: 6 }]);
+    expect(f.get('attacks')?.roll).toEqual({ type: 'sum', dice: 'row.dice' });
+    expect(blankStats(pack, 'character')).toMatchObject({ inventory: [] });
+  });
+
+  it('names a total, rolls under with advantage, takes dice from a row', () => {
+    const v = (stats: Record<string, unknown>) => (f: string) => evalFormula(pack, stats, f);
+    const fate = fieldMap(pack).get('fight')!.roll!;
+    expect(rollPack(fate, v({ fight: 2 }), 'en', words, fixed(3, 2, 2, 2))).toMatchObject({ total: 3, outcome: 'Good' });
+    expect(rollPack(fate, v({ fight: 0 }), 'en', words, fixed(1, 1, 2, 2))).toMatchObject({ total: -2, outcome: 'Mediocre' });
+    const save = fieldMap(pack).get('str')!.roll!;
+    expect(rollPack(save, v({ str: 9 }), 'en', words, fixed(15, 4), 'advantage')).toMatchObject({ total: 4, tone: 'good' });
+    expect(rollPack(save, v({ str: 9 }), 'en', words, fixed(15, 4), 'disadvantage')).toMatchObject({ total: 15, tone: 'bad' });
+    const hit = fieldMap(pack).get('attacks')!.roll!;
+    expect(rollPack(hit, v({}), 'en', words, fixed(7), 'normal', { name: 'Needle', dice: 'd6/d8' })).toMatchObject({ total: 7, note: '1d6' });
+    expect(rollPack(hit, v({}), 'en', words, fixed(3, 4), 'normal', { name: 'Claws', dice: '2d4' })).toMatchObject({ total: 7 });
+  });
+
+  it('slots: cells by group with their places; text cells stay out of the numbers', () => {
+    const groups = slotGroups(fieldMap(pack).get('inventory')!, [{ name: 'Sword' }, { name: '' }, { name: 'Torch', usage: 2 }]);
+    expect(groups.map((g) => g.cells.length)).toEqual([2, 6]);
+    expect(groups[1]!.cells[0]).toEqual({ i: 2, slot: { name: 'Torch', usage: 2 } });
+    expect(packCombat(pack, { fight: 2, str: 9, mild: 'Bruised' })).toMatchObject({ initiative: 2, attrs: [{ id: 'str', value: 9 }] });
   });
 });
 

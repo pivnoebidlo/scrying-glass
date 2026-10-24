@@ -29,6 +29,8 @@ export interface Combatant {
   consequences?: Consequence[];
   // Mausritter: attribute scores, current and maximum (damage past HP goes to STR; STR 0 — dead).
   attrs?: AttrScore[];
+  // A system pack's text cells in the tracker (Fate consequences): by the field's key.
+  texts?: Record<string, string>;
   // Выведен из боя (Fate: «taken out»); у D&D побеждённого определяют хиты.
   out?: boolean;
   // Карточка из бестиария, если участник добавлен оттуда (открыть статблок).
