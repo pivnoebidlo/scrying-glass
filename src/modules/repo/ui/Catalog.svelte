@@ -40,7 +40,23 @@
 
   const found = $derived(repo.info ? allFound() : []);
   const updates = $derived(repo.info ? updatesHere().map((u) => key(u.entry)) : []);
-  const hasSystems = $derived(found.some((e) => e.kind === 'system'));
+  // The kinds of things in the Community (bestiaries and more will come here).
+  const KINDS: { id: 'adventures' | 'systems'; title: string; fits: (e: Found) => boolean }[] = [
+    {
+      id: 'adventures',
+      get title() {
+        return t('repo.whatAdventures');
+      },
+      fits: (e) => e.kind !== 'system',
+    },
+    {
+      id: 'systems',
+      get title() {
+        return t('repo.whatSystems');
+      },
+      fits: (e) => e.kind === 'system',
+    },
+  ];
   const entries = $derived(
     found
       // Updates are of both kinds; otherwise — the kind chosen.
@@ -100,43 +116,36 @@
       <button class="icon-btn" title={t('repo.close')} onclick={close}><X size={16} /></button>
     </header>
 
+    <!-- The same lists, always in their places: what doesn't apply is disabled, not hidden (nothing jumps). A new kind
+         of thing in the Community is one more option of «What». -->
     <div class="filters">
       <!-- svelte-ignore a11y_autofocus -->
-      <input type="text" placeholder={t('repo.search')} bind:value={query} autofocus />
-      {#if on.length > 1}
-        <select bind:value={source}>
-          <option value="">{t('repo.allSources')}</option>
-          {#each on as s (s.id)}<option value={s.id}>{sourceName(s)}</option>{/each}
-        </select>
-      {/if}
-      {#if hasSystems || what === 'systems'}
-        <div class="seg">
-          <button class:on={what === 'adventures'} onclick={() => (what = 'adventures')}>{t('repo.whatAdventures')}</button>
-          <button class:on={what === 'systems'} onclick={() => (what = 'systems')}>{t('repo.whatSystems')}</button>
-        </div>
-      {/if}
-      {#if what === 'adventures'}
-        <select bind:value={system}>
-          <option value="">{t('repo.allSystems')}</option>
-          {#each enabled as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
-        </select>
-      {/if}
-      <select bind:value={lang}>
+      <input type="text" class="search" placeholder={t('repo.search')} bind:value={query} autofocus />
+      <select class="f" bind:value={what} title={t('repo.whatHint')}>
+        {#each KINDS as k (k.id)}<option value={k.id}>{k.title} ({found.filter(k.fits).length})</option>{/each}
+      </select>
+      <select class="f" bind:value={show} title={t('repo.showHint')}>
+        <option value="all">{t('repo.showAll')}</option>
+        <option value="updates">{t('repo.showUpdates', { count: updates.length })}</option>
+        <option value="installed">{t('repo.showInstalled')}</option>
+        <option value="mine">{t('repo.showMine')}</option>
+        {#if admin}
+          <option value="reported">{t('repo.showReported', { count: reportedCount })}</option>
+          <option value="blocked">{t('repo.showBlocked', { count: blocked.length })}</option>
+        {/if}
+      </select>
+      <select class="f" bind:value={system} disabled={what === 'systems'}>
+        <option value="">{t('repo.allSystems')}</option>
+        {#each enabled as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
+      </select>
+      <select class="f" bind:value={lang}>
         <option value="">{t('repo.allLangs')}</option>
         {#each Object.entries(LANGS) as [id, title] (id)}<option value={id}>{title}</option>{/each}
       </select>
-      <div class="seg">
-        <button class:on={show === 'all'} onclick={() => (show = 'all')}>{t('repo.showAll')}</button>
-        {#if updates.length || show === 'updates'}
-          <button class:on={show === 'updates'} onclick={() => (show = 'updates')}>{t('repo.showUpdates', { count: updates.length })}</button>
-        {/if}
-        <button class:on={show === 'installed'} onclick={() => (show = 'installed')}>{t('repo.showInstalled')}</button>
-        <button class:on={show === 'mine'} onclick={() => (show = 'mine')}>{t('repo.showMine')}</button>
-        {#if admin}
-          <button class:on={show === 'reported'} onclick={() => (show = 'reported')}>{t('repo.showReported', { count: reportedCount })}</button>
-          <button class:on={show === 'blocked'} onclick={() => (show = 'blocked')}>{t('repo.showBlocked', { count: blocked.length })}</button>
-        {/if}
-      </div>
+      <select class="f" bind:value={source} disabled={on.length < 2}>
+        <option value="">{t('repo.allSources')}</option>
+        {#each on as s (s.id)}<option value={s.id}>{sourceName(s)}</option>{/each}
+      </select>
     </div>
 
     {#each failed as s (s.id)}
@@ -310,26 +319,13 @@
     padding: 0 18px 12px;
     border-bottom: 1px solid var(--border);
   }
-  .filters input {
-    flex: 1;
-    min-width: 200px;
+  .search {
+    flex: 1 1 220px;
+    min-width: 0;
   }
-  .seg {
-    display: inline-flex;
-    padding: 2px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-s);
-  }
-  .seg button {
-    padding: 3px 10px;
-    border: 0;
-    border-radius: var(--radius-s);
-    background: none;
-    color: var(--text-muted);
-  }
-  .seg button.on {
-    background: var(--bg-active);
-    color: var(--text-normal);
+  .f {
+    flex: none;
+    width: 150px;
   }
   .problem {
     display: flex;
