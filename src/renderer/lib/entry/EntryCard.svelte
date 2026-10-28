@@ -170,6 +170,7 @@
   .body :global(th),
   .body :global(td) {
     padding: 2px 10px 2px 0;
+    vertical-align: top;
     border-bottom: 1px solid var(--border);
     text-align: left;
   }

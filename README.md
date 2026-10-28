@@ -96,7 +96,7 @@ a supplement, ready to be used in adventures, and gets new versions like an adve
 on a supplement's page, "New table" in Tools → Roll tables, or "+" in the Compendium. The editor: the die by buttons
 (d4…d100, 2d6 or any dice), rows as ranges and results (split, merge, add; a warning names the numbers no row covers),
 "Grid" — a second die for the columns (the crit table: d10 rows × d6 columns). "Roll in the text" puts `{1d6}` into a
-result (rolled with the table), "Link to a table" — a link to another table: it is rolled too, so tables chain (crit →
+result (rolled with the table; a result may be several lines — Enter), "Link to a table" — a link to another table: it is rolled too, so tables chain (crit →
 body part → effect). "Paste from text…" makes the table from numbered lines or a list copied from a PDF or a site.
 "Roll" on the entry (or the dice button in Tools → Roll tables, where every table seen here is listed) puts the whole
 chain into the roll log; there "Again", "Show to players" and "To Telegram". A table marked "Offer on a natural 20" (or

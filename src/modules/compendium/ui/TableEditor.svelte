@@ -8,6 +8,8 @@
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { rolls } from '../../../renderer/lib/rolls.svelte';
+  import { markdownKeys } from '../../../renderer/lib/markdownKeys';
+  import { modKey } from '../../../shared/hotkeys';
   import { colsFor, coverage, diceSpan, modelMarkdown, numbersText, parseRollTable, rowsFor, TABLE_TYPE, tableModel, type EditRow, type Range, type TableModel } from '../../../shared/rolltable';
   import { allEntries } from './store.svelte';
 
@@ -100,7 +102,7 @@
   };
 
   // Rolls and links go where the cursor was: the last cell in focus.
-  let focus: { el: HTMLInputElement; row: number; col: number } | null = null;
+  let focus: { el: HTMLTextAreaElement; row: number; col: number } | null = null;
   async function insert(text: string) {
     const f = focus ?? { el: null, row: model.rows.length - 1, col: 0 };
     const r = model.rows[f.row];
@@ -220,7 +222,7 @@
             </span>
           </td>
           {#each r.cells.slice(0, width) as _, k (k)}
-            <td><input class="cell" type="text" bind:value={r.cells[k]} onfocus={(e) => (focus = { el: e.currentTarget, row: i, col: k })} /></td>
+            <td><textarea class="cell" rows="1" use:markdownKeys bind:value={r.cells[k]} title={t('cmpui.table.cellHint', { mod: modKey() })} onfocus={(e) => (focus = { el: e.currentTarget, row: i, col: k })}></textarea></td>
           {/each}
           <td class="act">
             {#if r.from < r.to}<button type="button" class="icon-btn" title={t('cmpui.table.split')} onclick={() => split(i)}><Split size={12} /></button>{/if}
@@ -353,10 +355,18 @@
     padding: 2px 4px;
     text-align: right;
   }
+  /* A result may be several lines (Enter): the field grows with its text. */
   .cell {
     box-sizing: border-box;
     width: 100%;
     min-width: 60px;
+    field-sizing: content;
+    min-height: 0;
+    resize: none;
+    font: inherit;
+  }
+  td {
+    vertical-align: top;
   }
   .act {
     width: 1%;

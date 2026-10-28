@@ -43,6 +43,11 @@ describe('roll tables', () => {
     expect(rollOnTable(t, faces(3, 4)).text).toBeNull();
   });
 
+  it('goes on with a numbered line wrapped in a PDF', () => {
+    const t = parseRollTable('Crits:\n1-2 Melee: your hat slips\nover your eyes.\n3 Ranged: attack again\n\nAfter the table.')!;
+    expect(t.rows.map((r) => r.cells[0])).toEqual(['Melee: your hat slips over your eyes.', 'Ranged: attack again']);
+  });
+
   it('reads numbered lines and plain lists', () => {
     expect(parseRollTable('1–2. Rain\n3: Fog\n4-6 Clear')!.rows.map((r) => r.range.to)).toEqual([2, 3, 6]);
     const list = parseRollTable('# Weather\n- Rain\n- Fog\n- Clear')!;
@@ -67,7 +72,7 @@ describe('roll tables', () => {
       ['Head', 1],
     ]);
     expect(steps[1]!.text).toBe('Stunned **1** (1d4) rounds, see [[Stunned]]');
-    expect(stepsMarkdown(steps, '—')).toBe('- **Crit** (1d1: 1): [[Head]] and [[Crit]]\n  - **Head** (1d1: 1): Stunned **1** (1d4) rounds, see [[Stunned]]');
+    expect(stepsMarkdown(steps, '—')).toBe('**Crit** (1d1: 1)\n[[Head]] and [[Crit]]\n\n→ **Head** (1d1: 1)\nStunned **1** (1d4) rounds, see [[Stunned]]');
   });
 });
 
@@ -87,7 +92,9 @@ describe('roll table editor model', () => {
     const m = tableModel('Weather:\n- Rain\n- Fog', '', 'd');
     expect([m.dice, m.intro, m.rows.length]).toEqual(['d2', 'Weather:', 2]);
     m.rows[0]!.cells[0] = 'Rain | hail\nand wind';
-    expect(modelMarkdown(m, 'Result').body).toBe('Weather:\n\n| d2 | Result |\n|---|---|\n| 1 | Rain / hail and wind |\n| 2 | Fog |\n');
+    expect(modelMarkdown(m, 'Result').body).toBe('Weather:\n\n| d2 | Result |\n|---|---|\n| 1 | Rain / hail<br>and wind |\n| 2 | Fog |\n');
+    // A multi-line result comes back as lines.
+    expect(tableModel(modelMarkdown(m, 'Result').body, 'd2', 'd').rows[0]!.cells[0]).toBe('Rain / hail\nand wind');
   });
 
   it('makes rows for dice, checks the coverage', () => {

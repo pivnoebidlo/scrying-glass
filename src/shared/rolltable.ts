@@ -56,12 +56,13 @@ export function parseRange(text: string): Range | null {
   return to >= from ? { from, to } : null;
 }
 
+// A line break in a cell is «<br>» (as in Obsidian): a multi-line result.
 const cellsOf = (line: string) =>
   line
     .trim()
     .replace(/^\||\|$/g, '')
     .split('|')
-    .map((c) => c.trim());
+    .map((c) => c.trim().replace(/\s*<br\s*\/?>\s*/gi, '\n'));
 const isSeparator = (line: string) => /^\|?[\s:|-]+\|?$/.test(line.trim()) && line.includes('-');
 
 // «1–3 text», «4. text», «5: text», «6) text».
@@ -112,12 +113,19 @@ export function splitTable(body: string, roll = ''): { table: RollTable | null; 
   }
   // Numbered lines, else list items. Headings, quotes and other lines are the description.
   const used = new Set<number>();
-  const numbered = lines.flatMap((l, k) => {
+  // A line without a number right after a numbered one goes on with it (a result wrapped in a PDF).
+  const numbered: TableRow[] = [];
+  lines.forEach((l, k) => {
     const m = NUMBERED.exec(l.trim().replace(/^[-*]\s+/, ''));
     const range = m ? parseRange(m[1]!) : null;
-    if (!range) return [];
-    used.add(k);
-    return [{ range, cells: [m![2]!.trim()] }];
+    const prev = numbered.at(-1);
+    if (range) {
+      used.add(k);
+      numbered.push({ range, cells: [m![2]!.trim()] });
+    } else if (prev && used.has(k - 1) && l.trim() && !/^[#>|]/.test(l.trim())) {
+      used.add(k);
+      prev.cells[0] = `${prev.cells[0]} ${l.trim()}`;
+    }
   });
   const others = () => lines.filter((_, k) => !used.has(k)).join('\n').replace(/\n{3,}/g, '\n\n').trim();
   if (numbered.length) return { table: { rows: numbered, rowDice: dice[0] ?? dieOf(last(numbered.map((r) => r.range))) }, intro: others() };
@@ -205,9 +213,10 @@ export function runTable(start: TableSource, resolve: (name: string) => TableSou
   return steps;
 }
 
-// The steps as Markdown: for the players' screen and Telegram.
+// The steps as Markdown: for the players' screen and Telegram. A step is its title and dice, then the result (it may
+// be several lines); a table rolled by a link — with an arrow.
 export function stepsMarkdown(steps: TableStep[], none: string): string {
-  return steps.map((s) => `${'  '.repeat(s.depth)}- **${s.title}** (${s.dice}): ${s.text ?? none}`).join('\n');
+  return steps.map((s) => `${s.depth ? `${'→ '.repeat(s.depth)}` : ''}**${s.title}** (${s.dice})\n${s.text ?? none}`).join('\n\n');
 }
 
 // ---------- The editor's model: rows to fill in, written back as a Markdown table ----------
@@ -269,8 +278,12 @@ export function tableModel(body: string, roll: string, letter: string): TableMod
 }
 
 export const rangeText = (r: Range) => (r.from === r.to ? String(r.from) : `${r.from}–${r.to}`);
-// A cell on one line, without the column bar.
-const cellText = (s: string) => s.replace(/\|/g, '/').replace(/\s*\n\s*/g, ' ').trim();
+// A cell on one line of the file: no column bar, line breaks as «<br>».
+const cellText = (s: string) =>
+  s
+    .replace(/\|/g, '/')
+    .trim()
+    .replace(/[ \t]*\n[ \t]*/g, '<br>');
 
 // The model as the entry's text and its `roll` field. `result` — the title of the result column.
 export function modelMarkdown(m: TableModel, result: string): { body: string; roll: string } {

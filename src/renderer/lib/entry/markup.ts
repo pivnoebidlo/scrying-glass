@@ -70,7 +70,9 @@ export function entryHtml(text: string, opts: MarkupOpts = {}): string {
       i += 2;
       while (i < lines.length && /^\s*\|/.test(lines[i]!)) rows.push(cells(lines[i++]!));
       i--;
-      out.push(`<table><thead><tr>${head.map((c) => `<th>${inl(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${inl(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
+      // A line break inside a cell is «<br>», as in Obsidian (roll tables write long results so).
+      const cell = (c: string) => c.split(/<br\s*\/?>/i).map(inl).join('<br>');
+      out.push(`<table><thead><tr>${head.map((c) => `<th>${cell(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${cell(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
       continue;
     }
     const li = /^\s*([-*•]|\d+[.)])\s+(.*)$/.exec(line);
