@@ -82,6 +82,12 @@ system, cover, export, publish, delete. A picture dropped on a tile becomes its 
 folder: it travels with the adventure and is the cover in the Community). Renaming moves everything the app knows of
 the adventure; a published one stays the same entry in the Community — publishing again makes its new version.
 
+**Bestiaries** live on the same tab: "Create bestiary…" makes a folder with only a monsters folder in it, with its own
+system and cover. Open it like an adventure and work on its cards — the Cards tab shows them, new ones go there. An
+adventure uses a bestiary when it is ticked in the adventure's "Name and system…": its cards are seen in that adventure
+as its own. "⋯ → Publish to the Community…" publishes the bestiary's cards as one entry (its new version, if it was
+published).
+
 **Adventures** are top-level folders of the vault marked as adventures: "Create adventure…" in the switcher above
 the side panel, or "Make an adventure" in the Files tab (on the first open, folders that already contain characters,
 maps and so on become adventures). An adventure always has characters, monsters, backgrounds, maps and music folders —

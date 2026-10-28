@@ -15,7 +15,14 @@ export interface AdventuresState {
   // Ролевая система приключения (id из systems/index.ts); ключ '' — всё хранилище и общее вне приключений.
   // Нет записи — DEFAULT_SYSTEM. Вкладки показывают карточки и записи семейства этой системы.
   systems?: Record<string, string>;
+  // Which of the list are bestiaries, not adventures: a folder of one's own cards (its monsters folder), worked on
+  // like an adventure — open it, and the Cards tab shows its cards and makes new ones in it.
+  bestiaries?: string[];
+  // Bestiaries an adventure uses: their cards are seen in it as its own (adventure → bestiary folders).
+  uses?: Record<string, string[]>;
 }
+
+export const isBestiary = (adv: AdventuresState, folder: string | null) => folder !== null && !!adv.bestiaries?.includes(folder);
 
 // Без приключений: видно всё, подписи — путь целиком.
 export const NO_ADVENTURE: AdventuresState = { list: [], current: null, initialized: true };
@@ -24,9 +31,9 @@ export const NO_ADVENTURE: AdventuresState = { list: [], current: null, initiali
 const STANDARD_ROLES: FolderRole[] = ['characters', 'party', 'bestiary', 'backgrounds', 'handouts', 'maps', 'music'];
 
 // Каких стандартных папок нет прямо в папке приключения (папка с той же ролью под другим именем — есть).
-export function missingFolders(folder: VaultFolder): string[] {
+export function missingFolders(folder: VaultFolder, bestiary = false): string[] {
   const roles = new Set(folder.folders.map((f) => folderRole(f.name)));
-  return STANDARD_ROLES.filter((role) => !roles.has(role)).map((role) => roleNames()[role][0]!);
+  return (bestiary ? (['bestiary'] as FolderRole[]) : STANDARD_ROLES).filter((role) => !roles.has(role)).map((role) => roleNames()[role][0]!);
 }
 
 // Папка похожа на приключение: в ней есть хотя бы одна папка с ролью (и сама она не «maps» и т. п.).
@@ -68,7 +75,7 @@ export const inCurrentFamily = (adv: AdventuresState, system: string) =>
 export function visibleIn(adv: AdventuresState, path: string): boolean {
   const a = adventureOf(adv, path);
   if (adventureHidden(adv, a)) return false;
-  return adv.current === null || a === null || a === adv.current;
+  return adv.current === null || a === null || a === adv.current || !!adv.uses?.[adv.current]?.includes(a);
 }
 
 // Подпись группы по папке, где она лежит: «Глава 1» внутри текущего приключения, название приключения
@@ -77,13 +84,18 @@ export function placeTitle(adv: AdventuresState, dir: string, vaultName: string)
   if (adv.current === null) return dir ? dir.split('/').join(' / ') : vaultName;
   const a = adventureOf(adv, dir);
   if (a === null) return dir ? `${t('place.shared')} / ${dir.split('/').join(' / ')}` : t('place.shared');
+  // A bestiary the adventure uses: its own name first.
+  if (a !== adv.current) return dir.split('/').join(' / ');
   if (dir === a) return basename(a);
   return dir.slice(a.length + 1).split('/').join(' / ');
 }
 
-// Порядок групп: сначала текущее приключение (его корень, потом главы), затем общее.
-export const placeOrder = (adv: AdventuresState, dir: string) =>
-  adv.current !== null && adventureOf(adv, dir) === null ? 1 : 0;
+// Порядок групп: сначала текущее приключение (его корень, потом главы), then the bestiaries it uses, затем общее.
+export const placeOrder = (adv: AdventuresState, dir: string) => {
+  if (adv.current === null) return 0;
+  const a = adventureOf(adv, dir);
+  return a === adv.current ? 0 : a === null ? 2 : 1;
+};
 
 // Куда класть новые файлы вкладки (вставка из буфера): папка роли в текущем приключении, без приключения —
 // в корне хранилища. null — такой папки нет.

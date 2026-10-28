@@ -1,14 +1,15 @@
 <!-- The «Adventures» tab, the first one: every adventure as a tile — its cover, system, what is in it and where it
-     stands in the Community. «Open» makes it the current one; «⋯» — rename, cover, system, export, publish, delete.
-     A picture dropped on a tile becomes its cover. -->
+     stands in the Community — and below, the bestiaries (folders of one's own cards, opened and worked on the same
+     way). A click on the cover opens one, a double click picks its cover; «⋯» — name and system (for an adventure,
+     the bestiaries it uses), cover, export, publish, delete. A picture dropped on a tile becomes its cover. -->
 <script lang="ts">
-  import { CloudUpload, Download, Globe, ImagePlus, MoreHorizontal, Pencil, Plus, Trash2 } from '@lucide/svelte';
+  import { BookOpen, CloudUpload, Download, Globe, ImagePlus, MoreHorizontal, Pencil, Plus, Trash2 } from '@lucide/svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import FilePicker from '../../../renderer/lib/FilePicker.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { COVER_FILE, currentSystem, shownAdventures, systemFor } from '../../../shared/adventures';
+  import { COVER_FILE, currentSystem, isBestiary, shownAdventures, systemFor } from '../../../shared/adventures';
   import { allFiles, thumb, vaultUrl, type VaultFolder } from '../../../shared/vault';
   import { systems } from '../../../systems';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
@@ -20,6 +21,10 @@
   void connectCards();
   const list = $derived(shownAdventures(ms));
   const hidden = $derived(ms.list.length - list.length);
+  const adventures = $derived(list.filter((a) => !isBestiary(ms, a)));
+  const bestiaries = $derived(list.filter((a) => isBestiary(ms, a)));
+  // The order the tiles stand in (arrows).
+  const order = $derived([...adventures, ...bestiaries]);
   const folderOf = (a: string): VaultFolder | undefined => app.vault.tree?.folders.find((f) => f.path === a);
   // A cover just set: the same path, a new picture — the thumbnail is asked for again.
   let rev = $state(0);
@@ -30,11 +35,16 @@
   };
   const inside = (a: string, p: string | undefined) => !!p && (p === a || p.startsWith(a + '/'));
   function counts(a: string) {
+    const cards = bestiary.all.filter((c) => c.ref.scope === 'vault' && inside(a, c.folder)).length;
+    if (isBestiary(ms, a)) {
+      const users = Object.entries(ms.uses ?? {}).filter(([, b]) => b.includes(a)).length;
+      return [t('adv.page.cards', { count: cards }), ...(users ? [t('adv.page.usedBy', { count: users })] : [])].join(' · ');
+    }
     const files = folderOf(a) ? allFiles(folderOf(a)!) : [];
     return [
       t('adv.page.scenes', { count: app.scenes.scenes.filter((s) => s.adventure === a).length }),
       t('adv.page.encounters', { count: app.initiative.encounters.filter((e) => e.adventure === a).length }),
-      t('adv.page.cards', { count: bestiary.all.filter((c) => c.ref.scope === 'vault' && inside(a, c.folder)).length }),
+      t('adv.page.cards', { count: cards }),
       t('adv.page.notes', { count: files.filter((f) => f.kind === 'page').length }),
     ].join(' · ');
   }
@@ -46,7 +56,7 @@
   }
 
   // Rename and system: one small dialog.
-  let editing = $state<{ name: string; was: string; system: string } | null>(null);
+  let editing = $state<{ name: string; was: string; system: string; uses: string[] } | null>(null);
   let error = $state('');
   async function save() {
     if (!editing) return;
@@ -58,6 +68,9 @@
       name = to;
     }
     if (e.system !== systemFor(ms, e.was)) await dispatch('adventures', 'setSystem', { path: name, system: e.system });
+    if (!isBestiary(ms, name) && e.uses.join('\n') !== (ms.uses?.[name] ?? []).join('\n')) {
+      await dispatch('adventures', 'setUses', { adventure: name, bestiaries: $state.snapshot(e.uses) });
+    }
     editing = null;
   }
 
@@ -82,15 +95,23 @@
   let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
   function openMenu(e: MouseEvent, a: string) {
     const at = menuAt(e);
+    const edit = () => ((error = ''), (editing = { name: a, was: a, system: systemFor(ms, a), uses: [...(ms.uses?.[a] ?? [])] }));
     menu = {
       ...at,
-      items: [
-        { label: t('adv.page.edit'), icon: Pencil, action: () => ((error = ''), (editing = { name: a, was: a, system: systemFor(ms, a) })) },
-        { label: t('adv.page.cover'), icon: ImagePlus, action: () => (picking = a) },
-        { label: t('adv.export', { name: a }), icon: Download, action: () => void window.api.exportAdventure(a) },
-        { label: t(app.repo.published[a] ? 'repo.menuUpdate' : 'repo.menuPublish', { name: a }), icon: CloudUpload, action: () => (repo.publish = a) },
-        { label: t('adv.delete', { name: a }), icon: Trash2, danger: true, action: () => void window.api.deleteAdventure(a) },
-      ],
+      items: isBestiary(ms, a)
+        ? [
+            { label: t('adv.page.editBestiary'), icon: Pencil, action: edit },
+            { label: t('adv.page.cover'), icon: ImagePlus, action: () => (picking = a) },
+            { label: t('adv.page.publishBestiary'), icon: CloudUpload, action: () => (repo.publishBestiary = a) },
+            { label: t('adv.delete', { name: a }), icon: Trash2, danger: true, action: () => void window.api.deleteAdventure(a) },
+          ]
+        : [
+            { label: t('adv.page.edit'), icon: Pencil, action: edit },
+            { label: t('adv.page.cover'), icon: ImagePlus, action: () => (picking = a) },
+            { label: t('adv.export', { name: a }), icon: Download, action: () => void window.api.exportAdventure(a) },
+            { label: t(app.repo.published[a] ? 'repo.menuUpdate' : 'repo.menuPublish', { name: a }), icon: CloudUpload, action: () => (repo.publish = a) },
+            { label: t('adv.delete', { name: a }), icon: Trash2, danger: true, action: () => void window.api.deleteAdventure(a) },
+          ],
     };
   }
 
@@ -99,30 +120,56 @@
   let pageEl = $state<HTMLElement | null>(null);
   function onkeydown(e: KeyboardEvent) {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-    if (!pageEl?.offsetParent || menu || editing || picking || !list.length) return;
+    if (!pageEl?.offsetParent || menu || editing || picking || !order.length) return;
     const target = e.target as HTMLElement | null;
     if (target?.closest('input, textarea, select, [contenteditable]') || (target && target !== document.body && !pageEl.contains(target))) return;
     const grid = pageEl.querySelector('.adv-grid');
     const cols = grid ? getComputedStyle(grid).gridTemplateColumns.split(' ').length : 1;
     const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -cols, ArrowDown: cols }[e.key as 'ArrowLeft'];
-    const i = ms.current === null ? -1 : list.indexOf(ms.current);
-    const next = list[i < 0 ? 0 : Math.min(list.length - 1, Math.max(0, i + step))];
+    const i = ms.current === null ? -1 : order.indexOf(ms.current);
+    const next = order[i < 0 ? 0 : Math.min(order.length - 1, Math.max(0, i + step))];
     e.preventDefault();
     if (!next || next === ms.current) return;
     void dispatch('adventures', 'select', { path: next });
     requestAnimationFrame(() => pageEl?.querySelector('.tile.current')?.scrollIntoView({ block: 'nearest' }));
   }
 
-  let creating = $state(false);
+  // What is being created: an adventure or a bestiary (null — nothing).
+  let creating = $state<'adventure' | 'bestiary' | null>(null);
   let newName = $state('');
   let newSystem = $state('');
+  const startCreating = (kind: 'adventure' | 'bestiary') => ((creating = creating === kind ? null : kind), (newSystem = currentSystem(ms)));
   async function create() {
     if (!newName.trim()) return;
-    await dispatch('adventures', 'create', { name: newName.trim(), system: newSystem || currentSystem(ms) });
+    await dispatch('adventures', 'create', { name: newName.trim(), system: newSystem || currentSystem(ms), bestiary: creating === 'bestiary' });
     newName = '';
-    creating = false;
+    creating = null;
   }
 </script>
+
+{#snippet tile(a: string)}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="tile"
+    class:current={ms.current === a}
+    ondragover={(e) => e.dataTransfer?.types.includes('Files') && (e.preventDefault(), e.stopPropagation())}
+    ondrop={(e) => ondrop(e, a)}
+    oncontextmenu={(e) => openMenu(e, a)}
+  >
+    <button class="cover" title={t('adv.page.openHint')} onclick={() => dispatch('adventures', 'select', { path: a })} ondblclick={() => (picking = a)}>
+      {#if cover(a)}<img src={cover(a)} alt="" />{:else}<span class="none"><ImagePlus size={22} /> {t('adv.page.dropCover')}</span>{/if}
+    </button>
+    <div class="info">
+      <div class="name">{a}</div>
+      <div class="faint small">{systemTitle(a)}{community(a) ? ` · ${community(a)}` : ''}</div>
+      <div class="faint small">{counts(a)}</div>
+    </div>
+    <div class="bar">
+      <span class="here small">{ms.current === a ? t('adv.page.current') : ''}</span>
+      <button class="icon-btn" title={t('adv.page.more')} onclick={(e) => openMenu(e, a)}><MoreHorizontal size={15} /></button>
+    </div>
+  </div>
+{/snippet}
 
 <svelte:window {onkeydown} />
 
@@ -130,7 +177,8 @@
   <header>
     <h2>{t('adv.page.title')}</h2>
     <div class="actions">
-      <button class="btn" onclick={() => ((creating = !creating), (newSystem = currentSystem(ms)))}><Plus size={14} /> {t('adv.createAdventure')}</button>
+      <button class="btn" onclick={() => startCreating('adventure')}><Plus size={14} /> {t('adv.createAdventure')}</button>
+      <button class="btn" onclick={() => startCreating('bestiary')}><BookOpen size={14} /> {t('adv.page.createBestiary')}</button>
       <button class="btn" onclick={() => openRepo()}><Globe size={14} /> {t('repo.menuBrowse')}</button>
     </div>
   </header>
@@ -138,7 +186,7 @@
   {#if creating}
     <form class="create" onsubmit={(e) => (e.preventDefault(), create())}>
       <!-- svelte-ignore a11y_autofocus -->
-      <input type="text" bind:value={newName} placeholder={t('adv.namePlaceholder')} autofocus />
+      <input type="text" bind:value={newName} placeholder={t(creating === 'bestiary' ? 'adv.page.bestiaryPlaceholder' : 'adv.namePlaceholder')} autofocus />
       <SystemSelect value={newSystem} onchange={(v) => (newSystem = v)} />
       <button class="btn primary" type="submit" disabled={!newName.trim()}>{t('adv.create')}</button>
     </form>
@@ -152,30 +200,14 @@
   {/if}
 
   <div class="adv-grid">
-    {#each list as a (a)}
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="tile"
-        class:current={ms.current === a}
-        ondragover={(e) => e.dataTransfer?.types.includes('Files') && (e.preventDefault(), e.stopPropagation())}
-        ondrop={(e) => ondrop(e, a)}
-        oncontextmenu={(e) => openMenu(e, a)}
-      >
-        <button class="cover" title={t('adv.page.openHint')} onclick={() => dispatch('adventures', 'select', { path: a })} ondblclick={() => (picking = a)}>
-          {#if cover(a)}<img src={cover(a)} alt="" />{:else}<span class="none"><ImagePlus size={22} /> {t('adv.page.dropCover')}</span>{/if}
-        </button>
-        <div class="info">
-          <div class="name">{a}</div>
-          <div class="faint small">{systemTitle(a)}{community(a) ? ` · ${community(a)}` : ''}</div>
-          <div class="faint small">{counts(a)}</div>
-        </div>
-        <div class="bar">
-          <span class="here small">{ms.current === a ? t('adv.page.current') : ''}</span>
-          <button class="icon-btn" title={t('adv.page.more')} onclick={(e) => openMenu(e, a)}><MoreHorizontal size={15} /></button>
-        </div>
-      </div>
-    {/each}
+    {#each adventures as a (a)}{@render tile(a)}{/each}
   </div>
+  {#if bestiaries.length}
+    <h3 class="group">{t('adv.page.bestiaries')}</h3>
+    <div class="adv-grid">
+      {#each bestiaries as a (a)}{@render tile(a)}{/each}
+    </div>
+  {/if}
 </div>
 
 {#if menu}
@@ -200,6 +232,21 @@
         <span>{t('adv.system')}</span>
         <SystemSelect value={editing.system} onchange={(v) => editing && (editing.system = v)} />
       </label>
+      {#if !isBestiary(ms, editing.was) && bestiaries.length}
+        <div class="field">
+          <span>{t('adv.page.uses')}</span>
+          {#each bestiaries as b (b)}
+            <label class="check">
+              <input
+                type="checkbox"
+                checked={editing.uses.includes(b)}
+                onchange={(e) => editing && (editing.uses = e.currentTarget.checked ? [...editing.uses, b] : editing.uses.filter((x) => x !== b))}
+              />
+              {b}
+            </label>
+          {/each}
+        </div>
+      {/if}
       {#if app.repo.published[editing.was]}<p class="faint small">{t('adv.page.renamePublished')}</p>{/if}
       {#if error}<p class="warn small">{error}</p>{/if}
       <div class="row">
@@ -331,6 +378,15 @@
   }
   .warn {
     color: var(--warning);
+  }
+  .group {
+    margin: 22px 0 10px;
+    font-size: 15px;
+  }
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   .row {
     display: flex;

@@ -34,8 +34,8 @@ export const repo = $state({
   // The publish dialog: for which adventure; for which system pack (its id).
   publish: null as string | null,
   publishSystem: null as string | null,
-  // The bestiary publish dialog is open.
-  publishBestiary: false,
+  // The bestiary publish dialog is open; a folder — for that bestiary (the Adventures tab).
+  publishBestiary: false as boolean | string,
   // A download waits for a name: the adventure of that name is already there.
   naming: null as { file: string; name: string; suggestion: string; entry: Found } | null,
   // The last result to show (done or failed).

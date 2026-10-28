@@ -11,6 +11,7 @@
   import { getLang } from '../../../shared/i18n';
   import { LANGS } from '../../../shared/i18n/core';
   import { LIMITS } from '../../../shared/repo';
+  import { COVER_FILE } from '../../../shared/adventures';
   import { thumb, vaultUrl } from '../../../shared/vault';
   import { systems } from '../../../systems';
   import { loadCatalogs, loadInfo, publishBestiary, repo, sourceName, sourcesOn } from './repo.svelte';
@@ -50,7 +51,20 @@
     lang = getLang();
     rights = false;
     cover = null;
-    void window.api.listCards().then((list) => (cards = list.filter((c) => c.ref.scope !== 'srd')));
+    // A bestiary folder (the Adventures tab): its cards ticked, its name for the title, its entry if published.
+    const folder = typeof repo.publishBestiary === 'string' ? repo.publishBestiary : null;
+    void window.api.listCards().then(async (list) => {
+      cards = list.filter((c) => c.ref.scope !== 'srd');
+      if (!folder) return;
+      const mine = cards.filter((c) => c.ref.scope === 'vault' && (c.folder === folder || c.folder?.startsWith(folder + '/')));
+      chosen = new Set(mine.map((c) => refKey(c.ref)));
+      title = folder;
+      // Its cover, if it has one (cover.jpg, as adventures).
+      if (store.state.vault.tree?.folders.find((f) => f.path === folder)?.files.some((f) => f.name === COVER_FILE)) cover = `${folder}/${COVER_FILE}`;
+      await loadInfo();
+      const was = Object.values(repo.info?.bestiaries.published ?? {}).find((m) => m.cards.some((r) => chosen.has(refKey(r))));
+      if (was) pickTarget(was.id), (chosen = new Set(mine.map((c) => refKey(c.ref))));
+    });
     void loadInfo().then(async () => {
       author = repo.info?.name ?? '';
       await loadCatalogs();

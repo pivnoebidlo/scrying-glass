@@ -1,16 +1,17 @@
 <!-- The side panel of the «Adventures» tab: the adventures by name (a click makes one current and shows the tab) and
      the whole vault; ↑ ↓ walk the list (listNav). -->
 <script lang="ts">
-  import { Castle, Library } from '@lucide/svelte';
+  import { BookOpen, Castle, Library } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { shownAdventures, systemFor } from '../../../shared/adventures';
+  import { isBestiary, shownAdventures, systemFor } from '../../../shared/adventures';
   import { systems } from '../../../systems';
 
   let { ms }: ModuleProps<'adventures'> = $props();
-  const list = $derived(shownAdventures(ms));
+  // Adventures first, then bestiaries.
+  const list = $derived(shownAdventures(ms).sort((a, b) => Number(isBestiary(ms, a)) - Number(isBestiary(ms, b))));
   const systemTitle = (a: string | null) => {
     const id = systemFor(ms, a);
     return systems.find((s) => s.id === id)?.title ?? id;
@@ -24,7 +25,7 @@
 <div class="list">
   {#each list as a (a)}
     <button class="item" class:active={ms.current === a} data-nav onclick={() => select(a)}>
-      <Castle size={14} />
+      {#if isBestiary(ms, a)}<BookOpen size={14} />{:else}<Castle size={14} />{/if}
       <span class="text"><span class="name">{a}</span><span class="faint small">{systemTitle(a)}</span></span>
     </button>
   {/each}

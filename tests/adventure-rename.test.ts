@@ -22,3 +22,25 @@ describe('renaming an adventure', () => {
     expect(out.strange).toEqual({ title: 'Страдание', other: 'Страд2/x' });
   });
 });
+
+import { isBestiary, missingFolders, placeTitle, visibleIn, type AdventuresState } from '../src/shared/adventures';
+import type { VaultFolder } from '../src/shared/vault';
+
+describe('bestiaries', () => {
+  const adv: AdventuresState = { list: ['Страд', 'Мои монстры', 'Чужие монстры'], current: 'Страд', initialized: true, bestiaries: ['Мои монстры', 'Чужие монстры'], uses: { Страд: ['Мои монстры'] } };
+
+  it('an adventure sees the bestiaries it uses, not the others', () => {
+    expect(isBestiary(adv, 'Мои монстры')).toBe(true);
+    expect(isBestiary(adv, 'Страд')).toBe(false);
+    expect(visibleIn(adv, 'Мои монстры/monsters/огр.json')).toBe(true);
+    expect(visibleIn(adv, 'Чужие монстры/monsters/гоблин.json')).toBe(false);
+    expect(visibleIn({ ...adv, current: 'Мои монстры' }, 'Страд/monsters/x.json')).toBe(false);
+    expect(placeTitle(adv, 'Мои монстры/monsters', 'Хранилище')).toBe('Мои монстры / monsters');
+  });
+
+  it('a bestiary gets only its monsters folder', () => {
+    const empty: VaultFolder = { path: 'Мои монстры', name: 'Мои монстры', folders: [], files: [] };
+    expect(missingFolders(empty, true)).toEqual(['monsters']);
+    expect(missingFolders(empty).length).toBeGreaterThan(1);
+  });
+});

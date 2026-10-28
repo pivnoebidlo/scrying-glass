@@ -781,6 +781,8 @@ interface AdventureData {
   clocks?: unknown[];
   // The Forged in the Dark crew (none before 0.54).
   crew?: AnyRec;
+  // A bestiary, not an adventure (none before 0.61).
+  bestiary?: boolean;
 }
 
 ipcMain.handle('packs:export', async (_event, adventure: string) => {
@@ -967,6 +969,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     mausritter: (st['mausritter']!['byAdventure'] as Record<string, AnyRec>)[name],
     clocks: (st['clocks']!['byAdventure'] as Record<string, unknown[]>)[name],
     crew: (st['crew']!['byAdventure'] as Record<string, AnyRec>)[name],
+    ...(state.adventures.bestiaries?.includes(name) ? { bestiary: true } : {}),
   };
   try {
     discard(vaultRoot, [name], { title: name, kind: 'adventure', data });
@@ -1070,7 +1073,7 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
   if (place === 'vault') {
     await enqueue('vault', async () => rescanVault());
     if (res.meta.kind === 'adventure') {
-      await runAction('adventures', 'mark', { path: main.to });
+      await runAction('adventures', 'mark', { path: main.to, bestiary: (res.meta.data as AdventureData | undefined)?.bestiary });
       const system = (res.meta.data as AdventureData | undefined)?.system;
       if (system) await runAction('adventures', 'setSystem', { path: main.to, system });
     }
