@@ -19,6 +19,11 @@ export const en = {
   'vault.markHint':
     'Tabs will show this folder’s content separately; missing folders characters, monsters, backgrounds, maps, music will be created',
   'vault.mark': 'Make an adventure',
+  'vault.supplementBadge': 'supplement',
+  'vault.unmarkSupplement': 'No longer a supplement',
+  'vault.unmarkSupplementHint': 'The folder stays as it is; its content becomes shared, adventures stop using it',
+  'vault.markSupplement': 'Make a supplement',
+  'vault.markSupplementHint': 'Creatures and compendium entries to use in adventures; missing folders monsters, compendium will be created',
   'vault.pasteHint': 'Paste an image from the clipboard',
   'vault.paste': 'Paste',
   'vault.addFiles': 'Add files…',
@@ -150,6 +155,11 @@ export const ru: Messages<typeof en> = {
   'vault.markHint':
     'Вкладки будут показывать содержимое этой папки отдельно; недостающие папки characters, monsters, backgrounds, maps, music появятся сами',
   'vault.mark': 'Сделать приключением',
+  'vault.supplementBadge': 'дополнение',
+  'vault.unmarkSupplement': 'Больше не дополнение',
+  'vault.unmarkSupplementHint': 'Папка останется как есть, её содержимое станет общим, приключения перестанут его подключать',
+  'vault.markSupplement': 'Сделать дополнением',
+  'vault.markSupplementHint': 'Существа и записи справочника для приключений; недостающие папки monsters, compendium появятся сами',
   'vault.pasteHint': 'Вставить картинку из буфера обмена',
   'vault.paste': 'Вставить',
   'vault.addFiles': 'Добавить файлы…',

@@ -2,7 +2,7 @@
 <script lang="ts">
   import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { ChevronRight, ClipboardPaste, Download, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
+  import { BookOpen, ChevronRight, ClipboardPaste, Download, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
   import { badgeOf, type ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { findFolder, folderRole } from '../../../shared/vault';
@@ -22,7 +22,7 @@
   import { thumbs } from '../../../renderer/lib/thumbs.svelte';
   import { sortable } from '../../../renderer/lib/sortable';
   import { applyOrder } from '../../../shared/order';
-  import { adventureHidden, adventureOf, visibleIn } from '../../../shared/adventures';
+  import { adventureHidden, adventureOf, isSupplement, visibleIn } from '../../../shared/adventures';
 
   let { ms, app }: ModuleProps<'vault'> = $props();
 
@@ -35,6 +35,7 @@
   // Папка первого уровня может быть приключением: отсюда его отмечают и открывают.
   const topLevel = $derived(!!folder?.path && !folder.path.includes('/') && !folderRole(folder.name));
   const isAdventure = $derived(!!folder && app.adventures.list.includes(folder.path));
+  const supplement = $derived(!!folder && isSupplement(app.adventures, folder.path));
   const crumbs = $derived.by(() => {
     if (!folder?.path) return [];
     const parts = folder.path.split('/');
@@ -122,17 +123,24 @@
       {/if}
       {#if topLevel && isAdventure}
         <!-- Приключение открывается само, когда выбрана его папка в дереве. -->
-        <span class="badge-adv" title={t('vault.adventureBadgeHint')}><Map size={12} /> {t('vault.adventureBadge')}</span>
+        <span class="badge-adv" title={t('vault.adventureBadgeHint')}>
+          {#if supplement}<BookOpen size={12} /> {t('vault.supplementBadge')}{:else}<Map size={12} /> {t('vault.adventureBadge')}{/if}
+        </span>
         <button
           class="btn"
-          title={t('vault.unmarkHint')}
-          onclick={() => dispatch('adventures', 'unmark', { path: folder.path })}>{t('vault.unmark')}</button
+          title={t(supplement ? 'vault.unmarkSupplementHint' : 'vault.unmarkHint')}
+          onclick={() => dispatch('adventures', 'unmark', { path: folder.path })}>{t(supplement ? 'vault.unmarkSupplement' : 'vault.unmark')}</button
         >
       {:else if topLevel}
         <button
           class="btn"
           title={t('vault.markHint')}
           onclick={() => dispatch('adventures', 'mark', { path: folder.path })}><Map size={14} /> {t('vault.mark')}</button
+        >
+        <button
+          class="btn"
+          title={t('vault.markSupplementHint')}
+          onclick={() => dispatch('adventures', 'mark', { path: folder.path, supplement: 'collection' })}><BookOpen size={14} /> {t('vault.markSupplement')}</button
         >
       {/if}
       <button class="btn" title={hint(t('vault.pasteHint'), 'paste')} onclick={() => dispatch('vault', 'pasteImage', { folder: folder.path })}>
