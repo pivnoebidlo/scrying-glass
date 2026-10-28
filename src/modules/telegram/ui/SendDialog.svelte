@@ -12,6 +12,9 @@
   import type { Note } from '../../../shared/notes';
   import { isSketchPath, type Sketch } from '../../../shared/sketch';
   import SketchView from '../../../renderer/lib/sketch/SketchView.svelte';
+  import PaperSheet from '../../../systems/dnd5e/PaperSheet.svelte';
+  import type { Card, CardRef } from '../../../shared/cards';
+  import type { Dnd5eCharacter } from '../../../systems/dnd5e/character';
   import { enabledChats, lastSelected, loadTg, rememberSelected, sending, tg, tgReady } from './tg.svelte';
 
   // Standard module props; nothing here uses them.
@@ -61,6 +64,7 @@
     if (j.kind === 'file') r = await window.api.telegramSendFile($state.snapshot(selected), j.path, cap);
     else if (j.kind === 'image') r = await window.api.telegramSendBytes($state.snapshot(selected), j.data, j.name, cap);
     else if (j.kind === 'text') r = await window.api.telegramSendText($state.snapshot(selected), j.html);
+    else if (j.kind === 'card') r = await sendCard(j.ref, j.title, cap);
     else r = await sendNote(j.path, j.title, cap);
     busy = false;
     result = [r.sent ? t('tg.sent', { count: r.sent }) : '', ...r.errors].filter(Boolean).join(' ');
@@ -92,6 +96,31 @@
     return r;
   }
 
+  // A character: the paper sheet drawn over the window, made smaller to fit it (CSS zoom), captured.
+  let sheetCard = $state.raw<{ card: Card<Dnd5eCharacter>; ref: CardRef } | null>(null);
+  let sheetBox = $state<HTMLElement | null>(null);
+  async function sendCard(ref: CardRef, title: string, cap?: string) {
+    ref = $state.snapshot(ref);
+    const card = (await window.api.getCard(ref)) as Card<Dnd5eCharacter> | null;
+    if (!card) return { sent: 0, errors: [title] };
+    const j = sending.job;
+    sending.job = null;
+    sheetCard = { card, ref };
+    await tick();
+    await document.fonts.ready;
+    await Promise.all([...(sheetBox?.querySelectorAll('img') ?? [])].map((img) => img.decode().catch(() => {})));
+    const el = sheetBox!.firstElementChild as HTMLElement;
+    const zoom = Math.min(1, (window.innerWidth - 16) / el.offsetWidth, (window.innerHeight - 16) / el.offsetHeight);
+    sheetBox!.style.zoom = String(zoom);
+    await frame();
+    await frame();
+    const b = el.getBoundingClientRect();
+    const r = await window.api.telegramSendCapture($state.snapshot(selected), { x: b.x, y: b.y, width: b.width, height: b.height }, `${title}.png`, cap);
+    sheetCard = null;
+    sending.job = j;
+    return r;
+  }
+
   function onkeydown(e: KeyboardEvent) {
     if (job && e.key === 'Escape') close();
   }
@@ -101,6 +130,9 @@
 
 {#if shooting}
   <div class="shoot"><div class="page" bind:this={page}>{#if shooting.scryingGlass === 'sketch'}<SketchView sketch={shooting} />{:else}<NotePaper note={shooting} />{/if}</div></div>
+{/if}
+{#if sheetCard}
+  <div class="shoot top"><div bind:this={sheetBox}><PaperSheet card={sheetCard.card} scope={sheetCard.ref.scope} /></div></div>
 {/if}
 
 {#if job}
@@ -153,6 +185,10 @@
     display: grid;
     place-items: center;
     background: rgba(0, 0, 0, 0.5);
+  }
+  .shoot.top {
+    place-items: start center;
+    padding-top: 8px;
   }
   .shoot {
     position: fixed;

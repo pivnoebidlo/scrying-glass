@@ -502,6 +502,9 @@ Electron-приложение для мастера D&D: окно управле
   (`setTables` / IPC `telegram:setTables`, `withTables`); текущий стол и стол приключения — localStorage окна
   (`table`, `setTable`, `followAdventure` в tg.svelte.ts, ключ «хранилище|приключение», следит `Background.svelte`);
   видимые чаты — `chatsAt` (его и без стола) через `enabledChats` / `visibleChat`.
+  Лист персонажа D&D в Telegram: задание `{ kind: 'card', ref }` (кнопка в `CardView`), `SendDialog` рисует
+  `systems/dnd5e/PaperSheet.svelte` (бумажный лист, ширина 1180, подписи — `tr(card.lang)`, ключи `pap.*`) поверх окна,
+  ужимает `zoom` до окна и снимает `telegramSendCapture`.
   Окно: `ui/tg.svelte.ts` (`sendToTelegram(job)`, `tg.inbox`, `unread`, `tg.toast`), фон модуля `Background.svelte`
   (`SendDialog.svelte` + `Toast.svelte`), `Settings.svelte`, `Compose.svelte` (страница в «Инструментах» — переписка
   с выбором чата, ответ — `reply_parameters`, «Все» — через окно отправки); кнопка на

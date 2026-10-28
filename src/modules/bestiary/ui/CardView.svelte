@@ -4,7 +4,9 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
-  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, MoreHorizontal, Pencil, RefreshCw, RotateCcw, Star, Swords, Trash2, Upload, Wand2, X } from '@lucide/svelte';
+  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, MoreHorizontal, Pencil, RefreshCw, RotateCcw, Send, Star, Swords, Trash2, Upload, Wand2, X } from '@lucide/svelte';
+  import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
+  import { isCharacter } from '../../../systems/dnd5e/character';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { reshapeFrom } from '../../tools/reshape/store.svelte';
   import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
@@ -162,6 +164,9 @@
           {/if}
           {#if isDnd(summary.system) && summary.kind !== 'character'}
             <button class="btn" title={t('reshape.fromCardHint')} onclick={() => reshapeFrom(cref)}><Wand2 size={13} /> {t('reshape.fromCard')}</button>
+          {/if}
+          {#if tgReady() && isDnd(summary.system) && isCharacter(card?.stats)}
+            <button class="icon-btn" title={t('best.sendSheet')} onclick={() => sendToTelegram({ kind: 'card', ref: cref, title: summary.name })}><Send size={14} /></button>
           {/if}
           <button
             class="icon-btn"

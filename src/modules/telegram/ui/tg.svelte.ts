@@ -1,4 +1,5 @@
 // Telegram in the window: the bot's status and chats (from the core, refreshed on its event) and the send dialog.
+import type { CardRef } from '../../../shared/cards';
 import { chatsAt, type TgChat, type TgMessage, type TgStatus } from '../../../shared/telegram';
 
 export const tg = $state({
@@ -91,7 +92,9 @@ export type SendJob =
   | { kind: 'file'; path: string; title: string }
   | { kind: 'image'; title: string; data: Uint8Array; name: string; caption?: string }
   | { kind: 'text'; title: string; html: string }
-  | { kind: 'note'; path: string; title: string };
+  | { kind: 'note'; path: string; title: string }
+  // A D&D character as a paper sheet (a picture).
+  | { kind: 'card'; ref: CardRef; title: string };
 
 export const sending = $state({ job: null as SendJob | null });
 export const sendToTelegram = (job: SendJob) => (sending.job = job);
