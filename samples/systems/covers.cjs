@@ -180,11 +180,48 @@ function maus() {
 </svg>`;
 }
 
+// Forged in the Dark: a city at night in the rain, a progress clock and a pool of d6 (two sixes — a critical).
+function fitd() {
+  const clock = (cx, cy, r, n, filled) =>
+    Array.from({ length: n }, (_, i) => {
+      const a0 = (i / n) * 2 * Math.PI - Math.PI / 2;
+      const a1 = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2;
+      const p = (a) => `${cx + r * Math.cos(a)} ${cy + r * Math.sin(a)}`;
+      return `<path d="M${cx} ${cy} L${p(a0)} A${r} ${r} 0 0 1 ${p(a1)} Z" fill="${i < filled ? '#c8452f' : 'none'}" stroke="#e7d9c2" stroke-width="5"/>`;
+    }).join('');
+  const roofs = [[0, 520], [90, 470], [170, 500], [250, 430], [330, 480], [430, 410], [520, 460], [610, 380], [700, 450], [800, 400], [900, 470], [990, 420], [1080, 490], [1200, 450]];
+  const sky = `M0 900 L${roofs.map(([x, y]) => `${x} ${y}`).join(' L')} L1200 900 Z`;
+  const windows = Array.from({ length: 26 }, (_, i) => `<rect x="${40 + ((i * 97) % 1120)}" y="${470 + ((i * 53) % 110)}" width="14" height="20" fill="#f2b45a" opacity="${0.35 + (i % 4) * 0.15}"/>`).join('');
+  const rain = Array.from({ length: 90 }, (_, i) => `<line x1="${(i * 61) % 1200}" y1="${(i * 37) % 560}" x2="${((i * 61) % 1200) - 14}" y2="${((i * 37) % 560) + 46}" stroke="#9fb3c8" stroke-width="2" opacity="0.25"/>`).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <radialGradient id="bg" cx="0.7" cy="0.25" r="1"><stop offset="0" stop-color="#3b4a5e"/><stop offset="0.55" stop-color="#16202c"/><stop offset="1" stop-color="#07090d"/></radialGradient>
+    <linearGradient id="ivory" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f1e6"/><stop offset="1" stop-color="#c9c2b0"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe7a8"/><stop offset="1" stop-color="#d79b2c"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity="0.6"/></filter>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="0" stdDeviation="14" flood-color="#ffc861" flood-opacity="0.8"/></filter>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05070a" stop-opacity="0"/><stop offset="1" stop-color="#05070a" stop-opacity="0.94"/></linearGradient>
+  </defs>
+  <rect width="${W}" height="${H}" fill="url(#bg)"/>
+  ${rain}
+  <path d="${sky}" fill="#0b0f15"/>
+  ${windows}
+  <g filter="url(#shadow)" opacity="0.92">${clock(930, 230, 120, 6, 4)}</g>
+  ${d6(250, 330, 150, -14, 6, true)}
+  ${d6(450, 300, 150, 9, 6, true)}
+  ${d6(640, 360, 140, -6, 3, false)}
+  <rect y="560" width="${W}" height="340" fill="url(#fade)"/>
+  <text x="70" y="760" font-family="Georgia, 'Palatino', serif" font-size="104" font-weight="700" fill="#efe6d6">Forged in the Dark</text>
+  <text x="74" y="828" font-family="Georgia, 'Palatino', serif" font-size="44" fill="#c9a77a">пул к6 · стресс и вред · часы прогресса · банда</text>
+  <text x="${W - 70}" y="80" text-anchor="end" font-family="-apple-system, 'Helvetica Neue', sans-serif" font-size="26" letter-spacing="3" fill="#9fb3c8" opacity="0.8">SCRYING GLASS · СИСТЕМА</text>
+</svg>`;
+}
+
 app.disableHardwareAcceleration();
 // One window after another: closing the first one must not end the app.
 app.on('window-all-closed', () => {});
 app.whenReady().then(async () => {
-  for (const [id, svg] of [['yz-pool', pool()], ['d100-horror', horror()], ['fate-core', fate()], ['mausritter', maus()]]) {
+  for (const [id, svg] of [['yz-pool', pool()], ['d100-horror', horror()], ['fate-core', fate()], ['mausritter', maus()], ['fitd', fitd()]]) {
     const w = new BrowserWindow({ width: W, height: H, show: false, frame: false, webPreferences: { offscreen: true } });
     w.webContents.setFrameRate(1);
     await w.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`<html><body style='margin:0;background:#000'>${svg}</body></html>`));
