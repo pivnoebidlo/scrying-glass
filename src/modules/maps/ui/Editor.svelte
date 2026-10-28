@@ -4,9 +4,7 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
-  import {
-    Brush, CircleUserRound, Cloud, Eraser, Eye, EyeOff, Grid2x2X, Grid3x3, Hand, Hexagon, List, Move3d, UsersRound, MapPin, MapPinPlus, Maximize, Move, ScanEye, Shield, SquareDashed, SquareDashedMousePointer, Swords, Undo2,
-  } from '@lucide/svelte';
+  import { Brush, CircleUserRound, Cloud, Eraser, Eye, EyeOff, Grid2x2X, Grid3x3, Hand, Hexagon, List, MapPin, MapPinPlus, Maximize, Move, Move3d, ScanEye, Shield, SquareDashed, SquareDashedMousePointer, Swords, Trash2, Undo2, UsersRound } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { playerDisplay } from '../../../renderer/lib/nav';
   import Slider from '../../../renderer/lib/Slider.svelte';
@@ -729,6 +727,8 @@
         <button class="btn show" class:primary={!shown} onclick={() => dispatch('maps', shown ? 'clear' : 'show', { path })}>
           {#if shown}<EyeOff size={14} /> {t('maps.removeFromPlayers')}{:else}<Eye size={14} /> {t('maps.showToPlayers')}{/if}
         </button>
+        <!-- As on other things' pages: delete right here (the action asks; the file goes to the app's trash). -->
+        <button class="icon-btn" title={t('maps.toTrash')} onclick={() => dispatch('vault', 'trash', { paths: [path] })}><Trash2 size={15} /></button>
       </div>
 
       <div class="options">

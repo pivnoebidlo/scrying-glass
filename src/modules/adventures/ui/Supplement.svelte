@@ -23,7 +23,7 @@
   import { allEntries, entryAt, loadEntries, typesHere } from '../../compendium/ui/store.svelte';
   import EntryEditor from '../../compendium/ui/EntryEditor.svelte';
   import { ui as cmp } from '../../compendium/ui/ui.svelte';
-  import { entryMenu as entryItems } from '../../compendium/ui/menu.svelte';
+  import { entryMenu as entryItems, trashEntry } from '../../compendium/ui/menu.svelte';
   import { repo } from '../../repo/ui/repo.svelte';
   import { advUi } from './ui.svelte';
 
@@ -227,6 +227,8 @@
         <div class="entry">
           <div class="bar">
             <button class="btn" onclick={() => pickEntry(path, true)}><Pencil size={13} /> {t('adv.supp.edit')}</button>
+            <!-- As on a creature's card: delete is right here, not only in the menu. -->
+            <button class="icon-btn" title={t('cmpui.toTrash')} onclick={() => trashEntry(path)}><Trash2 size={15} /></button>
             <button class="icon-btn" title={t('adv.page.more')} onclick={(e) => entryMenu(e, path)}><MoreHorizontal size={15} /></button>
           </div>
           <EntryCard entry={entryItem.entry} />

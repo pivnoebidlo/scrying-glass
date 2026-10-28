@@ -46,7 +46,7 @@
   let author = $state('');
   let rights = $state(false);
   let picking = $state(false);
-  let sizes = $state<{ total: number; music: number; pdf: number; images: number } | null>(null);
+  let sizes = $state<{ total: number; music: number; pdf: number; images: number; files: number } | null>(null);
 
   let shownFor: string | null = null;
   $effect(() => {
@@ -93,7 +93,9 @@
   // Pictures are made lighter on the way (shrink.ts in the core): how much — unknown before, so only what surely
   // stays counts (PNGs from image generators lose ~85%).
   const tooBig = $derived(!!max && size - (sizes?.images ?? 0) * 0.8 > max);
-  const ready = $derived(!!source && !!title.trim() && rights && !tooBig && !repo.busy);
+  // Nothing in it — nothing to publish: no files of its own (the cover is not content) and, for an adventure, no scenes.
+  const empty = $derived(!!sizes && !!adventure && sizes.files === 0 && (supplement || !app.scenes.scenes.some((x) => x.adventure === adventure)));
+  const ready = $derived(!!source && !!title.trim() && rights && !tooBig && !empty && !repo.busy);
 
   const close = () => (repo.publish = null);
 
@@ -167,6 +169,7 @@
         {/if}
         <p class="faint small">{t(sizes.images ? 'repo.dialog.sizeImages' : 'repo.dialog.size', { size: mb(size) })}</p>
         {#if tooBig}<p class="warn">{t('repo.dialog.tooBig', { max: mb(max) })}</p>{/if}
+        {#if empty}<p class="warn">{t(supplement ? 'repo.dialog.emptySupplement' : 'repo.dialog.emptyAdventure')}</p>{/if}
       {/if}
 
       {#if byName && !byMark}

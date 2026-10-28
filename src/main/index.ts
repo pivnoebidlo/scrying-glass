@@ -1253,11 +1253,17 @@ ipcMain.handle('repo:sizes', (_event, adventure: string) => {
   if (!folder || !isDir(folder)) return null;
   const all = folderFiles(folder, true);
   const sum = (re: RegExp) => all.filter((f) => re.test(f.rel)).reduce((n, f) => n + f.size, 0);
-  return { total: all.reduce((n, f) => n + f.size, 0), music: sum(/\.(mp3|ogg|wav|flac|m4a)$/i), pdf: sum(/\.pdf$/i), images: sum(/\.(png|jpe?g)$/i) };
+  // Files of its own: the cover alone is no content (publishing an empty adventure or supplement is not allowed).
+  const files = all.filter((f) => f.rel !== COVER_FILE).length;
+  return { total: all.reduce((n, f) => n + f.size, 0), music: sum(/\.(mp3|ogg|wav|flac|m4a)$/i), pdf: sum(/\.pdf$/i), images: sum(/\.(png|jpe?g)$/i), files };
 });
 // Publish (or update) an adventure: pack it into a temporary file, upload, remember the entry.
 ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf?: boolean; cover?: string; id?: string | null }) => {
   if (!vaultRoot || !state.adventures.list.includes(p.adventure)) return null;
+  // Nothing in it — nothing to publish (the window says so first).
+  const content = folderFiles(resolveInVault(p.adventure) ?? '', true).filter((f) => f.rel !== COVER_FILE).length;
+  const scenes = (state as unknown as { scenes: { scenes: AnyRec[] } }).scenes.scenes.some((x) => x['adventure'] === p.adventure);
+  if (!content && (state.adventures.supplements?.[p.adventure] || !scenes)) throw new Error('repo:empty');
   // The same id in every source: publishing again anywhere updates that source's entry.
   const known = state.repo.published[p.adventure];
   // No cover picked — the adventure's own (cover.jpg in its folder), if it has one.
