@@ -52,6 +52,7 @@ export const TOOLS: ToolDef[] = [
   tool('mouse', Rat, 'tools.side.mouse', MAUS),
   tool('mausTables', Table2, 'tools.side.mausTables', MAUS),
   tool('factions', Flag, 'tools.side.factions', MAUS),
+  tool('mausShop', Store, 'tools.side.mausShop', MAUS),
   tool('build', Pickaxe, 'tools.side.build', MAUS),
   tool('crew', Swords, 'tools.side.crew', FITD),
 ];

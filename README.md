@@ -763,7 +763,9 @@ torches mark usage) and watches of travel (four a day; morning and evening start
 Factions and the clock belong to the adventure: they go into the .sgpack and to the trash with it. **Tools →
 Constructions** prices a burrow by the SRD: rooms (poor, standard, grand) and tunnels in 6" cubes give the materials,
 the upkeep (1% a month), the days of digging for so many tunnel diggers (three dig a cube of soil a day, other
-materials take twice as long) and their wages; "To journal" writes the plan as a table.
+materials take twice as long) and their wages; "To journal" writes the plan as a table. **Tools → Shop** is the SRD
+price list by its sections with a search: human-made tools only "Near humans", "For a warband" — equipment ×20; a
+click puts an item into the basket with the total.
 
 **Forged in the Dark** (the Blades in the Dark SRD; not the Blades setting). One card for the scoundrels and for NPCs:
 playbook, heritage, background, vice; twelve actions rated 0–4 under Insight, Prowess and Resolve; stress 0–9, traumas,

@@ -384,6 +384,15 @@ const WANT: [string, string, number?][] = [
   ['npcSign', 'Useful tables / Non-player mice / Birthsign'],
   ['npcDetails', 'Useful tables / Non-player mice / Details'],
   ['seed', 'Useful tables / Adventure seeds'],
+  // Gear and prices (Tools → Shop).
+  ['gearMouse', 'Gear and prices / Tools, mouse made'],
+  ['gearHuman', 'Gear and prices / Tools, human made'],
+  ['gearWeapons', 'Gear and prices / Weapons and armour'],
+  ['gearLight', 'Gear and prices / Light sources'],
+  ['gearClothing', 'Gear and prices / Clothing'],
+  ['gearLodging', 'Gear and prices / Lodging and food'],
+  ['gearTransport', 'Gear and prices / Transport hire'],
+  ['gearHired', 'Gear and prices / Hired help'],
   ...(['Spring', 'Summer', 'Autumn', 'Winter'] as const).flatMap((s): [string, string][] => [
     [`weather${s}`, `Useful tables / Seasons / ${s} / Weather`],
     [`events${s}`, `Useful tables / Seasons / ${s} / Seasonal events`],

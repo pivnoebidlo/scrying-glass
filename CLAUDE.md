@@ -506,6 +506,9 @@ Electron-приложение для мастера D&D: окно управле
   Постройки (только Mausritter, `ui.tool = 'build'`): `tools/build/rules.ts` (`build`: цена за куб 6" — `ROOM_COST`,
   содержание 1 % в месяц, три землекопа — куб земли в день, «не земля» вдвое дольше, 5 п в день), страница
   `BuildCalculator.svelte` (план — localStorage окна, «В журнал» — таблица Markdown).
+  Лавка (только Mausritter, `ui.tool = 'mausShop'`): цены SRD — таблицы `gear*` в `tools/maus/srd.ts` (собирает
+  `build-mausritter`, `WANT`), правила — `tools/maus/shop.ts` (`priceOf`, `gearItems`, `priceFor`: снаряжение отряду ×20 —
+  `EQUIPMENT`), страница `MausShop.svelte` (поиск, «Рядом с людьми», корзина — localStorage окна).
   Фракции и счётчик исследования Mausritter — модуль `modules/mausritter` (`byAdventure[приключение | '']`: `factions`
   с целями `FactionGoal` (`marks`, `progress`, `relevant`, `rival`), `session` — итог «между сессиями» (`betweenSessions`:
   к6 + relevant − rival, 4–5 +1, 6+ +2), `clock` — ход / стража / день, `last` — бросок встречи; у бросающих действий
