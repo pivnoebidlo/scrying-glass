@@ -516,6 +516,10 @@ Electron-приложение для мастера D&D: окно управле
   `EXAMPLE_FACTIONS` в `tools/maus/srd.ts`), блок «Исследование» в правой панели (`ui/Clock.svelte`, `mausHere`). Данные
   приключения уходят в `.sgpack` (`PackSlices.mausritter`) и в корзину (`AdventureData.mausritter`). Наёмники — в
   «Таблицах Mausritter» (`hirelings`).
+  Отряды (`Warband` в `byAdventure[…].warbands`: `formed` — день счётчика, `paid` — оплаченные недели, `card` — ссылка;
+  `weeksDue` / `weeksOwed`, `WARBAND_UPKEEP`; действия `formWarband` / `updateWarband` / `payWarband` / `disbandWarband`):
+  блок `ui/Warbands.svelte` под фракциями (карточку по SRD пишет окно — `saveCard` в папку бестиария приключения, иначе
+  в библиотеку; «В бой» — `addToInitiative`), долг — строкой в `ui/Clock.svelte`.
   Генератор NPC: `tools/npc/` — как таверны (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — занятия и черты берёт у
   таверн, `text.ts` — Markdown и карточка, `store.svelte.ts` — с историей); «Создать карточку» — `bestiary.create(place,
   prefill)`.

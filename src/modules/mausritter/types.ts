@@ -1,3 +1,5 @@
+import type { CardRef } from '../../shared/cards';
+
 // Mausritter play aids kept with the adventure: factions with their goals (Hexcrawl toolbox → Factions) and the
 // exploration clock (turns, watches, days — encounter rolls by the SRD). Shared by the core and the windows.
 
@@ -47,10 +49,23 @@ export interface Clock {
   last: EncounterRoll | null;
 }
 
+// A warband of the party (Recruiting help → Warbands): 20+ fighting mice and their followers, formed in a town or a
+// city for a WIL save or 1000p. Its numbers live on its card (a Mausritter creature of warband scale, `card`); here —
+// the upkeep: 1000p a week from the day it was formed, `paid` — weeks paid.
+export interface Warband {
+  id: string;
+  name: string;
+  // The clock's day it was formed.
+  formed: number;
+  paid: number;
+  card?: CardRef;
+}
+
 export interface MausAdventure {
   factions: Faction[];
   session: SessionRoll[];
   clock: Clock;
+  warbands?: Warband[];
 }
 
 export interface MausState {
@@ -59,6 +74,11 @@ export interface MausState {
 }
 
 export const WATCHES = 4;
+
+export const WARBAND_UPKEEP = 1000;
+// The upkeep of a warband is due for each week begun since it was formed: day 1–7 — the first week, and so on.
+export const weeksDue = (w: Warband, day: number) => Math.max(0, Math.floor((day - w.formed) / 7) + 1);
+export const weeksOwed = (w: Warband, day: number) => Math.max(0, weeksDue(w, day) - w.paid);
 
 // The goal a faction works on: the first one not completed.
 export const currentGoal = (f: Faction) => f.goals.find((g) => g.progress < g.marks);

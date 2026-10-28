@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto';
 import { die } from '../../shared/dice';
 import { defineModule } from '../../shared/module';
-import { blankAdventure, blankClock, currentGoal, WATCHES, type Clock, type EncounterRoll, type Faction, type FactionGoal, type MausAdventure, type MausState } from './types';
+import { blankAdventure, blankClock, currentGoal, WATCHES, type Clock, type EncounterRoll, type Faction, type FactionGoal, type MausAdventure, type MausState, type Warband } from './types';
 
 const initialState: MausState = { byAdventure: {} };
 
@@ -98,6 +98,32 @@ export default defineModule({
         });
         return { ...a, factions, session };
       });
+    },
+
+    // ---- Warbands ----
+
+    // A warband formed today (the clock's day); its card is made by the window and remembered with `updateWarband`.
+    formWarband(s, { adventure, name, card }: { adventure: string | null; name: string; card?: Warband['card'] }) {
+      return withAdventure(s, adventure, (a) => {
+        const w: Warband = { id: randomUUID(), name: name.trim(), formed: a.clock.day, paid: 0, ...(card ? { card } : {}) };
+        return { ...a, warbands: [...(a.warbands ?? []), w] };
+      });
+    },
+
+    updateWarband(s, { adventure, id, changes }: { adventure: string | null; id: string; changes: Partial<Pick<Warband, 'name' | 'card'>> }) {
+      return withAdventure(s, adventure, (a) => ({
+        ...a,
+        warbands: (a.warbands ?? []).map((w) => (w.id === id ? { ...w, ...(changes.name?.trim() ? { name: changes.name.trim() } : {}), ...(changes.card !== undefined ? { card: changes.card } : {}) } : w)),
+      }));
+    },
+
+    // A week of upkeep paid (step −1 — taken back).
+    payWarband(s, { adventure, id, step = 1 }: { adventure: string | null; id: string; step?: 1 | -1 }) {
+      return withAdventure(s, adventure, (a) => ({ ...a, warbands: (a.warbands ?? []).map((w) => (w.id === id ? { ...w, paid: Math.max(0, w.paid + step) } : w)) }));
+    },
+
+    disbandWarband(s, { adventure, id }: { adventure: string | null; id: string }) {
+      return withAdventure(s, adventure, (a) => ({ ...a, warbands: (a.warbands ?? []).filter((w) => w.id !== id) }));
     },
 
     // ---- Exploration clock ----

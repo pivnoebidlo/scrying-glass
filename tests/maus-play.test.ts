@@ -85,3 +85,28 @@ describe('Mausritter hirelings', () => {
     expect(lineText(r.lines[1]!, 'en')).toBe('Bramble (torchbearer) — HP 3, STR 2, DEX 4, WIL 6');
   });
 });
+
+describe('Mausritter warbands', () => {
+  it('upkeep for each week begun since it was formed, by the days of the clock', async () => {
+    const { weeksDue, weeksOwed } = await import('../src/modules/mausritter/types');
+    let s = act(S0, 'formWarband', { name: ' Red Guard ', card: { scope: 'vault', id: 'w1' } });
+    const w = of(s).warbands![0]!;
+    expect(w).toMatchObject({ name: 'Red Guard', formed: 1, paid: 0, card: { scope: 'vault', id: 'w1' } });
+    expect([weeksDue(w, 1), weeksDue(w, 7), weeksDue(w, 8), weeksDue(w, 15)]).toEqual([1, 1, 2, 3]);
+    s = act(s, 'payWarband', { id: w.id });
+    expect(weeksOwed(of(s).warbands![0]!, 7)).toBe(0);
+    expect(weeksOwed(of(s).warbands![0]!, 8)).toBe(1);
+    s = act(act(s, 'payWarband', { id: w.id, step: -1 }), 'payWarband', { id: w.id, step: -1 });
+    expect(of(s).warbands![0]!.paid).toBe(0);
+    s = act(s, 'updateWarband', { id: w.id, changes: { name: '  ' } });
+    expect(of(s).warbands![0]!.name).toBe('Red Guard');
+    expect(of(act(s, 'disbandWarband', { id: w.id })).warbands).toEqual([]);
+  });
+
+  it('formed on the day of the clock', () => {
+    let s = S0;
+    for (let i = 0; i < 8; i++) s = rolled(s, 'watch', [6]);
+    expect(of(s).clock.day).toBe(3);
+    expect(of(act(s, 'formWarband', { name: 'B' })).warbands![0]!.formed).toBe(3);
+  });
+});

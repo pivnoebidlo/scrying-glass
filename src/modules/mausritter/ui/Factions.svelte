@@ -6,6 +6,7 @@
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import { EXAMPLE_FACTIONS } from '../../tools/maus/srd';
+  import Warbands from './Warbands.svelte';
   import { blankAdventure, currentGoal, type Faction, type FactionGoal } from '../types';
 
   const adventure = $derived(store.state.adventures.current);
@@ -107,6 +108,7 @@
   {:else}
     <p class="faint placeholder">{t('mfac.none')}</p>
   {/each}
+  <Warbands />
 </div>
 
 <style>

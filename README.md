@@ -757,7 +757,10 @@ and a card in one click), an adventure seed, the weather and event of a season (
 reaction. The dice are shown; "To journal" and "Copy" take the result as Markdown. **Tools → Factions** keeps the
 adventure's factions: resources, goals with progress marks (a click marks one), and "Between sessions" rolls d6 + the
 faction's relevant resources − a rival's for each current goal (4–5 — a mark, 6+ — two; a completed goal suggests a
-new resource); the ten example factions of the SRD are added from a list. The **Exploration** block in the right panel
+new resource); the ten example factions of the SRD are added from a list. Under the factions — the party's
+**warbands**: "Form a warband" makes its card by the SRD (d6 HP, STR/DEX/WIL 10, d6 clubs and axes, warband scale, the
+casualty rules in its text) in the adventure's bestiary folder, one click adds it to the fight; the upkeep (1000p a
+week) is counted by the days of the exploration clock, and an owed week shows in the Exploration block too. The **Exploration** block in the right panel
 counts turns in an adventure site (every third — an encounter roll: 1 — an encounter, 2 — an omen; every sixth —
 torches mark usage) and watches of travel (four a day; morning and evening start with an encounter roll and its hour).
 Factions and the clock belong to the adventure: they go into the .sgpack and to the trash with it. **Tools →
