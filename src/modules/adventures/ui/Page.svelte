@@ -185,7 +185,8 @@
 <svelte:window {onkeydown} />
 
 {#if advUi.supplement && isSupplement(ms, advUi.supplement)}
-  <Supplement {app} folder={advUi.supplement} {rev} />
+  {@const f = advUi.supplement}
+  <Supplement {app} folder={f} {rev} onedit={() => ((error = ''), (editing = { name: f, was: f, system: systemFor(ms, f), uses: [] }))} oncover={() => (picking = f)} />
 {:else}
 <div class="page" bind:this={pageEl}>
   <header>
