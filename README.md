@@ -92,14 +92,16 @@ entries, pictures) to the Community, under "Supplements" with what it is about; 
 a supplement, ready to be used in adventures, and gets new versions like an adventure. "Export…" saves it to a file
 (it comes back as a supplement with "Import adventure…").
 
-**Roll tables** are compendium entries of the type "Roll table": the table is the entry's text, a plain Markdown table
-whose first column is ranges (`1–3`, `01–05`, `00`), or numbered lines, or a list (each item is one number). The
-"Roll" field sets the dice — `d100`, `2d6` (summed), `d10 × d6` (a grid: the first die picks the row, the second the
-column, the header holds the column ranges); empty — a die as big as the last row. A result may hold rolls (`{2d6}`,
-rolled with the table) and [[links]]: a link to another roll table is rolled too, so tables chain (crit → body part →
-effect). "Roll" on the entry puts the whole chain into the roll log; there "Again", "Show to players" and "To Telegram".
-A table marked "Offer on a natural 20" (or 1) shows up as a button under any natural 20 (or 1) in the log. Tables
-travel with their supplement.
+**Roll tables** are compendium entries of the type "Roll table", made without any markup: "+" next to "Roll tables"
+on a supplement's page, "New table" in Tools → Roll tables, or "+" in the Compendium. The editor: the die by buttons
+(d4…d100, 2d6 or any dice), rows as ranges and results (split, merge, add; a warning names the numbers no row covers),
+"Grid" — a second die for the columns (the crit table: d10 rows × d6 columns). "Roll in the text" puts `{1d6}` into a
+result (rolled with the table), "Link to a table" — a link to another table: it is rolled too, so tables chain (crit →
+body part → effect). "Paste from text…" makes the table from numbered lines or a list copied from a PDF or a site.
+"Roll" on the entry (or the dice button in Tools → Roll tables, where every table seen here is listed) puts the whole
+chain into the roll log; there "Again", "Show to players" and "To Telegram". A table marked "Offer on a natural 20" (or
+1) shows up as a button under any natural 20 (or 1) in the log. Inside, a table is a plain Markdown file (a table with
+ranges in its first column and the `roll` field), so it travels with its supplement and can be edited by hand.
 
 **Adventures** are top-level folders of the vault marked as adventures: "Create adventure…" in the switcher above
 the side panel, or "Make an adventure" in the Files tab (on the first open, folders that already contain characters,

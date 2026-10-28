@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseRange, parseRollTable, rollInline, rollOnTable, runTable, stepsMarkdown, type TableSource } from '../src/shared/rolltable';
+import { coverage, diceSpan, modelMarkdown, numbersText, parseRange, parseRollTable, rangeText, rollInline, rollOnTable, rowsFor, runTable, stepsMarkdown, tableModel, type TableSource } from '../src/shared/rolltable';
 
 // A die that gives the faces in order.
 const faces = (...list: number[]) => {
@@ -68,5 +68,33 @@ describe('roll tables', () => {
     ]);
     expect(steps[1]!.text).toBe('Stunned **1** (1d4) rounds, see [[Stunned]]');
     expect(stepsMarkdown(steps, '—')).toBe('- **Crit** (1d1: 1): [[Head]] and [[Crit]]\n  - **Head** (1d1: 1): Stunned **1** (1d4) rounds, see [[Stunned]]');
+  });
+});
+
+describe('roll table editor model', () => {
+  it('reads a table into rows and writes it back', () => {
+    const body = 'On a crit.\n\n| к10 \\ к6 | 1–3 | 4–6 |\n|---|---|---|\n| 1–5 | [[A]] | B |\n| 6–10 | C | D |\n\nAfter.';
+    const m = tableModel(body, 'к10 × к6', 'к');
+    expect([m.dice, m.colDice, m.cols.length, m.rows[1]!.cells, m.intro]).toEqual(['к10', 'к6', 2, ['C', 'D'], 'On a crit.\n\nAfter.']);
+    const out = modelMarkdown(m, 'Result');
+    expect(out.roll).toBe('к10 × к6');
+    const again = tableModel(out.body, out.roll, 'к');
+    expect(again.rows).toEqual(m.rows);
+    expect(again.intro).toBe(m.intro);
+  });
+
+  it('turns a list into a table, a cell keeps one line and no bars', () => {
+    const m = tableModel('Weather:\n- Rain\n- Fog', '', 'd');
+    expect([m.dice, m.intro, m.rows.length]).toEqual(['d2', 'Weather:', 2]);
+    m.rows[0]!.cells[0] = 'Rain | hail\nand wind';
+    expect(modelMarkdown(m, 'Result').body).toBe('Weather:\n\n| d2 | Result |\n|---|---|\n| 1 | Rain / hail and wind |\n| 2 | Fog |\n');
+  });
+
+  it('makes rows for dice, checks the coverage', () => {
+    expect(diceSpan('2к6')).toEqual({ from: 2, to: 12 });
+    expect(rowsFor({ from: 2, to: 12 })).toHaveLength(11);
+    expect(rowsFor({ from: 1, to: 100 }).map((r) => rangeText(r)).slice(0, 2)).toEqual(['1–10', '11–20']);
+    const c = coverage([{ from: 1, to: 2 }, { from: 2, to: 3 }, { from: 6, to: 6 }], { from: 1, to: 6 });
+    expect([numbersText(c.gaps), numbersText(c.overlaps)]).toEqual(['4–5', '2']);
   });
 });

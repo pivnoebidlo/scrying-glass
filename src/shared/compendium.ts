@@ -335,8 +335,7 @@ export function fieldText(v: FieldValue): string {
   return String(v);
 }
 
-// A new roll table starts with a small one to fill in.
-export const blankEntry = (type: string, title = ''): Entry => ({ title, type, fields: {}, body: type === 'table' ? t('cmp.tableStarter') : '' });
+export const blankEntry = (type: string, title = ''): Entry => ({ title, type, fields: {}, body: '' });
 
 // Для поиска: название, метки и текст без разметки, без учёта регистра и «ё».
 export const searchKey = (s: string) => s.toLowerCase().replace(/ё/g, 'е');

@@ -256,7 +256,10 @@ Electron-приложение для мастера D&D: окно управле
   `AdventureData.supplement`. Экспорт в файл — тот же `packs:export` (слова — `core.exportSupplement*`).
   Таблицы с броском (`shared/rolltable.ts`): запись справочника типа `table` (поля `roll`, `crit`, `fumble`; текст —
   таблица Markdown с диапазонами, сетка — диапазоны и в заголовке, нумерованные строки или список; `parseRollTable`,
-  `runTable` — цепочка по [[ссылкам]] на таблицы, `{2d6}` — `rollInline`). Кнопка «Бросить» — в `EntryCard` (не у
+  `runTable` — цепочка по [[ссылкам]] на таблицы, `{2d6}` — `rollInline`; модель редактора — `tableModel` /
+  `modelMarkdown`, `splitTable` отделяет описание). Визуальный редактор — `compendium/ui/TableEditor.svelte` (внутри
+  `EntryEditor` у типа `table`, поле `roll` пишет он); список «Таблицы с броском» на странице дополнения; инструмент
+  «Таблицы с броском» — `tools/rolltables/RollTables.svelte` (`ui.tool = 'rollTables'`, общий, выбор — `cmp.open`). Кнопка «Бросить» — в `EntryCard` (не у
   игроков), журнал — `rolls.table` / `RollEntry.table`; справочник даёт журналу `rolls.tables` (`resolve`, `offered` —
   таблицы с `crit` / `fumble` под натуральной 20 / 1; ставит `EntryDrawer`), Telegram — `rolls.telegram` (фон модуля
   telegram); игрокам — `handouts/toggleEntry` с путём `roll:<id>` (`ROLL_RESULT`; в подборку и сцену не попадает).

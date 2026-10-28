@@ -80,9 +80,13 @@ function parseRoll(roll: string): DiceExpr[] {
 }
 
 // The table of an entry's text; null — there is none.
-export function parseRollTable(body: string, roll = ''): RollTable | null {
+export const parseRollTable = (body: string, roll = ''): RollTable | null => splitTable(body, roll).table;
+
+// The table and the rest of the text (the description around it: the lines that aren't the table).
+export function splitTable(body: string, roll = ''): { table: RollTable | null; intro: string } {
   const lines = body.replace(/\r\n/g, '\n').split('\n');
   const dice = parseRoll(roll);
+  const rest = (from: number, to: number) => [...lines.slice(0, from), ...lines.slice(to)].join('\n').replace(/\n{3,}/g, '\n\n').trim();
   // The first Markdown table with ranges in its first column.
   for (let i = 0; i < lines.length; i++) {
     if (!lines[i]!.trim().startsWith('|') || !isSeparator(lines[i + 1] ?? '')) continue;
@@ -95,28 +99,31 @@ export function parseRollTable(body: string, roll = ''): RollTable | null {
     if (ranged.length && colRanges.length >= 2 && colRanges.every((r) => r)) {
       const cols = colRanges as Range[];
       const rows = ranged.map((r) => ({ range: parseRange(r[0]!)!, cells: cols.map((_, k) => r[k + 1] ?? '') }));
-      return { rows, cols, rowDice: dice[0] ?? dieOf(last(rows.map((r) => r.range))), colDice: dice[1] ?? dieOf(last(cols)) };
+      return { table: { rows, cols, rowDice: dice[0] ?? dieOf(last(rows.map((r) => r.range))), colDice: dice[1] ?? dieOf(last(cols)) }, intro: rest(i, j) };
     }
     if (ranged.length) {
       const rows = ranged.map((r) => ({ range: parseRange(r[0]!)!, cells: [r.slice(1).filter(Boolean).join(' — ')] }));
-      return { rows, rowDice: dice[0] ?? dieOf(last(rows.map((r) => r.range))) };
+      return { table: { rows, rowDice: dice[0] ?? dieOf(last(rows.map((r) => r.range))) }, intro: rest(i, j) };
     }
     // A table without numbers: each row is one.
     const rows = uniform(body.map((r) => r.filter(Boolean).join(' — ')).filter(Boolean));
-    if (rows.length) return { rows, rowDice: dice[0] ?? dieOf(rows.length) };
+    if (rows.length) return { table: { rows, rowDice: dice[0] ?? dieOf(rows.length) }, intro: rest(i, j) };
     i = j;
   }
-  // Numbered lines, else lines and list items. Headings and quotes are the description.
-  const text = lines.map((l) => l.trim()).filter((l) => l && !l.startsWith('#') && !l.startsWith('>') && !l.startsWith('|'));
-  const numbered = text.flatMap((l) => {
-    const m = NUMBERED.exec(l.replace(/^[-*]\s+/, ''));
+  // Numbered lines, else list items. Headings, quotes and other lines are the description.
+  const used = new Set<number>();
+  const numbered = lines.flatMap((l, k) => {
+    const m = NUMBERED.exec(l.trim().replace(/^[-*]\s+/, ''));
     const range = m ? parseRange(m[1]!) : null;
-    return range ? [{ range, cells: [m![2]!.trim()] }] : [];
+    if (!range) return [];
+    used.add(k);
+    return [{ range, cells: [m![2]!.trim()] }];
   });
-  if (numbered.length) return { rows: numbered, rowDice: dice[0] ?? dieOf(last(numbered.map((r) => r.range))) };
-  const items = text.filter((l) => /^[-*]\s+/.test(l)).map((l) => l.replace(/^[-*]\s+/, ''));
-  const rows = uniform(items.length ? items : []);
-  return rows.length ? { rows, rowDice: dice[0] ?? dieOf(rows.length) } : null;
+  const others = () => lines.filter((_, k) => !used.has(k)).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  if (numbered.length) return { table: { rows: numbered, rowDice: dice[0] ?? dieOf(last(numbered.map((r) => r.range))) }, intro: others() };
+  const items = lines.flatMap((l, k) => (/^\s*[-*]\s+/.test(l) ? (used.add(k), [l.trim().replace(/^[-*]\s+/, '')]) : []));
+  const rows = uniform(items);
+  return rows.length ? { table: { rows, rowDice: dice[0] ?? dieOf(rows.length) }, intro: others() } : { table: null, intro: body.trim() };
 }
 
 const inRange = (r: Range, n: number) => n >= r.from && n <= r.to;
@@ -201,4 +208,103 @@ export function runTable(start: TableSource, resolve: (name: string) => TableSou
 // The steps as Markdown: for the players' screen and Telegram.
 export function stepsMarkdown(steps: TableStep[], none: string): string {
   return steps.map((s) => `${'  '.repeat(s.depth)}- **${s.title}** (${s.dice}): ${s.text ?? none}`).join('\n');
+}
+
+// ---------- The editor's model: rows to fill in, written back as a Markdown table ----------
+// The entry stays a plain Markdown file (published, searched, editable by hand); the editor reads it into rows and
+// writes them back. A table in another form (numbered lines, a list) becomes a Markdown table on the first save.
+
+export interface EditRow {
+  from: number;
+  to: number;
+  // One cell; a grid — one per column.
+  cells: string[];
+}
+export interface TableModel {
+  // The die for the rows and (a grid) for the columns, as the GM writes them: «к6», «2d6».
+  dice: string;
+  colDice: string | null;
+  rows: EditRow[];
+  // A grid: the ranges of the columns.
+  cols: Range[];
+  // The text around the table (a description).
+  intro: string;
+}
+
+// «к6», «2к6», «d10 + 2» in the letter of the language.
+export const diceLabel = (e: DiceExpr, letter: string) =>
+  e.dice.map((d) => `${d.count > 1 ? d.count : ''}${letter}${d.sides}`).join(' + ') + (e.bonus ? (e.bonus > 0 ? ` + ${e.bonus}` : ` − ${-e.bonus}`) : '');
+
+// The lowest and highest total of the dice (null — not dice).
+export function diceSpan(text: string): Range | null {
+  const e = parseDice(text);
+  if (!e) return null;
+  return { from: e.dice.reduce((n, d) => n + d.count, 0) + e.bonus, to: e.dice.reduce((n, d) => n + d.count * d.sides, 0) + e.bonus };
+}
+
+// Rows for a span of numbers: one per number up to 20, else ten equal parts (a d100 — 1–10, 11–20…).
+export function rowsFor(span: Range, cells = 1): EditRow[] {
+  const n = span.to - span.from + 1;
+  const parts = n <= 20 ? n : 10;
+  return Array.from({ length: parts }, (_, i) => ({
+    from: span.from + Math.floor((i * n) / parts),
+    to: span.from + Math.floor(((i + 1) * n) / parts) - 1,
+    cells: Array.from({ length: cells }, () => ''),
+  }));
+}
+export const colsFor = (span: Range): Range[] => rowsFor(span, 0).map(({ from, to }) => ({ from, to }));
+
+const ROLL_SPLIT = /[×,;]|\s[xх*]\s/;
+export function tableModel(body: string, roll: string, letter: string): TableModel {
+  const { table, intro } = splitTable(body, roll);
+  const parts = roll.split(ROLL_SPLIT).map((s) => s.trim()).filter((s) => parseDice(s));
+  if (!table) return { dice: `${letter}6`, colDice: null, rows: rowsFor({ from: 1, to: 6 }), cols: [], intro };
+  return {
+    dice: parts[0] ?? diceLabel(table.rowDice, letter),
+    colDice: table.cols ? (parts[1] ?? diceLabel(table.colDice!, letter)) : null,
+    rows: table.rows.map((r) => ({ from: r.range.from, to: r.range.to === 1000 ? r.range.from : r.range.to, cells: [...r.cells] })),
+    cols: table.cols ? table.cols.map((c) => ({ ...c })) : [],
+    intro,
+  };
+}
+
+export const rangeText = (r: Range) => (r.from === r.to ? String(r.from) : `${r.from}–${r.to}`);
+// A cell on one line, without the column bar.
+const cellText = (s: string) => s.replace(/\|/g, '/').replace(/\s*\n\s*/g, ' ').trim();
+
+// The model as the entry's text and its `roll` field. `result` — the title of the result column.
+export function modelMarkdown(m: TableModel, result: string): { body: string; roll: string } {
+  const grid = !!m.colDice && m.cols.length > 0;
+  const head = grid ? [`${m.dice} \\ ${m.colDice}`, ...m.cols.map(rangeText)] : [m.dice, result];
+  const line = (cells: string[]) => `| ${cells.map((c) => cellText(c) || ' ').join(' | ')} |`;
+  const table = [
+    line(head),
+    `|${head.map(() => '---').join('|')}|`,
+    ...m.rows.map((r) => line([rangeText(r), ...(grid ? m.cols.map((_, k) => r.cells[k] ?? '') : [r.cells[0] ?? ''])])),
+  ].join('\n');
+  return { body: `${m.intro.trim() ? `${m.intro.trim()}\n\n` : ''}${table}\n`, roll: grid ? `${m.dice} × ${m.colDice}` : m.dice };
+}
+
+// Numbers of the span no row covers, and those two rows cover.
+export function coverage(ranges: Range[], span: Range): { gaps: number[]; overlaps: number[] } {
+  const gaps: number[] = [];
+  const overlaps: number[] = [];
+  for (let n = span.from; n <= span.to && n - span.from < 1000; n++) {
+    const k = ranges.filter((r) => inRange(r, n)).length;
+    if (!k) gaps.push(n);
+    else if (k > 1) overlaps.push(n);
+  }
+  return { gaps, overlaps };
+}
+
+// «3, 5–7, 9» — numbers as short ranges.
+export function numbersText(list: number[]): string {
+  const out: string[] = [];
+  for (let i = 0; i < list.length; ) {
+    let j = i;
+    while (j + 1 < list.length && list[j + 1] === list[j]! + 1) j++;
+    out.push(rangeText({ from: list[i]!, to: list[j]! }));
+    i = j + 1;
+  }
+  return out.join(', ');
 }

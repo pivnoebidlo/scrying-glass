@@ -27,6 +27,7 @@
   import { entryMenu as entryItems, trashEntry } from '../../compendium/ui/menu.svelte';
   import { repo } from '../../repo/ui/repo.svelte';
   import { advUi } from './ui.svelte';
+  import { TABLE_TYPE } from '../../../shared/rolltable';
 
   let {
     app,
@@ -64,7 +65,10 @@
   const systemTitle = $derived(systems.find((s) => s.id === systemFor(ms, folder))?.title ?? systemFor(ms, folder));
 
   const cards = $derived(bestiary.all.filter((c) => c.ref.scope === 'vault' && inside(c.folder)).sort((a, b) => a.name.localeCompare(b.name)));
-  const entries = $derived(allEntries().filter((e) => inside(e.path)));
+  // Roll tables have a list of their own; the other entries are grouped by type.
+  const all = $derived(allEntries().filter((e) => inside(e.path)));
+  const tables = $derived(all.filter((e) => e.entry.type === TABLE_TYPE));
+  const entries = $derived(all.filter((e) => e.entry.type !== TABLE_TYPE));
   const groups = $derived.by(() => {
     const by = new Map<string, typeof entries>();
     for (const e of entries) by.set(e.entry.type, [...(by.get(e.entry.type) ?? []), e]);
@@ -118,12 +122,12 @@
   };
   // The same menu as in the Compendium list (show to players, edit, open elsewhere, delete).
   const entryMenu = (e: MouseEvent, path: string) => {
-    const item = entries.find((x) => x.path === path);
+    const item = all.find((x) => x.path === path);
     if (!item) return;
     pickEntry(path);
     show(e, entryItems(item, (p, edit) => pickEntry(p, edit)));
   };
-  const typesMenu = (e: MouseEvent) => show(e, typesHere().map((ty) => ({ label: ty.def.title, action: () => void newEntry(ty.id) })));
+  const typesMenu = (e: MouseEvent) => show(e, typesHere().filter((ty) => ty.id !== TABLE_TYPE).map((ty) => ({ label: ty.def.title, action: () => void newEntry(ty.id) })));
   const pageMenu = (e: MouseEvent) =>
     show(e, [
       { label: t('adv.page.edit'), icon: Pencil, action: onedit },
@@ -219,6 +223,20 @@
         {/each}
       {:else}
         <p class="none">{t('adv.supp.noEntries')}</p>
+      {/each}
+
+      <div class="head">
+        <span>{t('adv.supp.tables')} <i>{tables.length || ''}</i></span>
+        <button class="icon-btn" title={t('adv.supp.newTable')} onclick={() => void newEntry(TABLE_TYPE)} disabled={!!bestiary.draft}><Plus size={14} /></button>
+      </div>
+      {#each tables as e (e.path)}
+        {@const on = picked === 'entry' && cmp.open === e.path}
+        <div class="row" class:active={on} oncontextmenu={(ev) => entryMenu(ev, e.path)} role="none">
+          <button class="item" onclick={() => pickEntry(e.path)}><span class="name">{e.entry.title}</span></button>
+          {#if on}<button class="icon-btn more" title={t('adv.page.more')} onclick={(ev) => entryMenu(ev, e.path)}><MoreHorizontal size={14} /></button>{/if}
+        </div>
+      {:else}
+        <p class="none">{t('adv.supp.noTables')}</p>
       {/each}
     </nav>
 

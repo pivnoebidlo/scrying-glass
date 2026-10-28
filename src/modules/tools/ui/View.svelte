@@ -35,6 +35,7 @@
   import WildMagic from '../wildmagic/WildMagic.svelte';
   import SchedulePage from '../../schedule/ui/SchedulePage.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
+  import RollTables from '../rolltables/RollTables.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
   import { familyOf } from '../../../systems';
@@ -49,7 +50,7 @@
     shop: ShopGenerator, settlement: SettlementGenerator, treasure: TreasureGenerator, events: EventsGenerator,
     weather: WeatherGenerator, mouse: MouseGenerator, mausTables: MausTables, factions: Factions, npc: NpcGenerator,
     tavern: TavernGenerator, telegram: TelegramCompose, difficulty: Calculator, timer: TimerTool, pointbuy: PointBuy, reshape: Reshape,
-    wildMagic: WildMagic, crew: CrewSheet, systems: SystemBuilder,
+    wildMagic: WildMagic, crew: CrewSheet, systems: SystemBuilder, rollTables: RollTables,
   };
   const Page = $derived(ui.tool !== 'notes' && ui.tool !== 'sketches' && shown(ui.tool, family) ? PAGES[ui.tool] : undefined);
 

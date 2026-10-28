@@ -18,6 +18,8 @@
   import { entriesFolder, isBuiltinEntry, typesHere, type EntryItem } from './store.svelte';
   import { LIBRARY } from '../../../shared/vault';
   import { openEntry } from './ui.svelte';
+  import TableEditor from './TableEditor.svelte';
+  import { TABLE_TYPE } from '../../../shared/rolltable';
 
   let { item }: { item: EntryItem } = $props();
 
@@ -27,9 +29,13 @@
   let error = $state('');
 
   const def = $derived(typeDef(draft.type));
-  const fields = $derived([...def.fields, ...COMMON_FIELDS]);
+  // A roll table: its own editor writes the text and the dice (the `roll` field), and shows the table itself.
+  const isTable = $derived(draft.type === TABLE_TYPE);
+  const fields = $derived([...def.fields.filter((f) => !(isTable && f.key === 'roll')), ...COMMON_FIELDS]);
+  const tableRoll = () => String(draft.fields['roll'] ?? '');
+  const setTableRoll = (v: string) => (draft.fields = { ...draft.fields, roll: v });
   // Поля, которых нет у типа (из Obsidian или прошлого типа), — показываем и даём править как текст.
-  const extra = $derived(Object.keys(draft.fields).filter((k) => k !== OVERRIDES && k !== IMAGE_FIELD && !fields.some((f) => f.key === k)));
+  const extra = $derived(Object.keys(draft.fields).filter((k) => k !== OVERRIDES && k !== IMAGE_FIELD && !(isTable && k === 'roll') && !fields.some((f) => f.key === k)));
   // Встроенная запись: правка сохранится в библиотеку и заменит её.
   const builtin = $derived(isBuiltinEntry(item.path));
 
@@ -118,8 +124,9 @@
     <button class="btn primary" disabled={saving} onclick={save} title={hotkeyLabel('save')}><Save size={14} /> {t('cmpui.save')}</button>
   </header>
 
-  <div class="columns">
+  <div class="columns" class:single={isTable}>
     <form class="form" onsubmit={(e) => e.preventDefault()}>
+      {#if isTable}<TableEditor bind:body={draft.body} bind:roll={tableRoll, setTableRoll} title={draft.title} />{/if}
       <div class="grid">
         {#each fields as f (f.key)}
           {@const v = draft.fields[f.key]}
@@ -154,15 +161,19 @@
           <button type="button" class="btn" title={t('cmpui.imageHint')} onclick={() => (picking = true)}><ImagePlus size={14} /> {t('cmpui.image')}</button>
         {/if}
       </div>
-      <label class="field">
-        <span>{t('cmpui.text')}</span>
-        {#if editorPrefs.toolbar}<MarkdownToolbar area={bodyArea} />{/if}
-        <textarea rows="16" bind:this={bodyArea} bind:value={draft.body} placeholder={t('cmpui.textPh', { mod: modKey() })} use:markdownKeys></textarea>
-      </label>
+      {#if !isTable}
+        <label class="field">
+          <span>{t('cmpui.text')}</span>
+          {#if editorPrefs.toolbar}<MarkdownToolbar area={bodyArea} />{/if}
+          <textarea rows="16" bind:this={bodyArea} bind:value={draft.body} placeholder={t('cmpui.textPh', { mod: modKey() })} use:markdownKeys></textarea>
+        </label>
+      {/if}
     </form>
-    <div class="preview">
-      <EntryCard entry={draft} />
-    </div>
+    {#if !isTable}
+      <div class="preview">
+        <EntryCard entry={draft} />
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -174,13 +185,15 @@
   }
   .bar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border);
   }
   .title {
-    min-width: 240px;
+    flex: 1 1 120px;
+    min-width: 0;
     font-size: 16px;
     font-weight: 600;
   }
@@ -198,6 +211,9 @@
     grid-template-columns: minmax(340px, 1fr) minmax(300px, 1fr);
     flex: 1;
     min-height: 0;
+  }
+  .columns.single {
+    grid-template-columns: minmax(340px, 900px);
   }
   .form {
     display: flex;

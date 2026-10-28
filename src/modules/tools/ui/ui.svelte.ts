@@ -2,7 +2,7 @@
 import { openTab } from '../../../renderer/lib/nav';
 import { isSketchPath } from '../../../shared/sketch';
 
-export type ToolId = 'notes' | 'sketches' | 'names' | 'npc' | 'tavern' | 'weather' | 'events' | 'treasure' | 'settlement' | 'shop' | 'relic' | 'dungeon' | 'travel' | 'schedule' | 'telegram' | 'difficulty' | 'timer' | 'pointbuy' | 'mouse' | 'mausTables' | 'factions' | 'reshape' | 'wildMagic' | 'crew' | 'systems';
+export type ToolId = 'notes' | 'sketches' | 'names' | 'npc' | 'tavern' | 'weather' | 'events' | 'treasure' | 'settlement' | 'shop' | 'relic' | 'dungeon' | 'travel' | 'schedule' | 'telegram' | 'difficulty' | 'timer' | 'pointbuy' | 'mouse' | 'mausTables' | 'factions' | 'reshape' | 'wildMagic' | 'crew' | 'systems' | 'rollTables';
 
 export const ui = $state({
   tool: 'notes' as ToolId,
