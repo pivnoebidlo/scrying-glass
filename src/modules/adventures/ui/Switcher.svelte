@@ -2,14 +2,16 @@
      одним файлом (.sgpack). -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Castle, Check, ChevronsUpDown, CloudUpload, Download, Globe, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
+  import { Castle, Check, ChevronsUpDown, LayoutGrid, CloudUpload, Download, Globe, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
   import { openRepo, repo } from '../../repo/ui/repo.svelte';
-  import { currentSystem, roleFolderHere, shownAdventures, visibleIn } from '../../../shared/adventures';
+  import { currentSystem, isSupplement, recentAdventures, roleFolderHere, shownAdventures, visibleIn } from '../../../shared/adventures';
   import SystemSelect from './SystemSelect.svelte';
   import { roleNames } from '../../../shared/vault';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
+  import { openTab } from '../../../renderer/lib/nav';
+  import { advUi } from './ui.svelte';
 
   let { ms, app }: ModuleProps<'adventures'> = $props();
 
@@ -21,13 +23,22 @@
   const system = $derived(currentSystem(ms));
 
   // Приключения отключённых систем скрыты (настройки «Приключения» → «Ролевые системы»).
-  const list = $derived(shownAdventures(ms));
-  const hidden = $derived(ms.list.length - list.length);
-  const title = $derived(ms.current ?? (list.length ? t('adv.allVault') : app.vault.name));
+  const all = $derived(shownAdventures(ms));
+  const hidden = $derived(ms.list.length - all.length);
+  // Only the lately opened few: the rest — on the «Adventures» tab.
+  const list = $derived(recentAdventures(ms));
+  const more = $derived(all.filter((a) => !isSupplement(ms, a)).length > list.filter((a) => !isSupplement(ms, a)).length);
+  const title = $derived(ms.current ?? (all.length ? t('adv.allVault') : app.vault.name));
 
   function select(path: string | null) {
     dispatch('adventures', 'select', { path });
     open = false;
+  }
+
+  function showAll() {
+    open = false;
+    advUi.supplement = null;
+    openTab('adventures');
   }
 
   // Экспорт и импорт идут долго (картинки, музыка): показываем, что работа идёт, и чем закончилась.
@@ -151,6 +162,11 @@
         <span class="mark">{#if ms.current === null}<Check size={13} />{/if}</span>
         <span class="muted">{t('adv.allVault')}</span>
       </button>
+      {#if more}
+        <button onclick={showAll} title={t('adv.allAdventuresHint')}>
+          <span class="mark"><LayoutGrid size={13} /></span> {t('adv.allAdventures')}
+        </button>
+      {/if}
       {#if hidden}<p class="hint faint">{t('adv.hiddenN', { count: hidden })}</p>{/if}
       <label class="system" title={ms.current ? t('adv.systemHintAdv') : t('adv.systemHintVault')}>
         <span class="faint">{t('adv.system')}</span>

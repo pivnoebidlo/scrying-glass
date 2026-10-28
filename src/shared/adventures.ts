@@ -21,6 +21,8 @@ export interface AdventuresState {
   supplements?: Record<string, SupplementKind>;
   // Supplements an adventure uses: their cards and entries are seen in it as its own (adventure → supplement folders).
   uses?: Record<string, string[]>;
+  // Adventures opened lately, the last one first (supplements are not kept): the switcher shows a few of them.
+  recent?: string[];
 }
 
 export const SUPPLEMENT_KINDS = ['bestiary', 'spells', 'items', 'rules', 'tables', 'collection'] as const;
@@ -69,6 +71,25 @@ export function adventureHidden(adv: AdventuresState, adventure: string | null):
   return !isEnabled(id) || !systems.some((s) => s.id === id);
 }
 export const shownAdventures = (adv: AdventuresState) => adv.list.filter((a) => !adventureHidden(adv, a));
+
+// How many adventures the switcher shows, and how many opened ones are kept (some may be hidden by their system).
+export const RECENT_SHOWN = 5;
+const RECENT_KEPT = 20;
+
+// The recent list after opening an adventure (null and supplements leave it as it was).
+export function withRecent(adv: AdventuresState, path: string | null): string[] | undefined {
+  if (path === null || isSupplement(adv, path)) return adv.recent;
+  return [path, ...(adv.recent ?? []).filter((a) => a !== path)].slice(0, RECENT_KEPT);
+}
+
+// The switcher's list: the current one first (even a supplement — it is open), then the lately opened adventures,
+// then the rest by name (vaults from before the recent list); no supplements, no hidden ones.
+export function recentAdventures(adv: AdventuresState, count = RECENT_SHOWN): string[] {
+  const shown = shownAdventures(adv);
+  const adventures = shown.filter((a) => !isSupplement(adv, a));
+  const order = [...(adv.current !== null && shown.includes(adv.current) ? [adv.current] : []), ...(adv.recent ?? []), ...adventures];
+  return [...new Set(order)].filter((a) => a === adv.current || adventures.includes(a)).slice(0, count);
+}
 export const currentSystem = (adv: AdventuresState) => systemFor(adv, adv.current);
 // Подходит ли карточка или запись этой системы текущему приключению: то же семейство (2014 и 2024 — вместе), и
 // система не отключена в настройках.

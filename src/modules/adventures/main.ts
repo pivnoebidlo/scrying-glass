@@ -2,7 +2,7 @@
 // Остальные модули фильтруют по нему то, что показывают (см. shared/adventures.ts).
 import * as fs from 'node:fs';
 import { defineModule, type ModuleContext } from '../../shared/module';
-import { isSupplement, looksLikeAdventure, missingFolders, SUPPLEMENT_KINDS, type AdventuresState, type SupplementKind } from '../../shared/adventures';
+import { isSupplement, looksLikeAdventure, withRecent, missingFolders, SUPPLEMENT_KINDS, type AdventuresState, type SupplementKind } from '../../shared/adventures';
 
 const initialState: AdventuresState = { list: [], current: null, initialized: false, systems: {} };
 
@@ -19,10 +19,11 @@ function sync(s: AdventuresState, ctx: ModuleContext): AdventuresState {
   return { ...s, list, current, initialized: true, ...kept(s, list) };
 }
 
-// Supplements and the supplements adventures use — of the folders still on the list.
-function kept(s: AdventuresState, list: string[]): Pick<AdventuresState, 'supplements' | 'uses'> {
+// Supplements, the supplements adventures use and the recent list — of the folders still on the list.
+function kept(s: AdventuresState, list: string[]): Pick<AdventuresState, 'supplements' | 'uses' | 'recent'> {
   const on = (a: string) => list.includes(a);
   return {
+    recent: s.recent?.filter(on),
     supplements: s.supplements && Object.fromEntries(Object.entries(s.supplements).filter(([a]) => on(a))),
     uses: s.uses && Object.fromEntries(Object.entries(s.uses).filter(([a]) => on(a)).map(([a, b]) => [a, b.filter(on)])),
   };
@@ -53,7 +54,7 @@ export default defineModule({
 
   actions: {
     select(s, { path }: { path: string | null }) {
-      return path === null || s.list.includes(path) ? { ...s, current: path } : s;
+      return path === null || s.list.includes(path) ? { ...s, current: path, recent: withRecent(s, path) } : s;
     },
 
     // Отметить папку первого уровня как приключение (и создать в ней стандартные папки).
@@ -65,6 +66,7 @@ export default defineModule({
         current: path,
         ...(supplement ? { supplements: { ...s.supplements, [path]: supplement } } : {}),
       };
+      next.recent = withRecent(next, path);
       if (ensure(next, ctx)) ctx.vault.rescan();
       return next;
     },
@@ -95,6 +97,7 @@ export default defineModule({
         systems: system ? { ...s.systems, [clean]: system } : s.systems,
         ...(supplement ? { supplements: { ...s.supplements, [clean]: supplement } } : {}),
       };
+      next.recent = withRecent(next, clean);
       ensure(next, ctx);
       ctx.vault.rescan();
       return next;

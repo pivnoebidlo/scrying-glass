@@ -110,7 +110,8 @@ the side panel, or "Make an adventure" in the Files tab (on the first open, fold
 maps and so on become adventures). An adventure always has characters, monsters, backgrounds, maps and music folders —
 missing ones are created on launch. Every tab except Files shows the current adventure and the "shared" part — what
 lies outside adventures (for example, music in the vault root). Scenes belong to an adventure; scenes from older
-versions are shared, and the scene editor can assign them an adventure.
+versions are shared, and the scene editor can assign them an adventure. The switcher lists the five adventures
+opened last (supplements are not there); the rest are under "All adventures…" — the Adventures tab.
 
 **Files** shows the whole vault like a file manager: ↑ ↓ — the neighbouring folder, → — expand or enter,
 ← — collapse or go up (arrows work the same in every list on the left: journal, compendium, cards, tools, scenes,
