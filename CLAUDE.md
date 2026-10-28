@@ -317,7 +317,10 @@ Electron-приложение для мастера D&D: окно управле
   названию (`byName` в `PublishDialog`, «как новое» — галочка; ядру уходит `id`). Две копии приложения на одном
   хранилище затирают `state.json` друг друга: открывая хранилище, ядро кладёт метку `.scrying-glass/lock.json` (pid,
   версия; `claimVault` / `releaseVault`), метка живого чужого процесса — предупреждение. Первый запуск (нет
-  settings.json) — включены только D&D (`FIRST_LAUNCH_OFF`). Бестиарии: запись `kind: 'bestiary'` (`system` — система
+  settings.json → `settings.systemsChosen: false` → `vault.chooseSystems`): `Welcome` сначала показывает
+  `renderer/control/ChooseSystems.svelte` — редакции D&D и пакеты официального автора (`OFFICIAL_AUTHOR` в shared/repo.ts)
+  из официального каталога; отмеченные ставит `repoInstallSystem`, неотмеченные D&D — `setSystemsOff`, итог — действие
+  `vault/systemsChosen` (поле из настроек убирается). Бестиарии: запись `kind: 'bestiary'` (`system` — система
   большинства карточек), файл — формат «экспорта карточек» (`exportCards`); каталог просит виды явно
   (`?kinds=adventure,system,bestiary`, `all` для 0.59 — только приключения и системы; приключения — записи без `kind`);
   IPC `repo:publishBestiary` (окно `BestiaryPublishDialog.svelte`: свои карточки галочками, новое или новая версия

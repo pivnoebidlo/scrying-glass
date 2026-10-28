@@ -1,8 +1,10 @@
-<!-- Стартовый экран, когда хранилище не открыто: выбрать папку или открыть недавнюю. -->
+<!-- Стартовый экран, когда хранилище не открыто: выбрать папку или открыть недавнюю. The very first launch asks for
+     the systems first (ChooseSystems). -->
 <script lang="ts">
   import { FolderOpen, X } from '@lucide/svelte';
   import { dispatch, store } from '../lib/store.svelte';
   import { t } from '../lib/i18n.svelte';
+  import ChooseSystems from './ChooseSystems.svelte';
 
   const recent = $derived(store.state.vault.recent);
   const name = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() ?? p;
@@ -13,26 +15,30 @@
   <div class="card">
     <div class="logo">🔮</div>
     <h1>Scrying Glass</h1>
-    <p class="muted">{t('welcome.text')}</p>
-    <button class="btn primary big" onclick={() => dispatch('vault', 'choose')}>
-      <FolderOpen size={16} /> {t('welcome.open')}
-    </button>
+    {#if store.state.vault.chooseSystems}
+      <ChooseSystems />
+    {:else}
+      <p class="muted">{t('welcome.text')}</p>
+      <button class="btn primary big" onclick={() => dispatch('vault', 'choose')}>
+        <FolderOpen size={16} /> {t('welcome.open')}
+      </button>
 
-    {#if recent.length}
-      <div class="pane-title">{t('welcome.recent')}</div>
-      <ul>
-        {#each recent as r (r)}
-          <li>
-            <button class="recent" title={r} onclick={() => dispatch('vault', 'open', { root: r })}>
-              <span class="name">{name(r)}</span>
-              <span class="path faint">{r}</span>
-            </button>
-            <button class="icon-btn" title={t('welcome.forget')} onclick={() => dispatch('vault', 'forget', { root: r })}>
-              <X size={14} />
-            </button>
-          </li>
-        {/each}
-      </ul>
+      {#if recent.length}
+        <div class="pane-title">{t('welcome.recent')}</div>
+        <ul>
+          {#each recent as r (r)}
+            <li>
+              <button class="recent" title={r} onclick={() => dispatch('vault', 'open', { root: r })}>
+                <span class="name">{name(r)}</span>
+                <span class="path faint">{r}</span>
+              </button>
+              <button class="icon-btn" title={t('welcome.forget')} onclick={() => dispatch('vault', 'forget', { root: r })}>
+                <X size={14} />
+              </button>
+            </li>
+          {/each}
+        </ul>
+      {/if}
     {/if}
   </div>
 </div>

@@ -25,6 +25,8 @@ export interface VaultAccess {
   setTheme(theme: ThemeSetting): VaultState;
   // The GM's own hotkeys (app settings; null — all as by default).
   setHotkeys(map: Record<string, string> | null): VaultState;
+  // The systems of the first launch are picked (or skipped).
+  systemsChosen(): VaultState;
 }
 
 // Контекст, который получают действия и хуки модулей.

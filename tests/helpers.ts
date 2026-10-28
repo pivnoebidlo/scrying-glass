@@ -34,6 +34,9 @@ export function ctx(tree: VaultFolder | null = null): ModuleContext {
       setHotkeys: () => {
         throw new Error('не нужно в тестах');
       },
+      systemsChosen: () => {
+        throw new Error('не нужно в тестах');
+      },
     },
   };
 }

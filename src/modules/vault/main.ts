@@ -55,6 +55,11 @@ export default defineModule({
       return ctx.vault.setSystemsOff(list);
     },
 
+    // The first launch: the systems are picked (Welcome).
+    systemsChosen(_s, _: void, ctx) {
+      return ctx.vault.systemsChosen();
+    },
+
     // The control window's colour theme (app settings).
     setTheme(_s, { theme }: { theme: ThemeSetting }, ctx) {
       return ctx.vault.setTheme(theme);

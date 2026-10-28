@@ -793,9 +793,10 @@ successes or the best die and a push, 4dF, sums, exploding dice) and what the in
 the card, its editor, the rolls and the tracker from it. Sample packs are in the Community (Find adventures → Systems,
 or Settings → Game systems → Find systems): **Pool of Sixes** (in the style of Year Zero: attributes and skills roll
 a pool of d6, sixes count, a roll can be pushed) and **Percentile Horror** (d100 under characteristics and skills);
-their files are in `samples/systems/`. On the very first launch only the two editions of D&D are on; Fate Core,
-Mausritter and Forged in the Dark are packs installed from the Community, and Settings → Game systems turns systems
-off and deletes pack systems. Your own systems are made in **Tools → System builder** (also from Settings → Game
+their files are in `samples/systems/`. On the very first launch the app asks what you play: the two editions
+of D&D (in the app) and the systems of the official repository (Fate Core, Mausritter, Forged in the Dark, the samples)
+with checkboxes — the ticked ones are downloaded, the unticked editions of D&D are turned off. Later Settings → Game
+systems turns systems on and off and deletes pack systems; more are in the Community. Your own systems are made in **Tools → System builder** (also from Settings → Game
 systems): sections and fields, the roll of each field, the tracker, with a live preview of the card where rolls can be
 tried; a built-in system can be copied and changed. They are saved to `systems/` in the library (every vault sees
 them) and can be exported to a file and imported. A system can have its own **compendium** (rules, conditions, gear —

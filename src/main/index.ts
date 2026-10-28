@@ -83,6 +83,8 @@ interface AppSettings {
   trash?: TrashSettings;
   // Отключённые ролевые системы (systems/index.ts).
   systemsOff?: string[];
+  // false — the very first launch, the systems are not picked yet (Welcome asks); no field — picked or an older install.
+  systemsChosen?: boolean;
   // Interface language: 'auto' (OS language, else English) or a language.
   language?: LangSetting;
   // The control window's colour theme; no field — follow the system.
@@ -102,7 +104,6 @@ interface AppSettings {
   repo?: RepoSettings;
 }
 const RECENT_MAX = 10;
-const FIRST_LAUNCH_OFF = ['fitd'];
 const settingsFile = () => path.join(app.getPath('userData'), 'settings.json');
 let settings: AppSettings = { vault: null, recent: [] };
 
@@ -111,9 +112,9 @@ function loadSettings() {
     const saved = readJson(settingsFile()) as Partial<AppSettings> | undefined;
     // Остальные поля (папка снимков, корзина) — как сохранены.
     settings = { ...saved, vault: saved?.vault ?? null, recent: saved?.recent ?? [], library: saved?.library ?? null, roles: saved?.roles ?? null };
-    // The very first launch: only D&D is on, the other systems wait in Settings → Game systems (a GM who has used the
-    // app keeps what they had — their adventures on those systems must not disappear).
-    if (!saved) settings.systemsOff = [...FIRST_LAUNCH_OFF];
+    // The very first launch: the GM picks the systems on the Welcome screen — the editions of D&D and the packs of the
+    // official repository (a GM who has used the app keeps what they had).
+    if (!saved) settings.systemsChosen = false;
     setTrashSettings(settings.trash);
     setSystemsOff(settings.systemsOff);
     setHotkeys(settings.hotkeys);
@@ -145,6 +146,7 @@ function vaultState(): VaultState {
     hotkeys: setHotkeys(settings.hotkeys),
     themesFound: settings.themesFound ?? [],
     themeBefore: isTheme(settings.themeBefore) ? settings.themeBefore : 'auto',
+    chooseSystems: settings.systemsChosen === false,
   };
 }
 
@@ -387,6 +389,13 @@ function setSystemsOffSetting(list: string[]): VaultState {
   return vaultState();
 }
 
+function systemsChosenSetting(): VaultState {
+  const { systemsChosen: _, ...rest } = settings;
+  settings = rest;
+  writeJsonAtomic(settingsFile(), settings);
+  return vaultState();
+}
+
 // The library changed: its system packs are read again and the windows get them.
 function useLibrary(dir: string) {
   // Systems first: the cards' lines are made by them.
@@ -416,6 +425,7 @@ const vault: VaultAccess = {
   setLanguage: setLanguageSetting,
   setTheme: setThemeSetting,
   setHotkeys: setHotkeysSetting,
+  systemsChosen: systemsChosenSetting,
 };
 
 const ctx: ModuleContext = {

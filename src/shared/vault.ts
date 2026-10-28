@@ -53,6 +53,8 @@ export interface VaultState {
   themesFound: string[];
   // The theme before the hidden one (its «Exit» goes back to it).
   themeBefore: ThemeSetting;
+  // The very first launch: the GM picks the systems they play before anything else (Welcome).
+  chooseSystems?: boolean;
 }
 
 // Colour themes of the control window (renderer/lib/theme.css): 'auto' follows the system (dark or light); parchment

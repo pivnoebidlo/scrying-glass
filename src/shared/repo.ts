@@ -11,6 +11,9 @@ export const REPO_API = 1;
 // The app's own repository (Settings → Community: the GM may turn it off and add others).
 export const DEFAULT_REPO_URL = 'https://sg.sbin.ru';
 export const OFFICIAL_SOURCE = 'official';
+// The app's own author in the official repository (the sample systems, Fate Core, Mausritter, Forged in the Dark): the
+// first launch offers only its systems.
+export const OFFICIAL_AUTHOR = 'P9ItAZ2rANcPXzONSV_XM0lVUCDnAJDI2o3IyP5dBzE';
 
 export interface RepoEntry {
   // The author's public key (Ed25519, base64url, 43 characters) and the name they chose.
