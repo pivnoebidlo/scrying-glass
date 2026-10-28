@@ -163,11 +163,18 @@ export interface TableHit {
   // The result as written; null — no row (or cell) for that number.
   text: string | null;
 }
-export function rollOnTable(table: RollTable, die: (sides: number) => number): TableHit {
-  const row = throwDice(table.rowDice, die);
+// The numbers the players rolled on their own dice: the GM picks the result instead of the app rolling.
+export interface TablePick {
+  row: number;
+  col?: number;
+}
+const told = (e: DiceExpr, total: number): DiceThrow => ({ expr: diceText(e), faces: [], total });
+export function rollOnTable(table: RollTable, die: (sides: number) => number, pick?: TablePick): TableHit {
+  const row = pick ? told(table.rowDice, pick.row) : throwDice(table.rowDice, die);
   const r = table.rows.find((x) => inRange(x.range, row.total));
   if (!table.cols) return { row, text: r?.cells[0] || null };
-  const col = throwDice(table.colDice ?? dieOf(last(table.cols)), die);
+  const colDice = table.colDice ?? dieOf(last(table.cols));
+  const col = pick?.col !== undefined ? told(colDice, pick.col) : throwDice(colDice, die);
   const k = table.cols.findIndex((c) => inRange(c, col.total));
   return { row, col, text: (r && k >= 0 ? r.cells[k] : '') || null };
 }
@@ -193,12 +200,12 @@ export interface TableStep {
 }
 
 // Roll a table and every table its result links to, depth first: the steps in reading order. A table already in the
-// chain is not rolled again (no loops), and a chain stops at MAX_DEPTH.
+// chain is not rolled again (no loops), and a chain stops at MAX_DEPTH. `pick` — the numbers for the first table.
 export const MAX_DEPTH = 6;
-export function runTable(start: TableSource, resolve: (name: string) => TableSource | null, die: (sides: number) => number): TableStep[] {
+export function runTable(start: TableSource, resolve: (name: string) => TableSource | null, die: (sides: number) => number, pick?: TablePick): TableStep[] {
   const steps: TableStep[] = [];
   const walk = (src: TableSource, depth: number, seen: Set<string>) => {
-    const hit = rollOnTable(src.table, die);
+    const hit = rollOnTable(src.table, die, depth ? undefined : pick);
     const dice = [hit.row, hit.col].filter((x): x is DiceThrow => !!x).map((d) => `${d.expr}: ${d.faces.length > 1 ? `${d.faces.join(' + ')} = ` : ''}${d.total}`).join(' · ');
     steps.push({ title: src.title, ...(src.path ? { path: src.path } : {}), depth, dice, text: hit.text === null ? null : rollInline(hit.text, die) });
     if (hit.text === null || depth >= MAX_DEPTH) return;

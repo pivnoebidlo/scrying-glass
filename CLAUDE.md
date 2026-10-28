@@ -261,7 +261,7 @@ Electron-приложение для мастера D&D: окно управле
   `entryHtml` рисует его в таблицах; строка без номера сразу после нумерованной продолжает её — вставка из PDF). Визуальный редактор — `compendium/ui/TableEditor.svelte` (внутри
   `EntryEditor` у типа `table`, поле `roll` пишет он); список «Таблицы с броском» на странице дополнения; инструмент
   «Таблицы с броском» — `tools/rolltables/RollTables.svelte` (`ui.tool = 'rollTables'`, общий, выбор — `cmp.open`). Кнопка «Бросить» — в `EntryCard` (не у
-  игроков), журнал — `rolls.table` / `RollEntry.table`; справочник даёт журналу `rolls.tables` (`resolve`, `offered` —
+  игроков; там же «Выпало» и щелчок по клетке первой таблицы текста — `TablePick`: числа игроков вместо броска, `runTable(…, pick)`), журнал — `rolls.table` / `RollEntry.table`; справочник даёт журналу `rolls.tables` (`resolve`, `offered` —
   таблицы с `crit` / `fumble` под натуральной 20 / 1; ставит `EntryDrawer`), Telegram — `rolls.telegram` (фон модуля
   telegram); игрокам — `handouts/toggleEntry` с путём `roll:<id>` (`ROLL_RESULT`; в подборку и сцену не попадает).
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —

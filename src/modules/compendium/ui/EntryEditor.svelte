@@ -213,7 +213,10 @@
     min-height: 0;
   }
   .columns.single {
-    grid-template-columns: minmax(340px, 900px);
+    grid-template-columns: minmax(340px, 1fr);
+  }
+  .columns.single .form {
+    border-right: 0;
   }
   .form {
     display: flex;

@@ -99,7 +99,9 @@ on a supplement's page, "New table" in Tools → Roll tables, or "+" in the Comp
 result (rolled with the table; a result may be several lines — Enter), "Link to a table" — a link to another table: it is rolled too, so tables chain (crit →
 body part → effect). "Paste from text…" makes the table from numbered lines or a list copied from a PDF or a site.
 "Roll" on the entry (or the dice button in Tools → Roll tables, where every table seen here is listed) puts the whole
-chain into the roll log; there "Again", "Show to players" and "To Telegram". A table marked "Offer on a natural 20" (or
+chain into the roll log; there "Again", "Show to players" and "To Telegram". When the players roll their own dice,
+type the number into "Rolled" next to "Roll" and press Enter, or just click the result in the table: it goes to the
+log the same way (linked tables are still rolled by the app). A table marked "Offer on a natural 20" (or
 1) shows up as a button under any natural 20 (or 1) in the log. Inside, a table is a plain Markdown file (a table with
 ranges in its first column and the `roll` field), so it travels with its supplement and can be edited by hand.
 

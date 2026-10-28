@@ -9,7 +9,8 @@
   import { typeDef } from './types.svelte';
   import { entryHtml } from './markup';
   import { Dices } from '@lucide/svelte';
-  import { parseRollTable, TABLE_TYPE } from '../../../shared/rolltable';
+  import { diceText } from '../../../shared/dice';
+  import { parseRange, parseRollTable, TABLE_TYPE, type TablePick } from '../../../shared/rolltable';
   import { rolls } from '../rolls.svelte';
 
   let { entry, players = false, onlink, path }: { entry: Entry; players?: boolean; onlink?: (name: string) => void; path?: string } = $props();
@@ -62,11 +63,44 @@
 
   // A roll table: a button to roll it (the result goes to the roll log). `path` — where the entry is, for the log.
   const table = $derived(entry.type === TABLE_TYPE && !players ? parseRollTable(entry.body, fieldText(entry.fields['roll'] ?? '')) : null);
-  const roll = () => table && rolls.table({ title: entry.title, ...(path ? { path } : {}), table });
+  const roll = (pick?: TablePick) => table && rolls.table({ title: entry.title, ...(path ? { path } : {}), table }, undefined, pick);
+
+  // The players rolled on their own dice: the GM types the number (or clicks the row) instead of looking it up.
+  let rowIn = $state('');
+  let colIn = $state('');
+  function rolled(e: SubmitEvent) {
+    e.preventDefault();
+    const row = Number(rowIn.trim());
+    const col = Number(colIn.trim());
+    if (!rowIn.trim() || !Number.isInteger(row) || (table?.cols && (!colIn.trim() || !Number.isInteger(col)))) return;
+    roll(table?.cols ? { row, col } : { row });
+    rowIn = colIn = '';
+  }
+  // The roll table is the first table of the text: its rows (and a grid's cells) pick a result by a click.
+  let bodyEl = $state<HTMLElement>();
+  const picking = () => (table ? (bodyEl?.querySelector('table') ?? null) : null);
+  $effect(() => {
+    void html;
+    picking()?.classList.add('pick', ...(table?.cols ? ['grid'] : []));
+  });
+  function pickCell(cell: HTMLTableCellElement): TablePick | null {
+    if (!table || cell.tagName !== 'TD' || cell.closest('table') !== picking()) return null;
+    const range = parseRange(cell.parentElement?.firstElementChild?.textContent ?? '');
+    if (!range) return null;
+    if (!table.cols) return { row: range.from };
+    const col = table.cols[cell.cellIndex - 1];
+    return col ? { row: range.from, col: col.from } : null;
+  }
 
   function click(e: MouseEvent) {
     const a = (e.target as HTMLElement).closest('a.wikilink') as HTMLElement | null;
-    if (!a || !onlink) return;
+    if (!a) {
+      const cell = (e.target as HTMLElement).closest('td');
+      const pick = cell && pickCell(cell);
+      if (pick) roll(pick);
+      return;
+    }
+    if (!onlink) return;
     e.preventDefault();
     onlink(a.dataset['link'] ?? '');
   }
@@ -77,7 +111,15 @@
   <header>
     <div class="title">
       <h1>{entry.title}</h1>
-      {#if table}<button class="btn roll" onclick={roll}><Dices size={14} /> {t('lib.rollTable')}</button>{/if}
+      {#if table}
+        <form class="rolled" onsubmit={rolled} title={t('lib.rolledHint')}>
+          <span>{t('lib.rolled')}</span>
+          <input type="text" inputmode="numeric" bind:value={rowIn} placeholder={diceText(table.rowDice)} />
+          {#if table.cols}<span>×</span><input type="text" inputmode="numeric" bind:value={colIn} placeholder={table.colDice ? diceText(table.colDice) : ''} />{/if}
+          <button type="submit" hidden aria-hidden="true"></button>
+        </form>
+        <button class="btn" onclick={() => roll()}><Dices size={14} /> {t('lib.rollTable')}</button>
+      {/if}
     </div>
     <div class="sub">{entrySubtitle(entry, def)}</div>
     {#if aliases.length && !players}<div class="aka">{t('lib.alsoKnown', { names: aliases.join(', ') })}</div>{/if}
@@ -91,7 +133,7 @@
     </dl>
   {/if}
   <!-- Текст экранирован в entryHtml. -->
-  <div class="body">{@html html}</div>
+  <div class="body" bind:this={bodyEl} title={table ? t('lib.pickHint') : undefined}>{@html html}</div>
   {#if !players && (tags.length || entry.fields['source'])}
     <footer>
       {#each tags as t (t)}<span class="tag">{t}</span>{/each}
@@ -118,9 +160,25 @@
     align-items: center;
     gap: 10px;
   }
-  .roll {
-    margin-left: auto;
+  .rolled {
+    display: flex;
     flex: none;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .rolled input {
+    width: 44px;
+    text-align: center;
+  }
+  .body :global(table.pick td) {
+    cursor: pointer;
+  }
+  .body :global(table.pick:not(.grid) tr:hover td),
+  .body :global(table.pick.grid td:not(:first-child):hover) {
+    background: var(--bg-hover);
   }
   .sub {
     color: var(--text-muted);

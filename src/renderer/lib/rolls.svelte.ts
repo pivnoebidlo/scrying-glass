@@ -4,7 +4,7 @@ import { t } from './i18n.svelte';
 import { die, parseDice, rollD20, rollDamage, rollPool, rollSave, type D20Mode, type D20Roll, type DamageRoll, type PoolRoll, type SaveRoll } from '../../shared/dice';
 import { getLang } from '../../shared/i18n';
 import { pushPool, rollPack, type PackRollResult, type RollSpec, type RollWords } from '../../shared/syspack';
-import { runTable, type TableSource, type TableStep } from '../../shared/rolltable';
+import { runTable, type TablePick, type TableSource, type TableStep } from '../../shared/rolltable';
 
 export interface RollEntry {
   id: number;
@@ -85,9 +85,9 @@ class Rolls {
     this.push({ who: e.who, what: `${e.what} · ${t('pack.pushed')}`, pack: { ...r, pushed: true }, damage: [] });
   }
 
-  // A roll table: rolled with the chain of tables its result links to.
-  table(start: TableSource, who = t('cmp.type.table')) {
-    const steps = runTable(start, (name) => this.tables?.resolve(name) ?? null, die);
+  // A roll table: rolled with the chain of tables its result links to; `pick` — the numbers the players rolled.
+  table(start: TableSource, who = t('cmp.type.table'), pick?: TablePick) {
+    const steps = runTable(start, (name) => this.tables?.resolve(name) ?? null, die, pick);
     this.push({ who, what: start.title, table: { steps, start }, damage: [] });
   }
 

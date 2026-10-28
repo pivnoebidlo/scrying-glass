@@ -37,6 +37,15 @@ describe('roll tables', () => {
     expect(parseRollTable(body)!.rowDice.dice[0]!.sides).toBe(10);
   });
 
+  it('takes the numbers the players rolled', () => {
+    const t = parseRollTable('| d10 \\ d6 | 1–3 | 4–6 |\n|---|---|---|\n| 1–5 | A | B |\n| 6–10 | C | D |', 'd10 × d6')!;
+    const hit = rollOnTable(t, faces(1), { row: 8, col: 5 });
+    expect([hit.text, hit.row.total, hit.col?.total]).toEqual(['D', 8, 5]);
+    const tables: Record<string, TableSource> = { Head: { title: 'Head', table: parseRollTable('- Stunned')! } };
+    const steps = runTable({ title: 'Crit', table: parseRollTable('1. [[Head]]\n2. Bruise')! }, (n) => tables[n] ?? null, faces(1), { row: 1 });
+    expect(steps.map((s) => [s.title, s.dice])).toEqual([['Crit', '1d2: 1'], ['Head', '1d1: 1']]);
+  });
+
   it('sums the dice of a roll, finds no row for a gap', () => {
     const t = parseRollTable('| 2d6 | |\n|---|---|\n| 2–6 | Low |\n| 8–12 | High |', '2d6')!;
     expect(rollOnTable(t, faces(3, 2)).text).toBe('Low');
