@@ -11,6 +11,8 @@
   import { dirname, roleFolders } from '../../../shared/vault';
   import { adventureHidden, adventureOf, currentSystem, inCurrentFamily, placeTitle, visibleIn } from '../../../shared/adventures';
   import { bestiary, connectCards } from './cards.svelte';
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import { cardMenu } from './menu.svelte';
 
   let { app }: ModuleProps<'bestiary'> = $props();
 
@@ -73,6 +75,8 @@
     void bestiary.visible;
     limit = PAGE;
   });
+  // A row's menu (a right click): the card's actions.
+  let rowMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
 </script>
 
 <div class="filters">
@@ -140,7 +144,13 @@
 
 <div class="list">
   {#each bestiary.visible.slice(0, limit) as c (c.ref.scope + ':' + c.ref.id)}
-    <button class="item" data-nav class:active={sameRef(c.ref, bestiary.selected)} onclick={() => bestiary.select(c.ref)}>
+    <button
+      class="item"
+      data-nav
+      class:active={sameRef(c.ref, bestiary.selected)}
+      onclick={() => bestiary.select(c.ref)}
+      oncontextmenu={(e) => ((rowMenu = { ...menuAt(e), items: cardMenu(c) }), bestiary.select(c.ref))}
+    >
       <span class="name"
         >{c.name}{#if editions.length > 1 && !editions.some((s) => s.id === f.system)}<span class="tag">{c.system.replace(/^dnd5e-/, '')}</span>{/if}{#if bestiary.lang === 'all'}<span
             class="tag">{c.lang}</span
@@ -155,6 +165,8 @@
     <button class="btn more" onclick={() => (limit += PAGE)}>{t('best.more')}</button>
   {/if}
 </div>
+
+{#if rowMenu}<ContextMenu x={rowMenu.x} y={rowMenu.y} items={rowMenu.items} onclose={() => (rowMenu = null)} />{/if}
 
 <style>
   .filters {

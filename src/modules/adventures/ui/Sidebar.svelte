@@ -1,7 +1,9 @@
 <!-- The side panel of the «Adventures» tab: the adventures by name (a click makes one current and shows the tab) and
      the whole vault; ↑ ↓ walk the list (listNav). -->
 <script lang="ts">
-  import { BookOpen, Castle, Library } from '@lucide/svelte';
+  import { BookOpen, Castle, CloudUpload, Download, ImagePlus, Library, Pencil, Trash2 } from '@lucide/svelte';
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import { repo } from '../../repo/ui/repo.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
@@ -10,7 +12,7 @@
   import { advUi } from './ui.svelte';
   import { systems } from '../../../systems';
 
-  let { ms }: ModuleProps<'adventures'> = $props();
+  let { ms, app }: ModuleProps<'adventures'> = $props();
   // Adventures first, then supplements.
   const list = $derived(shownAdventures(ms).sort((a, b) => Number(isSupplement(ms, a)) - Number(isSupplement(ms, b))));
   const systemTitle = (a: string | null) => {
@@ -23,11 +25,32 @@
     advUi.supplement = path !== null && isSupplement(ms, path) ? path : null;
     openTab('adventures');
   }
+
+  // A row's menu (a right click): the same as the «⋯» of its tile.
+  let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  function openMenu(e: MouseEvent, a: string) {
+    const supplement = isSupplement(ms, a);
+    const onTab = (k: 'edit' | 'cover') => () => (openTab('adventures'), (advUi[k] = a));
+    menu = {
+      ...menuAt(e),
+      items: [
+        { label: t('adv.page.edit'), icon: Pencil, action: onTab('edit') },
+        { label: t('adv.page.cover'), icon: ImagePlus, action: onTab('cover') },
+        ...(supplement ? [] : [{ label: t('adv.export', { name: a }), icon: Download, action: () => void window.api.exportAdventure(a) }]),
+        {
+          label: supplement ? t('adv.page.publishBestiary') : t(app.repo.published[a] ? 'repo.menuUpdate' : 'repo.menuPublish', { name: a }),
+          icon: CloudUpload,
+          action: () => (supplement ? (repo.publishBestiary = a) : (repo.publish = a)),
+        },
+        { label: t('adv.delete', { name: a }), icon: Trash2, danger: true, action: () => void window.api.deleteAdventure(a) },
+      ],
+    };
+  }
 </script>
 
 <div class="list">
   {#each list as a (a)}
-    <button class="item" class:active={ms.current === a} data-nav onclick={() => select(a)}>
+    <button class="item" class:active={ms.current === a} data-nav onclick={() => select(a)} oncontextmenu={(e) => openMenu(e, a)}>
       {#if isSupplement(ms, a)}<BookOpen size={14} />{:else}<Castle size={14} />{/if}
       <span class="text"><span class="name">{a}</span><span class="faint small">{systemTitle(a)}</span></span>
     </button>
@@ -39,6 +62,8 @@
     </button>
   {/if}
 </div>
+
+{#if menu}<ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />{/if}
 
 <style>
   .list {

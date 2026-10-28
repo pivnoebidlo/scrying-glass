@@ -1,6 +1,7 @@
 <!-- Блок «Журнал» в правой панели: закреплённые заметки и PDF приключения под рукой на игре (видит только мастер).
      Only their names: a click opens one in the side drawer over any tab, a second click closes it; the pin unpins it. -->
 <script lang="ts">
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { BookOpen, NotebookText, PinOff } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -13,11 +14,23 @@
 
   const adv = $derived(app.adventures.current);
   const list = $derived(pinnedPages(app));
+  // A pinned note's menu (a right click): open or close it, unpin.
+  let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const pinMenu = (e: MouseEvent, path: string) =>
+    (menu = {
+      ...menuAt(e),
+      items: [
+        peek.path === path
+          ? { label: t('journal.peekClose'), icon: BookOpen, action: closePeek }
+          : { label: t('journal.peekHint'), icon: BookOpen, action: () => peekJournal(path) },
+        { label: t('journal.unpin'), icon: PinOff, action: () => void dispatch('journal', 'unpin', { adventure: adv, path }) },
+      ],
+    });
 </script>
 
 <ul class="pinned">
   {#each list as path (path)}
-    <li class:open={peek.path === path}>
+    <li class:open={peek.path === path} oncontextmenu={(e) => pinMenu(e, path)}>
       <button class="name" title={peek.path === path ? t('journal.peekClose') : t('journal.peekHint')} onclick={() => (peek.path === path ? closePeek() : peekJournal(path))}>
         {#if isPdf(path)}<BookOpen size={13} />{:else}<NotebookText size={13} />{/if}
         <span class="t">{pageTitle(path)}</span>
@@ -26,6 +39,8 @@
     </li>
   {/each}
 </ul>
+
+{#if menu}<ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />{/if}
 
 <style>
   .pinned {

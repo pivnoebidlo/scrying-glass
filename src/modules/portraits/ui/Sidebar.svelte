@@ -1,5 +1,7 @@
 <!-- Боковая панель: папки персонажей из хранилища. -->
 <script lang="ts">
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import { folderMenu } from '../../vault/ui/folderMenu.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Images, Skull, Users } from '@lucide/svelte';
   import { onMount } from 'svelte';
@@ -14,6 +16,12 @@
   onMount(connectCards);
   const monsters = $derived(monsterGroups(bestiary.all, app.adventures, app.vault.name, bestiary.filters.lang === 'all' ? 'ru' : bestiary.filters.lang));
   const total = $derived(groups.reduce((n, g) => n + g.items.length, 0) + monsters.reduce((n, g) => n + g.items.length, 0));
+  // A folder's menu (a right click): the same as in the Files tree.
+  let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const groupMenu = (e: MouseEvent, path: string) => {
+    ui.group = path;
+    menu = { ...menuAt(e), items: folderMenu(path) };
+  };
 </script>
 
 <div class="list">
@@ -23,7 +31,7 @@
     <span class="count">{total}</span>
   </button>
   {#each groups as g (g.key)}
-    <button class="item" data-nav class:active={ui.group === g.key} title={g.key} onclick={() => (ui.group = g.key)}>
+    <button class="item" data-nav class:active={ui.group === g.key} title={g.key} onclick={() => (ui.group = g.key)} oncontextmenu={(e) => groupMenu(e, g.key)}>
       <Users size={14} />
       <span class="name">{g.title}</span>
       <span class="count">{g.items.length}</span>
@@ -37,6 +45,8 @@
     </button>
   {/each}
 </div>
+
+{#if menu}<ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />{/if}
 
 <style>
   .list {

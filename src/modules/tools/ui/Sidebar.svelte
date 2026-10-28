@@ -1,6 +1,10 @@
 <!-- Боковая панель «Инструментов»: записки (и их быстрый список), общие инструменты и раздел системы текущего
      приключения; инструменты других систем — только включённые в настройках (registry.svelte.ts). -->
 <script lang="ts">
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import { Pencil, Scroll, Send, Trash2 } from '@lucide/svelte';
+  import { dispatch, store } from '../../../renderer/lib/store.svelte';
+  import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
   import { unread } from '../../telegram/ui/tg.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Brush, FileText, ScrollText } from '@lucide/svelte';
@@ -21,6 +25,22 @@
   const sketches = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures, 'sketch').flatMap((g) => g.items) : []);
   // A count next to a tool: unread messages, a running timer.
   const badge = (d: ToolDef) => (d.id === 'telegram' ? unread() || '' : d.id === 'timer' && app.timer.active ? t('tools.side.running') : '');
+  // A note's or a canvas's menu (a right click): the same as on its tile.
+  let rowMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  function handoutMenu(e: MouseEvent, tool: 'notes' | 'sketches', path: string, title: string) {
+    ui.tool = tool;
+    ui.note = path;
+    const shown = store.state.handouts.current === path;
+    rowMenu = {
+      ...menuAt(e),
+      items: [
+        { label: shown ? t('tools.card.removeFromScreen') : t('tools.card.show'), icon: Scroll, action: () => void dispatch('handouts', 'toggle', { path }) },
+        { label: t('tools.card.edit'), icon: Pencil, action: () => ((ui.tool = tool), (ui.note = path)) },
+        ...(tool === 'notes' && tgReady() ? [{ label: t('tg.sendShort'), icon: Send, action: () => sendToTelegram({ kind: 'note', path, title }) }] : []),
+        { label: t('tools.card.toTrash'), icon: Trash2, danger: true, action: () => void dispatch('vault', 'trash', { paths: [path] }) },
+      ],
+    };
+  }
 </script>
 
 {#snippet item(d: ToolDef)}
@@ -39,7 +59,7 @@
     <span class="count">{notes.length}</span>
   </button>
   {#each ui.tool === 'notes' && ui.folded !== 'notes' ? notes : [] as f (f.path)}
-    <button class="item sub" data-nav data-depth="1" class:active={ui.note === f.path} title={f.path} onclick={() => ((ui.tool = 'notes'), (ui.note = f.path))}>
+    <button class="item sub" data-nav data-depth="1" class:active={ui.note === f.path} title={f.path} onclick={() => ((ui.tool = 'notes'), (ui.note = f.path))} oncontextmenu={(e) => handoutMenu(e, 'notes', f.path, noteTitle(f.path))}>
       <FileText size={13} />
       <span class="name">{noteTitle(f.path)}</span>
     </button>
@@ -50,7 +70,7 @@
     <span class="count">{sketches.length}</span>
   </button>
   {#each ui.tool === 'sketches' && ui.folded !== 'sketches' ? sketches : [] as f (f.path)}
-    <button class="item sub" data-nav data-depth="1" class:active={ui.note === f.path} title={f.path} onclick={() => ((ui.tool = 'sketches'), (ui.note = f.path))}>
+    <button class="item sub" data-nav data-depth="1" class:active={ui.note === f.path} title={f.path} onclick={() => ((ui.tool = 'sketches'), (ui.note = f.path))} oncontextmenu={(e) => handoutMenu(e, 'sketches', f.path, sketchTitle(f.path))}>
       <Brush size={13} />
       <span class="name">{sketchTitle(f.path)}</span>
     </button>
@@ -67,6 +87,8 @@
   {/if}
   <p class="faint more">{t('tools.side.more')}</p>
 </div>
+
+{#if rowMenu}<ContextMenu x={rowMenu.x} y={rowMenu.y} items={rowMenu.items} onclose={() => (rowMenu = null)} />{/if}
 
 <style>
   .list {

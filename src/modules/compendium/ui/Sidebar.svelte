@@ -10,6 +10,8 @@
   import { LIBRARY } from '../../../shared/vault';
   import { allEntries, book, editionNow, editionsHere, entriesFolder, loadEntries, search, setEdition, srd, srdHere, typesHere, type Edition } from './store.svelte';
   import { openEntry, ui } from './ui.svelte';
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import { entryMenu } from './menu.svelte';
 
   let { app }: ModuleProps<'compendium'> = $props();
   // Редакции SRD без отключённых в настройках систем.
@@ -70,6 +72,9 @@
     openEntry(path);
     ui.editing = true;
   }
+  // A row's menu (a right click): the entry's actions.
+  let rowMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const openAt = (path: string, edit: boolean) => (openEntry(path), (ui.editing = edit));
 </script>
 
 <div class="panel">
@@ -116,7 +121,13 @@
         <li class="level">{levelOf(e) === 99 ? t('cmpui.noLevel') : levelTitle(levelOf(e))}</li>
       {/if}
       <li>
-        <button data-nav class:active={ui.open === e.path} title={e.path} onclick={() => openEntry(e.path)}>
+        <button
+          data-nav
+          class:active={ui.open === e.path}
+          title={e.path}
+          onclick={() => openEntry(e.path)}
+          oncontextmenu={(ev) => ((rowMenu = { ...menuAt(ev), items: entryMenu(e, openAt) }), openEntry(e.path))}
+        >
           <span class="t">{e.entry.title}</span>
           <span class="s">{entrySubtitle(e.entry, typeDef(e.entry.type))} · {e.group}</span>
         </button>
@@ -127,6 +138,8 @@
     <p class="faint empty">{t('cmpui.none')}</p>
   {/if}
 </div>
+
+{#if rowMenu}<ContextMenu x={rowMenu.x} y={rowMenu.y} items={rowMenu.items} onclose={() => (rowMenu = null)} />{/if}
 
 <style>
   .panel {

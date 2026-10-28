@@ -119,6 +119,21 @@
     };
   }
 
+  // The side panel's menu asks for a dialog: name and system, or a cover.
+  $effect(() => {
+    const e = advUi.edit;
+    if (!e) return;
+    advUi.edit = null;
+    error = '';
+    editing = { name: e, was: e, system: systemFor(ms, e), uses: [...(ms.uses?.[e] ?? [])] };
+  });
+  $effect(() => {
+    const c = advUi.cover;
+    if (!c) return;
+    advUi.cover = null;
+    picking = c;
+  });
+
   // Arrows walk the tiles like a list (← → — the next one, ↑ ↓ — a row up or down) and open the one they reach;
   // not while typing or with a dialog or menu open, and only when this tab is on screen.
   let pageEl = $state<HTMLElement | null>(null);

@@ -2,6 +2,8 @@
      ← — свернуть или к родителю. Выбранная папка приключения (или папка внутри него) сразу открывает это приключение;
      общие папки и корень текущее приключение не меняют. -->
 <script lang="ts">
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import { folderMenu } from './folderMenu.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Library, Trash2 } from '@lucide/svelte';
   import { tick } from 'svelte';
@@ -68,12 +70,14 @@
     void root;
     void loadTrash();
   });
+  // The vault root's menu (a right click): as any folder's.
+  let rootMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
 </script>
 
 {#if ms.tree}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="tree" bind:this={tree} {onkeydown}>
-    <button class="row root" data-path="" class:active={!ui.trash && ui.folder === ''} title={ms.root} onclick={() => select('')}>
+    <button class="row root" data-path="" class:active={!ui.trash && ui.folder === ''} title={ms.root} onclick={() => select('')} oncontextmenu={(e) => (select(''), (rootMenu = { ...menuAt(e), items: folderMenu('') }))}>
       <Library size={14} />
       <span class="name">{ms.name}</span>
     </button>
@@ -95,6 +99,8 @@
     </button>
   </div>
 {/if}
+
+{#if rootMenu}<ContextMenu x={rootMenu.x} y={rootMenu.y} items={rootMenu.items} onclose={() => (rootMenu = null)} />{/if}
 
 <style>
   .tree {

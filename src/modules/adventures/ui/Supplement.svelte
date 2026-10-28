@@ -19,9 +19,11 @@
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import CardEditor from '../../bestiary/ui/CardEditor.svelte';
   import CardView from '../../bestiary/ui/CardView.svelte';
+  import { cardMenu as cardItems } from '../../bestiary/ui/menu.svelte';
   import { allEntries, entryAt, loadEntries, typesHere } from '../../compendium/ui/store.svelte';
   import EntryEditor from '../../compendium/ui/EntryEditor.svelte';
   import { ui as cmp } from '../../compendium/ui/ui.svelte';
+  import { entryMenu as entryItems } from '../../compendium/ui/menu.svelte';
   import { repo } from '../../repo/ui/repo.svelte';
   import { advUi } from './ui.svelte';
 
@@ -98,26 +100,24 @@
     const path = await window.api.createEntry(sub('compendium'), t('cmpui.newEntryName', { type: def.title.toLowerCase() }), serializeEntry(blankEntry(type), def));
     if (path) pickEntry(path, true);
   }
-  async function removeEntry(path: string) {
-    const s = await dispatch('vault', 'trash', { paths: [path] });
-    if ((!s.vault.tree || !allFiles(s.vault.tree).some((f) => f.path === path)) && cmp.open === path) {
-      cmp.open = null;
-      picked = null;
-    }
-  }
+
 
   let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
   const show = (e: MouseEvent, items: MenuItem[]) => (menu = { ...menuAt(e), items });
-  const cardMenu = (e: MouseEvent, ref: CardRef) =>
-    show(e, [
-      { label: t('adv.supp.edit'), icon: Pencil, action: () => (pickCard(ref), void bestiary.edit(ref)) },
-      { label: t('adv.supp.delete'), icon: Trash2, danger: true, action: () => void bestiary.remove(ref) },
-    ]);
-  const entryMenu = (e: MouseEvent, path: string) =>
-    show(e, [
-      { label: t('adv.supp.edit'), icon: Pencil, action: () => pickEntry(path, true) },
-      { label: t('adv.supp.delete'), icon: Trash2, danger: true, action: () => void removeEntry(path) },
-    ]);
+  // The same menu as in the Cards list (edit, copy, move, to initiative, export, delete).
+  const cardMenu = (e: MouseEvent, ref: CardRef) => {
+    const c = cards.find((x) => sameRef(x.ref, ref));
+    if (!c) return;
+    pickCard(ref);
+    show(e, cardItems(c));
+  };
+  // The same menu as in the Compendium list (show to players, edit, open elsewhere, delete).
+  const entryMenu = (e: MouseEvent, path: string) => {
+    const item = entries.find((x) => x.path === path);
+    if (!item) return;
+    pickEntry(path);
+    show(e, entryItems(item, (p, edit) => pickEntry(p, edit)));
+  };
   const typesMenu = (e: MouseEvent) => show(e, typesHere().map((ty) => ({ label: ty.def.title, action: () => void newEntry(ty.id) })));
   const pageMenu = (e: MouseEvent) =>
     show(e, [

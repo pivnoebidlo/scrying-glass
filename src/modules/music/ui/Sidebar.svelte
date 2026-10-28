@@ -1,5 +1,6 @@
 <!-- Боковая панель: плейлисты (папки с музыкой). -->
 <script lang="ts">
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { ListMusic, Play } from '@lucide/svelte';
@@ -11,11 +12,19 @@
 
   let { ms, app }: ModuleProps<'music'> = $props();
   const list = $derived(app.vault.tree ? playlists(app.vault.tree, app.vault.name, app.adventures) : []);
+  // A row's menu (a right click): its actions.
+  let rowMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const rowMenuAt = (e: MouseEvent, items: MenuItem[]) => (rowMenu = { ...menuAt(e), items });
+  const playlistMenu = (e: MouseEvent, path: string) =>
+    rowMenuAt(e, [
+      { label: t('music.play'), icon: Play, action: () => void dispatch('music', 'playFolder', { folder: path }) },
+      { label: t('music.openList'), icon: ListMusic, action: () => ((ui.selected = path), openTab('music')) },
+    ]);
 </script>
 
 <div class="list">
   {#each list as p (p.path)}
-    <div class="item" class:active={ui.selected === p.path} class:playing={ms.playlist === p.path && ms.playing}>
+    <div class="item" class:active={ui.selected === p.path} class:playing={ms.playlist === p.path && ms.playing} oncontextmenu={(e) => playlistMenu(e, p.path)} role="none">
       <button class="main" data-nav title={p.path} onclick={() => { ui.selected = p.path; openTab('music'); }}>
         <ListMusic size={14} />
         <span class="name">{p.title}</span>
@@ -31,6 +40,8 @@
     </p>
   {/each}
 </div>
+
+{#if rowMenu}<ContextMenu x={rowMenu.x} y={rowMenu.y} items={rowMenu.items} onclose={() => (rowMenu = null)} />{/if}
 
 <style>
   .list {

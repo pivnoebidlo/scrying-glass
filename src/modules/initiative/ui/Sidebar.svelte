@@ -1,5 +1,7 @@
 <!-- Боковая панель инициативы: текущий бой и заготовки боёв текущего приключения (и общие). -->
 <script lang="ts">
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import { Trash2 } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Plus, Swords, Sword } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -25,6 +27,25 @@
     dispatch('initiative', 'createEncounter', { id, name: newEncounterName(ms), adventure: app.adventures.current });
     ui.encounter = id;
   }
+  // A row's menu (a right click): its actions.
+  let rowMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const rowMenuAt = (e: MouseEvent, items: MenuItem[]) => (rowMenu = { ...menuAt(e), items });
+  function encounterMenu(e: MouseEvent, id: string, name: string, count: number) {
+    ui.encounter = id;
+    rowMenuAt(e, [
+      { label: t('init.toFight'), icon: Swords, disabled: !count, action: () => void dispatch('initiative', 'startEncounter', { id }).then(() => (ui.encounter = null)) },
+      {
+        label: t('init.deleteEnc'),
+        icon: Trash2,
+        danger: true,
+        action: () => {
+          if (!confirm(t('init.deleteEncounter', { name }))) return;
+          ui.encounter = null;
+          void dispatch('initiative', 'deleteEncounter', { id });
+        },
+      },
+    ]);
+  }
 </script>
 
 <div class="list">
@@ -39,7 +60,7 @@
     <button class="icon-btn" title={t('init.newEncounter')} onclick={create}><Plus size={14} /></button>
   </div>
   {#each list as e (e.id)}
-    <button class="item" data-nav class:active={ui.encounter === e.id} onclick={() => (ui.encounter = e.id)}>
+    <button class="item" data-nav class:active={ui.encounter === e.id} onclick={() => (ui.encounter = e.id)} oncontextmenu={(ev) => encounterMenu(ev, e.id, e.name, e.combatants.length)}>
       <Sword size={14} />
       <span class="name">{e.name}</span>
       <span class="count">{e.combatants.length}</span>
@@ -50,6 +71,8 @@
     </p>
   {/each}
 </div>
+
+{#if rowMenu}<ContextMenu x={rowMenu.x} y={rowMenu.y} items={rowMenu.items} onclose={() => (rowMenu = null)} />{/if}
 
 <style>
   .list {

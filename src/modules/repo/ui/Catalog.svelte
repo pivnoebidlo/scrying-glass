@@ -3,6 +3,7 @@
      description, download or update; the GM's own — take down; others' — complain. The admin of a repository sees
      complaints and takes any entry down. Opens on repo.browsing (openRepo). -->
 <script lang="ts">
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { Ban, Check, LockOpen, CloudUpload, Download, Flag, ImageOff, RefreshCw, Settings, ShieldCheck, Trash2, TriangleAlert, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
@@ -105,6 +106,25 @@
   // Esc closes the window, unless a dialog above it is open.
   const onkey = (e: KeyboardEvent) => e.key === 'Escape' && !repo.publish && !repo.naming && !repo.reporting && close();
   const reasonDate = (ms: number) => new Date(ms).toLocaleDateString(getLang(), { day: 'numeric', month: 'short' });
+
+  // An entry's menu (a right click): the same as the buttons under its details.
+  let rowMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  function entryMenu(ev: MouseEvent, e: Found) {
+    chosen = key(e);
+    const have = installedVersion(e);
+    const busy = !!repo.busy;
+    const get = have && have >= e.version ? t('repo.again') : have ? t('repo.update', { n: e.version }) : e.kind === 'system' ? t('repo.installSystem') : e.kind === 'bestiary' ? t('repo.installBestiary') : t('repo.download');
+    rowMenu = {
+      ...menuAt(ev),
+      items: [
+        { label: get, icon: Download, disabled: busy, action: () => void install(e) },
+        ...(e.kind === 'bestiary' && have ? [{ label: t('repo.removeBestiary'), icon: Trash2, disabled: busy, action: () => void removeBestiary(e) }] : []),
+        e.author === me
+          ? { label: t('repo.unpublish'), icon: Trash2, danger: true, disabled: busy, action: () => void unpublish(e) }
+          : { label: t('repo.report.button'), icon: Flag, disabled: busy, action: () => (repo.reporting = e) },
+      ],
+    };
+  }
 </script>
 
 <svelte:window onkeydown={onkey} />
@@ -205,7 +225,7 @@
           {#each entries as e (key(e))}
             {@const cover = e.cover ? coverOf(e) : null}
             {@const have = installedVersion(e)}
-            <button class="item" class:on={picked && key(picked) === key(e)} onclick={() => (chosen = key(e))}>
+            <button class="item" class:on={picked && key(picked) === key(e)} onclick={() => (chosen = key(e))} oncontextmenu={(ev) => entryMenu(ev, e)}>
               <span class="thumb">{#if cover}<img src={cover} alt="" />{:else}<ImageOff size={16} />{/if}</span>
               <span class="text">
                 <span class="title">{e.title}</span>
@@ -291,6 +311,8 @@
     {/if}
   </div>
 </div>
+
+{#if rowMenu}<ContextMenu x={rowMenu.x} y={rowMenu.y} items={rowMenu.items} onclose={() => (rowMenu = null)} />{/if}
 
 <style>
   .backdrop {

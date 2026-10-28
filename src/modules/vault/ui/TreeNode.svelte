@@ -1,7 +1,10 @@
 <!-- Ветка дерева: папка и, если раскрыта, вложенные папки. -->
 <script lang="ts">
-  import { ChevronRight, Map } from '@lucide/svelte';
+  import { BookOpen, Castle, ChevronRight } from '@lucide/svelte';
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
+  import { folderMenu } from './folderMenu.svelte';
+  import { isSupplement } from '../../../shared/adventures';
   import type { VaultFolder } from '../../../shared/vault';
   import Self from './TreeNode.svelte';
   import { folderIcon, ui } from './ui.svelte';
@@ -12,7 +15,15 @@
   // Приключения — со своей иконкой, текущее выделено.
   const adventure = $derived(depth === 0 && store.state.adventures.list.includes(folder.path));
   const current = $derived(adventure && store.state.adventures.current === folder.path);
-  const Icon = $derived(adventure ? Map : folderIcon(folder.name));
+  const Icon = $derived(adventure ? (isSupplement(store.state.adventures, folder.path) ? BookOpen : Castle) : folderIcon(folder.name));
+
+  // The folder's menu (a right click): the same as the buttons over the open folder.
+  let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  function openMenu(e: MouseEvent) {
+    select(folder.path);
+    menu = { ...menuAt(e), items: folderMenu(folder.path) };
+  }
+
 
   function toggle(e: MouseEvent) {
     e.stopPropagation();
@@ -26,6 +37,7 @@
   class:active={!ui.trash && ui.folder === folder.path}
   style:padding-left="{8 + depth * 14}px"
   title={folder.path}
+  oncontextmenu={openMenu}
   onclick={() => {
     select(folder.path);
     if (!open && folder.folders.length) ui.expanded[folder.path] = true;
@@ -38,6 +50,8 @@
   <span class="icon" class:current><Icon size={14} /></span>
   <span class="name" class:current>{folder.name}</span>
 </button>
+
+{#if menu}<ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />{/if}
 
 {#if open}
   {#each folder.folders as f (f.path)}

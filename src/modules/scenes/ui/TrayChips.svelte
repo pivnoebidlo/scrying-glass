@@ -1,6 +1,8 @@
 <!-- Подборка без картинок (музыка, бои): строки-кнопки. Щелчок включает (что именно — toggle блока), включённое —
      с подсветкой; крестик убирает из подборки. «+» — выбор из списка (options). Пополняется и само (scenes/tray.ts). -->
 <script lang="ts">
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import { Power, PowerOff } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Plus, X } from '@lucide/svelte';
   import type { Component, Snippet } from 'svelte';
@@ -48,12 +50,22 @@
   const add = (ids: string[]) => ids.length && dispatch('scenes', 'trayAdd', { owner: $state.snapshot(owner), part, paths: ids });
   const reorder = (ids: string[]) => dispatch('scenes', 'traySet', { owner: $state.snapshot(owner), part, ids });
   const remove = (id: string) => dispatch('scenes', 'trayRemove', { owner: $state.snapshot(owner), part, path: id });
+  // A chip's menu (a right click): turn it on or off, take it out of the tray.
+  let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const chipMenu = (e: MouseEvent, id: string) =>
+    (menu = {
+      ...menuAt(e),
+      items: [
+        isOn(id) ? { label: t('scenes.chipOff'), icon: PowerOff, action: () => void toggle(id) } : { label: t('scenes.chipOn'), icon: Power, action: () => void toggle(id) },
+        { label: t('scenes.removeFromTray'), icon: X, action: () => void remove(id) },
+      ],
+    });
 </script>
 
 <div class="chips">
   {#each items as id (id)}
     {@const Icon = iconOf(id)}
-    <div class="chip" class:on={isOn(id)} use:sortable={{ group: `tray:${part}`, id, ids: tray, disabled: !tray.includes(id), onmove: reorder }}>
+    <div class="chip" class:on={isOn(id)} use:sortable={{ group: `tray:${part}`, id, ids: tray, disabled: !tray.includes(id), onmove: reorder }} oncontextmenu={(e) => chipMenu(e, id)} role="none">
       <button class="main" title={caption(id)} onclick={() => toggle(id)}>
         <Icon size={13} />
         <span class="name">{caption(id)}</span>
@@ -72,6 +84,8 @@
 {#if picking}
   <ListPicker title={pickTitle} options={options()} skip={tray} onpick={(ids) => ((picking = false), add(ids))} onclose={() => (picking = false)} />
 {/if}
+
+{#if menu}<ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />{/if}
 
 <style>
   .chips {
