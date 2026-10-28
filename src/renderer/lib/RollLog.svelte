@@ -26,9 +26,20 @@
   const crit = (e: RollEntry) => !!e.attack && e.d20?.natural === 20;
   const fumble = (e: RollEntry) => !!e.attack && e.d20?.natural === 1;
 
-  // Roll tables: offered on a natural 20 or 1 (the tables marked so), the result — to the players or Telegram.
+  // Roll tables: offered on a natural 20 or 1 or an event of the game (the tables marked so), the result — to the
+  // players or Telegram.
   const offers = (e: RollEntry): TableSource[] =>
-    !rolls.tables || !e.d20 ? [] : e.d20.natural === 20 ? rolls.tables.offered('crit') : e.d20.natural === 1 ? rolls.tables.offered('fumble') : [];
+    !rolls.tables
+      ? []
+      : e.event
+        ? rolls.tables.offered(e.event)
+        : !e.d20
+          ? []
+          : e.d20.natural === 20
+            ? rolls.tables.offered('crit')
+            : e.d20.natural === 1
+              ? rolls.tables.offered('fumble')
+              : [];
   const markdown = (e: RollEntry) => stepsMarkdown(e.table!.steps, t('lib.tableNone'));
   const resultPath = (e: RollEntry) => `${ROLL_RESULT}${e.id}`;
   const shown = (e: RollEntry) => store.state?.handouts.current === resultPath(e);

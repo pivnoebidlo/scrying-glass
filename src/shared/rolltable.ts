@@ -19,11 +19,15 @@
 //   the second the column. Without it — a die as big as the last range (a d<lines> for plain lines).
 // - A result may hold rolls «{2d6}» (rolled with the table) and [[links]]: a link to another table is rolled too
 //   (a chain: crit → body part → effect), other links stay links (an entry, a creature).
-// - `crit` / `fumble`: the roll log offers the table on a natural 20 / 1.
+// - `crit` / `fumble` / `combat` / `round` / `down` / `watch` (TABLE_EVENTS): the roll log offers the table on a
+//   natural 20 / 1, when a fight begins, on a new round, when a participant goes down, when a watch passes (Mausritter).
 // Pure functions: the windows roll, tests check.
 import { diceText, parseDice, type DiceExpr } from './dice';
 
 export const TABLE_TYPE = 'table';
+// The events a table can be offered on: a field of its own each (`down: true`).
+export const TABLE_EVENTS = ['crit', 'fumble', 'combat', 'round', 'down', 'watch'] as const;
+export type TableEvent = (typeof TABLE_EVENTS)[number];
 // A result shown to the players: the handout's «path» (no file behind it).
 export const ROLL_RESULT = 'roll:';
 

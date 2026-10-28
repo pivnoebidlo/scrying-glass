@@ -101,8 +101,10 @@ body part → effect). "Paste from text…" makes the table from numbered lines 
 "Roll" on the entry (or the dice button in Tools → Roll tables, where every table seen here is listed) puts the whole
 chain into the roll log; there "Again", "Show to players" and "To Telegram". When the players roll their own dice,
 type the number into "Rolled" next to "Roll" and press Enter, or just click the result in the table: it goes to the
-log the same way (linked tables are still rolled by the app). A table marked "Offer on a natural 20" (or
-1) shows up as a button under any natural 20 (or 1) in the log. Inside, a table is a plain Markdown file (a table with
+log the same way (linked tables are still rolled by the app). Under "Offer in the roll log" a table is
+marked for events: a natural 20 or 1, a fight begins, a new round, a participant goes down (no hit points; STR 0 in
+Mausritter), a watch passes (Mausritter). When it happens, the log shows a line ("Goblin · is down") with a button
+for each table marked so — the app doesn't roll by itself; with no such table nothing shows up. Inside, a table is a plain Markdown file (a table with
 ranges in its first column and the `roll` field), so it travels with its supplement and can be edited by hand.
 
 **Adventures** are top-level folders of the vault marked as adventures: "Create adventure…" in the switcher above

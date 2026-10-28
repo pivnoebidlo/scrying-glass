@@ -265,7 +265,10 @@ Electron-приложение для мастера D&D: окно управле
   `EntryEditor` у типа `table`, поле `roll` пишет он); список «Таблицы с броском» на странице дополнения; инструмент
   «Таблицы с броском» — `tools/rolltables/RollTables.svelte` (`ui.tool = 'rollTables'`, общий, выбор — `cmp.open`). Кнопка «Бросить» — в `EntryCard` (не у
   игроков; там же «Выпало» и щелчок по клетке первой таблицы текста — `TablePick`: числа игроков вместо броска, `runTable(…, pick)`), журнал — `rolls.table` / `RollEntry.table`; справочник даёт журналу `rolls.tables` (`resolve`, `offered` —
-  таблицы с `crit` / `fumble` под натуральной 20 / 1; ставит `EntryDrawer`), Telegram — `rolls.telegram` (фон модуля
+  таблицы с полем события `TABLE_EVENTS` (`crit` / `fumble` под натуральной 20 / 1, `combat`, `round`, `down`, `watch`;
+  в редакторе — группа «Предлагать в журнале бросков»); ставит `EntryDrawer`; события игры — `gameEvents` в
+  `compendium/events.ts` по разнице состояний, следит `compendium/ui/TableEvents.svelte` → `rolls.event` — строка
+  `RollEntry.event`, только если есть таблицы), Telegram — `rolls.telegram` (фон модуля
   telegram); игрокам — `handouts/toggleEntry` с путём `roll:<id>` (`ROLL_RESULT`; в подборку и сцену не попадает).
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `DEFAULT_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции

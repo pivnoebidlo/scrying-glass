@@ -15,6 +15,7 @@
 // Только типы, подписи и чистые функции: используются ядром и окнами.
 import { familyOf } from '../systems';
 import { getLang, t, type Key } from './i18n';
+import { TABLE_EVENTS } from './rolltable';
 
 export type FieldValue = string | number | boolean | string[];
 
@@ -139,7 +140,10 @@ export const TYPES: Record<string, TypeDef> = {
   rule: type('rule', [field('rule', 'category', 'text', { hint: true })]),
   note: type('note', []),
   // A roll table (shared/rolltable.ts): the table is the text; any system.
-  table: type('table', [field('table', 'roll', 'text', { hint: true }), field('table', 'crit', 'bool'), field('table', 'fumble', 'bool')]),
+  table: type('table', [
+    field('table', 'roll', 'text', { hint: true }),
+    ...TABLE_EVENTS.map((on) => field('table', on, 'bool')),
+  ]),
 };
 
 // Поле шапки с системой записи.

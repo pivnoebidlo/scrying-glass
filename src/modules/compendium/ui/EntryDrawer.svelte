@@ -2,6 +2,7 @@
      листах). Рисует выдвижную панель записи поверх любой вкладки, у правой панели (как панель карточки): её открывают
      заклинание в статблоке, состояние в трекере, ⌘K. Одновременно открыта одна из двух панелей. -->
 <script lang="ts">
+  import TableEvents from './TableEvents.svelte';
   import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { fly } from 'svelte/transition';
@@ -37,7 +38,7 @@
   $effect(() => setSpellIndex(spellNames()));
 
   // Roll tables for the roll log: a link in a result rolls the table it names; tables marked «on a natural 20 / 1»
-  // (the ones seen here) are offered there.
+  // or on an event of the game (the ones seen here) are offered there — the events are watched by TableEvents.
   const tableOf = (e: EntryItem): TableSource | null => {
     if (e.entry.type !== TABLE_TYPE) return null;
     const table = parseRollTable(e.entry.body, fieldText(e.entry.fields['roll'] ?? ''));
@@ -100,6 +101,7 @@
 <svelte:window {onkeydown} />
 
 <QuickSearch />
+<TableEvents />
 
 {#if entryPeek.names}
   <aside class="drawer" transition:fly={{ x: 40, duration: 180 }} aria-label={t('cmpui.drawer')}>

@@ -19,7 +19,7 @@
   import { LIBRARY } from '../../../shared/vault';
   import { openEntry } from './ui.svelte';
   import TableEditor from './TableEditor.svelte';
-  import { TABLE_TYPE } from '../../../shared/rolltable';
+  import { TABLE_EVENTS, TABLE_TYPE, type TableEvent } from '../../../shared/rolltable';
 
   let { item }: { item: EntryItem } = $props();
 
@@ -31,11 +31,14 @@
   const def = $derived(typeDef(draft.type));
   // A roll table: its own editor writes the text and the dice (the `roll` field), and shows the table itself.
   const isTable = $derived(draft.type === TABLE_TYPE);
-  const fields = $derived([...def.fields.filter((f) => !(isTable && f.key === 'roll')), ...COMMON_FIELDS]);
+  // A table's roll is written by its editor, the events it is offered on — a group of their own.
+  const isEvent = (f: FieldDef) => isTable && (TABLE_EVENTS as readonly string[]).includes(f.key);
+  const fields = $derived([...def.fields.filter((f) => !(isTable && f.key === 'roll') && !isEvent(f)), ...COMMON_FIELDS]);
+  const events = $derived(def.fields.filter(isEvent));
   const tableRoll = () => String(draft.fields['roll'] ?? '');
   const setTableRoll = (v: string) => (draft.fields = { ...draft.fields, roll: v });
   // Поля, которых нет у типа (из Obsidian или прошлого типа), — показываем и даём править как текст.
-  const extra = $derived(Object.keys(draft.fields).filter((k) => k !== OVERRIDES && k !== IMAGE_FIELD && !(isTable && k === 'roll') && !fields.some((f) => f.key === k)));
+  const extra = $derived(Object.keys(draft.fields).filter((k) => k !== OVERRIDES && k !== IMAGE_FIELD && !(isTable && k === 'roll') && !fields.some((f) => f.key === k) && !events.some((f) => f.key === k)));
   // Встроенная запись: правка сохранится в библиотеку и заменит её.
   const builtin = $derived(isBuiltinEntry(item.path));
 
@@ -126,7 +129,15 @@
 
   <div class="columns" class:single={isTable}>
     <form class="form" onsubmit={(e) => e.preventDefault()}>
-      {#if isTable}<TableEditor bind:body={draft.body} bind:roll={tableRoll, setTableRoll} title={draft.title} />{/if}
+      {#if isTable}
+        <TableEditor bind:body={draft.body} bind:roll={tableRoll, setTableRoll} title={draft.title} />
+        <fieldset class="events">
+          <legend>{t('cmpui.offerOn')}</legend>
+          {#each events as f (f.key)}
+            <label><input type="checkbox" checked={draft.fields[f.key] === true} onchange={(e) => set(f, e.currentTarget.checked)} /> {t(`cmpui.offer.${f.key as TableEvent}`)}</label>
+          {/each}
+        </fieldset>
+      {/if}
       <div class="grid">
         {#each fields as f (f.key)}
           {@const v = draft.fields[f.key]}
@@ -242,6 +253,25 @@
   .field > span {
     color: var(--text-muted);
     font-size: 12px;
+  }
+  .events {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin: 0;
+    padding: 8px 12px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+  }
+  .events legend {
+    padding: 0 4px;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .events label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   .field input[type='checkbox'] {
     align-self: flex-start;

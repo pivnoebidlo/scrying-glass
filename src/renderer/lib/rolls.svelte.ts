@@ -4,7 +4,7 @@ import { t } from './i18n.svelte';
 import { die, parseDice, rollD20, rollDamage, rollPool, rollSave, type D20Mode, type D20Roll, type DamageRoll, type PoolRoll, type SaveRoll } from '../../shared/dice';
 import { getLang } from '../../shared/i18n';
 import { pushPool, rollPack, type PackRollResult, type RollSpec, type RollWords } from '../../shared/syspack';
-import { runTable, type TablePick, type TableSource, type TableStep } from '../../shared/rolltable';
+import { runTable, type TableEvent, type TablePick, type TableSource, type TableStep } from '../../shared/rolltable';
 
 export interface RollEntry {
   id: number;
@@ -21,6 +21,8 @@ export interface RollEntry {
   pack?: PackRollResult & { pushed?: boolean };
   // A roll table and the tables its result led to (shared/rolltable.ts); `start` — to roll it again.
   table?: { steps: TableStep[]; start: TableSource };
+  // Something happened in the game (a fight began, someone went down…): a line only to offer the tables marked so.
+  event?: TableEvent;
   // Попадание проверяется по натуральной 20/1 только у атак.
   attack?: boolean;
   damage: DamageRoll[];
@@ -32,8 +34,8 @@ const MAX = 50;
 // how to send a result. Neither is a part of this file's world (renderer/lib does not import modules).
 export interface TableHooks {
   resolve(name: string): TableSource | null;
-  // The tables offered on a natural 20 or 1 here.
-  offered(on: 'crit' | 'fumble'): TableSource[];
+  // The tables offered on a natural 20 or 1, or on an event of the game, here.
+  offered(on: TableEvent): TableSource[];
 }
 let next = 1;
 
@@ -89,6 +91,11 @@ class Rolls {
   table(start: TableSource, who = t('cmp.type.table'), pick?: TablePick) {
     const steps = runTable(start, (name) => this.tables?.resolve(name) ?? null, die, pick);
     this.push({ who, what: start.title, table: { steps, start }, damage: [] });
+  }
+
+  // An event of the game: a line in the log only when some table is offered on it.
+  event(on: TableEvent, who: string, what: string) {
+    if (this.tables?.offered(on).length) this.push({ who, what, event: on, damage: [] });
   }
 
   damage(who: string, what: string, damage: string, crit = false) {
