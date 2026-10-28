@@ -700,7 +700,8 @@ with a title, description, language and cover; a new version replaces the old on
 down any time. Something wrong with someone's adventure? "Complain…" sends it to the repository's admin (who
 sees complaints in the catalog after entering the admin token in Settings → Community). Downloaded adventures are offered their new versions (the old copy goes to the trash). Your
 adventures are tied to your author key, made on the first publish: save a copy of it in Settings → Community
-to update them from another computer. The repository service lives in `server/` (Helm chart included).
+to update them from another computer. Until it is saved, a plate after a publish reminds you ("Save the key to a
+file…", "It's saved already", "Later" — for three days). The repository service lives in `server/` (Helm chart included).
 
 ## Role-playing systems
 

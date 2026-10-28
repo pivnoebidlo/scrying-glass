@@ -260,6 +260,8 @@ export interface Api {
   // The author key to a file and back (asks where; true / the new info — done).
   repoExportKey(): Promise<boolean>;
   repoImportKey(): Promise<RepoInfo | null>;
+  // The GM says the author's key is kept already (no reminder to save it).
+  repoKeyKept(): Promise<RepoInfo>;
   onRepoProgress(cb: (p: RepoProgress) => void): void;
   // Снимки данных приложения (main/backups.ts): список (новые сверху), сделать сейчас, восстановить (спросит
   // подтверждение; число записанных файлов, 0 — отменили), открыть папку снимков.

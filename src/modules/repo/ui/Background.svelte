@@ -9,11 +9,11 @@
   import SystemPublishDialog from './SystemPublishDialog.svelte';
   import BestiaryPublishDialog from './BestiaryPublishDialog.svelte';
   import UpdatesNotice from './UpdatesNotice.svelte';
+  import KeyReminder from './KeyReminder.svelte';
   import Busy from './Busy.svelte';
   import { cancelNaming, finishInstall, repo } from './repo.svelte';
 
-  // Standard module props; nothing here uses them.
-  let {}: ModuleProps<'repo'> = $props();
+  let { app }: ModuleProps<'repo'> = $props();
 
   let name = $state('');
   let free = $state(true);
@@ -35,6 +35,7 @@
 <SystemPublishDialog />
 <BestiaryPublishDialog />
 <UpdatesNotice />
+<KeyReminder {app} />
 <Busy />
 
 {#if repo.naming}

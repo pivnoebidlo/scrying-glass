@@ -46,7 +46,7 @@ import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnounc
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
-import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
+import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
 import { ID_RE, type BestiaryMark, type RepoEntry, type RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
@@ -1464,8 +1464,10 @@ ipcMain.handle('repo:exportKey', async () => {
   });
   if (save.canceled || !save.filePath) return false;
   fs.writeFileSync(save.filePath, keyFile(), { mode: 0o600 });
+  keyKept();
   return true;
 });
+ipcMain.handle('repo:keyKept', () => keyKept());
 ipcMain.handle('repo:importKey', async () => {
   const win = getControlWindow();
   const pick = await dialog.showOpenDialog(win!, { title: t('core.repoKeyLoad'), filters: [{ name: 'JSON', extensions: ['json'] }], properties: ['openFile'] });

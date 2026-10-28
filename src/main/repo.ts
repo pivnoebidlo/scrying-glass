@@ -27,6 +27,8 @@ export interface RepoSettings {
   systems?: RepoInfo['systems'];
   bestiaries?: RepoInfo['bestiaries'];
   key?: { x: string; d: string; enc: boolean };
+  // The key was saved to a file (or loaded from one, or the GM says it is kept): no reminder.
+  keySaved?: boolean;
 }
 
 interface Deps {
@@ -75,6 +77,7 @@ export function repoInfo(): RepoInfo {
     sources: sources(),
     name: s.name ?? '',
     author: s.key?.x ?? null,
+    keySaved: !!s.keySaved,
     systems: { published: s.systems?.published ?? {}, installed: s.systems?.installed ?? {} },
     bestiaries: { published: s.bestiaries?.published ?? {}, installed: s.bestiaries?.installed ?? {} },
   };
@@ -137,7 +140,7 @@ function privateKey(make: boolean) {
     if (!make) throw fail('key');
     const pair = generateKeyPairSync('ed25519');
     const jwk = pair.privateKey.export({ format: 'jwk' });
-    saveKey(jwk.x!, jwk.d!);
+    saveKey(jwk.x!, jwk.d!, false);
     return { x: jwk.x!, key: pair.privateKey };
   }
   let d: string;
@@ -149,10 +152,16 @@ function privateKey(make: boolean) {
   return { x: s.key.x, key: createPrivateKey({ key: { kty: 'OKP', crv: 'Ed25519', x: s.key.x, d }, format: 'jwk' }) };
 }
 
-function saveKey(x: string, d: string) {
+function saveKey(x: string, d: string, saved: boolean) {
   const s = deps!.get();
   const enc = safeStorage.isEncryptionAvailable();
-  deps!.save({ ...s, key: { x, d: enc ? safeStorage.encryptString(d).toString('base64') : d, enc } });
+  deps!.save({ ...s, key: { x, d: enc ? safeStorage.encryptString(d).toString('base64') : d, enc }, keySaved: saved || undefined });
+}
+
+// The key is kept somewhere besides this computer: saved to a file here, or the GM says so.
+export function keyKept() {
+  deps!.save({ ...deps!.get(), keySaved: true });
+  return repoInfo();
 }
 
 // The key as a file (to keep it or move it to another computer) and back.
@@ -167,7 +176,7 @@ export function loadKeyFile(text: string) {
   // The private part must give this very public key.
   const priv = createPrivateKey({ key: { kty: 'OKP', crv: 'Ed25519', x: o.x, d: o.d }, format: 'jwk' });
   if (createPublicKey(priv).export({ format: 'jwk' }).x !== o.x) throw fail('key-file');
-  saveKey(o.x, o.d);
+  saveKey(o.x, o.d, true);
   return repoInfo();
 }
 

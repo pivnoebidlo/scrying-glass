@@ -158,6 +158,8 @@ export interface RepoInfo {
   sources: SourceInfo[];
   name: string;
   author: string | null;
+  // The author's key is kept besides this computer (saved to a file): else the window reminds to save it.
+  keySaved: boolean;
   // System packs published from here and downloaded (by pack id): systems live in the library, not in a vault.
   systems: { published: Record<string, SystemMark>; installed: Record<string, SystemMark & { author: string }> };
   // Bestiaries published from here (by entry id: its title and cards) and downloaded into the library (by

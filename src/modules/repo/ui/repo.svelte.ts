@@ -38,6 +38,8 @@ export const repo = $state({
   publishBestiary: false as boolean | string,
   // A download waits for a name: the adventure of that name is already there.
   naming: null as { file: string; name: string; suggestion: string; entry: Found } | null,
+  // The reminder to save the author's key is put off until then (ms; KeyReminder.svelte).
+  keyLater: Number(localStorage.getItem('sg.repo.keyLater') ?? 0) || 0,
   // The last result to show (done or failed).
   notice: '',
 });
@@ -180,6 +182,7 @@ export async function publishBestiary(p: { source: string; refs: CardRef[]; titl
   if (!entry) return false;
   notice(t('repo.published', { name: entry.title, version: entry.version }));
   repo.info = await window.api.repoInfo();
+  remindKey();
   void loadCatalogs(p.source);
   return true;
 }
@@ -189,6 +192,7 @@ export async function publishSystem(p: { source: string; pack: string; title: st
   if (!entry) return false;
   notice(t('repo.published', { name: entry.title, version: entry.version }));
   repo.info = await window.api.repoInfo();
+  remindKey();
   void loadCatalogs(p.source);
   return true;
 }
@@ -199,6 +203,18 @@ export async function installSystem(e: Found) {
   if (!id) return;
   repo.info = await window.api.repoInfo();
   notice(t('repo.systemInstalled', { name: e.title }));
+}
+
+// The author's key lives only on this computer until it is saved to a file: after a publish the reminder shows again
+// even if it was put off; «Later» puts it off for a few days.
+const KEY_LATER = 'sg.repo.keyLater';
+export function remindKey(later = 0) {
+  repo.keyLater = later;
+  try {
+    localStorage.setItem(KEY_LATER, String(later));
+  } catch {
+    // Only a convenience.
+  }
 }
 
 // On launch (if the GM didn't turn it off): what has a new version since the last time it was told. A version is
@@ -232,6 +248,7 @@ export async function publish(p: { source: string; adventure: string; title: str
   if (!entry) return false;
   notice(t('repo.published', { name: entry.title, version: entry.version }));
   repo.info = await window.api.repoInfo();
+  remindKey();
   void loadCatalogs(p.source);
   return true;
 }
