@@ -30,9 +30,11 @@ export type RollSpec =
   | { type: 'under'; sides: number; target: string; levels?: { title: Loc; divide: number }[] }
   // Dice + bonus against bands of outcome (PbtA: 10+, 7–9, 6−), the highest band that fits.
   | { type: 'bands'; dice: string; bonus: string; bands: { min: number; title: Loc }[] }
-  // A pool of dice: successes are faces ≥ `success` (Year Zero: sixes) or the best die (Forged in the Dark);
-  // push — the roll can be pushed once (the dice that aren't successes are rolled again).
-  | { type: 'pool'; sides: number; count: string; success?: number; best?: boolean; push?: boolean }
+  // A pool of dice: successes are faces ≥ `success` (Year Zero: sixes) or the best die (Forged in the Dark: the top
+  // face — full success, two below it — partial, less — bad, two tops — critical; no dice — two, the lower counts);
+  // push — the roll can be pushed once (the dice that aren't successes are rolled again); resist — the best die is a
+  // resistance roll: stress taken = sides − the best, a critical clears one.
+  | { type: 'pool'; sides: number; count: string; success?: number; best?: boolean; push?: boolean; resist?: boolean }
   // 4dF + bonus.
   | { type: 'fate'; bonus: string; labels?: RollLabels }
   // A plain sum: dice + bonus (damage, a table); dice — «2d6» or a column of the list row: «row.damage» (its text,
@@ -260,7 +262,11 @@ function rollOf(x: unknown): RollSpec | null {
       const sides = num(x['sides']);
       if (!sides || sides < 2 || sides > 100 || f('count') === null) return null;
       const success = num(x['success']);
-      return { type: 'pool', sides, count: x['count'] as string, ...(success ? { success } : {}), ...(x['best'] === true ? { best: true } : {}), ...(x['push'] === true ? { push: true } : {}) };
+      const best = x['best'] === true;
+      return {
+        type: 'pool', sides, count: x['count'] as string, ...(success ? { success } : {}), ...(best ? { best: true } : {}), ...(x['push'] === true ? { push: true } : {}),
+        ...(best && x['resist'] === true ? { resist: true } : {}),
+      };
     }
     case 'fate':
       return f('bonus') !== null ? { type: 'fate', bonus: x['bonus'] as string, ...withLabels } : null;
@@ -606,6 +612,12 @@ export interface RollWords {
   failure: string;
   successes: (n: number) => string;
   critical: string;
+  // The best die of a pool: a full success, a partial one, a bad outcome; a resistance roll — stress taken (n < 0 —
+  // cleared).
+  full?: string;
+  partial?: string;
+  bad?: string;
+  stress?: (n: number) => string;
 }
 
 type Die = (sides: number) => number;
@@ -710,13 +722,18 @@ function rollRaw(
   }
 }
 
-function poolResult(spec: { sides: number; success?: number; best?: boolean }, groups: number[][], zero: boolean, words: RollWords) {
+function poolResult(spec: { sides: number; success?: number; best?: boolean; resist?: boolean }, groups: number[][], zero: boolean, words: RollWords) {
   const all = groups.flat();
   if (spec.best || !spec.success) {
     const top = all.length ? (zero ? Math.min(...all) : Math.max(...all)) : 0;
     const crit = !zero && all.filter((d) => d === spec.sides).length > 1;
+    if (spec.resist) {
+      const stress = crit ? -1 : spec.sides - top;
+      return { dice: groups, total: top, outcome: words.stress?.(stress) ?? '', tone: stress <= 0 ? ('good' as const) : stress <= 2 ? ('partial' as const) : ('bad' as const) };
+    }
     const tone: PackRollResult['tone'] = crit || top === spec.sides ? 'good' : top >= spec.sides - 2 ? 'partial' : 'bad';
-    return { dice: groups, total: top, outcome: crit ? words.critical : '', tone };
+    const outcome = crit ? words.critical : spec.best ? ((tone === 'good' ? words.full : tone === 'partial' ? words.partial : words.bad) ?? '') : '';
+    return { dice: groups, total: top, outcome, tone };
   }
   const n = all.filter((d) => d >= spec.success!).length;
   return { dice: groups, total: n, outcome: n ? words.successes(n) : words.failure, tone: n ? ('good' as const) : ('bad' as const) };

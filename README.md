@@ -770,7 +770,8 @@ materials take twice as long) and their wages; "To journal" writes the plan as a
 price list by its sections with a search: human-made tools only "Near humans", "For a warband" — equipment ×20; a
 click puts an item into the basket with the total.
 
-**Forged in the Dark** (the Blades in the Dark SRD; not the Blades setting). One card for the scoundrels and for NPCs:
+**Forged in the Dark** (the Blades in the Dark SRD; not the Blades setting) is a system pack too (Community → Systems;
+its cards from before 0.64 are read as they are). One card for the scoundrels and for NPCs:
 playbook, heritage, background, vice; twelve actions rated 0–4 under Insight, Prowess and Resolve; stress 0–9, traumas,
 harm (two lesser, two moderate, one severe), armor, special abilities, items, coin, stash and XP; an NPC's tier. A
 click on an action — an action roll of its dots (6 — full success, 4–5 — partial, 1–3 — bad outcome, two sixes —
@@ -793,7 +794,8 @@ the card, its editor, the rolls and the tracker from it. Sample packs are in the
 or Settings → Game systems → Find systems): **Pool of Sixes** (in the style of Year Zero: attributes and skills roll
 a pool of d6, sixes count, a roll can be pushed) and **Percentile Horror** (d100 under characteristics and skills);
 their files are in `samples/systems/`. On the very first launch only the two editions of D&D are on; Fate Core,
-Mausritter and Forged in the Dark are turned on in Settings → Game systems, where pack systems can also be deleted. Your own systems are made in **Tools → System builder** (also from Settings → Game
+Mausritter and Forged in the Dark are packs installed from the Community, and Settings → Game systems turns systems
+off and deletes pack systems. Your own systems are made in **Tools → System builder** (also from Settings → Game
 systems): sections and fields, the roll of each field, the tracker, with a live preview of the card where rolls can be
 tried; a built-in system can be copied and changed. They are saved to `systems/` in the library (every vault sees
 them) and can be exported to a file and imported. A system can have its own **compendium** (rules, conditions, gear —
@@ -852,7 +854,7 @@ side panel, tabs, the player screen preview on the right. Settings: ⌘, (Ctrl+,
   - display.ts: a layer on the player screen (defineDisplay)
   - i18n.ts: the module's messages (English and Russian)
   - ui/: the module's Svelte components
-- src/systems/<system>/: role-playing systems for cards: stats, stat block, editor, tracker (D&D 5e, Fate Core, Mausritter, Forged in the Dark)
+- src/systems/<system>/: role-playing systems in code: stats, stat block, editor, tracker (D&D 5e); src/systems/pack/ — systems described by a file (Fate Core, Mausritter, Forged in the Dark: samples/systems/)
 - resources/srd/: the built-in bestiary, built by scripts/import-srd.ts
 - resources/compendium/: the built-in compendium (`<system>.<lang>.json`)
 - src/modules/index.ts: the list of core modules, a new module is added here; the windows pick up control.ts and

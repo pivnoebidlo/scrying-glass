@@ -1,7 +1,7 @@
 // Журнал бросков мастера: броски из статблоков и листов персонажей (к20 и урон D&D, кубы Fate). Только в окне управления, игрокам не виден.
 import { hotkeyLabel } from '../../shared/hotkeys';
 import { t } from './i18n.svelte';
-import { die, parseDice, rollD20, rollDamage, rollPool, rollSave, type D20Mode, type D20Roll, type DamageRoll, type PoolRoll, type SaveRoll } from '../../shared/dice';
+import { die, parseDice, rollD20, rollDamage, rollSave, type D20Mode, type D20Roll, type DamageRoll, type SaveRoll } from '../../shared/dice';
 import { getLang } from '../../shared/i18n';
 import { pushPool, rollPack, type PackRollResult, type RollSpec, type RollWords } from '../../shared/syspack';
 import { runTable, type TableEvent, type TablePick, type TableSource, type TableStep } from '../../shared/rolltable';
@@ -15,8 +15,6 @@ export interface RollEntry {
   d20?: D20Roll;
   // Roll-under save (Mausritter): d20 ≤ the attribute.
   save?: SaveRoll;
-  // Forged in the Dark: a pool of d6; `resist` — a resistance roll (stress taken instead of the outcome).
-  pool?: PoolRoll & { resist?: boolean };
   // A roll of a system pack (shared/syspack.ts); `pushed` — it was pushed already.
   pack?: PackRollResult & { pushed?: boolean };
   // A roll table and the tables its result led to (shared/rolltable.ts); `start` — to roll it again.
@@ -69,11 +67,6 @@ class Rolls {
     this.push({ who, what, save: rollSave(target, mode), damage: [] });
   }
 
-  // Forged in the Dark: an action, fortune or resistance roll of n dice.
-  pool(who: string, what: string, n: number, resist = false) {
-    this.push({ who, what, pool: { ...rollPool(n), ...(resist ? { resist: true } : {}) }, damage: [] });
-  }
-
   // A roll of a system pack: the spec of the field, its numbers from the card.
   packRoll(who: string, what: string, spec: RollSpec, value: (formula: string) => number, mode: D20Mode = 'normal', row?: Record<string, unknown>) {
     this.push({ who, what, pack: rollPack(spec, value, getLang(), packWords(), die, mode, row), damage: [] });
@@ -115,6 +108,10 @@ const packWords = (): RollWords => ({
   failure: t('pack.failure'),
   successes: (count) => t('pack.successes', { count }),
   critical: t('pack.critical'),
+  full: t('lib.pool.success'),
+  partial: t('lib.pool.partial'),
+  bad: t('lib.pool.bad'),
+  stress: (n) => (n < 0 ? t('lib.resistClear') : t('lib.resistStress', { n })),
 });
 
 // Shift — с преимуществом, ⌥/Alt — с помехой.

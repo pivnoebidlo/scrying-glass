@@ -88,7 +88,7 @@
     </td>
   {/each}
   <td class="c-out">
-    <button class="icon-btn out" class:on={c.out} title={c.out ? t('fitd.tc.outBack') : t('fitd.tc.outHint')} onclick={() => update(it, { out: !it.out })}><Ban size={14} /></button>
+    <button class="icon-btn out" class:on={c.out} title={c.out ? t('pack.outBack') : t('pack.outHint')} onclick={() => update(it, { out: !it.out })}><Ban size={14} /></button>
   </td>
 {/if}
 

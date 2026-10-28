@@ -208,6 +208,7 @@
                 if (n) {
                   r.success = n;
                   delete r.best;
+                  delete r.resist;
                 } else {
                   delete r.success;
                   r.best = true;
@@ -216,6 +217,9 @@
             </label>
           </div>
           <label class="check"><input type="checkbox" {disabled} checked={!!r.push} onchange={(e) => (e.currentTarget.checked ? (r.push = true) : delete r.push)} /> {t('sb.push')}</label>
+          {#if r.best}
+            <label class="check"><input type="checkbox" {disabled} checked={!!r.resist} onchange={(e) => (e.currentTarget.checked ? (r.resist = true) : delete r.resist)} /> {t('sb.resist')}</label>
+          {/if}
         {:else if r.type === 'sum'}
           <div class="two">
             <label class="row"><span>{t('sb.dice')}</span><input type="text" class="mono" {disabled} value={r.dice} onchange={(e) => (r.dice = e.currentTarget.value.trim() || '1d6')} /></label>

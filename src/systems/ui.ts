@@ -8,10 +8,6 @@ import CharacterEditor from './dnd5e/CharacterEditor.svelte';
 import { isCharacter } from './dnd5e/character';
 import GenericStats from './GenericStats.svelte';
 import GenericEditor from './GenericEditor.svelte';
-import FitdSheet from './fitd/Sheet.svelte';
-import FitdEditor from './fitd/Editor.svelte';
-import FitdTrackerCells from './fitd/TrackerCells.svelte';
-import { isFitd } from './fitd/stats';
 import DndTrackerCells from './dnd5e/TrackerCells.svelte';
 import PackSheet from './pack/Sheet.svelte';
 import PackEditor from './pack/Editor.svelte';
@@ -29,28 +25,20 @@ type StatsEditor = Component<{ stats: any; system: string; lang?: string; kind?:
 const views: Record<string, StatsView> = {
   'dnd5e-2014': Dnd5eStatBlock,
   'dnd5e-2024': Dnd5eStatBlock,
-  fitd: FitdSheet,
 };
 
 const editors: Record<string, StatsEditor> = {
   'dnd5e-2014': Dnd5eEditor,
   'dnd5e-2024': Dnd5eEditor,
-  fitd: FitdEditor,
 };
 
-// stats нужен, чтобы отличить лист персонажа игрока от статблока.
-// Карточка Fate (Mausritter) с чужим блоком stats (например, старая «поле — значение») — общий вид, чтобы ничего не потерять.
-const guards: Record<string, (stats: unknown) => boolean> = { fitd: isFitd };
-const fits = (system: string, stats: unknown) => stats === undefined || (guards[system]?.(stats) ?? true);
 // A system described by a pack: its own generic view and editor (stats of another shape too — the editor starts
 // from the pack's blank values).
 export const statsView = (system: string, stats?: unknown): StatsView =>
-  packOf(system) ? (PackSheet as StatsView) : system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterSheet : fits(system, stats) ? (views[system] ?? GenericStats) : GenericStats;
+  packOf(system) ? (PackSheet as StatsView) : system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterSheet : (views[system] ?? GenericStats);
 export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
-  packOf(system) ? (PackEditor as StatsEditor) : system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterEditor : fits(system, stats) ? (editors[system] ?? GenericEditor) : GenericEditor;
+  packOf(system) ? (PackEditor as StatsEditor) : system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterEditor : (editors[system] ?? GenericEditor);
 
 // Ячейки строки участника в трекере инициативы (хиты и КД, стресс и последствия): по семейству системы.
 type TrackerCells = Component<{ c?: Combatant; head?: boolean }>;
-const trackers: Record<string, TrackerCells> = { fitd: FitdTrackerCells };
-export const trackerCells = (system: string): TrackerCells =>
-  isPackFamily(familyOf(system)) ? PackTrackerCells : (trackers[familyOf(system)] ?? DndTrackerCells);
+export const trackerCells = (system: string): TrackerCells => (isPackFamily(familyOf(system)) ? PackTrackerCells : DndTrackerCells);

@@ -1,0 +1,528 @@
+{
+ "scryingGlass": "system",
+ "version": 1,
+ "id": "fitd",
+ "family": "fitd",
+ "release": 1,
+ "title": "Forged in the Dark",
+ "author": "Scrying Glass",
+ "license": "This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/). The card's structure and the Russian names are our own.",
+ "url": "http://www.bladesinthedark.com/",
+ "subtitle": "{playbook} · {heritage}",
+ "rank": "tier * 12 + hunt + study + survey + tinker + finesse + prowl + skirmish + wreck + attune + command + consort + sway",
+ "sections": [
+  {
+   "id": "who",
+   "title": {
+    "en": "Who they are",
+    "ru": "Кто это"
+   },
+   "fields": [
+    {
+     "key": "playbook",
+     "type": "text",
+     "title": {
+      "en": "Playbook",
+      "ru": "Роль"
+     },
+     "hint": {
+      "en": "Cutter, Lurk, a gang leader…",
+      "ru": "Головорез, вор, главарь банды…"
+     }
+    },
+    {
+     "key": "heritage",
+     "type": "text",
+     "title": {
+      "en": "Heritage",
+      "ru": "Происхождение"
+     }
+    },
+    {
+     "key": "background",
+     "type": "text",
+     "title": {
+      "en": "Background",
+      "ru": "Прошлое"
+     }
+    },
+    {
+     "key": "vice",
+     "type": "text",
+     "title": {
+      "en": "Vice",
+      "ru": "Порок"
+     }
+    },
+    {
+     "key": "tier",
+     "type": "number",
+     "title": {
+      "en": "Tier",
+      "ru": "Уровень"
+     },
+     "min": 0,
+     "max": 5,
+     "hideZero": true,
+     "hint": {
+      "en": "An NPC or a faction’s quality (0–5); a character leaves it at 0",
+      "ru": "Качество NPC или фракции (0–5); у персонажа — 0"
+     }
+    }
+   ]
+  },
+  {
+   "id": "actions",
+   "title": {
+    "en": "Actions",
+    "ru": "Действия"
+   },
+   "fields": [
+    {
+     "key": "insight",
+     "type": "formula",
+     "title": {
+      "en": "Insight",
+      "ru": "Проницательность"
+     },
+     "hint": {
+      "en": "Resistance: a die for each Insight action with a dot; stress = 6 − the highest die",
+      "ru": "Сопротивление: куб за каждое действие с точкой; стресс = 6 − лучший куб"
+     },
+     "formula": "min(1, hunt) + min(1, study) + min(1, survey) + min(1, tinker)",
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "insight",
+      "best": true,
+      "resist": true
+     }
+    },
+    {
+     "key": "hunt",
+     "type": "dots",
+     "title": {
+      "en": "Hunt",
+      "ru": "Выслеживать"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "hunt",
+      "best": true
+     }
+    },
+    {
+     "key": "study",
+     "type": "dots",
+     "title": {
+      "en": "Study",
+      "ru": "Изучать"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "study",
+      "best": true
+     }
+    },
+    {
+     "key": "survey",
+     "type": "dots",
+     "title": {
+      "en": "Survey",
+      "ru": "Осматривать"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "survey",
+      "best": true
+     }
+    },
+    {
+     "key": "tinker",
+     "type": "dots",
+     "title": {
+      "en": "Tinker",
+      "ru": "Мастерить"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "tinker",
+      "best": true
+     }
+    },
+    {
+     "key": "prowess",
+     "type": "formula",
+     "title": {
+      "en": "Prowess",
+      "ru": "Удаль"
+     },
+     "hint": {
+      "en": "Resistance: a die for each Prowess action with a dot; stress = 6 − the highest die",
+      "ru": "Сопротивление: куб за каждое действие с точкой; стресс = 6 − лучший куб"
+     },
+     "formula": "min(1, finesse) + min(1, prowl) + min(1, skirmish) + min(1, wreck)",
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "prowess",
+      "best": true,
+      "resist": true
+     }
+    },
+    {
+     "key": "finesse",
+     "type": "dots",
+     "title": {
+      "en": "Finesse",
+      "ru": "Ловкость"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "finesse",
+      "best": true
+     }
+    },
+    {
+     "key": "prowl",
+     "type": "dots",
+     "title": {
+      "en": "Prowl",
+      "ru": "Красться"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "prowl",
+      "best": true
+     }
+    },
+    {
+     "key": "skirmish",
+     "type": "dots",
+     "title": {
+      "en": "Skirmish",
+      "ru": "Драться"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "skirmish",
+      "best": true
+     }
+    },
+    {
+     "key": "wreck",
+     "type": "dots",
+     "title": {
+      "en": "Wreck",
+      "ru": "Крушить"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "wreck",
+      "best": true
+     }
+    },
+    {
+     "key": "resolve",
+     "type": "formula",
+     "title": {
+      "en": "Resolve",
+      "ru": "Решимость"
+     },
+     "hint": {
+      "en": "Resistance: a die for each Resolve action with a dot; stress = 6 − the highest die",
+      "ru": "Сопротивление: куб за каждое действие с точкой; стресс = 6 − лучший куб"
+     },
+     "formula": "min(1, attune) + min(1, command) + min(1, consort) + min(1, sway)",
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "resolve",
+      "best": true,
+      "resist": true
+     }
+    },
+    {
+     "key": "attune",
+     "type": "dots",
+     "title": {
+      "en": "Attune",
+      "ru": "Чуять"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "attune",
+      "best": true
+     }
+    },
+    {
+     "key": "command",
+     "type": "dots",
+     "title": {
+      "en": "Command",
+      "ru": "Командовать"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "command",
+      "best": true
+     }
+    },
+    {
+     "key": "consort",
+     "type": "dots",
+     "title": {
+      "en": "Consort",
+      "ru": "Знаться"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "consort",
+      "best": true
+     }
+    },
+    {
+     "key": "sway",
+     "type": "dots",
+     "title": {
+      "en": "Sway",
+      "ru": "Убеждать"
+     },
+     "max": 4,
+     "roll": {
+      "type": "pool",
+      "sides": 6,
+      "count": "sway",
+      "best": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "stress",
+   "title": {
+    "en": "Stress, trauma, harm",
+    "ru": "Стресс, травмы, вред"
+   },
+   "fields": [
+    {
+     "key": "stress",
+     "type": "track",
+     "title": {
+      "en": "Stress",
+      "ru": "Стресс"
+     },
+     "boxes": 9,
+     "hint": {
+      "en": "Stress 0–9: spent to push yourself and resist; at 9 — trauma",
+      "ru": "Стресс 0–9: тратится на усилие и сопротивление; на 9 — травма"
+     }
+    },
+    {
+     "key": "armor",
+     "type": "track",
+     "title": {
+      "en": "Armor",
+      "ru": "Броня"
+     },
+     "boxes": 1
+    },
+    {
+     "key": "traumas",
+     "type": "tags",
+     "title": {
+      "en": "Trauma",
+      "ru": "Травмы"
+     },
+     "hint": {
+      "en": "Cold, Haunted, Obsessed, Paranoid, Reckless, Soft, Unstable, Vicious",
+      "ru": "Холодный, Преследуемый, Одержимый, Параноик, Безрассудный, Мягкий, Неуравновешенный, Жестокий"
+     }
+    },
+    {
+     "key": "harm1",
+     "type": "text",
+     "title": {
+      "en": "Lesser harm",
+      "ru": "Лёгкий вред"
+     },
+     "hint": {
+      "en": "e.g. Broken arm",
+      "ru": "например, Сломанная рука"
+     }
+    },
+    {
+     "key": "harm2",
+     "type": "text",
+     "title": {
+      "en": "Lesser harm",
+      "ru": "Лёгкий вред"
+     },
+     "hint": {
+      "en": "e.g. Broken arm",
+      "ru": "например, Сломанная рука"
+     }
+    },
+    {
+     "key": "harm3",
+     "type": "text",
+     "title": {
+      "en": "Moderate harm",
+      "ru": "Средний вред"
+     },
+     "hint": {
+      "en": "e.g. Broken arm",
+      "ru": "например, Сломанная рука"
+     }
+    },
+    {
+     "key": "harm4",
+     "type": "text",
+     "title": {
+      "en": "Moderate harm",
+      "ru": "Средний вред"
+     },
+     "hint": {
+      "en": "e.g. Broken arm",
+      "ru": "например, Сломанная рука"
+     }
+    },
+    {
+     "key": "harm5",
+     "type": "text",
+     "title": {
+      "en": "Severe harm",
+      "ru": "Тяжёлый вред"
+     },
+     "hint": {
+      "en": "e.g. Broken arm",
+      "ru": "например, Сломанная рука"
+     }
+    }
+   ]
+  },
+  {
+   "id": "abilities",
+   "title": {
+    "en": "Special abilities",
+    "ru": "Особые способности"
+   },
+   "fields": [
+    {
+     "key": "abilities",
+     "type": "list",
+     "title": {
+      "en": "Special abilities",
+      "ru": "Особые способности"
+     },
+     "columns": [
+      {
+       "key": "name",
+       "type": "text",
+       "title": {
+        "en": "Ability",
+        "ru": "Способность"
+       }
+      },
+      {
+       "key": "text",
+       "type": "text",
+       "title": {
+        "en": "What it does",
+        "ru": "Что даёт"
+       }
+      }
+     ]
+    },
+    {
+     "key": "items",
+     "type": "tags",
+     "title": {
+      "en": "Items",
+      "ru": "Снаряжение"
+     }
+    }
+   ]
+  },
+  {
+   "id": "coin",
+   "title": {
+    "en": "Coin and XP",
+    "ru": "Монеты и опыт"
+   },
+   "kinds": [
+    "character"
+   ],
+   "fields": [
+    {
+     "key": "coin",
+     "type": "number",
+     "title": {
+      "en": "Coin",
+      "ru": "Монеты"
+     },
+     "min": 0,
+     "max": 4
+    },
+    {
+     "key": "stash",
+     "type": "number",
+     "title": {
+      "en": "Stash",
+      "ru": "Тайник"
+     },
+     "min": 0,
+     "max": 40
+    },
+    {
+     "key": "xp",
+     "type": "number",
+     "title": {
+      "en": "XP",
+      "ru": "Опыт"
+     },
+     "min": 0
+    }
+   ]
+  }
+ ],
+ "tracker": {
+  "init": {
+   "type": "none"
+  },
+  "cells": [
+   "stress",
+   "harm1",
+   "harm2",
+   "harm3",
+   "harm4",
+   "harm5"
+  ],
+  "conditions": {
+   "list": [],
+   "free": true
+  }
+ }
+}

@@ -11,6 +11,7 @@
 // Пути картинок — от корня библиотеки или хранилища, через «/».
 // id карточки хранится в её файле; если его нет или он повторяется (файл скопировали руками), берётся
 // производный от пути — и записывается в файл при следующем сохранении.
+import { upgradeCard } from '../shared/oldcards';
 import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -149,8 +150,9 @@ function loadFiles(scope: CardScope, root: string, list: string[]) {
   }
   for (const abs of list) {
     try {
-      const c = JSON.parse(fs.readFileSync(abs, 'utf8')) as Card;
-      if (!c || typeof c !== 'object' || typeof c.name !== 'string' || c.stats === undefined) continue;
+      const raw = JSON.parse(fs.readFileSync(abs, 'utf8')) as Card;
+      if (!raw || typeof raw !== 'object' || typeof raw.name !== 'string' || raw.stats === undefined) continue;
+      const c = upgradeCard(raw);
       let id = validId(c.id) ? c.id : pathId(root, abs);
       if (cards.has(refKey({ scope, id }))) id = pathId(root, abs);
       const key = refKey({ scope, id });
@@ -654,10 +656,10 @@ export function exportCards(refs: CardRef[], file: string): number {
 
 function readImport(file: string): Bundle {
   const data = JSON.parse(fs.readFileSync(file, 'utf8')) as Partial<Bundle> & Partial<Card>;
-  if (data.scryingGlass === 'cards' && Array.isArray(data.cards)) return { ...data, images: data.images ?? {} } as Bundle;
+  if (data.scryingGlass === 'cards' && Array.isArray(data.cards)) return { ...data, cards: data.cards.map(upgradeCard), images: data.images ?? {} } as Bundle;
   // Одиночная карточка: картинок при ней нет.
   if (typeof data.name === 'string' && data.stats !== undefined) {
-    return { scryingGlass: 'cards', version: 1, cards: [{ ...(data as Card), portraits: [] }], images: {} };
+    return { scryingGlass: 'cards', version: 1, cards: [upgradeCard({ ...(data as Card), portraits: [] })], images: {} };
   }
   throw new Error(t('core.notCards'));
 }

@@ -346,16 +346,18 @@ Electron-приложение для мастера D&D: окно управле
   `add` / `update` / `tick` / `remove` / `reorder`. Блок правой панели `ui/OnScreen.svelte` (щелчок — вперёд, правый —
   назад), слой игроков `ui/Layer.svelte` (order 33), круг — `ui/ClockFace.svelte` + `draw.ts`. В .sgpack —
   `PackSlices.clocks`, в корзину — `AdventureData.clocks`.
-- Forged in the Dark (четвёртая система, `fitd`, семейство `fitd`; SRD Blades in the Dark, CC BY 3.0 — атрибуция дословно в
-  `about.credit.fitd`; нельзя: «Blades in the Dark» в названии, их логотип, мир Даскволла и всё вне SRD):
-  `systems/fitd/` — `stats.ts` (`FitdStats`: роль, происхождение, прошлое, порок, `actions` 0–4 по `ACTIONS` трёх
-  атрибутов, `attributeRating` — сколько действий с точками; стресс 0–9, `traumas`, `harm` — 5 строк по `HARM_LEVELS`
-  1,1,2,2,3; способности, снаряжение, `tier` NPC, монеты / тайник / опыт), `Sheet.svelte` (щелчок по действию —
-  `rolls.pool` на точки, по атрибуту — сопротивление), `Editor.svelte`, `tracker.ts` (без инициативы: `roll.none`;
-  стресс — `stress` из 9 клеток, вред — `consequences`; `conditions.add` — своя подпись) + `TrackerCells.svelte`.
-  Пул к6 — `rollPool` / `poolOutcome` / `resistStress` в `shared/dice.ts` (0 точек — 2к6, меньший, без крита), в журнале —
-  `RollEntry.pool`. Свои русские термины (официальный перевод закрыт): Проницательность / Удаль / Решимость; Выслеживать,
-  Изучать, Осматривать, Мастерить; Ловкость, Красться, Драться, Крушить; Чуять, Командовать, Знаться, Убеждать.
+- Forged in the Dark — пакет системы с 0.64 (`samples/systems/fitd.json`, id и семейство `fitd`; SRD Blades in the Dark,
+  CC BY 3.0 — атрибуция дословно в `about.credit.fitd`; нельзя: «Blades in the Dark» в названии, их логотип, мир Даскволла
+  и всё вне SRD; кода системы больше нет — собирает пакет скрипт в истории, правка — в конструкторе или JSON): роль,
+  происхождение, прошлое, порок, `tier`; 12 действий `dots` (max 4, бросок `pool` с `best`), атрибуты — `formula`
+  `min(1, …)` сумма с бросками `pool` + `resist` (стресс = грани − лучший, крит снимает 1 — `RollWords.stress`; исходы
+  лучшего куба — `full` / `partial` / `bad`); стресс — `track` 9, броня — `track` 1, травмы — `tags`, вред — `harm1`…`harm5`
+  (лёгкий ×2, средний ×2, тяжёлый), способности — `list`, снаряжение — `tags`, монеты / тайник / опыт (только `character`).
+  Трекер — без инициативы, ячейки `stress` и `harm1`…`harm5`. Карточки старого вида (`actions`, `harm[]`) переводит при
+  чтении `upgradeCard` (`shared/oldcards.ts`, вызывают `loadCards` и импорт карточек в `main/cards.ts`). Пул к6
+  `rollPool` / `poolOutcome` в `shared/dice.ts` остался для банды (неприятности). Свои русские термины (официальный
+  перевод закрыт): Проницательность / Удаль / Решимость; Выслеживать, Изучать, Осматривать, Мастерить; Ловкость,
+  Красться, Драться, Крушить; Чуять, Командовать, Знаться, Убеждать.
   Справочник — `resources/compendium/fitd.<lang>.json` (`npm run build-fitd` из `scripts/fitd.<lang>.md`, общий разбор
   с Fate — `scripts/book-md.ts`; пересказ SRD без мира Blades; тип `fability` — особые способности, `category`
   персонаж / банда; названия действий, атрибутов и травм — как в карточке, тест сверяет). Свои русские термины: дело,

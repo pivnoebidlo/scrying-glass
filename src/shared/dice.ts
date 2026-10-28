@@ -127,5 +127,3 @@ export function rollPool(n: number): PoolRoll {
   return { dice, zero, ...poolOutcome(dice, zero) };
 }
 
-// A resistance roll: stress taken = 6 − the result; a critical clears 1 stress (−1).
-export const resistStress = (r: PoolRoll) => (r.outcome === 'critical' ? -1 : 6 - r.result);
