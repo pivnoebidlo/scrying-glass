@@ -19,6 +19,7 @@
 
   void connectCards();
   const list = $derived(shownAdventures(ms));
+  const hidden = $derived(ms.list.length - list.length);
   const folderOf = (a: string): VaultFolder | undefined => app.vault.tree?.folders.find((f) => f.path === a);
   // A cover just set: the same path, a new picture — the thumbnail is asked for again.
   let rev = $state(0);
@@ -63,6 +64,12 @@
   let picking = $state<string | null>(null);
   async function setCover(a: string, from: { abs?: string; rel?: string }) {
     if (await window.api.setAdventureCover(a, from)) rev++;
+  }
+  // The adventure is taken before the picker is closed: closing it clears `picking`.
+  function pickCover(paths: string[]) {
+    const a = picking;
+    picking = null;
+    if (a && paths[0]) void setCover(a, { rel: paths[0] });
   }
   function ondrop(e: DragEvent, a: string) {
     const file = e.dataTransfer?.files[0];
@@ -119,6 +126,9 @@
   {#if !list.length}
     <p class="faint">{t('adv.page.empty')}</p>
   {/if}
+  {#if hidden}
+    <p class="faint small">{t('adv.page.hidden', { count: hidden })}</p>
+  {/if}
 
   <div class="adv-grid">
     {#each list as a (a)}
@@ -139,11 +149,7 @@
           <div class="faint small">{counts(a)}</div>
         </div>
         <div class="bar">
-          {#if ms.current === a}
-            <span class="here small">{t('adv.page.current')}</span>
-          {:else}
-            <button class="btn primary" onclick={() => dispatch('adventures', 'select', { path: a })}>{t('adv.page.open')}</button>
-          {/if}
+          <span class="here small">{ms.current === a ? t('adv.page.current') : ''}</span>
           <button class="icon-btn" title={t('adv.page.more')} onclick={(e) => openMenu(e, a)}><MoreHorizontal size={15} /></button>
         </div>
       </div>
@@ -156,8 +162,7 @@
 {/if}
 
 {#if picking && app.vault.tree}
-  {@const a = picking}
-  <FilePicker tree={app.vault.tree} prefer="backgrounds" onpick={(p) => ((picking = null), p[0] && setCover(a, { rel: p[0] }))} onclose={() => (picking = null)} />
+  <FilePicker tree={app.vault.tree} prefer="backgrounds" onpick={pickCover} onclose={() => (picking = null)} />
 {/if}
 
 {#if editing}
@@ -212,7 +217,7 @@
   }
   .adv-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 14px;
   }
   .tile {

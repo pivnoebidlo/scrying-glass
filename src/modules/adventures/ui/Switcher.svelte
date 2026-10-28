@@ -2,7 +2,7 @@
      одним файлом (.sgpack). -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Check, ChevronsUpDown, CloudUpload, Download, Globe, Map, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
+  import { Castle, Check, ChevronsUpDown, CloudUpload, Download, Globe, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
   import { openRepo, repo } from '../../repo/ui/repo.svelte';
   import { currentSystem, roleFolderHere, shownAdventures, visibleIn } from '../../../shared/adventures';
   import SystemSelect from './SystemSelect.svelte';
@@ -132,7 +132,7 @@
 
 <div class="switcher">
   <button class="current" title={t('adv.currentHint')} onclick={() => (open = !open)}>
-    <Map size={14} />
+    <Castle size={14} />
     <span class="name">{title}</span>
     <ChevronsUpDown size={13} />
   </button>

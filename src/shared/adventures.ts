@@ -3,7 +3,7 @@
 // по-прежнему показывает хранилище целиком. Только типы и чистые функции: используются ядром и окнами.
 import { t } from './i18n';
 import { basename, folderRole, roleNames, type FolderRole, type VaultFolder } from './vault';
-import { DEFAULT_SYSTEM, defaultSystem, familyOf, isEnabled } from '../systems';
+import { DEFAULT_SYSTEM, defaultSystem, familyOf, isEnabled, systems } from '../systems';
 
 export interface AdventuresState {
   // Пути папок приключений (первый уровень хранилища, то есть просто имена).
@@ -49,8 +49,13 @@ export function systemFor(adv: AdventuresState, adventure: string | null): strin
 
 // Приключение, чья система отключена в настройках, скрыто целиком: его нет в переключателе и дереве файлов, его
 // папки, сцены и заготовки не видны ни в одной вкладке (и во «Всём хранилище»).
-export const adventureHidden = (adv: AdventuresState, adventure: string | null) =>
-  adventure !== null && adv.list.includes(adventure) && !isEnabled(systemFor(adv, adventure));
+// Hidden: its system is turned off — or not installed at all (a pack deleted, or never downloaded: Fate Core and
+// Mausritter are packs since 0.60).
+export function adventureHidden(adv: AdventuresState, adventure: string | null): boolean {
+  if (adventure === null || !adv.list.includes(adventure)) return false;
+  const id = systemFor(adv, adventure);
+  return !isEnabled(id) || !systems.some((s) => s.id === id);
+}
 export const shownAdventures = (adv: AdventuresState) => adv.list.filter((a) => !adventureHidden(adv, a));
 export const currentSystem = (adv: AdventuresState) => systemFor(adv, adv.current);
 // Подходит ли карточка или запись этой системы текущему приключению: то же семейство (2014 и 2024 — вместе), и
