@@ -2,7 +2,7 @@
 // Остальные модули фильтруют по нему то, что показывают (см. shared/adventures.ts).
 import * as fs from 'node:fs';
 import { defineModule, type ModuleContext } from '../../shared/module';
-import { isBestiary, looksLikeAdventure, missingFolders, type AdventuresState } from '../../shared/adventures';
+import { isSupplement, looksLikeAdventure, missingFolders, SUPPLEMENT_KINDS, type AdventuresState, type SupplementKind } from '../../shared/adventures';
 
 const initialState: AdventuresState = { list: [], current: null, initialized: false, systems: {} };
 
@@ -19,11 +19,11 @@ function sync(s: AdventuresState, ctx: ModuleContext): AdventuresState {
   return { ...s, list, current, initialized: true, ...kept(s, list) };
 }
 
-// Bestiaries and the bestiaries adventures use — of the folders still on the list.
-function kept(s: AdventuresState, list: string[]): Pick<AdventuresState, 'bestiaries' | 'uses'> {
+// Supplements and the supplements adventures use — of the folders still on the list.
+function kept(s: AdventuresState, list: string[]): Pick<AdventuresState, 'supplements' | 'uses'> {
   const on = (a: string) => list.includes(a);
   return {
-    bestiaries: s.bestiaries?.filter(on),
+    supplements: s.supplements && Object.fromEntries(Object.entries(s.supplements).filter(([a]) => on(a))),
     uses: s.uses && Object.fromEntries(Object.entries(s.uses).filter(([a]) => on(a)).map(([a, b]) => [a, b.filter(on)])),
   };
 }
@@ -35,7 +35,7 @@ function ensure(s: AdventuresState, ctx: ModuleContext): boolean {
     const folder = ctx.vault.tree?.folders.find((f) => f.path === a);
     const dir = ctx.vault.resolve(a);
     if (!folder || !dir) continue;
-    for (const name of missingFolders(folder, isBestiary(s, a))) {
+    for (const name of missingFolders(folder, isSupplement(s, a))) {
       fs.mkdirSync(`${dir}/${name}`, { recursive: true });
       created = true;
     }
@@ -57,13 +57,13 @@ export default defineModule({
     },
 
     // Отметить папку первого уровня как приключение (и создать в ней стандартные папки).
-    mark(s, { path, bestiary }: { path: string; bestiary?: boolean }, ctx) {
+    mark(s, { path, supplement }: { path: string; supplement?: SupplementKind }, ctx) {
       if (s.list.includes(path) || path.includes('/')) return s;
       const next = {
         ...s,
         list: [...s.list, path].sort((a, b) => a.localeCompare(b, 'ru')),
         current: path,
-        ...(bestiary ? { bestiaries: [...new Set([...(s.bestiaries ?? []), path])] } : {}),
+        ...(supplement ? { supplements: { ...s.supplements, [path]: supplement } } : {}),
       };
       if (ensure(next, ctx)) ctx.vault.rescan();
       return next;
@@ -82,7 +82,7 @@ export default defineModule({
 
     // Новое приключение: папка со стандартными подпапками. Название с «/» и подобным не годится.
     // system — его ролевая система (нет — как у хранилища).
-    create(s, { name, system, bestiary }: { name: string; system?: string; bestiary?: boolean }, ctx) {
+    create(s, { name, system, supplement }: { name: string; system?: string; supplement?: SupplementKind }, ctx) {
       const clean = name.replace(/[/\\:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
       const dir = clean && !clean.startsWith('.') ? ctx.vault.resolve(clean) : null;
       if (!dir) return s;
@@ -93,20 +93,26 @@ export default defineModule({
         list: [...new Set([...s.list, clean])].sort((a, b) => a.localeCompare(b, 'ru')),
         current: clean,
         systems: system ? { ...s.systems, [clean]: system } : s.systems,
-        ...(bestiary ? { bestiaries: [...new Set([...(s.bestiaries ?? []), clean])] } : {}),
+        ...(supplement ? { supplements: { ...s.supplements, [clean]: supplement } } : {}),
       };
       ensure(next, ctx);
       ctx.vault.rescan();
       return next;
     },
 
-    // The bestiaries an adventure uses (their cards are seen in it).
-    setUses(s, { adventure, bestiaries }: { adventure: string; bestiaries: string[] }) {
-      const list = bestiaries.filter((b) => isBestiary(s, b) && b !== adventure);
+    // The supplements an adventure uses (their cards and entries are seen in it).
+    setUses(s, { adventure, supplements }: { adventure: string; supplements: string[] }) {
+      const list = supplements.filter((b) => isSupplement(s, b) && b !== adventure && !isSupplement(s, adventure));
       const uses = { ...s.uses };
       if (list.length) uses[adventure] = list;
       else delete uses[adventure];
       return { ...s, uses };
+    },
+
+    // What a supplement is about.
+    setSupplementKind(s, { path, kind }: { path: string; kind: SupplementKind }) {
+      if (!isSupplement(s, path) || !SUPPLEMENT_KINDS.includes(kind)) return s;
+      return { ...s, supplements: { ...s.supplements, [path]: kind } };
     },
 
     // Проверка при открытии хранилища: в каждом приключении есть все стандартные папки.

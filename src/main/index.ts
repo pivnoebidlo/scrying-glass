@@ -17,7 +17,7 @@ import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
-import { COVER_FILE, renameAdventurePaths, systemFor } from '../shared/adventures';
+import { COVER_FILE, renameAdventurePaths, systemFor, type SupplementKind } from '../shared/adventures';
 import { setSystemsOff } from '../systems';
 import { loadSystemPacks, ownPackFile, packBooks, savePack, systemPacks } from './syspacks';
 import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
@@ -781,8 +781,8 @@ interface AdventureData {
   clocks?: unknown[];
   // The Forged in the Dark crew (none before 0.54).
   crew?: AnyRec;
-  // A bestiary, not an adventure (none before 0.61).
-  bestiary?: boolean;
+  // A supplement, not an adventure: its kind (none before 0.61).
+  supplement?: SupplementKind;
 }
 
 ipcMain.handle('packs:export', async (_event, adventure: string) => {
@@ -969,7 +969,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     mausritter: (st['mausritter']!['byAdventure'] as Record<string, AnyRec>)[name],
     clocks: (st['clocks']!['byAdventure'] as Record<string, unknown[]>)[name],
     crew: (st['crew']!['byAdventure'] as Record<string, AnyRec>)[name],
-    ...(state.adventures.bestiaries?.includes(name) ? { bestiary: true } : {}),
+    ...(state.adventures.supplements?.[name] ? { supplement: state.adventures.supplements[name] } : {}),
   };
   try {
     discard(vaultRoot, [name], { title: name, kind: 'adventure', data });
@@ -1073,7 +1073,7 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
   if (place === 'vault') {
     await enqueue('vault', async () => rescanVault());
     if (res.meta.kind === 'adventure') {
-      await runAction('adventures', 'mark', { path: main.to, bestiary: (res.meta.data as AdventureData | undefined)?.bestiary });
+      await runAction('adventures', 'mark', { path: main.to, supplement: (res.meta.data as AdventureData | undefined)?.supplement });
       const system = (res.meta.data as AdventureData | undefined)?.system;
       if (system) await runAction('adventures', 'setSystem', { path: main.to, system });
     }

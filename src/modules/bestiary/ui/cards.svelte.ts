@@ -120,6 +120,9 @@ class Bestiary {
   // Меняется при каждом обновлении карточек в ядре: выбранную надо перечитать.
   rev = $state(0);
   draft = $state<Draft | null>(null);
+  // Where the editor is shown: the Cards tab, or a supplement's page on the Adventures tab (while it is open there —
+  // a card is made and edited without leaving it).
+  host = $state<'bestiary' | 'adventures'>('bestiary');
   placeRequest = $state.raw<PlaceRequest | null>(null);
   lssRequest = $state.raw<LssRequest | null>(null);
   // Снимок черновика при открытии: есть ли несохранённые изменения.
@@ -209,7 +212,7 @@ class Bestiary {
     this.draftStart = JSON.stringify(d.card);
     this.external = null;
     this.peeked = null;
-    openTab('bestiary');
+    openTab(this.host);
   }
 
   get dirty() {
@@ -287,7 +290,7 @@ class Bestiary {
         notes: prefill?.notes ?? '', stats: prefill?.stats ?? systemOf(system).blank(kind),
       },
     });
-    openTab('bestiary');
+    openTab(this.host);
   }
 
   // Карточка для портрета: ложится рядом с картинкой, картинка — её портрет. В папке партии — лист персонажа

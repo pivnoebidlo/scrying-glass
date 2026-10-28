@@ -15,25 +15,30 @@ export interface AdventuresState {
   // Ролевая система приключения (id из systems/index.ts); ключ '' — всё хранилище и общее вне приключений.
   // Нет записи — DEFAULT_SYSTEM. Вкладки показывают карточки и записи семейства этой системы.
   systems?: Record<string, string>;
-  // Which of the list are bestiaries, not adventures: a folder of one's own cards (its monsters folder), worked on
-  // like an adventure — open it, and the Cards tab shows its cards and makes new ones in it.
-  bestiaries?: string[];
-  // Bestiaries an adventure uses: their cards are seen in it as its own (adventure → bestiary folders).
+  // Which of the list are supplements, not adventures, and what each is: a folder of content to use in adventures —
+  // creatures (cards in its monsters folder) and compendium entries (spells, items, rules, own types) — any mix of
+  // them; the kind only says what it is about.
+  supplements?: Record<string, SupplementKind>;
+  // Supplements an adventure uses: their cards and entries are seen in it as its own (adventure → supplement folders).
   uses?: Record<string, string[]>;
 }
 
-export const isBestiary = (adv: AdventuresState, folder: string | null) => folder !== null && !!adv.bestiaries?.includes(folder);
+export const SUPPLEMENT_KINDS = ['bestiary', 'spells', 'items', 'rules', 'collection'] as const;
+export type SupplementKind = (typeof SUPPLEMENT_KINDS)[number];
+export const isSupplement = (adv: AdventuresState, folder: string | null) => folder !== null && !!adv.supplements?.[folder];
 
 // Без приключений: видно всё, подписи — путь целиком.
 export const NO_ADVENTURE: AdventuresState = { list: [], current: null, initialized: true };
 
 // Стандартные папки приключения; создаются с первым из названий роли (настройки, roleNames в vault.ts).
 const STANDARD_ROLES: FolderRole[] = ['characters', 'party', 'bestiary', 'backgrounds', 'handouts', 'maps', 'music'];
+// A supplement: creatures and compendium entries.
+const SUPPLEMENT_ROLES: FolderRole[] = ['bestiary', 'compendium'];
 
 // Каких стандартных папок нет прямо в папке приключения (папка с той же ролью под другим именем — есть).
-export function missingFolders(folder: VaultFolder, bestiary = false): string[] {
+export function missingFolders(folder: VaultFolder, supplement = false): string[] {
   const roles = new Set(folder.folders.map((f) => folderRole(f.name)));
-  return (bestiary ? (['bestiary'] as FolderRole[]) : STANDARD_ROLES).filter((role) => !roles.has(role)).map((role) => roleNames()[role][0]!);
+  return (supplement ? SUPPLEMENT_ROLES : STANDARD_ROLES).filter((role) => !roles.has(role)).map((role) => roleNames()[role][0]!);
 }
 
 // Папка похожа на приключение: в ней есть хотя бы одна папка с ролью (и сама она не «maps» и т. п.).
@@ -84,13 +89,13 @@ export function placeTitle(adv: AdventuresState, dir: string, vaultName: string)
   if (adv.current === null) return dir ? dir.split('/').join(' / ') : vaultName;
   const a = adventureOf(adv, dir);
   if (a === null) return dir ? `${t('place.shared')} / ${dir.split('/').join(' / ')}` : t('place.shared');
-  // A bestiary the adventure uses: its own name first.
+  // A supplement the adventure uses: its own name first.
   if (a !== adv.current) return dir.split('/').join(' / ');
   if (dir === a) return basename(a);
   return dir.slice(a.length + 1).split('/').join(' / ');
 }
 
-// Порядок групп: сначала текущее приключение (его корень, потом главы), then the bestiaries it uses, затем общее.
+// Порядок групп: сначала текущее приключение (его корень, потом главы), then the supplements it uses, затем общее.
 export const placeOrder = (adv: AdventuresState, dir: string) => {
   if (adv.current === null) return 0;
   const a = adventureOf(adv, dir);

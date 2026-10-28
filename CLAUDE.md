@@ -238,11 +238,15 @@ Electron-приложение для мастера D&D: окно управле
   без выбранной обложки берёт её); переименование — IPC `adventures:rename`: папка, `renameAdventurePaths` (shared/adventures.ts:
   пути «from/…», ключи и значение `adventure` / `current` / список) во всех модулях синхронно, пути в .json и `image:` .md папки,
   пометки репозитория переезжают — новая версия той же записи.
-  Бестиарии-проекты: `adventures.bestiaries` (папки из `list`, в них только папка роли bestiary — `missingFolders(f, true)`;
-  `create` / `mark` с `bestiary`), `adventures.uses` (приключение → бестиарии; действие `setUses`, галочки в окне приключения):
-  `visibleIn` показывает в приключении и подключённые бестиарии (`placeTitle` / `placeOrder` — после своего);
-  на вкладке — отдельная группа, «⋯ → Опубликовать» открывает `BestiaryPublishDialog` с папкой (`repo.publishBestiary = <папка>`:
-  её карточки отмечены, название, обложка cover.jpg, своя прежняя запись — новой версией); в корзине — `AdventureData.bestiary`.
+  Дополнения: `adventures.supplements` (папка из `list` → вид `SupplementKind`: bestiary / spells / items / rules / collection —
+  только подпись, содержимое любое; в папке — роли bestiary и compendium, `missingFolders(f, true)`; `create` / `mark` с
+  `supplement`, `setSupplementKind`), `adventures.uses` (приключение → дополнения, `setUses`): `visibleIn` показывает в
+  приключении и подключённые (`placeTitle` / `placeOrder` — после своего). Страница дополнения — `ui/Supplement.svelte`
+  (`advUi.supplement` в `ui/ui.svelte.ts`; открывает щелчок по плитке и боковая панель): существа — `CardView` / `CardEditor`
+  на месте (`bestiary.host = 'adventures'`: `open` / `create` не уходят во вкладку «Карточки»), записи — `EntryCard` /
+  `EntryEditor` через `ui` справочника (`cmp.open` — путь и после переименования); новое — сразу в его папки, без
+  `PlacePicker`. Публикация — пока `BestiaryPublishDialog` с папкой (`repo.publishBestiary = <папка>`: его карточки, название,
+  cover.jpg); в корзине — `AdventureData.supplement`.
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `DEFAULT_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
   D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`, `isDnd`); правила —

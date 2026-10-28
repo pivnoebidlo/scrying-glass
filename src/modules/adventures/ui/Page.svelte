@@ -1,7 +1,7 @@
 <!-- The «Adventures» tab, the first one: every adventure as a tile — its cover, system, what is in it and where it
-     stands in the Community — and below, the bestiaries (folders of one's own cards, opened and worked on the same
-     way). A click on the cover opens one, a double click picks its cover; «⋯» — name and system (for an adventure,
-     the bestiaries it uses), cover, export, publish, delete. A picture dropped on a tile becomes its cover. -->
+     stands in the Community — and below, the supplements (creatures and compendium entries to use in adventures; one
+     opens on its own page). A click on the cover opens one, a double click picks its cover; «⋯» — name and system (for an adventure,
+     the supplements it uses), cover, export, publish, delete. A picture dropped on a tile becomes its cover. -->
 <script lang="ts">
   import { BookOpen, CloudUpload, Download, Globe, ImagePlus, MoreHorizontal, Pencil, Plus, Trash2 } from '@lucide/svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
@@ -9,7 +9,9 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { COVER_FILE, currentSystem, isBestiary, shownAdventures, systemFor } from '../../../shared/adventures';
+  import { COVER_FILE, currentSystem, isSupplement, shownAdventures, SUPPLEMENT_KINDS, systemFor, type SupplementKind } from '../../../shared/adventures';
+  import Supplement from './Supplement.svelte';
+  import { advUi } from './ui.svelte';
   import { allFiles, thumb, vaultUrl, type VaultFolder } from '../../../shared/vault';
   import { systems } from '../../../systems';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
@@ -21,10 +23,10 @@
   void connectCards();
   const list = $derived(shownAdventures(ms));
   const hidden = $derived(ms.list.length - list.length);
-  const adventures = $derived(list.filter((a) => !isBestiary(ms, a)));
-  const bestiaries = $derived(list.filter((a) => isBestiary(ms, a)));
+  const adventures = $derived(list.filter((a) => !isSupplement(ms, a)));
+  const supplements = $derived(list.filter((a) => isSupplement(ms, a)));
   // The order the tiles stand in (arrows).
-  const order = $derived([...adventures, ...bestiaries]);
+  const order = $derived([...adventures, ...supplements]);
   const folderOf = (a: string): VaultFolder | undefined => app.vault.tree?.folders.find((f) => f.path === a);
   // A cover just set: the same path, a new picture — the thumbnail is asked for again.
   let rev = $state(0);
@@ -35,12 +37,13 @@
   };
   const inside = (a: string, p: string | undefined) => !!p && (p === a || p.startsWith(a + '/'));
   function counts(a: string) {
-    const cards = bestiary.all.filter((c) => c.ref.scope === 'vault' && inside(a, c.folder)).length;
-    if (isBestiary(ms, a)) {
-      const users = Object.entries(ms.uses ?? {}).filter(([, b]) => b.includes(a)).length;
-      return [t('adv.page.cards', { count: cards }), ...(users ? [t('adv.page.usedBy', { count: users })] : [])].join(' · ');
-    }
     const files = folderOf(a) ? allFiles(folderOf(a)!) : [];
+    const cards = bestiary.all.filter((c) => c.ref.scope === 'vault' && inside(a, c.folder)).length;
+    if (isSupplement(ms, a)) {
+      const users = Object.entries(ms.uses ?? {}).filter(([, b]) => b.includes(a)).length;
+      const entries = files.filter((f) => f.kind === 'entry').length;
+      return [t('adv.page.cards', { count: cards }), t('adv.page.entries', { count: entries }), ...(users ? [t('adv.page.usedBy', { count: users })] : [])].join(' · ');
+    }
     return [
       t('adv.page.scenes', { count: app.scenes.scenes.filter((s) => s.adventure === a).length }),
       t('adv.page.encounters', { count: app.initiative.encounters.filter((e) => e.adventure === a).length }),
@@ -68,8 +71,8 @@
       name = to;
     }
     if (e.system !== systemFor(ms, e.was)) await dispatch('adventures', 'setSystem', { path: name, system: e.system });
-    if (!isBestiary(ms, name) && e.uses.join('\n') !== (ms.uses?.[name] ?? []).join('\n')) {
-      await dispatch('adventures', 'setUses', { adventure: name, bestiaries: $state.snapshot(e.uses) });
+    if (!isSupplement(ms, name) && e.uses.join('\n') !== (ms.uses?.[name] ?? []).join('\n')) {
+      await dispatch('adventures', 'setUses', { adventure: name, supplements: $state.snapshot(e.uses) });
     }
     editing = null;
   }
@@ -98,10 +101,11 @@
     const edit = () => ((error = ''), (editing = { name: a, was: a, system: systemFor(ms, a), uses: [...(ms.uses?.[a] ?? [])] }));
     menu = {
       ...at,
-      items: isBestiary(ms, a)
+      items: isSupplement(ms, a)
         ? [
-            { label: t('adv.page.editBestiary'), icon: Pencil, action: edit },
+            { label: t('adv.page.edit'), icon: Pencil, action: edit },
             { label: t('adv.page.cover'), icon: ImagePlus, action: () => (picking = a) },
+            { label: t('adv.supp.open'), icon: BookOpen, action: () => open(a) },
             { label: t('adv.page.publishBestiary'), icon: CloudUpload, action: () => (repo.publishBestiary = a) },
             { label: t('adv.delete', { name: a }), icon: Trash2, danger: true, action: () => void window.api.deleteAdventure(a) },
           ]
@@ -120,7 +124,7 @@
   let pageEl = $state<HTMLElement | null>(null);
   function onkeydown(e: KeyboardEvent) {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-    if (!pageEl?.offsetParent || menu || editing || picking || !order.length) return;
+    if (advUi.supplement || !pageEl?.offsetParent || menu || editing || picking || !order.length) return;
     const target = e.target as HTMLElement | null;
     if (target?.closest('input, textarea, select, [contenteditable]') || (target && target !== document.body && !pageEl.contains(target))) return;
     const grid = pageEl.querySelector('.adv-grid');
@@ -134,14 +138,21 @@
     requestAnimationFrame(() => pageEl?.querySelector('.tile.current')?.scrollIntoView({ block: 'nearest' }));
   }
 
+  // Open: make it current; a supplement — also its own page.
+  function open(a: string) {
+    void dispatch('adventures', 'select', { path: a });
+    if (isSupplement(ms, a)) advUi.supplement = a;
+  }
+
   // What is being created: an adventure or a bestiary (null — nothing).
-  let creating = $state<'adventure' | 'bestiary' | null>(null);
+  let creating = $state<'adventure' | 'supplement' | null>(null);
+  let newKind = $state<SupplementKind>('bestiary');
   let newName = $state('');
   let newSystem = $state('');
-  const startCreating = (kind: 'adventure' | 'bestiary') => ((creating = creating === kind ? null : kind), (newSystem = currentSystem(ms)));
+  const startCreating = (kind: 'adventure' | 'supplement') => ((creating = creating === kind ? null : kind), (newSystem = currentSystem(ms)));
   async function create() {
     if (!newName.trim()) return;
-    await dispatch('adventures', 'create', { name: newName.trim(), system: newSystem || currentSystem(ms), bestiary: creating === 'bestiary' });
+    await dispatch('adventures', 'create', { name: newName.trim(), system: newSystem || currentSystem(ms), ...(creating === 'supplement' ? { supplement: newKind } : {}) });
     newName = '';
     creating = null;
   }
@@ -156,12 +167,12 @@
     ondrop={(e) => ondrop(e, a)}
     oncontextmenu={(e) => openMenu(e, a)}
   >
-    <button class="cover" title={t('adv.page.openHint')} onclick={() => dispatch('adventures', 'select', { path: a })} ondblclick={() => (picking = a)}>
+    <button class="cover" title={t('adv.page.openHint')} onclick={() => open(a)} ondblclick={() => (picking = a)}>
       {#if cover(a)}<img src={cover(a)} alt="" />{:else}<span class="none"><ImagePlus size={22} /> {t('adv.page.dropCover')}</span>{/if}
     </button>
     <div class="info">
       <div class="name">{a}</div>
-      <div class="faint small">{systemTitle(a)}{community(a) ? ` · ${community(a)}` : ''}</div>
+      <div class="faint small">{isSupplement(ms, a) ? `${t(`adv.kind.${ms.supplements?.[a] ?? 'collection'}`)} · ` : ''}{systemTitle(a)}{community(a) ? ` · ${community(a)}` : ''}</div>
       <div class="faint small">{counts(a)}</div>
     </div>
     <div class="bar">
@@ -173,12 +184,15 @@
 
 <svelte:window {onkeydown} />
 
+{#if advUi.supplement && isSupplement(ms, advUi.supplement)}
+  <Supplement {app} folder={advUi.supplement} {rev} />
+{:else}
 <div class="page" bind:this={pageEl}>
   <header>
     <h2>{t('adv.page.title')}</h2>
     <div class="actions">
       <button class="btn" onclick={() => startCreating('adventure')}><Plus size={14} /> {t('adv.createAdventure')}</button>
-      <button class="btn" onclick={() => startCreating('bestiary')}><BookOpen size={14} /> {t('adv.page.createBestiary')}</button>
+      <button class="btn" onclick={() => startCreating('supplement')}><BookOpen size={14} /> {t('adv.page.createSupplement')}</button>
       <button class="btn" onclick={() => openRepo()}><Globe size={14} /> {t('repo.menuBrowse')}</button>
     </div>
   </header>
@@ -186,7 +200,10 @@
   {#if creating}
     <form class="create" onsubmit={(e) => (e.preventDefault(), create())}>
       <!-- svelte-ignore a11y_autofocus -->
-      <input type="text" bind:value={newName} placeholder={t(creating === 'bestiary' ? 'adv.page.bestiaryPlaceholder' : 'adv.namePlaceholder')} autofocus />
+      <input type="text" bind:value={newName} placeholder={t(creating === 'supplement' ? 'adv.page.supplementPlaceholder' : 'adv.namePlaceholder')} autofocus />
+      {#if creating === 'supplement'}
+        <select bind:value={newKind}>{#each SUPPLEMENT_KINDS as k (k)}<option value={k}>{t(`adv.kind.${k}`)}</option>{/each}</select>
+      {/if}
       <SystemSelect value={newSystem} onchange={(v) => (newSystem = v)} />
       <button class="btn primary" type="submit" disabled={!newName.trim()}>{t('adv.create')}</button>
     </form>
@@ -202,13 +219,14 @@
   <div class="adv-grid">
     {#each adventures as a (a)}{@render tile(a)}{/each}
   </div>
-  {#if bestiaries.length}
-    <h3 class="group">{t('adv.page.bestiaries')}</h3>
+  {#if supplements.length}
+    <h3 class="group">{t('adv.page.supplements')}</h3>
     <div class="adv-grid">
-      {#each bestiaries as a (a)}{@render tile(a)}{/each}
+      {#each supplements as a (a)}{@render tile(a)}{/each}
     </div>
   {/if}
 </div>
+{/if}
 
 {#if menu}
   <ContextMenu x={menu.x} y={menu.y} items={menu.items} onclose={() => (menu = null)} />
@@ -232,10 +250,10 @@
         <span>{t('adv.system')}</span>
         <SystemSelect value={editing.system} onchange={(v) => editing && (editing.system = v)} />
       </label>
-      {#if !isBestiary(ms, editing.was) && bestiaries.length}
+      {#if !isSupplement(ms, editing.was) && supplements.length}
         <div class="field">
           <span>{t('adv.page.uses')}</span>
-          {#each bestiaries as b (b)}
+          {#each supplements as b (b)}
             <label class="check">
               <input
                 type="checkbox"

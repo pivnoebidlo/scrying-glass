@@ -6,18 +6,21 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { isBestiary, shownAdventures, systemFor } from '../../../shared/adventures';
+  import { isSupplement, shownAdventures, systemFor } from '../../../shared/adventures';
+  import { advUi } from './ui.svelte';
   import { systems } from '../../../systems';
 
   let { ms }: ModuleProps<'adventures'> = $props();
-  // Adventures first, then bestiaries.
-  const list = $derived(shownAdventures(ms).sort((a, b) => Number(isBestiary(ms, a)) - Number(isBestiary(ms, b))));
+  // Adventures first, then supplements.
+  const list = $derived(shownAdventures(ms).sort((a, b) => Number(isSupplement(ms, a)) - Number(isSupplement(ms, b))));
   const systemTitle = (a: string | null) => {
     const id = systemFor(ms, a);
     return systems.find((s) => s.id === id)?.title ?? id;
   };
   function select(path: string | null) {
     dispatch('adventures', 'select', { path });
+    // A supplement opens on its own page; anything else — the tiles.
+    advUi.supplement = path !== null && isSupplement(ms, path) ? path : null;
     openTab('adventures');
   }
 </script>
@@ -25,7 +28,7 @@
 <div class="list">
   {#each list as a (a)}
     <button class="item" class:active={ms.current === a} data-nav onclick={() => select(a)}>
-      {#if isBestiary(ms, a)}<BookOpen size={14} />{:else}<Castle size={14} />{/if}
+      {#if isSupplement(ms, a)}<BookOpen size={14} />{:else}<Castle size={14} />{/if}
       <span class="text"><span class="name">{a}</span><span class="faint small">{systemTitle(a)}</span></span>
     </button>
   {/each}
