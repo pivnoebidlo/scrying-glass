@@ -109,7 +109,7 @@ export class Repo {
   // for an adventure). `kinds` — what to list besides adventures.
   catalog(kinds: string[] = []): RepoCatalog {
     const entries = this.entries.filter((e) => !e.blocked && (!e.kind || kinds.includes(e.kind))).map(({ files: _f, blocked: _b, blockedAt: _a, reports: _r, ...e }) => e);
-    return { api: REPO_API, features: ['systems', 'bestiaries'], maxSize: this.opts.maxSize, entries };
+    return { api: REPO_API, features: ['systems', 'bestiaries', 'supplements'], maxSize: this.opts.maxSize, entries };
   }
 
   private find(author: string, id: string) {

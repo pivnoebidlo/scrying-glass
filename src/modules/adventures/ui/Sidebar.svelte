@@ -38,9 +38,9 @@
         { label: t('adv.page.cover'), icon: ImagePlus, action: onTab('cover') },
         ...(supplement ? [] : [{ label: t('adv.export', { name: a }), icon: Download, action: () => void window.api.exportAdventure(a) }]),
         {
-          label: supplement ? t('adv.page.publishBestiary') : t(app.repo.published[a] ? 'repo.menuUpdate' : 'repo.menuPublish', { name: a }),
+          label: supplement ? t(app.repo.published[a] ? 'adv.supp.updateLong' : 'adv.page.publishBestiary') : t(app.repo.published[a] ? 'repo.menuUpdate' : 'repo.menuPublish', { name: a }),
           icon: CloudUpload,
-          action: () => (supplement ? (repo.publishBestiary = a) : (repo.publish = a)),
+          action: () => (repo.publish = a),
         },
         { label: t('adv.delete', { name: a }), icon: Trash2, danger: true, action: () => void window.api.deleteAdventure(a) },
       ],

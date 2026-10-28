@@ -45,6 +45,8 @@ export interface PackManifest {
   music: boolean;
   // Ролевая система приключения (нет — файл из версии до 0.18: D&D по умолчанию).
   system?: string;
+  // A supplement, not an adventure: its kind (none before 0.61).
+  supplement?: string;
 }
 
 export interface LibraryCard {

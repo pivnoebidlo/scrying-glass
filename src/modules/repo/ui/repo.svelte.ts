@@ -10,7 +10,7 @@ import { sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoPro
 // An entry of a catalog with the source it is in.
 export type Found = RepoEntry & { source: string };
 // The kinds of things in the Community (the «What» of the window).
-export type What = 'adventures' | 'systems' | 'bestiaries';
+export type What = 'adventures' | 'supplements' | 'systems' | 'bestiaries';
 
 export const repo = $state({
   info: null as RepoInfo | null,

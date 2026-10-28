@@ -3,6 +3,7 @@
      description, download or update; the GM's own — take down; others' — complain. The admin of a repository sees
      complaints and takes any entry down. Opens on repo.browsing (openRepo). -->
 <script lang="ts">
+  import { SUPPLEMENT_KINDS, type SupplementKind } from '../../../shared/adventures';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { Ban, Check, LockOpen, CloudUpload, Download, Flag, ImageOff, RefreshCw, Settings, ShieldCheck, Trash2, TriangleAlert, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -51,6 +52,13 @@
       fits: (e) => !e.kind,
     },
     {
+      id: 'supplements',
+      get title() {
+        return t('repo.whatSupplements');
+      },
+      fits: (e) => e.kind === 'supplement',
+    },
+    {
       id: 'bestiaries',
       get title() {
         return t('repo.whatBestiaries');
@@ -93,7 +101,14 @@
   };
   const date = (ms: number) => new Date(ms).toLocaleDateString(getLang(), { day: 'numeric', month: 'short', year: 'numeric' });
   // Under the title: the system of an adventure, «Game system», «Bestiary · its system».
-  const kindLine = (e: Found) => (e.kind === 'system' ? t('repo.kindSystem') : e.kind === 'bestiary' ? `${t('repo.kindBestiary')} · ${systemTitle(e.system)}` : systemTitle(e.system));
+  const kindLine = (e: Found) =>
+    e.kind === 'system'
+      ? t('repo.kindSystem')
+      : e.kind === 'bestiary'
+        ? `${t('repo.kindBestiary')} · ${systemTitle(e.system)}`
+        : e.kind === 'supplement'
+          ? `${t('repo.kindSupplement')}${SUPPLEMENT_KINDS.includes(e.subkind as SupplementKind) ? ` (${t(`adv.kind.${e.subkind as SupplementKind}`)})` : ''} · ${systemTitle(e.system)}`
+          : systemTitle(e.system);
   const installedVersion = (e: Found) => {
     if (e.kind === 'system') return systemVersion(e);
     if (e.kind === 'bestiary') return bestiaryVersion(e);
@@ -277,7 +292,7 @@
                 <button class="btn link" disabled={!!repo.busy} onclick={() => (repo.reporting = e)}><Flag size={13} /> {t('repo.report.button')}</button>
               {/if}
             </div>
-            {#if !e.kind && !systems.some((s) => s.id === e.system)}
+            {#if (!e.kind || e.kind === 'supplement') && !systems.some((s) => s.id === e.system)}
               {@const need = missingSystem(e)}
               <p class="needs">
                 {t('repo.needsSystem', { system: need?.title ?? e.system })}

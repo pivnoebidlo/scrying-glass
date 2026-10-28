@@ -249,8 +249,11 @@ Electron-приложение для мастера D&D: окно управле
   (`advUi.supplement` в `ui/ui.svelte.ts`; открывает щелчок по плитке и боковая панель): существа — `CardView` / `CardEditor`
   на месте (`bestiary.host = 'adventures'`: `open` / `create` не уходят во вкладку «Карточки»), записи — `EntryCard` /
   `EntryEditor` через `ui` справочника (`cmp.open` — путь и после переименования); новое — сразу в его папки, без
-  `PlacePicker`. Публикация — пока `BestiaryPublishDialog` с папкой (`repo.publishBestiary = <папка>`: его карточки, название,
-  cover.jpg); в корзине — `AdventureData.supplement`.
+  `PlacePicker`. Публикация — как приключения (`repo.publish = <папка>`, `PublishDialog`: только
+  репозитории с `features` 'supplements'): .sgpack с `manifest.supplement` (вид), запись `kind: 'supplement'` + `subkind`
+  (`checkPublish` берёт только у дополнения и только слово); импорт (`importPack`) отмечает папку дополнением; каталог —
+  раздел «Дополнения», сервис 0.7.0 (тег `repo-v0.7.0`), приложение просит `?kinds=…,supplement`; в корзине —
+  `AdventureData.supplement`.
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `DEFAULT_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
   D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`, `isDnd`); правила —

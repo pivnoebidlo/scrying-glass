@@ -48,6 +48,12 @@ describe('repository protocol', () => {
     expect(checkPublish(ok)).toEqual({ ...ok, title: 'Lost Mine' });
   });
 
+  it('keeps a subkind only of a supplement, and only a plain word', () => {
+    expect(checkPublish({ ...ok, kind: 'supplement', subkind: 'spells' })).toMatchObject({ kind: 'supplement', subkind: 'spells' });
+    expect(checkPublish({ ...ok, subkind: 'spells' })).not.toHaveProperty('subkind');
+    expect(checkPublish({ ...ok, kind: 'supplement', subkind: '../x' })).not.toHaveProperty('subkind');
+  });
+
   it('refuses bad ids, systems, sizes and covers', () => {
     expect(checkPublish({ ...ok, id: '../etc' })).toBe('id');
     expect(checkPublish({ ...ok, id: 'short' })).toBe('id');
@@ -228,6 +234,17 @@ describe('repository service', () => {
     expect(await ids('?kinds=all')).not.toContain('my-bestiary-01');
     expect(await ids('?kinds=adventure,system,bestiary')).toContain('my-bestiary-01');
     expect((await call('/api/v1/unpublish', { id: 'my-bestiary-01' })).status).toBe(200);
+  });
+
+  it('supplements: listed only to apps that ask for them, with what they are about', async () => {
+    const r = await publish(60, me, { id: 'my-supplement-1', title: 'Swamp things', system: 'dnd5e-2024', kind: 'supplement', subkind: 'bestiary' });
+    expect(r.body).toMatchObject({ kind: 'supplement', subkind: 'bestiary' });
+    const ids = async (q: string) => ((await (await fetch(base + '/api/v1/catalog' + q)).json()) as RepoCatalog).entries.map((e) => e.id);
+    expect(await ids('?kinds=all')).not.toContain('my-supplement-1');
+    expect(await ids('?kinds=adventure,system,bestiary')).not.toContain('my-supplement-1');
+    expect(await ids('?kinds=adventure,system,bestiary,supplement')).toContain('my-supplement-1');
+    expect((await catalog()).features).toContain('supplements');
+    expect((await call('/api/v1/unpublish', { id: 'my-supplement-1' })).status).toBe(200);
   });
 
   it('uploads never committed are swept away with their files, but not before they expire', async () => {

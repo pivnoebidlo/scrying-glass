@@ -2,6 +2,7 @@
      cover, music, PDFs (the adventure's text is often a PDF in the journal). The author confirms the content is theirs
      to share. Opens on repo.publish = <adventure>. -->
 <script lang="ts">
+  import { isSupplement } from '../../../shared/adventures';
   import { CloudUpload, ImagePlus, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
@@ -17,14 +18,18 @@
   const adventure = $derived(repo.publish);
   const app = $derived(store.state);
   const mark = $derived(adventure ? app.repo.published[adventure] : undefined);
+  // A supplement goes as one too, but only to services that know them (an older one would take it for an adventure).
+  const supplement = $derived(isSupplement(app.adventures, adventure));
   // Where to: the sources that take publishing (repositories), turned on.
-  const targets = $derived(repo.info ? sourcesOn().filter((s) => s.kind === 'repo') : []);
+  const targets = $derived(
+    repo.info ? sourcesOn().filter((s) => s.kind === 'repo' && (!supplement || !!repo.catalogs[s.id]?.catalog?.features?.includes('supplements'))) : [],
+  );
   let source = $state('');
   const catalog = $derived(repo.catalogs[source]?.catalog ?? null);
   // The entry as it is in that catalog: an update (to start from its texts). No mark in the vault (another copy of
   // the app wrote state.json over it, the folder was renamed) — the GM's own adventure of the same name is it, unless
   // they want a new entry.
-  const mine = (e: RepoEntry) => e.author === repo.info?.author && e.kind !== 'system';
+  const mine = (e: RepoEntry) => e.author === repo.info?.author && (supplement ? e.kind === 'supplement' : !e.kind);
   const byMark = $derived(mark ? catalog?.entries.find((e) => mine(e) && e.id === mark.id) : undefined);
   const byName = $derived(
     !byMark && adventure ? catalog?.entries.find((e) => mine(e) && [adventure, title.trim()].some((n) => n && e.title.toLowerCase() === n.toLowerCase())) : undefined,
@@ -108,7 +113,7 @@
   <div class="backdrop" onclick={(e) => e.target === e.currentTarget && close()}>
     <form class="modal" onsubmit={(e) => (e.preventDefault(), send())}>
       <header>
-        <h3>{entry ? t('repo.dialog.update', { n: entry.version + 1 }) : t('repo.dialog.title')}</h3>
+        <h3>{entry ? t('repo.dialog.update', { n: entry.version + 1 }) : t(supplement ? 'repo.dialog.titleSupplement' : 'repo.dialog.title')}</h3>
         <button type="button" class="icon-btn" onclick={close} title={t('repo.cancel')}><X size={14} /></button>
       </header>
 
@@ -118,7 +123,7 @@
           <select bind:value={source}>{#each targets as s (s.id)}<option value={s.id}>{sourceName(s)}</option>{/each}</select>
         </label>
       {:else if repo.info && !targets.length}
-        <p class="warn">{t('repo.dialog.noTargets')}</p>
+        <p class="warn">{t(supplement ? 'repo.dialog.noSupplementTargets' : 'repo.dialog.noTargets')}</p>
       {/if}
       <label class="field">
         <span>{t('repo.dialog.name')}</span>

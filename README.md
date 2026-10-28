@@ -87,8 +87,9 @@ rules, your own entry types), any mix of them. "Create supplement…" asks its n
 rules, collection) and its system. A click on a supplement opens its own page: creatures and entries on the left (with
 "+" — a new one is made right in the supplement, nothing asks where to keep it), the one picked or its editor on the
 right, and "Used in:" — ticks of the adventures that use it (also in an adventure's "Name and system…"). An adventure
-sees the creatures and entries of the supplements it uses as its own. "Publish to the Community…" publishes its
-creatures as a bestiary for now.
+sees the creatures and entries of the supplements it uses as its own. "Publish…" sends the supplement whole (creatures,
+entries, pictures) to the Community, under "Supplements" with what it is about; a downloaded one comes into the vault as
+a supplement, ready to be used in adventures, and gets new versions like an adventure.
 
 **Adventures** are top-level folders of the vault marked as adventures: "Create adventure…" in the switcher above
 the side panel, or "Make an adventure" in the Files tab (on the first open, folders that already contain characters,

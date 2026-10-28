@@ -17,7 +17,7 @@ import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
-import { COVER_FILE, renameAdventurePaths, systemFor, type SupplementKind } from '../shared/adventures';
+import { COVER_FILE, renameAdventurePaths, SUPPLEMENT_KINDS, systemFor, type SupplementKind } from '../shared/adventures';
 import { setSystemsOff } from '../systems';
 import { loadSystemPacks, ownPackFile, packBooks, savePack, systemPacks } from './syspacks';
 import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
@@ -862,6 +862,7 @@ async function buildPack(adventure: string, out: string, opts: { music: boolean;
       app: app.getVersion(),
       music: opts.music,
       system: systemFor(state.adventures, adventure),
+      ...(state.adventures.supplements?.[adventure] ? { supplement: state.adventures.supplements[adventure] } : {}),
     },
     slices,
     library,
@@ -1213,7 +1214,8 @@ async function importPack(file: string, wanted: string) {
     if (sl.repo) await merge('repo', (s) => ({ ...s, published: { ...(s['published'] as AnyRec), [name]: sl.repo } }));
     saveVault();
     await enqueue('vault', async () => rescanVault());
-    await runAction('adventures', 'mark', { path: name });
+    const supplement = SUPPLEMENT_KINDS.find((k) => k === pack.manifest.supplement);
+    await runAction('adventures', 'mark', { path: name, ...(supplement ? { supplement } : {}) });
     if (pack.manifest.system) await runAction('adventures', 'setSystem', { path: name, system: pack.manifest.system });
     await runAction('adventures', 'select', { path: name });
     return { name, renamed: name !== from, scenes: scenes.length, encounters: encounters.length, cards };
@@ -1273,6 +1275,7 @@ ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: st
       title: p.title,
       description: p.description,
       system: systemFor(state.adventures, p.adventure),
+      ...(state.adventures.supplements?.[p.adventure] ? { kind: 'supplement' as const, subkind: state.adventures.supplements[p.adventure] } : {}),
       lang: p.lang,
       music: p.music,
       app: app.getVersion(),

@@ -175,7 +175,7 @@
         </div>
       {/if}
     </div>
-    <button class="btn" onclick={() => (repo.publishBestiary = folder)}><CloudUpload size={14} /> {t('adv.supp.publish')}</button>
+    <button class="btn" onclick={() => (repo.publish = folder)}><CloudUpload size={14} /> {t(app.repo.published[folder] ? 'adv.supp.update' : 'adv.supp.publish')}</button>
     <button class="icon-btn" title={t('adv.page.more')} onclick={pageMenu}><MoreHorizontal size={16} /></button>
   </header>
 

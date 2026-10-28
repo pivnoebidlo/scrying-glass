@@ -106,7 +106,7 @@
             { label: t('adv.page.edit'), icon: Pencil, action: edit },
             { label: t('adv.page.cover'), icon: ImagePlus, action: () => (picking = a) },
             { label: t('adv.supp.open'), icon: BookOpen, action: () => open(a) },
-            { label: t('adv.page.publishBestiary'), icon: CloudUpload, action: () => (repo.publishBestiary = a) },
+            { label: t(app.repo.published[a] ? 'adv.supp.updateLong' : 'adv.page.publishBestiary'), icon: CloudUpload, action: () => (repo.publish = a) },
             { label: t('adv.delete', { name: a }), icon: Trash2, danger: true, action: () => void window.api.deleteAdventure(a) },
           ]
         : [

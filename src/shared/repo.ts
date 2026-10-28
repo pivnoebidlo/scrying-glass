@@ -22,9 +22,12 @@ export interface RepoEntry {
   description: string;
   // Role-playing system (systems/index.ts) and language of the adventure; of a system pack — its own id.
   system: string;
-  // What it is: a system pack (shared/syspack.ts), a bestiary (cards, the file of «export cards»); none — an
-  // adventure (.sgpack). `system` of a bestiary — the system of its cards.
+  // What it is: a system pack (shared/syspack.ts), a bestiary (cards, the file of «export cards»), a supplement (an
+  // .sgpack of creatures and compendium entries to use in adventures); none — an adventure (.sgpack). `system` of a
+  // bestiary — the system of its cards.
   kind?: EntryKind;
+  // What a supplement is about: bestiary, spells, items, rules, collection (shared/adventures.ts SUPPLEMENT_KINDS).
+  subkind?: string;
   lang: string;
   // 1, 2, … — each publish of the same adventure is a new version.
   version: number;
@@ -41,9 +44,9 @@ export interface RepoEntry {
 
 export interface RepoCatalog {
   api: number;
-  // What the service knows beyond adventures: 'systems', 'bestiaries'. The catalog lists other kinds only when
-  // asked: ?kinds=adventure,system,bestiary (`all` — adventures and systems, as 0.59 asks: an older app would take an
-  // unknown kind for an adventure).
+  // What the service knows beyond adventures: 'systems', 'bestiaries', 'supplements'. The catalog lists other kinds
+  // only when asked: ?kinds=adventure,system,bestiary,supplement (`all` — adventures and systems, as 0.59 asks: an older
+  // app would take an unknown kind for an adventure).
   features?: string[];
   // The largest pack the service takes, bytes.
   maxSize: number;
@@ -65,10 +68,12 @@ export interface PublishRequest {
   // Bytes of the cover picture (JPEG), none — no cover.
   cover?: number;
   kind?: EntryKind;
+  subkind?: string;
 }
 
-export type EntryKind = 'system' | 'bestiary';
-export const ENTRY_KINDS: EntryKind[] = ['system', 'bestiary'];
+export type EntryKind = 'system' | 'bestiary' | 'supplement';
+export const ENTRY_KINDS: EntryKind[] = ['system', 'bestiary', 'supplement'];
+const SUBKIND_RE = /^[a-z]{1,20}$/;
 
 export interface PublishTicket {
   upload: string;
@@ -144,6 +149,7 @@ export function checkPublish(x: unknown): PublishRequest | string {
     authorName: str(o['authorName'], LIMITS.authorName),
     ...(typeof cover === 'number' ? { cover } : {}),
     ...(ENTRY_KINDS.includes(o['kind'] as EntryKind) ? { kind: o['kind'] as EntryKind } : {}),
+    ...(o['kind'] === 'supplement' && typeof o['subkind'] === 'string' && SUBKIND_RE.test(o['subkind']) ? { subkind: o['subkind'] } : {}),
   };
 }
 
