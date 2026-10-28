@@ -87,11 +87,30 @@
       items: [
         { label: t('adv.page.edit'), icon: Pencil, action: () => ((error = ''), (editing = { name: a, was: a, system: systemFor(ms, a) })) },
         { label: t('adv.page.cover'), icon: ImagePlus, action: () => (picking = a) },
-        { label: t('adv.export'), icon: Download, action: () => void window.api.exportAdventure(a) },
+        { label: t('adv.export', { name: a }), icon: Download, action: () => void window.api.exportAdventure(a) },
         { label: t(app.repo.published[a] ? 'repo.menuUpdate' : 'repo.menuPublish', { name: a }), icon: CloudUpload, action: () => (repo.publish = a) },
-        { label: t('adv.delete'), icon: Trash2, danger: true, action: () => void window.api.deleteAdventure(a) },
+        { label: t('adv.delete', { name: a }), icon: Trash2, danger: true, action: () => void window.api.deleteAdventure(a) },
       ],
     };
+  }
+
+  // Arrows walk the tiles like a list (← → — the next one, ↑ ↓ — a row up or down) and open the one they reach;
+  // not while typing or with a dialog or menu open, and only when this tab is on screen.
+  let pageEl = $state<HTMLElement | null>(null);
+  function onkeydown(e: KeyboardEvent) {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+    if (!pageEl?.offsetParent || menu || editing || picking || !list.length) return;
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('input, textarea, select, [contenteditable]') || (target && target !== document.body && !pageEl.contains(target))) return;
+    const grid = pageEl.querySelector('.adv-grid');
+    const cols = grid ? getComputedStyle(grid).gridTemplateColumns.split(' ').length : 1;
+    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -cols, ArrowDown: cols }[e.key as 'ArrowLeft'];
+    const i = ms.current === null ? -1 : list.indexOf(ms.current);
+    const next = list[i < 0 ? 0 : Math.min(list.length - 1, Math.max(0, i + step))];
+    e.preventDefault();
+    if (!next || next === ms.current) return;
+    void dispatch('adventures', 'select', { path: next });
+    requestAnimationFrame(() => pageEl?.querySelector('.tile.current')?.scrollIntoView({ block: 'nearest' }));
   }
 
   let creating = $state(false);
@@ -105,7 +124,9 @@
   }
 </script>
 
-<div class="page">
+<svelte:window {onkeydown} />
+
+<div class="page" bind:this={pageEl}>
   <header>
     <h2>{t('adv.page.title')}</h2>
     <div class="actions">
@@ -140,7 +161,7 @@
         ondrop={(e) => ondrop(e, a)}
         oncontextmenu={(e) => openMenu(e, a)}
       >
-        <button class="cover" title={t('adv.page.openHint')} onclick={() => dispatch('adventures', 'select', { path: a })}>
+        <button class="cover" title={t('adv.page.openHint')} onclick={() => dispatch('adventures', 'select', { path: a })} ondblclick={() => (picking = a)}>
           {#if cover(a)}<img src={cover(a)} alt="" />{:else}<span class="none"><ImagePlus size={22} /> {t('adv.page.dropCover')}</span>{/if}
         </button>
         <div class="info">
