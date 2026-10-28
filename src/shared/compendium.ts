@@ -138,6 +138,8 @@ export const TYPES: Record<string, TypeDef> = {
   fability: type('fability', [field('fability', 'category', 'text')], 'fitd'),
   rule: type('rule', [field('rule', 'category', 'text', { hint: true })]),
   note: type('note', []),
+  // A roll table (shared/rolltable.ts): the table is the text; any system.
+  table: type('table', [field('table', 'roll', 'text', { hint: true }), field('table', 'crit', 'bool'), field('table', 'fumble', 'bool')]),
 };
 
 // Поле шапки с системой записи.
@@ -333,7 +335,8 @@ export function fieldText(v: FieldValue): string {
   return String(v);
 }
 
-export const blankEntry = (type: string, title = ''): Entry => ({ title, type, fields: {}, body: '' });
+// A new roll table starts with a small one to fill in.
+export const blankEntry = (type: string, title = ''): Entry => ({ title, type, fields: {}, body: type === 'table' ? t('cmp.tableStarter') : '' });
 
 // Для поиска: название, метки и текст без разметки, без учёта регистра и «ё».
 export const searchKey = (s: string) => s.toLowerCase().replace(/ё/g, 'е');

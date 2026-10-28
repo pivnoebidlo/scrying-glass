@@ -8,8 +8,11 @@
   import { assetUrl, thumb } from '../../../shared/vault';
   import { typeDef } from './types.svelte';
   import { entryHtml } from './markup';
+  import { Dices } from '@lucide/svelte';
+  import { parseRollTable, TABLE_TYPE } from '../../../shared/rolltable';
+  import { rolls } from '../rolls.svelte';
 
-  let { entry, players = false, onlink }: { entry: Entry; players?: boolean; onlink?: (name: string) => void } = $props();
+  let { entry, players = false, onlink, path }: { entry: Entry; players?: boolean; onlink?: (name: string) => void; path?: string } = $props();
 
   // Свой тип у игроков приходит вместе с записью (entry.def), у мастера — из библиотеки.
   const def = $derived(entry.def ?? typeDef(entry.type));
@@ -57,6 +60,10 @@
     document.fonts?.ready.then(fit);
   });
 
+  // A roll table: a button to roll it (the result goes to the roll log). `path` — where the entry is, for the log.
+  const table = $derived(entry.type === TABLE_TYPE && !players ? parseRollTable(entry.body, fieldText(entry.fields['roll'] ?? '')) : null);
+  const roll = () => table && rolls.table({ title: entry.title, ...(path ? { path } : {}), table });
+
   function click(e: MouseEvent) {
     const a = (e.target as HTMLElement).closest('a.wikilink') as HTMLElement | null;
     if (!a || !onlink) return;
@@ -68,7 +75,10 @@
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
 <article class="entry" class:players onclick={click} bind:this={el} style:--k={fontScale}>
   <header>
-    <h1>{entry.title}</h1>
+    <div class="title">
+      <h1>{entry.title}</h1>
+      {#if table}<button class="btn roll" onclick={roll}><Dices size={14} /> {t('lib.rollTable')}</button>{/if}
+    </div>
     <div class="sub">{entrySubtitle(entry, def)}</div>
     {#if aliases.length && !players}<div class="aka">{t('lib.alsoKnown', { names: aliases.join(', ') })}</div>{/if}
   </header>
@@ -102,6 +112,15 @@
   h1 {
     margin: 0;
     font-size: 22px;
+  }
+  .title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .roll {
+    margin-left: auto;
+    flex: none;
   }
   .sub {
     color: var(--text-muted);

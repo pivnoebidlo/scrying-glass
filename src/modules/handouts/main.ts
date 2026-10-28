@@ -7,6 +7,7 @@ import { LIBRARY } from '../../shared/vault';
 import { readNoteFile } from '../../main/notes';
 import { isSketchPath } from '../../shared/sketch';
 import { readSketchFile } from '../../main/sketches';
+import { ROLL_RESULT } from '../../shared/rolltable';
 import type { HandoutsState } from './types';
 
 // Записка у игроков — её содержимое с диска (перечитывается при каждом изменении файлов хранилища).
@@ -27,7 +28,8 @@ function prune(s: HandoutsState, ctx: ModuleContext): HandoutsState {
   const tree = ctx.vault.tree;
   if (!tree || !s.current) return withNote(s, ctx);
   // Запись справочника из библиотеки — вне хранилища, её не проверяем.
-  if ((s.current.startsWith(LIBRARY) || s.current.startsWith(BUILTIN)) && s.entry) return s;
+  // So is a roll table's result (an entry made by the roll log).
+  if ((s.current.startsWith(LIBRARY) || s.current.startsWith(BUILTIN) || s.current.startsWith(ROLL_RESULT)) && s.entry) return s;
   const exists = allFiles(tree).some((f) => f.path === s.current && (f.kind === 'image' || f.kind === 'note' || f.kind === 'sketch' || f.kind === 'entry'));
   return withNote(exists ? s : { ...s, current: null }, ctx);
 }

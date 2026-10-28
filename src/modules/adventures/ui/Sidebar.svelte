@@ -36,7 +36,7 @@
       items: [
         { label: t('adv.page.edit'), icon: Pencil, action: onTab('edit') },
         { label: t('adv.page.cover'), icon: ImagePlus, action: onTab('cover') },
-        ...(supplement ? [] : [{ label: t('adv.export', { name: a }), icon: Download, action: () => void window.api.exportAdventure(a) }]),
+        { label: t('adv.export', { name: a }), icon: Download, action: () => void window.api.exportAdventure(a) },
         {
           label: supplement ? t(app.repo.published[a] ? 'adv.supp.updateLong' : 'adv.page.publishBestiary') : t(app.repo.published[a] ? 'repo.menuUpdate' : 'repo.menuPublish', { name: a }),
           icon: CloudUpload,

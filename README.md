@@ -84,12 +84,22 @@ the adventure; a published one stays the same entry in the Community — publish
 
 **Supplements** live on the same tab: content to use in adventures — creatures and compendium entries (spells, items,
 rules, your own entry types), any mix of them. "Create supplement…" asks its name, what it is (bestiary, spells, items,
-rules, collection) and its system. A click on a supplement opens its own page: creatures and entries on the left (with
+rules, roll tables, collection) and its system. A click on a supplement opens its own page: creatures and entries on the left (with
 "+" — a new one is made right in the supplement, nothing asks where to keep it), the one picked or its editor on the
 right, and "Used in:" — ticks of the adventures that use it (also in an adventure's "Name and system…"). An adventure
 sees the creatures and entries of the supplements it uses as its own. "Publish…" sends the supplement whole (creatures,
 entries, pictures) to the Community, under "Supplements" with what it is about; a downloaded one comes into the vault as
-a supplement, ready to be used in adventures, and gets new versions like an adventure.
+a supplement, ready to be used in adventures, and gets new versions like an adventure. "Export…" saves it to a file
+(it comes back as a supplement with "Import adventure…").
+
+**Roll tables** are compendium entries of the type "Roll table": the table is the entry's text, a plain Markdown table
+whose first column is ranges (`1–3`, `01–05`, `00`), or numbered lines, or a list (each item is one number). The
+"Roll" field sets the dice — `d100`, `2d6` (summed), `d10 × d6` (a grid: the first die picks the row, the second the
+column, the header holds the column ranges); empty — a die as big as the last row. A result may hold rolls (`{2d6}`,
+rolled with the table) and [[links]]: a link to another roll table is rolled too, so tables chain (crit → body part →
+effect). "Roll" on the entry puts the whole chain into the roll log; there "Again", "Show to players" and "To Telegram".
+A table marked "Offer on a natural 20" (or 1) shows up as a button under any natural 20 (or 1) in the log. Tables
+travel with their supplement.
 
 **Adventures** are top-level folders of the vault marked as adventures: "Create adventure…" in the switcher above
 the side panel, or "Make an adventure" in the Files tab (on the first open, folders that already contain characters,

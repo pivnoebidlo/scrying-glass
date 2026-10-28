@@ -792,10 +792,12 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
   const all = folderFiles(folder, true);
   const mb = (n: number) => t('core.mb', { n: Math.round(n / 1024 / 1024) });
   const musicSize = all.filter((f) => /\.(mp3|ogg|wav|flac|m4a)$/i.test(f.rel)).reduce((n, f) => n + f.size, 0);
+  // A supplement: the same file, other words (it has no scenes or maps).
+  const supplement = !!state.adventures.supplements?.[adventure];
   const ask = await (win ? dialog.showMessageBox(win, {
     type: 'question',
-    message: t('core.exportAdventure', { name: adventure }),
-    detail: t('core.exportDetail', { size: mb(all.reduce((n, f) => n + f.size, 0) - musicSize) }),
+    message: t(supplement ? 'core.exportSupplement' : 'core.exportAdventure', { name: adventure }),
+    detail: t(supplement ? 'core.exportSupplementDetail' : 'core.exportDetail', { size: mb(all.reduce((n, f) => n + f.size, 0) - musicSize) }),
     checkboxLabel: musicSize ? t('core.withMusic', { size: mb(musicSize) }) : undefined,
     checkboxChecked: false,
     buttons: [t('core.export'), t('core.cancel')],
@@ -804,7 +806,7 @@ ipcMain.handle('packs:export', async (_event, adventure: string) => {
   }) : Promise.resolve({ response: 0, checkboxChecked: false }));
   if (ask.response !== 0) return null;
   const save = await dialog.showSaveDialog(win!, {
-    title: t('core.saveAdventure'),
+    title: t(supplement ? 'core.saveSupplement' : 'core.saveAdventure'),
     defaultPath: path.join(app.getPath('documents'), `${adventure.replace(/[/\\:*?"<>|]/g, '_')}.${PACK_EXT}`),
     filters: [{ name: t('core.adventureFilter'), extensions: [PACK_EXT] }],
   });

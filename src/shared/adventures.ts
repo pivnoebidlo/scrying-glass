@@ -23,7 +23,7 @@ export interface AdventuresState {
   uses?: Record<string, string[]>;
 }
 
-export const SUPPLEMENT_KINDS = ['bestiary', 'spells', 'items', 'rules', 'collection'] as const;
+export const SUPPLEMENT_KINDS = ['bestiary', 'spells', 'items', 'rules', 'tables', 'collection'] as const;
 export type SupplementKind = (typeof SUPPLEMENT_KINDS)[number];
 export const isSupplement = (adv: AdventuresState, folder: string | null) => folder !== null && !!adv.supplements?.[folder];
 

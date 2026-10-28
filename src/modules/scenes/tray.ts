@@ -4,6 +4,7 @@
 import type { AdventuresState } from '../../shared/adventures';
 import type { Scene, SceneContent, ScenesState } from './types';
 import { scenesFor } from './types';
+import { ROLL_RESULT } from '../../shared/rolltable';
 
 // music — плейлисты (папки) и отдельные треки; ambience — зацикленные звуки атмосферы; sounds — разовые эффекты;
 // encounters — id заготовок боёв, остальное — пути файлов.
@@ -32,7 +33,8 @@ export function shown(app: ScreenNow): Tray {
     background: one(app.scene.background),
     map: one(app.maps.current),
     portraits: [...app.portraits.onScreen],
-    handout: one(app.handouts.current),
+    // A roll table's result is shown once, it is not a file to keep at hand.
+    handout: app.handouts.current?.startsWith(ROLL_RESULT) ? [] : one(app.handouts.current),
     music: app.music.playing ? one(app.music.playlist) : [],
     ambience: app.music.ambiencePlaying ? app.music.ambience.map((a) => a.path) : [],
     // Разовый звук «на экране» не держится: он попадает в подборку, когда его сыграли (addShown).

@@ -4,7 +4,7 @@
      one. Every row has its menu (a right click, or «⋯» on the picked one): edit, delete. -->
 <script lang="ts">
   import { onDestroy, onMount, untrack } from 'svelte';
-  import { ArrowLeft, BookOpen, ChevronDown, CloudUpload, ImagePlus, Link2, MoreHorizontal, Pencil, Plus, Search, Trash2 } from '@lucide/svelte';
+  import { ArrowLeft, BookOpen, ChevronDown, CloudUpload, Download, ImagePlus, Link2, MoreHorizontal, Pencil, Plus, Search, Trash2 } from '@lucide/svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -15,6 +15,7 @@
   import { sameRef, type CardRef } from '../../../shared/cards';
   import { systems } from '../../../systems';
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
+  import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
   import { typeDef } from '../../../renderer/lib/entry/types.svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import CardEditor from '../../bestiary/ui/CardEditor.svelte';
@@ -56,6 +57,10 @@
   // Its folders of creatures and of entries: the first of each role in it (made with the supplement).
   const sub = (role: 'bestiary' | 'compendium') => tree?.folders.find((f) => folderRole(f.name) === role)?.path ?? `${folder}/${roleNames()[role][0]}`;
   const cover = $derived(tree?.files.some((f) => f.name === COVER_FILE) ? `${thumb(vaultUrl(`${folder}/${COVER_FILE}`), 240)}&r=${rev}` : '');
+  // Its place in the Community: published by us, or downloaded.
+  const community = $derived(
+    app.repo.published[folder] ? t('adv.page.published', { n: app.repo.published[folder]!.version }) : app.repo.installed[folder] ? t('adv.page.installed', { n: app.repo.installed[folder]!.version }) : ''
+  );
   const systemTitle = $derived(systems.find((s) => s.id === systemFor(ms, folder))?.title ?? systemFor(ms, folder));
 
   const cards = $derived(bestiary.all.filter((c) => c.ref.scope === 'vault' && inside(c.folder)).sort((a, b) => a.name.localeCompare(b.name)));
@@ -123,6 +128,7 @@
     show(e, [
       { label: t('adv.page.edit'), icon: Pencil, action: onedit },
       { label: t('adv.page.cover'), icon: ImagePlus, action: oncover },
+      { label: t('adv.export', { name: folder }), icon: Download, action: () => void window.api.exportAdventure(folder) },
       { label: t('adv.delete', { name: folder }), icon: Trash2, danger: true, action: () => void window.api.deleteAdventure(folder).then((ok) => ok && (advUi.supplement = null)) },
     ]);
 
@@ -151,6 +157,7 @@
           {#each SUPPLEMENT_KINDS as k (k)}<option value={k}>{t(`adv.kind.${k}`)}</option>{/each}
         </select>
         <span class="faint">· {systemTitle}</span>
+        {#if community}<span class="faint">· {community}</span>{/if}
       </div>
     </div>
     <div class="uses-box">
@@ -231,7 +238,7 @@
             <button class="icon-btn" title={t('cmpui.toTrash')} onclick={() => trashEntry(path)}><Trash2 size={15} /></button>
             <button class="icon-btn" title={t('adv.page.more')} onclick={(e) => entryMenu(e, path)}><MoreHorizontal size={15} /></button>
           </div>
-          <EntryCard entry={entryItem.entry} />
+          <EntryCard entry={entryItem.entry} {path} onlink={(n) => peekEntry(n)} />
         </div>
       {:else}
         <p class="hint">{t('adv.supp.hint')}</p>

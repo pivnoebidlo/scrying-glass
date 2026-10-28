@@ -4,6 +4,10 @@
   import { Dices, Trash2, X } from '@lucide/svelte';
   import { diceText, resistStress } from '../../shared/dice';
   import { rolls, type RollEntry } from './rolls.svelte';
+  import { entryHtml } from './entry/markup';
+  import { peekEntry, peekEntryAt } from './entry/peek.svelte';
+  import { dispatch, store } from './store.svelte';
+  import { ROLL_RESULT, stepsMarkdown, type TableSource } from '../../shared/rolltable';
 
 
   let list = $state<HTMLElement>();
@@ -21,6 +25,21 @@
       : '';
   const crit = (e: RollEntry) => !!e.attack && e.d20?.natural === 20;
   const fumble = (e: RollEntry) => !!e.attack && e.d20?.natural === 1;
+
+  // Roll tables: offered on a natural 20 or 1 (the tables marked so), the result — to the players or Telegram.
+  const offers = (e: RollEntry): TableSource[] =>
+    !rolls.tables || !e.d20 ? [] : e.d20.natural === 20 ? rolls.tables.offered('crit') : e.d20.natural === 1 ? rolls.tables.offered('fumble') : [];
+  const markdown = (e: RollEntry) => stepsMarkdown(e.table!.steps, t('lib.tableNone'));
+  const resultPath = (e: RollEntry) => `${ROLL_RESULT}${e.id}`;
+  const shown = (e: RollEntry) => store.state?.handouts.current === resultPath(e);
+  const toPlayers = (e: RollEntry) =>
+    dispatch('handouts', 'toggleEntry', { path: resultPath(e), entry: { title: e.table!.start.title, type: 'note', fields: {}, body: markdown(e) } });
+  function link(ev: MouseEvent) {
+    const a = (ev.target as HTMLElement).closest('a.wikilink') as HTMLElement | null;
+    if (!a) return;
+    ev.preventDefault();
+    peekEntry(a.dataset['link'] ?? '');
+  }
 </script>
 
 {#if rolls.open}
@@ -76,6 +95,31 @@
             {#if p.push && !p.pushed}
               <button class="push" title={t('pack.pushHint')} onclick={() => rolls.pushRoll(e)}>{t('pack.push')}</button>
             {/if}
+          {/if}
+          {#if e.table}
+            {@const tb = e.table}
+            {#each tb.steps as st, i (i)}
+              <div class="step" style:padding-left="{st.depth * 12}px">
+                <button class="step-title" onclick={() => (st.path ? peekEntryAt(st.path, st.title) : peekEntry(st.title))}>{st.title}</button>
+                <span class="note">{st.dice}</span>
+                <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+                <div class="result" onclick={link}>
+                  {#if st.text === null}<span class="note">{t('lib.tableNone')}</span>{:else}{@html entryHtml(st.text)}{/if}
+                </div>
+              </div>
+            {/each}
+            <div class="acts">
+              <button class="push" onclick={() => rolls.table(tb.start, e.who)}>{t('lib.again')}</button>
+              <button class="push" class:on={shown(e)} onclick={() => toPlayers(e)}>{shown(e) ? t('lib.hideFromPlayers') : t('lib.toPlayers')}</button>
+              {#if rolls.telegram}<button class="push" onclick={() => rolls.telegram?.(tb.start.title, markdown(e))}>{t('lib.toTelegram')}</button>{/if}
+            </div>
+          {/if}
+          {#if offers(e).length}
+            <div class="acts">
+              {#each offers(e) as o (o.path ?? o.title)}
+                <button class="push" title={t('lib.tableOffer')} onclick={() => rolls.table(o, e.who)}><Dices size={11} /> {o.title}</button>
+              {/each}
+            </div>
           {/if}
           {#each e.damage as d, i (i)}
             <div class="line dmg">
@@ -194,6 +238,45 @@
   .push:hover {
     border-color: var(--accent);
     color: var(--text-normal);
+  }
+  .acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 2px 0 4px;
+  }
+  .acts .push {
+    margin: 0;
+  }
+  .push.on {
+    border-color: var(--accent);
+    color: var(--text-normal);
+  }
+  .step {
+    margin: 2px 0;
+  }
+  .step-title {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-normal);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .step-title:hover {
+    color: var(--text-accent, var(--accent));
+  }
+  .result {
+    font-size: 13px;
+  }
+  .result :global(p) {
+    margin: 0;
+  }
+  .result :global(a.wikilink) {
+    color: var(--accent);
+    text-decoration: underline dotted;
+    cursor: pointer;
   }
   .tag {
     margin-left: auto;

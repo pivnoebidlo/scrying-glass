@@ -16,7 +16,10 @@
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
-  import { book, entryAt, loadEntries, resolveEntry, spellNames, srd } from './store.svelte';
+  import { allEntries, book, entryAt, loadEntries, resolveEntry, spellNames, srd, type EntryItem } from './store.svelte';
+  import { rolls } from '../../../renderer/lib/rolls.svelte';
+  import { fieldText } from '../../../shared/compendium';
+  import { parseRollTable, TABLE_TYPE, type TableSource } from '../../../shared/rolltable';
   import QuickSearch from './QuickSearch.svelte';
   import { openEntry } from './ui.svelte';
 
@@ -32,6 +35,21 @@
     loadEntries();
   });
   $effect(() => setSpellIndex(spellNames()));
+
+  // Roll tables for the roll log: a link in a result rolls the table it names; tables marked «on a natural 20 / 1»
+  // (the ones seen here) are offered there.
+  const tableOf = (e: EntryItem): TableSource | null => {
+    if (e.entry.type !== TABLE_TYPE) return null;
+    const table = parseRollTable(e.entry.body, fieldText(e.entry.fields['roll'] ?? ''));
+    return table && { title: e.entry.title, path: e.path, table };
+  };
+  rolls.tables = {
+    resolve: (name) => {
+      const e = resolveEntry(name);
+      return e ? tableOf(e) : null;
+    },
+    offered: (on) => allEntries().flatMap((e) => (e.entry.fields[on] === true ? (tableOf(e) ?? []) : [])),
+  };
   void loadCustomTypes();
 
   // Панель карточки и панель записи — на одном месте: открылась одна — закрываем другую.
@@ -103,7 +121,7 @@
     </header>
     <div class="body">
       {#if item}
-        <EntryCard entry={item.entry} onlink={follow} />
+        <EntryCard entry={item.entry} path={item.path} onlink={follow} />
       {:else if !book.builtin.length}
         <p class="faint">{t('cmpui.loading')}</p>
       {:else}

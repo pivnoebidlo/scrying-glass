@@ -242,7 +242,7 @@ Electron-приложение для мастера D&D: окно управле
   без выбранной обложки берёт её); переименование — IPC `adventures:rename`: папка, `renameAdventurePaths` (shared/adventures.ts:
   пути «from/…», ключи и значение `adventure` / `current` / список) во всех модулях синхронно, пути в .json и `image:` .md папки,
   пометки репозитория переезжают — новая версия той же записи.
-  Дополнения: `adventures.supplements` (папка из `list` → вид `SupplementKind`: bestiary / spells / items / rules / collection —
+  Дополнения: `adventures.supplements` (папка из `list` → вид `SupplementKind`: bestiary / spells / items / rules / tables / collection —
   только подпись, содержимое любое; в папке — роли bestiary и compendium, `missingFolders(f, true)`; `create` / `mark` с
   `supplement`, `setSupplementKind`), `adventures.uses` (приключение → дополнения, `setUses`): `visibleIn` показывает в
   приключении и подключённые (`placeTitle` / `placeOrder` — после своего). Страница дополнения — `ui/Supplement.svelte`
@@ -253,7 +253,13 @@ Electron-приложение для мастера D&D: окно управле
   репозитории с `features` 'supplements'): .sgpack с `manifest.supplement` (вид), запись `kind: 'supplement'` + `subkind`
   (`checkPublish` берёт только у дополнения и только слово); импорт (`importPack`) отмечает папку дополнением; каталог —
   раздел «Дополнения», сервис 0.7.0 (тег `repo-v0.7.0`), приложение просит `?kinds=…,supplement`; в корзине —
-  `AdventureData.supplement`.
+  `AdventureData.supplement`. Экспорт в файл — тот же `packs:export` (слова — `core.exportSupplement*`).
+  Таблицы с броском (`shared/rolltable.ts`): запись справочника типа `table` (поля `roll`, `crit`, `fumble`; текст —
+  таблица Markdown с диапазонами, сетка — диапазоны и в заголовке, нумерованные строки или список; `parseRollTable`,
+  `runTable` — цепочка по [[ссылкам]] на таблицы, `{2d6}` — `rollInline`). Кнопка «Бросить» — в `EntryCard` (не у
+  игроков), журнал — `rolls.table` / `RollEntry.table`; справочник даёт журналу `rolls.tables` (`resolve`, `offered` —
+  таблицы с `crit` / `fumble` под натуральной 20 / 1; ставит `EntryDrawer`), Telegram — `rolls.telegram` (фон модуля
+  telegram); игрокам — `handouts/toggleEntry` с путём `roll:<id>` (`ROLL_RESULT`; в подборку и сцену не попадает).
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `DEFAULT_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
   D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`, `isDnd`); правила —

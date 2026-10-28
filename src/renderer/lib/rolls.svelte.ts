@@ -4,6 +4,7 @@ import { t } from './i18n.svelte';
 import { die, parseDice, rollD20, rollDamage, rollPool, rollSave, type D20Mode, type D20Roll, type DamageRoll, type PoolRoll, type SaveRoll } from '../../shared/dice';
 import { getLang } from '../../shared/i18n';
 import { pushPool, rollPack, type PackRollResult, type RollSpec, type RollWords } from '../../shared/syspack';
+import { runTable, type TableSource, type TableStep } from '../../shared/rolltable';
 
 export interface RollEntry {
   id: number;
@@ -18,17 +19,30 @@ export interface RollEntry {
   pool?: PoolRoll & { resist?: boolean };
   // A roll of a system pack (shared/syspack.ts); `pushed` — it was pushed already.
   pack?: PackRollResult & { pushed?: boolean };
+  // A roll table and the tables its result led to (shared/rolltable.ts); `start` — to roll it again.
+  table?: { steps: TableStep[]; start: TableSource };
   // Попадание проверяется по натуральной 20/1 только у атак.
   attack?: boolean;
   damage: DamageRoll[];
 }
 
 const MAX = 50;
+
+// Roll tables are compendium entries: the compendium (its background part) tells the log how to find them, Telegram —
+// how to send a result. Neither is a part of this file's world (renderer/lib does not import modules).
+export interface TableHooks {
+  resolve(name: string): TableSource | null;
+  // The tables offered on a natural 20 or 1 here.
+  offered(on: 'crit' | 'fumble'): TableSource[];
+}
 let next = 1;
 
 class Rolls {
   list = $state<RollEntry[]>([]);
   open = $state(false);
+  tables = $state.raw<TableHooks | null>(null);
+  // Send a result as Markdown (null — no Telegram).
+  telegram = $state.raw<((title: string, markdown: string) => void) | null>(null);
 
   private push(e: Omit<RollEntry, 'id' | 'time'>) {
     this.list = [...this.list, { ...e, id: next++, time: Date.now() }].slice(-MAX);
@@ -69,6 +83,12 @@ class Rolls {
     this.list = this.list.map((x) => (x.id === e.id ? { ...x, pack: { ...x.pack!, pushed: true } } : x));
     const r = pushPool(e.pack.push, packWords(), die);
     this.push({ who: e.who, what: `${e.what} · ${t('pack.pushed')}`, pack: { ...r, pushed: true }, damage: [] });
+  }
+
+  // A roll table: rolled with the chain of tables its result links to.
+  table(start: TableSource, who = t('cmp.type.table')) {
+    const steps = runTable(start, (name) => this.tables?.resolve(name) ?? null, die);
+    this.push({ who, what: start.title, table: { steps, start }, damage: [] });
   }
 
   damage(who: string, what: string, damage: string, crit = false) {

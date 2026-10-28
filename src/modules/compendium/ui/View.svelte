@@ -113,7 +113,7 @@
       {/if}
     </header>
     <div class="page">
-      <EntryCard entry={item.entry} onlink={follow} />
+      <EntryCard entry={item.entry} path={item.path} onlink={follow} />
     </div>
   </div>
 {:else}
