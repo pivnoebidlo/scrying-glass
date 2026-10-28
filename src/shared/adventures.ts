@@ -86,3 +86,24 @@ export function roleFolderHere(tree: VaultFolder, adv: AdventuresState, role: Fo
   const base = adv.current === null ? tree : tree.folders.find((f) => f.path === adv.current);
   return base?.folders.find((f) => folderRole(f.name) === role) ?? null;
 }
+
+// An adventure renamed: its paths in any module's state — strings and keys «from/…» (scenes, maps, trays, order,
+// «monsters:from/…» groups), keys equal to the name (systems, trays, pinned notes, byAdventure, repo marks) and the name
+// itself as a value (the `adventure` of scenes and encounters, `current`, the adventures list). Other texts — names of
+// scenes, notes — stay, even when they happen to be the same.
+export function renameAdventurePaths<T>(value: T, from: string, to: string): T {
+  if (from === to) return value;
+  const path = (s: string) =>
+    s.startsWith(from + '/') ? to + s.slice(from.length) : s.startsWith(`monsters:${from}/`) ? `monsters:${to}` + s.slice(`monsters:${from}`.length) : s;
+  const key = (k: string) => (k === from ? to : path(k));
+  const walk = (v: unknown, k?: string, inArray = false): unknown => {
+    if (typeof v === 'string') return v === from && (inArray || k === 'adventure' || k === 'current') ? to : path(v);
+    if (Array.isArray(v)) return v.map((x) => walk(x, k, true));
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([kk, x]) => [key(kk), walk(x, kk)]));
+    return v;
+  };
+  return walk(value) as T;
+}
+
+// The adventure's cover: a picture in its folder (the core makes it from any picture the GM gives).
+export const COVER_FILE = 'cover.jpg';

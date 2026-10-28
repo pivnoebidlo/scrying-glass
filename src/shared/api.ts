@@ -203,6 +203,10 @@ export interface Api {
   exportAdventure(name: string): Promise<string | null>;
   // Удалить приключение: папка — в корзину, его сцены, заготовки и разметка карт — из приложения (спросит).
   deleteAdventure(name: string): Promise<boolean>;
+  // The new name, or null (taken, not an adventure).
+  renameAdventure(from: string, name: string): Promise<string | null>;
+  // The cover from a picture outside the vault (abs) or in it (rel).
+  setAdventureCover(adventure: string, from: { abs?: string; rel?: string }): Promise<boolean>;
   // Импорт в два шага: выбрать файл (название из него, есть ли такое уже, свободный вариант), потом — импорт под
   // выбранным названием (занятое не принимается).
   pickAdventurePack(): Promise<{ file: string; name: string; exists: boolean; suggestion: string } | null>;

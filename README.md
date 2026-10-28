@@ -76,6 +76,12 @@ On the first launch the app asks you to pick a vault folder, like Obsidian. Any 
         │   └── music/
         └── Chapter 2. Vallaki/
 
+The **Adventures** tab is the first in the strip: every adventure as a tile with its cover, system, what is in it
+(scenes, encounters, cards, notes) and its place in the Community. "Open" makes it the current one; "⋯" — name and
+system, cover, export, publish, delete. A picture dropped on a tile becomes its cover (`cover.jpg` in the adventure's
+folder: it travels with the adventure and is the cover in the Community). Renaming moves everything the app knows of
+the adventure; a published one stays the same entry in the Community — publishing again makes its new version.
+
 **Adventures** are top-level folders of the vault marked as adventures: "Create adventure…" in the switcher above
 the side panel, or "Make an adventure" in the Files tab (on the first open, folders that already contain characters,
 maps and so on become adventures). An adventure always has characters, monsters, backgrounds, maps and music folders —

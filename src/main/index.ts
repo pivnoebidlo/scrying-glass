@@ -1,5 +1,5 @@
 // Ядро: единое состояние, хранилище, сохранение, загрузка модулей, IPC.
-import { app, BrowserWindow, ipcMain, dialog, nativeTheme, protocol, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, nativeImage, nativeTheme, protocol, shell } from 'electron';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { moduleList } from '../modules';
@@ -17,7 +17,7 @@ import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
-import { systemFor } from '../shared/adventures';
+import { COVER_FILE, renameAdventurePaths, systemFor } from '../shared/adventures';
 import { setSystemsOff } from '../systems';
 import { loadSystemPacks, ownPackFile, packBooks, savePack, systemPacks } from './syspacks';
 import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
@@ -871,6 +871,63 @@ async function buildPack(adventure: string, out: string, opts: { music: boolean;
 // Удалить приключение: папка — в корзину приложения, из приложения — его сцены, заготовки боёв, разметка карт,
 // порядок плиток и подписи портретов (они сохраняются в корзине вместе с папкой и возвращаются с ней — AdventureData).
 // Спрашивает подтверждение; перед удалением — снимок.
+// Rename an adventure: its folder, then its paths everywhere — the state of every module (synchronously, before the
+// watcher sees the old folder gone), paths inside the folder's own files (cards' portraits, notes and canvases over
+// pictures, the `image:` of compendium entries). Its repository marks move with it: publishing again is a new
+// version of the same entry. The new name or null.
+ipcMain.handle('adventures:rename', (_event, { from, name }: { from: string; name: string }) => {
+  const to = cleanName(name);
+  const dir = resolveInVault(from);
+  if (!vaultRoot || !to || !dir || !isDir(dir) || from.includes('/') || !state.adventures.list.includes(from)) return null;
+  if (to === from) return from;
+  // Only the case of the letters: on macOS the same folder.
+  const sameFolder = to.toLowerCase() === from.toLowerCase();
+  if (!sameFolder && fs.existsSync(path.join(vaultRoot, to))) return null;
+  saveVault();
+  snapshotNow('manual', true);
+  const next = path.join(vaultRoot, to);
+  if (sameFolder) {
+    const tmp = path.join(vaultRoot, `.rename-${randomUUID().slice(0, 8)}`);
+    fs.renameSync(dir, tmp);
+    fs.renameSync(tmp, next);
+  } else fs.renameSync(dir, next);
+  for (const mod of Object.values(modules)) stateById[mod.id] = renameAdventurePaths(stateById[mod.id], from, to);
+  const quoted = JSON.stringify(from + '/').slice(0, -1);
+  const image = new RegExp(`^(\\s*image:\\s*)${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`, 'gm');
+  for (const f of folderFiles(next, true)) {
+    const ext = path.extname(f.rel).toLowerCase();
+    if (ext !== '.json' && ext !== '.md') continue;
+    try {
+      const text = fs.readFileSync(f.abs, 'utf8');
+      const fixed = ext === '.json' ? text.split(quoted).join(JSON.stringify(to + '/').slice(0, -1)) : text.replace(image, `$1${to}/`);
+      if (fixed !== text) fs.writeFileSync(f.abs, fixed);
+    } catch {
+      // A file that can't be read stays as it was.
+    }
+  }
+  saveVault();
+  rescanVault();
+  reloadCards();
+  broadcastState();
+  return to;
+});
+
+// The adventure's cover: any picture (dropped from outside — an absolute path, or one of the vault) made a JPEG of
+// sensible size and kept as cover.jpg in the adventure's folder — it travels with it (file, Community).
+ipcMain.handle('adventures:setCover', (_event, { adventure, abs, rel }: { adventure: string; abs?: string; rel?: string }) => {
+  const dir = resolveInVault(adventure);
+  const src = abs ?? (rel ? resolveInVault(rel) : null);
+  if (!dir || !isDir(dir) || !src || !state.adventures.list.includes(adventure)) return false;
+  let img = nativeImage.createFromPath(src);
+  if (img.isEmpty()) return false;
+  const { width } = img.getSize();
+  if (width > 1600) img = img.resize({ width: 1600, quality: 'best' });
+  fs.writeFileSync(path.join(dir, COVER_FILE), img.toJPEG(85));
+  rescanVault();
+  broadcastState();
+  return true;
+});
+
 ipcMain.handle('adventures:delete', async (_event, name: string) => {
   const folder = resolveInVault(name);
   if (!vaultRoot || !folder || !isDir(folder) || name.includes('/')) return false;
@@ -1198,7 +1255,9 @@ ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: st
   if (!vaultRoot || !state.adventures.list.includes(p.adventure)) return null;
   // The same id in every source: publishing again anywhere updates that source's entry.
   const known = state.repo.published[p.adventure];
-  const jpeg = p.cover ? coverFrom(resolveInVault(p.cover) ?? '') : null;
+  // No cover picked — the adventure's own (cover.jpg in its folder), if it has one.
+  const own = path.join(resolveInVault(p.adventure) ?? '', COVER_FILE);
+  const jpeg = p.cover ? coverFrom(resolveInVault(p.cover) ?? '') : fs.existsSync(own) ? coverFrom(own) : null;
   const tmp = path.join(app.getPath('userData'), 'repo', `publish-${randomUUID().slice(0, 8)}.${PACK_EXT}`);
   fs.mkdirSync(path.dirname(tmp), { recursive: true });
   try {

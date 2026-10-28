@@ -6,6 +6,7 @@ import { defineControl } from '../../renderer/lib/contrib';
 import Switcher from './ui/Switcher.svelte';
 import Ensure from './ui/Ensure.svelte';
 import Settings from './ui/Settings.svelte';
+import Page from './ui/Page.svelte';
 
 export default defineControl({
   id: 'adventures',
@@ -13,8 +14,9 @@ export default defineControl({
     return t('module.adventures');
   },
   icon: Map,
-  // Раздел настроек — после разделов вкладок.
-  order: 1,
+  // The first tab of the strip (before «Files»).
+  order: -1,
+  view: Page,
   header: Switcher,
   background: Ensure,
   settings: Settings,
