@@ -21,6 +21,9 @@
   let adminToken = $state('');
   let error = $state('');
   let saved = $state('');
+  // Which part the message is about: it shows right under it, not at the bottom of a long page.
+  type Part = 'sources' | 'add' | 'name' | 'key' | 'admin';
+  let at = $state<Part>('sources');
   onMount(async () => {
     await loadInfo();
     name = repo.info?.name ?? '';
@@ -31,8 +34,10 @@
     setTimeout(() => saved === text && (saved = ''), 4000);
   }
 
-  async function run(fn: () => Promise<unknown>) {
+  async function run(part: Part, fn: () => Promise<unknown>) {
+    at = part;
     error = '';
+    saved = '';
     try {
       await fn();
     } catch (e) {
@@ -41,10 +46,10 @@
   }
 
   const browse = () => (closeSettings(), openRepo());
-  const toggle = (s: SourceInfo, on: boolean) => run(async () => (repo.info = await window.api.repoSetSourceOff(s.id, !on)));
-  const remove = (s: SourceInfo) => confirm(t('repo.set.removeAsk', { name: sourceName(s) })) && run(async () => (repo.info = await window.api.repoRemoveSource(s.id)));
+  const toggle = (s: SourceInfo, on: boolean) => run('sources', async () => (repo.info = await window.api.repoSetSourceOff(s.id, !on)));
+  const remove = (s: SourceInfo) => confirm(t('repo.set.removeAsk', { name: sourceName(s) })) && run('sources', async () => (repo.info = await window.api.repoRemoveSource(s.id)));
   const add = () =>
-    run(async () => {
+    run('add', async () => {
       adding = true;
       try {
         repo.info = await window.api.repoAddSource(newName, newUrl);
@@ -61,16 +66,16 @@
     if (!repos.some((s) => s.id === adminSource)) adminSource = (repos.find((s) => !s.admin) ?? repos[0])?.id ?? '';
   });
   const becomeAdmin = () =>
-    run(async () => {
+    run('admin', async () => {
       repo.info = await window.api.repoSetAdmin(adminSource, adminToken);
       adminToken = '';
       flash(t('repo.set.adminSaved'));
     });
-  const stopAdmin = (s: SourceInfo) => run(async () => (repo.info = await window.api.repoSetAdmin(s.id, '')));
-  const saveName = () => run(async () => ((repo.info = await window.api.setRepoName(name)), flash(t('repo.set.saved'))));
-  const exportKey = () => run(async () => (await window.api.repoExportKey()) && ((repo.info = await window.api.repoInfo()), flash(t('repo.set.keySaved'))));
+  const stopAdmin = (s: SourceInfo) => run('admin', async () => (repo.info = await window.api.repoSetAdmin(s.id, '')));
+  const saveName = () => run('name', async () => ((repo.info = await window.api.setRepoName(name)), flash(t('repo.set.saved'))));
+  const exportKey = () => run('key', async () => (await window.api.repoExportKey()) && ((repo.info = await window.api.repoInfo()), flash(t('repo.set.keySaved'))));
   const importKey = () =>
-    run(async () => {
+    run('key', async () => {
       const info = await window.api.repoImportKey();
       if (info) (repo.info = info), flash(t('repo.set.keyLoaded'));
     });
@@ -107,6 +112,8 @@
   </label>
 {/each}
 
+{@render status('sources')}
+
 <div class="setting">
   <div class="info">
     <div class="name">{t('repo.set.add')}</div>
@@ -118,6 +125,7 @@
   <input type="text" bind:value={newUrl} placeholder="https://…" />
   <button class="btn" type="submit" disabled={!newUrl.trim() || adding}>{adding ? t('repo.set.checking') : t('repo.set.addBtn')}</button>
 </form>
+{@render status('add')}
 
 <h4>{t('repo.set.authorTitle')}</h4>
 <div class="setting">
@@ -130,6 +138,7 @@
   <input type="text" bind:value={name} placeholder={t('repo.anonymous')} />
   <button class="btn" type="submit">{t('repo.set.save')}</button>
 </form>
+{@render status('name')}
 
 <div class="setting">
   <div class="info">
@@ -144,6 +153,7 @@
   <button class="btn" onclick={exportKey}>{t('repo.set.exportKey')}</button>
   <button class="btn" onclick={importKey}>{t('repo.set.importKey')}</button>
 </div>
+{@render status('key')}
 
 <h4>{t('repo.set.adminTitle')}</h4>
 <div class="setting">
@@ -165,7 +175,11 @@
   <input type="password" bind:value={adminToken} placeholder={t('repo.set.adminToken')} autocomplete="off" />
   <button class="btn" type="submit" disabled={!adminToken.trim()}>{t('repo.set.adminBtn')}</button>
 </form>
-{#if error}<p class="err">{error}</p>{:else if saved}<p class="faint">{saved}</p>{/if}
+{@render status('admin')}
+
+{#snippet status(part: Part)}
+  {#if at === part}{#if error}<p class="err">{error}</p>{:else if saved}<p class="faint">{saved}</p>{/if}{/if}
+{/snippet}
 
 <style>
   h4 {
