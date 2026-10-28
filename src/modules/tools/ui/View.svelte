@@ -21,6 +21,7 @@
   import TavernGenerator from '../tavern/TavernGenerator.svelte';
   import NpcGenerator from '../npc/NpcGenerator.svelte';
   import MouseGenerator from '../mouse/MouseGenerator.svelte';
+  import BuildCalculator from '../build/BuildCalculator.svelte';
   import MausTables from '../maus/MausTables.svelte';
   import Factions from '../../mausritter/ui/Factions.svelte';
   import CrewSheet from '../../crew/ui/CrewSheet.svelte';
@@ -48,7 +49,7 @@
   const PAGES: Partial<Record<string, Component>> = {
     schedule: SchedulePage, names: NameGenerator, travel: TravelCalculator, dungeon: DungeonGenerator, relic: RelicGenerator,
     shop: ShopGenerator, settlement: SettlementGenerator, treasure: TreasureGenerator, events: EventsGenerator,
-    weather: WeatherGenerator, mouse: MouseGenerator, mausTables: MausTables, factions: Factions, npc: NpcGenerator,
+    weather: WeatherGenerator, mouse: MouseGenerator, mausTables: MausTables, factions: Factions, build: BuildCalculator, npc: NpcGenerator,
     tavern: TavernGenerator, telegram: TelegramCompose, difficulty: Calculator, timer: TimerTool, pointbuy: PointBuy, reshape: Reshape,
     wildMagic: WildMagic, crew: CrewSheet, systems: SystemBuilder, rollTables: RollTables,
   };

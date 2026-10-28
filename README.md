@@ -288,7 +288,7 @@ PDFs are renamed, moved between folders and deleted like notes and travel with t
 The Tools sidebar has the notes and the common tools (schedule, message to players, timer), then a section of the
 current adventure's system: in D&D — the generators (names, NPCs, taverns, settlements, shops, items, dungeons,
 weather, events, treasure), encounter difficulty, point buy, reshaping a stat block and travel; in Mausritter — the mouse generator, the
-Mausritter tables and factions; in Forged in the Dark — the crew; Fate has no tools of its own yet. Tools of other systems are hidden; Settings → Tools
+Mausritter tables, factions and constructions; in Forged in the Dark — the crew; Fate has no tools of its own yet. Tools of other systems are hidden; Settings → Tools
 turns one on for a system where it is needed too (it shows in "Other systems"), remembered by the window.
 
 **Encounter difficulty**: the current combat and every prepared encounter show a badge like "Moderate · 1,100 /
@@ -760,7 +760,10 @@ faction's relevant resources − a rival's for each current goal (4–5 — a ma
 new resource); the ten example factions of the SRD are added from a list. The **Exploration** block in the right panel
 counts turns in an adventure site (every third — an encounter roll: 1 — an encounter, 2 — an omen; every sixth —
 torches mark usage) and watches of travel (four a day; morning and evening start with an encounter roll and its hour).
-Factions and the clock belong to the adventure: they go into the .sgpack and to the trash with it.
+Factions and the clock belong to the adventure: they go into the .sgpack and to the trash with it. **Tools →
+Constructions** prices a burrow by the SRD: rooms (poor, standard, grand) and tunnels in 6" cubes give the materials,
+the upkeep (1% a month), the days of digging for so many tunnel diggers (three dig a cube of soil a day, other
+materials take twice as long) and their wages; "To journal" writes the plan as a table.
 
 **Forged in the Dark** (the Blades in the Dark SRD; not the Blades setting). One card for the scoundrels and for NPCs:
 playbook, heritage, background, vice; twelve actions rated 0–4 under Insight, Prowess and Resolve; stress 0–9, traumas,

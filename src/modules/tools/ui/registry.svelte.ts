@@ -2,7 +2,7 @@
 // common (any system); a system's tools show only in its adventures, unless the GM turned one on for another system in
 // the settings (Tools → "Tools of other systems", remembered by the window).
 import type { Component } from 'svelte';
-import { Beer, Blocks, Dices, CalendarClock, Calculator, Castle, CloudSun, DoorOpen, Flag, Footprints, Gauge, Gem, Hourglass, Rat, Send, Signature, Signpost, Sparkles, Swords, Store, Table2, UserRound, Wand2, Zap } from '@lucide/svelte';
+import { Beer, Blocks, Dices, CalendarClock, Calculator, Castle, CloudSun, DoorOpen, Flag, Footprints, Gauge, Gem, Hourglass, Pickaxe, Rat, Send, Signature, Signpost, Sparkles, Swords, Store, Table2, UserRound, Wand2, Zap } from '@lucide/svelte';
 import { t } from '../../../renderer/lib/i18n.svelte';
 import type { ToolId } from './ui.svelte';
 
@@ -52,6 +52,7 @@ export const TOOLS: ToolDef[] = [
   tool('mouse', Rat, 'tools.side.mouse', MAUS),
   tool('mausTables', Table2, 'tools.side.mausTables', MAUS),
   tool('factions', Flag, 'tools.side.factions', MAUS),
+  tool('build', Pickaxe, 'tools.side.build', MAUS),
   tool('crew', Swords, 'tools.side.crew', FITD),
 ];
 

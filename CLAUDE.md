@@ -503,6 +503,9 @@ Electron-приложение для мастера D&D: окно управле
   `generate.ts` (результат — ячейки `{ table, row, col }`, текст — по языку интерфейса; `rangeOf` / `rowFor` по первому
   столбцу английской таблицы; поселение, гекс, место с комнатами, сокровища, мышь мастера, завязка, погода, реакция),
   `text.ts` (`lineText`, Markdown), `MausTables.svelte`, `store.svelte.ts` (localStorage окна).
+  Постройки (только Mausritter, `ui.tool = 'build'`): `tools/build/rules.ts` (`build`: цена за куб 6" — `ROOM_COST`,
+  содержание 1 % в месяц, три землекопа — куб земли в день, «не земля» вдвое дольше, 5 п в день), страница
+  `BuildCalculator.svelte` (план — localStorage окна, «В журнал» — таблица Markdown).
   Фракции и счётчик исследования Mausritter — модуль `modules/mausritter` (`byAdventure[приключение | '']`: `factions`
   с целями `FactionGoal` (`marks`, `progress`, `relevant`, `rival`), `session` — итог «между сессиями» (`betweenSessions`:
   к6 + relevant − rival, 4–5 +1, 6+ +2), `clock` — ход / стража / день, `last` — бросок встречи; у бросающих действий
