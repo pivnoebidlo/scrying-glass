@@ -262,6 +262,10 @@ export interface Api {
   repoImportKey(): Promise<RepoInfo | null>;
   // The GM says the author's key is kept already (no reminder to save it).
   repoKeyKept(): Promise<RepoInfo>;
+  // The author key as its 24 recovery words (only when there is a key) and back (asks before replacing another
+  // author's key; null — the GM said no).
+  repoRecoveryWords(): Promise<string[]>;
+  repoLoadKeyWords(words: string[]): Promise<RepoInfo | null>;
   onRepoProgress(cb: (p: RepoProgress) => void): void;
   // Снимки данных приложения (main/backups.ts): список (новые сверху), сделать сейчас, восстановить (спросит
   // подтверждение; число записанных файлов, 0 — отменили), открыть папку снимков.

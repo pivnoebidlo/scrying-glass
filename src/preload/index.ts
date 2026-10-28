@@ -143,6 +143,8 @@ const api: Api = {
   repoExportKey: () => ipcRenderer.invoke('repo:exportKey'),
   repoImportKey: () => ipcRenderer.invoke('repo:importKey'),
   repoKeyKept: () => ipcRenderer.invoke('repo:keyKept'),
+  repoRecoveryWords: () => ipcRenderer.invoke('repo:recoveryWords'),
+  repoLoadKeyWords: (words) => ipcRenderer.invoke('repo:loadKeyWords', words),
   onRepoProgress: (cb) => { ipcRenderer.on('repo:progress', (_e, p) => cb(p)); },
   listBackups: () => ipcRenderer.invoke('backups:list'),
   createBackup: () => ipcRenderer.invoke('backups:create'),

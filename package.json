@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@lucide/svelte": "^1.55.0",
+    "@scure/bip39": "^2.4.0",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@types/node": "^26.6.5",
     "electron": "^44.7.0",

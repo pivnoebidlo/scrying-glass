@@ -1,6 +1,6 @@
 <!-- Settings → Community: «Browse» opens the catalog; the sources (the official repository — can be turned
      off; the GM's own repositories — added by address, turned off, removed); the author's name and key (save it to a
-     file, load one); the admin's token of a repository the GM keeps. -->
+     file or write down its recovery words, load it back); the admin's token of a repository the GM keeps. -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Globe, Trash2 } from '@lucide/svelte';
@@ -148,6 +148,10 @@
       {#if repo.info?.author}{t('repo.set.keyIs')} <code title={repo.info.author}>{shortKey(repo.info.author)}</code>{:else}{t('repo.set.noKey')}{/if}
     </div>
   </div>
+</div>
+<div class="row">
+  {#if repo.info?.author}<button class="btn" onclick={() => (repo.words = 'show')}>{t('repo.set.showWords')}</button>{/if}
+  <button class="btn" onclick={() => (repo.words = 'restore')}>{t('repo.set.restoreWords')}</button>
 </div>
 <div class="row">
   <button class="btn" onclick={exportKey}>{t('repo.set.exportKey')}</button>

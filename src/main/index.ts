@@ -46,7 +46,7 @@ import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnounc
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
-import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
+import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, loadKeyWords, recoveryWords, wordsAuthor, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
 import { ID_RE, type BestiaryMark, type RepoEntry, type RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
@@ -1468,6 +1468,22 @@ ipcMain.handle('repo:exportKey', async () => {
   return true;
 });
 ipcMain.handle('repo:keyKept', () => keyKept());
+ipcMain.handle('repo:recoveryWords', () => recoveryWords());
+ipcMain.handle('repo:loadKeyWords', async (_event, words: string[]) => {
+  const author = repoInfo().author;
+  if (author && author !== wordsAuthor(words)) {
+    const ask = await dialog.showMessageBox(getControlWindow()!, {
+      type: 'warning',
+      message: t('core.repoKeyReplace'),
+      detail: t('core.repoKeyReplaceDetail'),
+      buttons: [t('core.repoKeyReplaceYes'), t('core.cancel')],
+      defaultId: 1,
+      cancelId: 1,
+    });
+    if (ask.response !== 0) return null;
+  }
+  return loadKeyWords(words);
+});
 ipcMain.handle('repo:importKey', async () => {
   const win = getControlWindow();
   const pick = await dialog.showOpenDialog(win!, { title: t('core.repoKeyLoad'), filters: [{ name: 'JSON', extensions: ['json'] }], properties: ['openFile'] });

@@ -591,7 +591,10 @@ Electron-приложение для мастера D&D: окно управле
   пока только 'repo', дальше — облачные диски); каждый вызов называет источник; ключ в `settings.repo` (`keySaved` — сохранён в файл / загружен из файла / «Уже сохранён»: `keyKept`, IPC
   `repo:keyKept`; без него при опубликованном — плашка `KeyReminder.svelte`, «Позже» — `remindKey`, публикация снимает
   отсрочку), закрытая часть
-  через `safeStorage`; каталог, обложки — кэш `<userData>/repo/covers` (с хэшем адреса), публикация: `buildPack` (музыка и PDF — галочками; картинки легче — `shrinker` из `main/shrink.ts`: PNG без прозрачности → JPEG 85, сторона до 4096, копия только если легче на 20 %; новое имя `writePack` переписывает в срезах состояния (`renameFiles`) и в .json / .md папки (`renameInText`); файлы мастера не меняются; в окне — «до {size}», `tooBig` считает картинки за 20 %) → publish → PUT в S3 → commit; скачивание во временную
+  через `safeStorage`; слова восстановления — сам ключ: 32 байта = 24 слова BIP39 (английский список, `@scure/bip39`,
+  `shared/keywords.ts`: `keyWords`, `readWords` — номера, регистр, первые 4 буквы, `checkWords`, `wordsKey`), ядро —
+  `recoveryWords` / `loadKeyWords` (PKCS#8 из байтов, чужой ключ — вопрос), IPC `repo:recoveryWords` / `repo:loadKeyWords`,
+  окно `KeyWords.svelte` (`repo.words`: 'show' / 'restore'); каталог, обложки — кэш `<userData>/repo/covers` (с хэшем адреса), публикация: `buildPack` (музыка и PDF — галочками; картинки легче — `shrinker` из `main/shrink.ts`: PNG без прозрачности → JPEG 85, сторона до 4096, копия только если легче на 20 %; новое имя `writePack` переписывает в срезах состояния (`renameFiles`) и в .json / .md папки (`renameInText`); файлы мастера не меняются; в окне — «до {size}», `tooBig` считает картинки за 20 %) → publish → PUT в S3 → commit; скачивание во временную
   папку → `importPack`), IPC `repo:*`, ошибки — `repo:<код>` → `repo.err.<код>`. Модуль `modules/repo`:
   `published` / `installed` по папке приключения, с `source` (нет — официальный; id приключения один во всех
   источниках, пометка — последний; в .sgpack — `PackSlices.repo`; при установке чужого — снимается). Каталог — окно

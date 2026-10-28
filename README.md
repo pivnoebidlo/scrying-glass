@@ -704,9 +704,10 @@ turned on: the app's own repository and any other you add by address (say, your 
 with a title, description, language and cover; a new version replaces the old one, you can take it
 down any time. Something wrong with someone's adventure? "Complain…" sends it to the repository's admin (who
 sees complaints in the catalog after entering the admin token in Settings → Community). Downloaded adventures are offered their new versions (the old copy goes to the trash). Your
-adventures are tied to your author key, made on the first publish: save a copy of it in Settings → Community
-to update them from another computer. Until it is saved, a plate after a publish reminds you ("Save the key to a
-file…", "It's saved already", "Later" — for three days). The repository service lives in `server/` (Helm chart included).
+adventures are tied to your author key, made on the first publish. Settings → Community shows its 24 **recovery
+words** — write them down on paper, and "Restore by words…" brings the same key back on another computer or after a
+reinstall (the key can also be saved to a file and loaded). Until the key is kept somewhere, a plate after a publish
+reminds you ("Show recovery words…", "Save the key to a file…", "It's saved already", "Later" — for three days). The repository service lives in `server/` (Helm chart included).
 
 ## Role-playing systems
 

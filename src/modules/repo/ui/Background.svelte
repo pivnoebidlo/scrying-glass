@@ -10,6 +10,7 @@
   import BestiaryPublishDialog from './BestiaryPublishDialog.svelte';
   import UpdatesNotice from './UpdatesNotice.svelte';
   import KeyReminder from './KeyReminder.svelte';
+  import KeyWords from './KeyWords.svelte';
   import Busy from './Busy.svelte';
   import { cancelNaming, finishInstall, repo } from './repo.svelte';
 
@@ -36,6 +37,7 @@
 <BestiaryPublishDialog />
 <UpdatesNotice />
 <KeyReminder {app} />
+<KeyWords />
 <Busy />
 
 {#if repo.naming}

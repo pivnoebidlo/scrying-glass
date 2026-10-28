@@ -1,5 +1,5 @@
-<!-- The author's key is only on this computer (no file of it yet) and something is published with it: a plate in the
-     corner — save it to a file, «it is kept already», or later (a few days; a new publish brings it back). Without the
+<!-- The author's key is only on this computer (no words written down, no file of it yet) and something is published
+     with it: a plate in the corner — write down the recovery words, save it to a file, «it is kept already», or later (a few days; a new publish brings it back). Without the
      key, after a reinstall the GM can't update or remove what they published. -->
 <script lang="ts">
   import { KeyRound, X } from '@lucide/svelte';
@@ -19,7 +19,7 @@
   const published = $derived(
     Object.keys(app.repo.published).length + Object.keys(repo.info?.systems.published ?? {}).length + Object.keys(repo.info?.bestiaries.published ?? {}).length > 0
   );
-  const shown = $derived(!!repo.info?.author && !repo.info.keySaved && published && !repo.busy && !repo.browsing && repo.keyLater < Date.now());
+  const shown = $derived(!!repo.info?.author && !repo.info.keySaved && published && !repo.busy && !repo.browsing && !repo.words && repo.keyLater < Date.now());
 
   async function save() {
     if (await window.api.repoExportKey()) repo.info = await window.api.repoInfo();
@@ -38,7 +38,8 @@
     </div>
     <p>{t('repo.key.text')}</p>
     <div class="row">
-      <button class="btn primary" onclick={save}>{t('repo.set.exportKey')}</button>
+      <button class="btn primary" onclick={() => (repo.words = 'show')}>{t('repo.set.showWords')}</button>
+      <button class="btn" onclick={save}>{t('repo.set.exportKey')}</button>
       <button class="btn" onclick={kept}>{t('repo.key.kept')}</button>
       <button class="btn" onclick={() => remindKey(Date.now() + LATER)}>{t('repo.key.later')}</button>
     </div>

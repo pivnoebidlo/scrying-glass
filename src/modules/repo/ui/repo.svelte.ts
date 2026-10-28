@@ -39,6 +39,8 @@ export const repo = $state({
   // A download waits for a name: the adventure of that name is already there.
   naming: null as { file: string; name: string; suggestion: string; entry: Found } | null,
   // The reminder to save the author's key is put off until then (ms; KeyReminder.svelte).
+  // The recovery words window: show the key's words, or type words to get the key back.
+  words: null as 'show' | 'restore' | null,
   keyLater: Number(localStorage.getItem('sg.repo.keyLater') ?? 0) || 0,
   // The last result to show (done or failed).
   notice: '',

@@ -2,7 +2,8 @@
 // (the official repository and the GM's own ones), the author's key, catalogs and covers, publishing a pack (ask →
 // upload straight to S3 → commit), downloading one. Every call names its source.
 // - The key (Ed25519) is made on the first publish and kept in settings.json, the private part encrypted with the
-//   system keychain (safeStorage) when it is available; the GM can save it to a file and load it on another computer.
+//   system keychain (safeStorage) when it is available; the GM can save it to a file or write down its recovery words
+//   (shared/keywords.ts) and load it on another computer.
 // - Errors go to the window as `repo:<code>` (the service's code or network / no-url / key), the window words them.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -11,6 +12,7 @@ import * as https from 'node:https';
 import { Readable } from 'node:stream';
 import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, randomBytes, sign } from 'node:crypto';
 import { nativeImage, safeStorage } from 'electron';
+import { keyWords, wordsKey } from '../shared/keywords';
 import { AUTHOR_RE, DEFAULT_REPO_URL, ID_RE, LIMITS, OFFICIAL_SOURCE, REPO_API, signedText, type PublishRequest, type PublishTicket, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type ReportedEntry, type BlockedEntry, type SourceInfo, type SystemMark, type BestiaryMark } from '../shared/repo';
 
 export interface RepoSettings {
@@ -178,6 +180,36 @@ export function loadKeyFile(text: string) {
   if (createPublicKey(priv).export({ format: 'jwk' }).x !== o.x) throw fail('key-file');
   saveKey(o.x, o.d, true);
   return repoInfo();
+}
+
+// The key as recovery words (only an existing key: no words before the first publish) and back.
+export function recoveryWords(): string[] {
+  const { key } = privateKey(false);
+  return keyWords(Buffer.from(key.export({ format: 'jwk' }).d!, 'base64url'));
+}
+
+// The author whose key the words are (to ask before replacing another one).
+export function wordsAuthor(words: string[]): string {
+  return keyFromWords(words).x;
+}
+
+export function loadKeyWords(words: string[]) {
+  const { x, d } = keyFromWords(words);
+  saveKey(x, d, true);
+  return repoInfo();
+}
+
+// An Ed25519 private key from its 32 bytes: PKCS#8 is a fixed prefix and the bytes.
+const PKCS8_ED25519 = Buffer.from('302e020100300506032b657004220420', 'hex');
+function keyFromWords(words: string[]): { x: string; d: string } {
+  let seed: Uint8Array;
+  try {
+    seed = wordsKey(words);
+  } catch {
+    throw fail('key-words');
+  }
+  const jwk = createPrivateKey({ key: Buffer.concat([PKCS8_ED25519, seed]), format: 'der', type: 'pkcs8' }).export({ format: 'jwk' });
+  return { x: jwk.x!, d: jwk.d! };
 }
 
 // ---- Calls ----
