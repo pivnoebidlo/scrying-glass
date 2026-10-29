@@ -36,15 +36,15 @@
     return '';
   });
 
-  const close = () => (repo.words = null);
+  // Shown words close as written: the GM has seen them, no reminder of the key after that.
+  async function close() {
+    if (repo.words === 'show' && words.length && !repo.info?.keySaved) repo.info = await window.api.repoKeyKept();
+    repo.words = null;
+  }
 
   async function copy() {
     await navigator.clipboard.writeText(words.map((w, i) => `${i + 1}. ${w}`).join('\n'));
     copied = true;
-  }
-  async function written() {
-    repo.info = await window.api.repoKeyKept();
-    close();
   }
   async function restore() {
     working = true;
@@ -59,6 +59,8 @@
     }
   }
 </script>
+
+<svelte:window onkeydown={(e) => repo.words && e.key === 'Escape' && (e.preventDefault(), close())} />
 
 {#if repo.words}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -81,8 +83,7 @@
         <div class="row">
           <button class="btn" onclick={copy} disabled={!words.length}><Copy size={14} /> {t(copied ? 'repo.words.copied' : 'repo.words.copy')}</button>
           <span class="space"></span>
-          <button class="btn" onclick={close}>{t('repo.words.close')}</button>
-          <button class="btn primary" onclick={written} disabled={!words.length}>{t('repo.words.written')}</button>
+          <button class="btn primary" onclick={close}>{t('repo.words.close')}</button>
         </div>
       {:else if done}
         <p>{done}</p>

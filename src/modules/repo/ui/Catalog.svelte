@@ -127,10 +127,28 @@
     return f ? (app.repo.installed[f]?.version ?? 0) : 0;
   };
 
-  const close = () => (repo.browsing = false);
+  // Back where it was opened from: a section of the settings opens again.
+  function close() {
+    repo.browsing = false;
+    if (repo.backTo) openSettings(repo.backTo as never);
+    repo.backTo = null;
+  }
   const settings = () => (close(), openSettings('repo'));
   // Esc closes the window, unless a dialog above it is open.
-  const onkey = (e: KeyboardEvent) => e.key === 'Escape' && !repo.publish && !repo.naming && !repo.reporting && close();
+  const dialogAbove = () => !!(repo.publish || repo.naming || repo.reporting);
+  function onkey(e: KeyboardEvent) {
+    if (e.key === 'Escape' && !dialogAbove()) return close();
+    // ↑ ↓ — the previous / next entry, from the list or the search field (not from the other fields and lists).
+    if ((e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || dialogAbove() || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+    const el = e.target as HTMLElement;
+    if (el.closest('select, textarea, [role="menu"]') || (el.closest('input') && !el.classList.contains('search'))) return;
+    if (!entries.length) return;
+    e.preventDefault();
+    const i = picked ? entries.findIndex((x) => key(x) === key(picked)) : -1;
+    const next = entries[Math.max(0, Math.min(entries.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))]!;
+    chosen = key(next);
+    requestAnimationFrame(() => document.querySelector<HTMLElement>('.window .list .item.on')?.scrollIntoView({ block: 'nearest' }));
+  }
   const reasonDate = (ms: number) => new Date(ms).toLocaleDateString(getLang(), { day: 'numeric', month: 'short' });
 
   // An entry's menu (a right click): the same as the buttons under its details.

@@ -57,7 +57,7 @@
 <div class="builder">
   <span class="faint">{t('adv.builderDesc')}</span>
   <span class="buttons">
-    <button class="btn" onclick={() => (closeSettings(), openRepo('all', 'systems'))}><Globe size={14} /> {t('adv.findSystems')}</button>
+    <button class="btn" onclick={() => (closeSettings(), openRepo('all', 'systems', 'adventures'))}><Globe size={14} /> {t('adv.findSystems')}</button>
     <button class="btn" onclick={() => (closeSettings(), openBuilder())}><Blocks size={14} /> {t('sb.title')}</button>
     <button class="btn" title={t('adv.contentFromFileHint')} onclick={fromFile}><FileDown size={14} /> {t('adv.contentFromFile')}</button>
   </span>

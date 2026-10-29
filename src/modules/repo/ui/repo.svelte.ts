@@ -27,6 +27,8 @@ export const repo = $state({
   browsing: false,
   startShow: 'all' as 'all' | 'updates',
   startWhat: 'everything' as What,
+  // Opened from a section of the settings: closing goes back there.
+  backTo: null as string | null,
   // New versions of what this vault downloaded, found on launch and not announced yet.
   updates: [] as { key: string; entry: Found }[],
   covers: {} as Record<string, string | null>,
@@ -129,9 +131,10 @@ async function work<T>(what: string, fn: () => Promise<T>): Promise<T | undefine
 }
 
 // Open the catalog window (on the updates of what was downloaded — after the launch notice).
-export function openRepo(show: 'all' | 'updates' = 'all', what: What = 'everything') {
+export function openRepo(show: 'all' | 'updates' = 'all', what: What = 'everything', from: string | null = null) {
   repo.startShow = show;
   repo.startWhat = what;
+  repo.backTo = from;
   repo.browsing = true;
   void loadCatalogs();
 }

@@ -45,7 +45,7 @@
     }
   }
 
-  const browse = () => (closeSettings(), openRepo());
+  const browse = () => (closeSettings(), openRepo('all', 'everything', 'repo'));
   const toggle = (s: SourceInfo, on: boolean) => run('sources', async () => (repo.info = await window.api.repoSetSourceOff(s.id, !on)));
   const remove = (s: SourceInfo) => confirm(t('repo.set.removeAsk', { name: sourceName(s) })) && run('sources', async () => (repo.info = await window.api.repoRemoveSource(s.id)));
   const add = () =>

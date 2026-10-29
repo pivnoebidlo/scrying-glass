@@ -59,8 +59,12 @@
   // ↑ ↓ — the previous / next section, as the lists of the side panel (not in a field: there the keys are its own).
   const order = $derived([GENERAL, HOTKEYS_SECTION, ...moduleSections.map((c) => c.id as string), ABOUT]);
   const sectionNow = $derived(about ? ABOUT : hotkeys ? HOTKEYS_SECTION : current ? (current.id as string) : GENERAL);
+  // Esc closes the top layer only: a dialog, a picker or a menu opened over the settings goes first.
+  let win = $state<HTMLElement | null>(null);
+  const layerAbove = () =>
+    [...document.querySelectorAll<HTMLElement>('[aria-modal="true"], .modal, [role="menu"]')].some((el) => el !== win && !win?.contains(el));
   function onkeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') close();
+    if (e.key === 'Escape' && !e.defaultPrevented && !layerAbove()) close();
     if ((e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || e.defaultPrevented) return;
     const el = e.target as HTMLElement;
     if (el.closest('input, textarea, select, [contenteditable="true"]')) return;
@@ -78,7 +82,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="backdrop" onclick={(e) => e.target === e.currentTarget && close()}>
-  <div class="modal" role="dialog" aria-modal="true" aria-label={t('app.settings')}>
+  <div class="modal" role="dialog" aria-modal="true" aria-label={t('app.settings')} bind:this={win}>
     <nav class="nav">
       <div class="pane-title">{t('app.settings')}</div>
       <button class="nav-item" class:active={!about && !hotkeys && (general || !current)} onclick={() => (workspace.settingsSection = GENERAL)}>
