@@ -5,6 +5,7 @@
  "family": "mausritter",
  "release": 1,
  "title": "Mausritter",
+ "about": {"en": "Mice with inventory slots, roll-under saves, damage to HP and then to STR", "ru": "Мыши с инвентарём по клеткам, спасброски на понижение, урон в защиту, потом в СИЛ"},
  "author": "Scrying Glass",
  "license": "This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.",
  "url": "https://mausritter.com",

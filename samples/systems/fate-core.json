@@ -5,6 +5,7 @@
  "family": "fate",
  "release": 1,
  "title": "Fate Core",
+ "about": {"en": "Aspects, stress and consequences in combat, Fate dice", "ru": "Аспекты, стресс и последствия в бою, кубы Fate"},
  "author": "Scrying Glass",
  "license": "Fate Core System and Fate Accelerated Edition — Evil Hat Productions, LLC (Leonard Balsera, Brian Engard, Jeremy Keller, Ryan Macklin, Mike Olson, Clark Valentine, Amanda Valentine, Fred Hicks, Rob Donoghue), CC BY 3.0 (http://www.faterpg.com/). The card's structure and the Russian names are our own.",
  "url": "http://www.faterpg.com/",

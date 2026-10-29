@@ -20,7 +20,8 @@ Electron-приложение для мастера D&D: окно управле
   source of truth, `ru: Messages<typeof en>` (a missing key fails the type check); merged in `shared/i18n/index.ts`
   (`tr(lang, key, params)`, non-reactive `t` for the main process and plain code).
 - Dictionaries by part: `shared/i18n/app.ts`, `modules/<module>/i18n.ts` (key prefix — the module or a short form:
-  `adv.`, `init.`, `cmpui.`, `best.`…), `systems/i18n.ts` (`dnd.`, `fcore.`, `sys.`), `main/i18n.ts` (`core.` —
+  `adv.`, `init.`, `cmpui.`, `best.`…), `systems/i18n.ts` (`pack.`, `sys.`), a system plugin's own (`systems/dnd5e/i18n.ts`:
+  `dnd.`, its tools, compendium types, `best.lss*` — all D&D text lives there), `main/i18n.ts` (`core.` —
   system dialogs, errors, default file names). New dictionary — import and spread into `en` / `ru` in
   `shared/i18n/index.ts`.
 - Windows: `t` from `renderer/lib/i18n.svelte.ts` (reactive `locale.lang`, set by `store.svelte.ts` from
@@ -292,7 +293,11 @@ Electron-приложение для мастера D&D: окно управле
   у персонажа системы с импортёром (`importersOf`); окно «Что изменилось» — `SystemUi.importUpdate` (D&D —
   `systems/dnd5e/ImportUpdate.svelte`; нет — `confirm` в фоне бестиария), раздел настроек «Карточки» —
   `SystemUi.cardSettings` (D&D — `LssSettings.svelte`). LSS — `systems/dnd5e/importer.ts` поверх `lss.ts`. Встроенное
-  содержимое — `resources/` (потом — скачиваемым).
+  содержимое — `resources/` (потом — скачиваемым). Строки плагина — его словарь (`systems/dnd5e/i18n.ts`). Описание
+  системы — `SystemDef.about`, у пакета — поле `about` (`Loc`; конструктор — «О системе»; у официальных пакетов, опубликованных
+  до него, — запасные `adv.about.*` в `adventures/ui/Settings.svelte`, `PACK_ABOUT`). С выключенным D&D его не видно нигде,
+  кроме «Ролевых систем» (включить) и «О программе» (атрибуция): разделы настроек и инструменты других систем — только
+  включённых.
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `LEGACY_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
   D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`; из плагинов и пакетов); правила —

@@ -11,7 +11,8 @@
 
   // Families of the enabled systems (vault.systemsOff — to follow the settings).
   const families = $derived((store.state.vault.systemsOff, FAMILIES.filter((f) => enabledSystems().some((s) => s.family === f.id))));
-  const others = (family: string) => TOOLS.filter((d) => d.families && !d.families.includes(family));
+  // Tools of other systems turned on (a tool of systems all off is not offered).
+  const others = (family: string) => TOOLS.filter((d) => d.families && !d.families.includes(family) && d.families.some((x) => families.some((f) => f.id === x)));
   const title = (id: string) => FAMILIES.find((f) => f.id === id)?.title ?? id;
 </script>
 

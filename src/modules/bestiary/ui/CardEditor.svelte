@@ -9,7 +9,8 @@
   import type { AppState } from '../../../shared/types';
   import { LANGUAGES, SIDE_TITLES, cardImageUrl, defaultSide, imageScope, langName, type CardKind, type CardSide } from '../../../shared/cards';
   import { folderLabel } from './places';
-  import { familyOf, systemOf, systems } from '../../../systems';
+  import { enabledSystems, familyOf, systemOf } from '../../../systems';
+  import { store } from '../../../renderer/lib/store.svelte';
   import { statsEditor, statsView } from '../../../systems/ui';
   import { bestiary, type Draft } from './cards.svelte';
   import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
@@ -25,6 +26,8 @@
   const KINDS: CardKind[] = ['monster', 'npc', 'character'];
 
   const card = $derived(draft.card);
+  // Systems to choose from: the ones turned on (the card's own stays in the list even when it is off).
+  const choices = $derived((store.state.vault.systemsOff, enabledSystems()));
   const Editor = $derived(statsEditor(card.system, card.stats));
   const Preview = $derived(statsView(card.system, card.stats));
   // Предпросмотр получает снимок: компонент статблока не должен держать живой прокси черновика.
@@ -155,8 +158,8 @@
           <label class="field">
             <span>{t('best.system')}</span>
             <select value={card.system} onchange={(e) => changeSystem(e.currentTarget.value)}>
-              {#each systems as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
-              {#if !systems.some((s) => s.id === card.system)}<option value={card.system}>{card.system}</option>{/if}
+              {#each choices as s (s.id)}<option value={s.id}>{s.title}</option>{/each}
+              {#if !choices.some((s) => s.id === card.system)}<option value={card.system}>{systemOf(card.system).title}</option>{/if}
             </select>
           </label>
           <label class="field">

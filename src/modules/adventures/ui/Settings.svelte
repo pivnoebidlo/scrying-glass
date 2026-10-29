@@ -24,7 +24,7 @@
   }
 
   // Что даёт система — строка под названием.
-  // The app's own packs have a line in the dictionary.
+  // The official packs published before `about` existed: their line is in the dictionary (until republished).
   const PACK_ABOUT = ['fate-core', 'mausritter', 'fitd'];
   const about = (id: string) => systemOf(id).about ?? (PACK_ABOUT.includes(id) ? t(`adv.about.${id as 'fate-core'}`) : '');
 

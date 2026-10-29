@@ -4,8 +4,13 @@
   import { onMount } from 'svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { systemUis } from '../../../systems/ui';
+  import { store } from '../../../renderer/lib/store.svelte';
+  import { enabledSystems } from '../../../systems';
 
   let {}: ModuleProps<'bestiary'> = $props();
+
+  // Sections of the systems turned on (vault.systemsOff — to follow the settings).
+  const shown = $derived((store.state.vault.systemsOff, systemUis.filter((u) => u.cardSettings && enabledSystems().some((s) => s.family === u.family))));
 
   let lib = $state<{ path: string | null; isDefault: boolean }>({ path: null, isDefault: true });
   const refresh = async () => (lib = await window.api.library());
@@ -45,7 +50,7 @@
 </div>
 
 <!-- What the systems add here (D&D: the LSS spell table). -->
-{#each systemUis as u (u.family)}
+{#each shown as u (u.family)}
   {#if u.cardSettings}<u.cardSettings />{/if}
 {/each}
 

@@ -2,8 +2,6 @@
 import type { Messages } from '../../shared/i18n/core';
 
 export const en = {
-  'adv.about.dnd5e-2024': "Built-in monsters and the SRD 5.2.1 compendium, encounter difficulty, point buy",
-  'adv.about.dnd5e-2014': "Built-in monsters and the SRD 5.1 compendium, import from Long Story Short",
   'adv.about.fate-core': "Aspects, stress and consequences in combat, Fate dice",
   'adv.about.mausritter': "Mice with inventory slots, roll-under saves, damage to HP and then to STR",
   'adv.about.fitd': "Scoundrels with action dots, d6 pools, stress, trauma and harm; progress clocks",
@@ -114,8 +112,6 @@ export const en = {
 };
 
 export const ru: Messages<typeof en> = {
-  'adv.about.dnd5e-2024': "Встроенные монстры и справочник SRD 5.2.1, сложность боя, покупка характеристик",
-  'adv.about.dnd5e-2014': "Встроенные монстры и справочник SRD 5.1, импорт из Long Story Short",
   'adv.about.fate-core': "Аспекты, стресс и последствия в бою, кубы Fate",
   'adv.about.mausritter': "Мыши с инвентарём по клеткам, спасброски на понижение, урон в защиту, потом в СИЛ",
   'adv.about.fitd': "Негодяи с точками действий, пулы к6, стресс, травмы и вред; часы прогресса",

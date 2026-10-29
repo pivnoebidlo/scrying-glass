@@ -5,6 +5,7 @@
 import type { Component } from 'svelte';
 import { Beer, Blocks, Dices, CalendarClock, Castle, Flag, Hourglass, Pickaxe, Rat, Send, Signature, Store, Swords, Table2, UserRound } from '@lucide/svelte';
 import { systemUis } from '../../../systems/ui';
+import { enabledSystems } from '../../../systems';
 import { t } from '../../../renderer/lib/i18n.svelte';
 import type { ToolId } from './ui.svelte';
 
@@ -89,6 +90,8 @@ export type Place = 'common' | 'own' | 'extra';
 export function placeOf(def: ToolDef, family: string): Place | null {
   if (!def.families) return 'common';
   if (def.families.includes(family)) return 'own';
-  return (extra[family] ?? []).includes(def.id) ? 'extra' : null;
+  // Turned on by hand — while one of its systems is on.
+  const on = def.families.some((f) => enabledSystems().some((s) => s.family === f));
+  return on && (extra[family] ?? []).includes(def.id) ? 'extra' : null;
 }
 export const shown = (id: ToolId, family: string) => id === 'notes' || TOOLS.some((d) => d.id === id && placeOf(d, family) !== null);

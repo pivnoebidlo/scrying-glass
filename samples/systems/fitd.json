@@ -5,6 +5,7 @@
  "family": "fitd",
  "release": 1,
  "title": "Forged in the Dark",
+ "about": {"en": "Scoundrels with action dots, d6 pools, stress, trauma and harm; progress clocks", "ru": "Негодяи с точками действий, пулы к6, стресс, травмы и вред; часы прогресса"},
  "author": "Scrying Glass",
  "license": "This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/). The card's structure and the Russian names are our own.",
  "url": "http://www.bladesinthedark.com/",

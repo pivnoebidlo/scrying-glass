@@ -111,6 +111,8 @@ export interface SystemPack {
   kinds?: CardKind[];
   // The line under a card's name: «{role} · {tier}» (fields by key; one for every language or per language).
   subtitle?: Loc;
+  // What the system gives, a line under its title in Settings → Game systems.
+  about?: Loc;
   // A number to sort cards by (a formula).
   rank?: string;
   sections: SectionDef[];
@@ -407,6 +409,7 @@ export function validatePack(x: unknown): SystemPack | string {
     ...(num(x['release']) ? { release: Math.floor(num(x['release'])!) } : {}),
     ...(kinds.length ? { kinds } : {}),
     ...(locOf(x['subtitle']) ? { subtitle: locOf(x['subtitle'])! } : {}),
+    ...(locOf(x['about']) ? { about: locOf(x['about'])! } : {}),
     ...(formulaOf(x['rank']) ? { rank: x['rank'] as string } : {}),
     sections,
     tracker,

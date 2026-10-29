@@ -192,6 +192,7 @@
           <p class="faint small">{t('sb.idHint')}</p>
           <label class="row"><span>{t('sb.author')}</span><input type="text" disabled={ro} value={d.author ?? ''} oninput={(e) => (d.author = e.currentTarget.value || undefined)} /></label>
           <label class="row"><span>{t('sb.license')}</span><textarea rows="3" disabled={ro} placeholder={t('sb.licensePh')} value={d.license ?? ''} oninput={(e) => (d.license = e.currentTarget.value || undefined)}></textarea></label>
+          <label class="row"><span>{t('sb.aboutSystem')}</span><LocInput value={d.about} set={(v) => (d.about = v || undefined)} placeholder={t('sb.aboutHint')} disabled={ro} /></label>
           <label class="row"><span>{t('sb.subtitle')}</span><LocInput value={d.subtitle} set={(v) => (d.subtitle = v || undefined)} placeholder={t('sb.subtitleHint')} disabled={ro} /></label>
           <div class="row"><span>{t('sb.rank')}</span><FormulaInput value={d.rank ?? ''} set={(v) => (d.rank = v || undefined)} keys={allKeys} disabled={ro} /></div>
         {:else if builder.sel.kind === 'section' && d.sections[builder.sel.s]}

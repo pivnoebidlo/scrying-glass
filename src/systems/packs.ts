@@ -53,6 +53,9 @@ function systemOfPack(p: SystemPack): SystemDef {
       return loc(p.title, getLang());
     },
     family: p.family ?? p.id,
+    get about() {
+      return p.about ? loc(p.about, getLang()) : undefined;
+    },
     subtitle: (s, lang) => packSubtitle(p, s ?? {}, lang),
     rank: (s) => (p.rank ? evalFormula(p, s ?? {}, p.rank) : null),
     combat: (s) => packCombat(p, s ?? {}),

@@ -49,6 +49,14 @@ describe('system packs', () => {
     expect(p.tracker.init).toEqual({ type: 'roll', dice: '1d20', bonus: 'mod' });
   });
 
+  it('keeps what the system gives (about) — the sample packs have it', () => {
+    expect((validatePack({ ...raw, about: { en: 'Dice', ru: 'Кубы' } }) as SystemPack).about).toEqual({ en: 'Dice', ru: 'Кубы' });
+    for (const id of ['fate-core', 'mausritter', 'fitd']) {
+      const pack = validatePack(JSON.parse(fs.readFileSync(path.join('samples/systems', `${id}.json`), 'utf8'))) as SystemPack;
+      expect(pack.about).toHaveProperty('ru');
+    }
+  });
+
   it('refuses broken packs', () => {
     expect(validatePack({ ...raw, scryingGlass: 'adventure' })).toBe('not-a-pack');
     expect(validatePack({ ...raw, id: 'Bad Id' })).toBe('id');
