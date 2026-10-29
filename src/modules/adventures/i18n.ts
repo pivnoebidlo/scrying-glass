@@ -2,10 +2,10 @@
 import type { Messages } from '../../shared/i18n/core';
 
 export const en = {
-  'adv.contentFromFile': "Content from a file…",
-  'adv.contentFromFileHint': "Install content of a system (.sgcontent): built-in creatures and compendium books",
-  'adv.contentHas': "Built-in creatures: {cards}, compendium books: {books}",
-  'adv.contentMissing': "Not downloaded: the system's built-in creatures and compendium",
+  'adv.contentFromFile': "System data from a file…",
+  'adv.contentFromFileHint': "Install the data of a system (.sgcontent): built-in creatures and compendium books",
+  'adv.contentHas': "Data of the system: built-in creatures — {cards}, compendium books — {books}",
+  'adv.contentMissing': "Data of the system, not downloaded: built-in creatures and compendium",
   'adv.page.supplements': "Supplements",
   'adv.page.createSupplement': "Create supplement…",
   'adv.page.supplementPlaceholder': "Supplement name",
@@ -113,10 +113,10 @@ export const en = {
 };
 
 export const ru: Messages<typeof en> = {
-  'adv.contentFromFile': "Содержимое из файла…",
-  'adv.contentFromFileHint': "Установить содержимое системы (.sgcontent): встроенных существ и книги справочника",
-  'adv.contentHas': "Встроенных существ: {cards}, книг справочника: {books}",
-  'adv.contentMissing': "Не скачано: встроенные существа и справочник системы",
+  'adv.contentFromFile': "Данные системы из файла…",
+  'adv.contentFromFileHint': "Установить данные системы (.sgcontent): встроенных существ и книги справочника",
+  'adv.contentHas': "Данные системы: встроенных существ — {cards}, книг справочника — {books}",
+  'adv.contentMissing': "Данные системы, не скачаны: встроенные существа и справочник",
   'adv.page.supplements': "Дополнения",
   'adv.page.createSupplement': "Создать дополнение…",
   'adv.page.supplementPlaceholder': "Название дополнения",

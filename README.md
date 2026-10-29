@@ -202,10 +202,11 @@ casting time, concentration and ritual (the filter appears when the Spells type 
 level or alphabetical. Source: System Reference Document 5.1 and 5.2.1 © Wizards of the Coast, CC BY 4.0; Markdown of
 both versions and the translation — OmnisGM (rules.omnisgm.com), CC BY 4.0. More in `content/dnd5e-srd/README.md`.
 
-The D&D SRD (its creatures and compendium, about 1 MB) is not in the installer: it is **content of the system**,
-downloaded from the Community — on the first launch with D&D ticked, or by itself after an update from 0.65. Settings →
-Game systems shows what is installed (Remove) and what can be downloaded; «Content from a file…» installs an
-`.sgcontent` file; without it Cards and the compendium of a D&D adventure offer «Download».
+The D&D SRD (its creatures and compendium, about 1 MB) is not in the installer: it is the **data of the system**,
+downloaded from the Community (in Systems, next to the systems themselves) — on the first launch with D&D ticked,
+or by itself after an update from 0.65. Settings → Game systems shows what is installed (Remove) and what can be
+downloaded; «System data from a file…» installs an `.sgcontent` file; without it Cards and the compendium of a D&D
+adventure offer «Download».
 
 In **Fate Core** adventures the Fate rules are built in instead of the D&D SRD (the ladder, dice, outcomes, the four
 actions, aspects, invokes and compels, fate points, conflict, stress, consequences, contests, stunts, milestones, NPCs)

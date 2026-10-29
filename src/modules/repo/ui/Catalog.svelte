@@ -70,14 +70,8 @@
       get title() {
         return t('repo.whatSystems');
       },
-      fits: (e) => e.kind === 'system',
-    },
-    {
-      id: 'content',
-      get title() {
-        return t('repo.whatContent');
-      },
-      fits: (e) => e.kind === 'content',
+      // A system and its data (built-in creatures and books: D&D's SRD) — together.
+      fits: (e) => e.kind === 'system' || e.kind === 'content',
     },
   ];
   const entries = $derived(

@@ -164,14 +164,14 @@ Electron-приложение для мастера D&D: окно управле
   `origin` — перевод/вариант, портреты, заметки) + блок `stats`, который описывает система (`src/systems/<система>/`:
   типы, подписи на разных языках, статблок; реестры `systems/index.ts` и `systems/ui.ts`). Неизвестная система
   показывается как «поле — значение». Одна карточка — один язык, перевод — отдельная карточка с `origin`.
-- Содержимое систем (с 0.66; `shared/content.ts`, ядро — `main/content.ts`): `.sgcontent` — ZIP с `content.json`
+- Данные систем — «содержимое» в коде (с 0.66; `shared/content.ts`, ядро — `main/content.ts`): `.sgcontent` — ZIP с `content.json`
   (`ContentManifest`: id, family, release, cards, books, license), `bestiary/<система>.json`, `compendium/<система>.<lang>.json`;
   ставится в `<библиотека>/content/<id>/` (`installContent`: во временную папку, проверка, только известные файлы),
   встроенные карточки и книги читаются из `resources/` и отсюда (`builtinDirs`; при установке, удалении, смене библиотеки —
   `contentChanged` в main/index.ts: `reloadBuiltin`, `resetBuiltinEntries`), список — `vault.content`. В «Сообществе» —
   вид `content` (`system` — семейство; сервис 0.8.0, `features: ['content']`), IPC `repo:installContent` /
   `repo:publishContent`, `content:installFile` / `content:remove`, пометки — `settings.repo.content`. Окно: раздел
-  каталога «Содержимое систем», строки в «Ролевых системах», подсказка `repo/ui/ContentHint.svelte` в «Карточках» и
+  каталога «Системы» (рядом с системами, «Данные системы»; не путать с бестиариями — свои карточки мастеров), строки в «Ролевых системах», подсказка `repo/ui/ContentHint.svelte` в «Карточках» и
   справочнике (`SystemPlugin.content` — официальное содержимое семейства, D&D — `dnd5e-srd`), `autoContent` — один раз
   скачать недостающее официальное содержимое включённых плагинов (обновление с 0.65, первый запуск; localStorage
   `sg.content.auto`). SRD D&D — `content/dnd5e-srd/` в репозитории (не в установщике), упаковка — `npm run build-content`,
