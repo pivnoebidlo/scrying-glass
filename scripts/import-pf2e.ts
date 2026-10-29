@@ -1,7 +1,8 @@
 // Pathfinder 2e data of the system: content/pf2e-core/ from the data of the pf2e system for Foundry VTT
 // (github.com/foundryvtt/pf2e; code Apache 2.0, each entry names its license — only ORC ones are taken).
-// What: the creatures of Monster Core (stat blocks only — the lore of Golarion is not open), conditions, spells and
-// actions of Player Core and Player Core 2, the monster abilities glossary. More books later (see the README there).
+// What: the creatures of Monster Core (stat blocks only — the lore of Golarion is not open), conditions, spells,
+// actions, equipment, feats, ancestries, heritages, backgrounds and classes of Player Core, Player Core 2 and GM Core,
+// the monster abilities glossary. More books later (see the README there).
 // Run: npm run import-pf2e (needs git and the internet; the data is cached in node_modules/.cache/pf2e).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +13,7 @@ const REPO = 'https://github.com/foundryvtt/pf2e.git';
 const BRANCH = 'v14-dev';
 const CACHE = path.resolve(import.meta.dirname, '../node_modules/.cache/pf2e');
 const OUT = path.resolve(import.meta.dirname, '../content/pf2e-core');
-const PACKS = ['pathfinder-monster-core', 'conditions', 'spells', 'actions', 'bestiary-ability-glossary-srd'];
+const PACKS = ['pathfinder-monster-core', 'conditions', 'spells', 'actions', 'bestiary-ability-glossary-srd', 'equipment', 'feats', 'ancestries', 'heritages', 'backgrounds', 'classes'];
 const BOOKS = new Set(['Pathfinder Player Core', 'Pathfinder Player Core 2', 'Pathfinder Monster Core', 'Pathfinder GM Core']);
 
 // ---------- The data ----------
@@ -263,6 +264,41 @@ function spell(d: Doc) {
   if (s.traits.rarity && s.traits.rarity !== 'common') fields['rarity'] = s.traits.rarity;
   return entry(d, 'pf2e-spell', fields);
 }
+const ABILITY: Record<string, string> = { str: 'Str', dex: 'Dex', con: 'Con', int: 'Int', wis: 'Wis', cha: 'Cha' };
+const price = (p: Record<string, number> | undefined) =>
+  (['pp', 'gp', 'sp', 'cp'] as const).filter((k) => p?.[k]).map((k) => `${p![k]} ${k}`).join(', ');
+const bulk = (b: number | undefined) => (b === undefined ? '' : b === 0 ? '—' : b < 1 ? 'L' : String(b));
+const traitsOf = (d: Doc) => (d.system.traits?.value ?? []).map(words);
+function item(d: Doc) {
+  const s = d.system;
+  const dmg = s.damage?.die ? `${s.damage.dice ?? 1}${s.damage.die} ${s.damage.damageType ?? ''}`.trim() : s.damage?.formula ? `${s.damage.formula} ${s.damage.kind === 'healing' ? 'healing' : (s.damage.type ?? '')}`.trim() : '';
+  return entry(d, 'pf2e-item', {
+    level: s.level?.value ?? 0,
+    kind: words(d.type === 'equipment' ? (s.usage?.value ? 'gear' : 'equipment') : d.type),
+    category: words(s.category ?? ''),
+    price: price(s.price?.value),
+    bulk: bulk(s.bulk?.value),
+    traits: traitsOf(d),
+    damage: dmg,
+    range: s.range ? `${s.range} feet` : '',
+    ac: s.acBonus ? `+${s.acBonus}${s.dexCap !== undefined && s.dexCap !== null ? `, Dex cap +${s.dexCap}` : ''}${s.strength ? `, Str ${s.strength}` : ''}` : '',
+    ...(s.traits?.rarity && s.traits.rarity !== 'common' ? { rarity: s.traits.rarity } : {}),
+  });
+}
+function feat(d: Doc) {
+  const s = d.system;
+  return entry(d, 'pf2e-feat', {
+    level: s.level?.value ?? 1,
+    category: words(s.category ?? ''),
+    actions: actionsOf(d) === null ? '' : String(actionsOf(d)),
+    traits: traitsOf(d),
+    prerequisites: (s.prerequisites?.value ?? []).map((p: { value: string }) => p.value).join('; '),
+    ...(s.traits?.rarity && s.traits.rarity !== 'common' ? { rarity: s.traits.rarity } : {}),
+  });
+}
+const boosts = (b: Record<string, { value: string[] }> | undefined) =>
+  Object.values(b ?? {}).map((x) => (x.value.length >= 6 ? 'free' : x.value.map((v) => ABILITY[v] ?? v).join(' or '))).join(', ');
+
 function entry(d: Doc, type: string, fields: Record<string, unknown>) {
   const clean = Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, field(v)]).filter(([, v]) => v !== '' && v !== undefined && v !== null && !(Array.isArray(v) && !v.length)));
   return { title: d.name, type, fields: clean, body: html(d.system.description?.value ?? '') };
@@ -279,13 +315,25 @@ const spells = data['spells']!.filter(open);
 const actions = data['actions']!.filter(open);
 const abilities = data['bestiary-ability-glossary-srd']!.filter(open);
 const monsters = data['pathfinder-monster-core']!.filter(open);
-for (const d of [...conditions, ...spells, ...actions, ...abilities]) linked.add(d.name);
+const items = data['equipment']!.filter(open);
+const feats = data['feats']!.filter(open);
+const ancestries = data['ancestries']!.filter(open);
+const heritages = data['heritages']!.filter(open);
+const backgrounds = data['backgrounds']!.filter(open);
+const classes = data['classes']!.filter(open);
+for (const d of [...conditions, ...spells, ...actions, ...abilities, ...items, ...feats, ...ancestries, ...heritages, ...backgrounds, ...classes]) linked.add(d.name);
 
 const entries = [
   ...conditions.map((d) => entry(d, 'pf2e-condition', d.system.value?.isValued ? { valued: true } : {})),
   ...actions.map((d) => entry(d, 'pf2e-action', { actions: actionsOf(d) === null ? '' : String(actionsOf(d)), traits: (d.system.traits?.value ?? []).map(words) })),
   ...abilities.map((d) => entry(d, 'pf2e-ability', { actions: actionsOf(d) === null ? '' : String(actionsOf(d)), traits: (d.system.traits?.value ?? []).map(words) })),
   ...spells.map(spell),
+  ...classes.map((d) => entry(d, 'pf2e-class', { hp: d.system.hp, key: (d.system.keyAbility?.value ?? []).map((v: string) => ABILITY[v] ?? v).join(' or ') })),
+  ...ancestries.map((d) => entry(d, 'pf2e-ancestry', { hp: d.system.hp, size: d.system.size, speed: d.system.speed ? `${d.system.speed} feet` : '', boosts: boosts(d.system.boosts), traits: traitsOf(d) })),
+  ...heritages.map((d) => entry(d, 'pf2e-heritage', { ancestry: d.system.ancestry?.name ?? 'versatile' })),
+  ...backgrounds.map((d) => entry(d, 'pf2e-background', { boosts: boosts(d.system.boosts), skills: [...(d.system.trainedSkills?.value ?? []).map(cap), ...(d.system.trainedSkills?.lore ?? [])] })),
+  ...feats.map(feat),
+  ...items.map(item),
 ];
 // One title — one entry (an action and a monster ability of the same name: the action stays).
 const seen = new Set<string>();
@@ -300,7 +348,7 @@ fs.writeFileSync(
   JSON.stringify({
     system: 'pf2e',
     lang: 'en',
-    source: { title: 'Pathfinder Player Core, Monster Core', attribution: 'Paizo Inc.', url: 'https://paizo.com/orclicense', license: 'ORC' },
+    source: { title: 'Pathfinder Player Core, Monster Core, GM Core', attribution: 'Paizo Inc.', url: 'https://paizo.com/orclicense', license: 'ORC' },
     entries: unique,
   }),
 );
@@ -310,12 +358,12 @@ fs.writeFileSync(
   manifestFile,
   JSON.stringify(
     {
-      scryingGlass: 'content', version: 1, id: 'pf2e-core', title: 'Pathfinder 2e: Monster Core and Player Core', family: 'pf2e', release: old.release || 1,
+      scryingGlass: 'content', version: 1, id: 'pf2e-core', title: 'Pathfinder 2e: Monster Core, Player Core and GM Core', family: 'pf2e', release: old.release || 1,
       cards: cards.length, books: 1,
-      license: `This product is licensed under the ORC License held in the Library of Congress at TX 9-307-067 and available online at various locations including paizo.com/orclicense, azoralaw.com/orclicense, and others. All warranties are disclaimed as set forth therein. Attribution: This product is based on the following Licensed Material: Pathfinder Player Core © 2023 Paizo Inc.; Pathfinder Player Core 2 © 2024 Paizo Inc.; Pathfinder Monster Core © 2024 Paizo Inc. Data from the pf2e system for Foundry VTT (github.com/foundryvtt/pf2e, ${commit.slice(0, 7)}). Scrying Glass uses trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy (paizo.com/licenses/communityuse). We are expressly prohibited from charging you to use or access this content. Scrying Glass is not published, endorsed, or specifically approved by Paizo. For more information about Paizo Inc. and Paizo products, visit paizo.com.`,
+      license: `This product is licensed under the ORC License held in the Library of Congress at TX 9-307-067 and available online at various locations including paizo.com/orclicense, azoralaw.com/orclicense, and others. All warranties are disclaimed as set forth therein. Attribution: This product is based on the following Licensed Material: Pathfinder Player Core © 2023 Paizo Inc.; Pathfinder Player Core 2 © 2024 Paizo Inc.; Pathfinder Monster Core © 2024 Paizo Inc.; Pathfinder GM Core © 2023 Paizo Inc. Data from the pf2e system for Foundry VTT (github.com/foundryvtt/pf2e, ${commit.slice(0, 7)}). Scrying Glass uses trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy (paizo.com/licenses/communityuse). We are expressly prohibited from charging you to use or access this content. Scrying Glass is not published, endorsed, or specifically approved by Paizo. For more information about Paizo Inc. and Paizo products, visit paizo.com.`,
     },
     null,
     1,
   ) + '\n',
 );
-console.log(`creatures ${cards.length}, entries ${unique.length} (conditions ${conditions.length}, actions ${actions.length}, monster abilities ${abilities.length}, spells ${spells.length}); pf2e ${commit.slice(0, 7)}`);
+console.log(`creatures ${cards.length}, entries ${unique.length} (conditions ${conditions.length}, actions ${actions.length}, monster abilities ${abilities.length}, spells ${spells.length}, classes ${classes.length}, ancestries ${ancestries.length}, heritages ${heritages.length}, backgrounds ${backgrounds.length}, feats ${feats.length}, items ${items.length}); pf2e ${commit.slice(0, 7)}`);

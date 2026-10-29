@@ -329,7 +329,8 @@ Electron-приложение для мастера D&D: окно управле
   частичный клон foundryvtt/pf2e в `node_modules/.cache/pf2e`, только `publication.license === 'ORC'` из Player Core,
   Player Core 2, Monster Core, GM Core; HTML и обогащения Foundry → наша разметка; лор существ не берём — Reserved Material).
   Новая встроенная система приходит выключенной (`settings.systemsKnown`, `meetNewSystems` в main/index.ts; первый запуск
-  отмечает только D&D). Дальше: снаряжение, черты, классы в данных, редактор листа.
+  отмечает только D&D). Данные: + снаряжение (`pf2e-item`), черты (`pf2e-feat`), родословные, наследия, предыстории, классы (GM Core тоже). Дальше:
+  другие книги, русский перевод (просили авторов модуля Foundry «PF2ERUS»), редактор листа.
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `LEGACY_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
   D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`; из плагинов и пакетов); правила —

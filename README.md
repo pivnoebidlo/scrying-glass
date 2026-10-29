@@ -234,7 +234,8 @@ them. This work is based on Blades in the Dark (found at http://www.bladesinthed
 
 **Pathfinder 2e** (the remaster) is a system of the app, off until you turn it on in Settings → Game systems; its data
 is downloaded then (about 0.5 MB, English only — there is no open Russian translation): the 492 creatures of Monster
-Core (stat blocks), the conditions, spells and actions of Player Core and Player Core 2, the monster abilities. A stat
+Core (stat blocks), the conditions, spells, actions, equipment, feats, ancestries, heritages, backgrounds and classes of
+Player Core, Player Core 2 and GM Core, the monster abilities. A stat
 block rolls Perception, skills and saves, each strike three times (with the multiple attack penalty, agile weapons
 −4/−8), damage and ×2 for a critical hit; a link opens the rule on the side. The tracker takes initiative from
 Perception, conditions with a value («Frightened 2») have − and +; above a fight — the threat by the XP budget of GM
@@ -242,8 +243,8 @@ Core for the party's size and level. The data comes from the pf2e system for Fou
 `content/pf2e-core/README.md`). Creatures are edited in a form (lists by commas, dice in a damage roll by themselves). Player characters come from
 **Pathbuilder 2e**: «Import from file…» takes its JSON export (a file, or the page pathbuilder2e.com/json.php?id=<code>
 saved) — a sheet with the totals counted by the rules (rolls of attributes, Perception, saves, skills with ranks,
-strikes, spells), feats, gear and money; «Update from Pathbuilder…» reads a newer export. A smaller set of data for
-now: equipment, feats and classes come later. This product is licensed under the ORC License (paizo.com/orclicense); Scrying Glass uses
+strikes, spells), feats, gear and money; «Update from Pathbuilder…» reads a newer export. More books and the Russian translation
+come later. This product is licensed under the ORC License (paizo.com/orclicense); Scrying Glass uses
 trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy
 (paizo.com/licenses/communityuse); we are expressly prohibited from charging you to use or access this content; Scrying
 Glass is not published, endorsed, or specifically approved by Paizo.
