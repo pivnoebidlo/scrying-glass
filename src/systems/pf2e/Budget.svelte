@@ -1,5 +1,5 @@
 <!-- Above a fight and an encounter in Pathfinder 2e: the threat by the XP budget. Enemies' levels — from their cards;
-     the party — from the fight's settings (heroes and their level; Pathfinder has no character sheets here yet). -->
+     the party — its characters in the fight (their sheets' levels), else the fight's settings. -->
 <script lang="ts">
   import { Gauge } from '@lucide/svelte';
   import { onMount } from 'svelte';
@@ -13,9 +13,12 @@
   let { list }: { list: Combatant[] } = $props();
   onMount(connectCards);
 
-  const party = $derived(store.state.initiative.party);
-  const enemies = $derived(list.filter((c) => c.side === 'enemy'));
   const levelOf = (c: Combatant) => (c.card ? (bestiary.all.find((x) => sameRef(x.ref, c.card!))?.rank ?? null) : null);
+  // The party: the heroes of the fight with a level (their cards), else the fight's settings.
+  const heroes = $derived((bestiary.all, list.filter((c) => c.side === 'party').map(levelOf).filter((l): l is number => l !== null)));
+  const setting = $derived(store.state.initiative.party);
+  const party = $derived(heroes.length ? { size: heroes.length, level: Math.round(heroes.reduce((a, b) => a + b, 0) / heroes.length) } : setting);
+  const enemies = $derived(list.filter((c) => c.side === 'enemy'));
   const a = $derived((bestiary.all, threatOf(enemies.map(levelOf), party)));
   const unknown = $derived(enemies.filter((c) => levelOf(c) === null).map((c) => c.name));
   let open = $state(false);
@@ -32,8 +35,8 @@
       <div class="pop">
         <p class="faint">{t('pf2e.budget.title')}</p>
         <div class="row">
-          <label>{t('pf2e.budget.size')} <input type="number" min="1" max="10" value={party.size} onchange={(e) => dispatch('initiative', 'setParty', { size: Number(e.currentTarget.value) })} /></label>
-          <label>{t('pf2e.budget.level')} <input type="number" min="1" max="20" value={party.level} onchange={(e) => dispatch('initiative', 'setParty', { level: Number(e.currentTarget.value) })} /></label>
+          <label>{t('pf2e.budget.size')} <input type="number" min="1" max="10" value={party.size} disabled={heroes.length > 0} onchange={(e) => dispatch('initiative', 'setParty', { size: Number(e.currentTarget.value) })} /></label>
+          <label>{t('pf2e.budget.level')} <input type="number" min="1" max="20" value={party.level} disabled={heroes.length > 0} onchange={(e) => dispatch('initiative', 'setParty', { level: Number(e.currentTarget.value) })} /></label>
         </div>
         <ul>
           {#each Object.entries(a.budgets) as [k, v] (k)}<li class:on={a.threat === k}>{t(`pf2e.budget.${k as 'low'}`)} — {v}</li>{/each}

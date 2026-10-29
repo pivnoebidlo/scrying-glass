@@ -798,7 +798,7 @@ async function importCharacter(imp: CardImporter, r: ImportedCard, to: CardScope
   }
   const id = newId(to, r.name);
   const card: Card = {
-    format: 1, id, kind: 'character', system: r.system, lang: 'ru', name: r.name, side: 'party', portraits, tags: [], notes: '',
+    format: 1, id, kind: 'character', system: r.system, lang: r.lang ?? 'ru', name: r.name, side: 'party', portraits, tags: [], notes: '',
     stats: r.stats,
     ...linked(imp, r.linkId),
   };

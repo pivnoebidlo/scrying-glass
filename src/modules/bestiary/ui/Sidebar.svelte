@@ -162,7 +162,7 @@
             class="tag">{c.lang}</span
           >{/if}{#if c.edited}<span class="tag" title={t('best.editedHint')}>{t('best.edited')}</span>{/if}</span
       >
-      <span class="sub">{c.subtitle}{#if c.folder !== undefined && !f.scope.startsWith('vault:')} · {folderTitle(c.folder)}{/if}</span>
+      <span class="sub">{c.subtitle}{#if c.folder !== undefined && !f.scope.startsWith('vault:')}{' · '}{folderTitle(c.folder)}{/if}</span>
     </button>
   {:else}
     <p class="faint empty">{t('best.nothing')}</p>

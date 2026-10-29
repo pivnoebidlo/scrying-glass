@@ -239,8 +239,11 @@ block rolls Perception, skills and saves, each strike three times (with the mult
 −4/−8), damage and ×2 for a critical hit; a link opens the rule on the side. The tracker takes initiative from
 Perception, conditions with a value («Frightened 2») have − and +; above a fight — the threat by the XP budget of GM
 Core for the party's size and level. The data comes from the pf2e system for Foundry VTT (ORC entries only;
-`content/pf2e-core/README.md`). A smaller set for now: equipment, feats, classes, character sheets and the Pathbuilder
-import come later. This product is licensed under the ORC License (paizo.com/orclicense); Scrying Glass uses
+`content/pf2e-core/README.md`). Creatures are edited in a form (lists by commas, dice in a damage roll by themselves). Player characters come from
+**Pathbuilder 2e**: «Import from file…» takes its JSON export (a file, or the page pathbuilder2e.com/json.php?id=<code>
+saved) — a sheet with the totals counted by the rules (rolls of attributes, Perception, saves, skills with ranks,
+strikes, spells), feats, gear and money; «Update from Pathbuilder…» reads a newer export. A smaller set of data for
+now: equipment, feats and classes come later. This product is licensed under the ORC License (paizo.com/orclicense); Scrying Glass uses
 trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy
 (paizo.com/licenses/communityuse); we are expressly prohibited from charging you to use or access this content; Scrying
 Glass is not published, endorsed, or specifically approved by Paizo.

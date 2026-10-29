@@ -317,7 +317,11 @@ Electron-приложение для мастера D&D: окно управле
   по Community Use Policy Paizo, правила — ORC (атрибуция дословно — `about.credit.pf2e`, `content/pf2e-core/README.md`).
   Статблок `Pf2eStats` (`stats.ts`: уровень, черты, Восприятие, навыки, КБ/спасброски, удары `Strike` — `mapOf`, способности
   `Feature` по разделам interaction / defensive / offensive, колдовство), вид — `StatBlock.svelte` (броски, ×2 —
-  `rolls.damage(…, 'total')`), редактор пока общий (JSON). Типы записей с префиксом (`pf2e-spell`, `pf2e-condition`,
+  `rolls.damage(…, 'total')`; удары и колдовство — общие `Strikes.svelte` / `SpellLists.svelte`), редактор — `Editor.svelte`
+  (списки через запятую, кубы урона в {} сами). Персонаж — `character.ts` (`Pf2eCharacter`, `sheet: 'pf2e-character'`,
+  `isCharacter`; `SystemDef.shape`), лист — `CharacterSheet.svelte`, правка листа пока JSON; импорт — `pathbuilder.ts`
+  (`pathbuilderImporter`, `fromPathbuilder`: значения характеристик → модификаторы, владение + уровень + модификатор;
+  `ImportedCard.lang` — язык новой карточки, без него русский). Угроза боя берёт партию из персонажей боя, иначе из настроек. Типы записей с префиксом (`pf2e-spell`, `pf2e-condition`,
   `pf2e-action`, `pf2e-ability`; `spell` занят D&D — ключи типов общие на всё приложение). Трекер — `tracker.ts`
   (`CONDITIONS`, `VALUED` — `TrackerDef.conditions.valued`, общий механизм: «Frightened 2» строкой, − / + — действие
   `initiative/setCondition`, `conditionValue`), угроза боя — `budget.ts` + `Budget.svelte` (`SystemUi.encounter`; партия —
@@ -325,7 +329,7 @@ Electron-приложение для мастера D&D: окно управле
   частичный клон foundryvtt/pf2e в `node_modules/.cache/pf2e`, только `publication.license === 'ORC'` из Player Core,
   Player Core 2, Monster Core, GM Core; HTML и обогащения Foundry → наша разметка; лор существ не берём — Reserved Material).
   Новая встроенная система приходит выключенной (`settings.systemsKnown`, `meetNewSystems` в main/index.ts; первый запуск
-  отмечает только D&D). Дальше: лист персонажа, импорт из Pathbuilder, снаряжение, черты, классы.
+  отмечает только D&D). Дальше: снаряжение, черты, классы в данных, редактор листа.
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `LEGACY_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
   D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`; из плагинов и пакетов); правила —

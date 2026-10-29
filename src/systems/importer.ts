@@ -7,6 +7,8 @@
 export interface ImportedCard {
   name: string;
   system: string;
+  // The language of the card (none — Russian: LSS).
+  lang?: string;
   stats: unknown;
   // The character's id in that service (`links[importer.id]` of the card): an import again updates the card.
   linkId: string | null;

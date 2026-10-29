@@ -8,18 +8,15 @@
   import { peekEntry } from '../../renderer/lib/entry/peek.svelte';
   import { rolls } from '../../renderer/lib/rolls.svelte';
   import { actionIcon } from './entries';
-  import { ABILITIES, mapOf, signed, type Feature, type Pf2eStats, type Strike } from './stats';
+  import { ABILITIES, signed, type Feature, type Pf2eStats } from './stats';
+  import Strikes from './Strikes.svelte';
+  import SpellLists from './SpellLists.svelte';
 
   let { card }: { card: Card<Pf2eStats> } = $props();
 
   const s = $derived(card.stats);
   const lb = (key: string, params?: Record<string, string | number>) => tr(card.lang === 'ru' ? 'ru' : 'en', `pf2e.${key}` as Key, params);
   const check = (what: string, bonus: number) => rolls.check(card.name, what, bonus);
-  // The dice of a damage line («{1d10+1} piercing plus {1d6} fire»): their sum is rolled (one roll in the log).
-  const diceOf = (damage: string) => [...damage.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]!).join('+');
-  const damageText = (damage: string) => damage.replace(/\{([^}]+)\}/g, '$1');
-  const strike = (st: Strike, n: 1 | 2 | 3) => rolls.check(card.name, `${st.name} (${lb('sb.map', { n })})`, st.bonus + mapOf(st, n));
-  const hit = (st: Strike, crit: boolean) => rolls.damage(card.name, `${st.name}${crit ? ' ×2' : ''}`, diceOf(st.damage), crit, 'total');
 
   const html = (f: Feature) => entryHtml(f.text, { dice: true });
   // Links and dice in a text: the compendium entry on the side, the dice — into the roll log.
@@ -30,7 +27,6 @@
     const dice = el.closest<HTMLElement>('button.dice');
     if (dice?.dataset['dice']) rolls.damage(card.name, f.name, dice.dataset['dice']);
   }
-  const rankTitle = (r: { rank: number; constant?: boolean }) => (r.constant ? lb('sb.constant') : r.rank === 0 ? lb('sb.cantrips') : lb('sb.rank', { n: r.rank }));
 </script>
 
 {#snippet features(list: Feature[])}
@@ -87,26 +83,8 @@
 
   <hr />
   <p><strong>{lb('sb.speed')}</strong> {s.speeds.join(', ')}</p>
-  {#each s.strikes as st (st.name + st.bonus)}
-    <div class="strike">
-      <strong>{st.ranged ? lb('sb.ranged') : lb('sb.melee')}</strong> <span class="act">◆</span>
-      {st.name}
-      <span class="attacks">{#each [1, 2, 3] as const as n (n)}{n > 1 ? ' / ' : ''}<button class="roll" title={lb('sb.map', { n })} onclick={() => strike(st, n)}>{signed(st.bonus + mapOf(st, n))}</button>{/each}</span>
-      {#if st.traits.length}<span class="traits">({st.traits.join(', ')})</span>{/if},
-      <strong>{lb('sb.damage')}</strong>
-      {#if diceOf(st.damage)}
-        <button class="roll" onclick={() => hit(st, false)}>{damageText(st.damage)}</button>
-        <button class="roll crit" title={lb('sb.crit')} onclick={() => hit(st, true)}>×2</button>
-      {:else}{damageText(st.damage)}{/if}{#if st.effects.length} plus {st.effects.join(', ')}{/if}
-    </div>
-  {/each}
-  {#each s.spellcasting as sc (sc.name)}
-    <div class="spells">
-      <strong>{sc.name}</strong> {lb('sb.dc')} {sc.dc}{#if sc.attack !== null}, {lb('sb.attack')} <button class="roll" onclick={() => check(`${sc.name}: ${lb('sb.attack')}`, sc.attack!)}>{signed(sc.attack)}</button>{/if};
-      {#each sc.ranks as r, i (r.rank + String(r.constant))}{i ? '; ' : ''}<strong>{rankTitle(r)}</strong>{#if r.slots} ({lb('sb.slots', { n: r.slots })}){/if}
-        {#each r.spells as sp, j (sp + j)}{j ? ', ' : ''}<button class="link" onclick={() => peekEntry(sp)}>{sp}</button>{/each}{/each}
-    </div>
-  {/each}
+  <Strikes strikes={s.strikes} who={card.name} lang={card.lang} />
+  <SpellLists spellcasting={s.spellcasting} who={card.name} lang={card.lang} />
   {@render features(s.offensive)}
 </article>
 

@@ -4,6 +4,8 @@ import type { SystemDef } from '..';
 import type { SystemPlugin } from '../plugin';
 import { t } from '../../shared/i18n';
 import { blankStats, combatStats, subtitle, type Pf2eStats } from './stats';
+import { blankCharacter, characterCombat, characterSubtitle, isCharacter } from './character';
+import { pathbuilderImporter } from './pathbuilder';
 import { pf2eTracker } from './tracker';
 import { ENTRY_SUBTITLES, ENTRY_TYPES } from './entries';
 
@@ -16,11 +18,13 @@ const pf2e: SystemDef = {
   get about() {
     return t('pf2e.about');
   },
-  subtitle: (s: Pf2eStats) => subtitle(s, (k) => t(`pf2e.${k}` as never)),
-  rank: (s: Pf2eStats) => s.level,
-  combat: (s: Pf2eStats) => combatStats(s),
-  blank: () => blankStats(),
+  // Two shapes of stats: a creature's stat block and a player character's sheet.
+  subtitle: (s) => (isCharacter(s) ? characterSubtitle(s, t('pf2e.sh.level')) : subtitle(s as Pf2eStats, (k) => t(`pf2e.${k}` as never))),
+  rank: (s) => (s as { level: number }).level,
+  combat: (s) => (isCharacter(s) ? characterCombat(s) : combatStats(s as Pf2eStats)),
+  blank: (kind) => (kind === 'character' ? blankCharacter() : blankStats()),
   tracker: pf2eTracker,
+  shape: { ofKind: (kind) => (kind === 'character' ? 'sheet' : 'block'), ofStats: (s) => (isCharacter(s) ? 'sheet' : 'block') },
 };
 
 export const pf2ePlugin: SystemPlugin = {
@@ -33,4 +37,5 @@ export const pf2ePlugin: SystemPlugin = {
   entrySubtitle: ENTRY_SUBTITLES,
   // Monster Core creatures, Player Core conditions, spells, actions (content/pf2e-core/).
   content: ['pf2e-core'],
+  importers: [pathbuilderImporter],
 };

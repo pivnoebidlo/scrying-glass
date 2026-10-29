@@ -235,7 +235,11 @@ CC BY 3.0). Тексты лежат в `scripts/fate-core.<язык>.md`, `npm r
 проворного оружия −4/−8), урон и ×2 для критического попадания; ссылка открывает правило сбоку. Трекер берёт инициативу
 от Восприятия, у состояний со значением («Frightened 2») есть − и +; над боем — угроза по бюджету опыта из GM Core для
 размера и уровня партии. Данные — из системы pf2e для Foundry VTT (только записи под ORC; `content/pf2e-core/README.md`).
-Пока набор поменьше: снаряжение, черты, классы, листы персонажей и импорт из Pathbuilder — потом. This product is
+Существа правятся в форме (списки через запятую, кубы в уроне становятся бросками сами). Персонажи игроков — из
+**Pathbuilder 2e**: «Импорт из файла…» берёт его экспорт JSON (файл или сохранённую страницу
+pathbuilder2e.com/json.php?id=<код>) — лист с итогами по правилам (броски характеристик, Восприятия, спасбросков, навыков
+с рангами, удары, заклинания), черты, снаряжение и деньги; «Обновить из Pathbuilder…» читает свежий экспорт. Данных пока
+поменьше: снаряжение, черты и классы — потом. This product is
 licensed under the ORC License (paizo.com/orclicense); Scrying Glass uses trademarks and/or copyrights owned by Paizo
 Inc., used under Paizo's Community Use Policy (paizo.com/licenses/communityuse); we are expressly prohibited from
 charging you to use or access this content; Scrying Glass is not published, endorsed, or specifically approved by
