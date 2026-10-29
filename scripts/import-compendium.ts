@@ -1,6 +1,6 @@
 // Built-in compendium: spells, magic items, feats, conditions and rules from SRD 5.1 and SRD 5.2.1 — the English
 // originals and the Russian translation by OmnisGM (both CC BY 4.0, Markdown of OmnisGM-Rules).
-// Run: npm run import-compendium (needs the internet). Output — resources/compendium/<system>.<lang>.json. Do not edit.
+// Run: npm run import-compendium (needs the internet). Output — content/dnd5e-srd/compendium/<system>.<lang>.json (downloadable content). Do not edit.
 //
 // Источник — Markdown OmnisGM: запись = заголовок «Русское (English)», строка курсивом с типом
 // («Воплощение 3-го уровня (Чародей, Волшебник)», «Чудесный предмет, необычный (требуется настройка)»,
@@ -10,7 +10,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 const RU = { repo: 'OmnisGM-App/OmnisGM-Rules', sha: '20fd77db5a417d7c49a74fcea8bd7d1e905a96c0' };
-const OUT = path.resolve(import.meta.dirname, '../resources/compendium');
+const OUT = path.resolve(import.meta.dirname, '../content/dnd5e-srd/compendium');
 const CACHE = path.join(os.tmpdir(), 'scrying-glass-compendium');
 
 type Value = string | number | boolean | string[];

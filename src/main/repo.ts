@@ -28,6 +28,7 @@ export interface RepoSettings {
   // System packs published from here and downloaded (by pack id).
   systems?: RepoInfo['systems'];
   bestiaries?: RepoInfo['bestiaries'];
+  content?: RepoInfo['content'];
   key?: { x: string; d: string; enc: boolean };
   // The key was saved to a file (or loaded from one, or the GM says it is kept): no reminder.
   keySaved?: boolean;
@@ -82,7 +83,17 @@ export function repoInfo(): RepoInfo {
     keySaved: !!s.keySaved,
     systems: { published: s.systems?.published ?? {}, installed: s.systems?.installed ?? {} },
     bestiaries: { published: s.bestiaries?.published ?? {}, installed: s.bestiaries?.installed ?? {} },
+    content: { published: s.content?.published ?? {}, installed: s.content?.installed ?? {} },
   };
+}
+
+// Remember (or forget — null) content of a system published from here or downloaded (by content id).
+export function setContentMark(which: 'published' | 'installed', id: string, mark: (SystemMark & { author?: string }) | null) {
+  const s = deps!.get();
+  const c = { published: { ...(s.content?.published ?? {}) }, installed: { ...(s.content?.installed ?? {}) } };
+  if (mark) (c[which] as Record<string, unknown>)[id] = mark;
+  else delete c[which][id];
+  deps!.save({ ...s, content: c });
 }
 
 // Remember (or forget — null) a bestiary published from here (key — the entry id) or downloaded («source/author/id»).

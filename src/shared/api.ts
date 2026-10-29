@@ -1,6 +1,7 @@
 // API, который preload открывает окнам как window.api.
 import type { BlockedEntry, RepoCatalog, RepoEntry, RepoInfo, RepoProgress, ReportedEntry, ReportReason } from './repo';
 import type { BuiltinSounds } from './sounds';
+import type { ContentManifest } from './content';
 import type { Card, CardRef, CardScope, CardSummary, ImportMatch, ImportPreview } from './cards';
 import type { BuiltinBook } from './compendium';
 import type { Note } from './notes';
@@ -247,6 +248,12 @@ export interface Api {
   repoPublishBestiary(p: { source: string; refs: CardRef[]; title: string; description: string; lang: string; cover?: string; id?: string }): Promise<RepoEntry | null>;
   repoInstallBestiary(source: string, entry: RepoEntry): Promise<number>;
   repoRemoveBestiary(key: string): Promise<boolean>;
+  // Content of a system (shared/content.ts): download from the Community, publish an .sgcontent file (its author),
+  // install from a file (dialog; null — cancelled), remove.
+  repoInstallContent(source: string, entry: RepoEntry): Promise<ContentManifest>;
+  repoPublishContent(p: { source: string; file: string; title: string; description: string; lang: string; cover?: string }): Promise<RepoEntry>;
+  installContentFile(): Promise<ContentManifest | null>;
+  removeContent(id: string): Promise<boolean>;
   // Download into a temporary file, then install under a name (like the import of a file) or discard it.
   repoDownload(source: string, author: string, id: string): Promise<{ file: string; name: string; exists: boolean; suggestion: string } | null>;
   repoInstall(file: string, name: string, entry: RepoEntry, source: string): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number } | null>;

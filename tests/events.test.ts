@@ -12,7 +12,7 @@ const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1
 const cardNames = (() => {
   const out: Record<string, Set<string>> = { en: new Set(), ru: new Set() };
   for (const ed of ['2014', '2024']) {
-    const d = JSON.parse(fs.readFileSync(`resources/srd/dnd5e-${ed}.json`, 'utf8'));
+    const d = JSON.parse(fs.readFileSync(`content/dnd5e-srd/bestiary/dnd5e-${ed}.json`, 'utf8'));
     for (const c of d.cards ?? d) out[c.lang]?.add(c.name);
   }
   return out;

@@ -169,6 +169,8 @@ export interface RepoInfo {
   // Bestiaries published from here (by entry id: its title and cards) and downloaded into the library (by
   // «source/author/id»: the cards they became — an update replaces them).
   bestiaries: { published: Record<string, BestiaryMark>; installed: Record<string, BestiaryMark & { author: string }> };
+  // Content of systems (shared/content.ts) published from here and downloaded, by content id.
+  content: { published: Record<string, SystemMark>; installed: Record<string, SystemMark & { author: string }> };
 }
 export interface BestiaryMark extends SystemMark {
   title: string;

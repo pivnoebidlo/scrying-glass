@@ -4,7 +4,7 @@ import { attackBlocks, diceOf, NO_RESHAPE, NO_WEAPON, ownTemplate, ownWeapon, pa
 import type { Dnd5eStats } from '../src/systems/dnd5e/stats';
 
 const load = (file: string) => {
-  const d = JSON.parse(fs.readFileSync(`resources/srd/${file}`, 'utf8')) as { cards: { id: string; stats: Dnd5eStats }[] } | { id: string; stats: Dnd5eStats }[];
+  const d = JSON.parse(fs.readFileSync(`content/dnd5e-srd/bestiary/${file}`, 'utf8')) as { cards: { id: string; stats: Dnd5eStats }[] } | { id: string; stats: Dnd5eStats }[];
   const cards = Array.isArray(d) ? d : d.cards;
   return (id: string) => structuredClone(cards.find((c) => c.id === id)!.stats);
 };

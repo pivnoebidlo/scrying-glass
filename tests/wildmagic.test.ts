@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import en2014 from '../resources/compendium/dnd5e-2014.en.json';
-import ru2014 from '../resources/compendium/dnd5e-2014.ru.json';
-import en2024 from '../resources/compendium/dnd5e-2024.en.json';
-import ru2024 from '../resources/compendium/dnd5e-2024.ru.json';
+import en2014 from '../content/dnd5e-srd/compendium/dnd5e-2014.en.json';
+import ru2014 from '../content/dnd5e-srd/compendium/dnd5e-2014.ru.json';
+import en2024 from '../content/dnd5e-srd/compendium/dnd5e-2024.en.json';
+import ru2024 from '../content/dnd5e-srd/compendium/dnd5e-2024.ru.json';
 import { dieOf, isSurge, parseOwnTables, parseTable, rangeText, rowFor, surgeRows } from '../src/systems/dnd5e/tools/wildmagic/tables';
 
 type Book = { entries: { title: string; type: string; body: string; en?: string }[] };

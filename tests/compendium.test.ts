@@ -47,7 +47,7 @@ describe('встроенный справочник', () => {
   for (const file of ['dnd5e-2014.ru', 'dnd5e-2014.en', 'dnd5e-2024.ru', 'dnd5e-2024.en']) {
     it(`${file}: у заклинаний и предметов есть поля, названия не повторяются`, async () => {
       const fs = await import('node:fs');
-      const book = JSON.parse(fs.readFileSync(`resources/compendium/${file}.json`, 'utf8')) as BuiltinBook;
+      const book = JSON.parse(fs.readFileSync(`content/dnd5e-srd/compendium/${file}.json`, 'utf8')) as BuiltinBook;
       const spells = book.entries.filter((e) => e.type === 'spell');
       expect(spells.length).toBeGreaterThan(300);
       for (const s of spells) {
@@ -63,7 +63,7 @@ describe('встроенный справочник', () => {
   }
   it('английская книга: у записи есть русское название, у русской — английское', async () => {
     const fs = await import('node:fs');
-    const read = (f: string) => JSON.parse(fs.readFileSync(`resources/compendium/${f}.json`, 'utf8')) as BuiltinBook;
+    const read = (f: string) => JSON.parse(fs.readFileSync(`content/dnd5e-srd/compendium/${f}.json`, 'utf8')) as BuiltinBook;
     const en = read('dnd5e-2024.en');
     const ru = read('dnd5e-2024.ru');
     expect(en.lang).toBe('en');

@@ -9,7 +9,7 @@ import { dict } from '../src/systems/dnd5e/stats';
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 // Card names of each SRD edition by language.
 const editions = ['2014', '2024'].map((ed) => {
-  const d = JSON.parse(fs.readFileSync(`resources/srd/dnd5e-${ed}.json`, 'utf8'));
+  const d = JSON.parse(fs.readFileSync(`content/dnd5e-srd/bestiary/dnd5e-${ed}.json`, 'utf8'));
   const out: Record<string, Set<string>> = { en: new Set(), ru: new Set() };
   for (const c of d.cards ?? d) out[c.lang]?.add(c.name);
   return out;

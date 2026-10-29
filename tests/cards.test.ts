@@ -3,7 +3,8 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-// Встроенный бестиарий читается из resources/srd проекта; окон нет.
+// Встроенный бестиарий: resources/srd проекта и содержимое D&D (content/dnd5e-srd — как будто установлено в
+// библиотеку теста); окон нет.
 vi.mock('electron', () => ({ app: { getAppPath: () => process.cwd() }, BrowserWindow: { getAllWindows: () => [] } }));
 
 const { getCard, importCards, initCards, isEditedSrd, listCards, revertSrd, saveCard, setLibrary, updateFromExport } = await import('../src/main/cards');
@@ -11,6 +12,7 @@ const { listTrash } = await import('../src/main/trash');
 
 const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-cards-'));
 afterAll(() => fs.rmSync(lib, { recursive: true, force: true }));
+fs.cpSync('content/dnd5e-srd', path.join(lib, 'content', 'dnd5e-srd'), { recursive: true });
 initCards(lib);
 
 const ref = { scope: 'srd' as const, id: 'srd52-goblin-warrior.ru' };

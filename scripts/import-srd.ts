@@ -4,7 +4,7 @@
 //
 // Числа и структура — из 5e-bits/5e-database (английский), русский текст — из перевода OmnisGM.
 // Монстры сопоставляются по английскому названию, которое в переводе стоит в скобках после русского.
-// Результат: resources/srd/dnd5e-2014.json и dnd5e-2024.json (английские карточки и их переводы).
+// Результат: content/dnd5e-srd/bestiary/dnd5e-2014.json и dnd5e-2024.json (английские карточки и их переводы).
 // Источники закреплены коммитами: обновить — поменять SHA ниже и запустить скрипт заново.
 import * as fs from 'node:fs';
 import * as os from 'node:os';
@@ -39,7 +39,7 @@ const RU_SOURCE = (en: CardSource): CardSource => ({
   url: 'https://rules.omnisgm.com',
 });
 
-const OUT = path.resolve(import.meta.dirname, '../resources/srd');
+const OUT = path.resolve(import.meta.dirname, '../content/dnd5e-srd/bestiary');
 const CACHE = path.join(os.tmpdir(), 'scrying-glass-srd');
 
 async function download(repo: string, sha: string, file: string): Promise<string> {

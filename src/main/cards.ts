@@ -25,6 +25,7 @@ import { PLUGINS } from '../systems/plugins';
 import type { CardImporter, ImportedCard } from '../systems/importer';
 import { freeName, writeJsonAtomic } from './files';
 import { discard } from './trash';
+import { builtinDirs, setContentLibrary } from './content';
 
 const cards = new Map<string, Card>();
 // Файл каждой своей карточки (ключ — refKey).
@@ -49,23 +50,34 @@ function inside(root: string | null, rel: string): string | null {
 
 const toRel = (root: string, abs: string) => path.relative(root, abs).split(path.sep).join('/');
 
-// Встроенный бестиарий лежит рядом с приложением: resources/srd/<система>.json
+// Встроенный бестиарий: рядом с приложением (resources/srd/<система>.json) и в установленном содержимом систем
+// (<библиотека>/content/<id>/bestiary/, main/content.ts).
 function loadBuiltin() {
-  const dir = path.join(app.getAppPath(), 'resources', 'srd');
-  let list: string[] = [];
-  try {
-    list = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
-  } catch {
-    console.error('Built-in bestiary not found:', dir);
-  }
-  for (const f of list) {
+  builtin.clear();
+  for (const key of [...cards.keys()]) if (key.startsWith('srd:')) cards.delete(key);
+  for (const dir of builtinDirs('srd')) {
+    let list: string[] = [];
     try {
-      const data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) as Card[];
-      for (const c of data) builtin.set(c.id, c);
-    } catch (e) {
-      console.error('Could not read the built-in bestiary', f, e);
+      list = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
+    } catch {
+      continue;
+    }
+    for (const f of list) {
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) as Card[];
+        for (const c of data) builtin.set(c.id, c);
+      } catch (e) {
+        console.error('Could not read the built-in bestiary', f, e);
+      }
     }
   }
+}
+
+// Content of systems installed or removed: the built-in cards are read again.
+export function reloadBuiltin() {
+  loadBuiltin();
+  applySrd();
+  changed();
 }
 
 // ---------- Портреты встроенных карточек ----------
@@ -246,7 +258,6 @@ function changed() {
 }
 
 export function initCards(library: string) {
-  loadBuiltin();
   setLibrary(library);
 }
 
@@ -278,6 +289,9 @@ function watchLibrary(root: string) {
 
 export function setLibrary(root: string) {
   libraryRoot = root;
+  // The built-in cards of the content installed in this library.
+  setContentLibrary(root);
+  loadBuiltin();
   watchLibrary(root);
   loadLibrary();
   loadSrdPortraits();

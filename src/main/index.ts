@@ -11,7 +11,7 @@ import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './b
 import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices, type Shrink } from './packs';
 import { shrinker } from './shrink';
 import { BACKUP_EXT, backupSizes, placeFiles, readBackup, writeBackup } from './archive';
-import { safeEntry } from './zip';
+import { readEntry, safeEntry } from './zip';
 import { randomUUID } from 'node:crypto';
 import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
@@ -28,12 +28,14 @@ import { canThumb, pruneThumbs, thumbnail } from './thumbs';
 import { createNote, readNote, renameNote, writeNote } from './notes';
 import { createSketch, readSketch, renameSketch, writeSketch } from './sketches';
 import type { Sketch } from '../shared/sketch';
-import { builtinEntries, entries, watchLibraryCompendium } from './compendium';
+import { builtinEntries, entries, resetBuiltinEntries, watchLibraryCompendium } from './compendium';
+import { installContent, installedContent, removeContent } from './content';
+import { CONTENT_EXT, CONTENT_MANIFEST, validContent } from '../shared/content';
 import { pages } from './journal';
 import { resolver } from './textstore';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, fillImporterTable, clearImporterTable, importerDialog, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, fillImporterTable, clearImporterTable, importerDialog, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
@@ -46,7 +48,7 @@ import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnounc
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
-import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, loadKeyWords, recoveryWords, wordsAuthor, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
+import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, loadKeyWords, recoveryWords, wordsAuthor, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setContentMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
 import { ID_RE, type BestiaryMark, type RepoEntry, type RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
@@ -140,6 +142,7 @@ function vaultState(): VaultState {
     roles: setRoleNames(settings.roles),
     systemsOff: setSystemsOff(settings.systemsOff),
     systems: systemPacks(),
+    content: installedContent().map(({ dir: _d, ...m }) => m),
     language: settings.language ?? 'auto',
     lang: interfaceLang(),
     theme: isTheme(settings.theme) ? settings.theme : 'auto',
@@ -401,6 +404,14 @@ function useLibrary(dir: string) {
   // Systems first: the cards' lines are made by them.
   loadSystemPacks(dir);
   setLibrary(dir);
+  contentChanged();
+}
+
+// Content of systems installed, removed or read from another library: the built-in cards and books again.
+function contentChanged() {
+  reloadBuiltin();
+  resetBuiltinEntries();
+  for (const w of BrowserWindow.getAllWindows()) w.webContents.send('compendium:changed');
   stateById['vault'] = vaultState();
   broadcastState();
 }
@@ -1399,6 +1410,56 @@ ipcMain.handle('repo:installBestiary', async (_event, { source, entry }: { sourc
   } finally {
     discardDownload(file);
   }
+});
+// Content of systems (shared/content.ts): from a file, from the Community, removed; published by its author.
+ipcMain.handle('content:installFile', async () => {
+  const win = getControlWindow();
+  const opts = { properties: ['openFile' as const], filters: [{ name: t('core.contentFilter'), extensions: [CONTENT_EXT.slice(1)] }] };
+  const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+  if (res.canceled || !res.filePaths[0]) return null;
+  const m = await installContent(res.filePaths[0]);
+  contentChanged();
+  return m;
+});
+ipcMain.handle('content:remove', (_event, id: string) => {
+  if (!removeContent(id)) return false;
+  setContentMark('installed', id, null);
+  contentChanged();
+  return true;
+});
+ipcMain.handle('repo:installContent', async (_event, { source, entry }: { source: string; entry: RepoEntry }) => {
+  const file = await repoDownload(source, entry.author, entry.id);
+  try {
+    const m = await installContent(file);
+    setContentMark('installed', m.id, { source, author: entry.author, id: entry.id, version: entry.version });
+    contentChanged();
+    return m;
+  } finally {
+    discardDownload(file);
+  }
+});
+// Publish (or update — the same author's entry of this content) an .sgcontent file.
+ipcMain.handle('repo:publishContent', async (_event, p: { source: string; file: string; title: string; description: string; lang: string; cover?: string }) => {
+  const raw = await readEntry(p.file, CONTENT_MANIFEST);
+  const m = raw ? validContent(JSON.parse(raw.toString('utf8'))) : null;
+  if (!m) throw new Error(t('core.notContent'));
+  const info = repoInfo();
+  const mark = info.content.published[m.id];
+  const known =
+    (mark?.source === p.source ? mark : undefined) ??
+    (await repoCatalog(p.source).then((c) => c.entries.find((e) => e.kind === 'content' && e.system === m.family && e.author === info.author && e.title === p.title), () => undefined));
+  const entry = await repoPublish(p.source, p.file, {
+    id: known?.id ?? newAdventureId(),
+    title: p.title,
+    description: p.description,
+    system: m.family,
+    lang: p.lang,
+    music: false,
+    app: app.getVersion(),
+    kind: 'content',
+  }, p.cover ? coverFrom(p.cover) : null);
+  setContentMark('published', m.id, { source: p.source, id: entry.id, version: entry.version });
+  return entry;
 });
 ipcMain.handle('repo:removeBestiary', (_event, key: string) => {
   const mark = repoInfo().bestiaries.installed[key];
