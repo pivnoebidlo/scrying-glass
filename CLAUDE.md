@@ -354,7 +354,9 @@ Electron-приложение для мастера D&D: окно управле
   bands (PbtA), pool (`success` — счёт успехов, `best` — FitD, `push` — переброс YZE; Year Zero — `kind` основных кубов
   и `groups` (`PoolKind`: base / skill / gear / stress / artifact — к8–к12 с несколькими успехами), единица на base / gear /
   stress — беда (при перебросе остаётся, `kindsResult`), стресс — паника, `pushStress` — переброс добавляет куб стресса;
-  `ask` — кубы ±3 при броске, полоса `.ask` в `pack/Sheet.svelte`), fate, sum, explode; у d20 — `degrees` ('two' / 'four':
+  `ask` — кубы ±3 при броске (`askRange` — до ±10), полоса `.ask` в `pack/Sheet.svelte`; `max` — предел кубов; у простого пула
+  успехов `need` — поле «Нужно» в журнале (`RollEntry.dc`), `tweak` — правка после броска: `tally` / `tweakPool` (+/− успех, куб
+  щелчком, провальные и единицы заново, «5 = успех»), `rolls.tweak`), fate, sum, explode; у d20 — `degrees` ('two' / 'four':
   в журнале бросков поле «КС» и исход — `RollEntry.degrees` / `pack.dc`, `rolls.setDc`, `degreeOf`; Pathfinder — 'four');
   `tracker` — `init` roll / value / none, `hp`, `cells`, `conditions` (`valued` — состояния с числом; в конструкторе — « #» в
   конце строки); `validatePack` берёт только известное — пакет может быть чужим;
@@ -394,6 +396,10 @@ Electron-приложение для мастера D&D: окно управле
   своего — `settings.repo.bestiaries.published[id]` с карточками), `repo:installBestiary` (`importCards` в библиотеку,
   отдаёт `refs`; новая версия — старые карточки в корзину), `repo:removeBestiary`; пометки установленных —
   `bestiaries.installed["источник/автор/id"]`. Пункты — в «+» «Карточек». Сервис 0.6.0 (тег `repo-v0.6.0`).
+- «Девяностые» (Time to RP!, @time_to_rp — игра свободная, имя автора указывать) — пакет `samples/systems/nineties.json`
+  (id и семейство `nineties`, только по-русски): пулы к6 до 15 кубов, дебафы — поля `track` на 1 клетку, вычитаются в формуле
+  пула вместе со штрафом за два дебафа группы, справочник — правила, 84 карточки умений, субкультуры, предметы, 30 локаций;
+  тексты переписаны со страниц PDF (текст в нём кривыми), сборщика в репозитории нет — правка в конструкторе или в JSON.
 - Mausritter — пакет системы (`samples/systems/mausritter.json`, id и семейство `mausritter`; кода системы больше нет;
   SRD 2.3.1, CC BY 4.0 — атрибуция дословно в `about.credit.mausritter`): hp, str/dex/wil (бросок `under` к20 с
   преимуществом и помехой), armour, warband, attacks (строки name/dice, бросок `sum` с `dice: 'row.dice'`), critical,

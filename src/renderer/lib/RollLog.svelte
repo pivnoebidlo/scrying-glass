@@ -104,9 +104,35 @@
             {@const p = e.pack}
             <div class="line">
               <span class="total" class:crit={p.tone === 'good'} class:fumble={p.tone === 'bad'}>{p.total}</span>
-              <span class="note">{p.note}: <span class="faces">{p.dice.map((g) => g.join(' ')).join(' | ')}</span></span>
+              <span class="note">{p.note}{#if !p.tally}: <span class="faces">{p.dice.map((g) => g.join(' ')).join(' | ')}</span>{/if}</span>
               {#if p.outcome}<span class="tag" class:crit={p.tone === 'good'} class:fumble={p.tone === 'bad'}>{p.outcome}</span>{/if}
             </div>
+            {#if p.tally}
+              {@const tl = p.tally}
+              <div class="dice">
+                {#each tl.dice as d, i (i)}<button class="die" class:hit={d >= (tl.fives ? Math.min(5, tl.success) : tl.success)} title={t('pack.dieHint')} onclick={() => rolls.tweak(e.id, { die: i })}>{d}</button>{/each}
+              </div>
+            {/if}
+            {#if p.need}
+              {@const ok = e.dc !== undefined ? p.total >= e.dc : null}
+              <div class="line dc">
+                <label title={t('pack.needHint')}>{t('pack.need')} <input type="number" min="0" max="30" value={e.dc ?? ''} onchange={(ev) => rolls.setDc(e.id, ev.currentTarget.value.trim() === '' ? null : Number(ev.currentTarget.value))} /></label>
+                {#if ok !== null}
+                  <span class="tag" class:crit={ok} class:fumble={!ok}>{ok ? t('pack.success') : t('pack.failure')}</span>
+                  {#if ok && p.total > e.dc!}<span class="note">{t('pack.extra', { count: p.total - e.dc! })}</span>{/if}
+                {/if}
+              </div>
+            {/if}
+            {#if p.tally}
+              {@const tl = p.tally}
+              <div class="acts">
+                <button class="push" title={t('pack.addSuccess')} onclick={() => rolls.tweak(e.id, { plus: 1 })}>+1</button>
+                <button class="push" title={t('pack.takeSuccess')} disabled={p.total === 0} onclick={() => rolls.tweak(e.id, { plus: -1 })}>−1</button>
+                <button class="push" title={t('pack.againFailedHint')} onclick={() => rolls.tweak(e.id, { failed: true })}>{t('pack.againFailed')}</button>
+                <button class="push" title={t('pack.againOnesHint')} disabled={!tl.dice.includes(1)} onclick={() => rolls.tweak(e.id, { ones: true })}>{t('pack.againOnes')}</button>
+                {#if tl.success > 5}<button class="push" class:on={tl.fives} title={t('pack.fivesHint')} onclick={() => rolls.tweak(e.id, { fives: !tl.fives })}>{t('pack.fivesToggle')}</button>{/if}
+              </div>
+            {/if}
             {#if p.push && !p.pushed}
               <button class="push" title={t('pack.pushHint')} onclick={() => rolls.pushRoll(e)}>{t('pack.push')}</button>
             {/if}
@@ -230,6 +256,31 @@
   .dc input {
     width: 48px;
     padding: 1px 4px;
+  }
+  .dice {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin: 2px 0 2px 36px;
+  }
+  .die {
+    min-width: 20px;
+    padding: 0 3px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+  }
+  .die.hit {
+    color: var(--success);
+    border-color: var(--success);
+    font-weight: 600;
+  }
+  .die:hover {
+    background: var(--bg-hover);
   }
   .total {
     min-width: 28px;

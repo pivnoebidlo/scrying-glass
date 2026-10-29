@@ -38,10 +38,14 @@ export type RollSpec =
   // Year Zero: the dice are of kinds (kind — of these, groups — more of other kinds): a 1 on an attribute, gear or
   // stress die is a bane (damage to it, a broken item, panic — a stress 1 on any roll), artifact dice (d8–d12) give
   // more successes on high faces; a push keeps successes and banes, pushStress — it adds a stress die (Alien); ask —
-  // dice added or taken at the moment of the roll (help, darkness).
+  // dice added or taken at the moment of the roll (help, darkness), askRange — how many at most (3 if not set).
+  // max — no more dice than this, whatever is added. A plain pool counting successes: need — the log asks how many
+  // successes are needed and says the outcome and the extra ones; tweak — the log changes the roll after it: a success
+  // added or taken, a die rolled again by a click, all failed dice or all 1s again, fives counting as successes.
   | {
       type: 'pool'; sides: number; count: string; success?: number; best?: boolean; push?: boolean; resist?: boolean;
-      kind?: PoolKind; groups?: PoolGroup[]; pushStress?: boolean; ask?: boolean;
+      kind?: PoolKind; groups?: PoolGroup[]; pushStress?: boolean; ask?: boolean; askRange?: number; max?: number;
+      need?: boolean; tweak?: boolean;
     }
   // 4dF + bonus.
   | { type: 'fate'; bonus: string; labels?: RollLabels }
@@ -298,6 +302,8 @@ function rollOf(x: unknown): RollSpec | null {
         : [];
       // Kinds, groups and the rest of Year Zero — only for a pool counting successes.
       const yz = !best && !!success;
+      // Needed successes and changes after the roll — a pool without kinds.
+      const plain = yz && !kindOf(x['kind']) && !groups.length;
       return {
         type: 'pool', sides, count: x['count'] as string, ...(success ? { success } : {}), ...(best ? { best: true } : {}), ...(x['push'] === true ? { push: true } : {}),
         ...(best && x['resist'] === true ? { resist: true } : {}),
@@ -305,6 +311,10 @@ function rollOf(x: unknown): RollSpec | null {
         ...(yz && groups.length ? { groups } : {}),
         ...(yz && x['pushStress'] === true ? { pushStress: true } : {}),
         ...(x['ask'] === true ? { ask: true } : {}),
+        ...(x['ask'] === true && num(x['askRange']) && (x['askRange'] as number) >= 1 ? { askRange: Math.min(10, Math.round(x['askRange'] as number)) } : {}),
+        ...(num(x['max']) && (x['max'] as number) >= 1 ? { max: Math.min(30, Math.round(x['max'] as number)) } : {}),
+        ...(plain && x['need'] === true ? { need: true } : {}),
+        ...(plain && x['tweak'] === true ? { tweak: true } : {}),
       };
     }
     case 'fate':
@@ -650,7 +660,22 @@ export interface PackRollResult {
   push?: { sides: number; success?: number; best?: boolean; dice: number[]; groups?: { kind: PoolKind; sides: number; dice: number[] }[]; pushStress?: boolean };
   // A d20 roll judged against a DC typed in the log (the natural die, two or four degrees).
   dc?: { natural: number; degrees: Degrees };
+  // A pool whose needed successes are typed in the log.
+  need?: boolean;
+  // A pool the log can change after the roll (tweakPool).
+  tally?: Tally;
 }
+
+// The dice of a pool changed after the roll: added successes, fives counting, how many dice were rolled again.
+export interface Tally {
+  sides: number;
+  success: number;
+  dice: number[];
+  plus: number;
+  fives: boolean;
+  rerolled: number;
+}
+export type TallyOp = { plus: 1 | -1 } | { die: number } | { failed: true } | { ones: true } | { fives: boolean };
 
 export interface RollWords {
   success: string;
@@ -666,6 +691,10 @@ export interface RollWords {
   // Year Zero: banes on dice of a kind (damage to the attribute, the gear), a stress 1 — panic.
   bane?: (kind: PoolKind, n: number) => string;
   panic?: string;
+  // Changes after the roll: successes added (n < 0 — taken), dice rolled again, fives counting.
+  plus?: (n: number) => string;
+  rerolled?: (n: number) => string;
+  fives?: string;
 }
 
 type Die = (sides: number) => number;
@@ -738,7 +767,7 @@ function rollRaw(
     case 'pool': {
       if (spec.kind || spec.groups?.length) {
         const groups = [{ kind: spec.kind ?? 'base', count: spec.count, sides: spec.sides }, ...(spec.groups ?? [])].map((g) => {
-          const n = Math.max(0, Math.min(30, Math.round(value(g.count))));
+          const n = Math.max(0, Math.min(spec.max ?? 30, Math.round(value(g.count))));
           const sides = g.sides ?? spec.sides;
           return { kind: g.kind, sides, dice: Array.from({ length: n }, () => die(sides)) };
         });
@@ -749,11 +778,15 @@ function rollRaw(
           ...(spec.push && total ? { push: { sides: spec.sides, success: spec.success!, dice: groups.flatMap((g) => g.dice), groups, ...(spec.pushStress ? { pushStress: true } : {}) } } : {}),
         };
       }
-      const n = Math.max(0, Math.min(30, Math.round(value(spec.count))));
+      const n = Math.max(0, Math.min(spec.max ?? 30, Math.round(value(spec.count))));
+      if (spec.tweak && spec.success) {
+        const tally: Tally = { sides: spec.sides, success: spec.success, dice: Array.from({ length: n }, () => die(spec.sides)), plus: 0, fives: false, rerolled: 0 };
+        return { ...tallyResult(tally, words), ...(spec.need ? { need: true } : {}), ...(spec.push && n ? { push: { sides: spec.sides, success: spec.success, dice: tally.dice } } : {}) };
+      }
       // Forged in the Dark: no dice — two, the lower counts.
       const zero = n === 0 && !!spec.best;
       const rolls = Array.from({ length: zero ? 2 : n }, () => die(spec.sides));
-      return { ...poolResult(spec, [rolls], zero, words), note: `${n}d${spec.sides}`, ...(spec.push && rolls.length ? { push: { sides: spec.sides, ...(spec.success ? { success: spec.success } : {}), dice: rolls } } : {}) };
+      return { ...poolResult(spec, [rolls], zero, words), note: `${n}d${spec.sides}`, ...(spec.need ? { need: true } : {}), ...(spec.push && rolls.length ? { push: { sides: spec.sides, ...(spec.success ? { success: spec.success } : {}), dice: rolls } } : {}) };
     }
     case 'fate': {
       const bonus = Math.round(value(spec.bonus));
@@ -818,6 +851,41 @@ function kindsResult(groups: { kind: PoolKind; sides: number; dice: number[] }[]
     ...(panic ? [words.panic ?? ''] : []),
   ].filter(Boolean);
   return { dice: groups.map((g) => g.dice), total: n, outcome: said.join(' · '), tone: panic ? ('bad' as const) : n ? ('good' as const) : ('bad' as const) };
+}
+
+// A pool changed after the roll: its successes (fives too, if they count), the added ones, the words.
+export function tallyResult(tally: Tally, words: RollWords): PackRollResult {
+  const at = tally.fives ? Math.min(5, tally.success) : tally.success;
+  const n = Math.max(0, tally.dice.filter((d) => d >= at).length + tally.plus);
+  const said = [
+    n ? words.successes(n) : words.failure,
+    ...(tally.plus ? [words.plus?.(tally.plus) ?? ''] : []),
+    ...(tally.rerolled ? [words.rerolled?.(tally.rerolled) ?? ''] : []),
+    ...(tally.fives ? [words.fives ?? ''] : []),
+  ].filter(Boolean);
+  return { dice: [tally.dice], total: n, outcome: said.join(' · '), tone: n ? 'good' : 'bad', note: `${tally.dice.length}d${tally.sides}`, tally };
+}
+
+// Change a pool after the roll: a success added or taken, one die (its place) rolled again, all failed dice, all 1s,
+// fives counting or not.
+export function tweakPool(tally: Tally, op: TallyOp, words: RollWords, die: Die): PackRollResult {
+  const at = tally.fives ? Math.min(5, tally.success) : tally.success;
+  const again = (pick: (d: number, i: number) => boolean) => {
+    let count = 0;
+    const dice = tally.dice.map((d, i) => (pick(d, i) ? (count++, die(tally.sides)) : d));
+    return { ...tally, dice, rerolled: tally.rerolled + count };
+  };
+  const next: Tally =
+    'plus' in op
+      ? { ...tally, plus: tally.plus + op.plus }
+      : 'die' in op
+        ? again((_d, i) => i === op.die)
+        : 'failed' in op
+          ? again((d) => d < at)
+          : 'ones' in op
+            ? again((d) => d === 1)
+            : { ...tally, fives: op.fives };
+  return tallyResult(next, words);
 }
 
 // Push a pool roll (Year Zero): the dice that aren't successes are rolled again, once; banes (a 1 on an attribute, gear

@@ -3,7 +3,7 @@ import { hotkeyLabel } from '../../shared/hotkeys';
 import { t } from './i18n.svelte';
 import { die, parseDice, rollD20, rollDamage, rollSave, type D20Mode, type D20Roll, type DamageRoll, type SaveRoll } from '../../shared/dice';
 import { getLang } from '../../shared/i18n';
-import { pushPool, rollPack, type Degrees, type PackRollResult, type RollSpec, type RollWords } from '../../shared/syspack';
+import { pushPool, rollPack, tweakPool, type Degrees, type TallyOp, type PackRollResult, type RollSpec, type RollWords } from '../../shared/syspack';
 import { runTable, type TableEvent, type TablePick, type TableSource, type TableStep } from '../../shared/rolltable';
 
 export interface RollEntry {
@@ -23,7 +23,8 @@ export interface RollEntry {
   event?: TableEvent;
   // Попадание проверяется по натуральной 20/1 только у атак.
   attack?: boolean;
-  // A d20 check judged against a DC typed here: two degrees or four (Pathfinder); dc — the one typed.
+  // A d20 check judged against a DC typed here: two degrees or four (Pathfinder); dc — the one typed (a pool with
+  // `need` — the successes needed).
   degrees?: Degrees;
   dc?: number;
   damage: DamageRoll[];
@@ -81,9 +82,18 @@ class Rolls {
     this.push({ who, what, pack: rollPack(spec, value, getLang(), packWords(), die, mode, row), damage: [] });
   }
 
-  // Push a pack's pool roll: a new line, the old one can't be pushed again.
+  // Change a pool after the roll (its line, in place).
+  tweak(id: number, op: TallyOp) {
+    this.list = this.list.map((x) => (x.id === id && x.pack?.tally ? { ...x, pack: { ...x.pack, ...tweakPool(x.pack.tally, op, packWords(), die) } } : x));
+  }
+  // Push a pack's pool roll: a new line, the old one can't be pushed again (a pool changed in place — its line).
   pushRoll(e: RollEntry) {
     if (!e.pack?.push || e.pack.pushed) return;
+    if (e.pack.tally) {
+      this.tweak(e.id, { failed: true });
+      this.list = this.list.map((x) => (x.id === e.id ? { ...x, pack: { ...x.pack!, pushed: true } } : x));
+      return;
+    }
     this.list = this.list.map((x) => (x.id === e.id ? { ...x, pack: { ...x.pack!, pushed: true } } : x));
     const r = pushPool(e.pack.push, packWords(), die);
     this.push({ who: e.who, what: `${e.what} · ${t('pack.pushed')}`, pack: { ...r, pushed: true }, damage: [] });
@@ -124,6 +134,9 @@ const packWords = (): RollWords => ({
   stress: (n) => (n < 0 ? t('lib.resistClear') : t('lib.resistStress', { n })),
   bane: (kind, n) => t(kind === 'gear' ? 'pack.baneGear' : 'pack.baneBase', { n }),
   panic: t('pack.panic'),
+  plus: (n) => t(n > 0 ? 'pack.plus' : 'pack.minus', { n: Math.abs(n) }),
+  rerolled: (count) => t('pack.rerolled', { count }),
+  fives: t('pack.fives'),
 });
 
 // Shift — с преимуществом, ⌥/Alt — с помехой.

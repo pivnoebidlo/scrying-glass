@@ -227,12 +227,36 @@
             </label>
           </div>
           <label class="check"><input type="checkbox" {disabled} checked={!!r.push} onchange={(e) => (e.currentTarget.checked ? (r.push = true) : delete r.push)} /> {t('sb.push')}</label>
-          <label class="check" title={t('sb.askHint')}><input type="checkbox" {disabled} checked={!!r.ask} onchange={(e) => (e.currentTarget.checked ? (r.ask = true) : delete r.ask)} /> {t('sb.ask')}</label>
+          <label class="check" title={t('sb.askHint')}><input type="checkbox" {disabled} checked={!!r.ask} onchange={(e) => (e.currentTarget.checked ? (r.ask = true) : (delete r.ask, delete r.askRange))} /> {t('sb.ask')}</label>
+          <div class="row">
+            {#if r.ask}
+              <label class="col" title={t('sb.askRangeHint')}>
+                <span>{t('sb.askRange')}</span>
+                <input type="number" min="1" max="10" placeholder="3" {disabled} value={r.askRange ?? ''} onchange={(e) => {
+                  const n = num(e.currentTarget.value);
+                  if (n) r.askRange = Math.min(10, Math.max(1, Math.round(n)));
+                  else delete r.askRange;
+                }} />
+              </label>
+            {/if}
+            <label class="col" title={t('sb.maxHint')}>
+              <span>{t('sb.maxDice')}</span>
+              <input type="number" min="1" max="30" placeholder={t('sb.maxNone')} {disabled} value={r.max ?? ''} onchange={(e) => {
+                const n = num(e.currentTarget.value);
+                if (n) r.max = Math.min(30, Math.max(1, Math.round(n)));
+                else delete r.max;
+              }} />
+            </label>
+          </div>
+          {#if r.success && !r.best && !r.kind && !r.groups?.length}
+            <label class="check" title={t('sb.needHint')}><input type="checkbox" {disabled} checked={!!r.need} onchange={(e) => (e.currentTarget.checked ? (r.need = true) : delete r.need)} /> {t('sb.need')}</label>
+            <label class="check" title={t('sb.tweakHint')}><input type="checkbox" {disabled} checked={!!r.tweak} onchange={(e) => (e.currentTarget.checked ? (r.tweak = true) : delete r.tweak)} /> {t('sb.tweak')}</label>
+          {/if}
           {#if r.success && !r.best}
             <!-- Year Zero: the dice by kind. -->
             <label class="row" title={t('sb.kindHint')}>
               <span>{t('sb.kind')}</span>
-              <select {disabled} value={r.kind ?? ''} onchange={(e) => (e.currentTarget.value ? (r.kind = e.currentTarget.value as PoolKind) : delete r.kind)}>
+              <select {disabled} value={r.kind ?? ''} onchange={(e) => (e.currentTarget.value ? ((r.kind = e.currentTarget.value as PoolKind), delete r.need, delete r.tweak) : delete r.kind)}>
                 <option value="">{t('sb.kindPlain')}</option>
                 {#each POOL_KINDS.filter((k) => k !== 'artifact') as k (k)}<option value={k}>{t(`sb.pk.${k}`)}</option>{/each}
               </select>
@@ -253,7 +277,7 @@
                   <button type="button" class="icon-btn" title={t('sb.remove')} {disabled} onclick={() => (r.groups = r.groups!.filter((_, j) => j !== i))}><X size={13} /></button>
                 </div>
               {/each}
-              <button type="button" class="btn small" {disabled} onclick={() => ((r.kind ??= 'base'), (r.groups = [...(r.groups ?? []), { kind: 'skill', count: '0' }]))}>{t('sb.addGroup')}</button>
+              <button type="button" class="btn small" {disabled} onclick={() => ((r.kind ??= 'base'), delete r.need, delete r.tweak, (r.groups = [...(r.groups ?? []), { kind: 'skill', count: '0' }]))}>{t('sb.addGroup')}</button>
             </div>
             {#if r.push}
               <label class="check"><input type="checkbox" {disabled} checked={!!r.pushStress} onchange={(e) => (e.currentTarget.checked ? (r.pushStress = true) : delete r.pushStress)} /> {t('sb.pushStress')}</label>

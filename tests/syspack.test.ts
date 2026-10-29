@@ -2,7 +2,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, pushPool, rollPack, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
+import { blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
 
 const words: RollWords = { success: 'Success', failure: 'Failure', successes: (n) => `${n} successes`, critical: 'Critical' };
 // Dice that fall as told, in order.
@@ -247,5 +247,48 @@ describe('sample system packs', () => {
     expect(keys.size).toBe(raw.sections.reduce((n: number, s: { fields: unknown[] }) => n + s.fields.length, 0));
     expect(formulaProblems(pack)).toEqual([]);
     for (const k of [pack.tracker.hp, ...(pack.tracker.cells ?? [])]) if (k) expect(keys.has(k), k).toBe(true);
+  });
+});
+
+describe('pool limits, needed successes and changes after the roll', () => {
+  const queue = (faces: number[]) => () => faces.shift() ?? 1;
+  const pool = { type: 'pool' as const, sides: 6, count: 'n', success: 6, tweak: true, need: true, max: 15 };
+
+  it('caps the dice and keeps a tally', () => {
+    const r = rollPack(pool, () => 20, 'en', words, () => 6);
+    expect(r.dice[0]).toHaveLength(15);
+    expect(r.need).toBe(true);
+    expect(r.tally?.dice).toHaveLength(15);
+  });
+
+  it('adds successes, rolls a die again, fives and ones', () => {
+    const r = rollPack(pool, () => 4, 'en', words, queue([6, 5, 1, 2]));
+    expect(r.total).toBe(1);
+    const plus = tweakPool(r.tally!, { plus: 1 }, words, queue([]));
+    expect(plus.total).toBe(2);
+    const fives = tweakPool(plus.tally!, { fives: true }, words, queue([]));
+    expect(fives.total).toBe(3);
+    const die = tweakPool(r.tally!, { die: 3 }, words, queue([6]));
+    expect(die.tally!.dice).toEqual([6, 5, 1, 6]);
+    expect(die.tally!.rerolled).toBe(1);
+    const ones = tweakPool(r.tally!, { ones: true }, words, queue([6]));
+    expect(ones.tally!.dice).toEqual([6, 5, 6, 2]);
+    const failed = tweakPool(r.tally!, { failed: true }, words, queue([6, 6, 6]));
+    expect(failed.total).toBe(4);
+    expect(failed.tally!.rerolled).toBe(3);
+  });
+
+  it('validates the new fields only where they fit', () => {
+    const v = validatePack({
+      scryingGlass: 'system', id: 'test-pool', title: 'X', version: 1, release: 1,
+      sections: [{ id: 's', title: 'S', fields: [
+        { key: 'a', type: 'number', title: 'A', roll: { type: 'pool', sides: 6, count: 'a', success: 6, ask: true, askRange: 99, max: 15, need: true, tweak: true } },
+        { key: 'b', type: 'number', title: 'B', roll: { type: 'pool', sides: 6, count: 'b', success: 6, kind: 'base', need: true, tweak: true } },
+      ] }],
+    });
+    const [a, b] = (v as SystemPack).sections[0]!.fields;
+    expect(a!.roll).toMatchObject({ askRange: 10, max: 15, need: true, tweak: true });
+    expect(b!.roll).not.toHaveProperty('need');
+    expect(b!.roll).not.toHaveProperty('tweak');
   });
 });

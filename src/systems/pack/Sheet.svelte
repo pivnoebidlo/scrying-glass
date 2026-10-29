@@ -45,7 +45,11 @@
   }
   // The field whose pool asks for added or taken dice now.
   let asking = $state<{ key: string; row?: Record<string, unknown>; mode: ReturnType<typeof modeOf> } | null>(null);
-  const MODS = [-3, -2, -1, 0, 1, 2, 3];
+  // −N…+N: the pool's askRange (3 if not set).
+  const modsOf = (f: FieldDef | undefined) => {
+    const n = f?.roll?.type === 'pool' ? (f.roll.askRange ?? 3) : 3;
+    return Array.from({ length: 2 * n + 1 }, (_, i) => i - n);
+  };
   const cell = (v: unknown) => (v === undefined || v === null || v === '' ? t('pack.empty') : String(v));
 </script>
 
@@ -55,7 +59,7 @@
       {@const f = sections.flatMap((x) => x.fields).find((x) => x.key === asking!.key)}
       <div class="ask" role="group">
         <span>{t('pack.askDice', { name: f ? L(f.title) : '' })}</span>
-        {#each MODS as m (m)}<button class="chip" class:zero={m === 0} onclick={(e) => f && roll(f, e, asking!.row, m)}>{m > 0 ? `+${m}` : m < 0 ? `−${-m}` : '±0'}</button>{/each}
+        {#each modsOf(f) as m (m)}<button class="chip" class:zero={m === 0} onclick={(e) => f && roll(f, e, asking!.row, m)}>{m > 0 ? `+${m}` : m < 0 ? `−${-m}` : '±0'}</button>{/each}
         <button class="icon-btn" title={t('pack.askCancel')} onclick={() => (asking = null)}>✕</button>
       </div>
     {/if}

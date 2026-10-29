@@ -824,7 +824,8 @@ with checkboxes — the ticked ones are downloaded, the unticked editions of D&D
 systems turns systems on and off and deletes pack systems; more are in the Community. A pool can count dice by kind, as in Year Zero: attribute, skill, gear, stress and artifact dice (d8–d12), a 1
 on an attribute or gear die is a bane that stays on a push, a stress 1 is panic, a push can add a stress die, and dice
 can be added or taken at the moment of the roll; a d20 roll can be judged by degrees of success against a DC typed in
-the roll log; conditions can carry a number («Frightened 2»). Your own systems are made in **Tools → System builder** (also from Settings → Game
+the roll log; a pool can cap its dice, ask for the successes needed and be changed after the roll (a success added,
+a die rolled again by a click, the failed dice or the 1s again, fives as successes); conditions can carry a number («Frightened 2»). Your own systems are made in **Tools → System builder** (also from Settings → Game
 systems): a line about the system, sections and fields, the roll of each field, the tracker, with a live preview of the card where rolls can be
 tried; a built-in system can be copied and changed. They are saved to `systems/` in the library (every vault sees
 them) and can be exported to a file and imported. A system can have its own **compendium** (rules, conditions, gear —
