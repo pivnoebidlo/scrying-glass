@@ -115,6 +115,14 @@ export default defineModule({
       }));
     },
 
+    // Replace a condition by another one in its place (a valued one changed: «Frightened 2» → «Frightened 1»); to
+    // null — remove it.
+    setCondition(s, { id, from, to }: { id: string; from: string; to: string | null }) {
+      return patch(s, id, (c) => ({
+        ...c,
+        conditions: to === null ? c.conditions.filter((x) => x !== from) : c.conditions.map((x) => (x === from ? to : x)),
+      }));
+    },
     toggleCondition(s, { id, condition }: { id: string; condition: string }) {
       return patch(s, id, (c) => ({
         ...c,

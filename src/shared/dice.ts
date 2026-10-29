@@ -66,14 +66,29 @@ export interface DamageRoll {
   // Выпавшие грани по каждому кубу записи.
   rolls: number[][];
   crit: boolean;
+  // A critical hit doubles the whole damage (Pathfinder 2e), not the dice.
+  doubled?: boolean;
   total: number;
 }
 
-// Критическое попадание: кубов вдвое больше, бонус тот же.
-export function rollDamage(expr: DiceExpr, crit = false): DamageRoll {
-  const rolls = expr.dice.map((d) => Array.from({ length: d.count * (crit ? 2 : 1) }, () => die(d.sides)));
-  const total = Math.max(0, rolls.flat().reduce((a, b) => a + b, 0) + expr.bonus);
-  return { expr, rolls, crit, total };
+// Критическое попадание: кубов вдвое больше, бонус тот же (D&D) — or, `double: 'total'`, the whole damage twice
+// (Pathfinder 2e).
+export function rollDamage(expr: DiceExpr, crit = false, double: 'dice' | 'total' = 'dice'): DamageRoll {
+  const twice = crit && double === 'total';
+  const rolls = expr.dice.map((d) => Array.from({ length: d.count * (crit && !twice ? 2 : 1) }, () => die(d.sides)));
+  const sum = Math.max(0, rolls.flat().reduce((a, b) => a + b, 0) + expr.bonus);
+  return { expr, rolls, crit, ...(twice ? { doubled: true } : {}), total: twice ? sum * 2 : sum };
+}
+
+// Degrees of success (Pathfinder 2e): beat the DC by 10 — a critical success, miss it by 10 — a critical failure;
+// a natural 20 is one degree better, a natural 1 one worse.
+export type Degree = 'critical' | 'success' | 'failure' | 'fumble';
+const DEGREES: Degree[] = ['fumble', 'failure', 'success', 'critical'];
+export function degreeOf(total: number, natural: number, dc: number): Degree {
+  let i = total >= dc + 10 ? 3 : total >= dc ? 2 : total <= dc - 10 ? 0 : 1;
+  if (natural === 20) i = Math.min(3, i + 1);
+  if (natural === 1) i = Math.max(0, i - 1);
+  return DEGREES[i]!;
 }
 
 // Кубы Fate (4dF): у каждого грани −1, 0, +1 (по две). Итог — сумма граней и бонуса (навыка).

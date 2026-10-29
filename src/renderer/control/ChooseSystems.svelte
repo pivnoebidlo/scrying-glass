@@ -9,10 +9,12 @@
   import { t } from '../lib/i18n.svelte';
   import { OFFICIAL_AUTHOR, OFFICIAL_SOURCE, type RepoEntry } from '../../shared/repo';
   import { PLUGINS } from '../../systems/plugins';
+  import { familyOf, LEGACY_SYSTEM } from '../../systems';
   import { autoContent } from '../../modules/repo/ui/repo.svelte';
 
   const BUILT_IN = PLUGINS.flatMap((p) => p.systems);
-  const builtIn = $state<Record<string, boolean>>(Object.fromEntries(BUILT_IN.map((s) => [s.id, true])));
+  // Ticked at first: the legacy family (D&D) — the others are a choice of their own.
+  const builtIn = $state<Record<string, boolean>>(Object.fromEntries(BUILT_IN.map((s) => [s.id, s.family === familyOf(LEGACY_SYSTEM)])));
 
   let packs = $state.raw<RepoEntry[]>([]);
   let picked = $state<Record<string, boolean>>({});

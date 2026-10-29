@@ -91,9 +91,10 @@ class Rolls {
     if (this.tables?.offered(on).length) this.push({ who, what, event: on, damage: [] });
   }
 
-  damage(who: string, what: string, damage: string, crit = false) {
+  // double — what a critical hit doubles: the dice (D&D) or the whole damage (Pathfinder 2e).
+  damage(who: string, what: string, damage: string, crit = false, double: 'dice' | 'total' = 'dice') {
     const e = parseDice(damage);
-    if (e) this.push({ who, what, damage: [rollDamage(e, crit)] });
+    if (e) this.push({ who, what, damage: [rollDamage(e, crit, double)] });
   }
 
   clear() {

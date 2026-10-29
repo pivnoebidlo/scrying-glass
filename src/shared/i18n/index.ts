@@ -30,11 +30,12 @@ import * as schedule from '../../modules/schedule/i18n';
 import * as mausritter from '../../modules/mausritter/i18n';
 import * as crew from '../../modules/crew/i18n';
 import * as dnd5e from '../../systems/dnd5e/i18n';
+import * as pf2e from '../../systems/pf2e/i18n';
 
 export * from './core';
 
-export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en, ...maps.en, ...music.en, ...adventures.en, ...backup.en, ...timer.en, ...fate.en, ...journal.en, ...initiative.en, ...tools.en, ...compendium.en, ...bestiary.en, ...systems.en, ...core.en, ...telegram.en, ...schedule.en, ...mausritter.en, ...clocks.en, ...crew.en, ...repo.en, ...sysbuilder.en, ...dnd5e.en };
-const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru, ...maps.ru, ...music.ru, ...adventures.ru, ...backup.ru, ...timer.ru, ...fate.ru, ...journal.ru, ...initiative.ru, ...tools.ru, ...compendium.ru, ...bestiary.ru, ...systems.ru, ...core.ru, ...telegram.ru, ...schedule.ru, ...mausritter.ru, ...clocks.ru, ...crew.ru, ...repo.ru, ...sysbuilder.ru, ...dnd5e.ru } };
+export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en, ...maps.en, ...music.en, ...adventures.en, ...backup.en, ...timer.en, ...fate.en, ...journal.en, ...initiative.en, ...tools.en, ...compendium.en, ...bestiary.en, ...systems.en, ...core.en, ...telegram.en, ...schedule.en, ...mausritter.en, ...clocks.en, ...crew.en, ...repo.en, ...sysbuilder.en, ...dnd5e.en, ...pf2e.en };
+const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru, ...maps.ru, ...music.ru, ...adventures.ru, ...backup.ru, ...timer.ru, ...fate.ru, ...journal.ru, ...initiative.ru, ...tools.ru, ...compendium.ru, ...bestiary.ru, ...systems.ru, ...core.ru, ...telegram.ru, ...schedule.ru, ...mausritter.ru, ...clocks.ru, ...crew.ru, ...repo.ru, ...sysbuilder.ru, ...dnd5e.ru, ...pf2e.ru } };
 
 export type Key = keyof typeof en;
 

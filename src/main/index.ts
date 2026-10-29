@@ -18,7 +18,8 @@ import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { COVER_FILE, renameAdventurePaths, SUPPLEMENT_KINDS, systemFor, type SupplementKind } from '../shared/adventures';
-import { defaultSystem, setSystemsOff } from '../systems';
+import { defaultSystem, LEGACY_SYSTEM, setSystemsOff } from '../systems';
+import { PLUGINS } from '../systems/plugins';
 import { loadSystemPacks, ownPackFile, packBooks, savePack, systemPacks } from './syspacks';
 import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
 import type { TrashPlace, TrashSettings } from '../shared/trash';
@@ -87,6 +88,9 @@ interface AppSettings {
   systemsOff?: string[];
   // false — the very first launch, the systems are not picked yet (Welcome asks); no field — picked or an older install.
   systemsChosen?: boolean;
+  // The built-in systems (of the plugins) this install has met: a new one comes turned off (no field — the legacy
+  // family's, D&D: the installs from before the list).
+  systemsKnown?: string[];
   // Interface language: 'auto' (OS language, else English) or a language.
   language?: LangSetting;
   // The control window's colour theme; no field — follow the system.
@@ -117,12 +121,30 @@ function loadSettings() {
     // The very first launch: the GM picks the systems on the Welcome screen — the editions of D&D and the packs of the
     // official repository (a GM who has used the app keeps what they had).
     if (!saved) settings.systemsChosen = false;
+    meetNewSystems();
     setTrashSettings(settings.trash);
     setSystemsOff(settings.systemsOff);
     setHotkeys(settings.hotkeys);
   } catch {
     /* не прочитались — начнём с выбора хранилища */
   }
+}
+
+// A built-in system the app brings in a new version (Pathfinder 2e in 0.67) comes turned off: the GM turns it on in
+// Settings → Game systems (and only then its data is downloaded). The very first launch asks instead (ChooseSystems).
+function meetNewSystems() {
+  const builtIn = PLUGINS.flatMap((p) => p.systems.map((s) => s.id));
+  const legacy = LEGACY_SYSTEM ? PLUGINS.find((p) => p.systems.some((s) => s.id === LEGACY_SYSTEM))?.systems.map((s) => s.id) ?? [] : [];
+  const known = settings.systemsKnown ?? legacy;
+  const fresh = builtIn.filter((id) => !known.includes(id));
+  if (!fresh.length && settings.systemsKnown) return;
+  settings = {
+    ...settings,
+    systemsKnown: builtIn,
+    ...(settings.systemsChosen === false ? {} : { systemsOff: [...new Set([...(settings.systemsOff ?? []), ...fresh])] }),
+  };
+  // The very first launch is saved with the choice.
+  if (settings.systemsChosen !== false) writeJsonAtomic(settingsFile(), settings);
 }
 
 // ---------- Хранилище ----------

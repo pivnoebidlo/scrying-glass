@@ -95,6 +95,7 @@ Electron-приложение для мастера D&D: окно управле
     npm test           # тесты ядра (vitest, tests/*.test.ts): кубы, порядок, инициатива, карты, хранилище
     npm run import-srd # пересобрать бестиарий SRD D&D content/dnd5e-srd/bestiary/ (нужен интернет)
     npm run import-compendium # пересобрать справочник SRD D&D content/dnd5e-srd/compendium/ (нужен интернет)
+    npm run import-pf2e # данные Pathfinder 2e: content/pf2e-core/ из данных pf2e для Foundry (только ORC; нужны git и интернет)
     npm run build-content # упаковать content/<id>/ → dist/content/<id>.sgcontent (скачиваемое содержимое систем)
     npm run build-fate # встроенный справочник Fate: resources/compendium/fate-core.<lang>.json из scripts/fate-core.<lang>.md
     npm run build-fitd # встроенный справочник FitD: resources/compendium/fitd.<lang>.json из scripts/fitd.<lang>.md
@@ -312,6 +313,19 @@ Electron-приложение для мастера D&D: окно управле
   системы — `SystemDef.about`, у пакета — поле `about` (`Loc`; конструктор — «О системе»). С выключенным D&D его не видно нигде,
   кроме «Ролевых систем» (включить) и «О программе» (атрибуция): разделы настроек и инструменты других систем — только
   включённых.
+- Pathfinder 2e (с 0.67) — второй плагин (`systems/pf2e/`): одна система `pf2e` (ремастер), семейство `pf2e`; название —
+  по Community Use Policy Paizo, правила — ORC (атрибуция дословно — `about.credit.pf2e`, `content/pf2e-core/README.md`).
+  Статблок `Pf2eStats` (`stats.ts`: уровень, черты, Восприятие, навыки, КБ/спасброски, удары `Strike` — `mapOf`, способности
+  `Feature` по разделам interaction / defensive / offensive, колдовство), вид — `StatBlock.svelte` (броски, ×2 —
+  `rolls.damage(…, 'total')`), редактор пока общий (JSON). Типы записей с префиксом (`pf2e-spell`, `pf2e-condition`,
+  `pf2e-action`, `pf2e-ability`; `spell` занят D&D — ключи типов общие на всё приложение). Трекер — `tracker.ts`
+  (`CONDITIONS`, `VALUED` — `TrackerDef.conditions.valued`, общий механизм: «Frightened 2» строкой, − / + — действие
+  `initiative/setCondition`, `conditionValue`), угроза боя — `budget.ts` + `Budget.svelte` (`SystemUi.encounter`; партия —
+  `initiative.party`). Степени успеха — `degreeOf` в `shared/dice.ts`. Данные — `content/pf2e-core/` (`scripts/import-pf2e.ts`:
+  частичный клон foundryvtt/pf2e в `node_modules/.cache/pf2e`, только `publication.license === 'ORC'` из Player Core,
+  Player Core 2, Monster Core, GM Core; HTML и обогащения Foundry → наша разметка; лор существ не берём — Reserved Material).
+  Новая встроенная система приходит выключенной (`settings.systemsKnown`, `meetNewSystems` в main/index.ts; первый запуск
+  отмечает только D&D). Дальше: лист персонажа, импорт из Pathbuilder, снаряжение, черты, классы.
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `LEGACY_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
   D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`; из плагинов и пакетов); правила —

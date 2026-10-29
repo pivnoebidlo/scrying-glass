@@ -25,10 +25,17 @@ export interface TrackerDef {
   roll: { label: string; title: string; value(bonus: number): number; none?: boolean };
   // Состояния: готовый список (у D&D) или свободный ввод (аспекты Fate).
   // add — the placeholder of the free input ("+ aspect" by default).
-  conditions: { label: string; list: string[]; free: boolean; add?: string; entry?(c: string): string[] };
+  // valued — the conditions that carry a number («Frightened 2»): stored in the same string, − / + change it.
+  conditions: { label: string; list: string[]; free: boolean; add?: string; entry?(c: string): string[]; valued?: string[] };
   fields: CombatField[];
   // Участник из карточки: всё, кроме имени, стороны и картинки.
   fromCard(combat: CombatStats): Partial<Combatant>;
+}
+
+// A condition with a number: «Frightened 2» → { name: 'Frightened', value: 2 } (no number — value null).
+export function conditionValue(c: string): { name: string; value: number | null } {
+  const m = /^(.*\S)\s+(\d+)$/.exec(c);
+  return m ? { name: m[1]!, value: Number(m[2]) } : { name: c, value: null };
 }
 
 // Числа участника из полей (нет значения — по умолчанию системы). Поля применяются по очереди: дорожки стресса

@@ -17,6 +17,7 @@ import { familyOf } from '.';
 import type { ToolDef } from '../modules/tools/ui/registry.svelte';
 import type { ImportRequest } from '../modules/bestiary/ui/cards.svelte';
 import { dnd5eUi } from './dnd5e/ui';
+import { pf2eUi } from './pf2e/ui';
 
 export type StatsView = Component<{ card: Card<any> }>;
 // lang — язык карточки (подписи, которые попадут в статблок, например название колдовства).
@@ -77,7 +78,7 @@ export interface SystemUi {
   cardSettings?: Component;
 }
 
-export const systemUis: SystemUi[] = [dnd5eUi];
+export const systemUis: SystemUi[] = [dnd5eUi, pf2eUi];
 
 export const systemUi = (system: string): SystemUi | undefined => systemUis.find((u) => u.family === familyOf(system));
 

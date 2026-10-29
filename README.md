@@ -48,6 +48,7 @@ The app is not signed with Apple or Microsoft certificates, so the system warns 
     npm run build-content # pack content/<id>/ into dist/content/<id>.sgcontent (downloadable content of systems)
     npm run build-fate # build the built-in Fate compendium from scripts/fate-core.<lang>.md
     npm run build-fitd # build the built-in Forged in the Dark compendium from scripts/fitd.<lang>.md
+    npm run import-pf2e # rebuild the Pathfinder 2e data in content/pf2e-core/ (needs git and the internet)
     npm run build-mausritter # built-in Mausritter creatures and compendium from scripts/mausritter-srd.<lang>.md
     npm run dist       # installer for your system in dist/ (electron-builder.yml)
     npm run icon       # build/icon.png from build/icon.svg
@@ -230,6 +231,19 @@ faction status, claims, upgrades, cohorts) together with 58 sample special abili
 retelling of the Blades in the Dark SRD in English and Russian written for the app, without the original setting.
 The texts are in `scripts/fitd.<lang>.md`; `npm run build-fitd` builds `resources/compendium/fitd.<lang>.json` from
 them. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
+
+**Pathfinder 2e** (the remaster) is a system of the app, off until you turn it on in Settings → Game systems; its data
+is downloaded then (about 0.5 MB, English only — there is no open Russian translation): the 492 creatures of Monster
+Core (stat blocks), the conditions, spells and actions of Player Core and Player Core 2, the monster abilities. A stat
+block rolls Perception, skills and saves, each strike three times (with the multiple attack penalty, agile weapons
+−4/−8), damage and ×2 for a critical hit; a link opens the rule on the side. The tracker takes initiative from
+Perception, conditions with a value («Frightened 2») have − and +; above a fight — the threat by the XP budget of GM
+Core for the party's size and level. The data comes from the pf2e system for Foundry VTT (ORC entries only;
+`content/pf2e-core/README.md`). A smaller set for now: equipment, feats, classes, character sheets and the Pathbuilder
+import come later. This product is licensed under the ORC License (paizo.com/orclicense); Scrying Glass uses
+trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy
+(paizo.com/licenses/communityuse); we are expressly prohibited from charging you to use or access this content; Scrying
+Glass is not published, endorsed, or specifically approved by Paizo.
 
 The compendium is at hand from any tab:
 - spells in stat blocks (in italics, as in the SRD) and in a character sheet's spell lists are links: a click opens

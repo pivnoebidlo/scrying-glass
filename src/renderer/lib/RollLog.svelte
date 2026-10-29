@@ -124,7 +124,7 @@
             <div class="line dmg">
               <span class="total">{d.total}</span>
               <span class="note">
-                {e.d20 ? t('lib.damage') + ' ' : ''}{diceText(d.expr)}{d.crit ? ' ' + t('lib.doubleDice') : ''}: {d.rolls.map((r) => r.join(', ')).join(' | ')}
+                {e.d20 ? t('lib.damage') + ' ' : ''}{diceText(d.expr)}{d.doubled ? ' ' + t('lib.doubled') : d.crit ? ' ' + t('lib.doubleDice') : ''}: {d.rolls.map((r) => r.join(', ')).join(' | ')}
               </span>
             </div>
           {/each}

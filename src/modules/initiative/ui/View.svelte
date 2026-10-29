@@ -16,6 +16,7 @@
   import { currentSystem } from '../../../shared/adventures';
   import { systemOf } from '../../../systems';
   import { systemUi, trackerCells } from '../../../systems/ui';
+  import { conditionValue } from '../../../systems/tracker';
 
   let { ms, app }: ModuleProps<'initiative'> = $props();
 
@@ -41,6 +42,11 @@
 
 
   // Число из поля или null, если поле пустое.
+  // A valued condition of the system («Frightened 2»): its name and number, else null.
+  const valued = (cond: string) => {
+    const v = conditionValue(cond);
+    return v.value !== null && tracker.conditions.valued?.includes(v.name) ? (v as { name: string; value: number }) : null;
+  };
   const num = (v: string) => (v.trim() === '' || isNaN(Number(v)) ? null : Number(v));
 
   const update = (c: Combatant, changes: Partial<Omit<Combatant, 'id'>>) => dispatch('initiative', 'update', { id: c.id, changes });
@@ -124,12 +130,15 @@
             <td class="c-cond">
               {#each c.conditions as cond (cond)}
                 {@const entry = tracker.conditions.entry}
+                {@const v = valued(cond)}
                 <span class="chip">
+                  {#if v}<button class="step" title={t('init.condLess')} onclick={() => dispatch('initiative', 'setCondition', { id: c.id, from: cond, to: v.value > 1 ? `${v.name} ${v.value - 1}` : null })}>−</button>{/if}
                   {#if entry}
                     <button class="cond" title={t('init.condHint')} onclick={() => peekEntry(entry(cond))}>{cond}</button>
                   {:else}
                     <span>{cond}</span>
                   {/if}
+                  {#if v}<button class="step" title={t('init.condMore')} onclick={() => dispatch('initiative', 'setCondition', { id: c.id, from: cond, to: `${v.name} ${v.value + 1}` })}>+</button>{/if}
                   <button class="off" title={t('init.condOff')} onclick={() => dispatch('initiative', 'toggleCondition', { id: c.id, condition: cond })}><X size={10} /></button>
                 </span>
               {/each}
@@ -154,12 +163,13 @@
                   title={t('init.addCondition')}
                   onchange={(e) => {
                     const v = e.currentTarget.value;
-                    if (v) dispatch('initiative', 'toggleCondition', { id: c.id, condition: v });
+                    // A condition with a value starts at 1.
+                    if (v) dispatch('initiative', 'toggleCondition', { id: c.id, condition: tracker.conditions.valued?.includes(v) ? `${v} 1` : v });
                     e.currentTarget.value = '';
                   }}
                 >
                   <option value="">+</option>
-                  {#each tracker.conditions.list.filter((x) => !c.conditions.includes(x)) as cond (cond)}<option value={cond}>{cond}</option>{/each}
+                  {#each tracker.conditions.list.filter((x) => !c.conditions.some((y) => conditionValue(y).name === x)) as cond (cond)}<option value={cond}>{cond}</option>{/each}
                 </select>
               {/if}
             </td>
@@ -319,6 +329,13 @@
   .chip .cond:hover {
     color: var(--accent);
     text-decoration: underline dotted;
+  }
+  .chip .step {
+    padding: 0 3px;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
   }
   .chip .off {
     color: var(--text-faint);

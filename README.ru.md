@@ -48,6 +48,7 @@
     npm run build-content # упаковать content/<id>/ в dist/content/<id>.sgcontent (скачиваемое содержимое систем)
     npm run build-fate # собрать встроенный справочник Fate из scripts/fate-core.<язык>.md
     npm run build-fitd # собрать встроенный справочник Forged in the Dark из scripts/fitd.<язык>.md
+    npm run import-pf2e # пересобрать данные Pathfinder 2e в content/pf2e-core/ (нужны git и интернет)
     npm run build-mausritter # встроенные существа и справочник Mausritter из scripts/mausritter-srd.<язык>.md
     npm run dist       # установщик для своей системы в dist/ (electron-builder.yml)
     npm run icon       # иконка build/icon.png из build/icon.svg
@@ -226,6 +227,19 @@ CC BY 3.0). Тексты лежат в `scripts/fate-core.<язык>.md`, `npm r
 владения, улучшения, подручные) и 58 примеров особых способностей негодяев и банд — пересказ SRD Blades in the Dark на
 русском и английском, сделанный для приложения, без мира оригинальной игры. Тексты — в `scripts/fitd.<язык>.md`,
 `npm run build-fitd` собирает из них `resources/compendium/fitd.<язык>.json`. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
+
+**Pathfinder 2e** (ремастер) — система приложения, выключена, пока вы не включите её в «Настройки» → «Ролевые
+системы»; тогда скачиваются её данные (около 0,5 МБ, только на английском — открытого русского перевода нет): 492
+существа Monster Core (статблоки), состояния, заклинания и действия Player Core и Player Core 2, способности существ.
+Статблок бросает Восприятие, навыки и спасброски, каждый удар — тремя кнопками (со штрафом за несколько атак, у
+проворного оружия −4/−8), урон и ×2 для критического попадания; ссылка открывает правило сбоку. Трекер берёт инициативу
+от Восприятия, у состояний со значением («Frightened 2») есть − и +; над боем — угроза по бюджету опыта из GM Core для
+размера и уровня партии. Данные — из системы pf2e для Foundry VTT (только записи под ORC; `content/pf2e-core/README.md`).
+Пока набор поменьше: снаряжение, черты, классы, листы персонажей и импорт из Pathbuilder — потом. This product is
+licensed under the ORC License (paizo.com/orclicense); Scrying Glass uses trademarks and/or copyrights owned by Paizo
+Inc., used under Paizo's Community Use Policy (paizo.com/licenses/communityuse); we are expressly prohibited from
+charging you to use or access this content; Scrying Glass is not published, endorsed, or specifically approved by
+Paizo.
 
 Справочник под рукой из любой вкладки:
 - заклинания в статблоках (курсивом, как в SRD) и в списках заклинаний листа персонажа — ссылки: щелчок открывает

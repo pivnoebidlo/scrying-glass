@@ -16,6 +16,7 @@
     "import-compendium": "node --no-warnings scripts/import-compendium.ts",
     "build-fate": "node --no-warnings scripts/build-fate.ts",
     "build-fitd": "node --no-warnings scripts/build-fitd.ts",
+    "import-pf2e": "node --no-warnings scripts/import-pf2e.ts",
     "build-content": "node --no-warnings scripts/build-content.ts",
     "build-mausritter": "node --no-warnings scripts/build-mausritter.ts",
     "postinstall": "node node_modules/electron/install.js",
