@@ -14,7 +14,7 @@
   let { card }: { card: Card<Pf2eCharacter> } = $props();
   const c = $derived(card.stats);
   const lb = (key: string, params?: Record<string, string | number>) => tr(card.lang === 'ru' ? 'ru' : 'en', `pf2e.${key}` as Key, params);
-  const check = (what: string, bonus: number) => rolls.check(card.name, what, bonus);
+  const check = (what: string, bonus: number) => rolls.check(card.name, what, bonus, 'normal', 'four');
   const money = $derived((['pp', 'gp', 'sp', 'cp'] as const).filter((k) => c.money[k]).map((k) => `${c.money[k]} ${k}`).join(', '));
   // Feats by level, in order.
   const featLevels = $derived([...new Set(c.feats.map((f) => f.level))].sort((a, b) => a - b));

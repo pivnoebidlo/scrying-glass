@@ -11,7 +11,7 @@
   // The dice of a damage line («{1d10+1} piercing plus {1d6} fire»): their sum is rolled (one roll in the log).
   const diceOf = (damage: string) => [...damage.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]!).join('+');
   const damageText = (damage: string) => damage.replace(/\{([^}]+)\}/g, '$1');
-  const strike = (st: Strike, n: 1 | 2 | 3) => rolls.check(who, `${st.name} (${lb('sb.map', { n })})`, st.bonus + mapOf(st, n));
+  const strike = (st: Strike, n: 1 | 2 | 3) => rolls.check(who, `${st.name} (${lb('sb.map', { n })})`, st.bonus + mapOf(st, n), 'normal', 'four');
   const hit = (st: Strike, crit: boolean) => rolls.damage(who, `${st.name}${crit ? ' ×2' : ''}`, diceOf(st.damage), crit, 'total');
 </script>
 

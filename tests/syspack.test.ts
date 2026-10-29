@@ -133,6 +133,53 @@ describe('system packs', () => {
   });
 });
 
+describe('Year Zero, degrees of success, valued conditions', () => {
+  const yzWords: RollWords = { ...words, bane: (k, n) => `${n} ${k}`, panic: 'Panic' };
+  const v = () => (f: string) => Number(f) || (f === 'str' ? 3 : f === 'skill' ? 2 : f === 'gear' ? 1 : 0);
+  const spec = {
+    type: 'pool' as const, sides: 6, count: 'str', success: 6, push: true, kind: 'base' as const, pushStress: true,
+    groups: [{ kind: 'skill' as const, count: 'skill' }, { kind: 'gear' as const, count: 'gear' }],
+  };
+
+  it('a pack keeps what it knows of the new rolls and the tracker', () => {
+    const p = validatePack({
+      ...raw,
+      sections: [{ id: 'm', title: 'M', fields: [
+        { key: 'str', type: 'number', title: 'Str', roll: { ...spec, groups: [...spec.groups, { kind: 'artifact', count: '1', sides: 10 }, { kind: 'evil', count: '1' }], ask: true } },
+        { key: 'skill', type: 'number', title: 'Skill', roll: { type: 'd20', bonus: 'skill', degrees: 'four' } },
+        { key: 'gear', type: 'number', title: 'Gear' },
+      ] }],
+      tracker: { init: { type: 'none' }, conditions: { list: ['Frightened', 'Prone'], valued: ['Frightened'] } },
+    }) as SystemPack;
+    const roll = p.sections[0]!.fields[0]!.roll!;
+    expect(roll).toMatchObject({ kind: 'base', pushStress: true, ask: true });
+    expect(roll.type === 'pool' && roll.groups).toEqual([{ kind: 'skill', count: 'skill' }, { kind: 'gear', count: 'gear' }, { kind: 'artifact', count: '1', sides: 10 }]);
+    expect(p.sections[0]!.fields[1]!.roll).toMatchObject({ degrees: 'four' });
+    expect(p.tracker.conditions?.valued).toEqual(['Frightened']);
+  });
+
+  it('dice by kind: successes, banes on the attribute and the gear, a push keeps them and adds a stress die', () => {
+    // base 3: 6 1 3; skill 2: 1 5; gear 1: 1
+    const r = rollPack(spec, v(), 'en', yzWords, fixed(6, 1, 3, 1, 5, 1));
+    expect(r).toMatchObject({ total: 1, outcome: '1 successes · 1 base · 1 gear', tone: 'good', dice: [[6, 1, 3], [1, 5], [1]] });
+    // The push: 6 and the banes stay; 3, the skill 1 and 5 roll again; a stress die is added.
+    const pushed = pushPool(r.push!, yzWords, fixed(6, 2, 4, 1));
+    expect(pushed.dice).toEqual([[6, 1, 6], [2, 4], [1], [1]]);
+    expect(pushed).toMatchObject({ total: 2, tone: 'bad' });
+    expect(pushed.outcome).toContain('Panic');
+  });
+
+  it('artifact dice give more successes on high faces', () => {
+    const art = { type: 'pool' as const, sides: 6, count: '0', success: 6, kind: 'base' as const, groups: [{ kind: 'artifact' as const, count: '3', sides: 12 }] };
+    expect(rollPack(art, v(), 'en', yzWords, fixed(12, 9, 5)).total).toBe(4 + 2);
+  });
+
+  it('a d20 roll with degrees is ready to be judged against a DC', () => {
+    expect(rollPack({ type: 'd20', bonus: '5', degrees: 'four' }, v(), 'en', words, fixed(14))).toMatchObject({ total: 19, dc: { natural: 14, degrees: 'four' } });
+    expect(rollPack({ type: 'd20', bonus: '5' }, v(), 'en', words, fixed(14))).not.toHaveProperty('dc');
+  });
+});
+
 describe('format extensions for Fate and Mausritter', () => {
   const pack = validatePack({
     scryingGlass: 'system',

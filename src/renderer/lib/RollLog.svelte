@@ -1,5 +1,6 @@
 <!-- Журнал бросков мастера: всплывает при броске, новые снизу. Игрокам не виден. -->
 <script lang="ts">
+  import { degreeOf, type Degree } from '../../shared/dice';
   import { t } from './i18n.svelte';
   import { Dices, Trash2, X } from '@lucide/svelte';
   import { diceText } from '../../shared/dice';
@@ -24,6 +25,14 @@
       ? `${t('lib.d20')}: ${e.d20.rolls.join(' | ')}${e.d20.mode === 'advantage' ? ` (${t('lib.adv')})` : e.d20.mode === 'disadvantage' ? ` (${t('lib.dis')})` : ''} ${signed(e.d20.bonus)}`
       : '';
   const crit = (e: RollEntry) => !!e.attack && e.d20?.natural === 20;
+  // A roll judged against a DC typed here: its natural die, total and how many degrees.
+  const judged = (e: RollEntry) =>
+    e.d20 && e.degrees ? { natural: e.d20.natural, total: e.d20.total, degrees: e.degrees } : e.pack?.dc ? { natural: e.pack.dc.natural, total: e.pack.total, degrees: e.pack.dc.degrees } : null;
+  const degree = (e: RollEntry): Degree | null => {
+    const j = judged(e);
+    if (!j || e.dc === undefined) return null;
+    return j.degrees === 'four' ? degreeOf(j.total, j.natural, e.dc) : j.total >= e.dc ? 'success' : 'failure';
+  };
   const fumble = (e: RollEntry) => !!e.attack && e.d20?.natural === 1;
 
   // Roll tables: offered on a natural 20 or 1 or an event of the game (the tables marked so), the result — to the
@@ -73,6 +82,13 @@
               >
               <span class="note">{d20Note(e)}</span>
               {#if crit(e)}<span class="tag crit">{t('lib.crit')}</span>{:else if fumble(e)}<span class="tag fumble">{t('lib.miss')}</span>{/if}
+            </div>
+          {/if}
+          {#if judged(e)}
+            {@const d = degree(e)}
+            <div class="line dc">
+              <label title={t('lib.dcHint')}>{t('lib.dc')} <input type="number" min="0" max="99" value={e.dc ?? ''} onchange={(ev) => rolls.setDc(e.id, ev.currentTarget.value.trim() === '' ? null : Number(ev.currentTarget.value))} /></label>
+              {#if d}<span class="tag" class:crit={d === 'critical' || d === 'success'} class:fumble={d === 'failure' || d === 'fumble'}>{t(`lib.degree.${d}`)}</span>{/if}
             </div>
           {/if}
           {#if e.save}
@@ -203,6 +219,17 @@
     display: flex;
     align-items: baseline;
     gap: 8px;
+  }
+  .dc label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .dc input {
+    width: 48px;
+    padding: 1px 4px;
   }
   .total {
     min-width: 28px;

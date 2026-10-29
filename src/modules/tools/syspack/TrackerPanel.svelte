@@ -13,7 +13,9 @@
   const shown = $derived(fields.filter((f) => ['number', 'track', 'dots', 'formula'].includes(f.type)));
   const title = (k: string) => loc(fieldMap(pack).get(k)?.title, getLang()) || k;
   const tr = $derived(pack.tracker);
-  const condText = $derived((tr.conditions?.list ?? []).map((c) => loc(c, getLang())).join('\n'));
+  // One condition a line; «Frightened #» — it carries a number.
+  const valuedNames = $derived(new Set((tr.conditions?.valued ?? []).map((c) => loc(c, getLang()))));
+  const condText = $derived((tr.conditions?.list ?? []).map((c) => loc(c, getLang())).map((c) => (valuedNames.has(c) ? `${c} #` : c)).join('\n'));
 
   function setInit(type: string) {
     tr.init = type === 'roll' ? { type: 'roll', dice: '1d20' } : type === 'value' ? { type: 'value', value: keys[0] ?? '0' } : { type: 'none' };
@@ -23,7 +25,9 @@
     tr.cells = on ? [...cells, k] : cells;
   }
   function setConditions(text: string) {
-    tr.conditions = { list: text.split('\n').map((x) => x.trim()).filter(Boolean), free: tr.conditions?.free ?? true };
+    const lines = text.split('\n').map((x) => x.trim()).filter(Boolean);
+    const valued = lines.filter((x) => /\s#$/.test(x)).map((x) => x.replace(/\s*#$/, ''));
+    tr.conditions = { list: lines.map((x) => x.replace(/\s*#$/, '')), free: tr.conditions?.free ?? true, ...(valued.length ? { valued } : {}) };
   }
 </script>
 
@@ -61,8 +65,9 @@
   </div>
 
   <label class="row"><span>{t('sb.conditions')}</span><textarea rows="5" {disabled} value={condText} onchange={(e) => setConditions(e.currentTarget.value)}></textarea></label>
+  <p class="faint small">{t('sb.conditionsValued')}</p>
   <label class="check">
-    <input type="checkbox" {disabled} checked={tr.conditions?.free ?? true} onchange={(e) => (tr.conditions = { list: tr.conditions?.list ?? [], free: e.currentTarget.checked })} />
+    <input type="checkbox" {disabled} checked={tr.conditions?.free ?? true} onchange={(e) => (tr.conditions = { ...tr.conditions, list: tr.conditions?.list ?? [], free: e.currentTarget.checked })} />
     {t('sb.conditionsFree')}
   </label>
 </div>

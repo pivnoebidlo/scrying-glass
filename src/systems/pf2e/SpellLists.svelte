@@ -13,7 +13,7 @@
 
 {#each spellcasting as sc (sc.name)}
   <div class="spells">
-    <strong>{sc.name}</strong> {lb('sb.dc')} {sc.dc}{#if sc.attack !== null}, {lb('sb.attack')} <button class="roll" onclick={() => rolls.check(who, `${sc.name}: ${lb('sb.attack')}`, sc.attack!)}>{signed(sc.attack)}</button>{/if};
+    <strong>{sc.name}</strong> {lb('sb.dc')} {sc.dc}{#if sc.attack !== null}, {lb('sb.attack')} <button class="roll" onclick={() => rolls.check(who, `${sc.name}: ${lb('sb.attack')}`, sc.attack!, 'normal', 'four')}>{signed(sc.attack)}</button>{/if};
     {#each sc.ranks as r, i (r.rank + String(r.constant))}{i ? '; ' : ''}<strong>{rankTitle(r)}</strong>{#if r.slots} ({lb('sb.slots', { n: r.slots })}){/if}
       {#each r.spells as sp, j (sp + j)}{j ? ', ' : ''}<button class="link" onclick={() => peekEntry(sp)}>{sp}</button>{/each}{/each}
   </div>

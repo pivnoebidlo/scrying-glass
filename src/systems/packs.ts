@@ -151,6 +151,9 @@ export function packTracker(p: SystemPack): TrackerDef {
         return (p.tracker.conditions?.list ?? []).map((c) => loc(c, getLang()));
       },
       free: p.tracker.conditions?.free ?? !(p.tracker.conditions?.list ?? []).length,
+      get valued() {
+        return (p.tracker.conditions?.valued ?? []).map((c) => loc(c, getLang()));
+      },
       get add() {
         return t('pack.tr.addCondition');
       },

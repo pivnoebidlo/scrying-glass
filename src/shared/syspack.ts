@@ -23,8 +23,9 @@ export type RollLabels = { min: number; title: Loc }[];
 
 // How a roll goes. Numbers are formulas over the card's fields (and `row.<key>` in a list row).
 export type RollSpec =
-  // d20 + bonus (advantage and disadvantage with Shift / Alt).
-  | { type: 'd20'; bonus: string; labels?: RollLabels }
+  // d20 + bonus (advantage and disadvantage with Shift / Alt); degrees — against a DC typed in the roll log: success or
+  // failure ('two'), or four degrees by 10 with a natural 20 / 1 one better / worse ('four', Pathfinder).
+  | { type: 'd20'; bonus: string; labels?: RollLabels; degrees?: Degrees }
   // A die (d100, d20) under the target; levels — harder successes at a fraction of it («hard» — half). Advantage —
   // the lower of two dice, disadvantage — the higher (a Mausritter save).
   | { type: 'under'; sides: number; target: string; levels?: { title: Loc; divide: number }[] }
@@ -34,7 +35,14 @@ export type RollSpec =
   // face — full success, two below it — partial, less — bad, two tops — critical; no dice — two, the lower counts);
   // push — the roll can be pushed once (the dice that aren't successes are rolled again); resist — the best die is a
   // resistance roll: stress taken = sides − the best, a critical clears one.
-  | { type: 'pool'; sides: number; count: string; success?: number; best?: boolean; push?: boolean; resist?: boolean }
+  // Year Zero: the dice are of kinds (kind — of these, groups — more of other kinds): a 1 on an attribute, gear or
+  // stress die is a bane (damage to it, a broken item, panic — a stress 1 on any roll), artifact dice (d8–d12) give
+  // more successes on high faces; a push keeps successes and banes, pushStress — it adds a stress die (Alien); ask —
+  // dice added or taken at the moment of the roll (help, darkness).
+  | {
+      type: 'pool'; sides: number; count: string; success?: number; best?: boolean; push?: boolean; resist?: boolean;
+      kind?: PoolKind; groups?: PoolGroup[]; pushStress?: boolean; ask?: boolean;
+    }
   // 4dF + bonus.
   | { type: 'fate'; bonus: string; labels?: RollLabels }
   // A plain sum: dice + bonus (damage, a table); dice — «2d6» or a column of the list row: «row.damage» (its text,
@@ -43,6 +51,18 @@ export type RollSpec =
   // One die of `sides` that explodes on its maximum (Savage Worlds), plus a wild die if set; the better counts.
   | { type: 'explode'; sides: string; bonus?: string; wild?: number };
 export const ROLL_TYPES = ['d20', 'under', 'bands', 'pool', 'fate', 'sum', 'explode'] as const;
+export type Degrees = 'two' | 'four';
+export type PoolKind = 'base' | 'skill' | 'gear' | 'stress' | 'artifact';
+export const POOL_KINDS: PoolKind[] = ['base', 'skill', 'gear', 'stress', 'artifact'];
+// A group of dice of a kind in a pool (the main dice are the first group); sides — of artifact dice (8, 10, 12).
+export interface PoolGroup {
+  kind: PoolKind;
+  count: string;
+  sides?: number;
+  title?: Loc;
+}
+// Kinds whose 1 is a bane (stays on a push).
+const BANED: PoolKind[] = ['base', 'gear', 'stress'];
 
 export interface ColumnDef {
   key: string;
@@ -90,8 +110,8 @@ export interface TrackerSpec {
   hp?: string;
   // Fields shown in a combatant's row: tracks (boxes to mark) and numbers (current / max).
   cells?: string[];
-  // Conditions: a list to choose from and/or free text.
-  conditions?: { list?: Loc[]; free?: boolean };
+  // Conditions: a list to choose from and/or free text; valued — the ones with a number («Frightened 2»).
+  conditions?: { list?: Loc[]; free?: boolean; valued?: Loc[] };
 }
 
 export interface SystemPack {
@@ -244,7 +264,9 @@ function rollOf(x: unknown): RollSpec | null {
   const f = (k: string, need = true) => (x[k] === undefined && !need ? '' : formulaOf(x[k]));
   switch (x['type']) {
     case 'd20':
-      return f('bonus') !== null ? { type: 'd20', bonus: x['bonus'] as string, ...withLabels } : null;
+      return f('bonus') !== null
+        ? { type: 'd20', bonus: x['bonus'] as string, ...withLabels, ...(x['degrees'] === 'two' || x['degrees'] === 'four' ? { degrees: x['degrees'] } : {}) }
+        : null;
     case 'under': {
       const sides = num(x['sides']);
       if (!sides || sides < 2 || sides > 1000 || f('target') === null) return null;
@@ -265,9 +287,24 @@ function rollOf(x: unknown): RollSpec | null {
       if (!sides || sides < 2 || sides > 100 || f('count') === null) return null;
       const success = num(x['success']);
       const best = x['best'] === true;
+      const kindOf = (k: unknown) => (POOL_KINDS.includes(k as PoolKind) ? (k as PoolKind) : null);
+      const groups = Array.isArray(x['groups'])
+        ? x['groups'].flatMap((g): PoolGroup[] => {
+            if (!isObj(g) || !kindOf(g['kind']) || formulaOf(g['count']) === null) return [];
+            const s = num(g['sides']);
+            const title = locOf(g['title']);
+            return [{ kind: kindOf(g['kind'])!, count: g['count'] as string, ...(s && s >= 2 && s <= 100 ? { sides: Math.round(s) } : {}), ...(title ? { title } : {}) }];
+          }).slice(0, 6)
+        : [];
+      // Kinds, groups and the rest of Year Zero — only for a pool counting successes.
+      const yz = !best && !!success;
       return {
         type: 'pool', sides, count: x['count'] as string, ...(success ? { success } : {}), ...(best ? { best: true } : {}), ...(x['push'] === true ? { push: true } : {}),
         ...(best && x['resist'] === true ? { resist: true } : {}),
+        ...(yz && kindOf(x['kind']) ? { kind: kindOf(x['kind'])! } : {}),
+        ...(yz && groups.length ? { groups } : {}),
+        ...(yz && x['pushStress'] === true ? { pushStress: true } : {}),
+        ...(x['ask'] === true ? { ask: true } : {}),
       };
     }
     case 'fate':
@@ -382,6 +419,9 @@ export function validatePack(x: unknown): SystemPack | string {
           conditions: {
             list: Array.isArray(cond['list']) ? cond['list'].map((c) => locOf(c)).filter((c): c is Loc => c !== null).slice(0, LIMIT.options) : [],
             free: cond['free'] === true,
+            ...(Array.isArray(cond['valued']) && cond['valued'].length
+              ? { valued: cond['valued'].map((c) => locOf(c)).filter((c): c is Loc => c !== null).slice(0, LIMIT.options) }
+              : {}),
           },
         }
       : {}),
@@ -606,8 +646,10 @@ export interface PackRollResult {
   tone: 'good' | 'partial' | 'bad' | 'none';
   // What the roll was against: the target, the bonus.
   note: string;
-  // A pool that can still be pushed: what to roll again.
-  push?: { sides: number; success?: number; best?: boolean; dice: number[] };
+  // A pool that can still be pushed: what to roll again (groups — the dice by kind, Year Zero).
+  push?: { sides: number; success?: number; best?: boolean; dice: number[]; groups?: { kind: PoolKind; sides: number; dice: number[] }[]; pushStress?: boolean };
+  // A d20 roll judged against a DC typed in the log (the natural die, two or four degrees).
+  dc?: { natural: number; degrees: Degrees };
 }
 
 export interface RollWords {
@@ -621,6 +663,9 @@ export interface RollWords {
   partial?: string;
   bad?: string;
   stress?: (n: number) => string;
+  // Year Zero: banes on dice of a kind (damage to the attribute, the gear), a stress 1 — panic.
+  bane?: (kind: PoolKind, n: number) => string;
+  panic?: string;
 }
 
 type Die = (sides: number) => number;
@@ -666,7 +711,10 @@ function rollRaw(
       const bonus = Math.round(value(spec.bonus));
       const rolls = mode === 'normal' ? [die(20)] : [die(20), die(20)];
       const nat = mode === 'advantage' ? Math.max(...rolls) : mode === 'disadvantage' ? Math.min(...rolls) : rolls[0]!;
-      return { dice: [rolls], total: nat + bonus, outcome: nat === 20 ? words.critical : '', tone: nat === 20 ? 'good' : nat === 1 ? 'bad' : 'none', note: `d20 ${signed(bonus)}` };
+      return {
+        dice: [rolls], total: nat + bonus, outcome: nat === 20 ? words.critical : '', tone: nat === 20 ? 'good' : nat === 1 ? 'bad' : 'none', note: `d20 ${signed(bonus)}`,
+        ...(spec.degrees ? { dc: { natural: nat, degrees: spec.degrees } } : {}),
+      };
     }
     case 'under': {
       const target = Math.round(value(spec.target));
@@ -688,6 +736,19 @@ function rollRaw(
       return { dice: [rolls], total, outcome: band ? loc(band.title, lang) : '', tone, note: `${d.count}d${d.sides} ${signed(bonus)}` };
     }
     case 'pool': {
+      if (spec.kind || spec.groups?.length) {
+        const groups = [{ kind: spec.kind ?? 'base', count: spec.count, sides: spec.sides }, ...(spec.groups ?? [])].map((g) => {
+          const n = Math.max(0, Math.min(30, Math.round(value(g.count))));
+          const sides = g.sides ?? spec.sides;
+          return { kind: g.kind, sides, dice: Array.from({ length: n }, () => die(sides)) };
+        });
+        const total = groups.reduce((a, g) => a + g.dice.length, 0);
+        return {
+          ...kindsResult(groups, spec.success!, words),
+          note: groups.filter((g) => g.dice.length).map((g) => `${g.dice.length}d${g.sides}`).join(' + ') || '0d6',
+          ...(spec.push && total ? { push: { sides: spec.sides, success: spec.success!, dice: groups.flatMap((g) => g.dice), groups, ...(spec.pushStress ? { pushStress: true } : {}) } } : {}),
+        };
+      }
       const n = Math.max(0, Math.min(30, Math.round(value(spec.count))));
       // Forged in the Dark: no dice — two, the lower counts.
       const zero = n === 0 && !!spec.best;
@@ -742,8 +803,38 @@ function poolResult(spec: { sides: number; success?: number; best?: boolean; res
   return { dice: groups, total: n, outcome: n ? words.successes(n) : words.failure, tone: n ? ('good' as const) : ('bad' as const) };
 }
 
-// Push a pool roll (Year Zero): the dice that aren't successes are rolled again, once.
+// Successes of a die: a face ≥ success; an artifact die (d8–d12) — more on high faces (6–7: 1, 8–9: 2, 10–11: 3, 12: 4).
+const successesOf = (kind: PoolKind, face: number, success: number) => (face < success ? 0 : kind === 'artifact' ? 1 + Math.floor((face - success) / 2) : 1);
+
+// A pool of dice by kind (Year Zero): successes, banes by kind, panic on a stress 1.
+function kindsResult(groups: { kind: PoolKind; sides: number; dice: number[] }[], success: number, words: RollWords) {
+  const n = groups.reduce((a, g) => a + g.dice.reduce((b, d) => b + successesOf(g.kind, d, success), 0), 0);
+  const banes = new Map<PoolKind, number>();
+  for (const g of groups) if (BANED.includes(g.kind)) banes.set(g.kind, (banes.get(g.kind) ?? 0) + g.dice.filter((d) => d === 1).length);
+  const panic = (banes.get('stress') ?? 0) > 0;
+  const said = [
+    n ? words.successes(n) : words.failure,
+    ...(['base', 'gear'] as const).flatMap((k) => (banes.get(k) ? [words.bane?.(k, banes.get(k)!) ?? ''] : [])),
+    ...(panic ? [words.panic ?? ''] : []),
+  ].filter(Boolean);
+  return { dice: groups.map((g) => g.dice), total: n, outcome: said.join(' · '), tone: panic ? ('bad' as const) : n ? ('good' as const) : ('bad' as const) };
+}
+
+// Push a pool roll (Year Zero): the dice that aren't successes are rolled again, once; banes (a 1 on an attribute, gear
+// or stress die) stay; pushStress — one stress die more.
 export function pushPool(push: NonNullable<PackRollResult['push']>, words: RollWords, die: Die): PackRollResult {
+  if (push.groups) {
+    const groups = push.groups.map((g) => ({
+      ...g,
+      dice: g.dice.map((d) => (successesOf(g.kind, d, push.success!) || (d === 1 && BANED.includes(g.kind)) ? d : die(g.sides))),
+    }));
+    if (push.pushStress) {
+      const stress = groups.find((g) => g.kind === 'stress');
+      if (stress) stress.dice.push(die(stress.sides));
+      else groups.push({ kind: 'stress', sides: push.sides, dice: [die(push.sides)] });
+    }
+    return { ...kindsResult(groups, push.success!, words), note: groups.filter((g) => g.dice.length).map((g) => `${g.dice.length}d${g.sides}`).join(' + ') };
+  }
   const keep = push.dice.filter((d) => push.success !== undefined && d >= push.success);
   const again = push.dice.filter((d) => !(push.success !== undefined && d >= push.success)).map(() => die(push.sides));
   return { ...poolResult(push, [keep, again], false, words), note: `${push.dice.length}d${push.sides}` };

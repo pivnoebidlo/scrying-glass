@@ -34,16 +34,31 @@
   const wide = (f: FieldDef) => f.type === 'textarea' || f.type === 'list' || f.type === 'tags' || f.type === 'slots';
   const sections = $derived(sectionsFor(pack, card.kind).map((sec) => ({ ...sec, fields: sec.fields.filter(filled) })).filter((sec) => sec.fields.length));
 
-  function roll(f: FieldDef, e: MouseEvent, row?: Record<string, unknown>) {
+  function roll(f: FieldDef, e: MouseEvent, row?: Record<string, unknown>, extra = 0) {
     if (!f.roll) return;
+    // A pool that asks: dice added or taken first (help, darkness) — the chips under the field.
+    if (f.roll.type === 'pool' && f.roll.ask && asking === null) return void (asking = { key: f.key, row, mode: modeOf(e) });
     const label = row ? String(Object.values(row).find((v) => typeof v === 'string' && v.trim()) ?? L(f.title)) : L(f.title);
-    rolls.packRoll(card.name, label, f.roll, (formula) => evalFormula(pack, s, formula, row), modeOf(e), row);
+    const spec = extra && f.roll.type === 'pool' ? { ...f.roll, count: `(${f.roll.count}) + ${extra}` } : f.roll;
+    rolls.packRoll(card.name, extra ? `${label} (${extra > 0 ? '+' : '−'}${Math.abs(extra)})` : label, spec, (formula) => evalFormula(pack, s, formula, row), asking?.mode ?? modeOf(e), row);
+    asking = null;
   }
+  // The field whose pool asks for added or taken dice now.
+  let asking = $state<{ key: string; row?: Record<string, unknown>; mode: ReturnType<typeof modeOf> } | null>(null);
+  const MODS = [-3, -2, -1, 0, 1, 2, 3];
   const cell = (v: unknown) => (v === undefined || v === null || v === '' ? t('pack.empty') : String(v));
 </script>
 
 {#if pack}
   <article class="sheet">
+    {#if asking}
+      {@const f = sections.flatMap((x) => x.fields).find((x) => x.key === asking!.key)}
+      <div class="ask" role="group">
+        <span>{t('pack.askDice', { name: f ? L(f.title) : '' })}</span>
+        {#each MODS as m (m)}<button class="chip" class:zero={m === 0} onclick={(e) => f && roll(f, e, asking!.row, m)}>{m > 0 ? `+${m}` : m < 0 ? `−${-m}` : '±0'}</button>{/each}
+        <button class="icon-btn" title={t('pack.askCancel')} onclick={() => (asking = null)}>✕</button>
+      </div>
+    {/if}
     {#each sections as sec (sec.id)}
       <section>
         <h3>{L(sec.title)}</h3>
@@ -122,6 +137,33 @@
 {/if}
 
 <style>
+  .ask {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-s);
+    background: var(--bg-secondary);
+    font-size: 12px;
+  }
+  .ask .chip {
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--text-normal);
+    font: inherit;
+    cursor: pointer;
+  }
+  .ask .chip.zero {
+    border-color: var(--accent);
+  }
   .sheet {
     max-width: 760px;
     line-height: 1.45;

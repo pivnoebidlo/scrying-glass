@@ -3,7 +3,7 @@ import { hotkeyLabel } from '../../shared/hotkeys';
 import { t } from './i18n.svelte';
 import { die, parseDice, rollD20, rollDamage, rollSave, type D20Mode, type D20Roll, type DamageRoll, type SaveRoll } from '../../shared/dice';
 import { getLang } from '../../shared/i18n';
-import { pushPool, rollPack, type PackRollResult, type RollSpec, type RollWords } from '../../shared/syspack';
+import { pushPool, rollPack, type Degrees, type PackRollResult, type RollSpec, type RollWords } from '../../shared/syspack';
 import { runTable, type TableEvent, type TablePick, type TableSource, type TableStep } from '../../shared/rolltable';
 
 export interface RollEntry {
@@ -23,6 +23,9 @@ export interface RollEntry {
   event?: TableEvent;
   // Попадание проверяется по натуральной 20/1 только у атак.
   attack?: boolean;
+  // A d20 check judged against a DC typed here: two degrees or four (Pathfinder); dc — the one typed.
+  degrees?: Degrees;
+  dc?: number;
   damage: DamageRoll[];
 }
 
@@ -50,8 +53,14 @@ class Rolls {
   }
 
   // Проверка, спасбросок, навык, инициатива.
-  check(who: string, what: string, bonus: number, mode: D20Mode = 'normal') {
-    this.push({ who, what, d20: rollD20(bonus, mode), damage: [] });
+  // degrees — the log offers a DC to judge it against (Pathfinder: four degrees).
+  check(who: string, what: string, bonus: number, mode: D20Mode = 'normal', degrees?: Degrees) {
+    this.push({ who, what, d20: rollD20(bonus, mode), ...(degrees ? { degrees } : {}), damage: [] });
+  }
+
+  // The DC a check (or a pack's d20 roll) is judged against; null — none.
+  setDc(id: number, dc: number | null) {
+    this.list = this.list.map((x) => (x.id === id ? (dc === null ? (({ dc: _d, ...rest }) => rest)(x) : { ...x, dc }) : x));
   }
 
   // Атака: к20 и сразу урон (на натуральной 20 — с удвоенными кубами).
@@ -113,6 +122,8 @@ const packWords = (): RollWords => ({
   partial: t('lib.pool.partial'),
   bad: t('lib.pool.bad'),
   stress: (n) => (n < 0 ? t('lib.resistClear') : t('lib.resistStress', { n })),
+  bane: (kind, n) => t(kind === 'gear' ? 'pack.baneGear' : 'pack.baneBase', { n }),
+  panic: t('pack.panic'),
 });
 
 // Shift — с преимуществом, ⌥/Alt — с помехой.

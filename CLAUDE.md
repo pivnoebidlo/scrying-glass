@@ -351,8 +351,13 @@ Electron-приложение для мастера D&D: окно управле
 - Пакеты систем (система — JSON-файл, не код; первая версия): формат, проверка, формулы и броски — `shared/syspack.ts`
   (`SystemPack`: `sections` → поля `FieldDef` типов number / text / textarea / select / dots / track (`boxes` — число или
   ключ поля) / tags / list (`columns`) / formula; `roll` у поля — `RollSpec`: d20, under (к100 со ступенями `levels`),
-  bands (PbtA), pool (`success` — счёт успехов, `best` — FitD, `push` — переброс YZE), fate, sum, explode; `tracker` —
-  `init` roll / value / none, `hp`, `cells`, `conditions`; `validatePack` берёт только известное — пакет может быть чужим;
+  bands (PbtA), pool (`success` — счёт успехов, `best` — FitD, `push` — переброс YZE; Year Zero — `kind` основных кубов
+  и `groups` (`PoolKind`: base / skill / gear / stress / artifact — к8–к12 с несколькими успехами), единица на base / gear /
+  stress — беда (при перебросе остаётся, `kindsResult`), стресс — паника, `pushStress` — переброс добавляет куб стресса;
+  `ask` — кубы ±3 при броске, полоса `.ask` в `pack/Sheet.svelte`), fate, sum, explode; у d20 — `degrees` ('two' / 'four':
+  в журнале бросков поле «КС» и исход — `RollEntry.degrees` / `pack.dc`, `rolls.setDc`, `degreeOf`; Pathfinder — 'four');
+  `tracker` — `init` roll / value / none, `hp`, `cells`, `conditions` (`valued` — состояния с числом; в конструкторе — « #» в
+  конце строки); `validatePack` берёт только известное — пакет может быть чужим;
   формулы — свой маленький язык `parseFormula` / `evalFormula`: числа, поля, `row.<колонка>`, + − × ÷, floor/ceil/round/
   abs/min/max). Статы карточки — плоский объект по ключам полей. Встроенных пакетов сейчас нет (`resources/systems/` читается,
   если появится); пробные — `samples/systems/` (в приложение не входят, публикуются в официальном репозитории; тест

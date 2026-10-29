@@ -3,7 +3,7 @@
 <script lang="ts">
   import { X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { COLUMN_TYPES, FIELD_TYPES, loc, newField, newRoll, ROLL_TYPES, type FieldDef, type FieldType, type Loc, type RollSpec } from '../../../shared/syspack';
+  import { COLUMN_TYPES, FIELD_TYPES, loc, newField, newRoll, ROLL_TYPES, type FieldDef, type FieldType, type Loc, type RollSpec, POOL_KINDS, type PoolKind } from '../../../shared/syspack';
   import { getLang } from '../../../shared/i18n';
   import FormulaInput from './FormulaInput.svelte';
   import LocInput from './LocInput.svelte';
@@ -162,6 +162,16 @@
         {@const r = f.roll}
         {#if r.type === 'd20' || r.type === 'fate'}
           <div class="row"><span>{t('sb.bonus')}</span><FormulaInput value={r.bonus} set={(v) => (r.bonus = v)} keys={keys} row={cols} {disabled} /></div>
+          {#if r.type === 'd20'}
+            <label class="row" title={t('sb.degreesHint')}>
+              <span>{t('sb.degrees')}</span>
+              <select {disabled} value={r.degrees ?? ''} onchange={(e) => (e.currentTarget.value ? (r.degrees = e.currentTarget.value as 'two' | 'four') : delete r.degrees)}>
+                <option value="">{t('sb.degreesNone')}</option>
+                <option value="two">{t('sb.degreesTwo')}</option>
+                <option value="four">{t('sb.degreesFour')}</option>
+              </select>
+            </label>
+          {/if}
           {@render labelsEditor(r)}
         {:else if r.type === 'under'}
           <div class="two">
@@ -217,6 +227,38 @@
             </label>
           </div>
           <label class="check"><input type="checkbox" {disabled} checked={!!r.push} onchange={(e) => (e.currentTarget.checked ? (r.push = true) : delete r.push)} /> {t('sb.push')}</label>
+          <label class="check" title={t('sb.askHint')}><input type="checkbox" {disabled} checked={!!r.ask} onchange={(e) => (e.currentTarget.checked ? (r.ask = true) : delete r.ask)} /> {t('sb.ask')}</label>
+          {#if r.success && !r.best}
+            <!-- Year Zero: the dice by kind. -->
+            <label class="row" title={t('sb.kindHint')}>
+              <span>{t('sb.kind')}</span>
+              <select {disabled} value={r.kind ?? ''} onchange={(e) => (e.currentTarget.value ? (r.kind = e.currentTarget.value as PoolKind) : delete r.kind)}>
+                <option value="">{t('sb.kindPlain')}</option>
+                {#each POOL_KINDS.filter((k) => k !== 'artifact') as k (k)}<option value={k}>{t(`sb.pk.${k}`)}</option>{/each}
+              </select>
+            </label>
+            <div class="row">
+              <span>{t('sb.groups')}</span>
+              {#each r.groups ?? [] as g, i (i)}
+                <div class="col">
+                  <select {disabled} value={g.kind} onchange={(e) => ((g.kind = e.currentTarget.value as PoolKind), g.kind === 'artifact' ? (g.sides ??= 8) : delete g.sides)}>
+                    {#each POOL_KINDS as k (k)}<option value={k}>{t(`sb.pk.${k}`)}</option>{/each}
+                  </select>
+                  <FormulaInput value={g.count} set={(v) => (g.count = v)} keys={keys} row={cols} {disabled} />
+                  {#if g.kind === 'artifact'}
+                    <select {disabled} value={g.sides ?? 8} onchange={(e) => (g.sides = Number(e.currentTarget.value))}>
+                      {#each [8, 10, 12] as n (n)}<option value={n}>d{n}</option>{/each}
+                    </select>
+                  {/if}
+                  <button type="button" class="icon-btn" title={t('sb.remove')} {disabled} onclick={() => (r.groups = r.groups!.filter((_, j) => j !== i))}><X size={13} /></button>
+                </div>
+              {/each}
+              <button type="button" class="btn small" {disabled} onclick={() => ((r.kind ??= 'base'), (r.groups = [...(r.groups ?? []), { kind: 'skill', count: '0' }]))}>{t('sb.addGroup')}</button>
+            </div>
+            {#if r.push}
+              <label class="check"><input type="checkbox" {disabled} checked={!!r.pushStress} onchange={(e) => (e.currentTarget.checked ? (r.pushStress = true) : delete r.pushStress)} /> {t('sb.pushStress')}</label>
+            {/if}
+          {/if}
           {#if r.best}
             <label class="check"><input type="checkbox" {disabled} checked={!!r.resist} onchange={(e) => (e.currentTarget.checked ? (r.resist = true) : delete r.resist)} /> {t('sb.resist')}</label>
           {/if}

@@ -2,10 +2,14 @@
  "scryingGlass": "system",
  "version": 1,
  "id": "yz-pool",
- "release": 1,
+ "release": 2,
  "title": {
   "en": "Pool of Sixes (Year Zero style)",
   "ru": "Пул шестёрок (по мотивам Year Zero)"
+ },
+ "about": {
+  "en": "Pools of d6 by kind: attribute, skill and stress dice, sixes count, a push keeps the banes and adds stress; dice added or taken at the roll",
+  "ru": "Пулы к6 по видам: кубы характеристики, навыка и стресса, считаются шестёрки, переброс оставляет беды и добавляет стресс; кубы можно добавить или убрать при броске"
  },
  "author": "Scrying Glass",
  "license": "A sample pack of the app: the structure of a card and the dice of a d6 pool in the style of the Year Zero Engine (Free League Publishing). No rules text is included.",
@@ -85,7 +89,16 @@
       "sides": 6,
       "count": "strength",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -103,7 +116,16 @@
       "sides": 6,
       "count": "agility",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -121,7 +143,16 @@
       "sides": 6,
       "count": "wits",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -139,7 +170,16 @@
       "sides": 6,
       "count": "empathy",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     }
    ]
@@ -166,9 +206,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "strength + force",
+      "count": "strength",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "force"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -186,9 +239,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "strength + melee",
+      "count": "strength",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "melee"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -206,9 +272,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "strength + stamina",
+      "count": "strength",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "stamina"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -226,9 +305,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "agility + dexterity",
+      "count": "agility",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "dexterity"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -246,9 +338,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "agility + ranged",
+      "count": "agility",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "ranged"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -266,9 +371,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "agility + stealth",
+      "count": "agility",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "stealth"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -286,9 +404,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "wits + observation",
+      "count": "wits",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "observation"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -306,9 +437,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "wits + survival",
+      "count": "wits",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "survival"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -326,9 +470,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "wits + tech",
+      "count": "wits",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "tech"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -346,9 +503,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "empathy + manipulation",
+      "count": "empathy",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "manipulation"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -366,9 +536,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "empathy + medicine",
+      "count": "empathy",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "medicine"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     },
     {
@@ -386,9 +569,22 @@
      "roll": {
       "type": "pool",
       "sides": 6,
-      "count": "empathy + command",
+      "count": "empathy",
       "success": 6,
-      "push": true
+      "push": true,
+      "kind": "base",
+      "groups": [
+       {
+        "kind": "skill",
+        "count": "command"
+       },
+       {
+        "kind": "stress",
+        "count": "stress"
+       }
+      ],
+      "pushStress": true,
+      "ask": true
      }
     }
    ]

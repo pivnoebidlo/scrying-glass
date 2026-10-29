@@ -16,7 +16,7 @@
 
   const s = $derived(card.stats);
   const lb = (key: string, params?: Record<string, string | number>) => tr(card.lang === 'ru' ? 'ru' : 'en', `pf2e.${key}` as Key, params);
-  const check = (what: string, bonus: number) => rolls.check(card.name, what, bonus);
+  const check = (what: string, bonus: number) => rolls.check(card.name, what, bonus, 'normal', 'four');
 
   const html = (f: Feature) => entryHtml(f.text, { dice: true });
   // Links and dice in a text: the compendium entry on the side, the dice — into the roll log.
