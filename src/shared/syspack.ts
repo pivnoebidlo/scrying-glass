@@ -154,6 +154,39 @@ export interface PackEntry {
   text: Loc;
 }
 
+// Entries of a pack's compendium from a Markdown file (the rules of a book): with «##» headings in it, «#» is a group
+// and «##» an entry; without them, «#» is an entry. The text under a heading is the entry's; deeper headings stay in
+// it. A group's own text (before its first entry) becomes an entry named as the group.
+export function entriesFromMarkdown(md: string): PackEntry[] {
+  const lines = md.replace(/\r\n?/g, '\n').split('\n');
+  const nested = lines.some((l) => /^##\s+\S/.test(l));
+  const out: PackEntry[] = [];
+  let group = '';
+  let cur: { title: string; lines: string[] } | null = null;
+  const flush = () => {
+    if (!cur) return;
+    const text = cur.lines.join('\n').trim();
+    // A group heading without text of its own is only a group.
+    if (cur.title && (text || cur.title !== group))
+      out.push({ title: cur.title.slice(0, LIMIT.text), ...(group ? { category: group.slice(0, LIMIT.text) } : {}), text: text.slice(0, LIMIT.entry) });
+    cur = null;
+  };
+  for (const line of lines) {
+    const h1 = /^#\s+(.+?)\s*#*\s*$/.exec(line);
+    const h2 = nested ? /^##\s+(.+?)\s*#*\s*$/.exec(line) : null;
+    if (h1 && nested) {
+      flush();
+      group = h1[1]!;
+      cur = { title: group, lines: [] };
+    } else if (h1 || h2) {
+      flush();
+      cur = { title: (h2 ?? h1)![1]!, lines: [] };
+    } else if (cur) cur.lines.push(line);
+  }
+  flush();
+  return out.slice(0, LIMIT.entries);
+}
+
 // A card's block of stats in a pack system: values by field key (a list — rows of values by column key).
 export type PackStats = Record<string, unknown>;
 // A cell of a «slots» field: an item (usage dots marked) or a condition.

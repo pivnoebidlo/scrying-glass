@@ -3,7 +3,7 @@
      will look (and its values to try rolls with). Saved to the library by the core; a built-in pack is read only
      («Make a copy»). -->
 <script lang="ts">
-  import { ArrowDown, ArrowUp, BookOpen, CloudUpload, Copy, Download, FilePlus, Save, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, CloudUpload, Copy, Download, FilePlus, Save, Swords, Trash2, Upload, X } from '@lucide/svelte';
   import { repo } from '../../repo/ui/repo.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { Card, CardKind } from '../../../shared/cards';
@@ -145,7 +145,8 @@
   {#if ro && d}<p class="note">{t('sb.readonly')}</p>{/if}
 
   {#if d}
-    <div class="body">
+    <div class="body" class:wide={builder.sel.kind === 'compendium'}>
+      {#if builder.sel.kind !== 'compendium'}
       <nav class="tree">
         <button class="item" class:on={builder.sel.kind === 'system'} onclick={() => select({ kind: 'system' })}><b>{L(d.title) || t('sb.system')}</b></button>
         <div class="label">{t('sb.sections')}</div>
@@ -179,10 +180,11 @@
         {/each}
         {#if !ro}<button class="add" onclick={addSection}>{t('sb.addSection')}</button>{/if}
         <button class="item tracker" class:on={builder.sel.kind === 'tracker'} onclick={() => select({ kind: 'tracker' })}><Swords size={13} /> {t('sb.tracker')}</button>
-        <button class="item tracker" class:on={builder.sel.kind === 'compendium'} onclick={() => select({ kind: 'compendium' })}>
+        <button class="item tracker" onclick={() => select({ kind: 'compendium' })}>
           <BookOpen size={13} /> {t('sb.compendium')}<span class="faint type">{d.compendium?.length ?? 0}</span>
         </button>
       </nav>
+      {/if}
 
       <section class="middle">
         {#if builder.sel.kind === 'system'}
@@ -230,7 +232,7 @@
           <h3>{t('sb.tracker')}</h3>
           <TrackerPanel bind:pack={builder.draft!} disabled={ro} />
         {:else if builder.sel.kind === 'compendium'}
-          <h3>{t('sb.compendium')}</h3>
+          <div class="comp-head"><button class="btn small" onclick={() => select({ kind: 'system' })}><ArrowLeft size={13} /> {t('sb.backToSheet')}</button><h3>{t('sb.compendium')}</h3></div>
           <CompendiumPanel bind:pack={builder.draft!} disabled={ro} />
         {/if}
         {#if problems.length}
@@ -243,6 +245,7 @@
         {/if}
       </section>
 
+      {#if builder.sel.kind !== 'compendium'}
       <aside class="preview">
         <div class="pv-head">
           <b>{t('sb.preview')}</b>
@@ -265,6 +268,7 @@
           {/key}
         {/if}
       </aside>
+      {/if}
     </div>
   {:else}
     <div class="empty">
@@ -320,6 +324,18 @@
   }
   .preview {
     grid-column: 1 / -1;
+  }
+  /* The compendium: no tree, no preview — its list and its editor take the width. */
+  .body.wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .comp-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .comp-head h3 {
+    margin: 0;
   }
   @container (min-width: 1100px) {
     .body {

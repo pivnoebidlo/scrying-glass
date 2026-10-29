@@ -2,7 +2,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
+import { blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
 
 const words: RollWords = { success: 'Success', failure: 'Failure', successes: (n) => `${n} successes`, critical: 'Critical' };
 // Dice that fall as told, in order.
@@ -290,5 +290,23 @@ describe('pool limits, needed successes and changes after the roll', () => {
     expect(a!.roll).toMatchObject({ askRange: 10, max: 15, need: true, tweak: true });
     expect(b!.roll).not.toHaveProperty('need');
     expect(b!.roll).not.toHaveProperty('tweak');
+  });
+});
+
+describe('compendium from Markdown', () => {
+  it('takes # as groups and ## as entries, a group text as its own entry', () => {
+    const md = '# Правила\nО правилах.\n\n## Проверки\nНужна **шестёрка**.\n\n### Сложные\nДве.\n\n## Крафт\n| a | b |\n|---|---|\n\n# Город\n## Парк\nАллеи.\n';
+    expect(entriesFromMarkdown(md)).toEqual([
+      { title: 'Правила', category: 'Правила', text: 'О правилах.' },
+      { title: 'Проверки', category: 'Правила', text: 'Нужна **шестёрка**.\n\n### Сложные\nДве.' },
+      { title: 'Крафт', category: 'Правила', text: '| a | b |\n|---|---|' },
+      { title: 'Парк', category: 'Город', text: 'Аллеи.' },
+    ]);
+  });
+  it('takes # as entries when there are no ##', () => {
+    expect(entriesFromMarkdown('intro\n# One\nA\n# Two\r\nB')).toEqual([
+      { title: 'One', text: 'A' },
+      { title: 'Two', text: 'B' },
+    ]);
   });
 });
