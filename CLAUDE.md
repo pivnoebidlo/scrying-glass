@@ -270,18 +270,35 @@ Electron-приложение для мастера D&D: окно управле
   `compendium/events.ts` по разнице состояний, следит `compendium/ui/TableEvents.svelte` → `rolls.event` — строка
   `RollEntry.event`, только если есть таблицы), Telegram — `rolls.telegram` (фон модуля
   telegram); игрокам — `handouts/toggleEntry` с путём `roll:<id>` (`ROLL_RESULT`; в подборку и сцену не попадает).
+- Системы-плагины (решение 2026-10-29: ядро не знает систем по имени, D&D — подключаемая система). Система кодом —
+  папка `src/systems/<система>/` и строка в `systems/plugins.ts` (`PLUGINS`) и `systems/ui.ts` (`systemUis`). Общая
+  часть — `SystemPlugin` (`systems/plugin.ts`; ядро и окна): `family`, `systems` (`SystemDef`: `short` — метка
+  редакции, `about` — строка в настройках систем, `shape` — разная форма stats по виду карточки), `legacy` — система
+  данных до выбора систем (`LEGACY_SYSTEM`, у D&D — 2024), `entryTypes` / `entrySubtitle` — типы записей справочника
+  (помощники — `shared/entrytypes.ts`: не импортирует системы, иначе цикл). Часть окна — `SystemUi` (`systems/ui.ts`):
+  `view` / `editor` (stats по форме), `trackerCells` (нет — `systems/HpCells.svelte`, подписи из полей трекера),
+  `tools` (с `families` и `page`) и `claims` (общие генераторы ядра, которые система считает своими: имена, NPC,
+  таверны, поселения), `cardActions` (кнопки карточки, `run` может вернуть строку состояния), `newCard` («По образцу
+  статблока…» в «+» и под портретом), `paper` (бумажный лист для Telegram), `encounter` (над боем и заготовкой —
+  плашка сложности), `entryList` (тип справочника со своим фильтром и группами — заклинания по кругам), `background`
+  (невидимый компонент, рисует `App.svelte`). Неизвестная система — `genericTracker` (`systems/tracker.ts`). D&D:
+  `systems/dnd5e/plugin.ts` + `ui.ts`, инструменты — `systems/dnd5e/tools/`, бой — `encounter/`, справочник —
+  `entries.ts`, `spellfilter.ts`, `spells.svelte.ts`, указатель заклинаний — `spellindex.ts` + `links.ts`; `isDnd` —
+  только внутри плагина (`here.ts`). Новое про D&D — в плагин, не проверками в модулях. Ещё в ядре: импорт LSS
+  (`main/cards.ts`, IPC `cards:*Lss`, `LssUpdate.svelte`, таблица заклинаний в настройках «Карточки») — следующий шаг
+  (импортёр системы); встроенное содержимое — `resources/` (потом — скачиваемым).
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
-  `DEFAULT_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
-  D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`, `isDnd`); правила —
+  `LEGACY_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
+  D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`; из плагинов и пакетов); правила —
   `systemFor` / `currentSystem` / `inCurrentFamily` в `shared/adventures.ts`. По семейству текущего приключения
   фильтруются: карточки бестиария (фильтр — только редакции семейства), подсказки боя и меток (`suggest`), ⌘K,
   справочник (`fitsHere`: поле `system` записи, иначе `family` типа — заклинания и т. п. D&D, правила и заметки —
-  любые; встроенный SRD — только в D&D, `srdHere`; типы — `typesHere`). Инструменты D&D (сложность боя, покупка
-  характеристик) и плашка сложности — только в D&D. Система уходит в .sgpack (`manifest.system`) и в корзину с
+  любые; встроенные книги — своего семейства, выбор редакции — `editionsHere`, когда у семейства несколько систем с
+  книгами; типы — `typesHere`). Инструменты системы и `encounter` — только в её приключениях. Система уходит в .sgpack (`manifest.system`) и в корзину с
   приключением.
   Встроенный справочник Fate — `resources/compendium/fate-core.<lang>.json` (`npm run build-fate` из
   `scripts/fate-core.<lang>.md`, тексты свои по Fate Core SRD, CC BY 3.0; тип `skill` — семейство fate); встроенные записи показываются по семейству
-  системы приключения (`editionShown` в store справочника), выбор редакции SRD — только у D&D.
+  системы приключения (`editionShown` в store справочника), выбор редакции — у семейства из нескольких систем с книгами.
   Fate Core — пакет системы (`samples/systems/fate-core.json`, id `fate-core`, семейство `fate`; кода системы больше
   нет): аспекты, 18 навыков числами (`hideZero`, бросок `fate` с `labels` — лестница), трюки, восстановление, дорожки
   стресса по формулам от Телосложения и Воли, последствия текстом (ячейки трекера — `Combatant.texts`); «Партия»
@@ -384,7 +401,7 @@ Electron-приложение для мастера D&D: окно управле
   (`editionsHere` / `editionNow`). Приключение с отключённой системой скрыто целиком (`adventureHidden`,
   `shownAdventures`; и неустановленной системы — пакет удалён или не скачан): переключатель, дерево «Файлов», `visibleIn` (и во «Всём хранилище»), `scenesFor`, заготовки,
   списки выбора приключения; открытое — `Ensure.svelte` переключает на всё хранилище. Приключение без своей системы —
-  с системой хранилища, а без неё — `DEFAULT_SYSTEM` (старые приключения — D&D); само «Всё хранилище» с отключённой
+  с системой хранилища, а без неё — `LEGACY_SYSTEM` (старые приключения — D&D); само «Всё хранилище» с отключённой
   системой берёт `defaultSystem()` (первую включённую). Ядро (экспорт, снимки) ничего не скрывает.
 - Трекер системы (`SystemDef.tracker`, тип — `systems/tracker.ts`; `dnd5e/tracker.ts`, `fate/tracker.ts`): подписи
   очерёдности и бонуса, кнопка «Бросить за NPC» (`roll.value` — действие `rollNpcs` получает `system`), состояния
@@ -417,7 +434,9 @@ Electron-приложение для мастера D&D: окно управле
   Список инструментов — `tools/ui/registry.svelte.ts` (`TOOLS`: id, значок, название, `families` — системы; без них —
   общий). Боковая панель рисует по разделам: записки, общие, раздел семейства приключения, «Другие системы» (включённые
   вручную — `extra`, localStorage окна, раздел настроек `tools/ui/Settings.svelte`); страница — `PAGES` в `View.svelte`,
-  скрытый в этой системе инструмент открывает записки (`shown`). Новый инструмент — строка в `TOOLS` и в `PAGES`.
+  скрытый в этой системе инструмент открывает записки (`shown`). Новый инструмент ядра — строка в `CORE` и в `PAGES`;
+  инструмент системы — в `SystemUi.tools` (страница — `page`); генератор нескольких систем — `families: SOME`, его
+  семейства — плагины, у которых он в `claims`.
   Записка — файл `….note.json` в папке раздатки (формат и подписи — `shared/notes.ts`, `FileKind` 'note'), ядро
   читает и пишет её через `main/notes.ts` (IPC `notes:*`, после записи — пересканирование хранилища и событие
   `vault:rescanned`, по нему окна перечитывают записки — `renderer/lib/note/notes.svelte.ts`). Вид — `NotePaper.svelte`
@@ -443,10 +462,10 @@ Electron-приложение для мастера D&D: окно управле
   Таблицы случайностей сняты (0.33): их заменили генераторы; роли папок `tables` больше нет, файлы пользователя
   в таких папках и в `<библиотека>/tables` приложение не трогает (просто не показывает). Место для копии записки —
   `ui/CopyToMenu.svelte`.
-  Сложность боя: бюджеты 2024 (SRD 5.2) — `systems/dnd5e/difficulty.ts`, расчёт по участникам — `initiative/difficulty.ts`
+  Сложность боя: бюджеты 2024 (SRD 5.2) — `systems/dnd5e/difficulty.ts`, расчёт по участникам — `systems/dnd5e/encounter/analyze.ts`
   (партия: из боя → приключения → `initiative.party` из настроек), опыт монстра — `CombatStats.xp`, уровень героя —
-  `rank` карточки (`initiative/ui/heroes.ts`). Плашка — `initiative/ui/Difficulty.svelte` (в бою и заготовке),
-  подробности — `DifficultyDetails.svelte`, калькулятор — `tools/difficulty/Calculator.svelte` (набросок — `calc.svelte.ts`).
+  `rank` карточки (`encounter/heroes.ts`). Плашка — `encounter/Difficulty.svelte` (`SystemUi.encounter`, в бою и заготовке),
+  подробности — `DifficultyDetails.svelte`, калькулятор — `systems/dnd5e/tools/difficulty/Calculator.svelte` (набросок — `calc.svelte.ts`).
   Генератор имён: правила и генерация — `shared/names.ts` (`parseListName`: файл `раса_пол_вид.txt`, `generateNames`,
   фильтры `lengthOf` / `soundOf`; народы людей Забытых Королевств — `PEOPLES` (в списках — свои «расы»,
   `calishite_man_names.txt`; в генераторе — строка «Происхождение», `peoplesIn`), `MIXED` — тетирцы берут имена
@@ -455,47 +474,47 @@ Electron-приложение для мастера D&D: окно управле
   `tools/names/builtin/<lang>/*.txt` (написаны для приложения); свои — `<библиотека>/names/<lang>/` (`main/names.ts`, IPC
   `names:*`), в репозиторий не кладём — это могут быть списки чужих сайтов (папка `/names/` в корне — в .gitignore).
   Выгрузка TXT / CSV — общий IPC `files:saveText`.
-  Дикая магия (только D&D, `ui.tool = 'wildMagic'`): `tools/wildmagic/` — `tables.ts` (`parseTable`: строки «01–02 текст»,
+  Дикая магия (только D&D, `ui.tool = 'wildMagic'`): `systems/dnd5e/tools/wildmagic/` — `tables.ts` (`parseTable`: строки «01–02 текст»,
   Markdown, просто строки; слитые строки «… . 06-10 …» SRD 2014 — по диапазону после конца предложения; наша таблица
   `surgeRows` — 50 эффектов en/ru, заклинания курсивом и в именительном падеже — иначе не ссылка, тест сверяет со
   справочником), `store.svelte.ts` (палочка чудес — из `book.builtin` системы приключения через `entryAt`, свои
   таблицы — `<библиотека>/wild-magic.json`, броски — localStorage окна), `WildMagic.svelte`. Таблицы PHB и других книг
   не встраиваем (не SRD) — мастер вставляет их сам.
-  Путь (только D&D): `tools/travel/rules.ts` (`travel` — темп и `PACE_RATE`, таблица местности 2024 `TERRAIN_TABLE`,
+  Путь (только D&D): `systems/dnd5e/tools/travel/rules.ts` (`travel` — темп и `PACE_RATE`, таблица местности 2024 `TERRAIN_TABLE`,
   дороги, 2014 — трудная местность вдвое, долгий марш — СЛ 11, 12…, корабли `VESSEL_MPH`), `TravelCalculator.svelte`
   (редакция — по системе приключения).
   Генераторы → заготовка боя: `tools/encounter.ts` (`findCard` — карточка по названию: язык текста, система
   приключения, свои важнее встроенных; `toEncounter` — `createEncounter` + `addToInitiative`, открывает «Инициативу»;
   без числа — `groupSize` по ПО). Кнопки — у комнат подземелья и у встреч в «Случайных событиях».
-  Генератор подземелий: `tools/dungeon/` — `content.ts` (en и ru парами; существа — названия карточек SRD обеих
+  Генератор подземелий: `systems/dnd5e/tools/dungeon/` — `content.ts` (en и ru парами; существа — названия карточек SRD обеих
   редакций с ПО и видами подземелий, тест проверяет; ловушки — спасбросок и тип урона), `generate.ts` (всё — индексы,
   поэтому текст на языке интерфейса; роли комнат «пяти комнат», ПО рядовых и босса по уровню, урон ловушек
   `TRAP_DICE` по SRD, клад — `generateTreasure`), `text.ts`, `DungeonGenerator.svelte`.
-  Генератор магических предметов: `tools/relic/` — `content.ts` (en и ru парами; по-русски название «предмет +
+  Генератор магических предметов: `systems/dnd5e/tools/relic/` — `content.ts` (en и ru парами; по-русски название «предмет +
   владелец в родительном», в текстах предмет — «вещь», чтобы не согласовывать род), `generate.ts` (`pickBase` —
   предмет справочника по редкости силы и категории вида), `RelicGenerator.svelte`.
-  Генератор лавок: `tools/shop/` — `content.ts` (en и ru парами, товары с ценой в медяках по SRD), `generate.ts`
+  Генератор лавок: `systems/dnd5e/tools/shop/` — `content.ts` (en и ru парами, товары с ценой в медяках по SRD), `generate.ts`
   (`shopGoods`: потолок цены по достатку, магические — из справочника по `MAGIC_VALUE` SRD 5.2, зелья — `isConsumable`),
   страница `ShopGenerator.svelte`; хозяин — `helpers` из store генератора поселений, цены — `coins` таверн.
   Генератор поселений: `tools/settlement/` — как NPC (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — русские
   названия из основы и суффикса `fitsSuffix` или «прилагательное + существительное» по родам, `text.ts`,
   `store.svelte.ts`); таверна и жители — через `Helpers` из генераторов таверн и NPC.
-  Сокровища: `tools/treasure/` — `generate.ts` (монеты, ценности, вещи, редкости магических предметов по источнику
+  Сокровища: `systems/dnd5e/tools/treasure/` — `generate.ts` (монеты, ценности, вещи, редкости магических предметов по источнику
   и уровню; `pickItems` берёт предметы из `allEntries()` справочника по `rarityOf`), тексты `content.ts` (en и ru
   парами), `text.ts`. Вне D&D — диковины из генератора NPC, без цен.
-  Случайные события: `tools/events/` — один двуязычный список `events.ts` (метки: вид, местность, время, опасность,
+  Случайные события: `systems/dnd5e/tools/events/` — один двуязычный список `events.ts` (метки: вид, местность, время, опасность,
   проверка `[навык | save:хар, СЛ]`; [[ссылки]] на карточки SRD — названия как в SRD своего языка, тест проверяет),
   генерация `generate.ts` (веса видов по опасности, слухи — из генератора таверн), текст `text.ts`.
-  Генератор погоды: `tools/weather/` — модель `generate.ts` (климат по местности и сезону, дни связаны: температура
+  Генератор погоды: `systems/dnd5e/tools/weather/` — модель `generate.ts` (климат по местности и сезону, дни связаны: температура
   тянется к среднему, дождь затягивается; день — коды, слова — в словаре `weather.*`), текст `text.ts` (`daySummary`,
   `dayFlavor`, `dayRules` — правила SRD только в D&D), страница `WeatherGenerator.svelte` (последняя погода — localStorage).
   Переделка статблока (только D&D, `ui.tool = 'reshape'`): правила — `systems/dnd5e/reshape.ts` (`TEMPLATES` — возраст,
   сложение, роль, народ en/ru, по одному в группе; возраст — только гуманоидам, народ — тем, у кого нет своего (`peopleFits`: подвид пуст, «любая раса», класс или наш народ; `templateFits`); свои шаблоны мастера — `OwnTemplate` в `<библиотека>/reshape-templates.json` (`parseOwnTemplates`, `ownTemplate` → `Template` группы `own`, с `people` — группы `people` (их подвиды — знакомые народы для `peopleFits(s, own)`), `reshape(…, own)`; окно — `own` / `loadOwn` / `saveOwn` в store, редактор `OwnTemplates.svelte`); `Reshape.names` — другие названия атак (идут и в мультиатаку, и в снаряжение), `NO_WEAPON` — атака убрана (и из снаряжения); `Reshape.added` — добавленное оружие (атакой или в снаряжение), `gear` — прочие вещи; `WEAPONS` — оружие SRD, своё оружие мастера — `OwnWeapon` (`parseOwnWeapons`, `ownWeapon`, в том же
-  `reshape-templates.json` поле `weapons`; редактор `tools/reshape/OwnWeapons.svelte`; `reshape(…, own, weapons)`; у оружия
+  `reshape-templates.json` поле `weapons`; редактор `systems/dnd5e/tools/reshape/OwnWeapons.svelte`; `reshape(…, own, weapons)`; у оружия
   `bonus` — магия, `extra` — урон другого типа; типы урона — `DAMAGE_TYPES`, по-русски прилагательным, как в SRD); `reshape` пересчитывает спасброски, навыки, пассивную Внимательность,
   инициативу, хиты по кости размера, КД по доспеху (`armourDex`), атаки и урон в текстах блоков по характеристике,
   чей модификатор в уроне (`attackAbility`), СЛ — если её даёт ровно одна характеристика; `weaponBlock` — атака на языке
-  и в редакции карточки; `changesOf` — список изменений), страница `tools/reshape/Reshape.svelte`, состояние и
+  и в редакции карточки; `changesOf` — список изменений), страница `systems/dnd5e/tools/reshape/Reshape.svelte`, состояние и
   `empower` — сила по ПО (`BY_CR` — медианы существ SRD, сглаженные; хиты и первый урон блока — сдвиг на разницу
   типичных, кубы — `scaleDice`), `Reshape.cr`; `reshapeFrom(ref)` — `store.svelte.ts` (кнопка «Переделать…» в `CardView`), `reshapeNew()` — пункт меню «+» в «Карточках» (`bestiary/ui/Sidebar.svelte`), `reshapeFor(portrait, name)` — для портрета без карточки (`portraits/ui/CardBar.svelte`: «Создать карточку» в D&D — меню «С нуля» / «По образцу статблока…», `rs.target` → `bestiary.createFor(…, prefill)`); карточка — `bestiary.create(…, { stats })`.
   Генератор мыши (только Mausritter, `ui.tool = 'mouse'`): `tools/mouse/` — `tables.ts` (таблицы SRD en/ru: прошлое по
@@ -577,7 +596,7 @@ Electron-приложение для мастера D&D: окно управле
   сигнал WebAudio на устройство вывода музыки); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
   окна только пересчитывают остаток по `setInterval`. Страница в «Инструментах» — `timer/ui/TimerTool.svelte`.
   Покупка характеристик: правила, расы SRD 2014 и проверка готовых значений (перебор допустимых бонусов) —
-  `systems/dnd5e/pointbuy.ts` (расы — раса + подрасы, `combine`), страница — `tools/pointbuy/PointBuy.svelte`
+  `systems/dnd5e/pointbuy.ts` (расы — раса + подрасы, `combine`), страница — `systems/dnd5e/tools/pointbuy/PointBuy.svelte`
   (набросок — `state.svelte.ts`); свои расы и подрасы — `races.svelte.ts` + `RaceEditor.svelte`, файл
   `<библиотека>/pointbuy.json` (IPC `library:readData` / `writeData`, имена файлов — по списку в main/index.ts).
 - Резервные копии: снимки данных приложения — `main/backups.ts` (`<userData>/backups/<время>/`: state.json, записки,
@@ -647,10 +666,11 @@ Electron-приложение для мастера D&D: окно управле
   удалить её — «Вернуть как в SRD». «Копия в…» убирает `overrides` (отдельная запись), у записи есть `en` (английское название — для поиска и ссылок). Редакция — фильтр
   `srd.edition` в store (localStorage окна, по умолчанию 2024); ссылка находит встроенную и в скрытой редакции.
   Связи: общее состояние — `renderer/lib/entry/peek.svelte.ts` (`peekEntry(названия)` / `peekEntryAt(путь)` —
-  выдвижная панель записи откуда угодно; указатель названий заклинаний `setSpellIndex`). Действие `use:spellLinks`
-  (`entry/links.ts`): 'em' — курсив с названием заклинания в `StatBlock`, 'text' — названия в `.spells` листа;
+  выдвижная панель записи откуда угодно). Указатель названий заклинаний — `systems/dnd5e/spellindex.ts` (`setSpellIndex`,
+  заполняет фон плагина `systems/dnd5e/Background.svelte` из `entryNames('spell')`). Действие `use:spellLinks`
+  (`systems/dnd5e/links.ts`): 'em' — курсив с названием заклинания в `StatBlock`, 'text' — названия в `.spells` листа;
   MutationObserver пересобирает ссылки после перерисовки. Фоновый компонент справочника `EntryDrawer.svelte` грузит
-  записи, заполняет указатель и рисует панель (с панелью карточки — одна из двух, «назад» к карточке), в нём же
+  записи и рисует панель (с панелью карточки — одна из двух, «назад» к карточке), в нём же
   `QuickSearch.svelte` (⌘K: записи + `bestiary.all`). Состояния трекера → записи — `CONDITION_ENTRY` в
   `systems/dnd5e/conditions.ts` (через `tracker.conditions.entry`). Другие названия — поле `aliases` (`altNames` в store: английское + aliases).
   Картинка записи — поле `image` (`IMAGE_FIELD`, `entryImage`; путь хранилища, выбор — `FilePicker` в `EntryEditor`), у игроков — вместе с текстом.
@@ -660,9 +680,9 @@ Electron-приложение для мастера D&D: окно управле
   (`typeDef` вместо `typeOf` там, где нужны свои типы; `serializeEntry` / `entrySubtitle` принимают описание типа);
   страница «Типы записей» — `TypesEditor.svelte` (`ui.page = 'types'`, кнопка в боковой панели). Окно игроков
   библиотеку не читает: запись уходит в раздатку через `forPlayers` — со снимком описания своего типа в `entry.def`.
-  Фильтр заклинаний (как на dnd.su) — `SpellFilters.svelte` в боковой панели при типе «Заклинания»: уровень, класс,
-  школа, время (`castingKind`), концентрация, ритуал; правила — `spellMatches` в `shared/compendium.ts`, состояние —
-  `ui.spells` / `ui.byLevel` (по уровням — с заголовками групп).
+  Фильтр заклинаний (как на dnd.su) — `systems/dnd5e/SpellFilters.svelte` (`SystemUi.entryList.spell`) в боковой панели
+  при типе «Заклинания»: уровень, класс, школа, время (`castingKind`), концентрация, ритуал; правила — `spellMatches` в
+  `systems/dnd5e/spellfilter.ts`, состояние — `spells` в `spells.svelte.ts` (`byLevel` — группы с заголовками).
   Приключение одним файлом (.sgpack) свои типы не переносит — записи там покажутся как «поле — значение».
 - Журнал мастера (`modules/journal`): заметки к приключению — Markdown в папках роли `journal` (`FileKind` 'page',
   `main/scan.ts`), название = имя файла, папки внутри — свои. Ядро — `main/journal.ts` поверх `textstore.ts` (у него
