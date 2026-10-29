@@ -7,12 +7,13 @@
   import { onMount } from 'svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { monsterGroups } from './monsters';
+  import { cardTiles } from './tiles';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { characterGroups } from '../library';
   import { ui } from './ui.svelte';
 
   let { app }: ModuleProps<'portraits'> = $props();
-  const groups = $derived(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []);
+  const groups = $derived(cardTiles(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []));
   onMount(connectCards);
   const monsters = $derived(monsterGroups(bestiary.all, app.adventures, app.vault.name, bestiary.filters.lang === 'all' ? 'ru' : bestiary.filters.lang));
   const total = $derived(groups.reduce((n, g) => n + g.items.length, 0) + monsters.reduce((n, g) => n + g.items.length, 0));

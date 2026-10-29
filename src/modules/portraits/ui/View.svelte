@@ -21,6 +21,7 @@
   import { ui } from './ui.svelte';
   import MonsterTile from './MonsterTile.svelte';
   import { monsterGroups } from './monsters';
+  import { cardTiles } from './tiles';
   import { sortable } from '../../../renderer/lib/sortable';
   import { applyOrder } from '../../../shared/order';
 
@@ -43,7 +44,7 @@
   onMount(connectCardNames);
 
   const groups = $derived(
-    (app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []).map((g) => ({
+    cardTiles(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []).map((g) => ({
       ...g,
       items: applyOrder(g.items, (f) => f.path, app.order.groups[g.key]),
     }))
