@@ -225,10 +225,18 @@ function cardSpells(j: LssExport, table: LssSpellTable): { spells: Record<string
   const ids = spellIds(j);
   const byLevel: Record<string, string[]> = {};
   const missing = ids.filter((id) => !table[id]);
+  // LSS has two spell databases (2014 and 2024) with different ids and Russian names, and a spellbook can mix
+  // them: one spell is one line, by its English name. Prepared spells come first, so their name wins.
+  const seen = new Set<string>();
   for (const id of ids) {
     const s = table[id];
-    if (s) (byLevel[String(s.level)] ??= []).push(s.name);
+    if (!s) continue;
+    const key = `${s.level}:${(s.en ?? s.name).toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    (byLevel[String(s.level)] ??= []).push(s.name);
   }
+  const total = seen.size + missing.length;
   const spells = Object.fromEntries(Object.entries(byLevel).map(([l, names]) => [l, names.sort((a, b) => a.localeCompare(b, 'ru')).join(', ')]));
   if (!missing.length) return { spells, warnings: [] };
   const how = t('dnd.lss.how');
@@ -237,7 +245,7 @@ function cardSpells(j: LssExport, table: LssSpellTable): { spells: Record<string
     warnings: [
       missing.length === ids.length
         ? t('dnd.lss.cards', { n: ids.length, how })
-        : t('dnd.lss.missing', { n: missing.length, total: ids.length, how }),
+        : t('dnd.lss.missing', { n: missing.length, total, how }),
     ],
   };
 }

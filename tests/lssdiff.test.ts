@@ -143,4 +143,15 @@ describe('таблица заклинаний LSS', () => {
     expect(r.warnings[0]).toContain('1 из 3');
     expect(fromLss(j, collectLssSpells([light, shield, own])).warnings).toEqual([]);
   });
+
+  it('одно заклинание из баз 2014 и 2024 — одна строка, название — из подготовленных', () => {
+    const shield14 = { _id: '65d3c172f3d820fa1add486a', name: 'Щит [Shield]', type: 'spell', system: { level: 1 } };
+    const hand14 = { _id: '65d3c16af3d820fa1add43a8', name: 'Волшебная рука [Mage Hand]', type: 'spell', system: { level: 0 } };
+    const hand24 = { _id: '698197c7a5dc6923c7028d3b', name: 'Магическая рука [Mage Hand]', type: 'spell', system: { level: 0 } };
+    const table = collectLssSpells([shield, shield14, hand14, hand24]);
+    const j = { data: JSON.stringify({ name: { value: 'Бурли' } }), edition: '2014', spells: { mode: 'cards', prepared: [hand14._id], book: [hand24._id, shield._id, shield14._id, own._id] } };
+    const r = fromLss(j, table);
+    expect(r.stats.spellcasting?.spells).toEqual({ 0: 'Волшебная рука', 1: 'Щит' });
+    expect(r.warnings[0]).toContain('1 из 3');
+  });
 });
