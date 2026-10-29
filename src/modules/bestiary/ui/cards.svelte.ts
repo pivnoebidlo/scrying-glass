@@ -115,8 +115,13 @@ class Bestiary {
   // The search starts empty on every launch; other filters are remembered. lang '' — the interface language.
   filters = $state<Filters>({ system: 'all', lang: '', scope: 'all', kind: 'all', ...load(), search: '' });
   // Language of the cards shown: the chosen one, 'all' or the interface language.
+  // The language chosen (or the interface's) — if the cards of the adventure's system have it; else theirs: a
+  // bestiary in one language (Pathfinder, English only) is shown in it, not as a «Russian» list of English cards.
   get lang() {
-    return this.filters.lang || locale.lang;
+    const want = this.filters.lang || locale.lang;
+    const have = this.familyLangs;
+    if (want === 'all' || !have.length || have.includes(want)) return want;
+    return have.includes('en') ? 'en' : have[0]!;
   }
   // Меняется при каждом обновлении карточек в ядре: выбранную надо перечитать.
   rev = $state(0);
@@ -145,6 +150,8 @@ class Bestiary {
 
   // Языки, на которых есть карточки (для фильтра).
   langs = $derived([...new Set(this.all.map((c) => c.lang))].sort((a, b) => (a === 'ru' ? -1 : b === 'ru' ? 1 : a.localeCompare(b))));
+  // The languages of the cards of the adventure's system (the filter offers these).
+  familyLangs = $derived(this.langs.filter((l) => this.all.some((c) => c.lang === l && inCurrentFamily(store.state.adventures, c.system))));
 
   visible = $derived.by(() => {
     const f = this.filters;

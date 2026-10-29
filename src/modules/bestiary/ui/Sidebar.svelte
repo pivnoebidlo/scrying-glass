@@ -130,8 +130,8 @@
       <option value="character">{t('best.party')}</option>
     </select>
     <select value={bestiary.lang} onchange={(e) => (f.lang = e.currentTarget.value)} title={t('best.langHint')}>
-      {#each bestiary.langs as l (l)}<option value={l}>{langName(l)}</option>{/each}
-      {#if !bestiary.langs.includes(bestiary.lang) && bestiary.lang !== 'all'}<option value={bestiary.lang}>{langName(bestiary.lang)}</option>{/if}
+      {#each bestiary.familyLangs as l (l)}<option value={l}>{langName(l)}</option>{/each}
+      {#if !bestiary.familyLangs.includes(bestiary.lang) && bestiary.lang !== 'all'}<option value={bestiary.lang}>{langName(bestiary.lang)}</option>{/if}
       <option value="all">{t('best.allVersions')}</option>
     </select>
   </div>
