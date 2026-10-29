@@ -1,6 +1,7 @@
 <!-- The builder's sheet step, its left side: the card's sections and fields as tiles with the values of the sample
      card — the way a GM will find them. A click chooses a field or a section (its settings — on the right), «＋ field»
-     adds one to the section, «＋ section» — a section; 🎲 — the field rolls on a click. -->
+     adds one to the section, «＋ section» — a section; 🎲 — the field rolls on a click. A field is dragged to its place:
+     before or after another (by the half of the tile), to the end of a section (its heading or «＋ field»). -->
 <script lang="ts">
   import { Dices, Plus } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -16,6 +17,7 @@
     onselect,
     onaddfield,
     onaddsection,
+    onmove,
   }: {
     pack: SystemPack;
     stats: PackStats;
@@ -24,7 +26,34 @@
     onselect: (s: Selection) => void;
     onaddfield: (s: number) => void;
     onaddsection: () => void;
+    // A field to section `s`, before its field `f` (the end — its number of fields).
+    onmove: (from: { s: number; f: number }, to: { s: number; f: number }) => void;
   } = $props();
+
+  // The field being dragged and where it would go.
+  let dragging = $state<{ s: number; f: number } | null>(null);
+  let over = $state<{ s: number; f: number } | null>(null);
+  const DRAG = 'application/x-sg-field';
+  function start(e: DragEvent, s: number, f: number) {
+    dragging = { s, f };
+    e.dataTransfer?.setData(DRAG, `${s}:${f}`);
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+  }
+  // Over a tile: before it in its left half, after it in the right one; over the end of a section — its end.
+  function hover(e: DragEvent, s: number, f: number, end = false) {
+    if (!dragging) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    if (end) return void (over = { s, f });
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    over = { s, f: e.clientX > r.left + r.width / 2 ? f + 1 : f };
+  }
+  function drop(e: DragEvent) {
+    e.preventDefault();
+    if (dragging && over) onmove(dragging, over);
+    dragging = over = null;
+  }
+  const before = (s: number, f: number) => !!over && !!dragging && over.s === s && over.f === f;
 
   const L = (x: Loc | undefined) => loc(x, getLang());
   const num = (v: unknown) => (typeof v === 'number' ? v : Number(v) || 0);
@@ -48,14 +77,27 @@
   <p class="hint faint">{t('sb.sheetHint')}</p>
   {#each pack.sections as sec, s (s)}
     <div class="sec">
-      <button class="sec-head" class:on={sel.kind === 'section' && sel.s === s} onclick={() => onselect({ kind: 'section', s })}>
+      <button class="sec-head" class:on={sel.kind === 'section' && sel.s === s} onclick={() => onselect({ kind: 'section', s })} ondragover={(e) => hover(e, s, sec.fields.length, true)} ondrop={drop}>
         <h4>{L(sec.title) || '—'}</h4>
         {#if sec.kinds}<span class="faint kinds">· {sec.kinds.map((k) => t(`sb.kind.${k}`)).join(', ')}</span>{/if}
       </button>
       <div class="grid">
         {#each sec.fields as f, i (i)}
           {@const wide = f.type === 'textarea' || f.type === 'list' || f.type === 'slots' || f.type === 'tags'}
-          <button class="field" class:wide class:on={isSel(s, i)} onclick={() => onselect({ kind: 'field', s, f: i })}>
+          <button
+            class="field"
+            class:wide
+            class:on={isSel(s, i)}
+            class:moving={dragging?.s === s && dragging.f === i}
+            class:drop-before={before(s, i)}
+            class:drop-after={before(s, i + 1) && i === sec.fields.length - 1}
+            draggable={!disabled}
+            ondragstart={(e) => start(e, s, i)}
+            ondragover={(e) => hover(e, s, i)}
+            ondrop={drop}
+            ondragend={() => (dragging = over = null)}
+            onclick={() => onselect({ kind: 'field', s, f: i })}
+          >
             {#if f.roll}<span class="dice" title={t('sb.rollsOnClick')}><Dices size={12} /></span>{/if}
             <span class="title">{L(f.title) || f.key}</span>
             <span class="value">
@@ -69,7 +111,7 @@
             </span>
           </button>
         {/each}
-        {#if !disabled}<button class="add" onclick={() => onaddfield(s)}><Plus size={12} /> {t('sb.addFieldShort')}</button>{/if}
+        {#if !disabled}<button class="add" class:drop-before={before(s, sec.fields.length) && !sec.fields.length} onclick={() => onaddfield(s)} ondragover={(e) => hover(e, s, sec.fields.length, true)} ondrop={drop}><Plus size={12} /> {t('sb.addFieldShort')}</button>{/if}
       </div>
     </div>
   {/each}
@@ -143,6 +185,19 @@
   }
   .field:hover {
     border-color: var(--text-faint);
+  }
+  .field[draggable='true'] {
+    cursor: grab;
+  }
+  .field.moving {
+    opacity: 0.4;
+  }
+  /* Where the dragged field goes: a bar at the edge of the tile. */
+  .drop-before {
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .drop-after {
+    box-shadow: inset -3px 0 0 var(--accent);
   }
   .field.on {
     border-color: var(--accent);

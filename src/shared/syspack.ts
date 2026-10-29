@@ -588,6 +588,36 @@ export function parseFormula(text: string): Node | null {
   return ok;
 }
 
+// A formula as the builder shows it: the fields by their titles in brackets («[Body] + [Strength] − 1»), − × ÷ for
+// the signs; and back. Labels must be unique: a title two fields share (or an empty one) gets its key in brackets
+// after it — unless only one of them is of `first` (the fields with a number: a formula reads those), which keeps the
+// title. A label the pack hasn't stays «[…]» — the formula then doesn't read.
+export function formulaLabels(titles: Record<string, string>, first: string[] = []): Record<string, string> {
+  const firsts = new Set(first);
+  const count = (keys: string[]) => {
+    const m = new Map<string, number>();
+    for (const k of keys) m.set(titles[k]!, (m.get(titles[k]!) ?? 0) + 1);
+    return m;
+  };
+  const inFirst = count(Object.keys(titles).filter((k) => firsts.has(k)));
+  const inAll = count(Object.keys(titles));
+  const plain = (k: string, v: string) => !!v.trim() && !/[[\]]/.test(v) && (firsts.has(k) ? inFirst.get(v) === 1 : inAll.get(v) === 1 && !inFirst.has(v));
+  return Object.fromEntries(Object.entries(titles).map(([k, v]) => [k, plain(k, v) ? v : `${v.trim() || k} (${k})`]));
+}
+const FORMULA_FNS = new Set(['floor', 'ceil', 'round', 'abs', 'min', 'max']);
+export function formulaToText(formula: string, labels: Record<string, string>): string {
+  return formula.replace(/row\.[a-z_][a-z0-9_]*|[a-z_][a-z0-9_]*|[-*/]/gi, (w) =>
+    w === '-' ? '−' : w === '*' ? '×' : w === '/' ? '÷' : FORMULA_FNS.has(w) || !labels[w] ? w : `[${labels[w]}]`,
+  );
+}
+export function formulaFromText(text: string, labels: Record<string, string>): string {
+  const keyOf = new Map(Object.entries(labels).map(([k, v]) => [v, k]));
+  return text
+    .split(/(\[[^\]]*\])/)
+    .map((part) => (part.startsWith('[') ? (keyOf.get(part.slice(1, -1).trim()) ?? part) : part.replace(/−/g, '-').replace(/×/g, '*').replace(/÷/g, '/')))
+    .join('');
+}
+
 // A formula in the words of the sheet: the names of the fields instead of their keys, − × ÷, and the functions said
 // the way a rule says them — min(15, x) is «x, no more than 15», max(0, x) — «x, not below 0», floor(x) — «x, rounded
 // down». Null — it doesn't read.

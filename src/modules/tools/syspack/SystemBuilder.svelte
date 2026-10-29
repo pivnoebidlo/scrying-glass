@@ -74,6 +74,16 @@
     d.sections.splice(s, 1);
     select({ kind: 'none' });
   }
+  // A field dragged on the sheet: to section `to.s`, before its field `to.f`.
+  function dropField(from: { s: number; f: number }, to: { s: number; f: number }) {
+    if (!d || !d.sections[from.s] || !d.sections[to.s]) return;
+    let at = to.f;
+    if (from.s === to.s && at > from.f) at--;
+    if (from.s === to.s && at === from.f) return;
+    const [x] = d.sections[from.s]!.fields.splice(from.f, 1);
+    d.sections[to.s]!.fields.splice(at, 0, x!);
+    select({ kind: 'field', s: to.s, f: at });
+  }
   // A field to another section (to its end).
   function moveField(s: number, f: number, to: number) {
     if (!d || s === to || !d.sections[to]) return;
@@ -184,7 +194,7 @@
       </section>
     {:else if builder.step === 'sheet'}
       <div class="sheet-step">
-        <SheetCanvas pack={d} stats={builder.previewStats} sel={builder.sel} disabled={ro} onselect={select} onaddfield={(s) => addField(s)} onaddsection={addSection} />
+        <SheetCanvas pack={d} stats={builder.previewStats} sel={builder.sel} disabled={ro} onselect={select} onaddfield={(s) => addField(s)} onaddsection={addSection} onmove={dropField} />
         <section class="pane inspector">
           {#if builder.sel.kind === 'section' && d.sections[builder.sel.s]}
             {@const s = builder.sel.s}

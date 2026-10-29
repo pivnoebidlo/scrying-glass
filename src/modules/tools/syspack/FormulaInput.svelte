@@ -1,9 +1,10 @@
-<!-- A formula of a pack: checked as it is typed (doesn't read / names a field the pack hasn't), read back in the words
-     of the sheet (the titles of the fields instead of their keys) with its value on the sample card, and the fields to
-     insert by a click — by their titles. `row` — the columns of a list row (row.<column>). -->
+<!-- A formula of a pack: typed with the fields by their titles in brackets («[Body] + [Strength] − 1»; the pack keeps
+     the keys — formulaToText / formulaFromText; a key typed by hand becomes its title when the field is left), checked
+     as it is typed (doesn't read / names a field the pack hasn't), read back in the words of a rule with its value on
+     the sample card, and the fields to insert by a click — by their titles. `row` — the columns of a list row. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { parseFormula, readFormula, type FormulaWords } from '../../../shared/syspack';
+  import { formulaFromText, formulaLabels, formulaToText, parseFormula, readFormula, type FormulaWords } from '../../../shared/syspack';
 
   let {
     value,
@@ -32,8 +33,21 @@
 
   const FNS = new Set(['floor', 'ceil', 'round', 'abs', 'min', 'max']);
   const WORDS = /row\.[a-z_][a-z0-9_]*|[a-z_][a-z0-9_]*/gi;
+  // The labels of the fields (and of the row's columns) in the text; the text itself — kept while it's typed.
+  const labels = $derived(formulaLabels(Object.fromEntries([...keys.map((k) => [k, names[k] ?? k]), ...row.map((c) => [`row.${c}`, names[`row.${c}`] ?? c])]), [...(numeric ?? []), ...row.map((c) => `row.${c}`)]));
+  let text = $state('');
+  let editing = $state(false);
+  $effect(() => {
+    if (!editing) text = formulaToText(value, labels);
+  });
+  const put = (v: string) => {
+    text = v;
+    set(formulaFromText(v, labels));
+  };
   const problem = $derived.by(() => {
     if (!value.trim()) return '';
+    const strange = [...value.matchAll(/\[([^\]]*)\]/g)].map((m) => m[1]!);
+    if (strange.length) return t('sb.unknown', { list: strange.join(', ') });
     if (!parseFormula(value)) return t('sb.broken');
     const used = (value.match(WORDS) ?? []).filter((w) => !FNS.has(w));
     const unknown = [...new Set(used.filter((n) => (n.startsWith('row.') ? !row.includes(n.slice(4)) : !keys.includes(n))))];
@@ -51,16 +65,18 @@
     abs: (x) => t('sb.fw.abs', { x }),
   };
   const read = $derived(value.trim() && !problem ? (readFormula(value, (k) => names[k] ?? k, words) ?? '') : '');
-  const differs = $derived(read && read.replace(/\s+/g, '') !== value.replace(/\s+/g, ''));
+  // Said in words only when it says more than the text (functions, brackets of a rule).
+  const differs = $derived(read && read.replace(/\s+/g, '') !== text.replace(/[[\]\s]/g, ''));
   let input = $state<HTMLInputElement>();
-  function insert(name: string) {
+  function insert(key: string) {
+    const name = `[${labels[key] ?? key}]`;
     const el = input;
-    if (!el) return set(`${value}${value.trim() ? ' + ' : ''}${name}`);
-    const at = el.selectionStart ?? value.length;
-    const before = value.slice(0, at);
+    if (!el) return put(`${text}${text.trim() ? ' + ' : ''}${name}`);
+    const at = el.selectionStart ?? text.length;
+    const before = text.slice(0, at);
     // Between two names — a plus, so a click after a click still reads.
-    const glue = /[a-z0-9_)]\s*$/i.test(before) ? ' + ' : '';
-    set(before + glue + name + value.slice(el.selectionEnd ?? at));
+    const glue = /[\p{L}\p{N}_)\]]\s*$/u.test(before) ? ' + ' : '';
+    put(before + glue + name + text.slice(el.selectionEnd ?? at));
     queueMicrotask(() => {
       el.focus();
       const end = at + glue.length + name.length;
@@ -70,7 +86,17 @@
 </script>
 
 <div class="formula">
-  <input bind:this={input} type="text" class="mono" class:bad={!!problem} {placeholder} {disabled} {value} oninput={(e) => set(e.currentTarget.value)} />
+  <input
+    bind:this={input}
+    type="text"
+    class:bad={!!problem}
+    {placeholder}
+    {disabled}
+    value={text}
+    onfocus={() => (editing = true)}
+    onblur={() => ((editing = false), (text = formulaToText(value, labels)))}
+    oninput={(e) => put(e.currentTarget.value)}
+  />
   {#if problem}
     <span class="bad-note">{problem}</span>
   {:else if differs || example !== null}
@@ -82,8 +108,8 @@
     <details class="insert">
       <summary class="faint">{t('sb.insert')}</summary>
       <div class="chips">
-        {#each row as c (c)}<button type="button" class="chip" title={`row.${c}`} onclick={() => insert(`row.${c}`)}>{names[`row.${c}`] ?? `row.${c}`}</button>{/each}
-        {#each numeric ?? keys as k (k)}<button type="button" class="chip" title={k} onclick={() => insert(k)}>{names[k] ?? k}</button>{/each}
+        {#each row as c (c)}<button type="button" class="chip" title={`row.${c}`} onmousedown={(e) => e.preventDefault()} onclick={() => insert(`row.${c}`)}>{names[`row.${c}`] ?? `row.${c}`}</button>{/each}
+        {#each numeric ?? keys as k (k)}<button type="button" class="chip" title={k} onmousedown={(e) => e.preventDefault()} onclick={() => insert(k)}>{names[k] ?? k}</button>{/each}
       </div>
     </details>
   {/if}
@@ -94,10 +120,6 @@
     display: flex;
     flex-direction: column;
     gap: 3px;
-  }
-  .mono {
-    font-family: ui-monospace, Menlo, monospace;
-    font-size: 12px;
   }
   .bad {
     border-color: var(--warning) !important;

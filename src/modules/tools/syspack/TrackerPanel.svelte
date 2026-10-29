@@ -12,6 +12,7 @@
   const keys = $derived(fields.map((f) => f.key));
   const shown = $derived(fields.filter((f) => ['number', 'track', 'dots', 'formula'].includes(f.type)));
   const title = (k: string) => loc(fieldMap(pack).get(k)?.title, getLang()) || k;
+  const names = $derived(Object.fromEntries(keys.map((k) => [k, title(k)])));
   const tr = $derived(pack.tracker);
   // One condition a line; «Frightened #» — it carries a number.
   const valuedNames = $derived(new Set((tr.conditions?.valued ?? []).map((c) => loc(c, getLang()))));
@@ -43,10 +44,10 @@
   {#if tr.init.type === 'roll'}
     {@const init = tr.init}
     <label class="row"><span>{t('sb.initDice')}</span><input type="text" class="mono" {disabled} value={init.dice} onchange={(e) => (init.dice = e.currentTarget.value.trim() || '1d20')} /></label>
-    <div class="row"><span>{t('sb.initBonus')}</span><FormulaInput value={init.bonus ?? ''} set={(v) => (init.bonus = v || undefined)} {keys} {disabled} /></div>
+    <div class="row"><span>{t('sb.initBonus')}</span><FormulaInput value={init.bonus ?? ''} set={(v) => (init.bonus = v || undefined)} {keys} {names} {disabled} /></div>
   {:else if tr.init.type === 'value'}
     {@const init = tr.init}
-    <div class="row"><span>{t('sb.initValueF')}</span><FormulaInput value={init.value} set={(v) => (init.value = v)} {keys} {disabled} /></div>
+    <div class="row"><span>{t('sb.initValueF')}</span><FormulaInput value={init.value} set={(v) => (init.value = v)} {keys} {names} {disabled} /></div>
   {/if}
 
   <label class="row">

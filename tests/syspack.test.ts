@@ -348,3 +348,21 @@ describe('templates of the builder', () => {
     }
   });
 });
+
+describe('a formula with the titles of the fields', () => {
+  it('shows keys as [titles] and reads them back', async () => {
+    const { formulaLabels, formulaToText, formulaFromText } = await import('../src/shared/syspack');
+    const labels = formulaLabels({ body: 'Тело', strength: 'Сила', body_slot: 'Тело', debuffs: 'Дебафов из 5', 'row.dice': 'Кубы' });
+    expect(labels['body']).toBe('Тело (body)');
+    expect(labels['debuffs']).toBe('Дебафов из 5');
+    // Of two «Тело» only one has a number: it keeps the title.
+    const numeric = formulaLabels({ body: 'Тело', body_slot: 'Тело' }, ['body']);
+    expect(numeric).toEqual({ body: 'Тело', body_slot: 'Тело (body_slot)' });
+    const f = 'min(15, max(0, body + strength - debuffs - floor((body_slot) / 2))) * row.dice';
+    const text = formulaToText(f, labels);
+    expect(text).toBe('min(15, max(0, [Тело (body)] + [Сила] − [Дебафов из 5] − floor(([Тело (body_slot)]) ÷ 2))) × [Кубы]');
+    expect(formulaFromText(text, labels)).toBe(f);
+    // A key typed by hand still reads; an unknown title stays as it is.
+    expect(formulaFromText('strength + [Ловкость] − 1', labels)).toBe('strength + [Ловкость] - 1');
+  });
+});
