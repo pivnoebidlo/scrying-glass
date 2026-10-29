@@ -797,7 +797,7 @@ their files are in `samples/systems/`. On the very first launch the app asks wha
 of D&D (in the app) and the systems of the official repository (Fate Core, Mausritter, Forged in the Dark, the samples)
 with checkboxes — the ticked ones are downloaded, the unticked editions of D&D are turned off. Later Settings → Game
 systems turns systems on and off and deletes pack systems; more are in the Community. Your own systems are made in **Tools → System builder** (also from Settings → Game
-systems): sections and fields, the roll of each field, the tracker, with a live preview of the card where rolls can be
+systems): a line about the system, sections and fields, the roll of each field, the tracker, with a live preview of the card where rolls can be
 tried; a built-in system can be copied and changed. They are saved to `systems/` in the library (every vault sees
 them) and can be exported to a file and imported. A system can have its own **compendium** (rules, conditions, gear —
 Markdown entries shown in its adventures like built-in ones; a condition in the tracker opens its entry) and can be
@@ -855,7 +855,10 @@ side panel, tabs, the player screen preview on the right. Settings: ⌘, (Ctrl+,
   - display.ts: a layer on the player screen (defineDisplay)
   - i18n.ts: the module's messages (English and Russian)
   - ui/: the module's Svelte components
-- src/systems/<system>/: role-playing systems in code: stats, stat block, editor, tracker (D&D 5e); src/systems/pack/ — systems described by a file (Fate Core, Mausritter, Forged in the Dark: samples/systems/)
+- src/systems/<system>/: role-playing systems in code, as plugins (D&D 5e): stats, stat block, editor, tracker, its tools,
+  compendium types, importers (Long Story Short), its messages; the core asks them what they add (systems/plugin.ts,
+  systems/ui.ts) and knows no system by name; a new one is a folder and a line in systems/plugins.ts and systems/ui.ts.
+  src/systems/pack/ — systems described by a file (Fate Core, Mausritter, Forged in the Dark: samples/systems/)
 - resources/srd/: the built-in bestiary, built by scripts/import-srd.ts
 - resources/compendium/: the built-in compendium (`<system>.<lang>.json`)
 - src/modules/index.ts: the list of core modules, a new module is added here; the windows pick up control.ts and
