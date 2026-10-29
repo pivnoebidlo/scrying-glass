@@ -9,7 +9,9 @@ import { blankPack, blankStats, loc, type PackStats, type SystemPack } from '../
 import { systems } from '../../../systems';
 import { ui as tools } from '../ui/ui.svelte';
 
-export type Selection = { kind: 'system' } | { kind: 'tracker' } | { kind: 'compendium' } | { kind: 'section'; s: number } | { kind: 'field'; s: number; f: number };
+// The steps of the builder (its tabs) and, on the sheet step, the chosen section or field.
+export type Step = 'about' | 'sheet' | 'tracker' | 'compendium' | 'trial';
+export type Selection = { kind: 'none' } | { kind: 'section'; s: number } | { kind: 'field'; s: number; f: number };
 
 export const builder = $state({
   draft: null as SystemPack | null,
@@ -17,7 +19,8 @@ export const builder = $state({
   was: null as string | null,
   readonly: false,
   saved: '',
-  sel: { kind: 'system' } as Selection,
+  step: 'sheet' as Step,
+  sel: { kind: 'none' } as Selection,
   previewKind: 'character' as 'monster' | 'npc' | 'character',
   previewStats: {} as PackStats,
   status: '',
@@ -51,7 +54,9 @@ function load(p: SystemPack, was: string | null, readonly: boolean) {
   builder.was = was;
   builder.readonly = readonly;
   builder.saved = was ? snapshot(clean) : '';
-  builder.sel = { kind: 'system' };
+  // A new system starts from what it is; a saved one — from its sheet.
+  builder.step = was || readonly ? 'sheet' : 'about';
+  builder.sel = clean.sections[0]?.fields.length ? { kind: 'field', s: 0, f: 0 } : { kind: 'none' };
   builder.previewStats = blankStats(clean, builder.previewKind);
   builder.status = '';
   builder.error = '';

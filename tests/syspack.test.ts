@@ -310,3 +310,27 @@ describe('compendium from Markdown', () => {
     ]);
   });
 });
+
+describe('a formula in words', () => {
+  const words = {
+    atMost: (x: string, n: string) => `${x}, at most ${n}`,
+    atLeast: (x: string, n: string) => `${x}, at least ${n}`,
+    least: (xs: string[]) => `least of ${xs.join(', ')}`,
+    most: (xs: string[]) => `most of ${xs.join(', ')}`,
+    floor: (x: string) => `${x}, down`,
+    ceil: (x: string) => `${x}, up`,
+    round: (x: string) => `${x}, rounded`,
+    abs: (x: string) => `|${x}|`,
+  };
+  const names: Record<string, string> = { body: 'Body', str: 'Strength', deb: 'Debuffs', a: 'A', b: 'B' };
+  it('says keys as names and functions as rules', async () => {
+    const { readFormula } = await import('../src/shared/syspack');
+    expect(readFormula('min(15, max(0, body + str - deb - floor((a + b) / 2)))', (k) => names[k] ?? k, words)).toBe(
+      'Body + Strength − Debuffs − ((A + B) ÷ 2, down), at least 0, at most 15',
+    );
+    expect(readFormula('a - (b + 1)', (k) => names[k] ?? k, words)).toBe('A − (B + 1)');
+    expect(readFormula('(a + b) * 2', (k) => names[k] ?? k, words)).toBe('(A + B) × 2');
+    expect(readFormula('min(a, b)', (k) => names[k] ?? k, words)).toBe('least of A, B');
+    expect(readFormula('a +', (k) => k, words)).toBe(null);
+  });
+});

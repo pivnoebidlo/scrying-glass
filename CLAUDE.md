@@ -369,9 +369,12 @@ Electron-приложение для мастера D&D: окно управле
   (`store.svelte.ts`, до `setSystemsOff`). Вид — `systems/pack/Sheet.svelte`, редактор — `pack/Editor.svelte` (`kind` из
   `CardEditor`), трекер — `pack/TrackerCells.svelte` (хиты — `hp`/`maxHp`, дорожки — `stress` по ключу, числа — `attrs`);
   броски — `rolls.packRoll` / `pushRoll`, в журнале — `RollEntry.pack`. Встроенные системы остаются кодом (решение
-  пользователя). Конструктор — «Инструменты» → «Конструктор систем» (`tools/syspack/`: `SystemBuilder.svelte` — дерево,
-панели `FieldPanel` / `TrackerPanel`, предпросмотр `pack/Sheet` и `pack/Editor` с `draft`; `FormulaInput` проверяет
-формулы на лету, `LocInput` правит текст на языке интерфейса; состояние — `store.svelte.ts`, `openBuilder(id?)` — и из
+  пользователя). Конструктор — «Инструменты» → «Конструктор систем» (`tools/syspack/`: `SystemBuilder.svelte` — вкладки шагов
+`builder.step` (О системе · Лист · Трекер · Справочник · Проба); «Лист» — `SheetCanvas` (плитки полей на пробных значениях,
+щелчок — `builder.sel`) и инспектор `FieldPanel` (вид плитками, бросок — рецепты фразой, «Для знатоков», «Пробный бросок» —
+`rolls.packRoll` по `previewStats`; ключ нового поля идёт за названием, ключи — в «Дополнительно»); «Проба» — `pack/Sheet` и
+`pack/Editor` с `draft`; `FormulaInput` проверяет формулы на лету и читает их словами (`readFormula`: названия полей,
+min(15, x) — «x, не больше 15»), вставка — числовые поля по названию, `LocInput` правит текст на языке интерфейса; состояние — `store.svelte.ts`, `openBuilder(id?)` — и из
 настроек систем); ядро — IPC `systems:save` / `delete` / `import` / `export` (`savePack`, свой пакет — `own`, встроенный —
 только копией), ошибки `syspack:<код>` → `sb.err.*`. `fieldMap` не кэшируется: конструктор правит пакет на месте.
 Справочник пакета — `compendium` (`PackEntry`: title, category, text): ядро отдаёт его встроенными книгами

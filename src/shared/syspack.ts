@@ -588,6 +588,50 @@ export function parseFormula(text: string): Node | null {
   return ok;
 }
 
+// A formula in the words of the sheet: the names of the fields instead of their keys, − × ÷, and the functions said
+// the way a rule says them — min(15, x) is «x, no more than 15», max(0, x) — «x, not below 0», floor(x) — «x, rounded
+// down». Null — it doesn't read.
+export interface FormulaWords {
+  atMost: (x: string, n: string) => string;
+  atLeast: (x: string, n: string) => string;
+  least: (xs: string[]) => string;
+  most: (xs: string[]) => string;
+  floor: (x: string) => string;
+  ceil: (x: string) => string;
+  round: (x: string) => string;
+  abs: (x: string) => string;
+}
+export function readFormula(text: string, name: (key: string) => string, words: FormulaWords): string | null {
+  const node = parseFormula(text);
+  if (!node) return null;
+  const PREC: Record<string, number> = { '+': 1, '-': 1, '*': 2, '/': 2 };
+  const SIGN: Record<string, string> = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+  const say = (n: Node, outer = 0): string => {
+    if ('n' in n) return String(n.n);
+    if ('v' in n) return name(n.v);
+    if ('neg' in n) return `−${say(n.neg, 3)}`;
+    if ('fn' in n) {
+      const args = n.args.map((x) => say(x));
+      const fixed = n.args.findIndex((x) => 'n' in x);
+      const said =
+        (n.fn === 'min' || n.fn === 'max') && n.args.length === 2 && fixed >= 0
+          ? (n.fn === 'min' ? words.atMost : words.atLeast)(args[1 - fixed]!, args[fixed]!)
+          : n.fn === 'min'
+            ? words.least(args)
+            : n.fn === 'max'
+              ? words.most(args)
+              : words[n.fn as 'floor' | 'ceil' | 'round' | 'abs'](args[0] ?? '');
+      // Inside a sum the words of a function keep to their part: a − (b ÷ 2, rounded down).
+      return outer > 0 ? `(${said})` : said;
+    }
+    const p = PREC[n.op]!;
+    // The right side of − and ÷ keeps its brackets at the same level: a − (b + c).
+    const text = `${say(n.a, p)} ${SIGN[n.op]} ${say(n.b, n.op === '-' || n.op === '/' ? p + 0.5 : p)}`;
+    return p < outer ? `(${text})` : text;
+  };
+  return say(node);
+}
+
 function evalNode(n: Node, vars: (name: string) => number): number {
   if ('n' in n) return n.n;
   if ('v' in n) return vars(n.v);
