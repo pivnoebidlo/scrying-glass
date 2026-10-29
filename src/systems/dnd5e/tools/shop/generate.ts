@@ -1,6 +1,6 @@
 // Shop generation: a pure function over the content (content.ts) in one language. The owner comes from the NPC
 // generator and the magic goods from the compendium — both through `ShopContext` (the page passes them in).
-import type { Person } from '../settlement/types';
+import type { Person } from '../../../../modules/tools/settlement/types';
 import { type Rarity } from '../treasure/generate';
 import { GOODS, HOOKS, QUIRKS, SHOP_LOOKS, SHOP_NAMES } from './content';
 

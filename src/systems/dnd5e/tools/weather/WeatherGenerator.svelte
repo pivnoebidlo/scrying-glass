@@ -3,15 +3,15 @@
      Copy, to the journal, to Telegram. The last weather is remembered by the window. -->
 <script lang="ts">
   import { Check, CloudSun, Copy, NotebookPen, Send } from '@lucide/svelte';
-  import { locale, t } from '../../../renderer/lib/i18n.svelte';
-  import { openTab } from '../../../renderer/lib/nav';
-  import { store } from '../../../renderer/lib/store.svelte';
-  import { currentSystem } from '../../../shared/adventures';
-  import { markdownToTelegram } from '../../../shared/telegram';
-  import { isDnd } from '../../../systems';
-  import { journalFolder } from '../../journal/ui/store.svelte';
-  import { openPage } from '../../journal/ui/ui.svelte';
-  import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
+  import { locale, t } from '../../../../renderer/lib/i18n.svelte';
+  import { openTab } from '../../../../renderer/lib/nav';
+  import { store } from '../../../../renderer/lib/store.svelte';
+  import { currentSystem } from '../../../../shared/adventures';
+  import { markdownToTelegram } from '../../../../shared/telegram';
+  import { isDnd } from '../../here';
+  import { journalFolder } from '../../../../modules/journal/ui/store.svelte';
+  import { openPage } from '../../../../modules/journal/ui/ui.svelte';
+  import { sendToTelegram, tgReady } from '../../../../modules/telegram/ui/tg.svelte';
   import { generateWeather, SEASONS, TERRAINS, type Day, type Season, type Terrain } from './generate';
   import { dayEvent, dayFlavor, dayRules, daySummary, weatherMarkdown } from './text';
 

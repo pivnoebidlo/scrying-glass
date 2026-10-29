@@ -67,4 +67,3 @@ const unknown = (id: string): SystemDef => ({
 export const systemOf = (id: string) => systems.find((s) => s.id === id) ?? unknown(id);
 
 export const familyOf = (id: string) => systemOf(id).family;
-export const isDnd = (id: string) => familyOf(id) === 'dnd5e';

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ART, GEMS, GOODS, POCKETS, SIZES, TRINKETS } from '../src/modules/tools/treasure/content';
-import { generateTreasure, pickItems, rarityOf, rerollPart, SOURCES, TIERS, totalGold, VALUES } from '../src/modules/tools/treasure/generate';
-import { treasureMarkdown, valuableLines } from '../src/modules/tools/treasure/text';
+import { ART, GEMS, GOODS, POCKETS, SIZES, TRINKETS } from '../src/systems/dnd5e/tools/treasure/content';
+import { generateTreasure, pickItems, rarityOf, rerollPart, SOURCES, TIERS, totalGold, VALUES } from '../src/systems/dnd5e/tools/treasure/generate';
+import { treasureMarkdown, valuableLines } from '../src/systems/dnd5e/tools/treasure/text';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 const words = { coin: (c: string) => c, each: (v: string) => `${v} each` };

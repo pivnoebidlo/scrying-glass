@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { tr, type Lang } from '../src/shared/i18n';
-import { effectsOf, EVENTS, generateWeather, SEASONS, TERRAINS } from '../src/modules/tools/weather/generate';
-import { daySummary, weatherMarkdown } from '../src/modules/tools/weather/text';
+import { effectsOf, EVENTS, generateWeather, SEASONS, TERRAINS } from '../src/systems/dnd5e/tools/weather/generate';
+import { daySummary, weatherMarkdown } from '../src/systems/dnd5e/tools/weather/text';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 

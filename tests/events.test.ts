@@ -1,9 +1,9 @@
 import * as fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { EVENTS, COMPLICATIONS, RUMOR_INTROS } from '../src/modules/tools/events/events';
-import { DANGERS, fits, generateEvents, splitLinks } from '../src/modules/tools/events/generate';
-import { RUMORS, checkText, eventText } from '../src/modules/tools/events/text';
-import { TERRAINS } from '../src/modules/tools/weather/generate';
+import { EVENTS, COMPLICATIONS, RUMOR_INTROS } from '../src/systems/dnd5e/tools/events/events';
+import { DANGERS, fits, generateEvents, splitLinks } from '../src/systems/dnd5e/tools/events/generate';
+import { RUMORS, checkText, eventText } from '../src/systems/dnd5e/tools/events/text';
+import { TERRAINS } from '../src/systems/dnd5e/tools/weather/generate';
 import { dict } from '../src/systems/dnd5e/stats';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;

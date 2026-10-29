@@ -3,7 +3,7 @@
 // the settings (Tools → "Tools of other systems", remembered by the window). A system plugin brings its own tools
 // (SystemUi.tools, with their pages) and claims the core's generators it shows as its own (SystemUi.claims).
 import type { Component } from 'svelte';
-import { Beer, Blocks, Dices, CalendarClock, Castle, CloudSun, DoorOpen, Flag, Gem, Hourglass, Pickaxe, Rat, Send, Signature, Signpost, Sparkles, Swords, Store, Table2, UserRound } from '@lucide/svelte';
+import { Beer, Blocks, Dices, CalendarClock, Castle, Flag, Hourglass, Pickaxe, Rat, Send, Signature, Store, Swords, Table2, UserRound } from '@lucide/svelte';
 import { systemUis } from '../../../systems/ui';
 import { t } from '../../../renderer/lib/i18n.svelte';
 import type { ToolId } from './ui.svelte';
@@ -49,12 +49,6 @@ const CORE: ToolDef[] = [
   tool('npc', UserRound, 'tools.side.npc', SOME),
   tool('tavern', Beer, 'tools.side.tavern', SOME),
   tool('settlement', Castle, 'tools.side.settlement', SOME),
-  tool('shop', Store, 'tools.side.shop', SOME),
-  tool('relic', Sparkles, 'tools.side.relic', SOME),
-  tool('dungeon', DoorOpen, 'tools.side.dungeon', SOME),
-  tool('weather', CloudSun, 'tools.side.weather', SOME),
-  tool('events', Signpost, 'tools.side.events', SOME),
-  tool('treasure', Gem, 'tools.side.treasure', SOME),
   tool('mouse', Rat, 'tools.side.mouse', MAUS),
   tool('mausTables', Table2, 'tools.side.mausTables', MAUS),
   tool('factions', Flag, 'tools.side.factions', MAUS),

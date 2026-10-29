@@ -23,13 +23,7 @@
   import MausTables from '../maus/MausTables.svelte';
   import Factions from '../../mausritter/ui/Factions.svelte';
   import CrewSheet from '../../crew/ui/CrewSheet.svelte';
-  import WeatherGenerator from '../weather/WeatherGenerator.svelte';
-  import EventsGenerator from '../events/EventsGenerator.svelte';
-  import TreasureGenerator from '../treasure/TreasureGenerator.svelte';
   import SettlementGenerator from '../settlement/SettlementGenerator.svelte';
-  import ShopGenerator from '../shop/ShopGenerator.svelte';
-  import RelicGenerator from '../relic/RelicGenerator.svelte';
-  import DungeonGenerator from '../dungeon/DungeonGenerator.svelte';
   import SchedulePage from '../../schedule/ui/SchedulePage.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
   import RollTables from '../rolltables/RollTables.svelte';
@@ -43,9 +37,9 @@
   const family = $derived(familyOf(currentSystem(app.adventures)));
   // The page of each tool; a tool hidden in this system (another system's, not turned on) — the notes instead.
   const PAGES: Partial<Record<string, Component>> = {
-    schedule: SchedulePage, names: NameGenerator, dungeon: DungeonGenerator, relic: RelicGenerator,
-    shop: ShopGenerator, settlement: SettlementGenerator, treasure: TreasureGenerator, events: EventsGenerator,
-    weather: WeatherGenerator, mouse: MouseGenerator, mausTables: MausTables, factions: Factions, build: BuildCalculator, mausShop: MausShop, npc: NpcGenerator,
+    schedule: SchedulePage, names: NameGenerator, 
+    settlement: SettlementGenerator, 
+    mouse: MouseGenerator, mausTables: MausTables, factions: Factions, build: BuildCalculator, mausShop: MausShop, npc: NpcGenerator,
     tavern: TavernGenerator, telegram: TelegramCompose, timer: TimerTool, crew: CrewSheet, systems: SystemBuilder, rollTables: RollTables,
   };
   const Page = $derived(ui.tool !== 'notes' && ui.tool !== 'sketches' && shown(ui.tool, family) ? (PAGES[ui.tool] ?? TOOLS.find((d) => d.id === ui.tool)?.page) : undefined);

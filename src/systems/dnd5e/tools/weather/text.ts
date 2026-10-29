@@ -1,6 +1,6 @@
 // A day of weather as words (the dictionary, weather.*): a summary line, a line to read aloud, the rules; and several
 // days as Markdown. tr — the translation function (the window's reactive t or the shared one in tests).
-import type { Key } from '../../../shared/i18n';
+import type { Key } from '../../../../shared/i18n';
 import { effectsOf, fahrenheit, type Day, type Terrain } from './generate';
 
 type Tr = (key: Key, params?: Record<string, string | number>) => string;

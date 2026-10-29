@@ -3,15 +3,15 @@
      shows its check. Each event can be rerolled; copy or save to the journal. The last roll is remembered. -->
 <script lang="ts">
   import { Check, Copy, Dices, NotebookPen, RefreshCw, Swords } from '@lucide/svelte';
-  import { toEncounter } from '../encounter';
-  import { locale, t } from '../../../renderer/lib/i18n.svelte';
-  import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
-  import { openTab } from '../../../renderer/lib/nav';
-  import { store } from '../../../renderer/lib/store.svelte';
-  import { currentSystem } from '../../../shared/adventures';
-  import { isDnd } from '../../../systems';
-  import { journalFolder } from '../../journal/ui/store.svelte';
-  import { openPage } from '../../journal/ui/ui.svelte';
+  import { toEncounter } from '../../../../modules/tools/encounter';
+  import { locale, t } from '../../../../renderer/lib/i18n.svelte';
+  import { peekEntry } from '../../../../renderer/lib/entry/peek.svelte';
+  import { openTab } from '../../../../renderer/lib/nav';
+  import { store } from '../../../../renderer/lib/store.svelte';
+  import { currentSystem } from '../../../../shared/adventures';
+  import { isDnd } from '../../here';
+  import { journalFolder } from '../../../../modules/journal/ui/store.svelte';
+  import { openPage } from '../../../../modules/journal/ui/ui.svelte';
   import { TERRAINS, type Terrain } from '../weather/generate';
   import { COMPLICATIONS, EVENTS, RUMOR_INTROS } from './events';
   import { DANGERS, generateEvent, generateEvents, splitLinks, type Danger, type GeneratedEvent, type Time } from './generate';

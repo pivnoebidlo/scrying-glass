@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { GOODS, HOOKS, QUIRKS, SHOP_LOOKS, SHOP_NAMES } from '../src/modules/tools/shop/content';
-import { generateShop, isConsumable, MAGIC_VALUE, shopGoods, SHOP_TYPES, type ShopContext } from '../src/modules/tools/shop/generate';
+import { GOODS, HOOKS, QUIRKS, SHOP_LOOKS, SHOP_NAMES } from '../src/systems/dnd5e/tools/shop/content';
+import { generateShop, isConsumable, MAGIC_VALUE, shopGoods, SHOP_TYPES, type ShopContext } from '../src/systems/dnd5e/tools/shop/generate';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 const person = () => ({ name: 'Ann', race: 'human', gender: 'female' as const, occupation: 'smith', trait: 'haggles over everything' });

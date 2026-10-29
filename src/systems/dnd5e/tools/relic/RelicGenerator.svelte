@@ -4,17 +4,17 @@
 <script lang="ts">
   import { Check, Copy, NotebookPen, RefreshCw, Send, Sparkles } from '@lucide/svelte';
   import { onMount, type Snippet } from 'svelte';
-  import { locale, t } from '../../../renderer/lib/i18n.svelte';
-  import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
-  import { openTab } from '../../../renderer/lib/nav';
-  import { store } from '../../../renderer/lib/store.svelte';
-  import { currentSystem } from '../../../shared/adventures';
-  import { markdownToTelegram } from '../../../shared/telegram';
-  import { isDnd } from '../../../systems';
-  import { allEntries, loadEntries } from '../../compendium/ui/store.svelte';
-  import { journalFolder } from '../../journal/ui/store.svelte';
-  import { openPage } from '../../journal/ui/ui.svelte';
-  import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
+  import { locale, t } from '../../../../renderer/lib/i18n.svelte';
+  import { peekEntry } from '../../../../renderer/lib/entry/peek.svelte';
+  import { openTab } from '../../../../renderer/lib/nav';
+  import { store } from '../../../../renderer/lib/store.svelte';
+  import { currentSystem } from '../../../../shared/adventures';
+  import { markdownToTelegram } from '../../../../shared/telegram';
+  import { isDnd } from '../../here';
+  import { allEntries, loadEntries } from '../../../../modules/compendium/ui/store.svelte';
+  import { journalFolder } from '../../../../modules/journal/ui/store.svelte';
+  import { openPage } from '../../../../modules/journal/ui/ui.svelte';
+  import { sendToTelegram, tgReady } from '../../../../modules/telegram/ui/tg.svelte';
   import { rarityOf } from '../treasure/generate';
   import { generateRelic, generateRelicPart, POWERS, RELIC_KINDS, type BaseItem, type Power, type Relic, type RelicKind, type RelicLang, type RelicPart } from './generate';
 

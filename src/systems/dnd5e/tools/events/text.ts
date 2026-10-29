@@ -1,7 +1,7 @@
 // Events as text: the event in its language (with [[links]]), the D&D check, and several events as Markdown.
-import { en as tavernEn } from '../tavern/content/en';
-import { ru as tavernRu } from '../tavern/content/ru';
-import { dict } from '../../../systems/dnd5e/stats';
+import { en as tavernEn } from '../../../../modules/tools/tavern/content/en';
+import { ru as tavernRu } from '../../../../modules/tools/tavern/content/ru';
+import { dict } from '../../stats';
 import { COMPLICATIONS, EVENTS, RUMOR_INTROS } from './events';
 import type { GeneratedEvent } from './generate';
 

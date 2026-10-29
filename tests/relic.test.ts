@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CREATORS, CURSES, DETAILS, HISTORIES, MATERIALS, OBJECTS, OWNERS, PROPERTIES, QUIRKS } from '../src/modules/tools/relic/content';
-import { generateRelic, generateRelicPart, pickBase, POWERS, RELIC_KINDS } from '../src/modules/tools/relic/generate';
+import { CREATORS, CURSES, DETAILS, HISTORIES, MATERIALS, OBJECTS, OWNERS, PROPERTIES, QUIRKS } from '../src/systems/dnd5e/tools/relic/content';
+import { generateRelic, generateRelicPart, pickBase, POWERS, RELIC_KINDS } from '../src/systems/dnd5e/tools/relic/generate';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 const items = [

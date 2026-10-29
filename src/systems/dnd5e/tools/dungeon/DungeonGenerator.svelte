@@ -3,20 +3,20 @@
      treasure generator. Each part can be rerolled; copy or to the journal. The dungeon is remembered by the window. -->
 <script lang="ts">
   import { Check, Copy, DoorOpen, NotebookPen, RefreshCw, Swords } from '@lucide/svelte';
-  import { toEncounter } from '../encounter';
+  import { toEncounter } from '../../../../modules/tools/encounter';
   import { onMount, type Snippet } from 'svelte';
-  import { locale, t } from '../../../renderer/lib/i18n.svelte';
-  import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
-  import { openTab } from '../../../renderer/lib/nav';
-  import { store } from '../../../renderer/lib/store.svelte';
-  import { currentSystem } from '../../../shared/adventures';
-  import { isDnd } from '../../../systems';
-  import { dict } from '../../../systems/dnd5e/stats';
-  import { allEntries, loadEntries } from '../../compendium/ui/store.svelte';
-  import { journalFolder } from '../../journal/ui/store.svelte';
-  import { openPage } from '../../journal/ui/ui.svelte';
-  import { en as npcEn } from '../npc/content/en';
-  import { ru as npcRu } from '../npc/content/ru';
+  import { locale, t } from '../../../../renderer/lib/i18n.svelte';
+  import { peekEntry } from '../../../../renderer/lib/entry/peek.svelte';
+  import { openTab } from '../../../../renderer/lib/nav';
+  import { store } from '../../../../renderer/lib/store.svelte';
+  import { currentSystem } from '../../../../shared/adventures';
+  import { isDnd } from '../../here';
+  import { dict } from '../../stats';
+  import { allEntries, loadEntries } from '../../../../modules/compendium/ui/store.svelte';
+  import { journalFolder } from '../../../../modules/journal/ui/store.svelte';
+  import { openPage } from '../../../../modules/journal/ui/ui.svelte';
+  import { en as npcEn } from '../../../../modules/tools/npc/content/en';
+  import { ru as npcRu } from '../../../../modules/tools/npc/content/ru';
   import { pickItems, rarityOf, TIERS, type Rarity, type Tier } from '../treasure/generate';
   import { coinsLine, valuableLines, type TreasureWords } from '../treasure/text';
   import { DUNGEON_TYPES, generateDungeon, generateDungeonPart, TRAP_DICE, type Dungeon, type DungeonPart, type DungeonType, type Room } from './generate';

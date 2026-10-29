@@ -1,9 +1,9 @@
 import * as fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ATMOSPHERES, BUILDERS, ENTRANCES, FATES, FEATURES, HOOKS, MONSTERS, PLACES, PUZZLES, ROOMS, TRAPS, TWISTS } from '../src/modules/tools/dungeon/content';
-import { DUNGEON_TYPES, generateDungeon, generateDungeonPart } from '../src/modules/tools/dungeon/generate';
-import { dungeonMarkdown, dungeonName } from '../src/modules/tools/dungeon/text';
-import { TIERS } from '../src/modules/tools/treasure/generate';
+import { ATMOSPHERES, BUILDERS, ENTRANCES, FATES, FEATURES, HOOKS, MONSTERS, PLACES, PUZZLES, ROOMS, TRAPS, TWISTS } from '../src/systems/dnd5e/tools/dungeon/content';
+import { DUNGEON_TYPES, generateDungeon, generateDungeonPart } from '../src/systems/dnd5e/tools/dungeon/generate';
+import { dungeonMarkdown, dungeonName } from '../src/systems/dnd5e/tools/dungeon/text';
+import { TIERS } from '../src/systems/dnd5e/tools/treasure/generate';
 import { dict } from '../src/systems/dnd5e/stats';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
