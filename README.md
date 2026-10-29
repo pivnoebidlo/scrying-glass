@@ -43,8 +43,9 @@ The app is not signed with Apple or Microsoft certificates, so the system warns 
     npm start          # run the built version
     npm test           # core tests
     npm run typecheck  # type check
-    npm run import-srd # rebuild the built-in bestiary from the SRD (needs the internet)
-    npm run import-compendium # rebuild the built-in SRD compendium (needs the internet)
+    npm run import-srd # rebuild the D&D SRD bestiary in content/dnd5e-srd/ (needs the internet)
+    npm run import-compendium # rebuild the D&D SRD compendium in content/dnd5e-srd/ (needs the internet)
+    npm run build-content # pack content/<id>/ into dist/content/<id>.sgcontent (downloadable content of systems)
     npm run build-fate # build the built-in Fate compendium from scripts/fate-core.<lang>.md
     npm run build-fitd # build the built-in Forged in the Dark compendium from scripts/fitd.<lang>.md
     npm run build-mausritter # built-in Mausritter creatures and compendium from scripts/mausritter-srd.<lang>.md
@@ -199,7 +200,12 @@ replaces the built-in entry everywhere — in the list, search, links; "Restore 
 and back); spell links from cards find the entry in any language. Spells can be filtered by level, class, school,
 casting time, concentration and ritual (the filter appears when the Spells type is selected); the list is grouped by
 level or alphabetical. Source: System Reference Document 5.1 and 5.2.1 © Wizards of the Coast, CC BY 4.0; Markdown of
-both versions and the translation — OmnisGM (rules.omnisgm.com), CC BY 4.0. More in `resources/compendium/README.md`.
+both versions and the translation — OmnisGM (rules.omnisgm.com), CC BY 4.0. More in `content/dnd5e-srd/README.md`.
+
+The D&D SRD (its creatures and compendium, about 1 MB) is not in the installer: it is **content of the system**,
+downloaded from the Community — on the first launch with D&D ticked, or by itself after an update from 0.65. Settings →
+Game systems shows what is installed (Remove) and what can be downloaded; «Content from a file…» installs an
+`.sgcontent` file; without it Cards and the compendium of a D&D adventure offer «Download».
 
 In **Fate Core** adventures the Fate rules are built in instead of the D&D SRD (the ladder, dice, outcomes, the four
 actions, aspects, invokes and compels, fate points, conflict, stress, consequences, contests, stunts, milestones, NPCs)
@@ -661,7 +667,7 @@ the campaign or the library.
 
 The built-in bestiary: System Reference Document 5.1 and 5.2.1 © Wizards of the Coast, CC BY 4.0; numbers —
 5e-bits/5e-database; the Russian translation — OmnisGM (rules.omnisgm.com), CC BY 4.0. More in
-`resources/srd/README.md`.
+`content/dnd5e-srd/README.md`.
 
 ## Music
 
@@ -859,8 +865,9 @@ side panel, tabs, the player screen preview on the right. Settings: ⌘, (Ctrl+,
   compendium types, importers (Long Story Short), its messages; the core asks them what they add (systems/plugin.ts,
   systems/ui.ts) and knows no system by name; a new one is a folder and a line in systems/plugins.ts and systems/ui.ts.
   src/systems/pack/ — systems described by a file (Fate Core, Mausritter, Forged in the Dark: samples/systems/)
-- resources/srd/: the built-in bestiary, built by scripts/import-srd.ts
-- resources/compendium/: the built-in compendium (`<system>.<lang>.json`)
+- resources/srd/, resources/compendium/: the bestiary and compendium that come with the app (Mausritter, Fate, Forged in the Dark)
+- content/<id>/: downloadable content of systems (D&D's SRD: content/dnd5e-srd/, built by scripts/import-srd.ts and
+  import-compendium.ts), packed by scripts/build-content.ts and published to the Community
 - src/modules/index.ts: the list of core modules, a new module is added here; the windows pick up control.ts and
   display.ts by themselves
 
@@ -869,7 +876,7 @@ For testing, the app can run with a separate data folder: `SG_USER_DATA=/path np
 ## License
 
 GNU GPL version 3 or later (`LICENSE`). The built-in bestiary and compendium are SRD 5.1 / 5.2 material under CC BY 4.0,
-credits in `resources/srd/README.md` and `resources/compendium/README.md`; the Fate compendium is based on the Fate
+credits in `content/dnd5e-srd/README.md`; the Fate compendium is based on the Fate
 Core SRD (Evil Hat Productions, CC BY 3.0); the Mausritter creatures and compendium — Mausritter SRD 2.3.1 (Losing
 Games and Isaac Williams, CC BY 4.0); Forged in the Dark — the Blades in the Dark SRD (One Seven Design, John Harper, CC BY 3.0). PDFs are shown with pdf.js (Mozilla, Apache 2.0). Note fonts (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
 Neucha, Comforter Brush, Cormorant Garamond, Old Standard TT, Kurale, Forum, Yeseva One, Ruslan Display, Ponomar,

@@ -82,7 +82,8 @@ Electron-приложение для мастера D&D: окно управле
   (setting) and `vault.lang` (resolved); section «General / Общие» in the settings window (`Settings.svelte`).
 - Migration plan: 1) foundation + shell (done); 2) modules, systems, main process (done); 3) built-in content in English (done: compendium
   SRD, random tables, Fate; the bestiary was bilingual already); 4) README in English + README.ru.md (done).
-- Built-in content by language: compendium books `resources/compendium/<system>.<lang>.json` (a window shows the
+- Built-in content by language: compendium books `resources/compendium/<system>.<lang>.json` and of installed content
+  (`content/<id>/compendium/`; a window shows the
   interface language, else English; `en` / `ru` — the title in the other language, found by search and [[links]]),
   built-in sounds — the file name is the id, the title is `builtinSoundTitle` (`shared/sounds.ts`, keys `sounds.builtin.*`).
 
@@ -92,8 +93,9 @@ Electron-приложение для мастера D&D: окно управле
     npm start          # запуск собранной версии
     npm run typecheck  # svelte-check: проверка типов .ts и .svelte
     npm test           # тесты ядра (vitest, tests/*.test.ts): кубы, порядок, инициатива, карты, хранилище
-    npm run import-srd # пересобрать встроенный бестиарий resources/srd/ из SRD (нужен интернет)
-    npm run import-compendium # пересобрать встроенный справочник resources/compendium/ (нужен интернет)
+    npm run import-srd # пересобрать бестиарий SRD D&D content/dnd5e-srd/bestiary/ (нужен интернет)
+    npm run import-compendium # пересобрать справочник SRD D&D content/dnd5e-srd/compendium/ (нужен интернет)
+    npm run build-content # упаковать content/<id>/ → dist/content/<id>.sgcontent (скачиваемое содержимое систем)
     npm run build-fate # встроенный справочник Fate: resources/compendium/fate-core.<lang>.json из scripts/fate-core.<lang>.md
     npm run build-fitd # встроенный справочник FitD: resources/compendium/fitd.<lang>.json из scripts/fitd.<lang>.md
     npm run dist       # установщик для своей системы в dist/ (настройки — electron-builder.yml)
@@ -162,8 +164,21 @@ Electron-приложение для мастера D&D: окно управле
   `origin` — перевод/вариант, портреты, заметки) + блок `stats`, который описывает система (`src/systems/<система>/`:
   типы, подписи на разных языках, статблок; реестры `systems/index.ts` и `systems/ui.ts`). Неизвестная система
   показывается как «поле — значение». Одна карточка — один язык, перевод — отдельная карточка с `origin`.
-- Где карточки: встроенный SRD `resources/srd/*.json` (только чтение, собирает `scripts/import-srd.ts` из
-  5e-bits/5e-database + русского перевода OmnisGM, оба под CC BY 4.0, авторство — `resources/srd/README.md`),
+- Содержимое систем (с 0.66; `shared/content.ts`, ядро — `main/content.ts`): `.sgcontent` — ZIP с `content.json`
+  (`ContentManifest`: id, family, release, cards, books, license), `bestiary/<система>.json`, `compendium/<система>.<lang>.json`;
+  ставится в `<библиотека>/content/<id>/` (`installContent`: во временную папку, проверка, только известные файлы),
+  встроенные карточки и книги читаются из `resources/` и отсюда (`builtinDirs`; при установке, удалении, смене библиотеки —
+  `contentChanged` в main/index.ts: `reloadBuiltin`, `resetBuiltinEntries`), список — `vault.content`. В «Сообществе» —
+  вид `content` (`system` — семейство; сервис 0.8.0, `features: ['content']`), IPC `repo:installContent` /
+  `repo:publishContent`, `content:installFile` / `content:remove`, пометки — `settings.repo.content`. Окно: раздел
+  каталога «Содержимое систем», строки в «Ролевых системах», подсказка `repo/ui/ContentHint.svelte` в «Карточках» и
+  справочнике (`SystemPlugin.content` — официальное содержимое семейства, D&D — `dnd5e-srd`), `autoContent` — один раз
+  скачать недостающее официальное содержимое включённых плагинов (обновление с 0.65, первый запуск; localStorage
+  `sg.content.auto`). SRD D&D — `content/dnd5e-srd/` в репозитории (не в установщике), упаковка — `npm run build-content`,
+  публикует официальный автор.
+- Где карточки: встроенные — `resources/srd/*.json` (Mausritter) и содержимое систем (SRD D&D: собирает
+  `scripts/import-srd.ts` из 5e-bits/5e-database + русского перевода OmnisGM, оба под CC BY 4.0, авторство —
+  `content/dnd5e-srd/README.md`; только чтение),
   библиотека `<userData>/library/cards/`, в хранилище — *.json в папках бестиария (роль `bestiary`: monsters / монстры /
   bestiary / …) любого приключения; картинки с диска копируются рядом с карточкой. Место своей карточки — `Place`
   (библиотека или папка бестиария), выбирается в окне `PlacePicker`. Карточки NPC лежат в папках characters рядом
@@ -668,8 +683,8 @@ Electron-приложение для мастера D&D: окно управле
   Вид записи — `renderer/lib/entry/EntryCard.svelte` (у игроков — `players`, шрифт уменьшается до помещения),
   разметка — `entry/markup.ts`. Игрокам — через раздатку: `handouts/toggleEntry` кладёт запись целиком в
   `handouts.entry` (запись может лежать в библиотеке), `updateEntry` — после правки, `move` — после переименования.
-  Встроенные записи — `resources/compendium/<система>.<lang>.json` (SRD 5.1 / 5.2.1: английский оригинал и
-  перевод OmnisGM, собирает `scripts/import-compendium.ts` из Markdown OmnisGM-Rules; статблоки существ внутри предметов остаются в тексте
+  Встроенные записи — `resources/compendium/<система>.<lang>.json` и книги содержимого систем (SRD 5.1 / 5.2.1 —
+  `content/dnd5e-srd/compendium/`: английский оригинал и перевод OmnisGM, собирает `scripts/import-compendium.ts` из Markdown OmnisGM-Rules; статблоки существ внутри предметов остаются в тексте
   предмета). Ядро отдаёт их целиком (`compendium:builtin`), пути «srd:<система>/<тип>/<название>». Сами файлы
   не меняются: «Править» сохраняет правку — запись библиотеки с полем `overrides: <система>/<тип>/<название>`
   (`OVERRIDES`, `overrideOf` в store), она заменяет встроенную в `allEntries` / `entryAt` и видна с её редакцией;

@@ -43,8 +43,9 @@
     npm start          # запуск собранной версии
     npm test           # тесты ядра
     npm run typecheck  # проверка типов
-    npm run import-srd # пересобрать встроенный бестиарий из SRD (нужен интернет)
-    npm run import-compendium # пересобрать встроенный справочник SRD (нужен интернет)
+    npm run import-srd # пересобрать бестиарий SRD D&D в content/dnd5e-srd/ (нужен интернет)
+    npm run import-compendium # пересобрать справочник SRD D&D в content/dnd5e-srd/ (нужен интернет)
+    npm run build-content # упаковать content/<id>/ в dist/content/<id>.sgcontent (скачиваемое содержимое систем)
     npm run build-fate # собрать встроенный справочник Fate из scripts/fate-core.<язык>.md
     npm run build-fitd # собрать встроенный справочник Forged in the Dark из scripts/fitd.<язык>.md
     npm run build-mausritter # встроенные существа и справочник Mausritter из scripts/mausritter-srd.<язык>.md
@@ -196,7 +197,12 @@ journal / журнал / заметки / notes — журнал мастера.
 Заклинания можно отфильтровать, как на dnd.su: уровень, класс, школа, время накладывания, концентрация, ритуал
 (фильтр появляется, когда выбран тип «Заклинания»); список — по уровням с заголовками или по алфавиту.
 Источник: System Reference Document 5.1 и 5.2.1 © Wizards of the Coast, CC BY 4.0; Markdown обеих версий и
-перевод — OmnisGM (rules.omnisgm.com), CC BY 4.0. Подробнее — `resources/compendium/README.md`.
+перевод — OmnisGM (rules.omnisgm.com), CC BY 4.0. Подробнее — `content/dnd5e-srd/README.md`.
+
+SRD D&D (его существа и справочник, около 1 МБ) не входит в установщик: это **содержимое системы**, оно скачивается
+из «Сообщества» — при первом запуске, если отмечен D&D, или само после обновления с 0.65. «Настройки» → «Ролевые
+системы» показывают, что установлено («Удалить») и что можно скачать; «Содержимое из файла…» ставит файл
+`.sgcontent`; без него «Карточки» и справочник приключения D&D предлагают «Скачать».
 
 В приключениях Fate Core вместо SRD D&D встроены правила Fate (лестница, кубы, исходы, четыре действия, аспекты,
 призывы и принуждения, жетоны судьбы, конфликт, стресс, последствия, состязания, трюки, вехи, NPC) и все 18 навыков
@@ -612,7 +618,7 @@ NPC — та же карточка, но лежит в папке characters р�
 в кампанию или в библиотеку.
 
 Встроенный бестиарий: System Reference Document 5.1 и 5.2.1 © Wizards of the Coast, CC BY 4.0; числа —
-5e-bits/5e-database; русский перевод — OmnisGM (rules.omnisgm.com), CC BY 4.0. Подробнее — `resources/srd/README.md`.
+5e-bits/5e-database; русский перевод — OmnisGM (rules.omnisgm.com), CC BY 4.0. Подробнее — `content/dnd5e-srd/README.md`.
 
 Музыка: любая папка с аудиофайлами (mp3, ogg, m4a, wav, flac) — плейлист. Треки сменяются с плавным переходом,
 есть перемешивание и повтор. Поверх музыки можно включить атмосферу: зацикленные звуки (дождь, таверна, бой)
@@ -803,7 +809,9 @@ TypeScript + Svelte 5 + Electron, сборка через electron-vite. Инт�
   инструменты, типы записей справочника, импорт (Long Story Short), свои тексты; ядро спрашивает у них, что они добавляют
   (systems/plugin.ts, systems/ui.ts), и ни одной системы по имени не знает; новая — папка и строка в systems/plugins.ts
   и systems/ui.ts. src/systems/pack/ — системы, описанные файлом (Fate Core, Mausritter, Forged in the Dark: samples/systems/)
-- resources/srd/: встроенный бестиарий, собирается скриптом scripts/import-srd.ts
+- resources/srd/, resources/compendium/: бестиарий и справочник, которые входят в приложение (Mausritter, Fate, Forged in the Dark)
+- content/<id>/: скачиваемое содержимое систем (SRD D&D — content/dnd5e-srd/, собирают scripts/import-srd.ts и
+  import-compendium.ts), упаковывает scripts/build-content.ts, публикуется в «Сообществе»
 - src/modules/index.ts: список модулей ядра, новый модуль вписывается сюда;
   control.ts и display.ts окна подхватывают сами
 
@@ -812,7 +820,7 @@ TypeScript + Svelte 5 + Electron, сборка через electron-vite. Инт�
 ## Лицензия
 
 GNU GPL версии 3 или новее (`LICENSE`). Встроенный бестиарий и справочник — материалы SRD 5.1 / 5.2 под CC BY 4.0,
-авторство — в `resources/srd/README.md` и `resources/compendium/README.md`; справочник Fate — по Fate Core SRD
+авторство — в `content/dnd5e-srd/README.md`; справочник Fate — по Fate Core SRD
 (Evil Hat Productions, CC BY 3.0); существа и справочник Mausritter — Mausritter SRD 2.3.1 (Losing Games и
 Isaac Williams, CC BY 4.0); Forged in the Dark — SRD Blades in the Dark (One Seven Design, John Harper, CC BY 3.0). PDF показывает pdf.js (Mozilla, Apache 2.0). Шрифты записок (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
 Neucha, Comforter Brush, Cormorant Garamond, Old Standard TT, Kurale, Forum, Yeseva One, Ruslan Display, Ponomar,
