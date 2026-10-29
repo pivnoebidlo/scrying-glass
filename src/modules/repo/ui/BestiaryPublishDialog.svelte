@@ -3,9 +3,9 @@
      title, description, language, author, cover; the author confirms the cards are theirs to share. Opens on
      repo.publishBestiary. -->
 <script lang="ts">
-  import { CloudUpload, ImagePlus, X } from '@lucide/svelte';
+  import { CloudUpload, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import FilePicker from '../../../renderer/lib/FilePicker.svelte';
+  import CoverField from './CoverField.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import { refKey, type CardRef, type CardSummary } from '../../../shared/cards';
   import { getLang } from '../../../shared/i18n';
@@ -33,7 +33,6 @@
   let author = $state('');
   let rights = $state(false);
   let cover = $state<string | null>(null);
-  let picking = $state(false);
 
   let opened = false;
   $effect(() => {
@@ -172,18 +171,7 @@
           <input type="text" bind:value={author} maxlength={LIMITS.authorName} placeholder={t('repo.anonymous')} />
         </label>
       </div>
-      <div class="field">
-        <span>{t('repo.dialog.cover')}</span>
-        <div class="cover-row">
-          {#if cover}
-            <img src={thumb(vaultUrl(cover), 240)} alt="" />
-            <button type="button" class="btn" onclick={() => (cover = null)}>{t('repo.dialog.noCover')}</button>
-          {:else}
-            <button type="button" class="btn" onclick={() => (picking = true)} disabled={!store.state.vault.tree}><ImagePlus size={14} /> {t('repo.dialog.pickCover')}</button>
-            {#if target}<span class="faint small">{t('repo.dialog.coverKeep')}</span>{/if}
-          {/if}
-        </div>
-      </div>
+      <CoverField bind:cover tree={store.state.vault.tree} keep={!!target} />
       <label class="check"><input type="checkbox" bind:checked={rights} /> {t('repo.bestiary.rights')}</label>
       <p class="faint small">{t('repo.bestiary.public')}</p>
       <div class="row">
@@ -191,10 +179,6 @@
         <button class="btn primary" type="submit" disabled={!ready}><CloudUpload size={14} /> {target ? t('repo.dialog.sendUpdate') : t('repo.dialog.send')}</button>
       </div>
     </form>
-    <!-- Inside the backdrop: the picker's own z-index is below this dialog's. -->
-    {#if picking && store.state.vault.tree}
-      <FilePicker tree={store.state.vault.tree} prefer="backgrounds" onpick={(p) => ((cover = p[0] ?? null), (picking = false))} onclose={() => (picking = false)} />
-    {/if}
   </div>
 {/if}
 
@@ -268,17 +252,6 @@
   }
   textarea {
     resize: vertical;
-  }
-  .cover-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .cover-row img {
-    width: 120px;
-    height: 90px;
-    border-radius: var(--radius-s);
-    object-fit: cover;
   }
   .check {
     display: flex;

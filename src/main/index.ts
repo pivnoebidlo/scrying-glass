@@ -49,7 +49,7 @@ import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnounc
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
-import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, loadKeyWords, recoveryWords, wordsAuthor, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setContentMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
+import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, coverFromBytes, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, loadKeyWords, recoveryWords, wordsAuthor, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setContentMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
 import { ID_RE, type BestiaryMark, type RepoEntry, type RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
@@ -1291,6 +1291,30 @@ ipcMain.handle('repo:adminRemove', (_event, { source, author, id, block }: { sou
 ipcMain.handle('repo:adminBlocked', (_event, source: string) => adminBlocked(source));
 ipcMain.handle('repo:adminUnblock', (_event, { source, author, id }: { source: string; author: string; id: string }) => adminUnblock(source, author, id));
 ipcMain.handle('repo:adminDismiss', (_event, { source, author, id }: { source: string; author: string; id: string }) => adminDismiss(source, author, id));
+// Covers from outside the vault — a file of the disk, a picture of the clipboard: ready JPEGs till the publish, by the
+// name the window gets («outside:…»); a cover of the vault is its path.
+const outsideCovers = new Map<string, Buffer>();
+function keepCover(jpg: Buffer | null) {
+  if (!jpg) return null;
+  const name = `outside:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  outsideCovers.set(name, jpg);
+  return { cover: name, preview: `data:image/jpeg;base64,${jpg.toString('base64')}` };
+}
+function coverOf(cover: string | undefined, absolute = false): Buffer | null {
+  if (!cover) return null;
+  if (cover.startsWith('outside:')) return outsideCovers.get(cover) ?? null;
+  return coverFrom(absolute ? cover : (resolveInVault(cover) ?? ''));
+}
+ipcMain.handle('repo:coverFile', async () => {
+  const win = getControlWindow();
+  if (!win) return null;
+  const pick = await dialog.showOpenDialog(win, { title: t('core.coverPick'), filters: [{ name: t('core.images'), extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }], properties: ['openFile'] });
+  return pick.canceled || !pick.filePaths[0] ? null : keepCover(coverFrom(pick.filePaths[0]));
+});
+ipcMain.handle('repo:coverPaste', async () => {
+  const img = await clipboardImage();
+  return img ? keepCover(coverFromBytes(img.data)) : null;
+});
 ipcMain.handle('repo:cover', (_event, { source, author, id, version }: { source: string; author: string; id: string; version: number }) => repoCover(source, author, id, version));
 // What an adventure weighs: all of it, its music, its PDFs (both optional in a publish).
 ipcMain.handle('repo:sizes', (_event, adventure: string) => {
@@ -1313,7 +1337,7 @@ ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: st
   const known = state.repo.published[p.adventure];
   // No cover picked — the adventure's own (cover.jpg in its folder), if it has one.
   const own = path.join(resolveInVault(p.adventure) ?? '', COVER_FILE);
-  const jpeg = p.cover ? coverFrom(resolveInVault(p.cover) ?? '') : fs.existsSync(own) ? coverFrom(own) : null;
+  const jpeg = p.cover ? coverOf(p.cover) : fs.existsSync(own) ? coverFrom(own) : null;
   const tmp = path.join(app.getPath('userData'), 'repo', `publish-${randomUUID().slice(0, 8)}.${PACK_EXT}`);
   fs.mkdirSync(path.dirname(tmp), { recursive: true });
   try {
@@ -1370,7 +1394,7 @@ ipcMain.handle('repo:publishSystem', async (_event, p: { source: string; pack: s
       music: false,
       app: app.getVersion(),
       kind: 'system',
-    }, p.cover ? coverFrom(resolveInVault(p.cover) ?? '') : null);
+    }, coverOf(p.cover));
     setSystemMark('published', pack.id, { source: p.source, id: entry.id, version: entry.version });
     return entry;
   } finally {
@@ -1404,7 +1428,7 @@ ipcMain.handle('repo:publishBestiary', async (_event, p: { source: string; refs:
       music: false,
       app: app.getVersion(),
       kind: 'bestiary',
-    }, p.cover ? coverFrom(resolveInVault(p.cover) ?? '') : null);
+    }, coverOf(p.cover));
     setBestiaryMark('published', entry.id, { source: p.source, id: entry.id, version: entry.version, title: entry.title, cards: refs as BestiaryMark['cards'] });
     return entry;
   } finally {
@@ -1479,7 +1503,7 @@ ipcMain.handle('repo:publishContent', async (_event, p: { source: string; file: 
     music: false,
     app: app.getVersion(),
     kind: 'content',
-  }, p.cover ? coverFrom(p.cover) : null);
+  }, coverOf(p.cover, true));
   setContentMark('published', m.id, { source: p.source, id: entry.id, version: entry.version });
   return entry;
 });

@@ -3,7 +3,7 @@
      to share. Opens on repo.publish = <adventure>. -->
 <script lang="ts">
   import { isSupplement } from '../../../shared/adventures';
-  import { CloudUpload, ImagePlus, X } from '@lucide/svelte';
+  import { CloudUpload, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
   import { LANGS } from '../../../shared/i18n/core';
@@ -11,7 +11,7 @@
   import { thumb, vaultUrl } from '../../../shared/vault';
   import { store } from '../../../renderer/lib/store.svelte';
   import { openSettings } from '../../../renderer/lib/nav';
-  import FilePicker from '../../../renderer/lib/FilePicker.svelte';
+  import CoverField from './CoverField.svelte';
   import { loadCatalogs, loadInfo, mb, publish, repo, sourceName, sourcesOn } from './repo.svelte';
   import { sourceOf, type RepoEntry } from '../../../shared/repo';
 
@@ -45,7 +45,6 @@
   let cover = $state<string | null>(null);
   let author = $state('');
   let rights = $state(false);
-  let picking = $state(false);
   let sizes = $state<{ total: number; music: number; pdf: number; images: number; files: number } | null>(null);
 
   let shownFor: string | null = null;
@@ -147,18 +146,7 @@
         </label>
       </div>
 
-      <div class="field">
-        <span>{t('repo.dialog.cover')}</span>
-        <div class="cover-row">
-          {#if cover}
-            <img src={thumb(vaultUrl(cover), 240)} alt="" />
-            <button type="button" class="btn" onclick={() => (cover = null)}>{t('repo.dialog.noCover')}</button>
-          {:else}
-            <button type="button" class="btn" onclick={() => (picking = true)} disabled={!app.vault.tree}><ImagePlus size={14} /> {t('repo.dialog.pickCover')}</button>
-            {#if entry?.cover}<span class="faint small">{t('repo.dialog.coverKeep')}</span>{/if}
-          {/if}
-        </div>
-      </div>
+      <CoverField bind:cover tree={app.vault.tree} keep={!!entry?.cover} />
 
       {#if sizes}
         {#if sizes.music}
@@ -189,10 +177,6 @@
         <button class="btn primary" type="submit" disabled={!ready}><CloudUpload size={14} /> {entry ? t('repo.dialog.sendUpdate') : t('repo.dialog.send')}</button>
       </div>
     </form>
-    <!-- Inside the backdrop: the picker's own z-index is below this dialog's. -->
-    {#if picking && app.vault.tree}
-      <FilePicker tree={app.vault.tree} prefer="backgrounds" onpick={(p) => ((cover = p[0] ?? null), (picking = false))} onclose={() => (picking = false)} />
-    {/if}
   </div>
 {/if}
 
@@ -243,17 +227,6 @@
   .two {
     display: flex;
     gap: 10px;
-  }
-  .cover-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .cover-row img {
-    width: 120px;
-    height: 90px;
-    border-radius: var(--radius-s);
-    object-fit: cover;
   }
   .check {
     display: flex;

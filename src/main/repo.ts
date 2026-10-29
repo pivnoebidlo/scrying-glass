@@ -315,8 +315,12 @@ export async function cover(source: string, author: string, id: string, version:
 }
 
 // A picture of the vault as a cover: at most 640 px wide, JPEG under the service's limit.
-export function coverFrom(abs: string): Buffer | null {
-  let img = nativeImage.createFromPath(abs);
+export const coverFrom = (abs: string): Buffer | null => coverOfImage(nativeImage.createFromPath(abs));
+// The same from bytes (a picture of the clipboard).
+export const coverFromBytes = (data: Buffer): Buffer | null => coverOfImage(nativeImage.createFromBuffer(data));
+
+function coverOfImage(image: Electron.NativeImage): Buffer | null {
+  let img = image;
   if (img.isEmpty()) return null;
   if (img.getSize().width > 640) img = img.resize({ width: 640, quality: 'best' });
   for (const q of [85, 75, 60, 45]) {

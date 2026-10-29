@@ -233,6 +233,9 @@ export interface Api {
   repoAdminUnblock(source: string, author: string, id: string): Promise<void>;
   // A cover as a data: URL (null — none or not reachable).
   repoCover(source: string, author: string, id: string, version: number): Promise<string | null>;
+  // A cover from a file of the disk or the clipboard: its name for the publish («outside:…») and a picture to show.
+  repoCoverFile(): Promise<{ cover: string; preview: string } | null>;
+  repoCoverPaste(): Promise<{ cover: string; preview: string } | null>;
   // What an adventure weighs: all of it, its music, its PDFs (bytes).
   repoSizes(adventure: string): Promise<{ total: number; music: number; pdf: number; images: number; files: number } | null>;
   // Publish or update (the same entry if this vault published it before); cover — a picture of the vault.
