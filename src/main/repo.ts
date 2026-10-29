@@ -281,7 +281,7 @@ export const adminBlocked = (source: string) => adminCall<BlockedEntry[]>(source
 export const adminUnblock = (source: string, author: string, id: string) => adminCall(source, '/api/v1/admin/unblock', adminToken(source), { author, id });
 
 export async function catalog(source: string): Promise<RepoCatalog> {
-  const res = await request(`${base(source)}/api/v1/catalog?kinds=adventure,system,bestiary,supplement`);
+  const res = await request(`${base(source)}/api/v1/catalog?kinds=adventure,system,bestiary,supplement,content`);
   if (!res.ok) throw await errorOf(res);
   return (await res.json()) as RepoCatalog;
 }

@@ -26,8 +26,9 @@ export interface RepoEntry {
   // Role-playing system (systems/index.ts) and language of the adventure; of a system pack — its own id.
   system: string;
   // What it is: a system pack (shared/syspack.ts), a bestiary (cards, the file of «export cards»), a supplement (an
-  // .sgpack of creatures and compendium entries to use in adventures); none — an adventure (.sgpack). `system` of a
-  // bestiary — the system of its cards.
+  // .sgpack of creatures and compendium entries to use in adventures), a system's content (.sgcontent: built-in
+  // creatures and compendium books, shared/content.ts); none — an adventure (.sgpack). `system` of a bestiary — the
+  // system of its cards; of content — the family it is for.
   kind?: EntryKind;
   // What a supplement is about: bestiary, spells, items, rules, collection (shared/adventures.ts SUPPLEMENT_KINDS).
   subkind?: string;
@@ -47,8 +48,8 @@ export interface RepoEntry {
 
 export interface RepoCatalog {
   api: number;
-  // What the service knows beyond adventures: 'systems', 'bestiaries', 'supplements'. The catalog lists other kinds
-  // only when asked: ?kinds=adventure,system,bestiary,supplement (`all` — adventures and systems, as 0.59 asks: an older
+  // What the service knows beyond adventures: 'systems', 'bestiaries', 'supplements', 'content'. The catalog lists
+  // other kinds only when asked: ?kinds=adventure,system,bestiary,supplement,content (`all` — adventures and systems, as 0.59 asks: an older
   // app would take an unknown kind for an adventure).
   features?: string[];
   // The largest pack the service takes, bytes.
@@ -74,8 +75,8 @@ export interface PublishRequest {
   subkind?: string;
 }
 
-export type EntryKind = 'system' | 'bestiary' | 'supplement';
-export const ENTRY_KINDS: EntryKind[] = ['system', 'bestiary', 'supplement'];
+export type EntryKind = 'system' | 'bestiary' | 'supplement' | 'content';
+export const ENTRY_KINDS: EntryKind[] = ['system', 'bestiary', 'supplement', 'content'];
 const SUBKIND_RE = /^[a-z]{1,20}$/;
 
 export interface PublishTicket {
