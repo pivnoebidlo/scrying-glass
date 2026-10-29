@@ -7,7 +7,7 @@
   import { FAMILIES, systemOf, systems } from '../../../systems';
   import { systemFor } from '../../../shared/adventures';
   import { Blocks, Download, FileDown, Globe, Package, Trash2 } from '@lucide/svelte';
-  import { contentIdOf, installContent, loadCatalogs, officialContent, openRepo, removeContent, repo } from '../../repo/ui/repo.svelte';
+  import { autoContent, contentIdOf, installContent, loadCatalogs, officialContent, openRepo, removeContent, repo } from '../../repo/ui/repo.svelte';
   import { onMount } from 'svelte';
   import { closeSettings } from '../../../renderer/lib/nav';
   import { openBuilder } from '../../tools/syspack/store.svelte';
@@ -45,9 +45,11 @@
     if (m) repo.info = await window.api.repoInfo();
   }
 
-  function toggle(id: string, on: boolean) {
+  async function toggle(id: string, on: boolean) {
     const next = on ? [...off].filter((x) => x !== id) : [...off, id];
-    dispatch('vault', 'setSystemsOff', { list: next });
+    await dispatch('vault', 'setSystemsOff', { list: next });
+    // A built-in system turned on gets its data now (Pathfinder 2e), not on the next launch.
+    if (on) void autoContent().catch(() => undefined);
   }
 </script>
 
