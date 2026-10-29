@@ -2,11 +2,10 @@
      Карточка привязана к портрету, если эта картинка — её основной портрет. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { FilePlus, ScrollText, Swords, Wand2 } from '@lucide/svelte';
-  import { isDnd } from '../../../systems';
+  import { FilePlus, ScrollText, Swords } from '@lucide/svelte';
+  import { systemUi } from '../../../systems/ui';
   import { currentSystem } from '../../../shared/adventures';
   import { store } from '../../../renderer/lib/store.svelte';
-  import { reshapeFor } from '../../../systems/dnd5e/tools/reshape/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import { SIDE_TITLES } from '../../../shared/cards';
@@ -15,11 +14,11 @@
   let { path, name }: { path: string; name: string } = $props();
 
   const card = $derived(bestiary.cardFor(path));
-  // In D&D a card can start from another stat block: the button asks how; elsewhere it makes a blank one.
-  const dnd = $derived(isDnd(currentSystem(store.state.adventures)));
+  // The system may start a card otherwise (D&D: from another stat block): the button asks how; else — a blank one.
+  const ways = $derived(systemUi(currentSystem(store.state.adventures))?.newCard ?? []);
   let menu = $state(false);
   function create() {
-    if (dnd) menu = !menu;
+    if (ways.length) menu = !menu;
     else bestiary.createFor(path, name);
   }
 
@@ -45,8 +44,10 @@
       <div class="backdrop" role="presentation" onclick={() => (menu = false)}></div>
       <div class="menu">
         <button onclick={() => ((menu = false), bestiary.createFor(path, name))}><FilePlus size={13} /> {t('portraits.blankCard')}</button>
-        <!-- A stat block made from another one (Tools → Reshape a stat block). -->
-        <button title={t('portraits.fromStatblock')} onclick={() => ((menu = false), reshapeFor(path, name))}><Wand2 size={13} /> {t('portraits.fromStatblockShort')}</button>
+        {#each ways as w (w.label)}
+          {@const Icon = w.icon}
+          <button title={w.title} onclick={() => ((menu = false), w.run({ path, name }))}><Icon size={13} /> {w.short}</button>
+        {/each}
       </div>
     {/if}
   {/if}

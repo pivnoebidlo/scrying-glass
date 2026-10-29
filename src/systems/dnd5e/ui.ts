@@ -1,9 +1,12 @@
 // D&D 5e in the control window: the stat block and the character sheet, their editors, its tools.
 import type { Component } from 'svelte';
-import { Calculator as CalculatorIcon, Footprints, Gauge, Wand2, Zap } from '@lucide/svelte';
+import { Calculator as CalculatorIcon, Footprints, Gauge, RefreshCw, Wand2, Zap } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import type { ToolDef } from '../../modules/tools/ui/registry.svelte';
-import type { SystemUi, StatsEditor, StatsView } from '../ui';
+import type { PaperView, SystemUi, StatsEditor, StatsView } from '../ui';
+import { bestiary } from '../../modules/bestiary/ui/cards.svelte';
+import { reshapeFor, reshapeFrom, reshapeNew } from './tools/reshape/store.svelte';
+import PaperSheet from './PaperSheet.svelte';
 import Calculator from './tools/difficulty/Calculator.svelte';
 import PointBuy from './tools/pointbuy/PointBuy.svelte';
 import Reshape from './tools/reshape/Reshape.svelte';
@@ -37,5 +40,31 @@ export const dnd5eUi: SystemUi = {
     tool('wildMagic', Zap, 'tools.side.wildMagic', WildMagic),
   ],
   // Fantasy generators with D&D's rules and SRD inside.
+  cardActions: (c) => [
+    // A player's character imported from Long Story Short: read a newer export.
+    ...(c.kind === 'character' && c.ref.scope !== 'srd'
+      ? [{ icon: RefreshCw, get label() { return t('best.fromLss'); }, get title() { return t('best.lssHint'); }, run: () => bestiary.updateFromLss(c.ref) }]
+      : []),
+    ...(c.kind !== 'character'
+      ? [{ icon: Wand2, get label() { return t('reshape.fromCard'); }, get title() { return t('reshape.fromCardHint'); }, run: () => reshapeFrom(c.ref) }]
+      : []),
+  ],
+  // A stat block made from another one (Tools → Reshape a stat block).
+  newCard: [
+    {
+      icon: Wand2,
+      get label() {
+        return t('best.fromStatblock');
+      },
+      get short() {
+        return t('portraits.fromStatblockShort');
+      },
+      get title() {
+        return t('best.fromStatblockHint');
+      },
+      run: (p) => (p ? reshapeFor(p.path, p.name) : reshapeNew()),
+    },
+  ],
+  paper: (card) => (isCharacter(card.stats) ? (PaperSheet as PaperView) : undefined),
   claims: ['names', 'npc', 'tavern', 'settlement', 'shop', 'relic', 'dungeon', 'weather', 'events', 'treasure'],
 };

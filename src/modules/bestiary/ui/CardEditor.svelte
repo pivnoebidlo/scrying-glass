@@ -9,9 +9,8 @@
   import type { AppState } from '../../../shared/types';
   import { LANGUAGES, SIDE_TITLES, cardImageUrl, defaultSide, imageScope, langName, type CardKind, type CardSide } from '../../../shared/cards';
   import { folderLabel } from './places';
-  import { familyOf, isDnd, systemOf, systems } from '../../../systems';
+  import { familyOf, systemOf, systems } from '../../../systems';
   import { statsEditor, statsView } from '../../../systems/ui';
-  import { isCharacter } from '../../../systems/dnd5e/character';
   import { bestiary, type Draft } from './cards.svelte';
   import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
   import { markdown } from '../../../renderer/lib/markdown';
@@ -43,12 +42,12 @@
     card.system = id;
   }
 
-  // У персонажа игрока — лист, у монстра и NPC — статблок: при смене вида между ними характеристики начинаются
-  // заново (с подтверждением). Сторона в бою — по новому виду, если её не меняли.
+  // Stats of another shape for the new kind (D&D: a character's sheet, a stat block for the rest) start anew (with
+  // a question); a system of one shape keeps them. Сторона в бою — по новому виду, если её не меняли.
   function changeKind(select: HTMLSelectElement, kind: CardKind) {
     const sheet = kind === 'character';
-    // У Fate один вид для всех — характеристики остаются.
-    if (isDnd(card.system) && sheet !== isCharacter(card.stats)) {
+    const shape = systemOf(card.system).shape;
+    if (shape && shape.ofKind(kind) !== shape.ofStats(card.stats)) {
       if (!confirm(sheet ? t('best.toSheet') : t('best.toBlock'))) {
         select.value = card.kind;
         return;

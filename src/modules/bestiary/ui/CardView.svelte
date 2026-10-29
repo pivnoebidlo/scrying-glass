@@ -4,32 +4,34 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
-  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, MoreHorizontal, Pencil, RefreshCw, RotateCcw, Send, Star, Swords, Trash2, Upload, Wand2, X } from '@lucide/svelte';
+  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, MoreHorizontal, Pencil, RotateCcw, Send, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
   import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
-  import { isCharacter } from '../../../systems/dnd5e/character';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
-  import { reshapeFrom } from '../../../systems/dnd5e/tools/reshape/store.svelte';
   import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
   import type { AppState } from '../../../shared/types';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { LANGUAGES, SIDE_TITLES, cardAsset, cardImageUrl, langName, sameRef, type Card, type CardRef, type CardSide, type CardSummary } from '../../../shared/cards';
-  import { isDnd, systemOf } from '../../../systems';
-  import { statsView } from '../../../systems/ui';
+  import { systemOf } from '../../../systems';
+  import { statsView, systemUi } from '../../../systems/ui';
   import { markdown } from '../../../renderer/lib/markdown';
   import { viewImage } from '../../../renderer/lib/view-image.svelte';
   import { bestiary } from './cards.svelte';
   import { addToInitiative } from './combat';
   import { folderLabel } from './places';
 
-  // Чем закончилось «Обновить из LSS…» (пропадает через несколько секунд).
   const SIDES: CardSide[] = ['enemy', 'ally', 'neutral', 'party'];
-  let lssStatus = $state('');
+  // What a system's button said («Update from LSS…»: what changed); goes away in a few seconds.
+  let actionStatus = $state('');
   $effect(() => {
-    if (!lssStatus) return;
-    const t = setTimeout(() => (lssStatus = ''), 5000);
+    if (!actionStatus) return;
+    const t = setTimeout(() => (actionStatus = ''), 5000);
     return () => clearTimeout(t);
   });
+  async function runAction(run: () => unknown) {
+    const said = await run();
+    if (typeof said === 'string') actionStatus = said;
+  }
 
   let {
     app,
@@ -71,6 +73,9 @@
   const summary = $derived(bestiary.all.find((c) => sameRef(c.ref, ref)));
   const versions = $derived(ref ? bestiary.versionsOf(ref) : []);
   const Stats = $derived(card ? statsView(card.system, card.stats) : null);
+  // The buttons the card's system adds, and its paper sheet for Telegram.
+  const actions = $derived(summary ? (systemUi(summary.system)?.cardActions?.(summary, card) ?? []) : []);
+  const paper = $derived(summary && card ? systemUi(summary.system)?.paper?.(card) : undefined);
   // «D&D 5e (2024) · Встроенный SRD · SRD 5.2.1 (Wizards of the Coast)»
   const info = $derived.by(() => {
     if (!card || !summary) return '';
@@ -152,20 +157,13 @@
             <button class="btn" title={t('best.moveHint')} onclick={() => bestiary.move(cref)}
               ><ArrowRightLeft size={13} /> {t('best.move')}</button
             >
-            {#if summary.kind === 'character' && isDnd(summary.system)}
-              <button
-                class="btn"
-                title={t('best.lssHint')}
-                onclick={async () => (lssStatus = (await bestiary.updateFromLss(cref)) ?? '')}
-                ><RefreshCw size={13} /> {t('best.fromLss')}</button
-              >
-            {/if}
             <button class="icon-btn" title={t('best.delete')} onclick={() => bestiary.remove(cref)}><Trash2 size={14} /></button>
           {/if}
-          {#if isDnd(summary.system) && summary.kind !== 'character'}
-            <button class="btn" title={t('reshape.fromCardHint')} onclick={() => reshapeFrom(cref)}><Wand2 size={13} /> {t('reshape.fromCard')}</button>
-          {/if}
-          {#if tgReady() && isDnd(summary.system) && isCharacter(card?.stats)}
+          {#each actions as a (a.label)}
+            {@const Icon = a.icon}
+            <button class="btn" title={a.title} onclick={() => runAction(a.run)}><Icon size={13} /> {a.label}</button>
+          {/each}
+          {#if tgReady() && paper}
             <button class="icon-btn" title={t('best.sendSheet')} onclick={() => sendToTelegram({ kind: 'card', ref: cref, title: summary.name })}><Send size={14} /></button>
           {/if}
           <button
@@ -174,7 +172,7 @@
             onclick={() => window.api.exportCards({ refs: versions.map((v) => v.ref), name: summary.name })}
           ><Upload size={14} /></button>
         </div>
-        {#if lssStatus}<div class="lss-status faint">{lssStatus}</div>{/if}
+        {#if actionStatus}<div class="lss-status faint">{actionStatus}</div>{/if}
         <div class="actions">
           <div class="langs">
             {#each versions as v (v.ref.scope + v.ref.id)}
@@ -206,8 +204,8 @@
           <div class="spacer"></div>
           <!-- Персонаж игрока в бою один и с хитами по листу. -->
           {#if summary.kind !== 'character'}
-            {#if isDnd(summary.system)}<label class="hp" title={summary.combat.hpFormula ? t('best.rollHp', { formula: summary.combat.hpFormula }) : t('best.noHpFormula')}>
-              <input type="checkbox" bind:checked={rollHp} disabled={!summary.combat.hpFormula} /> {t('best.randomHp')}
+            {#if summary.combat.hpFormula}<label class="hp" title={t('best.rollHp', { formula: summary.combat.hpFormula })}>
+              <input type="checkbox" bind:checked={rollHp} /> {t('best.randomHp')}
             </label>{/if}
             <input class="count" type="number" min="1" max="20" bind:value={count} title={t('best.howMany')} />
           {/if}

@@ -12,9 +12,8 @@
   import type { Note } from '../../../shared/notes';
   import { isSketchPath, type Sketch } from '../../../shared/sketch';
   import SketchView from '../../../renderer/lib/sketch/SketchView.svelte';
-  import PaperSheet from '../../../systems/dnd5e/PaperSheet.svelte';
+  import { systemUi, type PaperView } from '../../../systems/ui';
   import type { Card, CardRef } from '../../../shared/cards';
-  import type { Dnd5eCharacter } from '../../../systems/dnd5e/character';
   import { enabledChats, lastSelected, loadTg, rememberSelected, sending, tg, tgReady } from './tg.svelte';
 
   // Standard module props; nothing here uses them.
@@ -96,16 +95,17 @@
     return r;
   }
 
-  // A character: the paper sheet drawn over the window, made smaller to fit it (CSS zoom), captured.
-  let sheetCard = $state.raw<{ card: Card<Dnd5eCharacter>; ref: CardRef } | null>(null);
+  // A character: the paper sheet of its system drawn over the window, made smaller to fit it (CSS zoom), captured.
+  let sheetCard = $state.raw<{ card: Card; ref: CardRef; Paper: PaperView } | null>(null);
   let sheetBox = $state<HTMLElement | null>(null);
   async function sendCard(ref: CardRef, title: string, cap?: string) {
     ref = $state.snapshot(ref);
-    const card = (await window.api.getCard(ref)) as Card<Dnd5eCharacter> | null;
-    if (!card) return { sent: 0, errors: [title] };
+    const card = await window.api.getCard(ref);
+    const Paper = card && systemUi(card.system)?.paper?.(card);
+    if (!card || !Paper) return { sent: 0, errors: [title] };
     const j = sending.job;
     sending.job = null;
-    sheetCard = { card, ref };
+    sheetCard = { card, ref, Paper };
     await tick();
     await document.fonts.ready;
     await Promise.all([...(sheetBox?.querySelectorAll('img') ?? [])].map((img) => img.decode().catch(() => {})));
@@ -132,7 +132,7 @@
   <div class="shoot"><div class="page" bind:this={page}>{#if shooting.scryingGlass === 'sketch'}<SketchView sketch={shooting} />{:else}<NotePaper note={shooting} />{/if}</div></div>
 {/if}
 {#if sheetCard}
-  <div class="shoot top"><div bind:this={sheetBox}><PaperSheet card={sheetCard.card} scope={sheetCard.ref.scope} /></div></div>
+  <div class="shoot top"><div bind:this={sheetBox}><sheetCard.Paper card={sheetCard.card} scope={sheetCard.ref.scope} /></div></div>
 {/if}
 
 {#if job}

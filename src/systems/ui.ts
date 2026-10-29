@@ -2,7 +2,7 @@
 // A plugin's part for the windows — `SystemUi` (the shared part is systems/plugin.ts); a new plugin — one line in
 // UIS. A pack system has its generic sheet, editor and tracker cells; an unknown one — «field — value» and JSON.
 import type { Component } from 'svelte';
-import type { Card } from '../shared/cards';
+import type { Card, CardRef, CardSummary } from '../shared/cards';
 import GenericStats from './GenericStats.svelte';
 import GenericEditor from './GenericEditor.svelte';
 import HpCells from './HpCells.svelte';
@@ -23,6 +23,25 @@ export type StatsEditor = Component<{ stats: any; system: string; lang?: string;
 // Ячейки строки участника в трекере инициативы (хиты и КД, стресс и последствия).
 export type TrackerCells = Component<{ c?: Combatant; head?: boolean }>;
 
+// A button of a card (CardView): run may give a line of status to show under the buttons.
+export interface CardAction {
+  icon: Component<{ size?: number }>;
+  readonly label: string;
+  readonly title?: string;
+  run(): unknown;
+}
+// A way to start a card besides a blank one (the «+» of Cards, «Create card» under a portrait).
+export interface NewCard {
+  icon: Component<{ size?: number }>;
+  readonly label: string;
+  // The label under a portrait.
+  readonly short: string;
+  readonly title: string;
+  run(portrait?: { path: string; name: string }): unknown;
+}
+// The card as a sheet of paper (a picture to send to Telegram).
+export type PaperView = Component<{ card: Card<any>; scope: CardRef['scope'] }>;
+
 export interface SystemUi {
   family: string;
   // How to show and edit a card's stats (by their shape: D&D has a stat block and a character sheet).
@@ -33,11 +52,14 @@ export interface SystemUi {
   // Its tools in Tools (with `families` and `page`) and the core's generators it shows as its own.
   tools?: ToolDef[];
   claims?: string[];
+  cardActions?(summary: CardSummary, card: Card | null): CardAction[];
+  newCard?: NewCard[];
+  paper?(card: Card): PaperView | undefined;
 }
 
 export const systemUis: SystemUi[] = [dnd5eUi];
 
-export const systemUi = (system: string) => systemUis.find((u) => u.family === familyOf(system));
+export const systemUi = (system: string): SystemUi | undefined => systemUis.find((u) => u.family === familyOf(system));
 
 export const statsView = (system: string, stats?: unknown): StatsView =>
   packOf(system) ? (PackSheet as StatsView) : (systemUi(system)?.view?.(system, stats) ?? GenericStats);

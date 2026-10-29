@@ -2,11 +2,11 @@
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
-  import { CloudUpload, Download, FilePlus, Globe, Plus, Search, Upload, Wand2 } from '@lucide/svelte';
+  import { CloudUpload, Download, FilePlus, Globe, Plus, Search, Upload } from '@lucide/svelte';
   import { openRepo, repo } from '../../repo/ui/repo.svelte';
-  import { reshapeNew } from '../../../systems/dnd5e/tools/reshape/store.svelte';
   import { langName, sameRef } from '../../../shared/cards';
-  import { familyOf, isDnd, isEnabled, systems } from '../../../systems';
+  import { familyOf, isEnabled, systemOf, systems } from '../../../systems';
+  import { systemUi } from '../../../systems/ui';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dirname, roleFolders } from '../../../shared/vault';
   import { adventureHidden, adventureOf, currentSystem, inCurrentFamily, placeTitle, visibleIn } from '../../../shared/adventures';
@@ -40,6 +40,10 @@
   );
 
   const f = bestiary.filters;
+  // Other ways to start a card that the adventure's system has (D&D: from another stat block).
+  const newCard = $derived(systemUi(currentSystem(app.adventures))?.newCard ?? []);
+  // Built-in cards of the adventure's system (the SRD): a filter for them.
+  const srdHere = $derived(bestiary.all.some((c) => c.ref.scope === 'srd' && inCurrentFamily(app.adventures, c.system)));
   // Длинный список рисуем частями: сотни строк сразу заметно тормозят при наборе в поиске.
   const PAGE = 200;
   let limit = $state(PAGE);
@@ -92,10 +96,10 @@
         <div class="menu-backdrop" onclick={() => (menu = false)}></div>
         <div class="menu">
           <button onclick={create}><FilePlus size={14} /> {t('best.newCardMenu')}</button>
-          <!-- A stat block made from another one (Tools → Reshape a stat block) — in D&D adventures. -->
-          {#if isDnd(currentSystem(app.adventures))}
-            <button title={t('best.fromStatblockHint')} onclick={() => ((menu = false), reshapeNew())}><Wand2 size={14} /> {t('best.fromStatblock')}</button>
-          {/if}
+          {#each newCard as n (n.label)}
+            {@const Icon = n.icon}
+            <button title={n.title} onclick={() => ((menu = false), n.run())}><Icon size={14} /> {n.label}</button>
+          {/each}
           <div class="sep"></div>
           <button onclick={importCards}><Download size={14} /> {t('best.importFile')}</button>
           <button onclick={exportCards}><Upload size={14} /> {t('best.exportFile')}</button>
@@ -132,7 +136,7 @@
   </div>
   <select bind:value={f.scope} title={t('best.scopeHint')}>
     <option value="all">{t('best.everywhere')}</option>
-    {#if isDnd(currentSystem(app.adventures)) || f.scope === 'srd'}<option value="srd">SRD</option>{/if}
+    {#if srdHere || f.scope === 'srd'}<option value="srd">SRD</option>{/if}
     <option value="library">{t('best.libraryShort')}</option>
     <option value="vault">{t('best.vault')}</option>
     {#each folders as fl (fl.folder.path)}<option value="vault:{fl.folder.path}">· {fl.title}</option>{/each}
@@ -152,7 +156,7 @@
       oncontextmenu={(e) => ((rowMenu = { ...menuAt(e), items: cardMenu(c) }), bestiary.select(c.ref))}
     >
       <span class="name"
-        >{c.name}{#if editions.length > 1 && !editions.some((s) => s.id === f.system)}<span class="tag">{c.system.replace(/^dnd5e-/, '')}</span>{/if}{#if bestiary.lang === 'all'}<span
+        >{c.name}{#if editions.length > 1 && !editions.some((s) => s.id === f.system)}<span class="tag">{systemOf(c.system).short ?? systemOf(c.system).title}</span>{/if}{#if bestiary.lang === 'all'}<span
             class="tag">{c.lang}</span
           >{/if}{#if c.edited}<span class="tag" title={t('best.editedHint')}>{t('best.edited')}</span>{/if}</span
       >
