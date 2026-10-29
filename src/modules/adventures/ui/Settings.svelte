@@ -24,8 +24,9 @@
     if (confirm(t('sb.deleteAsk', { name: title }))) await window.api.deleteSystem(id);
   }
 
-  // Что даёт система — строка под названием.
+  // Что даёт система — строка под названием; whose rules a pack is (its license and attribution), under it.
   const about = (id: string) => systemOf(id).about ?? '';
+  const credit = (id: string) => app.vault.systems.find((p) => p.id === id)?.license ?? '';
 
   // Приключения с этой системой (своей или унаследованной от хранилища) и само хранилище.
   const usedBy = (id: string) =>
@@ -80,6 +81,7 @@
         </div>
         <div class="desc">
           {about(s.id)}
+          {#if credit(s.id)}<div class="credit">{credit(s.id)}</div>{/if}
           {#if used.length}<div class="used">{t('adv.usedBy', { list: used.join(', ') })}</div>{/if}
         </div>
       </div>
@@ -125,6 +127,11 @@
   }
   .used {
     color: var(--text-faint);
+  }
+  .credit {
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: pre-line;
   }
   .content .name {
     display: flex;

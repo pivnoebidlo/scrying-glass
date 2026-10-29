@@ -38,7 +38,8 @@
     }
     shownFor = id;
     title = pack ? loc(pack.title, getLang()) : id;
-    description = '';
+    // A new entry starts from what the pack says of itself: what it gives and whose rules these are.
+    description = pack ? [pack.about ? loc(pack.about, getLang()) : '', pack.license ?? ''].filter(Boolean).join('\n\n').slice(0, LIMITS.description) : '';
     lang = getLang();
     rights = false;
     cover = null;
