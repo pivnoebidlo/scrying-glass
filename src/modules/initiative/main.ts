@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { defineModule } from '../../shared/module';
 import { sameRef } from '../../shared/cards';
 import { defeated, ordered, refreshed } from './order';
-import { DEFAULT_SYSTEM, systemOf } from '../../systems';
+import { defaultSystem, systemOf } from '../../systems';
 import type { Combatant, Encounter, InitiativeState, StripSettings } from './types';
 
 const initialState: InitiativeState = {
@@ -148,7 +148,7 @@ export default defineModule({
     // Бросить инициативу за противников и союзников, у которых её ещё нет (all — за всех, кроме партии). Как —
     // решает система приключения: в D&D к20 + бонус, в Fate — просто значение навыка.
     rollNpcs(s, { all, system }: { all?: boolean; system?: string }) {
-      const value = systemOf(system ?? DEFAULT_SYSTEM).tracker.roll.value;
+      const value = systemOf(system ?? defaultSystem()).tracker.roll.value;
       return {
         ...s,
         combatants: s.combatants.map((c) => (c.side !== 'party' && (all || c.init === null) ? { ...c, init: value(c.bonus) } : c)),

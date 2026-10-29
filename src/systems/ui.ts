@@ -1,14 +1,11 @@
 // Компоненты систем для окна управления: как показать и как править блок stats карточки.
+// A plugin's part for the windows — `SystemUi` (the shared part is systems/plugin.ts); a new plugin — one line in
+// UIS. A pack system has its generic sheet, editor and tracker cells; an unknown one — «field — value» and JSON.
 import type { Component } from 'svelte';
 import type { Card } from '../shared/cards';
-import Dnd5eStatBlock from './dnd5e/StatBlock.svelte';
-import Dnd5eEditor from './dnd5e/Editor.svelte';
-import CharacterSheet from './dnd5e/CharacterSheet.svelte';
-import CharacterEditor from './dnd5e/CharacterEditor.svelte';
-import { isCharacter } from './dnd5e/character';
 import GenericStats from './GenericStats.svelte';
 import GenericEditor from './GenericEditor.svelte';
-import DndTrackerCells from './dnd5e/TrackerCells.svelte';
+import HpCells from './HpCells.svelte';
 import PackSheet from './pack/Sheet.svelte';
 import PackEditor from './pack/Editor.svelte';
 import PackTrackerCells from './pack/TrackerCells.svelte';
@@ -16,29 +13,31 @@ import { isPackFamily, packOf } from './packs';
 import type { Combatant } from '../modules/initiative/types';
 import type { CardKind } from '../shared/cards';
 import { familyOf } from '.';
+import { dnd5eUi } from './dnd5e/ui';
 
-type StatsView = Component<{ card: Card<any> }>;
+export type StatsView = Component<{ card: Card<any> }>;
 // lang — язык карточки (подписи, которые попадут в статблок, например название колдовства).
 // kind — the kind of card (a pack system has sections for some kinds only).
-type StatsEditor = Component<{ stats: any; system: string; lang?: string; kind?: CardKind }, {}, 'stats'>;
+export type StatsEditor = Component<{ stats: any; system: string; lang?: string; kind?: CardKind }, {}, 'stats'>;
+// Ячейки строки участника в трекере инициативы (хиты и КД, стресс и последствия).
+export type TrackerCells = Component<{ c?: Combatant; head?: boolean }>;
 
-const views: Record<string, StatsView> = {
-  'dnd5e-2014': Dnd5eStatBlock,
-  'dnd5e-2024': Dnd5eStatBlock,
-};
+export interface SystemUi {
+  family: string;
+  // How to show and edit a card's stats (by their shape: D&D has a stat block and a character sheet).
+  view?(system: string, stats: unknown): StatsView | undefined;
+  editor?(system: string, stats: unknown): StatsEditor | undefined;
+  // The cells of a combatant's row; none — hit points and defence.
+  trackerCells?: TrackerCells;
+}
 
-const editors: Record<string, StatsEditor> = {
-  'dnd5e-2014': Dnd5eEditor,
-  'dnd5e-2024': Dnd5eEditor,
-};
+const UIS: SystemUi[] = [dnd5eUi];
 
-// A system described by a pack: its own generic view and editor (stats of another shape too — the editor starts
-// from the pack's blank values).
+export const systemUi = (system: string) => UIS.find((u) => u.family === familyOf(system));
+
 export const statsView = (system: string, stats?: unknown): StatsView =>
-  packOf(system) ? (PackSheet as StatsView) : system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterSheet : (views[system] ?? GenericStats);
+  packOf(system) ? (PackSheet as StatsView) : (systemUi(system)?.view?.(system, stats) ?? GenericStats);
 export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
-  packOf(system) ? (PackEditor as StatsEditor) : system.startsWith('dnd5e-') && isCharacter(stats) ? CharacterEditor : (editors[system] ?? GenericEditor);
-
-// Ячейки строки участника в трекере инициативы (хиты и КД, стресс и последствия): по семейству системы.
-type TrackerCells = Component<{ c?: Combatant; head?: boolean }>;
-export const trackerCells = (system: string): TrackerCells => (isPackFamily(familyOf(system)) ? PackTrackerCells : DndTrackerCells);
+  packOf(system) ? (PackEditor as StatsEditor) : (systemUi(system)?.editor?.(system, stats) ?? GenericEditor);
+export const trackerCells = (system: string): TrackerCells =>
+  isPackFamily(familyOf(system)) ? PackTrackerCells : (systemUi(system)?.trackerCells ?? HpCells);

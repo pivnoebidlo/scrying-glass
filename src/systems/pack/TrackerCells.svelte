@@ -48,7 +48,7 @@
 {#if head}
   {#if hp}
     <th class="c-hp">{loc(fields.get(pack!.tracker.hp!)?.title, getLang())}</th>
-    <th class="c-dmg" title={t('dnd.tr.dmgHint')}>±</th>
+    <th class="c-dmg" title={t('sys.tr.dmgHint')}>±</th>
   {/if}
   {#each cells as cell (cell.key)}<th class="c-cell">{cell.title}</th>{/each}
   <th class="c-out"></th>

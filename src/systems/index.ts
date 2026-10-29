@@ -1,10 +1,9 @@
 // Ролевые системы: как читать блок stats карточки. Только чистые функции — используется и ядром, и окнами.
 // Карточка неизвестной системы всё равно открывается: показывается общая часть и stats как «поле — значение».
+// The systems come from the plugins (systems/plugins.ts) and the packs (systems/packs.ts adds them here).
 import type { CardKind, CombatStats } from '../shared/cards';
-import * as dnd5e from './dnd5e/stats';
-import * as character from './dnd5e/character';
-import type { TrackerDef } from './tracker';
-import { dndTracker } from './dnd5e/tracker';
+import { genericTracker, type TrackerDef } from './tracker';
+import { PLUGINS } from './plugins';
 
 export interface SystemDef {
   id: string;
@@ -21,27 +20,19 @@ export interface SystemDef {
   tracker: TrackerDef;
 }
 
-// У D&D два вида блока stats: статблок (монстры, NPC) и лист персонажа игрока — их различает форма.
-const dnd = (id: string, title: string): SystemDef => ({
-  id,
-  title,
-  family: 'dnd5e',
-  subtitle: (s, lang) => (character.isCharacter(s) ? character.characterSubtitle(s) : dnd5e.subtitle(s, lang)),
-  rank: (s) => (character.isCharacter(s) ? character.totalLevel(s) : (s as dnd5e.Dnd5eStats).cr),
-  combat: (s) => (character.isCharacter(s) ? character.characterCombat(s) : dnd5e.combatStats(s)),
-  blank: (kind) => (kind === 'character' ? character.blankCharacter() : dnd5e.blankStats()),
-  tracker: dndTracker,
-});
-
-export const systems: SystemDef[] = [dnd('dnd5e-2024', 'D&D 5e (2024)'), dnd('dnd5e-2014', 'D&D 5e (2014)')];
+export const systems: SystemDef[] = PLUGINS.flatMap((p) => p.systems);
 
 // Семейства систем по порядку (для выбора системы приключения — группами).
-export const FAMILIES: { id: string; title: string }[] = [
-  { id: 'dnd5e', title: 'D&D 5e' },
-];
+export const FAMILIES: { id: string; title: string }[] = PLUGINS.map((p) => ({
+  id: p.family,
+  get title() {
+    return p.title;
+  },
+}));
 
-// Система, если для приключения она не выбрана.
-export const DEFAULT_SYSTEM = 'dnd5e-2024';
+// The system of data made before the systems existed: an adventure without a system of its own in a vault without
+// one (old adventures were D&D). Empty — no plugin claims it.
+export const LEGACY_SYSTEM = PLUGINS.find((p) => p.legacy)?.legacy ?? '';
 
 // Отключённые в настройках системы (settings.json приложения, общие для всех хранилищ): их не предлагают при
 // выборе, их карточки и встроенные записи не показываются. Ставит ядро из настроек, окна — из `vault.systemsOff`.
@@ -54,8 +45,8 @@ export function setSystemsOff(list?: string[] | null): string[] {
 }
 export const isEnabled = (id: string) => !off.has(id);
 export const enabledSystems = () => systems.filter((s) => !off.has(s.id));
-// Система по умолчанию с учётом отключённых.
-export const defaultSystem = () => (isEnabled(DEFAULT_SYSTEM) ? DEFAULT_SYSTEM : (enabledSystems()[0]?.id ?? DEFAULT_SYSTEM));
+// The default system: the legacy one while it is on, else the first one turned on.
+export const defaultSystem = () => (LEGACY_SYSTEM && isEnabled(LEGACY_SYSTEM) && systems.some((s) => s.id === LEGACY_SYSTEM) ? LEGACY_SYSTEM : (enabledSystems()[0]?.id ?? LEGACY_SYSTEM));
 
 const unknown = (id: string): SystemDef => ({
   id,
@@ -65,8 +56,7 @@ const unknown = (id: string): SystemDef => ({
   rank: () => null,
   combat: () => ({ hp: null, ac: null, initiative: 0 }),
   blank: () => ({}),
-  // У неизвестной системы — хиты и КД, как у D&D: самое привычное.
-  tracker: dndTracker,
+  tracker: genericTracker,
 });
 
 export const systemOf = (id: string) => systems.find((s) => s.id === id) ?? unknown(id);

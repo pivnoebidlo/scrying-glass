@@ -3,7 +3,7 @@
 // по-прежнему показывает хранилище целиком. Только типы и чистые функции: используются ядром и окнами.
 import { t } from './i18n';
 import { basename, folderRole, roleNames, type FolderRole, type VaultFolder } from './vault';
-import { DEFAULT_SYSTEM, defaultSystem, familyOf, isEnabled, systems } from '../systems';
+import { LEGACY_SYSTEM, defaultSystem, familyOf, isEnabled, systems } from '../systems';
 
 export interface AdventuresState {
   // Пути папок приключений (первый уровень хранилища, то есть просто имена).
@@ -13,7 +13,7 @@ export interface AdventuresState {
   // Список уже составлялся: при первом открытии приключения угадываются по папкам внутри.
   initialized: boolean;
   // Ролевая система приключения (id из systems/index.ts); ключ '' — всё хранилище и общее вне приключений.
-  // Нет записи — DEFAULT_SYSTEM. Вкладки показывают карточки и записи семейства этой системы.
+  // Нет записи — LEGACY_SYSTEM. Вкладки показывают карточки и записи семейства этой системы.
   systems?: Record<string, string>;
   // Which of the list are supplements, not adventures, and what each is: a folder of content to use in adventures —
   // creatures (cards in its monsters folder) and compendium entries (spells, items, rules, own types) — any mix of
@@ -52,11 +52,11 @@ const within = (path: string, dir: string) => path === dir || path.startsWith(di
 export const adventureOf = (adv: AdventuresState, path: string) => adv.list.find((a) => within(path, a)) ?? null;
 
 // Система приключения (null — всего хранилища) и текущая — по открытому приключению.
-// Приключение без своей системы — с системой хранилища, а без неё — с DEFAULT_SYSTEM (так было до выбора систем:
+// Приключение без своей системы — с системой хранилища, а без неё — с LEGACY_SYSTEM (так было до выбора систем:
 // старые приключения — это D&D). Отключённая система приключения его скрывает (adventureHidden). Само хранилище
 // («Всё хранилище») с отключённой системой берёт первую включённую — иначе в нём не было бы видно ничего.
 export function systemFor(adv: AdventuresState, adventure: string | null): string {
-  const vault = adv.systems?.[''] ?? DEFAULT_SYSTEM;
+  const vault = adv.systems?.[''] ?? LEGACY_SYSTEM;
   if (adventure !== null) return adv.systems?.[adventure] ?? vault;
   return isEnabled(vault) ? vault : defaultSystem();
 }

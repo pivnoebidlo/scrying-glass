@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { adventureHidden, currentSystem, inCurrentFamily, shownAdventures, systemFor, visibleIn, type AdventuresState } from '../src/shared/adventures';
 import { scenesFor, type ScenesState } from '../src/modules/scenes/types';
 import { entryFamily, parseEntry } from '../src/shared/compendium';
-import { DEFAULT_SYSTEM, enabledSystems, familyOf, isDnd, setSystemsOff, systems } from '../src/systems';
+import { LEGACY_SYSTEM, enabledSystems, familyOf, isDnd, setSystemsOff, systems } from '../src/systems';
 import { readFileSync } from 'node:fs';
 import { validatePack, type SystemPack } from '../src/shared/syspack';
 import { registerPacks } from '../src/systems/packs';
@@ -19,10 +19,10 @@ const adv = (systems: Record<string, string> | undefined, current: string | null
 
 describe('система приключения', () => {
   it('своя, иначе — хранилища, иначе — по умолчанию', () => {
-    expect(currentSystem(adv(undefined, 'Страд'))).toBe(DEFAULT_SYSTEM);
+    expect(currentSystem(adv(undefined, 'Страд'))).toBe(LEGACY_SYSTEM);
     expect(currentSystem(adv({ '': 'fate-core' }, 'Страд'))).toBe('fate-core');
     expect(currentSystem(adv({ '': 'fate-core', Страд: 'dnd5e-2014' }, 'Страд'))).toBe('dnd5e-2014');
-    expect(currentSystem(adv({ Страд: 'dnd5e-2014' }, null))).toBe(DEFAULT_SYSTEM);
+    expect(currentSystem(adv({ Страд: 'dnd5e-2014' }, null))).toBe(LEGACY_SYSTEM);
     expect(systemFor(adv({ Дрезден: 'fate-core' }, 'Страд'), 'Дрезден')).toBe('fate-core');
   });
 

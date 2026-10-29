@@ -2,6 +2,8 @@
 // какие состояния предлагать. Только чистые функции — нужно и ядру (бросок за NPC), и окнам.
 import type { CombatStats } from '../shared/cards';
 import type { Combatant } from '../modules/initiative/types';
+import { die } from '../shared/dice';
+import { t } from '../shared/i18n';
 
 // Число участника, которое вводится при быстром добавлении и в заготовке боя («Хиты», «КД», «Физ.»).
 export interface CombatField {
@@ -36,3 +38,67 @@ export function fromFields(fields: CombatField[], values: Record<string, number 
   for (const f of fields) Object.assign(out, f.set(values[f.key] ?? null, { ...c, ...out } as Combatant));
   return out;
 }
+
+// The tracker of a system the app doesn't know: d20 + bonus, hit points and defence, conditions typed freely.
+export const genericTracker: TrackerDef = {
+  init: {
+    get label() {
+      return t('sys.tr.init');
+    },
+    get title() {
+      return t('sys.tr.initiative');
+    },
+  },
+  bonus: {
+    get label() {
+      return t('sys.tr.bonus');
+    },
+    get short() {
+      return t('sys.tr.bonusShort');
+    },
+    get title() {
+      return t('sys.tr.bonusTitle');
+    },
+  },
+  roll: {
+    get label() {
+      return t('sys.tr.roll');
+    },
+    get title() {
+      return t('sys.tr.rollTitle');
+    },
+    value: (b) => die(20) + b,
+  },
+  conditions: {
+    get label() {
+      return t('sys.tr.conditions');
+    },
+    list: [],
+    free: true,
+  },
+  fields: [
+    {
+      key: 'hp',
+      get label() {
+        return t('sys.tr.hp');
+      },
+      get title() {
+        return t('sys.tr.maxHp');
+      },
+      get: (c) => c.maxHp,
+      set: (v) => ({ maxHp: v, hp: v }),
+    },
+    {
+      key: 'ac',
+      get label() {
+        return t('sys.tr.def');
+      },
+      get title() {
+        return t('sys.tr.defence');
+      },
+      get: (c) => c.ac,
+      set: (v) => ({ ac: v }),
+    },
+  ],
+  fromCard: (s) => ({ maxHp: s.hp, hp: s.hp, ac: s.ac, bonus: s.initiative }),
+};

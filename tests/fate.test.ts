@@ -14,6 +14,7 @@ import { evalFormula, fieldMap, loc, rollPack, validatePack, type SystemPack } f
 import { systemOf } from '../src/systems';
 import { registerPacks } from '../src/systems/packs';
 import { dndTracker } from '../src/systems/dnd5e/tracker';
+import { genericTracker } from '../src/systems/tracker';
 import { fromFields } from '../src/systems/tracker';
 import { run } from './helpers';
 import fate from '../src/modules/fate/main';
@@ -61,11 +62,12 @@ describe('кубы и лестница Fate', () => {
 });
 
 describe('трекер системы', () => {
-  it('у Fate — трекер пакета, неизвестная система — как D&D', () => {
+  it('у Fate — трекер пакета, неизвестная система — общий', () => {
     expect(fateSys().tracker).not.toBe(dndTracker);
     expect(fateSys().family).toBe('fate');
     expect(systemOf('dnd5e-2014').tracker).toBe(dndTracker);
-    expect(systemOf('нечто').tracker).toBe(dndTracker);
+    expect(systemOf('нечто').tracker).toBe(genericTracker);
+    expect(genericTracker.conditions.free).toBe(true);
   });
 
   it('поля Fate: дорожки стресса, не затирают друг друга; последствия пишутся в трекере', () => {
