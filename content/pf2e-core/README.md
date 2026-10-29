@@ -2,8 +2,9 @@
 
 Downloadable data for the Pathfinder 2e family (`shared/content.ts`), built by `scripts/import-pf2e.ts`
 (`npm run import-pf2e`) from the data of the pf2e system for Foundry VTT (https://github.com/foundryvtt/pf2e; code
-Apache 2.0). Only entries whose `publication.license` is ORC are taken; English only (there is no open Russian
-translation). `npm run build-content` packs it; the official author publishes it.
+Apache 2.0). Only entries whose `publication.license` is ORC are taken. The Russian text is the translation of the Foundry VTT
+module «Русский перевод Pathfinder 2e и Starfinder 2e» by **Доктор#0353** (https://gitlab.com/gnuraco/pf2r), used
+with the author's permission (its files by compendium, cached in `node_modules/.cache/pf2r`). `npm run build-content` packs it; the official author publishes it.
 
 - `bestiary/pf2e.json` — the creatures of Pathfinder Monster Core: stat blocks only (their lore — Golarion — is not
   open: Reserved Material of the ORC License).
@@ -11,10 +12,12 @@ translation). `npm run build-content` packs it; the official author publishes it
   classes of Pathfinder Player Core, Player Core 2 and GM Core, the monster abilities glossary of Monster Core (types
   `pf2e-condition`, `pf2e-spell`, `pf2e-action`, `pf2e-ability`, `pf2e-item`, `pf2e-feat`, `pf2e-ancestry`,
   `pf2e-heritage`, `pf2e-background`, `pf2e-class`).
+- `compendium/pf2e.ru.json` — the same entries in Russian (`en` — the English title); the Russian creatures are in
+  `bestiary/pf2e.json` too (`<id>.ru`, `origin` — the English card).
 - `content.json` — the manifest; raise `release` when the files change.
 
 To do: more books (Monster Core 2, NPC Core, GM Core hazards, Howl of the Wild…), class features, the Russian
-translation (asked of the authors of the Foundry module «PF2ERUS»).
+words of traits, sizes and other fields (they are English in the Russian entries).
 
 ## License
 
@@ -27,3 +30,7 @@ Scrying Glass uses trademarks and/or copyrights owned by Paizo Inc., used under 
 (paizo.com/licenses/communityuse). We are expressly prohibited from charging you to use or access this content.
 Scrying Glass is not published, endorsed, or specifically approved by Paizo. For more information about Paizo Inc. and
 Paizo products, visit paizo.com.
+
+Russian translation: «Русский перевод Pathfinder 2e и Starfinder 2e» for Foundry VTT by Доктор#0353
+(https://gitlab.com/gnuraco/pf2r), used with the author's permission; that module is distributed under the Open Game
+License 1.0a and Paizo's Community Use Policy.

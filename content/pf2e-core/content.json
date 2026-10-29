@@ -4,8 +4,8 @@
  "id": "pf2e-core",
  "title": "Pathfinder 2e: Monster Core, Player Core and GM Core",
  "family": "pf2e",
- "release": 2,
- "cards": 492,
- "books": 1,
- "license": "This product is licensed under the ORC License held in the Library of Congress at TX 9-307-067 and available online at various locations including paizo.com/orclicense, azoralaw.com/orclicense, and others. All warranties are disclaimed as set forth therein. Attribution: This product is based on the following Licensed Material: Pathfinder Player Core © 2023 Paizo Inc.; Pathfinder Player Core 2 © 2024 Paizo Inc.; Pathfinder Monster Core © 2024 Paizo Inc.; Pathfinder GM Core © 2023 Paizo Inc. Data from the pf2e system for Foundry VTT (github.com/foundryvtt/pf2e, 3169c24). Scrying Glass uses trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy (paizo.com/licenses/communityuse). We are expressly prohibited from charging you to use or access this content. Scrying Glass is not published, endorsed, or specifically approved by Paizo. For more information about Paizo Inc. and Paizo products, visit paizo.com."
+ "release": 3,
+ "cards": 984,
+ "books": 2,
+ "license": "This product is licensed under the ORC License held in the Library of Congress at TX 9-307-067 and available online at various locations including paizo.com/orclicense, azoralaw.com/orclicense, and others. All warranties are disclaimed as set forth therein. Attribution: This product is based on the following Licensed Material: Pathfinder Player Core © 2023 Paizo Inc.; Pathfinder Player Core 2 © 2024 Paizo Inc.; Pathfinder Monster Core © 2024 Paizo Inc.; Pathfinder GM Core © 2023 Paizo Inc. Data from the pf2e system for Foundry VTT (github.com/foundryvtt/pf2e, 3169c24). Scrying Glass uses trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy (paizo.com/licenses/communityuse). We are expressly prohibited from charging you to use or access this content. Scrying Glass is not published, endorsed, or specifically approved by Paizo. For more information about Paizo Inc. and Paizo products, visit paizo.com. Russian translation: «Русский перевод Pathfinder 2e и Starfinder 2e» for Foundry VTT by Доктор#0353 (https://gitlab.com/gnuraco/pf2r), used with the author's permission; that module is distributed under the Open Game License 1.0a and Paizo's Community Use Policy."
 }

@@ -1,10 +1,10 @@
 // Pathfinder 2e messages: the stat block, the tracker, the compendium types, the encounter budget. The content
-// itself (creatures, rules) is English only: there is no open Russian translation.
+// itself (creatures, rules) is in English and Russian (the translation of Доктор#0353, gitlab.com/gnuraco/pf2r).
 import type { Messages } from '../../shared/i18n/core';
 
 export const en = {
   'pf2e.title': "Pathfinder 2e",
-  'pf2e.about': "Monster Core creatures, Player Core conditions, spells and actions (English), degrees of success, the encounter budget",
+  'pf2e.about': "Monster Core creatures, Player Core conditions, spells and actions (English and Russian), degrees of success, the encounter budget",
   'pf2e.creature': "Creature",
   'pf2e.ed.who': "Character",
   'pf2e.ed.class': "Class",
@@ -201,7 +201,7 @@ export const en = {
 
 export const ru: Messages<typeof en> = {
   'pf2e.title': "Pathfinder 2e",
-  'pf2e.about': "Существа Monster Core, состояния, заклинания и действия Player Core (на английском), степени успеха, бюджет боя",
+  'pf2e.about': "Существа Monster Core, состояния, заклинания и действия Player Core (на английском и русском), степени успеха, бюджет боя",
   'pf2e.creature': "Существо",
   'pf2e.ed.who': "Персонаж",
   'pf2e.ed.class': "Класс",

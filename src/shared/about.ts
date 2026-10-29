@@ -31,6 +31,7 @@ export const CREDITS: Credit[] = [
   { id: 'mausritter', who: 'Losing Games and Isaac Williams', license: 'CC BY 4.0', url: 'https://mausritter.com', licenseUrl: CC_BY_4 },
   { id: 'pf2e', who: 'Paizo Inc. — Pathfinder Player Core, Player Core 2, Monster Core, GM Core', license: 'ORC', url: 'https://paizo.com/licenses/communityuse', licenseUrl: 'https://paizo.com/orclicense' },
   { id: 'pf2edata', who: 'The pf2e system for Foundry VTT', license: 'Apache 2.0', url: 'https://github.com/foundryvtt/pf2e', licenseUrl: 'https://www.apache.org/licenses/LICENSE-2.0' },
+  { id: 'pf2eru', who: 'Доктор#0353 — «Русский перевод Pathfinder 2e и Starfinder 2e»', license: 'OGL 1.0a', url: 'https://gitlab.com/gnuraco/pf2r', licenseUrl: 'https://gitlab.com/gnuraco/pf2r/-/raw/master/LICENSE' },
   { id: 'fitd', who: 'One Seven Design — John Harper', license: 'CC BY 3.0', url: 'http://www.bladesinthedark.com/', licenseUrl: 'https://creativecommons.org/licenses/by/3.0/' },
   { id: 'ambience', who: 'JC Sounds — Nature Ambient Pack Vol 1', license: 'CC BY 4.0', url: 'https://opengameart.org/node/180349', licenseUrl: CC_BY_4 },
   { id: 'sfx', who: 'Kenney, artisticdude, rubberduck', license: 'CC0', url: 'https://opengameart.org', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/' },
