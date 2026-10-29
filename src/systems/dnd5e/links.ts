@@ -3,8 +3,9 @@
 //   'em'   — статблок: заклинания там пишут курсивом («*огненный шар*»), ссылкой становится курсив с точным названием;
 //   'text' — список заклинаний в листе персонажа: названия ищутся во всём тексте.
 // Текст перерисовывается Svelte ({@html}) — MutationObserver применяет ссылки заново.
-import { t } from '../i18n.svelte';
-import { onSpellIndex, peekEntry, spellName, spellPattern } from './peek.svelte';
+import { t } from '../../renderer/lib/i18n.svelte';
+import { peekEntry } from '../../renderer/lib/entry/peek.svelte';
+import { onSpellIndex, spellName, spellPattern } from './spellindex';
 
 const link = (name: string, text: string) => {
   const a = document.createElement('a');

@@ -1,6 +1,7 @@
 <!-- Общий поиск ⌘K (Ctrl+K): записи справочника, карточки (монстры, NPC, персонажи) и заметки журнала из любой
      вкладки. Enter — в выдвижной панели (заметка — всегда во вкладке), ⌘Enter — во вкладке; стрелки — выбор, Esc — закрыть. -->
 <script lang="ts">
+  import { systemOf } from '../../../systems';
   import { matches, modKey } from '../../../shared/hotkeys';
   import { quickSearch } from '../../../renderer/lib/quicksearch.svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
@@ -123,7 +124,7 @@
   }
 
   const langNote = (l: string) => (l === locale.lang ? '' : l === 'en' ? t('cmpui.english') : l);
-  const cardWhere = (c: CardSummary) => [c.ref.scope === 'srd' ? (c.system === 'dnd5e-2014' ? 'SRD 5.1' : 'SRD 5.2.1') : c.ref.scope === 'library' ? t('cmpui.library') : c.folder ?? t('cmpui.vault'), langNote(c.lang)].filter(Boolean).join(', ');
+  const cardWhere = (c: CardSummary) => [c.ref.scope === 'srd' ? `SRD · ${systemOf(c.system).short ?? systemOf(c.system).title}` : c.ref.scope === 'library' ? t('cmpui.library') : c.folder ?? t('cmpui.vault'), langNote(c.lang)].filter(Boolean).join(', ');
 </script>
 
 <svelte:window onkeydown={onwindowkey} />

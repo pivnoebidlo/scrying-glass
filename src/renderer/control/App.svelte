@@ -1,6 +1,7 @@
 <!-- Окно управления: полоса модулей | боковая панель | вкладки | экран игроков. -->
 <script lang="ts">
   import { matches } from '../../shared/hotkeys';
+  import { systemUis } from '../../systems/ui';
   import Ribbon from './Ribbon.svelte';
   import Sidebar from './Sidebar.svelte';
   import Tabs from './Tabs.svelte';
@@ -62,6 +63,9 @@
   {#if store.state.vault.theme === 'oldschool'}<FKeys />{/if}
 
   <!-- Невидимые части модулей, например проигрыватель музыки. -->
+  {#each systemUis as u (u.family)}
+    {#if u.background}<u.background />{/if}
+  {/each}
   {#each backgrounds as c (c.id)}
     {#if c.background}<c.background ms={store.state[c.id]} app={store.state} />{/if}
   {/each}

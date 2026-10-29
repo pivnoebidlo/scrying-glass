@@ -4,7 +4,7 @@ import { locale, t } from '../../../renderer/lib/i18n.svelte';
 import { connectNotes, notes } from '../../../renderer/lib/note/notes.svelte';
 import { store } from '../../../renderer/lib/store.svelte';
 import { currentSystem, placeOrder, placeTitle, roleFolderHere, visibleIn } from '../../../shared/adventures';
-import { familyOf, isEnabled } from '../../../systems';
+import { familyOf, isEnabled, systems } from '../../../systems';
 import { allTypes, typeDef } from '../../../renderer/lib/entry/types.svelte';
 import { BUILTIN, OVERRIDES, entryFamily, entryTitle, parseEntry, searchKey, type Entry } from '../../../shared/compendium';
 import { allFiles, dirname, LIBRARY, roleFolders, roleNames } from '../../../shared/vault';
@@ -31,37 +31,37 @@ export const book = $state({ vault: [] as EntryItem[], library: [] as EntryItem[
 // Languages of the built-in books by system.
 let builtinLangs: Record<string, string[]> = {};
 
-// Какие встроенные записи показывать: редакция SRD, обе или никакие. Помнит окно (localStorage).
-export type Edition = 'dnd5e-2024' | 'dnd5e-2014' | 'all' | 'none';
-export const EDITIONS: { id: Edition; title: string }[] = [
-  { id: 'dnd5e-2024', title: 'SRD 5.2.1 (2024)' },
-  { id: 'dnd5e-2014', title: 'SRD 5.1 (2014)' },
-  { id: 'all', get title() {
-    return t('cmpui.bothEditions');
-  } },
-  { id: 'none', get title() {
-    return t('cmpui.noSrd');
-  } },
-];
+// Какие встроенные записи показывать, когда у семейства приключения несколько систем со встроенными книгами (D&D
+// 2014 и 2024): одной редакции (id системы), обе или никакие. Помнит окно (localStorage).
+export type Edition = string;
 const EDITION_KEY = 'compendium.edition';
 function savedEdition(): Edition {
   try {
     const v = localStorage.getItem(EDITION_KEY);
-    if (EDITIONS.some((e) => e.id === v)) return v as Edition;
+    if (v) return v;
   } catch {
     /* нет хранилища — по умолчанию */
   }
-  return 'dnd5e-2024';
+  return '';
 }
 export const srd = $state({ edition: savedEdition() });
-// Редакции, которые можно выбрать: без отключённых в настройках систем («обе» — только если включены обе).
-const editionOn = (id: string) => (void store.state.vault.systemsOff, isEnabled(id));
-export const editionsHere = () =>
-  EDITIONS.filter((e) => (e.id === 'all' ? editionOn('dnd5e-2014') && editionOn('dnd5e-2024') : e.id === 'none' || editionOn(e.id)));
-// Выбранная редакция, а если её отключили — первая доступная.
+// Editions to pick from: the family's systems turned on that have built-in books, «both» and «none» — only when
+// there are several (the title — the book's and the system's short name: «SRD 5.2.1 (2024)»).
+export const editionsHere = (): { id: Edition; title: string }[] => {
+  void store.state.vault.systemsOff;
+  const withBooks = new Map(book.builtin.map((e) => [systemOfBuiltin(e.path), e.group]));
+  const list = systems.filter((x) => x.family === hereFamily() && isEnabled(x.id) && withBooks.has(x.id));
+  if (list.length < 2) return [];
+  return [
+    ...list.map((x) => ({ id: x.id, title: `${withBooks.get(x.id)} (${x.short ?? x.title})` })),
+    { id: 'all', title: t('cmpui.bothEditions') },
+    { id: 'none', title: t('cmpui.noSrd') },
+  ];
+};
+// Выбранная редакция, а если её отключили (или она другого семейства) — первая доступная; '' — выбирать не из чего.
 export const editionNow = (): Edition => {
   const list = editionsHere();
-  return list.some((e) => e.id === srd.edition) ? srd.edition : (list[0]?.id ?? 'none');
+  return list.some((e) => e.id === srd.edition) ? srd.edition : (list[0]?.id ?? '');
 };
 export function setEdition(e: Edition) {
   srd.edition = e;
@@ -141,7 +141,8 @@ export function overrideOf(e: EntryItem): string | null {
 }
 // Семейство системы текущего приключения: справочник показывает записи этого семейства и общие (без системы).
 export const hereFamily = () => familyOf(currentSystem(store.state.adventures));
-export const srdHere = () => hereFamily() === 'dnd5e';
+// The family has editions to choose from (the picker in the sidebar).
+export const editionsChoice = () => editionsHere().length > 0;
 // Типы записей для системы приключения: её и общие.
 export const typesHere = () => allTypes().filter((t) => !t.def.family || t.def.family === hereFamily());
 const fitsHere = (e: EntryItem) => {
@@ -153,9 +154,8 @@ const systemOfBuiltin = (builtinPath: string) => builtinPath.slice(BUILTIN.lengt
 const editionShown = (builtinPath: string) => {
   const system = systemOfBuiltin(builtinPath);
   if (familyOf(system) !== hereFamily() || !isEnabled(system)) return false;
-  if (!srdHere()) return true;
   const ed = editionNow();
-  return ed === 'all' || (ed !== 'none' && system === ed);
+  return ed === '' || ed === 'all' || (ed !== 'none' && system === ed);
 };
 // Своя запись: правка встроенной видна вместе с её редакцией и получает её английское название и подпись места.
 function ownShown(list: EntryItem[]): EntryItem[] {
@@ -196,9 +196,10 @@ export function resolveEntry(names: string | string[]): EntryItem | null {
   return allEntries().find(hit) ?? book.builtin.find(hit) ?? null;
 }
 
-// Названия всех заклинаний (свои и встроенные обеих редакций, с английскими) — для ссылок в статблоках и листах.
-export const spellNames = () =>
-  [...book.vault, ...book.library, ...book.builtin].filter((e) => e.entry.type === 'spell').flatMap((e) => [e.entry.title, ...altNames(e)]);
+// Names of all entries of a type (own and built-in of every edition, with the English ones): D&D's spell links
+// in stat blocks and sheets.
+export const entryNames = (type: string) =>
+  [...book.vault, ...book.library, ...book.builtin].filter((e) => e.entry.type === type).flatMap((e) => [e.entry.title, ...altNames(e)]);
 // Запись по пути, в том числе встроенная из скрытой редакции.
 // Встроенная, которую заменила правка, — это правка.
 export function entryAt(path: string): EntryItem | undefined {

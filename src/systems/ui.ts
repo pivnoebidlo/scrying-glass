@@ -3,6 +3,7 @@
 // UIS. A pack system has its generic sheet, editor and tracker cells; an unknown one — «field — value» and JSON.
 import type { Component } from 'svelte';
 import type { Card, CardRef, CardSummary } from '../shared/cards';
+import type { FieldValue } from '../shared/entrytypes';
 import GenericStats from './GenericStats.svelte';
 import GenericEditor from './GenericEditor.svelte';
 import HpCells from './HpCells.svelte';
@@ -42,6 +43,14 @@ export interface NewCard {
 // The card as a sheet of paper (a picture to send to Telegram).
 export type PaperView = Component<{ card: Card<any>; scope: CardRef['scope'] }>;
 
+// The compendium list of a type of entries: a filter above it, which entries it lets through, and headed groups
+// (D&D spells by level; null — not grouped now).
+export interface EntryList {
+  filter: Component<{ entries: Record<string, FieldValue>[] }>;
+  match(fields: Record<string, FieldValue>): boolean;
+  group?(fields: Record<string, FieldValue>): { order: number; title: string } | null;
+}
+
 export interface SystemUi {
   family: string;
   // How to show and edit a card's stats (by their shape: D&D has a stat block and a character sheet).
@@ -57,6 +66,10 @@ export interface SystemUi {
   paper?(card: Card): PaperView | undefined;
   // Above a fight and an encounter: what the system says about it (D&D: how hard it is).
   encounter?: Component<{ list: Combatant[] }>;
+  // The compendium's list by type of entries (D&D: spells).
+  entryList?: Record<string, EntryList>;
+  // An invisible component of the control window, always there (D&D: the index of spell names).
+  background?: Component;
 }
 
 export const systemUis: SystemUi[] = [dnd5eUi];

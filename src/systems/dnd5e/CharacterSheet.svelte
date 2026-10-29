@@ -5,7 +5,7 @@
   import { labels } from '../../shared/i18n';
   import type { Card } from '../../shared/cards';
   import { markdown } from '../../renderer/lib/markdown';
-  import { spellLinks } from '../../renderer/lib/entry/links';
+  import { spellLinks } from './links';
   import { modeOf, rolls, rollHint } from '../../renderer/lib/rolls.svelte';
   import { parseBonus, parseDice } from '../../shared/dice';
   import { ABILITIES, dict, mod, signed, sizeText, SKILL_ABILITY } from './stats';

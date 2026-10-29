@@ -7,7 +7,7 @@
   import { onMount } from 'svelte';
   import { t } from '../../../../renderer/lib/i18n.svelte';
   import { entryHtml } from '../../../../renderer/lib/entry/markup';
-  import { spellLinks } from '../../../../renderer/lib/entry/links';
+  import { spellLinks } from '../../links';
   import { markdownToTelegram } from '../../../../shared/telegram';
   import { loadEntries } from '../../../../modules/compendium/ui/store.svelte';
   import { sendToTelegram, tgReady } from '../../../../modules/telegram/ui/tg.svelte';

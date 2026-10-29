@@ -5,7 +5,7 @@
   import { t } from '../../renderer/lib/i18n.svelte';
   import { labels } from '../../shared/i18n';
   import { Plus, Wand2, X } from '@lucide/svelte';
-  import { knownSpells } from '../../renderer/lib/entry/peek.svelte';
+  import { knownSpells } from './spellindex';
   import { ABILITIES, type Ability, type Dnd5eStats } from './stats';
   import {
     GROUP_KINDS, defaultSpellName, groupLabel, looksLikeSpellcasting, newSpellcasting, parseSpellcasting, spellAttack, spellDc,

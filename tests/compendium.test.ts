@@ -4,7 +4,8 @@ import { setLang } from '../src/shared/i18n';
 // Subtitles are checked in Russian (the built-in compendium is Russian).
 beforeAll(() => setLang('ru'));
 afterAll(() => setLang('en'));
-import { castingKind, entrySubtitle, keyFrom, NO_SPELL_FILTER, spellFilterOn, spellMatches, type SpellFilter, parseCustomTypes, parseEntry, serializeEntry, type BuiltinBook } from '../src/shared/compendium';
+import { entrySubtitle, keyFrom, parseCustomTypes, parseEntry, serializeEntry, type BuiltinBook } from '../src/shared/compendium';
+import { castingKind, NO_SPELL_FILTER, spellFilterOn, spellMatches, type SpellFilter } from '../src/systems/dnd5e/spellfilter';
 
 describe('записи справочника', () => {
   it('шапка: строки, числа, да/нет, списки в обоих видах; без шапки — заметка', () => {

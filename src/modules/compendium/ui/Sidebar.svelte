@@ -4,11 +4,12 @@
   import { Plus, Search, Shapes } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
-  import { blankEntry, entrySubtitle, levelTitle, serializeEntry, spellMatches } from '../../../shared/compendium';
-  import SpellFilters from './SpellFilters.svelte';
+  import { blankEntry, entrySubtitle, serializeEntry } from '../../../shared/compendium';
+  import { currentSystem } from '../../../shared/adventures';
+  import { systemUi } from '../../../systems/ui';
   import { customTypes, typeDef } from '../../../renderer/lib/entry/types.svelte';
   import { LIBRARY } from '../../../shared/vault';
-  import { allEntries, book, editionNow, editionsHere, entriesFolder, loadEntries, search, setEdition, srd, srdHere, typesHere, type Edition } from './store.svelte';
+  import { allEntries, book, editionNow, editionsHere, entriesFolder, loadEntries, search, setEdition, srd, editionsChoice, typesHere, type Edition } from './store.svelte';
   import { openEntry, ui } from './ui.svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { entryMenu } from './menu.svelte';
@@ -37,16 +38,16 @@
     const ids = [...new Set([...typesHere().map((t) => t.id), ...counts.keys()])];
     return ids.map((id) => ({ id, title: typeDef(id).plural, n: counts.get(id) ?? 0 }));
   });
-  // Заклинания: свой фильтр и порядок по уровням (при поиске — по совпадению, как обычно).
-  const spellsHere = $derived(ui.type === 'spell' ? all.filter((e) => e.entry.type === 'spell') : []);
-  const levelOf = (e: (typeof all)[number]) => Number(e.entry.fields['level'] ?? 99);
+  // A type the system lists its own way (D&D spells: a filter, by level); when searching — by the match, as usual.
+  const own = $derived(ui.type === 'all' ? undefined : systemUi(currentSystem(app.adventures))?.entryList?.[ui.type]);
+  const ofType = $derived(ui.type === 'all' ? all : all.filter((e) => e.entry.type === ui.type));
+  const groupOf = (e: (typeof all)[number]) => own?.group?.(e.entry.fields) ?? null;
+  // Headed groups (a heading before the first entry of each group).
+  const headed = $derived(!!own?.group && !ui.query.trim() && ofType.some((e) => groupOf(e) !== null));
   const shown = $derived.by(() => {
-    if (ui.type !== 'spell') return search(ui.type === 'all' ? all : all.filter((e) => e.entry.type === ui.type), ui.query);
-    const list = search(spellsHere.filter((e) => spellMatches(e.entry.fields, ui.spells)), ui.query);
-    return ui.byLevel && !ui.query.trim() ? [...list].sort((a, b) => levelOf(a) - levelOf(b)) : list;
+    const list = search(own ? ofType.filter((e) => own.match(e.entry.fields)) : ofType, ui.query);
+    return headed ? [...list].sort((a, b) => groupOf(a)!.order - groupOf(b)!.order) : list;
   });
-  // Заголовок уровня перед первым заклинанием этого уровня.
-  const headed = $derived(ui.type === 'spell' && ui.byLevel && !ui.query.trim());
 
   // Новая запись: тип и место.
   let creating = $state(false);
@@ -99,7 +100,7 @@
     </div>
   {/if}
 
-  {#if srdHere()}
+  {#if editionsChoice()}
     <select class="edition" title={t('cmpui.editionHint')} value={edition} onchange={(e) => setEdition(e.currentTarget.value as Edition)}>
       {#each editions as ed (ed.id)}<option value={ed.id}>{ed.title}</option>{/each}
     </select>
@@ -112,13 +113,13 @@
     {/each}
   </div>
 
-  {#if ui.type === 'spell'}<SpellFilters spells={spellsHere.map((e) => e.entry.fields)} />{/if}
+  {#if own}<own.filter entries={ofType.map((e) => e.entry.fields)} />{/if}
 
-  <div class="count faint">{t('cmpui.countOf', { n: shown.length, total: ui.type === 'spell' ? spellsHere.length : all.length })}</div>
+  <div class="count faint">{t('cmpui.countOf', { n: shown.length, total: own ? ofType.length : all.length })}</div>
   <ul class="list">
     {#each shown.slice(0, 500) as e, i (e.path)}
-      {#if headed && (i === 0 || levelOf(shown[i - 1]!) !== levelOf(e))}
-        <li class="level">{levelOf(e) === 99 ? t('cmpui.noLevel') : levelTitle(levelOf(e))}</li>
+      {#if headed && (i === 0 || groupOf(shown[i - 1]!)?.order !== groupOf(e)?.order)}
+        <li class="level">{groupOf(e)?.title}</li>
       {/if}
       <li>
         <button

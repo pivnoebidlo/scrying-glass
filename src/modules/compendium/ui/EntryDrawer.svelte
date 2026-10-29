@@ -11,13 +11,13 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
   import { forPlayers } from '../../../renderer/lib/entry/types.svelte';
-  import { closeEntryPeek, entryPeek, setSpellIndex } from '../../../renderer/lib/entry/peek.svelte';
+  import { closeEntryPeek, entryPeek } from '../../../renderer/lib/entry/peek.svelte';
   import { loadCustomTypes } from '../../../renderer/lib/entry/types.svelte';
   import type { Entry } from '../../../shared/compendium';
   import { notes } from '../../../renderer/lib/note/notes.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
-  import { allEntries, book, entryAt, loadEntries, resolveEntry, spellNames, srd, type EntryItem } from './store.svelte';
+  import { allEntries, book, entryAt, loadEntries, resolveEntry, srd, type EntryItem } from './store.svelte';
   import { rolls } from '../../../renderer/lib/rolls.svelte';
   import { fieldText } from '../../../shared/compendium';
   import { parseRollTable, TABLE_TYPE, type TableSource } from '../../../shared/rolltable';
@@ -35,7 +35,6 @@
     void book.rev;
     loadEntries();
   });
-  $effect(() => setSpellIndex(spellNames()));
 
   // Roll tables for the roll log: a link in a result rolls the table it names; tables marked «on a natural 20 / 1»
   // or on an event of the game (the ones seen here) are offered there — the events are watched by TableEvents.

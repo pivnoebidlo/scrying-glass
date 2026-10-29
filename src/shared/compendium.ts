@@ -14,76 +14,14 @@
 //
 // Только типы, подписи и чистые функции: используются ядром и окнами.
 import { familyOf } from '../systems';
-import { getLang, t, type Key } from './i18n';
+import { PLUGINS } from '../systems/plugins';
+import { t } from './i18n';
+import { entryField, entryType, type FieldDef, type FieldValue, type TypeDef } from './entrytypes';
 import { TABLE_EVENTS } from './rolltable';
 
-export type FieldValue = string | number | boolean | string[];
-
-export interface FieldDef {
-  key: string;
-  title: string;
-  kind: 'text' | 'number' | 'bool' | 'select' | 'list';
-  options?: string[];
-  // Подсказка в редакторе.
-  hint?: string;
-  // Своё поле: значение — в строке под названием («Божество, хаотично-доброе»), а не строкой «поле — значение».
-  subtitle?: boolean;
-}
-
-export interface TypeDef {
-  title: string;
-  // Во множественном числе — для фильтра: «Заклинания».
-  plural: string;
-  fields: FieldDef[];
-  // Семейство систем, к которому относится тип (dnd5e — заклинания и т. п.); нет — тип для любой системы.
-  family?: string;
-}
-
-// Choices of select fields: values written into entry files (so data, not labels), offered in the interface
-// language — the same words the built-in book of that language uses. Other languages get the English ones.
-const OPTIONS = {
-  ru: {
-    school: ['Ограждение', 'Вызов', 'Прорицание', 'Очарование', 'Воплощение', 'Иллюзия', 'Некромантия', 'Преобразование'],
-    rarity: ['Обычный', 'Необычный', 'Редкий', 'Очень редкий', 'Легендарный', 'Артефакт'],
-    itemCategory: ['Оружие', 'Доспех', 'Чудесный предмет', 'Зелье', 'Кольцо', 'Жезл', 'Посох', 'Волшебная палочка', 'Свиток', 'Снаряжение', 'Прочее'],
-    featCategory: ['Происхождение', 'Общая', 'Боевой стиль', 'Эпический дар'],
-  },
-  en: {
-    school: ['Abjuration', 'Conjuration', 'Divination', 'Enchantment', 'Evocation', 'Illusion', 'Necromancy', 'Transmutation'],
-    rarity: ['Common', 'Uncommon', 'Rare', 'Very Rare', 'Legendary', 'Artifact'],
-    itemCategory: ['Weapon', 'Armor', 'Wondrous Item', 'Potion', 'Ring', 'Rod', 'Staff', 'Wand', 'Scroll', 'Equipment', 'Other'],
-    featCategory: ['Origin', 'General', 'Fighting Style', 'Epic Boon'],
-  },
-};
-const options = (k: keyof (typeof OPTIONS)['en']) => () => (getLang() === 'ru' ? OPTIONS.ru : OPTIONS.en)[k];
-
-// Field titles and hints come from the dictionary (cmp.field.<type>.<key>, cmp.hint.<type>.<key>): getters, so they
-// follow the interface language. Option values of select fields are data written into entry files — not translated.
-const field = (type: string, key: string, kind: FieldDef['kind'], extra: { options?: () => string[]; hint?: boolean } = {}): FieldDef => ({
-  key,
-  kind,
-  ...(extra.options ? { get options() {
-    return extra.options!();
-  } } : {}),
-  get title() {
-    return t(`cmp.field.${type}.${key}` as Key);
-  },
-  get hint() {
-    return extra.hint ? t(`cmp.hint.${type}.${key}` as Key) : undefined;
-  },
-});
-
-// A built-in type: title and plural from the dictionary (cmp.type.<id>, cmp.plural.<id>).
-const type = (id: string, fields: FieldDef[], family?: string): TypeDef => ({
-  get title() {
-    return t(`cmp.type.${id}` as Key);
-  },
-  get plural() {
-    return t(`cmp.plural.${id}` as Key);
-  },
-  fields,
-  ...(family ? { family } : {}),
-});
+export type { FieldDef, FieldValue, TypeDef } from './entrytypes';
+const field = entryField;
+const type = entryType;
 
 // Поля, которые есть у любой записи.
 export const COMMON_FIELDS: FieldDef[] = [
@@ -93,45 +31,11 @@ export const COMMON_FIELDS: FieldDef[] = [
   field('common', 'source', 'text', { hint: true }),
 ];
 
-// Типы записей: D&D 5e и общие («Заметка»). Тип, которого здесь нет (из другой системы или придуманный в
+// Типы записей: систем и общие («Заметка»). Тип, которого здесь нет (из другой системы или придуманный в
 // Obsidian), всё равно показывается — поля как «поле — значение».
 export const TYPES: Record<string, TypeDef> = {
-  spell: type(
-    'spell',
-    [
-      field('spell', 'level', 'number', { hint: true }),
-      field('spell', 'school', 'select', { options: options('school') }),
-      field('spell', 'casting_time', 'text'),
-      field('spell', 'range', 'text'),
-      field('spell', 'components', 'text'),
-      field('spell', 'duration', 'text'),
-      field('spell', 'concentration', 'bool'),
-      field('spell', 'ritual', 'bool'),
-      field('spell', 'classes', 'list', { hint: true }),
-    ],
-    'dnd5e'
-  ),
-  item: type(
-    'item',
-    [
-      field('item', 'category', 'select', { options: options('itemCategory') }),
-      field('item', 'rarity', 'select', { options: options('rarity') }),
-      field('item', 'attunement', 'text', { hint: true }),
-      field('item', 'cost', 'text'),
-      field('item', 'weight', 'text'),
-    ],
-    'dnd5e'
-  ),
-  feat: type(
-    'feat',
-    [
-      field('feat', 'category', 'select', { options: options('featCategory') }),
-      field('feat', 'prerequisite', 'text'),
-      field('feat', 'repeatable', 'bool'),
-    ],
-    'dnd5e'
-  ),
-  condition: type('condition', [], 'dnd5e'),
+  // A system plugin's types first (D&D: spell, item, feat, condition), then the packs' and the common ones.
+  ...Object.assign({}, ...PLUGINS.map((p) => p.entryTypes ?? {})),
   skill: type('skill', [], 'fate'),
   // Mausritter spells: the effect is the text ([SUM], [DICE]), the recharge requirement — a field.
   mspell: type('mspell', [field('mspell', 'recharge', 'text')], 'mausritter'),
@@ -312,17 +216,10 @@ export function serializeEntry(e: Entry, def: TypeDef = typeOf(e.type)): string 
 // Строка под названием: «3 уровень, воплощение», «Чудесный предмет, редкий, требует настройки».
 export function entrySubtitle(e: Entry, def: TypeDef = e.def ?? typeOf(e.type)): string {
   const f = e.fields;
+  const own = PLUGINS.find((p) => p.entrySubtitle?.[e.type])?.entrySubtitle?.[e.type];
+  if (own) return own(f);
   const low = (v: FieldValue | undefined) => (typeof v === 'string' ? v.toLowerCase() : '');
   switch (e.type) {
-    case 'spell': {
-      const lvl = typeof f['level'] === 'number' ? f['level'] : null;
-      const head = lvl === 0 ? t('cmp.sub.cantrip') : lvl !== null ? t('cmp.sub.level', { n: lvl }) : t('cmp.type.spell');
-      return [head, low(f['school']), f['ritual'] ? t('cmp.sub.ritual') : '', f['concentration'] ? t('cmp.sub.concentration') : ''].filter(Boolean).join(', ');
-    }
-    case 'item':
-      return [f['category'] || t('cmp.type.item'), low(f['rarity']), f['attunement'] ? t('cmp.sub.attunement') + (f['attunement'] === 'да' || f['attunement'] === 'yes' || f['attunement'] === true ? '' : ` (${f['attunement']})`) : ''].filter(Boolean).join(', ');
-    case 'feat':
-      return [f['category'] ? t('cmp.sub.featOf', { category: low(f['category']) }) : t('cmp.type.feat'), f['prerequisite'] ? t('cmp.sub.requires', { what: String(f['prerequisite']) }) : ''].filter(Boolean).join(', ');
     default: {
       // Свой тип: название типа и поля, отмеченные «в строке под названием».
       const marked = def.fields.filter((d) => d.subtitle && f[d.key] !== undefined && f[d.key] !== '' && f[d.key] !== false);
@@ -344,54 +241,3 @@ export const blankEntry = (type: string, title = ''): Entry => ({ title, type, f
 // Для поиска: название, метки и текст без разметки, без учёта регистра и «ё».
 export const searchKey = (s: string) => s.toLowerCase().replace(/ё/g, 'е');
 
-// ---------- Фильтр заклинаний (как на dnd.su): уровень, класс, школа, время накладывания, концентрация, ритуал ----------
-
-export type CastingKind = 'action' | 'bonus' | 'reaction' | 'long';
-export const castingTitle = (k: CastingKind) => t(`cmp.casting.${k}`);
-export const CASTING_KINDS: CastingKind[] = ['action', 'bonus', 'reaction', 'long'];
-
-// «Бонусное действие» -> bonus, «1 минута» -> long. Пусто — неизвестно.
-export function castingKind(v: FieldValue | undefined): CastingKind | null {
-  const t = typeof v === 'string' ? searchKey(v) : '';
-  if (!t) return null;
-  if (/бонусн|bonus/.test(t)) return 'bonus';
-  if (/реакци|reaction/.test(t)) return 'reaction';
-  if (/^(1 )?(действие|action)\b/.test(t)) return 'action';
-  return 'long';
-}
-
-export interface SpellFilter {
-  levels: number[];
-  classes: string[];
-  schools: string[];
-  times: CastingKind[];
-  concentration: 'any' | 'yes' | 'no';
-  ritual: 'any' | 'yes' | 'no';
-}
-
-export const NO_SPELL_FILTER: SpellFilter = { levels: [], classes: [], schools: [], times: [], concentration: 'any', ritual: 'any' };
-
-export const spellFilterOn = (f: SpellFilter) =>
-  !!(f.levels.length || f.classes.length || f.schools.length || f.times.length || f.concentration !== 'any' || f.ritual !== 'any');
-
-const listOf = (v: FieldValue | undefined) => (Array.isArray(v) ? v : typeof v === 'string' && v ? v.split(',') : []).map((x) => searchKey(String(x).trim()));
-
-// Подходит ли заклинание: внутри одного признака — любое из выбранного, между признаками — все сразу.
-export function spellMatches(fields: Record<string, FieldValue>, f: SpellFilter): boolean {
-  if (f.levels.length && !f.levels.includes(Number(fields['level'] ?? -1))) return false;
-  if (f.classes.length) {
-    const own = listOf(fields['classes']);
-    if (!f.classes.some((c) => own.includes(searchKey(c)))) return false;
-  }
-  if (f.schools.length && !f.schools.some((s) => searchKey(s) === searchKey(String(fields['school'] ?? '')))) return false;
-  if (f.times.length) {
-    const k = castingKind(fields['casting_time']);
-    if (!k || !f.times.includes(k)) return false;
-  }
-  if (f.concentration !== 'any' && !!fields['concentration'] !== (f.concentration === 'yes')) return false;
-  if (f.ritual !== 'any' && !!fields['ritual'] !== (f.ritual === 'yes')) return false;
-  return true;
-}
-
-// Подпись уровня: «Заговоры», «1 уровень».
-export const levelTitle = (level: number) => (level === 0 ? t('cmp.sub.cantrips') : t('cmp.sub.level', { n: level }));

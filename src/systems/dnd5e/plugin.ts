@@ -4,6 +4,7 @@ import type { SystemPlugin } from '../plugin';
 import * as statblock from './stats';
 import * as character from './character';
 import { dndTracker } from './tracker';
+import { ENTRY_SUBTITLES, ENTRY_TYPES } from './entries';
 
 // Two shapes of stats: a stat block (monsters, NPCs) and a player character's sheet.
 const dnd = (id: string, title: string, short: string): SystemDef => ({
@@ -25,4 +26,6 @@ export const dnd5ePlugin: SystemPlugin = {
   systems: [dnd('dnd5e-2024', 'D&D 5e (2024)', '2024'), dnd('dnd5e-2014', 'D&D 5e (2014)', '2014')],
   // Adventures from before the choice of systems are D&D.
   legacy: 'dnd5e-2024',
+  entryTypes: ENTRY_TYPES,
+  entrySubtitle: ENTRY_SUBTITLES,
 };

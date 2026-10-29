@@ -4,7 +4,7 @@
   import { locale, t } from '../../renderer/lib/i18n.svelte';
   import type { Card } from '../../shared/cards';
   import { escape, markdown } from '../../renderer/lib/markdown';
-  import { spellLinks } from '../../renderer/lib/entry/links';
+  import { spellLinks } from './links';
   import { Dices } from '@lucide/svelte';
   import { modeOf, rolls, rollHint } from '../../renderer/lib/rolls.svelte';
   import { spellBlock } from './spells';
