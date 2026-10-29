@@ -6,8 +6,9 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { FAMILIES, systemOf, systems } from '../../../systems';
   import { systemFor } from '../../../shared/adventures';
-  import { Blocks, Globe, Trash2 } from '@lucide/svelte';
-  import { openRepo } from '../../repo/ui/repo.svelte';
+  import { Blocks, Download, FileDown, Globe, Package, Trash2 } from '@lucide/svelte';
+  import { contentVersion, installContent, loadCatalogs, officialContent, openRepo, removeContent, repo } from '../../repo/ui/repo.svelte';
+  import { onMount } from 'svelte';
   import { closeSettings } from '../../../renderer/lib/nav';
   import { openBuilder } from '../../tools/syspack/store.svelte';
   import { packOf } from '../../../systems/packs';
@@ -33,6 +34,16 @@
       .map((a) => `${t('common.quote', { text: a })}${off.has(id) ? t('adv.hidden') : ''}`)
       .concat(systemFor(ms, null) === id ? [t('adv.wholeVault')] : []);
 
+  // Content of the systems (their creatures and compendium books, shared/content.ts): what is installed, and the
+  // official content of a family not downloaded yet (from the catalog).
+  onMount(() => void loadCatalogs());
+  const installed = (family: string) => app.vault.content.filter((c) => c.family === family);
+  const missing = (family: string) => (repo.info, officialContent(family).filter((e) => !contentVersion(e) && !installed(family).some((c) => c.title === e.title)));
+  async function fromFile() {
+    const m = await window.api.installContentFile();
+    if (m) repo.info = await window.api.repoInfo();
+  }
+
   function toggle(id: string, on: boolean) {
     const next = on ? [...off].filter((x) => x !== id) : [...off, id];
     dispatch('vault', 'setSystemsOff', { list: next });
@@ -47,6 +58,7 @@
   <span class="buttons">
     <button class="btn" onclick={() => (closeSettings(), openRepo('all', 'systems'))}><Globe size={14} /> {t('adv.findSystems')}</button>
     <button class="btn" onclick={() => (closeSettings(), openBuilder())}><Blocks size={14} /> {t('sb.title')}</button>
+    <button class="btn" title={t('adv.contentFromFileHint')} onclick={fromFile}><FileDown size={14} /> {t('adv.contentFromFile')}</button>
   </span>
 </div>
 
@@ -77,6 +89,24 @@
       />
     </label>
   {/each}
+  {#each installed(f.id) as c (c.id)}
+    <div class="setting content">
+      <div class="info">
+        <div class="name"><Package size={13} /> {c.title}</div>
+        <div class="desc">{t('adv.contentHas', { cards: c.cards ?? 0, books: c.books ?? 0 })}</div>
+      </div>
+      <button class="btn" disabled={!!repo.busy} onclick={() => removeContent(c.id, c.title)}><Trash2 size={13} /> {t('repo.removeContent')}</button>
+    </div>
+  {/each}
+  {#each missing(f.id) as e (e.id)}
+    <div class="setting content">
+      <div class="info">
+        <div class="name"><Package size={13} /> {e.title}</div>
+        <div class="desc">{t('adv.contentMissing')}</div>
+      </div>
+      <button class="btn primary" disabled={!!repo.busy} onclick={() => installContent(e)}><Download size={13} /> {t('repo.installContent')}</button>
+    </div>
+  {/each}
 {/each}
 
 <style>
@@ -92,6 +122,11 @@
   }
   .used {
     color: var(--text-faint);
+  }
+  .content .name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   .builder {
     display: flex;

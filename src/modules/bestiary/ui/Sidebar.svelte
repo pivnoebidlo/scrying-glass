@@ -13,6 +13,7 @@
   import { bestiary, connectCards } from './cards.svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { cardMenu } from './menu.svelte';
+  import ContentHint from '../../repo/ui/ContentHint.svelte';
 
   let { app }: ModuleProps<'bestiary'> = $props();
 
@@ -143,6 +144,7 @@
   </select>
 </div>
 
+<ContentHint />
 {#if status}<div class="status">{status}</div>{/if}
 <div class="count faint">{bestiary.visible.length} {bestiary.visible.length === inFamily ? '' : t('best.ofTotal', { total: inFamily })}</div>
 

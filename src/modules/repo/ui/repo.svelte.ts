@@ -3,14 +3,15 @@
 // flow. The work is the core's (main/repo.ts); here — the window's side and the words for its errors.
 import { t } from '../../../renderer/lib/i18n.svelte';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
-import { systems } from '../../../systems';
+import { isEnabled, systems } from '../../../systems';
 import type { CardRef } from '../../../shared/cards';
-import { sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type BlockedEntry, type Report, type ReportedEntry, type ReportReason, type SourceInfo } from '../../../shared/repo';
+import { PLUGINS } from '../../../systems/plugins';
+import { OFFICIAL_AUTHOR, OFFICIAL_SOURCE, sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type BlockedEntry, type Report, type ReportedEntry, type ReportReason, type SourceInfo } from '../../../shared/repo';
 
 // An entry of a catalog with the source it is in.
 export type Found = RepoEntry & { source: string };
 // The kinds of things in the Community (the «What» of the window).
-export type What = 'adventures' | 'supplements' | 'systems' | 'bestiaries';
+export type What = 'adventures' | 'supplements' | 'systems' | 'bestiaries' | 'content';
 
 export const repo = $state({
   info: null as RepoInfo | null,
@@ -146,7 +147,8 @@ export function updatesHere(): { key: string; entry: Found }[] {
     .flatMap(([folder, m]) => (newer(m) ? [{ key: folder, entry: newer(m)! }] : []));
   const packs = Object.entries(repo.info?.systems.installed ?? {}).flatMap(([pack, m]) => (newer(m) ? [{ key: `system:${pack}`, entry: newer(m)! }] : []));
   const beasts = Object.entries(repo.info?.bestiaries.installed ?? {}).flatMap(([key, m]) => (newer(m) ? [{ key: `bestiary:${key}`, entry: newer(m)! }] : []));
-  return [...adventures, ...packs, ...beasts];
+  const content = Object.entries(repo.info?.content.installed ?? {}).flatMap(([id, m]) => (newer(m) ? [{ key: `content:${id}`, entry: newer(m)! }] : []));
+  return [...adventures, ...packs, ...beasts, ...content];
 }
 
 // A system pack downloaded: which version this library has (0 — none).
@@ -162,6 +164,33 @@ export const systemKnown = (id: string) => systems.some((s) => s.id === id);
 // A downloaded bestiary: which version the library has (0 — none).
 const bestiaryKey = (e: Found) => `${e.source}/${e.author}/${e.id}`;
 export const bestiaryVersion = (e: Found) => repo.info?.bestiaries.installed[bestiaryKey(e)]?.version ?? 0;
+
+// Content of a system (shared/content.ts) downloaded: its id in the library and the version (0 — none).
+const contentMark = (e: Found) => Object.entries(repo.info?.content.installed ?? {}).find(([, m]) => m.source === e.source && m.author === e.author && m.id === e.id);
+export const contentVersion = (e: Found) => contentMark(e)?.[1].version ?? 0;
+
+export async function installContent(e: Found): Promise<boolean> {
+  const { source, ...entry } = $state.snapshot(e) as Found;
+  const m = await work(t('repo.downloading', { name: e.title }), () => window.api.repoInstallContent(source, entry));
+  if (!m) return false;
+  repo.info = await window.api.repoInfo();
+  notice(t('repo.contentInstalled', { name: e.title }));
+  return true;
+}
+
+export async function removeContent(id: string, title: string) {
+  if (!confirm(t('repo.contentRemoveAsk', { name: title }))) return;
+  if (await window.api.removeContent(id)) {
+    repo.info = await window.api.repoInfo();
+    notice(t('repo.contentRemoved', { name: title }));
+  }
+}
+// The id in the library of a downloaded entry of content (to remove it from the catalog).
+export const contentIdOf = (e: Found) => contentMark(e)?.[0] ?? null;
+
+// The official content of a family that the library doesn't have (D&D: its SRD), from the catalogs loaded.
+export const officialContent = (family: string) =>
+  allFound().filter((e) => e.kind === 'content' && e.system === family && e.author === OFFICIAL_AUTHOR && e.source === OFFICIAL_SOURCE);
 
 export async function installBestiary(e: Found) {
   const { source, ...entry } = $state.snapshot(e) as Found;
@@ -237,6 +266,36 @@ export async function checkUpdates() {
   repo.updates = updatesHere().filter((u) => !told.has(stamp(u)));
 }
 
+// Families of the system plugins turned on that have no content installed: their official content is downloaded
+// once (until 0.65 D&D's SRD came with the installer — an update must not lose it; a first launch gets it too).
+// Removed by the GM later — not downloaded again. Offline — tried on the next launch.
+const AUTO_CONTENT = 'sg.content.auto';
+export async function autoContent() {
+  let done: string[] = [];
+  try {
+    done = JSON.parse(localStorage.getItem(AUTO_CONTENT) ?? '[]') as string[];
+  } catch {
+    // A convenience only.
+  }
+  const families = [...new Set(PLUGINS.flatMap((p) => p.systems).filter((s) => isEnabled(s.id)).map((s) => s.family))].filter(
+    (f) => !done.includes(f) && !store.state.vault.content.some((c) => c.family === f),
+  );
+  if (!families.length) return;
+  await loadCatalogs(OFFICIAL_SOURCE);
+  for (const f of families) {
+    const list = officialContent(f);
+    if (!list.length) continue;
+    let got = false;
+    for (const e of list) got = (await installContent(e)) || got;
+    if (got) done.push(f);
+  }
+  try {
+    localStorage.setItem(AUTO_CONTENT, JSON.stringify(done));
+  } catch {
+    // A convenience only.
+  }
+}
+
 // The notice is seen (closed or followed): these versions aren't announced again.
 export function updatesSeen() {
   const told = new Set<string>(JSON.parse(localStorage.getItem(ANNOUNCED) ?? '[]'));
@@ -306,6 +365,7 @@ export function installedFolder(e: Found): string | null {
 // Download and install. An update first offers to move the old copy to the trash (and takes its name).
 export async function install(e: Found) {
   if (e.kind === 'system') return installSystem(e);
+  if (e.kind === 'content') return installContent(e);
   if (e.kind === 'bestiary') return installBestiary(e);
   const old = installedFolder(e);
   const got = await work(t('repo.downloading', { name: e.title }), () => window.api.repoDownload(e.source, e.author, e.id));

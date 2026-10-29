@@ -4,11 +4,12 @@
   import { Download, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { checkUpdates, openRepo, repo, updatesSeen } from './repo.svelte';
+  import { autoContent, checkUpdates, openRepo, repo, updatesSeen } from './repo.svelte';
 
   // A while after launch: the vault and its state are there, the start isn't slowed down.
   onMount(() => {
-    const timer = setTimeout(() => void checkUpdates().catch(() => undefined), 6000);
+    // The official content of the systems turned on, if missing (D&D's SRD after an update), then the updates.
+    const timer = setTimeout(() => void autoContent().catch(() => undefined).then(() => checkUpdates()).catch(() => undefined), 6000);
     return () => clearTimeout(timer);
   });
 

@@ -34,4 +34,6 @@ export const dnd5ePlugin: SystemPlugin = {
   entryTypes: ENTRY_TYPES,
   entrySubtitle: ENTRY_SUBTITLES,
   importers: [lssImporter],
+  // The SRD 5.1 and 5.2.1: creatures and compendium books (content/dnd5e-srd/).
+  content: ['dnd5e-srd'],
 };

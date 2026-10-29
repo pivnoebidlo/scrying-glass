@@ -9,6 +9,7 @@
   import { t } from '../lib/i18n.svelte';
   import { OFFICIAL_AUTHOR, OFFICIAL_SOURCE, type RepoEntry } from '../../shared/repo';
   import { PLUGINS } from '../../systems/plugins';
+  import { autoContent } from '../../modules/repo/ui/repo.svelte';
 
   const BUILT_IN = PLUGINS.flatMap((p) => p.systems);
   const builtIn = $state<Record<string, boolean>>(Object.fromEntries(BUILT_IN.map((s) => [s.id, true])));
@@ -49,6 +50,8 @@
     }
     busy = '';
     await dispatch('vault', 'setSystemsOff', { list: BUILT_IN.filter((d) => !builtIn[d.id]).map((d) => d.id) });
+    // The built-in systems ticked get their content (D&D: its SRD) — in the background, with a notice.
+    void autoContent().catch(() => undefined);
     if (!failed.length) await dispatch('vault', 'systemsChosen');
   }
   const skip = () => dispatch('vault', 'systemsChosen');

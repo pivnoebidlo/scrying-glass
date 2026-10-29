@@ -13,6 +13,7 @@
   import { openEntry, ui } from './ui.svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { entryMenu } from './menu.svelte';
+  import ContentHint from '../../repo/ui/ContentHint.svelte';
 
   let { app }: ModuleProps<'compendium'> = $props();
   // Редакции SRD без отключённых в настройках систем.
@@ -100,6 +101,7 @@
     </div>
   {/if}
 
+  <ContentHint />
   {#if editionsChoice()}
     <select class="edition" title={t('cmpui.editionHint')} value={edition} onchange={(e) => setEdition(e.currentTarget.value as Edition)}>
       {#each editions as ed (ed.id)}<option value={ed.id}>{ed.title}</option>{/each}

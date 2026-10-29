@@ -19,4 +19,6 @@ export interface SystemPlugin {
   entrySubtitle?: Record<string, (fields: Record<string, FieldValue>) => string>;
   // Importers of characters from other services (D&D: Long Story Short).
   importers?: CardImporter[];
+  // Ids of the official content of the family (shared/content.ts), downloaded from the Community (D&D: its SRD).
+  content?: string[];
 }

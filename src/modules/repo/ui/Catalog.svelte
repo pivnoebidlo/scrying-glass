@@ -10,10 +10,10 @@
   import { getLang } from '../../../shared/i18n';
   import { store } from '../../../renderer/lib/store.svelte';
   import { openSettings } from '../../../renderer/lib/nav';
-  import { enabledSystems, systems } from '../../../systems';
+  import { enabledSystems, FAMILIES, familyOf, systems } from '../../../systems';
   import { LANGS } from '../../../shared/i18n/core';
   import { matchesQuery, shortKey } from '../../../shared/repo';
-  import { adminRemove, allFound, bestiaryVersion, installSystem, missingSystem, removeBestiary, systemVersion, type What, unblock, updatesHere, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
+  import { adminRemove, allFound, bestiaryVersion, contentIdOf, contentVersion, removeContent, installSystem, missingSystem, removeBestiary, systemVersion, type What, unblock, updatesHere, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
 
   let query = $state('');
   let source = $state('');
@@ -72,6 +72,13 @@
       },
       fits: (e) => e.kind === 'system',
     },
+    {
+      id: 'content',
+      get title() {
+        return t('repo.whatContent');
+      },
+      fits: (e) => e.kind === 'content',
+    },
   ];
   const entries = $derived(
     found
@@ -80,7 +87,7 @@
       // Adventures of systems turned off are nowhere to be seen (but the GM's own are).
       .filter((e) => e.kind === 'system' || e.author === me || enabled.some((s) => s.id === e.system) || !systems.some((s) => s.id === e.system))
       .filter((e) => !source || e.source === source)
-      .filter((e) => e.kind === 'system' || !system || e.system === system)
+      .filter((e) => e.kind === 'system' || !system || e.system === system || (e.kind === 'content' && e.system === familyOf(system)))
       .filter((e) => !lang || e.lang === lang)
       .filter((e) => show !== 'mine' || e.author === me)
       .filter((e) => show !== 'installed' || installedVersion(e) > 0)
@@ -106,12 +113,15 @@
       ? t('repo.kindSystem')
       : e.kind === 'bestiary'
         ? `${t('repo.kindBestiary')} · ${systemTitle(e.system)}`
+        : e.kind === 'content'
+          ? `${t('repo.kindContent')} · ${FAMILIES.find((f) => f.id === e.system)?.title ?? e.system}`
         : e.kind === 'supplement'
           ? `${t('repo.kindSupplement')}${SUPPLEMENT_KINDS.includes(e.subkind as SupplementKind) ? ` (${t(`adv.kind.${e.subkind as SupplementKind}`)})` : ''} · ${systemTitle(e.system)}`
           : systemTitle(e.system);
   const installedVersion = (e: Found) => {
     if (e.kind === 'system') return systemVersion(e);
     if (e.kind === 'bestiary') return bestiaryVersion(e);
+    if (e.kind === 'content') return contentVersion(e);
     const f = installedFolder(e);
     return f ? (app.repo.installed[f]?.version ?? 0) : 0;
   };
@@ -128,12 +138,13 @@
     chosen = key(e);
     const have = installedVersion(e);
     const busy = !!repo.busy;
-    const get = have && have >= e.version ? t('repo.again') : have ? t('repo.update', { n: e.version }) : e.kind === 'system' ? t('repo.installSystem') : e.kind === 'bestiary' ? t('repo.installBestiary') : t('repo.download');
+    const get = have && have >= e.version ? t('repo.again') : have ? t('repo.update', { n: e.version }) : e.kind === 'system' ? t('repo.installSystem') : e.kind === 'bestiary' ? t('repo.installBestiary') : e.kind === 'content' ? t('repo.installContent') : t('repo.download');
     rowMenu = {
       ...menuAt(ev),
       items: [
         { label: get, icon: Download, disabled: busy, action: () => void install(e) },
         ...(e.kind === 'bestiary' && have ? [{ label: t('repo.removeBestiary'), icon: Trash2, disabled: busy, action: () => void removeBestiary(e) }] : []),
+        ...(e.kind === 'content' && contentIdOf(e) ? [{ label: t('repo.removeContent'), icon: Trash2, disabled: busy, action: () => void removeContent(contentIdOf(e)!, e.title) }] : []),
         e.author === me
           ? { label: t('repo.unpublish'), icon: Trash2, danger: true, disabled: busy, action: () => void unpublish(e) }
           : { label: t('repo.report.button'), icon: Flag, disabled: busy, action: () => (repo.reporting = e) },
@@ -281,10 +292,13 @@
               {:else if have}
                 <button class="btn primary" disabled={!!repo.busy} onclick={() => install(e)}><Download size={14} /> {t('repo.update', { n: e.version })}</button>
               {:else}
-                <button class="btn primary" disabled={!!repo.busy} onclick={() => install(e)}><Download size={14} /> {e.kind === 'system' ? t('repo.installSystem') : e.kind === 'bestiary' ? t('repo.installBestiary') : t('repo.download')}</button>
+                <button class="btn primary" disabled={!!repo.busy} onclick={() => install(e)}><Download size={14} /> {e.kind === 'system' ? t('repo.installSystem') : e.kind === 'bestiary' ? t('repo.installBestiary') : e.kind === 'content' ? t('repo.installContent') : t('repo.download')}</button>
               {/if}
               {#if e.kind === 'bestiary' && have}
                 <button class="btn" disabled={!!repo.busy} onclick={() => removeBestiary(e)}><Trash2 size={14} /> {t('repo.removeBestiary')}</button>
+              {/if}
+              {#if e.kind === 'content' && contentIdOf(e)}
+                <button class="btn" disabled={!!repo.busy} onclick={() => removeContent(contentIdOf(e)!, e.title)}><Trash2 size={14} /> {t('repo.removeContent')}</button>
               {/if}
               {#if e.author === me}
                 <button class="btn danger" disabled={!!repo.busy} onclick={() => unpublish(e)}><Trash2 size={14} /> {t('repo.unpublish')}</button>
