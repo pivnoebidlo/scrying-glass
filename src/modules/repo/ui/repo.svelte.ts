@@ -11,7 +11,7 @@ import { OFFICIAL_AUTHOR, OFFICIAL_SOURCE, sourceOf, type RepoCatalog, type Repo
 // An entry of a catalog with the source it is in.
 export type Found = RepoEntry & { source: string };
 // The kinds of things in the Community (the «What» of the window).
-export type What = 'adventures' | 'supplements' | 'systems' | 'bestiaries';
+export type What = 'everything' | 'adventures' | 'supplements' | 'systems' | 'bestiaries';
 
 export const repo = $state({
   info: null as RepoInfo | null,
@@ -26,7 +26,7 @@ export const repo = $state({
   // The catalog window is open; the filter it opens with.
   browsing: false,
   startShow: 'all' as 'all' | 'updates',
-  startWhat: 'adventures' as What,
+  startWhat: 'everything' as What,
   // New versions of what this vault downloaded, found on launch and not announced yet.
   updates: [] as { key: string; entry: Found }[],
   covers: {} as Record<string, string | null>,
@@ -129,7 +129,7 @@ async function work<T>(what: string, fn: () => Promise<T>): Promise<T | undefine
 }
 
 // Open the catalog window (on the updates of what was downloaded — after the launch notice).
-export function openRepo(show: 'all' | 'updates' = 'all', what: What = 'adventures') {
+export function openRepo(show: 'all' | 'updates' = 'all', what: What = 'everything') {
   repo.startShow = show;
   repo.startWhat = what;
   repo.browsing = true;

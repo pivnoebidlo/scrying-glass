@@ -1,10 +1,11 @@
 <!-- The author's key is only on this computer (no words written down, no file of it yet) and something is published
-     with it: a plate in the corner — write down the recovery words, save it to a file, «it is kept already», or later (a few days; a new publish brings it back). Without the
+     with it: a plate with the other notices (lib/dock.ts) — write down the recovery words, save it to a file, «it is kept already», or later (a few days; a new publish brings it back). Without the
      key, after a reinstall the GM can't update or remove what they published. -->
 <script lang="ts">
   import { KeyRound, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
+  import { dock } from '../../../renderer/lib/dock';
   import type { AppState } from '../../../shared/types';
   import { loadInfo, remindKey, repo } from './repo.svelte';
 
@@ -30,7 +31,7 @@
 </script>
 
 {#if shown}
-  <div class="notice" role="status">
+  <div class="notice" role="status" use:dock>
     <div class="head">
       <KeyRound size={15} />
       <b>{t('repo.key.title')}</b>
@@ -48,16 +49,10 @@
 
 <style>
   .notice {
-    position: fixed;
-    -webkit-app-region: no-drag;
-    /* Past the module strip: its settings button is in that corner. */
-    left: 84px;
-    bottom: 16px;
-    z-index: 90;
     display: flex;
     flex-direction: column;
     gap: 6px;
-    width: min(420px, calc(100vw - 100px));
+    width: min(380px, calc(100vw - 32px));
     padding: 10px 12px 12px 14px;
     border: 1px solid var(--warning);
     border-radius: var(--radius-m);

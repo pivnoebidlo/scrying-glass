@@ -1,9 +1,10 @@
-<!-- New versions of what this vault downloaded from the Community, found on launch: a small plate in the corner —
+<!-- New versions of what this vault downloaded from the Community, found on launch: a plate with the other notices (lib/dock.ts) —
      look (the catalog on «Updates») or close; either way these versions aren't announced again. -->
 <script lang="ts">
   import { Download, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
+  import { dock } from '../../../renderer/lib/dock';
   import { autoContent, checkUpdates, openRepo, repo, updatesSeen } from './repo.svelte';
 
   // A while after launch: the vault and its state are there, the start isn't slowed down.
@@ -18,7 +19,7 @@
 </script>
 
 {#if repo.updates.length && !repo.browsing}
-  <div class="notice" role="status">
+  <div class="notice" role="status" use:dock>
     <div class="head">
       <b>{t('repo.updates.title')}</b>
       <button class="icon-btn" title={t('repo.close')} onclick={updatesSeen}><X size={14} /></button>
@@ -35,15 +36,10 @@
 
 <style>
   .notice {
-    position: fixed;
-    -webkit-app-region: no-drag;
-    right: 16px;
-    bottom: 16px;
-    z-index: 90;
     display: flex;
     flex-direction: column;
     gap: 6px;
-    width: min(340px, calc(100vw - 32px));
+    width: min(380px, calc(100vw - 32px));
     padding: 10px 12px 12px 14px;
     border: 1px solid var(--accent);
     border-radius: var(--radius-m);

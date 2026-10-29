@@ -419,6 +419,10 @@
   .content.scroll {
     inset: 10cqw 9cqw;
   }
+  /* Each alignment is set: a tile or a preview around the paper may center its text. */
+  .content.left {
+    text-align: left;
+  }
   .content.center {
     text-align: center;
   }

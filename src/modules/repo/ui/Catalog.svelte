@@ -44,6 +44,14 @@
   const updates = $derived(repo.info ? updatesHere().map((u) => key(u.entry)) : []);
   // The kinds of things in the Community (bestiaries and more will come here).
   const KINDS: { id: What; title: string; fits: (e: Found) => boolean }[] = [
+    // The whole catalog (the default): a search finds anything.
+    {
+      id: 'everything',
+      get title() {
+        return t('repo.whatEverything');
+      },
+      fits: () => true,
+    },
     {
       id: 'adventures',
       get title() {
@@ -76,8 +84,7 @@
   ];
   const entries = $derived(
     found
-      // Updates are of both kinds; otherwise — the kind chosen.
-      .filter((e) => show === 'updates' || !!KINDS.find((k) => k.id === what)?.fits(e))
+      .filter((e) => !!KINDS.find((k) => k.id === what)?.fits(e))
       // Adventures of systems turned off are nowhere to be seen (but the GM's own are).
       .filter((e) => e.kind === 'system' || e.author === me || enabled.some((s) => s.id === e.system) || !systems.some((s) => s.id === e.system))
       .filter((e) => !source || e.source === source)

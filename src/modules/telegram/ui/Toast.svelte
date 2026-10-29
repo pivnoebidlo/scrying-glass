@@ -1,10 +1,11 @@
-<!-- A new message from a player: a toast in the corner of the control window (a few seconds; a click opens the
+<!-- A new message from a player: a toast with the other notices (lib/dock.ts) (a few seconds; a click opens the
      conversation in Tools). Not shown while the conversation is open. -->
 <script lang="ts">
   import { hint } from '../../../shared/hotkeys';
   import { MessageCircle, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
+  import { dock } from '../../../renderer/lib/dock';
   import { openTab } from '../../../renderer/lib/nav';
   import { chatName } from '../../../shared/telegram';
   import { pickTool, ui as toolsUi } from '../../tools/ui/ui.svelte';
@@ -32,7 +33,7 @@
 
 {#if tg.toast}
   {@const m = tg.toast}
-  <div class="toast" role="status">
+  <div class="toast" role="status" use:dock>
     <button class="body" onclick={open}>
       <MessageCircle size={16} />
       <span class="txt">
@@ -46,15 +47,10 @@
 
 <style>
   .toast {
-    position: fixed;
-    -webkit-app-region: no-drag;
-    right: 16px;
-    bottom: 16px;
-    z-index: 60;
     display: flex;
     align-items: flex-start;
     gap: 4px;
-    width: 340px;
+    width: min(380px, calc(100vw - 32px));
     padding: 8px 6px 8px 12px;
     border: 1px solid var(--border);
     border-left: 3px solid var(--accent);

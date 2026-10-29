@@ -271,3 +271,22 @@ a.wikilink.spell:hover { color: var(--accent); }
 :root:is([data-frame='mac'], [data-frame='overlay']) .drag :is(button, input, select, textarea, a, label, [role='button'], .no-drag) {
   -webkit-app-region: no-drag;
 }
+
+/* The notices of the control window (renderer/lib/dock.ts): one column in the bottom right corner. */
+.sg-dock {
+  position: fixed;
+  -webkit-app-region: no-drag;
+  right: 16px;
+  bottom: 16px;
+  z-index: 130;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+.sg-dock > * {
+  pointer-events: auto;
+  max-width: 100%;
+}
