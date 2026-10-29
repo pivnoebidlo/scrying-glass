@@ -1,9 +1,9 @@
 // Reshape a stat block: the base card and what is done to it (kept while the window is open).
-import { openTab } from '../../../renderer/lib/nav';
-import type { Card, CardRef } from '../../../shared/cards';
-import { NO_RESHAPE, parseOwnTemplates, parseOwnWeapons, type OwnWeapon, type OwnTemplate, type Reshape } from '../../../systems/dnd5e/reshape';
-import type { Dnd5eStats } from '../../../systems/dnd5e/stats';
-import { ui } from '../ui/ui.svelte';
+import { openTab } from '../../../../renderer/lib/nav';
+import type { Card, CardRef } from '../../../../shared/cards';
+import { NO_RESHAPE, parseOwnTemplates, parseOwnWeapons, type OwnWeapon, type OwnTemplate, type Reshape } from '../../reshape';
+import type { Dnd5eStats } from '../../stats';
+import { ui } from '../../../../modules/tools/ui/ui.svelte';
 
 export const rs = $state({
   base: null as Card<Dnd5eStats> | null,

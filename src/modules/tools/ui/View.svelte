@@ -13,10 +13,7 @@
   import { isSketchPath } from '../../../shared/sketch';
   import { noteGroups } from './library';
   import { ui } from './ui.svelte';
-  import Calculator from '../difficulty/Calculator.svelte';
   import TimerTool from '../../timer/ui/TimerTool.svelte';
-  import PointBuy from '../pointbuy/PointBuy.svelte';
-  import Reshape from '../reshape/Reshape.svelte';
   import NameGenerator from '../names/NameGenerator.svelte';
   import TavernGenerator from '../tavern/TavernGenerator.svelte';
   import NpcGenerator from '../npc/NpcGenerator.svelte';
@@ -33,28 +30,25 @@
   import ShopGenerator from '../shop/ShopGenerator.svelte';
   import RelicGenerator from '../relic/RelicGenerator.svelte';
   import DungeonGenerator from '../dungeon/DungeonGenerator.svelte';
-  import TravelCalculator from '../travel/TravelCalculator.svelte';
-  import WildMagic from '../wildmagic/WildMagic.svelte';
   import SchedulePage from '../../schedule/ui/SchedulePage.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
   import RollTables from '../rolltables/RollTables.svelte';
 
   import { currentSystem } from '../../../shared/adventures';
   import { familyOf } from '../../../systems';
-  import { shown } from './registry.svelte';
+  import { shown, TOOLS } from './registry.svelte';
   import type { Component } from 'svelte';
 
   let { app }: ModuleProps<'tools'> = $props();
   const family = $derived(familyOf(currentSystem(app.adventures)));
   // The page of each tool; a tool hidden in this system (another system's, not turned on) — the notes instead.
   const PAGES: Partial<Record<string, Component>> = {
-    schedule: SchedulePage, names: NameGenerator, travel: TravelCalculator, dungeon: DungeonGenerator, relic: RelicGenerator,
+    schedule: SchedulePage, names: NameGenerator, dungeon: DungeonGenerator, relic: RelicGenerator,
     shop: ShopGenerator, settlement: SettlementGenerator, treasure: TreasureGenerator, events: EventsGenerator,
     weather: WeatherGenerator, mouse: MouseGenerator, mausTables: MausTables, factions: Factions, build: BuildCalculator, mausShop: MausShop, npc: NpcGenerator,
-    tavern: TavernGenerator, telegram: TelegramCompose, difficulty: Calculator, timer: TimerTool, pointbuy: PointBuy, reshape: Reshape,
-    wildMagic: WildMagic, crew: CrewSheet, systems: SystemBuilder, rollTables: RollTables,
+    tavern: TavernGenerator, telegram: TelegramCompose, timer: TimerTool, crew: CrewSheet, systems: SystemBuilder, rollTables: RollTables,
   };
-  const Page = $derived(ui.tool !== 'notes' && ui.tool !== 'sketches' && shown(ui.tool, family) ? PAGES[ui.tool] : undefined);
+  const Page = $derived(ui.tool !== 'notes' && ui.tool !== 'sketches' && shown(ui.tool, family) ? (PAGES[ui.tool] ?? TOOLS.find((d) => d.id === ui.tool)?.page) : undefined);
 
   connectNotes();
   // The notes' page or the canvases' (both live in the handouts folders).

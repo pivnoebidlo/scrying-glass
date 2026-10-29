@@ -2,7 +2,8 @@
 import { openTab } from '../../../renderer/lib/nav';
 import { isSketchPath } from '../../../shared/sketch';
 
-export type ToolId = 'notes' | 'sketches' | 'names' | 'npc' | 'tavern' | 'weather' | 'events' | 'treasure' | 'settlement' | 'shop' | 'relic' | 'dungeon' | 'travel' | 'schedule' | 'telegram' | 'difficulty' | 'timer' | 'pointbuy' | 'mouse' | 'mausTables' | 'factions' | 'reshape' | 'wildMagic' | 'crew' | 'systems' | 'rollTables' | 'build' | 'mausShop';
+// The core's tools; a system plugin adds its own (SystemUi.tools in systems/ui.ts) — any id.
+export type ToolId = 'notes' | 'sketches' | 'names' | 'npc' | 'tavern' | 'weather' | 'events' | 'treasure' | 'settlement' | 'shop' | 'relic' | 'dungeon' | 'schedule' | 'telegram' | 'timer' | 'mouse' | 'mausTables' | 'factions' | 'crew' | 'systems' | 'rollTables' | 'build' | 'mausShop' | (string & {});
 
 export const ui = $state({
   tool: 'notes' as ToolId,

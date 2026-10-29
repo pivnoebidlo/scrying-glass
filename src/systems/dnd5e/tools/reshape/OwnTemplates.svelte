@@ -3,9 +3,9 @@
      Saved by itself into the library (common to all campaigns). -->
 <script lang="ts">
   import { Plus, Trash2, X } from '@lucide/svelte';
-  import { locale, t } from '../../../renderer/lib/i18n.svelte';
-  import { ABILITIES, dict, SIZES, SPEEDS, type Ability, type Size } from '../../../systems/dnd5e/stats';
-  import type { OwnTemplate } from '../../../systems/dnd5e/reshape';
+  import { locale, t } from '../../../../renderer/lib/i18n.svelte';
+  import { ABILITIES, dict, SIZES, SPEEDS, type Ability, type Size } from '../../stats';
+  import type { OwnTemplate } from '../../reshape';
   import { addOwn, own, removeOwn, saveOwn } from './store.svelte';
 
   let { onclose }: { onclose: () => void } = $props();

@@ -4,7 +4,7 @@
   import { onMount } from 'svelte';
   import { CloudUpload, Download, FilePlus, Globe, Plus, Search, Upload, Wand2 } from '@lucide/svelte';
   import { openRepo, repo } from '../../repo/ui/repo.svelte';
-  import { reshapeNew } from '../../tools/reshape/store.svelte';
+  import { reshapeNew } from '../../../systems/dnd5e/tools/reshape/store.svelte';
   import { langName, sameRef } from '../../../shared/cards';
   import { familyOf, isDnd, isEnabled, systems } from '../../../systems';
   import type { ModuleProps } from '../../../renderer/lib/contrib';

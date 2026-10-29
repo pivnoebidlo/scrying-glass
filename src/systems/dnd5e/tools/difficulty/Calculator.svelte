@@ -1,22 +1,22 @@
 <!-- Калькулятор сложности боя: набросать противников из карточек (с количеством), увидеть сложность для партии
      приключения (или своей) и сохранить набросок заготовкой боя. Набросок живёт, пока открыто окно. -->
 <script lang="ts">
-  import { t } from '../../../renderer/lib/i18n.svelte';
+  import { t } from '../../../../renderer/lib/i18n.svelte';
   import { Minus, Plus, Swords, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
-  import { openTab } from '../../../renderer/lib/nav';
-  import { dispatch, store } from '../../../renderer/lib/store.svelte';
-  import { cardImageUrl, refKey, sameRef, type CardSummary } from '../../../shared/cards';
-  import { thumb } from '../../../shared/vault';
-  import { RATING_TITLES } from '../../../systems/dnd5e/difficulty';
-  import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
-  import { addToInitiative } from '../../bestiary/ui/combat';
-  import { analyze } from '../../initiative/difficulty';
-  import type { Combatant } from '../../initiative/types';
-  import DifficultyDetails from '../../initiative/ui/DifficultyDetails.svelte';
-  import { adventureHeroes, cardInfo } from '../../initiative/ui/heroes';
-  import { newEncounterName, ui as initiativeUi } from '../../initiative/ui/ui.svelte';
-  import CardSearch from '../../maps/ui/CardSearch.svelte';
+  import { openTab } from '../../../../renderer/lib/nav';
+  import { dispatch, store } from '../../../../renderer/lib/store.svelte';
+  import { cardImageUrl, refKey, sameRef, type CardSummary } from '../../../../shared/cards';
+  import { thumb } from '../../../../shared/vault';
+  import { RATING_TITLES } from '../../difficulty';
+  import { bestiary, connectCards } from '../../../../modules/bestiary/ui/cards.svelte';
+  import { addToInitiative } from '../../../../modules/bestiary/ui/combat';
+  import { analyze } from '../../../../modules/initiative/difficulty';
+  import type { Combatant } from '../../../../modules/initiative/types';
+  import DifficultyDetails from '../../../../modules/initiative/ui/DifficultyDetails.svelte';
+  import { adventureHeroes, cardInfo } from '../../../../modules/initiative/ui/heroes';
+  import { newEncounterName, ui as initiativeUi } from '../../../../modules/initiative/ui/ui.svelte';
+  import CardSearch from '../../../../modules/maps/ui/CardSearch.svelte';
   import { calc } from './calc.svelte';
 
   onMount(connectCards);

@@ -1,6 +1,6 @@
 // Свои расы и подрасы для покупки характеристик (правила 2014 года): лежат в библиотеке (pointbuy.json), общие
 // для всех кампаний. Подрасу можно добавить и к встроенной расе («Эльф → Лесной»).
-import { RACES_2014, type RaceDef, type Subrace } from '../../../systems/dnd5e/pointbuy';
+import { RACES_2014, type RaceDef, type Subrace } from '../../pointbuy';
 
 export interface CustomSubrace extends Subrace {
   // К какой расе относится: встроенной (id из RACES_2014) или своей.

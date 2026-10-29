@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { travel, type TravelInput } from '../src/modules/tools/travel/rules';
+import { travel, type TravelInput } from '../src/systems/dnd5e/tools/travel/rules';
 
 const base: TravelInput = { edition: '2024', distance: 60, by: 'land', pace: 'normal', terrain: 'grassland', road: false, difficult: false, hours: 8 };
 

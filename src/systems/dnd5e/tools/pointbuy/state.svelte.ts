@@ -1,5 +1,5 @@
 // Набросок покупки характеристик: живёт, пока открыто окно.
-import { STANDARD_RULES, zero, type Rules, type Scores } from '../../../systems/dnd5e/pointbuy';
+import { STANDARD_RULES, zero, type Rules, type Scores } from '../../pointbuy';
 
 // '2024' — бонусы предыстории, 'race' — раса 2014 года (race / sub), 'custom' — свои бонусы.
 export type Mode = '2024' | 'race' | 'custom';

@@ -3,9 +3,9 @@
      itself into the library beside the templates (common to all campaigns); offered in the weapon pickers. -->
 <script lang="ts">
   import { Trash2, X } from '@lucide/svelte';
-  import { locale, t } from '../../../renderer/lib/i18n.svelte';
-  import { dict } from '../../../systems/dnd5e/stats';
-  import { DAMAGE_TYPES, diceOf, type DamageType, type OwnWeapon } from '../../../systems/dnd5e/reshape';
+  import { locale, t } from '../../../../renderer/lib/i18n.svelte';
+  import { dict } from '../../stats';
+  import { DAMAGE_TYPES, diceOf, type DamageType, type OwnWeapon } from '../../reshape';
   import { addOwnWeapon, own, removeOwnWeapon, saveOwn } from './store.svelte';
 
   let { onclose }: { onclose: () => void } = $props();

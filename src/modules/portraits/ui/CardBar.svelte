@@ -6,7 +6,7 @@
   import { isDnd } from '../../../systems';
   import { currentSystem } from '../../../shared/adventures';
   import { store } from '../../../renderer/lib/store.svelte';
-  import { reshapeFor } from '../../tools/reshape/store.svelte';
+  import { reshapeFor } from '../../../systems/dnd5e/tools/reshape/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import { SIDE_TITLES } from '../../../shared/cards';

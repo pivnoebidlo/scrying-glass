@@ -1,11 +1,11 @@
 // Wild magic in the control window: the tables (ours, the Wand of Wonder of the adventure's edition from the
 // compendium, the GM's own from the library — wild-magic.json, common to all campaigns), the chosen table and the
 // rolls of this window (localStorage).
-import { locale, t } from '../../../renderer/lib/i18n.svelte';
-import { store } from '../../../renderer/lib/store.svelte';
-import { currentSystem } from '../../../shared/adventures';
-import { BUILTIN } from '../../../shared/compendium';
-import { book, entryAt } from '../../compendium/ui/store.svelte';
+import { locale, t } from '../../../../renderer/lib/i18n.svelte';
+import { store } from '../../../../renderer/lib/store.svelte';
+import { currentSystem } from '../../../../shared/adventures';
+import { BUILTIN } from '../../../../shared/compendium';
+import { book, entryAt } from '../../../../modules/compendium/ui/store.svelte';
 import { dieOf, parseOwnTables, parseTable, surgeRows, SURGE_ID, type OwnTable, type SurgeTable } from './tables';
 
 export const WAND_ID = 'wand';

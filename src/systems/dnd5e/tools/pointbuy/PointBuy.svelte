@@ -1,19 +1,19 @@
 <!-- «Инструменты» → «Покупка характеристик»: 27 очков, от 8 до 15 до бонусов (правила SRD). Бонусы — предыстории
      (2024), расы SRD (2014) или свои. «Проверить персонажа» берёт итоговые значения из листа и подбирает бонусы. -->
 <script lang="ts">
-  import { t } from '../../../renderer/lib/i18n.svelte';
+  import { t } from '../../../../renderer/lib/i18n.svelte';
   import { ChevronDown, ChevronRight, Minus, Plus, RotateCcw, UserCheck } from '@lucide/svelte';
   import { onMount } from 'svelte';
-  import { store } from '../../../renderer/lib/store.svelte';
-  import { refKey } from '../../../shared/cards';
-  import { visibleIn } from '../../../shared/adventures';
-  import { isCharacter, totalLevel, type Dnd5eCharacter } from '../../../systems/dnd5e/character';
+  import { store } from '../../../../renderer/lib/store.svelte';
+  import { refKey } from '../../../../shared/cards';
+  import { visibleIn } from '../../../../shared/adventures';
+  import { isCharacter, totalLevel, type Dnd5eCharacter } from '../../character';
   import {
     ABILITY_TITLES, STANDARD_ARRAY, checkFinal, combine, costOf, isStandardArray, problemsOf, spent, zero,
     type Scores,
-  } from '../../../systems/dnd5e/pointbuy';
-  import { ABILITIES, mod, type Ability } from '../../../systems/dnd5e/stats';
-  import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
+  } from '../../pointbuy';
+  import { ABILITIES, mod, type Ability } from '../../stats';
+  import { bestiary, connectCards } from '../../../../modules/bestiary/ui/cards.svelte';
   import { pb } from './state.svelte';
   import { allRaces, custom, loadRaces } from './races.svelte';
   import RaceEditor from './RaceEditor.svelte';

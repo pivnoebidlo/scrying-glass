@@ -2,9 +2,9 @@
      time on the way, the pace kept and its effect, the long-day saves and the terrain's DCs. The rules follow the
      edition of the adventure's system (2014 or 2024). The inputs are remembered by the window. -->
 <script lang="ts">
-  import { locale, t } from '../../../renderer/lib/i18n.svelte';
-  import { store } from '../../../renderer/lib/store.svelte';
-  import { currentSystem } from '../../../shared/adventures';
+  import { locale, t } from '../../../../renderer/lib/i18n.svelte';
+  import { store } from '../../../../renderer/lib/store.svelte';
+  import { currentSystem } from '../../../../shared/adventures';
   import { PACE_RATE, PACES, TERRAIN_TABLE, TERRAINS, travel, VESSEL_MPH, VESSELS, type Edition, type TravelInput } from './rules';
 
   const KEY = 'travel.state';

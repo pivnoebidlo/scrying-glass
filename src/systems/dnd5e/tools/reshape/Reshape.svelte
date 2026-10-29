@@ -2,14 +2,14 @@
      weapons; on the right — the stat block as it comes out and what changed. "Create card" opens it in the editor. -->
 <script lang="ts">
   import { IdCard, Image, Minus, Plus, RotateCcw, Wand2, X } from '@lucide/svelte';
-  import { locale, t } from '../../../renderer/lib/i18n.svelte';
-  import type { Card } from '../../../shared/cards';
-  import { attackBlocks, changesOf, NO_WEAPON, ownTemplate, ownWeapon, POWER_CRS, reshape, templateFits, TEMPLATES, WEAPONS, type Template, type Weapon } from '../../../systems/dnd5e/reshape';
-  import Slider from '../../../renderer/lib/Slider.svelte';
-  import StatBlock from '../../../systems/dnd5e/StatBlock.svelte';
-  import { ABILITIES, crText, dict, mod, signed, type Ability, type Dnd5eStats } from '../../../systems/dnd5e/stats';
-  import { bestiary } from '../../bestiary/ui/cards.svelte';
-  import CardSearch from '../../maps/ui/CardSearch.svelte';
+  import { locale, t } from '../../../../renderer/lib/i18n.svelte';
+  import type { Card } from '../../../../shared/cards';
+  import { attackBlocks, changesOf, NO_WEAPON, ownTemplate, ownWeapon, POWER_CRS, reshape, templateFits, TEMPLATES, WEAPONS, type Template, type Weapon } from '../../reshape';
+  import Slider from '../../../../renderer/lib/Slider.svelte';
+  import StatBlock from '../../StatBlock.svelte';
+  import { ABILITIES, crText, dict, mod, signed, type Ability, type Dnd5eStats } from '../../stats';
+  import { bestiary } from '../../../../modules/bestiary/ui/cards.svelte';
+  import CardSearch from '../../../../modules/maps/ui/CardSearch.svelte';
   import { editionOf, loadOwn, own, pickBase, rs } from './store.svelte';
   import OwnTemplates from './OwnTemplates.svelte';
   import OwnWeapons from './OwnWeapons.svelte';

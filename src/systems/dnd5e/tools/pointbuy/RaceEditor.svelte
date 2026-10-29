@@ -1,10 +1,10 @@
 <!-- Свои расы и подрасы: название, бонусы к характеристикам и «+1 на выбор». Подраса — к своей расе или к встроенной
      («Эльф → Лесной»). Сохраняется само, в библиотеку (общее для всех кампаний). -->
 <script lang="ts">
-  import { t } from '../../../renderer/lib/i18n.svelte';
+  import { t } from '../../../../renderer/lib/i18n.svelte';
   import { Plus, Trash2 } from '@lucide/svelte';
-  import { ABILITIES, type Ability } from '../../../systems/dnd5e/stats';
-  import type { RaceBonus } from '../../../systems/dnd5e/pointbuy';
+  import { ABILITIES, type Ability } from '../../stats';
+  import type { RaceBonus } from '../../pointbuy';
   import { allRaces, custom, newId, saveRaces } from './races.svelte';
 
   let { onpick }: { onpick: (race: string, sub: string | null) => void } = $props();

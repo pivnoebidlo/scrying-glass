@@ -2,19 +2,19 @@
      adventure's edition (from the compendium) or the GM's own, pasted as text. The result (− / + move it by one),
      spells in it open the compendium; copy, to Telegram; the table itself and the rolls of this window below. -->
 <script lang="ts">
-  import { hint } from '../../../shared/hotkeys';
+  import { hint } from '../../../../shared/hotkeys';
   import { Check, Copy, Dices, Minus, Pencil, Plus, Send, Trash2, Zap } from '@lucide/svelte';
   import { onMount } from 'svelte';
-  import { t } from '../../../renderer/lib/i18n.svelte';
-  import { entryHtml } from '../../../renderer/lib/entry/markup';
-  import { spellLinks } from '../../../renderer/lib/entry/links';
-  import { markdownToTelegram } from '../../../shared/telegram';
-  import { loadEntries } from '../../compendium/ui/store.svelte';
-  import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
+  import { t } from '../../../../renderer/lib/i18n.svelte';
+  import { entryHtml } from '../../../../renderer/lib/entry/markup';
+  import { spellLinks } from '../../../../renderer/lib/entry/links';
+  import { markdownToTelegram } from '../../../../shared/telegram';
+  import { loadEntries } from '../../../../modules/compendium/ui/store.svelte';
+  import { sendToTelegram, tgReady } from '../../../../modules/telegram/ui/tg.svelte';
   import { newOwnId, own, putOwn, remember, removeOwn, save, tables, wm, loadOwn } from './store.svelte';
   import { dieOf, isSurge, parseTable, rangeText, rollDie, rowFor, surgeOn, type Edition, type SurgeTable } from './tables';
-  import { store } from '../../../renderer/lib/store.svelte';
-  import { currentSystem } from '../../../shared/adventures';
+  import { store } from '../../../../renderer/lib/store.svelte';
+  import { currentSystem } from '../../../../shared/adventures';
 
   onMount(() => {
     void loadEntries();

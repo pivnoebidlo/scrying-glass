@@ -13,6 +13,7 @@ import { isPackFamily, packOf } from './packs';
 import type { Combatant } from '../modules/initiative/types';
 import type { CardKind } from '../shared/cards';
 import { familyOf } from '.';
+import type { ToolDef } from '../modules/tools/ui/registry.svelte';
 import { dnd5eUi } from './dnd5e/ui';
 
 export type StatsView = Component<{ card: Card<any> }>;
@@ -29,11 +30,14 @@ export interface SystemUi {
   editor?(system: string, stats: unknown): StatsEditor | undefined;
   // The cells of a combatant's row; none — hit points and defence.
   trackerCells?: TrackerCells;
+  // Its tools in Tools (with `families` and `page`) and the core's generators it shows as its own.
+  tools?: ToolDef[];
+  claims?: string[];
 }
 
-const UIS: SystemUi[] = [dnd5eUi];
+export const systemUis: SystemUi[] = [dnd5eUi];
 
-export const systemUi = (system: string) => UIS.find((u) => u.family === familyOf(system));
+export const systemUi = (system: string) => systemUis.find((u) => u.family === familyOf(system));
 
 export const statsView = (system: string, stats?: unknown): StatsView =>
   packOf(system) ? (PackSheet as StatsView) : (systemUi(system)?.view?.(system, stats) ?? GenericStats);

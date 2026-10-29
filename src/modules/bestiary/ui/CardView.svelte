@@ -8,7 +8,7 @@
   import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
   import { isCharacter } from '../../../systems/dnd5e/character';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
-  import { reshapeFrom } from '../../tools/reshape/store.svelte';
+  import { reshapeFrom } from '../../../systems/dnd5e/tools/reshape/store.svelte';
   import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
   import type { AppState } from '../../../shared/types';
   import { dispatch } from '../../../renderer/lib/store.svelte';
