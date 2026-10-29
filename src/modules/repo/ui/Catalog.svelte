@@ -5,7 +5,7 @@
 <script lang="ts">
   import { SUPPLEMENT_KINDS, type SupplementKind } from '../../../shared/adventures';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
-  import { Ban, Check, LockOpen, CloudUpload, Download, Flag, ImageOff, RefreshCw, Settings, ShieldCheck, Trash2, TriangleAlert, X } from '@lucide/svelte';
+  import { Ban, Check, LockOpen, CloudUpload, Download, Flag, ImageOff, Pencil, RefreshCw, Settings, ShieldCheck, Trash2, TriangleAlert, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
   import { store } from '../../../renderer/lib/store.svelte';
@@ -28,6 +28,19 @@
   const enabled = $derived((app.vault.systemsOff, enabledSystems()));
   const current = $derived(app.adventures.current);
   const me = $derived(repo.info?.author ?? null);
+  // Change an entry of one's own (its title, description, cover — or a new version): the publish dialog of what it was
+  // published from, here — a system pack of the library, an adventure folder, a bestiary; null — not on this computer.
+  function editOf(e: Found): (() => void) | null {
+    if (e.author !== me) return null;
+    if (e.kind === 'system') {
+      const pack = Object.entries(repo.info?.systems.published ?? {}).find(([, m]) => m.id === e.id && m.source === e.source)?.[0];
+      return pack && store.state.vault.systems.some((p) => p.id === pack && p.own) ? () => (repo.publishSystem = pack) : null;
+    }
+    if (e.kind === 'bestiary') return repo.info?.bestiaries.published[e.id] ? () => (repo.publishBestiary = true) : null;
+    if (e.kind === 'content') return null;
+    const folder = Object.entries(store.state.repo.published).find(([, m]) => m.id === e.id)?.[0];
+    return folder && store.state.vault.tree?.folders.some((f) => f.path === folder) ? () => (repo.publish = folder) : null;
+  }
   const on = $derived(repo.info ? sourcesOn() : []);
   const loading = $derived(on.some((s) => repo.catalogs[s.id]?.loading));
   const failed = $derived(on.filter((s) => repo.catalogs[s.id]?.error));
@@ -164,6 +177,7 @@
         { label: get, icon: Download, disabled: busy, action: () => void install(e) },
         ...(e.kind === 'bestiary' && have ? [{ label: t('repo.removeBestiary'), icon: Trash2, disabled: busy, action: () => void removeBestiary(e) }] : []),
         ...(e.kind === 'content' && contentIdOf(e) ? [{ label: t('repo.removeContent'), icon: Trash2, disabled: busy, action: () => void removeContent(contentIdOf(e)!, e.title) }] : []),
+        ...(editOf(e) ? [{ label: t('repo.edit'), icon: Pencil, disabled: busy, action: editOf(e)! }] : []),
         e.author === me
           ? { label: t('repo.unpublish'), icon: Trash2, danger: true, disabled: busy, action: () => void unpublish(e) }
           : { label: t('repo.report.button'), icon: Flag, disabled: busy, action: () => (repo.reporting = e) },
@@ -318,6 +332,9 @@
               {/if}
               {#if e.kind === 'content' && contentIdOf(e)}
                 <button class="btn" disabled={!!repo.busy} onclick={() => removeContent(contentIdOf(e)!, e.title)}><Trash2 size={14} /> {t('repo.removeContent')}</button>
+              {/if}
+              {#if editOf(e)}
+                <button class="btn" disabled={!!repo.busy} title={t('repo.editHint')} onclick={editOf(e)!}><Pencil size={14} /> {t('repo.edit')}</button>
               {/if}
               {#if e.author === me}
                 <button class="btn danger" disabled={!!repo.busy} onclick={() => unpublish(e)}><Trash2 size={14} /> {t('repo.unpublish')}</button>
