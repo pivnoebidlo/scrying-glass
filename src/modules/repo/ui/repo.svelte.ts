@@ -167,7 +167,11 @@ export const bestiaryVersion = (e: Found) => repo.info?.bestiaries.installed[bes
 
 // Content of a system (shared/content.ts) downloaded: its id in the library and the version (0 — none).
 const contentMark = (e: Found) => Object.entries(repo.info?.content.installed ?? {}).find(([, m]) => m.source === e.source && m.author === e.author && m.id === e.id);
-export const contentVersion = (e: Found) => contentMark(e)?.[1].version ?? 0;
+// Only while it lies in the library: a mark alone may be stale (the folder removed by hand).
+export const contentVersion = (e: Found) => {
+  const m = contentMark(e);
+  return m && store.state.vault.content.some((c) => c.id === m[0]) ? m[1].version : 0;
+};
 
 export async function installContent(e: Found): Promise<boolean> {
   const { source, ...entry } = $state.snapshot(e) as Found;

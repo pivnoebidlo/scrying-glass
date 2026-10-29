@@ -7,7 +7,7 @@
   import { FAMILIES, systemOf, systems } from '../../../systems';
   import { systemFor } from '../../../shared/adventures';
   import { Blocks, Download, FileDown, Globe, Package, Trash2 } from '@lucide/svelte';
-  import { contentVersion, installContent, loadCatalogs, officialContent, openRepo, removeContent, repo } from '../../repo/ui/repo.svelte';
+  import { contentIdOf, installContent, loadCatalogs, officialContent, openRepo, removeContent, repo } from '../../repo/ui/repo.svelte';
   import { onMount } from 'svelte';
   import { closeSettings } from '../../../renderer/lib/nav';
   import { openBuilder } from '../../tools/syspack/store.svelte';
@@ -38,7 +38,8 @@
   // official content of a family not downloaded yet (from the catalog).
   onMount(() => void loadCatalogs());
   const installed = (family: string) => app.vault.content.filter((c) => c.family === family);
-  const missing = (family: string) => (repo.info, officialContent(family).filter((e) => !contentVersion(e) && !installed(family).some((c) => c.title === e.title)));
+  // Installed — what lies in the library (a mark alone may be stale: the folder removed by hand).
+  const missing = (family: string) => (repo.info, officialContent(family).filter((e) => !installed(family).some((c) => c.id === contentIdOf(e) || c.title === e.title)));
   async function fromFile() {
     const m = await window.api.installContentFile();
     if (m) repo.info = await window.api.repoInfo();
