@@ -1,16 +1,20 @@
 // D&D 5e as a system plugin: the 2024 and 2014 editions of one family.
 import type { SystemDef } from '..';
 import type { SystemPlugin } from '../plugin';
+import { t } from '../../shared/i18n';
 import * as statblock from './stats';
 import * as character from './character';
 import { dndTracker } from './tracker';
 import { ENTRY_SUBTITLES, ENTRY_TYPES } from './entries';
 
 // Two shapes of stats: a stat block (monsters, NPCs) and a player character's sheet.
-const dnd = (id: string, title: string, short: string): SystemDef => ({
+const dnd = (id: 'dnd5e-2024' | 'dnd5e-2014', title: string, short: string): SystemDef => ({
   id,
   title,
   short,
+  get about() {
+    return t(`adv.about.${id}`);
+  },
   family: 'dnd5e',
   subtitle: (s, lang) => (character.isCharacter(s) ? character.characterSubtitle(s) : statblock.subtitle(s, lang)),
   rank: (s) => (character.isCharacter(s) ? character.totalLevel(s) : (s as statblock.Dnd5eStats).cr),

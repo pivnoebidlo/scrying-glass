@@ -20,6 +20,8 @@ export interface SystemDef {
   tracker: TrackerDef;
   // A short name among the family's editions in lists («2014»); none — the title.
   short?: string;
+  // What the system gives, a line under its title in Settings → Game systems.
+  readonly about?: string;
   // Stats of different shapes by the kind of card (D&D: a character's sheet, a stat block for the rest): changing
   // the kind to another shape starts the stats anew. None — one shape for every kind.
   shape?: { ofKind(kind: CardKind): string; ofStats(stats: unknown): string };

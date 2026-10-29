@@ -4,7 +4,7 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { FAMILIES, systems } from '../../../systems';
+  import { FAMILIES, systemOf, systems } from '../../../systems';
   import { systemFor } from '../../../shared/adventures';
   import { Blocks, Globe, Trash2 } from '@lucide/svelte';
   import { openRepo } from '../../repo/ui/repo.svelte';
@@ -24,7 +24,9 @@
   }
 
   // Что даёт система — строка под названием.
-  const about = (id: string) => (['dnd5e-2024', 'dnd5e-2014', 'fate-core', 'mausritter', 'fitd'].includes(id) ? t(`adv.about.${id as 'fate-core'}`) : '');
+  // The app's own packs have a line in the dictionary.
+  const PACK_ABOUT = ['fate-core', 'mausritter', 'fitd'];
+  const about = (id: string) => systemOf(id).about ?? (PACK_ABOUT.includes(id) ? t(`adv.about.${id as 'fate-core'}`) : '');
 
   // Приключения с этой системой (своей или унаследованной от хранилища) и само хранилище.
   const usedBy = (id: string) =>

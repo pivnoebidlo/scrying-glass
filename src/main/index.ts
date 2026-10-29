@@ -18,7 +18,7 @@ import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
 import { COVER_FILE, renameAdventurePaths, SUPPLEMENT_KINDS, systemFor, type SupplementKind } from '../shared/adventures';
-import { setSystemsOff } from '../systems';
+import { defaultSystem, setSystemsOff } from '../systems';
 import { loadSystemPacks, ownPackFile, packBooks, savePack, systemPacks } from './syspacks';
 import { deleteWords, discard, emptyTrash, listTrash, onTrashChanged, pruneTrash, purgeTrash, restoreFromTrash, setTrashSettings, trashSettings } from './trash';
 import type { TrashPlace, TrashSettings } from '../shared/trash';
@@ -1352,7 +1352,7 @@ function bestiarySystem(refs: CardRef[]): string {
     const c = getCard(r);
     if (c) n.set(c.system, (n.get(c.system) ?? 0) + 1);
   }
-  return [...n].sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'dnd5e-2024';
+  return [...n].sort((a, b) => b[1] - a[1])[0]?.[0] ?? defaultSystem();
 }
 // Publish (or update — `id`) a bestiary: the cards chosen, as one «export cards» file.
 ipcMain.handle('repo:publishBestiary', async (_event, p: { source: string; refs: CardRef[]; title: string; description: string; lang: string; cover?: string; id?: string }) => {

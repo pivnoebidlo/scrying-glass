@@ -1,6 +1,6 @@
-<!-- The very first launch (Welcome, before a vault): which systems the GM plays. The two editions of D&D are in the app;
-     the systems of the app's own author in the official repository (Fate Core, Mausritter, Forged in the Dark, the
-     samples) are downloaded when ticked. The editions of D&D left unticked are turned off. Everything can be changed
+<!-- The very first launch (Welcome, before a vault): which systems the GM plays. The systems of the plugins (D&D 5e) are
+     in the app; the systems of the app's own author in the official repository (Fate Core, Mausritter, Forged in the
+     Dark, the samples) are downloaded when ticked. The built-in ones left unticked are turned off. Everything can be changed
      later in Settings → Game systems. -->
 <script lang="ts">
   import { Check, Loader } from '@lucide/svelte';
@@ -8,12 +8,10 @@
   import { dispatch } from '../lib/store.svelte';
   import { t } from '../lib/i18n.svelte';
   import { OFFICIAL_AUTHOR, OFFICIAL_SOURCE, type RepoEntry } from '../../shared/repo';
+  import { PLUGINS } from '../../systems/plugins';
 
-  const DND = [
-    { id: 'dnd5e-2024', title: 'D&D 5e (2024)' },
-    { id: 'dnd5e-2014', title: 'D&D 5e (2014)' },
-  ];
-  const dnd = $state<Record<string, boolean>>({ 'dnd5e-2024': true, 'dnd5e-2014': true });
+  const BUILT_IN = PLUGINS.flatMap((p) => p.systems);
+  const builtIn = $state<Record<string, boolean>>(Object.fromEntries(BUILT_IN.map((s) => [s.id, true])));
 
   let packs = $state.raw<RepoEntry[]>([]);
   let picked = $state<Record<string, boolean>>({});
@@ -36,7 +34,7 @@
     loading = false;
   });
 
-  const anything = $derived(DND.some((d) => dnd[d.id]) || packs.some((p) => picked[p.system]));
+  const anything = $derived(BUILT_IN.some((d) => builtIn[d.id]) || packs.some((p) => picked[p.system]));
   const firstLine = (text: string) => text.split('\n').find((l) => l.trim())?.replace(/[*_#>]/g, '').trim() ?? '';
 
   async function done() {
@@ -50,7 +48,7 @@
       }
     }
     busy = '';
-    await dispatch('vault', 'setSystemsOff', { list: DND.filter((d) => !dnd[d.id]).map((d) => d.id) });
+    await dispatch('vault', 'setSystemsOff', { list: BUILT_IN.filter((d) => !builtIn[d.id]).map((d) => d.id) });
     if (!failed.length) await dispatch('vault', 'systemsChosen');
   }
   const skip = () => dispatch('vault', 'systemsChosen');
@@ -61,8 +59,8 @@
   <p class="muted">{t('welcome.systemsText')}</p>
 
   <ul>
-    {#each DND as d (d.id)}
-      <li><label><input type="checkbox" bind:checked={dnd[d.id]} /> <b>{d.title}</b> <span class="faint">{t('welcome.builtIn')}</span></label></li>
+    {#each BUILT_IN as d (d.id)}
+      <li><label><input type="checkbox" bind:checked={builtIn[d.id]} /> <b>{d.title}</b> <span class="faint">{t('welcome.builtIn')}</span></label></li>
     {/each}
     {#each packs as p (p.system)}
       <li>
