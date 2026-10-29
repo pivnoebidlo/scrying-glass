@@ -1,7 +1,7 @@
 // Бестиарий в окне управления: краткий список карточек из ядра, фильтры и выбранная карточка.
 // Фильтры запоминаются между запусками (в окне, не в хранилище).
 import { locale, t } from '../../../renderer/lib/i18n.svelte';
-import type { Card, CardKind, CardRef, CardScope, CardSummary, LssPreview } from '../../../shared/cards';
+import type { Card, CardKind, CardRef, CardScope, CardSummary, ImportPreview } from '../../../shared/cards';
 import { defaultSide, imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
@@ -57,17 +57,18 @@ export interface Draft {
 }
 
 // Запрос «где хранить?» — окно выбора места (PlacePicker) показывается, пока он есть.
-// Персонаж из LSS, у которого уже есть карточка: окно LssUpdate показывает, что изменилось, и ждёт решения.
-// import — спросили при импорте (можно и создать новую карточку), иначе — «Обновить из LSS…» у карточки.
-// update — с итогом, собранным из выбранных изменений (merged; нет — всё из файла).
-export type LssMerged = { name: string; system: string; stats: unknown };
-export type LssChoice = { kind: 'update'; merged?: LssMerged } | { kind: 'new' } | { kind: 'cancel' };
-export interface LssRequest {
+// Персонаж из экспорта другого сервиса, у которого уже есть карточка: окно системы «Что изменилось»
+// (SystemUi.importUpdate) показывает, что изменилось, и ждёт решения. import — спросили при импорте (можно и создать
+// новую карточку), иначе — «Обновить из…» у карточки. update — с итогом, собранным из выбранных изменений (merged;
+// нет — всё из файла).
+export type ImportMerged = { name: string; system: string; stats: unknown };
+export type ImportChoice = { kind: 'update'; merged?: ImportMerged } | { kind: 'new' } | { kind: 'cancel' };
+export interface ImportRequest {
   target: CardRef;
   current: Card;
-  lss: LssPreview;
+  next: ImportPreview;
   import: boolean;
-  resolve(c: LssChoice): void;
+  resolve(c: ImportChoice): void;
 }
 
 export interface PlaceRequest {
@@ -124,7 +125,7 @@ class Bestiary {
   // a card is made and edited without leaving it).
   host = $state<'bestiary' | 'adventures'>('bestiary');
   placeRequest = $state.raw<PlaceRequest | null>(null);
-  lssRequest = $state.raw<LssRequest | null>(null);
+  importRequest = $state.raw<ImportRequest | null>(null);
   // Снимок черновика при открытии: есть ли несохранённые изменения.
   draftStart = '';
   // Файл карточки, открытой в редакторе, изменили снаружи (в другой программе): новая версия с диска
@@ -232,34 +233,34 @@ class Bestiary {
     });
   }
 
-  private askLss(req: Omit<LssRequest, 'resolve'>): Promise<LssChoice> {
+  private askImport(req: Omit<ImportRequest, 'resolve'>): Promise<ImportChoice> {
     return new Promise((resolve) => {
-      this.lssRequest = {
+      this.importRequest = {
         ...req,
         resolve: (c) => {
-          this.lssRequest = null;
+          this.importRequest = null;
           resolve(c);
         },
       };
     });
   }
 
-  // «Обновить из LSS…»: выбрать свежий экспорт персонажа, посмотреть изменения и обновить карточку. Сообщение
-  // о результате или null — передумали.
-  async updateFromLss(ref: CardRef): Promise<string | null> {
+  // «Обновить из…» (importer — the system's importer: LSS): выбрать свежий экспорт персонажа, посмотреть изменения и
+  // обновить карточку. Сообщение о результате или null — передумали.
+  async updateFromExport(ref: CardRef, importer: string, source: string): Promise<string | null> {
     const current = await window.api.getCard($state.snapshot(ref));
     if (!current) return null;
     let picked;
     try {
-      picked = await window.api.pickLss();
+      picked = await window.api.pickExport(importer);
     } catch (e) {
       return t('best.readFailed', { error: e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e) });
     }
     if (!picked) return null;
-    const choice = await this.askLss({ target: $state.snapshot(ref), current, lss: picked.lss, import: false });
+    const choice = await this.askImport({ target: $state.snapshot(ref), current, next: picked.preview, import: false });
     if (choice.kind !== 'update') return null;
-    await window.api.updateFromLss($state.snapshot(ref), picked.file, choice.merged);
-    return t('best.updatedLss', { name: choice.merged?.name ?? picked.lss.name });
+    await window.api.updateFromExport($state.snapshot(ref), picked.file, importer, choice.merged);
+    return t('best.updatedFrom', { name: choice.merged?.name ?? picked.preview.name, source });
   }
 
   // Система новой карточки: выбранная в фильтре (если она из семейства приключения), иначе — приключения.
@@ -469,16 +470,16 @@ class Bestiary {
     place ??= await this.choosePlace({ title: t('best.whereImport'), action: t('best.import'), library: true });
     if (!place) return null;
     const { count, errors, matches } = await window.api.importCards(files, place.scope, place.folder);
-    // Персонажи LSS, у которых карточка уже есть: показать изменения и спросить — обновить или создать новую.
+    // Персонажи из экспортов, у которых карточка уже есть: показать изменения и спросить — обновить или создать новую.
     const updated: string[] = [];
     let added = count;
     for (const m of matches) {
       const current = await window.api.getCard(m.ref);
-      const lss = await window.api.readLss(m.file);
-      const choice: LssChoice = current ? await this.askLss({ target: m.ref, current, lss, import: true }) : { kind: 'new' };
+      const next = await window.api.readExport(m.file, m.importer);
+      const choice: ImportChoice = current ? await this.askImport({ target: m.ref, current, next, import: true }) : { kind: 'new' };
       if (choice.kind === 'update') {
-        await window.api.updateFromLss(m.ref, m.file, choice.merged);
-        updated.push(choice.merged?.name ?? lss.name);
+        await window.api.updateFromExport(m.ref, m.file, m.importer, choice.merged);
+        updated.push(choice.merged?.name ?? next.name);
       } else if (choice.kind === 'new') {
         const r = await window.api.importCards([m.file], place.scope, place.folder, true);
         added += r.count;

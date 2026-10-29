@@ -66,7 +66,8 @@ export interface Card<S = unknown> {
   notes: string;
   stats: S;
   // Откуда карточка импортирована: по id повторный импорт обновляет её, а не создаёт новую.
-  links?: { lss?: string };
+  // Ids of the character in other services, by importer ({ lss: '…' }).
+  links?: Record<string, string>;
   // Правка встроенной карточки (файл библиотеки): id карточки SRD, которую она заменяет везде (main/cards.ts).
   overrides?: string;
 }
@@ -134,18 +135,13 @@ export const cardAsset = (scope: CardScope, p: string) => (scope === 'vault' ? p
 export const imageScope = (scope: CardScope): CardScope => (scope === 'srd' ? 'library' : scope);
 export const cardImageUrl = (scope: CardScope, p: string) => assetUrl(cardAsset(scope, p));
 
-// Экспорт персонажа из Long Story Short, у которого уже есть карточка (импорт её не трогает, а спрашивает).
-export interface LssMatch {
+// Экспорт персонажа из другого сервиса, у которого уже есть карточка (импорт её не трогает, а спрашивает).
+export interface ImportMatch {
   file: string;
   ref: CardRef;
+  // The importer that knows the file (systems/importer.ts).
+  importer: string;
 }
 
-// Что пришло в экспорте LSS (для предпросмотра изменений): stats — лист персонажа D&D.
-export interface LssPreview {
-  name: string;
-  system: string;
-  stats: unknown;
-  lssId: string | null;
-  // Что перенести не получилось (заклинания-карточки LSS и т. п.).
-  warnings: string[];
-}
+// Что пришло в экспорте (для предпросмотра изменений): stats — лист персонажа системы.
+export type { ImportedCard as ImportPreview } from '../systems/importer';

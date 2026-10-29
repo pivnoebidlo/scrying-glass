@@ -4,7 +4,7 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
-  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, MoreHorizontal, Pencil, RotateCcw, Send, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, MoreHorizontal, Pencil, RefreshCw, RotateCcw, Send, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
   import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
@@ -12,7 +12,7 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { LANGUAGES, SIDE_TITLES, cardAsset, cardImageUrl, langName, sameRef, type Card, type CardRef, type CardSide, type CardSummary } from '../../../shared/cards';
-  import { systemOf } from '../../../systems';
+  import { importersOf, systemOf } from '../../../systems';
   import { statsView, systemUi } from '../../../systems/ui';
   import { markdown } from '../../../renderer/lib/markdown';
   import { viewImage } from '../../../renderer/lib/view-image.svelte';
@@ -157,6 +157,14 @@
             <button class="btn" title={t('best.moveHint')} onclick={() => bestiary.move(cref)}
               ><ArrowRightLeft size={13} /> {t('best.move')}</button
             >
+            <!-- A player's character from another service (the system's importers): read a newer export. -->
+            {#if summary.kind === 'character'}
+              {#each importersOf(summary.system) as imp (imp.id)}
+                <button class="btn" title={t('best.fromExportHint', { source: imp.title })} onclick={() => runAction(() => bestiary.updateFromExport(cref, imp.id, imp.short))}
+                  ><RefreshCw size={13} /> {t('best.fromExport', { source: imp.short })}</button
+                >
+              {/each}
+            {/if}
             <button class="icon-btn" title={t('best.delete')} onclick={() => bestiary.remove(cref)}><Trash2 size={14} /></button>
           {/if}
           {#each actions as a (a.label)}
@@ -172,7 +180,7 @@
             onclick={() => window.api.exportCards({ refs: versions.map((v) => v.ref), name: summary.name })}
           ><Upload size={14} /></button>
         </div>
-        {#if actionStatus}<div class="lss-status faint">{actionStatus}</div>{/if}
+        {#if actionStatus}<div class="action-status faint">{actionStatus}</div>{/if}
         <div class="actions">
           <div class="langs">
             {#each versions as v (v.ref.scope + v.ref.id)}
@@ -278,7 +286,7 @@
 {/if}
 
 <style>
-  .lss-status {
+  .action-status {
     margin-top: 6px;
     font-size: 12px;
   }

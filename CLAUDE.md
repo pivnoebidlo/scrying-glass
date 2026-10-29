@@ -200,14 +200,14 @@ Electron-приложение для мастера D&D: окно управле
   `CharacterSheet.svelte`); система различает лист и статблок по форме (`isCharacter`). Лежат в папках роли
   `party`, сторона «партия». Импорт из Long Story Short — `systems/dnd5e/lss.ts` (тексты LSS — документы
   TipTap/ProseMirror), повторный импорт и «Обновить из LSS…» у карточки
-  обновляют её через окно «Что изменилось» (`bestiary/ui/LssUpdate.svelte`, разница листов — `systems/dnd5e/diff.ts`; как слияние в git — галочки у
-  изменений и строк списков, итог — `mergeCharacter`, уходит в `updateFromLss(…, merged)`; заклинания-карточки LSS
+  обновляют её через окно «Что изменилось» (`systems/dnd5e/ImportUpdate.svelte`, разница листов — `systems/dnd5e/diff.ts`; как слияние в git — галочки у
+  изменений и строк списков, итог — `mergeCharacter`, уходит в `updateFromExport(…, merged)`; заклинания-карточки LSS
   в экспорте — только id: названия — из таблицы мастера `<библиотека>/lss-spells.json` (`collectLssSpells` находит
-  заклинания в любом сохранённом ответе API LSS, IPC `lssSpells:*`, раздел в настройках «Карточки»; в репозиторий
+  заклинания в любом сохранённом ответе API LSS, IPC `importers:*`, раздел в настройках «Карточки» — `LssSettings.svelte`; в репозиторий
   её не кладём — это данные LSS), ненайденные — в `warnings` `fromLss`):
-  `importCards` не трогает персонажа, у которого есть карточка (`lssMatch`: `links.lss` — id LSS есть только в адресе
-  аватарки, иначе то же имя в той же папке), а возвращает `matches`; `updateFromLss` (IPC `cards:updateFromLss`,
-  `cards:pickLss`, `cards:readLss`) пишет новый лист, прежний файл — в корзину. Редактор листа —
+  `importCards` не трогает персонажа, у которого есть карточка (`exportMatch`: `links.lss` — id LSS есть только в адресе
+  аватарки, иначе то же имя в той же папке), а возвращает `matches`; `updateFromExport` (IPC `cards:updateFromExport`,
+  `cards:pickExport`, `cards:readExport`) пишет новый лист, прежний файл — в корзину. Редактор листа —
   `CharacterEditor.svelte` (смена вида карточки в редакторе переключает статблок и лист).
 - Обмен карточками: один JSON `{ scryingGlass: 'cards', version: 1, cards, images }` с картинками в base64
   (`exportCards` / `importCards` в `main/cards.ts`); при импорте id новые, `origin` внутри файла переписывается.
@@ -284,9 +284,15 @@ Electron-приложение для мастера D&D: окно управле
   (невидимый компонент, рисует `App.svelte`). Неизвестная система — `genericTracker` (`systems/tracker.ts`). D&D:
   `systems/dnd5e/plugin.ts` + `ui.ts`, инструменты — `systems/dnd5e/tools/`, бой — `encounter/`, справочник —
   `entries.ts`, `spellfilter.ts`, `spells.svelte.ts`, указатель заклинаний — `spellindex.ts` + `links.ts`; `isDnd` —
-  только внутри плагина (`here.ts`). Новое про D&D — в плагин, не проверками в модулях. Ещё в ядре: импорт LSS
-  (`main/cards.ts`, IPC `cards:*Lss`, `LssUpdate.svelte`, таблица заклинаний в настройках «Карточки») — следующий шаг
-  (импортёр системы); встроенное содержимое — `resources/` (потом — скачиваемым).
+  только внутри плагина (`here.ts`). Новое про D&D — в плагин, не проверками в модулях. Импорт персонажей из других
+  сервисов — `SystemPlugin.importers` (`CardImporter`, `systems/importer.ts`: `id` — ключ в `card.links`, `detect`,
+  `read(json, table)`, `url`, `table` — данные мастера в библиотеке, у LSS — `lss-spells.json`); ядро — `main/cards.ts`
+  (`readExport`, `exportMatch`, `updateFromExport`, `importCharacter`, таблица — `fillImporterTable`), IPC
+  `cards:pickExport` / `readExport` / `updateFromExport`, `importers:*`; кнопка «Обновить из {short}…» — в `CardView`
+  у персонажа системы с импортёром (`importersOf`); окно «Что изменилось» — `SystemUi.importUpdate` (D&D —
+  `systems/dnd5e/ImportUpdate.svelte`; нет — `confirm` в фоне бестиария), раздел настроек «Карточки» —
+  `SystemUi.cardSettings` (D&D — `LssSettings.svelte`). LSS — `systems/dnd5e/importer.ts` поверх `lss.ts`. Встроенное
+  содержимое — `resources/` (потом — скачиваемым).
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `LEGACY_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
   D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`; из плагинов и пакетов); правила —

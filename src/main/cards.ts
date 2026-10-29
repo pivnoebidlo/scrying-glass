@@ -17,11 +17,12 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
 import { app, BrowserWindow } from 'electron';
-import type { Card, CardRef, CardScope, CardSummary, LssMatch } from '../shared/cards';
+import type { Card, CardRef, CardScope, CardSummary, ImportMatch, ImportPreview } from '../shared/cards';
 import { cardAsset, defaultSide, refKey } from '../shared/cards';
 import { folderRole, roleFolders, roleNames, type VaultFolder } from '../shared/vault';
 import { systemOf } from '../systems';
-import { collectLssSpells, fromLss, isLssExport, type LssImport, type LssSpellTable } from '../systems/dnd5e/lss';
+import { PLUGINS } from '../systems/plugins';
+import type { CardImporter, ImportedCard } from '../systems/importer';
 import { freeName, writeJsonAtomic } from './files';
 import { discard } from './trash';
 
@@ -664,53 +665,76 @@ function readImport(file: string): Bundle {
   throw new Error(t('core.notCards'));
 }
 
-// Таблица заклинаний LSS (номер → название) — <библиотека>/lss-spells.json. Собирает мастер из ответов API LSS
-// (см. collectLssSpells); в репозиторий приложения она не входит.
-const lssSpellsFile = () => (libraryRoot ? path.join(libraryRoot, 'lss-spells.json') : null);
-export function lssSpellTable(): LssSpellTable {
-  const file = lssSpellsFile();
+// Importers of characters from other services — the systems' (SystemPlugin.importers; D&D: Long Story Short).
+const IMPORTERS: CardImporter[] = PLUGINS.flatMap((p) => p.importers ?? []);
+const importerOf = (id: string) => IMPORTERS.find((i) => i.id === id);
+const importerFor = (json: unknown) => IMPORTERS.find((i) => i.detect(json));
+
+// An importer's data gathered by the GM (LSS: spell numbers → names) — a file of the library; not in the app's
+// repository.
+const tableFile = (imp: CardImporter) => (libraryRoot && imp.table ? path.join(libraryRoot, imp.table.file) : null);
+function importerTable(imp: CardImporter): Record<string, unknown> {
+  const file = tableFile(imp);
   try {
-    return file ? (JSON.parse(fs.readFileSync(file, 'utf8')) as LssSpellTable) : {};
+    return file ? (JSON.parse(fs.readFileSync(file, 'utf8')) as Record<string, unknown>) : {};
   } catch {
     return {};
   }
 }
-// Добавить заклинания из файлов. Сколько было, сколько стало; файлы без заклинаний — в errors.
-export function importLssSpells(list: string[]): { before: number; total: number; errors: string[] } {
-  const table = lssSpellTable();
+export const importerTableSize = (id: string) => {
+  const imp = importerOf(id);
+  return imp ? Object.keys(importerTable(imp)).length : 0;
+};
+// Добавить в таблицу найденное в файлах. Сколько было, сколько стало; файлы, где ничего нет, — в errors.
+export function fillImporterTable(id: string, list: string[]): { before: number; total: number; errors: string[] } {
+  const imp = importerOf(id);
+  const file = imp && tableFile(imp);
+  if (!imp?.table || !file) return { before: 0, total: 0, errors: [t('core.nowhere')] };
+  const table = importerTable(imp);
   const before = Object.keys(table).length;
   const errors: string[] = [];
-  for (const file of list) {
+  for (const f of list) {
     try {
-      const found = collectLssSpells(JSON.parse(fs.readFileSync(file, 'utf8')));
-      if (Object.keys(found).length) Object.assign(table, found);
-      else errors.push(t('core.noLssSpells', { file: path.basename(file) }));
+      const found = imp.table.collect(JSON.parse(fs.readFileSync(f, 'utf8')));
+      if (found) Object.assign(table, found);
+      else errors.push(t('core.nothingFor', { file: path.basename(f), source: imp.title }));
     } catch (e) {
-      errors.push(`${path.basename(file)}: ${e instanceof Error ? e.message : String(e)}`);
+      errors.push(`${path.basename(f)}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
-  const file = lssSpellsFile();
-  if (file) writeJsonAtomic(file, table);
+  writeJsonAtomic(file, table);
   return { before, total: Object.keys(table).length, errors };
 }
-export function clearLssSpells() {
-  const file = lssSpellsFile();
+export function clearImporterTable(id: string) {
+  const imp = importerOf(id);
+  const file = imp && tableFile(imp);
   if (file) fs.rmSync(file, { force: true });
 }
+export const importerDialog = (id: string) => {
+  const imp = importerOf(id);
+  return imp && { title: imp.fileTitle, filter: imp.filter, table: imp.table?.title };
+};
 
-// Экспорт персонажа из Long Story Short (JSON-файл) — для предпросмотра перед обновлением карточки.
-export function readLss(file: string): LssImport {
+// An export file read by its importer (the given one, else the one that knows it).
+export function readExport(file: string, id?: string): ImportPreview & { importer: string } {
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
-  if (!isLssExport(raw)) throw new Error(t('core.notLss'));
-  return fromLss(raw, lssSpellTable());
+  const imp = id ? importerOf(id) : importerFor(raw);
+  if (!imp || !imp.detect(raw)) throw new Error(t('core.notExport'));
+  return { ...imp.read(raw, importerTable(imp)), importer: imp.id };
 }
 
-// Карточка, которую этот экспорт LSS, скорее всего, обновляет: в этом месте — с тем же id в LSS, а без него —
-// персонаж с тем же именем в той же папке (id в экспорте LSS нет, его достаём только из адреса аватарки).
-function lssMatch(r: LssImport, to: CardScope, dir: string): CardRef | null {
+// Links of a card to its character in the service: the id and the page.
+function linked(imp: CardImporter, id: string | null, links?: Card['links']): Pick<Card, 'links' | 'source'> {
+  if (!id) return {};
+  return { links: { ...links, [imp.id]: id }, source: { title: imp.title, ...(imp.url ? { url: imp.url(id) } : {}) } };
+}
+
+// Карточка, которую этот экспорт, скорее всего, обновляет: в этом месте — с тем же id в сервисе, а без него —
+// персонаж с тем же именем в той же папке (LSS: id в экспорте нет, его достаём только из адреса аватарки).
+function exportMatch(imp: CardImporter, r: ImportedCard, to: CardScope, dir: string): CardRef | null {
   for (const [key, c] of cards) {
     if (!key.startsWith(to + ':') || c.kind !== 'character') continue;
-    if (r.lssId && c.links?.lss === r.lssId) return { scope: to, id: c.id };
+    if (r.linkId && c.links?.[imp.id] === r.linkId) return { scope: to, id: c.id };
   }
   for (const [key, c] of cards) {
     if (!key.startsWith(to + ':') || c.kind !== 'character' || c.name.trim().toLowerCase() !== r.name.trim().toLowerCase()) continue;
@@ -720,27 +744,21 @@ function lssMatch(r: LssImport, to: CardScope, dir: string): CardRef | null {
   return null;
 }
 
-// Обновить карточку персонажа из экспорта LSS: лист, имя и система — новые (или то, что мастер выбрал из
-// изменений: merged), портреты, заметки, теги, сторона — прежние. Прежняя версия файла уходит в корзину приложения
-// (если она включена), её можно вернуть.
-export function updateFromLss(ref: CardRef, file: string, merged?: { name: string; system: string; stats: unknown }): CardRef | null {
-  const r = { ...readLss(file), ...merged };
+// Обновить карточку персонажа из экспорта: лист, имя и система — новые (или то, что мастер выбрал из изменений:
+// merged), портреты, заметки, теги, сторона — прежние. Прежняя версия файла уходит в корзину приложения (если она
+// включена), её можно вернуть.
+export function updateFromExport(ref: CardRef, file: string, importer: string, merged?: { name: string; system: string; stats: unknown }): CardRef | null {
+  const imp = importerOf(importer);
+  if (!imp) return null;
+  const r = { ...readExport(file, importer), ...merged };
   const key = refKey(ref);
   const old = cards.get(key);
   const out = files.get(key);
   const root = scopeRoot(ref.scope);
   if (!old || !out || !root || ref.scope === 'srd') return null;
-  const lss = r.lssId ?? old.links?.lss;
-  const card: Card = {
-    ...old,
-    format: 1,
-    name: r.name,
-    system: r.system,
-    stats: r.stats,
-    ...(lss ? { links: { ...old.links, lss }, source: { title: 'Long Story Short', url: `https://longstoryshort.app/characters/digital/${lss}/` } } : {}),
-  };
+  const card: Card = { ...old, format: 1, name: r.name, system: r.system, stats: r.stats, ...linked(imp, r.linkId ?? old.links?.[imp.id] ?? null, old.links) };
   const rel = path.relative(root, out).split(path.sep).join('/');
-  discard(root, [rel], { title: t('core.beforeLss', { name: old.name }), kind: 'card' });
+  discard(root, [rel], { title: t('core.beforeImport', { name: old.name, source: imp.title }), kind: 'card' });
   writeJsonAtomic(out, card);
   remember(ref.scope, out);
   reload(ref.scope);
@@ -748,8 +766,8 @@ export function updateFromLss(ref: CardRef, file: string, merged?: { name: strin
   return ref;
 }
 
-// Персонаж из Long Story Short — новая карточка. Аватар из LSS становится её портретом.
-async function importLss(r: LssImport, to: CardScope, dir: string, imgDir: { abs: string; rel: string }) {
+// Персонаж из экспорта — новая карточка. Аватар из сервиса становится её портретом.
+async function importCharacter(imp: CardImporter, r: ImportedCard, to: CardScope, dir: string, imgDir: { abs: string; rel: string }) {
   const portraits: string[] = [];
   if (r.avatarUrl) {
     try {
@@ -768,7 +786,7 @@ async function importLss(r: LssImport, to: CardScope, dir: string, imgDir: { abs
   const card: Card = {
     format: 1, id, kind: 'character', system: r.system, lang: 'ru', name: r.name, side: 'party', portraits, tags: [], notes: '',
     stats: r.stats,
-    ...(r.lssId ? { links: { lss: r.lssId }, source: { title: 'Long Story Short', url: `https://longstoryshort.app/characters/digital/${r.lssId}/` } } : {}),
+    ...linked(imp, r.linkId),
   };
   fs.mkdirSync(dir, { recursive: true });
   const out = path.join(dir, fileName(dir, r.name));
@@ -778,18 +796,19 @@ async function importLss(r: LssImport, to: CardScope, dir: string, imgDir: { abs
 }
 
 // Импортирует файлы в библиотеку или папку хранилища: файлы обмена Scrying Glass, одиночные карточки и экспорт
-// персонажей из Long Story Short. Карточки добавляются как новые (существующие не перезаписываются). Персонаж
-// LSS, у которого в этом месте уже есть карточка (см. lssMatch), не импортируется, а возвращается в matches:
-// окно покажет, что изменилось, и спросит — обновить её или создать новую (newLss — сразу новые, без вопроса).
+// персонажей из других сервисов (импортёры систем). Карточки добавляются как новые (существующие не
+// перезаписываются). Персонаж, у которого в этом месте уже есть карточка (см. exportMatch), не импортируется, а
+// возвращается в matches: окно покажет, что изменилось, и спросит — обновить её или создать новую (asNew — сразу
+// новые, без вопроса).
 export async function importCards(
   list: string[],
   to: CardScope,
   folder?: string,
-  newLss = false
-): Promise<{ count: number; errors: string[]; matches: LssMatch[]; refs: CardRef[] }> {
+  asNew = false
+): Promise<{ count: number; errors: string[]; matches: ImportMatch[]; refs: CardRef[] }> {
   const dir = targetDir(to, folder);
   const imgDir = imagesDir(to, folder);
-  const matches: LssMatch[] = [];
+  const matches: ImportMatch[] = [];
   // The cards made (a bestiary of the Community remembers them to replace on an update).
   const refs: CardRef[] = [];
   if (to === 'srd' || !dir || !imgDir) return { count: 0, errors: [t('core.nowhere')], matches, refs };
@@ -799,12 +818,13 @@ export async function importCards(
     let bundle: Bundle;
     try {
       const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
-      if (isLssExport(raw)) {
-        const r = fromLss(raw, lssSpellTable());
-        const ref = newLss ? null : lssMatch(r, to, dir);
-        if (ref) matches.push({ file, ref });
+      const imp = importerFor(raw);
+      if (imp) {
+        const r = imp.read(raw, importerTable(imp));
+        const ref = asNew ? null : exportMatch(imp, r, to, dir);
+        if (ref) matches.push({ file, ref, importer: imp.id });
         else {
-          await importLss(r, to, dir, imgDir);
+          await importCharacter(imp, r, to, dir, imgDir);
           count++;
           errors.push(...r.warnings.map((w) => `${t('common.quote', { text: r.name })}: ${w}`));
         }

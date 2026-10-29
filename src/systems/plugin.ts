@@ -4,6 +4,7 @@
 // Systems described by packs (systems/packs.ts) need no plugin; a plugin may add to a pack's family later.
 import type { SystemDef } from '.';
 import type { FieldValue, TypeDef } from '../shared/entrytypes';
+import type { CardImporter } from './importer';
 
 export interface SystemPlugin {
   // The family: editions of one game (D&D 5e 2014 and 2024).
@@ -16,4 +17,6 @@ export interface SystemPlugin {
   // Types of compendium entries of the family (spells, items…) and the line under an entry's title by type.
   entryTypes?: Record<string, TypeDef>;
   entrySubtitle?: Record<string, (fields: Record<string, FieldValue>) => string>;
+  // Importers of characters from other services (D&D: Long Story Short).
+  importers?: CardImporter[];
 }

@@ -6,7 +6,7 @@ import { afterAll, describe, expect, it, vi } from 'vitest';
 // Встроенный бестиарий читается из resources/srd проекта; окон нет.
 vi.mock('electron', () => ({ app: { getAppPath: () => process.cwd() }, BrowserWindow: { getAllWindows: () => [] } }));
 
-const { getCard, importCards, initCards, isEditedSrd, listCards, revertSrd, saveCard, setLibrary, updateFromLss } = await import('../src/main/cards');
+const { getCard, importCards, initCards, isEditedSrd, listCards, revertSrd, saveCard, setLibrary, updateFromExport } = await import('../src/main/cards');
 const { listTrash } = await import('../src/main/trash');
 
 const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-cards-'));
@@ -68,6 +68,7 @@ describe('обновление персонажа из Long Story Short', () => 
     expect(again.count).toBe(0);
     expect(again.matches).toHaveLength(1);
     expect(again.matches[0]!.ref).toEqual(brunos()[0]!.ref);
+    expect(again.matches[0]!.importer).toBe('lss');
     expect(brunos()).toHaveLength(1);
   });
 
@@ -75,14 +76,14 @@ describe('обновление персонажа из Long Story Short', () => 
     const [b] = brunos();
     saveCard('library', { ...getCard(b!.ref)!, notes: 'Проверен мастером' });
     const before = listTrash(lib, 'library').length;
-    expect(updateFromLss(b!.ref, lssFile('Бруно', 31))).toEqual(b!.ref);
+    expect(updateFromExport(b!.ref, lssFile('Бруно', 31), 'lss')).toEqual(b!.ref);
     const c = getCard(b!.ref)!;
     expect((c.stats as { hpMax: number }).hpMax).toBe(31);
     expect(c.notes).toBe('Проверен мастером');
     expect(brunos()).toHaveLength(1);
     const trash = listTrash(lib, 'library');
     expect(trash.length).toBe(before + 1);
-    expect(trash[0]!.title).toContain('before the LSS update');
+    expect(trash[0]!.title).toContain('before the update from Long Story Short');
   });
 
   it('«Создать новую» — импорт без сопоставления', async () => {

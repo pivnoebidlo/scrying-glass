@@ -1,15 +1,16 @@
 // D&D 5e in the control window: the stat block and the character sheet, their editors, its tools.
 import type { Component } from 'svelte';
-import { Calculator as CalculatorIcon, CloudSun, DoorOpen, Footprints, Gauge, Gem, RefreshCw, Signpost, Sparkles, Store, Wand2, Zap } from '@lucide/svelte';
+import { Calculator as CalculatorIcon, CloudSun, DoorOpen, Footprints, Gauge, Gem, Signpost, Sparkles, Store, Wand2, Zap } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import type { ToolDef } from '../../modules/tools/ui/registry.svelte';
 import type { PaperView, SystemUi, StatsEditor, StatsView } from '../ui';
-import { bestiary } from '../../modules/bestiary/ui/cards.svelte';
 import { reshapeFor, reshapeFrom, reshapeNew } from './tools/reshape/store.svelte';
 import PaperSheet from './PaperSheet.svelte';
 import Difficulty from './encounter/Difficulty.svelte';
 import { spellList } from './spells.svelte';
 import Background from './Background.svelte';
+import ImportUpdate from './ImportUpdate.svelte';
+import LssSettings from './LssSettings.svelte';
 import Calculator from './tools/difficulty/Calculator.svelte';
 import PointBuy from './tools/pointbuy/PointBuy.svelte';
 import Reshape from './tools/reshape/Reshape.svelte';
@@ -56,10 +57,6 @@ export const dnd5eUi: SystemUi = {
     tool('wildMagic', Zap, 'tools.side.wildMagic', WildMagic),
   ],
   cardActions: (c) => [
-    // A player's character imported from Long Story Short: read a newer export.
-    ...(c.kind === 'character' && c.ref.scope !== 'srd'
-      ? [{ icon: RefreshCw, get label() { return t('best.fromLss'); }, get title() { return t('best.lssHint'); }, run: () => bestiary.updateFromLss(c.ref) }]
-      : []),
     ...(c.kind !== 'character'
       ? [{ icon: Wand2, get label() { return t('reshape.fromCard'); }, get title() { return t('reshape.fromCardHint'); }, run: () => reshapeFrom(c.ref) }]
       : []),
@@ -83,6 +80,8 @@ export const dnd5eUi: SystemUi = {
   encounter: Difficulty,
   entryList: { spell: spellList },
   background: Background,
+  importUpdate: ImportUpdate,
+  cardSettings: LssSettings,
   paper: (card) => (isCharacter(card.stats) ? (PaperSheet as PaperView) : undefined),
   // The core's fantasy generators, shown as D&D's own.
   claims: ['names', 'npc', 'tavern', 'settlement'],

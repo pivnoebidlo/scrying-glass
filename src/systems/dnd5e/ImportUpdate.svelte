@@ -1,19 +1,20 @@
-<!-- Окно «Что изменилось»: свежий экспорт персонажа из Long Story Short против его карточки — как слияние в git.
+<!-- Окно «Что изменилось» (SystemUi.importUpdate): свежий экспорт персонажа D&D (Long Story Short) против его
+     карточки — как слияние в git.
      У каждого изменения и каждой строки списка галочка «взять новое»: снятая — в карточке остаётся прежнее. Итог
      собирает mergeCharacter. Можно обновить карточку (прежняя версия — в корзину), создать новую (при импорте) или
      ничего не делать. -->
 <script lang="ts">
-  import { t } from '../../../renderer/lib/i18n.svelte';
+  import { t } from '../../renderer/lib/i18n.svelte';
   import { TriangleAlert, X } from '@lucide/svelte';
-  import { isCharacter } from '../../../systems/dnd5e/character';
-  import { allIds, characterDiff, isEmptyDiff, lineId, mergeCharacter } from '../../../systems/dnd5e/diff';
-  import { systemOf } from '../../../systems';
-  import type { LssRequest } from './cards.svelte';
+  import { isCharacter } from './character';
+  import { allIds, characterDiff, isEmptyDiff, lineId, mergeCharacter } from './diff';
+  import { systemOf } from '..';
+  import type { ImportRequest } from '../../modules/bestiary/ui/cards.svelte';
 
-  let { request }: { request: LssRequest } = $props();
+  let { request }: { request: ImportRequest } = $props();
 
   const cur = $derived(request.current);
-  const next = $derived(request.lss);
+  const next = $derived(request.next);
   const diff = $derived(isCharacter(cur.stats) && isCharacter(next.stats) ? characterDiff(cur.stats, next.stats) : null);
   const renamed = $derived(cur.name !== next.name);
   const resystem = $derived(cur.system !== next.system);

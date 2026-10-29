@@ -6,6 +6,7 @@ import * as statblock from './stats';
 import * as character from './character';
 import { dndTracker } from './tracker';
 import { ENTRY_SUBTITLES, ENTRY_TYPES } from './entries';
+import { lssImporter } from './importer';
 
 // Two shapes of stats: a stat block (monsters, NPCs) and a player character's sheet.
 const dnd = (id: 'dnd5e-2024' | 'dnd5e-2014', title: string, short: string): SystemDef => ({
@@ -32,4 +33,5 @@ export const dnd5ePlugin: SystemPlugin = {
   legacy: 'dnd5e-2024',
   entryTypes: ENTRY_TYPES,
   entrySubtitle: ENTRY_SUBTITLES,
+  importers: [lssImporter],
 };

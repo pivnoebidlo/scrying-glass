@@ -4,6 +4,7 @@
 import type { CardKind, CombatStats } from '../shared/cards';
 import { genericTracker, type TrackerDef } from './tracker';
 import { PLUGINS } from './plugins';
+import type { CardImporter } from './importer';
 
 export interface SystemDef {
   id: string;
@@ -69,3 +70,5 @@ const unknown = (id: string): SystemDef => ({
 export const systemOf = (id: string) => systems.find((s) => s.id === id) ?? unknown(id);
 
 export const familyOf = (id: string) => systemOf(id).family;
+// The importers of characters of a system's family (D&D: Long Story Short).
+export const importersOf = (id: string): CardImporter[] => PLUGINS.find((p) => p.family === familyOf(id))?.importers ?? [];

@@ -1,7 +1,7 @@
 // API, который preload открывает окнам как window.api.
 import type { BlockedEntry, RepoCatalog, RepoEntry, RepoInfo, RepoProgress, ReportedEntry, ReportReason } from './repo';
 import type { BuiltinSounds } from './sounds';
-import type { Card, CardRef, CardScope, CardSummary, LssMatch, LssPreview } from './cards';
+import type { Card, CardRef, CardScope, CardSummary, ImportMatch, ImportPreview } from './cards';
 import type { BuiltinBook } from './compendium';
 import type { Note } from './notes';
 import type { Sketch } from './sketch';
@@ -76,21 +76,21 @@ export interface Api {
   exportCards(what: { refs?: CardRef[]; scope?: CardScope; folder?: string; name: string }): Promise<number | null>;
   // Импорт: выбрать файлы (диалог), затем импортировать их в выбранное место.
   pickImportFiles(): Promise<string[]>;
-  // matches — персонажи из LSS, у которых в этом месте уже есть карточка: окно спрашивает, обновить её или создать
-  // новую (newLss — импортировать их новыми).
-  importCards(files: string[], scope: CardScope, folder?: string, newLss?: boolean): Promise<{ count: number; errors: string[]; matches: LssMatch[] }>;
-  // Выбрать экспорт персонажа из LSS (диалог) и прочитать его для предпросмотра. null — отменили.
-  pickLss(): Promise<{ file: string; lss: LssPreview } | null>;
-  // Прочитать экспорт LSS по пути (для совпадений импорта).
-  readLss(file: string): Promise<LssPreview>;
-  // Таблица заклинаний LSS (номер → название) для заклинаний-карточек: сколько загружено, загрузить файлы
+  // matches — персонажи из экспортов других сервисов, у которых в этом месте уже есть карточка: окно спрашивает,
+  // обновить её или создать новую (asNew — импортировать их новыми).
+  importCards(files: string[], scope: CardScope, folder?: string, asNew?: boolean): Promise<{ count: number; errors: string[]; matches: ImportMatch[] }>;
+  // Выбрать экспорт персонажа для импортёра (диалог) и прочитать его для предпросмотра. null — отменили.
+  pickExport(importer: string): Promise<{ file: string; preview: ImportPreview } | null>;
+  // Прочитать экспорт по пути (для совпадений импорта).
+  readExport(file: string, importer: string): Promise<ImportPreview>;
+  // Данные импортёра, которые собирает мастер (LSS: таблица заклинаний): сколько загружено, загрузить файлы
   // (диалог; null — отменили), очистить.
-  lssSpellCount(): Promise<number>;
-  importLssSpells(): Promise<{ before: number; total: number; errors: string[] } | null>;
-  clearLssSpells(): Promise<void>;
-  // Обновить карточку персонажа из экспорта LSS (прежняя версия — в корзину); merged — итог, собранный из
-  // выбранных мастером изменений (нет — всё из файла).
-  updateFromLss(ref: CardRef, file: string, merged?: { name: string; system: string; stats: unknown }): Promise<CardRef | null>;
+  importerTableSize(importer: string): Promise<number>;
+  fillImporterTable(importer: string): Promise<{ before: number; total: number; errors: string[] } | null>;
+  clearImporterTable(importer: string): Promise<void>;
+  // Обновить карточку персонажа из экспорта (прежняя версия — в корзину); merged — итог, собранный из выбранных
+  // мастером изменений (нет — всё из файла).
+  updateFromExport(ref: CardRef, file: string, importer: string, merged?: { name: string; system: string; stats: unknown }): Promise<CardRef | null>;
   library(): Promise<{ path: string | null; isDefault: boolean }>;
   chooseLibrary(reset?: boolean): Promise<void>;
   revealLibrary(): Promise<void>;

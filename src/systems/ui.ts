@@ -15,6 +15,7 @@ import type { Combatant } from '../modules/initiative/types';
 import type { CardKind } from '../shared/cards';
 import { familyOf } from '.';
 import type { ToolDef } from '../modules/tools/ui/registry.svelte';
+import type { ImportRequest } from '../modules/bestiary/ui/cards.svelte';
 import { dnd5eUi } from './dnd5e/ui';
 
 export type StatsView = Component<{ card: Card<any> }>;
@@ -70,6 +71,10 @@ export interface SystemUi {
   entryList?: Record<string, EntryList>;
   // An invisible component of the control window, always there (D&D: the index of spell names).
   background?: Component;
+  // The window «What changed» for a character updated from an export (none — a plain question).
+  importUpdate?: Component<{ request: ImportRequest }>;
+  // A section of the Cards settings (D&D: the LSS spell table).
+  cardSettings?: Component;
 }
 
 export const systemUis: SystemUi[] = [dnd5eUi];
