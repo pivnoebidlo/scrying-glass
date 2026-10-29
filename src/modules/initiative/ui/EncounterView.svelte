@@ -8,10 +8,10 @@
   import { SIDES, type Combatant, type Encounter, type Side } from '../types';
   import AvatarPick from './AvatarPick.svelte';
   import QuickAdd from './QuickAdd.svelte';
-  import Difficulty from './Difficulty.svelte';
   import { ui } from './ui.svelte';
   import { shownAdventures, systemFor } from '../../../shared/adventures';
-  import { isDnd, systemOf } from '../../../systems';
+  import { systemOf } from '../../../systems';
+  import { systemUi } from '../../../systems/ui';
   import { fromFields } from '../../../systems/tracker';
 
   let { e }: { e: Encounter } = $props();
@@ -23,6 +23,8 @@
   // Числа участников — как в системе приключения заготовки.
   const system = $derived(systemFor(store.state.adventures, e.adventure));
   const tracker = $derived(systemOf(system).tracker);
+  // What the system says about the fight (D&D: how hard it is).
+  const AboutFight = $derived(systemUi(system)?.encounter);
 
   async function start() {
     await dispatch('initiative', 'startEncounter', { id: e.id });
@@ -53,7 +55,7 @@
       </select>
     {/if}
     <div class="spacer"></div>
-    {#if isDnd(system)}<Difficulty list={e.combatants} />{/if}
+    {#if AboutFight}<AboutFight list={e.combatants} />{/if}
     <button class="btn primary" disabled={!e.combatants.length} title={t('init.startHint')} onclick={start}><Swords size={14} /> {t('init.toFight')}</button>
     <button class="icon-btn" title={t('init.deleteEnc')} onclick={remove}><Trash2 size={15} /></button>
   </header>

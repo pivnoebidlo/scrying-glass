@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { partyBudget, rate } from '../src/systems/dnd5e/difficulty';
-import { analyze } from '../src/modules/initiative/difficulty';
+import { analyze } from '../src/systems/dnd5e/encounter/analyze';
 import type { Combatant } from '../src/modules/initiative/types';
 
 const c = (name: string, side: Combatant['side'], card?: string) => ({ name, side, card: card ? { scope: 'vault', id: card } : null }) as Combatant;

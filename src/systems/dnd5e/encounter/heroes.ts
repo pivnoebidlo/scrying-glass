@@ -2,8 +2,8 @@
 import type { AppState } from '../../../shared/types';
 import { sameRef, type CardRef } from '../../../shared/cards';
 import { visibleIn } from '../../../shared/adventures';
-import { bestiary } from '../../bestiary/ui/cards.svelte';
-import type { CardInfo, Hero } from '../difficulty';
+import { bestiary } from '../../../modules/bestiary/ui/cards.svelte';
+import type { CardInfo, Hero } from './analyze';
 
 export function cardInfo(ref: CardRef | null | undefined): CardInfo | undefined {
   const card = ref ? bestiary.all.find((x) => sameRef(x.ref, ref)) : undefined;

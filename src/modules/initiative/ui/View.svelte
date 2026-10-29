@@ -12,11 +12,10 @@
   import QuickAdd from './QuickAdd.svelte';
   import StripControls from './StripControls.svelte';
   import EncounterView from './EncounterView.svelte';
-  import Difficulty from './Difficulty.svelte';
   import { newEncounterName, ui } from './ui.svelte';
   import { currentSystem } from '../../../shared/adventures';
-  import { isDnd, systemOf } from '../../../systems';
-  import { trackerCells } from '../../../systems/ui';
+  import { systemOf } from '../../../systems';
+  import { systemUi, trackerCells } from '../../../systems/ui';
 
   let { ms, app }: ModuleProps<'initiative'> = $props();
 
@@ -33,6 +32,8 @@
   // Что показывать у участника, решает система приключения: хиты и КД или стресс и последствия.
   const system = $derived(currentSystem(app.adventures));
   const tracker = $derived(systemOf(system).tracker);
+  // What the system says about the fight (D&D: how hard it is).
+  const AboutFight = $derived(systemUi(system)?.encounter);
   const Cells = $derived(trackerCells(system));
 
   const list = $derived(ordered(ms.combatants));
@@ -74,7 +75,7 @@
       <button class="btn primary" disabled={!list.length} onclick={() => dispatch('initiative', 'start')}><Swords size={14} /> {t('init.startFight')}</button>
     {/if}
     <div class="spacer"></div>
-    {#if isDnd(system)}<Difficulty list={ms.combatants} />{/if}
+    {#if AboutFight}<AboutFight list={ms.combatants} />{/if}
     {#if !tracker.roll.none}
       <button class="btn" title={tracker.roll.title} onclick={() => dispatch('initiative', 'rollNpcs', { system })}>
         <Dices size={14} /> {tracker.roll.label}

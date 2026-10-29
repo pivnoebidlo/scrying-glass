@@ -1,8 +1,8 @@
 // Сложность боя или заготовки: кто герои и какого они уровня, сколько опыта у противников. Чистые функции —
 // карточки и партию приключения подставляет окно (ui/Difficulty.svelte).
-import { t } from '../../shared/i18n';
-import { partyBudget, rate, type Budget, type Rating } from '../../systems/dnd5e/difficulty';
-import type { Combatant } from './types';
+import { t } from '../../../shared/i18n';
+import { partyBudget, rate, type Budget, type Rating } from '../difficulty';
+import type { Combatant } from '../../../modules/initiative/types';
 
 // Что известно о карточке участника: уровень персонажа игрока или опыт монстра.
 export interface CardInfo {

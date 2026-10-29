@@ -3,7 +3,7 @@
 <script lang="ts">
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
-  import type { Analysis } from '../difficulty';
+  import type { Analysis } from './analyze';
 
   let { a, editable = true }: { a: Analysis; editable?: boolean } = $props();
 

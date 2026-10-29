@@ -5,12 +5,12 @@
   import { Gauge } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { store } from '../../../renderer/lib/store.svelte';
-  import { RATING_TITLES } from '../../../systems/dnd5e/difficulty';
-  import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
-  import { analyze } from '../difficulty';
+  import { RATING_TITLES } from '../difficulty';
+  import { bestiary, connectCards } from '../../../modules/bestiary/ui/cards.svelte';
+  import { analyze } from './analyze';
   import { adventureHeroes, cardInfo } from './heroes';
   import DifficultyDetails from './DifficultyDetails.svelte';
-  import type { Combatant } from '../types';
+  import type { Combatant } from '../../../modules/initiative/types';
 
   let { list }: { list: Combatant[] } = $props();
 

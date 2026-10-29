@@ -11,10 +11,10 @@
   import { RATING_TITLES } from '../../difficulty';
   import { bestiary, connectCards } from '../../../../modules/bestiary/ui/cards.svelte';
   import { addToInitiative } from '../../../../modules/bestiary/ui/combat';
-  import { analyze } from '../../../../modules/initiative/difficulty';
+  import { analyze } from '../../encounter/analyze';
   import type { Combatant } from '../../../../modules/initiative/types';
-  import DifficultyDetails from '../../../../modules/initiative/ui/DifficultyDetails.svelte';
-  import { adventureHeroes, cardInfo } from '../../../../modules/initiative/ui/heroes';
+  import DifficultyDetails from '../../encounter/DifficultyDetails.svelte';
+  import { adventureHeroes, cardInfo } from '../../encounter/heroes';
   import { newEncounterName, ui as initiativeUi } from '../../../../modules/initiative/ui/ui.svelte';
   import CardSearch from '../../../../modules/maps/ui/CardSearch.svelte';
   import { calc } from './calc.svelte';

@@ -55,6 +55,8 @@ export interface SystemUi {
   cardActions?(summary: CardSummary, card: Card | null): CardAction[];
   newCard?: NewCard[];
   paper?(card: Card): PaperView | undefined;
+  // Above a fight and an encounter: what the system says about it (D&D: how hard it is).
+  encounter?: Component<{ list: Combatant[] }>;
 }
 
 export const systemUis: SystemUi[] = [dnd5eUi];

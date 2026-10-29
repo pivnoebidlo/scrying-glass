@@ -7,6 +7,7 @@ import type { PaperView, SystemUi, StatsEditor, StatsView } from '../ui';
 import { bestiary } from '../../modules/bestiary/ui/cards.svelte';
 import { reshapeFor, reshapeFrom, reshapeNew } from './tools/reshape/store.svelte';
 import PaperSheet from './PaperSheet.svelte';
+import Difficulty from './encounter/Difficulty.svelte';
 import Calculator from './tools/difficulty/Calculator.svelte';
 import PointBuy from './tools/pointbuy/PointBuy.svelte';
 import Reshape from './tools/reshape/Reshape.svelte';
@@ -65,6 +66,7 @@ export const dnd5eUi: SystemUi = {
       run: (p) => (p ? reshapeFor(p.path, p.name) : reshapeNew()),
     },
   ],
+  encounter: Difficulty,
   paper: (card) => (isCharacter(card.stats) ? (PaperSheet as PaperView) : undefined),
   claims: ['names', 'npc', 'tavern', 'settlement', 'shop', 'relic', 'dungeon', 'weather', 'events', 'treasure'],
 };
