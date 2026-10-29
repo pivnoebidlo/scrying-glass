@@ -8,6 +8,7 @@ import { getLang } from '../../../shared/i18n';
 import { blankPack, blankStats, loc, type PackStats, type SystemPack } from '../../../shared/syspack';
 import { systems } from '../../../systems';
 import { ui as tools } from '../ui/ui.svelte';
+import { fromTemplate, type TemplateId } from './templates';
 
 // The steps of the builder (its tabs) and, on the sheet step, the chosen section or field.
 export type Step = 'about' | 'sheet' | 'tracker' | 'compendium' | 'trial';
@@ -76,9 +77,10 @@ export function pickSystem(id: string) {
   if (p) load(p, p.own ? p.id : null, !p.own);
 }
 
-export function newSystem() {
+// A new system: blank or from a template of a kind of game (templates.ts).
+export function newSystem(template: TemplateId = 'blank') {
   const title = t('sb.newTitle');
-  load(blankPack(freeId(title), title), null, false);
+  load(template === 'blank' ? blankPack(freeId(title), title) : fromTemplate(template, freeId(title), title), null, false);
   builder.saved = '';
 }
 

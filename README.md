@@ -826,8 +826,11 @@ on an attribute or gear die is a bane that stays on a push, a stress 1 is panic,
 can be added or taken at the moment of the roll; a d20 roll can be judged by degrees of success against a DC typed in
 the roll log; a pool can cap its dice, ask for the successes needed and be changed after the roll (a success added,
 a die rolled again by a click, the failed dice or the 1s again, fives as successes); conditions can carry a number («Frightened 2»). Your own systems are made in **Tools → System builder** (also from Settings → Game
-systems): a line about the system, sections and fields, the roll of each field, the tracker, with a live preview of the card where rolls can be
-tried; a built-in system can be copied and changed. They are saved to `systems/` in the library (every vault sees
+systems), step by step: About the system · Sheet · Tracker · Compendium · Try it. A new system starts blank or from a
+template of a kind of game (a pool of d6, d20 + bonus, 2d6 + stat, the best of a pool, a die under the value, 4dF); the
+sheet is shown as tiles on sample values, a click on a field opens it beside: its kind, what a click rolls — a recipe
+in words with its numbers as a sentence («Roll Body + Strength d6, a success on 6 and up, no more than 15 dice») and a
+trial roll; formulas are read back with the names of the fields. A built-in system can be copied and changed. They are saved to `systems/` in the library (every vault sees
 them) and can be exported to a file and imported. A system can have its own **compendium** (rules, conditions, gear —
 Markdown entries shown in its adventures like built-in ones; a condition in the tracker opens its entry) and can be
 **published in the Community** («Publish…» in the builder): Find adventures → Systems lists them, «Install the system»

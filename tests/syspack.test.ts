@@ -334,3 +334,17 @@ describe('a formula in words', () => {
     expect(readFormula('a +', (k) => k, words)).toBe(null);
   });
 });
+
+describe('templates of the builder', () => {
+  it('give valid packs whose formulas read', async () => {
+    const { TEMPLATES, fromTemplate } = await import('../src/modules/tools/syspack/templates');
+    for (const id of TEMPLATES) {
+      const p = fromTemplate(id, `test-${id}`, 'Test');
+      const v = validatePack(JSON.parse(JSON.stringify(p)));
+      expect(typeof v, id).toBe('object');
+      expect(formulaProblems(v as SystemPack), id).toEqual([]);
+      // Nothing of a template is dropped by the check (all of it is known).
+      expect((v as SystemPack).sections.flatMap((s) => s.fields).length, id).toBe(p.sections.flatMap((s) => s.fields).length);
+    }
+  });
+});

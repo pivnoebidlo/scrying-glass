@@ -373,7 +373,8 @@ Electron-приложение для мастера D&D: окно управле
 `builder.step` (О системе · Лист · Трекер · Справочник · Проба); «Лист» — `SheetCanvas` (плитки полей на пробных значениях,
 щелчок — `builder.sel`) и инспектор `FieldPanel` (вид плитками, бросок — рецепты фразой, «Для знатоков», «Пробный бросок» —
 `rolls.packRoll` по `previewStats`; ключ нового поля идёт за названием, ключи — в «Дополнительно»); «Проба» — `pack/Sheet` и
-`pack/Editor` с `draft`; `FormulaInput` проверяет формулы на лету и читает их словами (`readFormula`: названия полей,
+`pack/Editor` с `draft`; «Новая система» — окно `TemplatePick` с образцами `templates.ts` (`fromTemplate`: blank, pool, d20, pbta, fitd,
+under, fate; тест проверяет каждый); `FormulaInput` проверяет формулы на лету и читает их словами (`readFormula`: названия полей,
 min(15, x) — «x, не больше 15»), вставка — числовые поля по названию, `LocInput` правит текст на языке интерфейса; состояние — `store.svelte.ts`, `openBuilder(id?)` — и из
 настроек систем); ядро — IPC `systems:save` / `delete` / `import` / `export` (`savePack`, свой пакет — `own`, встроенный —
 только копией), ошибки `syspack:<код>` → `sb.err.*`. `fieldMap` не кэшируется: конструктор правит пакет на месте.

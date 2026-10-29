@@ -17,10 +17,13 @@
   import TrackerPanel from './TrackerPanel.svelte';
   import CompendiumPanel from './CompendiumPanel.svelte';
   import SheetCanvas from './SheetCanvas.svelte';
+  import TemplatePick from './TemplatePick.svelte';
   import { builder, type Step, copySystem, deleteSystem, freeKey, importSystem, isDirty, newSystem, packError, packs, pickSystem, saveSystem } from './store.svelte';
 
   const KINDS: CardKind[] = ['monster', 'npc', 'character'];
   const STEPS: Step[] = ['about', 'sheet', 'tracker', 'compendium', 'trial'];
+  // «New system» asks what to start from.
+  let choosing = $state(false);
 
   const d = $derived(builder.draft);
   const ro = $derived(builder.readonly);
@@ -130,14 +133,14 @@
       value={builder.was ?? (d && ro ? d.id : '')}
       onchange={(e) => {
         const id = e.currentTarget.value;
-        leave(() => (id ? pickSystem(id) : newSystem()));
+        leave(() => (id ? pickSystem(id) : (choosing = true)));
       }}
     >
       <option value="" disabled={!!d && !builder.was && !ro}>{d && !builder.was && !ro ? L(d.title) : t('sb.pick')}</option>
       {#if own.length}<optgroup label={t('sb.system')}>{#each own as p (p.id)}<option value={p.id}>{L(p.title)}</option>{/each}</optgroup>{/if}
       <optgroup label={t('sb.builtin')}>{#each builtin as p (p.id)}<option value={p.id}>{L(p.title)}</option>{/each}</optgroup>
     </select>
-    <button class="btn" onclick={() => leave(newSystem)}><FilePlus size={14} /> {t('sb.new')}</button>
+    <button class="btn" onclick={() => leave(() => (choosing = true))}><FilePlus size={14} /> {t('sb.new')}</button>
     <button class="btn" onclick={() => leave(importSystem)}><Upload size={14} /> {t('sb.import')}</button>
     <div class="spacer"></div>
     {#if d && ro}<button class="btn" onclick={copySystem}><Copy size={14} /> {t('sb.copy')}</button>{/if}
@@ -278,10 +281,14 @@
     {/if}
   {:else}
     <div class="empty">
-      <button class="btn primary" onclick={newSystem}><FilePlus size={14} /> {t('sb.new')}</button>
+      <button class="btn primary" onclick={() => (choosing = true)}><FilePlus size={14} /> {t('sb.new')}</button>
     </div>
   {/if}
 </div>
+
+{#if choosing}
+  <TemplatePick onpick={(id) => ((choosing = false), newSystem(id))} onclose={() => (choosing = false)} />
+{/if}
 
 <style>
   .view {
