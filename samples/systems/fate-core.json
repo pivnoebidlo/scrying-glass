@@ -3,7 +3,7 @@
  "version": 1,
  "id": "fate-core",
  "family": "fate",
- "release": 1,
+ "release": 2,
  "title": "Fate Core",
  "about": {"en": "Aspects, stress and consequences in combat, Fate dice", "ru": "Аспекты, стресс и последствия в бою, кубы Fate"},
  "author": "Scrying Glass",

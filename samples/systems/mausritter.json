@@ -3,7 +3,7 @@
  "version": 1,
  "id": "mausritter",
  "family": "mausritter",
- "release": 1,
+ "release": 2,
  "title": "Mausritter",
  "about": {"en": "Mice with inventory slots, roll-under saves, damage to HP and then to STR", "ru": "Мыши с инвентарём по клеткам, спасброски на понижение, урон в защиту, потом в СИЛ"},
  "author": "Scrying Glass",

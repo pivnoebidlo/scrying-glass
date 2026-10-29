@@ -2,9 +2,6 @@
 import type { Messages } from '../../shared/i18n/core';
 
 export const en = {
-  'adv.about.fate-core': "Aspects, stress and consequences in combat, Fate dice",
-  'adv.about.mausritter': "Mice with inventory slots, roll-under saves, damage to HP and then to STR",
-  'adv.about.fitd': "Scoundrels with action dots, d6 pools, stress, trauma and harm; progress clocks",
   'adv.page.supplements': "Supplements",
   'adv.page.createSupplement': "Create supplement…",
   'adv.page.supplementPlaceholder': "Supplement name",
@@ -112,9 +109,6 @@ export const en = {
 };
 
 export const ru: Messages<typeof en> = {
-  'adv.about.fate-core': "Аспекты, стресс и последствия в бою, кубы Fate",
-  'adv.about.mausritter': "Мыши с инвентарём по клеткам, спасброски на понижение, урон в защиту, потом в СИЛ",
-  'adv.about.fitd': "Негодяи с точками действий, пулы к6, стресс, травмы и вред; часы прогресса",
   'adv.page.supplements': "Дополнения",
   'adv.page.createSupplement': "Создать дополнение…",
   'adv.page.supplementPlaceholder': "Название дополнения",
