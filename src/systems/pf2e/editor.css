@@ -1,0 +1,117 @@
+/* The editors of Pathfinder 2e cards (Editor, CharacterEditor and their parts): one look under .pf2e-ed. */
+.pf2e-ed section {
+  margin-bottom: 14px;
+}
+.pf2e-ed h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.pf2e-ed .grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.pf2e-ed .field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 110px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.pf2e-ed .field.small {
+  width: 80px;
+  min-width: 0;
+}
+.pf2e-ed .field.wide {
+  flex: 1;
+  min-width: 180px;
+}
+.pf2e-ed .field.one {
+  margin-bottom: 8px;
+}
+.pf2e-ed .abilities {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.pf2e-ed .ability {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.pf2e-ed .abbr {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.pf2e-ed .ability input {
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  font-weight: 600;
+}
+.pf2e-ed .chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.pf2e-ed .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 2px 2px 6px;
+  border-radius: var(--radius-s);
+  background: var(--bg-active);
+}
+.pf2e-ed .sk-name {
+  width: 110px;
+}
+.pf2e-ed .sk-mod,
+.pf2e-ed .bonus {
+  width: 52px;
+  text-align: center;
+}
+.pf2e-ed .block {
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+}
+.pf2e-ed .head,
+.pf2e-ed .rank {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.pf2e-ed .head .name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+.pf2e-ed .head .traits,
+.pf2e-ed .rank .spells {
+  flex: 1;
+  min-width: 0;
+}
+.pf2e-ed .mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.pf2e-ed textarea {
+  width: 100%;
+}
+.pf2e-ed .add {
+  margin-bottom: 8px;
+}

@@ -239,7 +239,7 @@ GM Core, способности существ.
 Существа правятся в форме (списки через запятую, кубы в уроне становятся бросками сами). Персонажи игроков — из
 **Pathbuilder 2e**: «Импорт из файла…» берёт его экспорт JSON (файл или сохранённую страницу
 pathbuilder2e.com/json.php?id=<код>) — лист с итогами по правилам (броски характеристик, Восприятия, спасбросков, навыков
-с рангами, удары, заклинания), черты, снаряжение и деньги; «Обновить из Pathbuilder…» читает свежий экспорт. Другие книги и
+с рангами, удары, заклинания), черты, снаряжение и деньги; «Обновить из Pathbuilder…» читает свежий экспорт; лист правится и в форме (навыки пересчитываются по рангам). Другие книги и
 русский перевод — потом. This product is
 licensed under the ORC License (paizo.com/orclicense); Scrying Glass uses trademarks and/or copyrights owned by Paizo
 Inc., used under Paizo's Community Use Policy (paizo.com/licenses/communityuse); we are expressly prohibited from

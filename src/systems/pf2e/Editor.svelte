@@ -5,6 +5,9 @@
   import { markdownKeys } from '../../renderer/lib/markdownKeys';
   import { t } from '../../renderer/lib/i18n.svelte';
   import { ABILITIES, SIZES, type ActionCost, type Feature, type Pf2eStats } from './stats';
+  import StrikesEditor from './StrikesEditor.svelte';
+  import SpellsEditor from './SpellsEditor.svelte';
+  import './editor.css';
 
   let { stats = $bindable() }: { stats: Pf2eStats; system?: string; lang?: string } = $props();
 
@@ -24,9 +27,6 @@
     return v.trim() === '' || isNaN(n) ? 0 : n;
   };
   const costOf = (v: string): ActionCost => (v === '' ? null : v === 'reaction' || v === 'free' ? v : (Number(v) as 1 | 2 | 3));
-  // «1d6+2 slashing» ↔ «{1d6+2} slashing»: the braces make the dice roll in the stat block.
-  const plain = (s: string) => s.replace(/\{([^}]+)\}/g, '$1');
-  const withDice = (s: string) => plain(s).replace(/\b(\d*d\d+(?:\s*[+-]\s*\d+)?)\b/g, (d) => `{${d.replace(/\s+/g, '')}}`);
 
   function move<T>(arr: T[], i: number, d: -1 | 1) {
     const j = i + d;
@@ -55,6 +55,7 @@
   <button type="button" class="btn add" onclick={() => arr.push(blankFeature())}><Plus size={14} /> {add}</button>
 {/snippet}
 
+<div class="pf2e-ed">
 <section>
   <h4>{t('pf2e.ed.basics')}</h4>
   <div class="grid">
@@ -125,168 +126,9 @@
 <section>
   <h4>{t('pf2e.ed.offense')}</h4>
   <label class="field wide one"><span>{t('pf2e.sb.speed')}</span><input type="text" placeholder="25 feet, climb 20 feet" value={stats.speeds.join(', ')} onchange={(e) => (stats.speeds = list(e.currentTarget.value))} /></label>
-  {#each stats.strikes as st, i (i)}
-    <div class="block">
-      <div class="head">
-        <select title={t('pf2e.ed.strikeKind')} value={st.ranged ? 'r' : 'm'} onchange={(e) => (st.ranged = e.currentTarget.value === 'r')}>
-          <option value="m">{t('pf2e.sb.melee')}</option>
-          <option value="r">{t('pf2e.sb.ranged')}</option>
-        </select>
-        <input class="name" type="text" placeholder={t('pf2e.ed.strikeName')} bind:value={st.name} />
-        <input class="bonus" type="text" title={t('pf2e.ed.bonus')} value={st.bonus} onchange={(e) => (st.bonus = num(e.currentTarget.value))} />
-        <button type="button" class="icon-btn" title={t('pf2e.ed.up')} disabled={i === 0} onclick={() => move(stats.strikes, i, -1)}><ArrowUp size={14} /></button>
-        <button type="button" class="icon-btn" title={t('pf2e.ed.down')} disabled={i === stats.strikes.length - 1} onclick={() => move(stats.strikes, i, 1)}><ArrowDown size={14} /></button>
-        <button type="button" class="icon-btn" title={t('pf2e.ed.delete')} onclick={() => stats.strikes.splice(i, 1)}><Trash2 size={14} /></button>
-      </div>
-      <div class="grid">
-        <label class="field wide"><span>{t('pf2e.ed.traits')}</span><input type="text" placeholder="agile, finesse" value={st.traits.join(', ')} onchange={(e) => (st.traits = list(e.currentTarget.value))} /></label>
-        <label class="field wide"><span>{t('pf2e.sb.damage')}</span><input type="text" placeholder="1d6+2 slashing" value={plain(st.damage)} onchange={(e) => (st.damage = withDice(e.currentTarget.value))} /></label>
-        <label class="field wide"><span>{t('pf2e.ed.effects')}</span><input type="text" placeholder="Grab" value={st.effects.join(', ')} onchange={(e) => (st.effects = list(e.currentTarget.value))} /></label>
-      </div>
-    </div>
-  {/each}
-  <button type="button" class="btn add" onclick={() => stats.strikes.push({ name: '', ranged: false, bonus: 0, traits: [], damage: '', effects: [] })}><Plus size={14} /> {t('pf2e.ed.addStrike')}</button>
-
-  {#each stats.spellcasting as sc, i (i)}
-    <div class="block">
-      <div class="head">
-        <input class="name" type="text" placeholder="Arcane Prepared Spells" bind:value={sc.name} />
-        <label class="mini">{t('pf2e.sb.dc')} <input class="bonus" type="number" bind:value={sc.dc} /></label>
-        <label class="mini">{t('pf2e.sb.attack')} <input class="bonus" type="text" value={sc.attack ?? ''} onchange={(e) => (sc.attack = e.currentTarget.value.trim() ? num(e.currentTarget.value) : null)} /></label>
-        <button type="button" class="icon-btn" title={t('pf2e.ed.delete')} onclick={() => stats.spellcasting.splice(i, 1)}><Trash2 size={14} /></button>
-      </div>
-      {#each sc.ranks as r, j (j)}
-        <div class="rank">
-          <input class="bonus" type="number" min="0" max="10" title={t('pf2e.ed.rankHint')} bind:value={r.rank} />
-          <label class="mini"><input type="checkbox" checked={!!r.constant} onchange={(e) => (e.currentTarget.checked ? (r.constant = true) : delete r.constant)} /> {t('pf2e.sb.constant')}</label>
-          <input class="bonus" type="text" placeholder={t('pf2e.ed.slots')} value={r.slots ?? ''} onchange={(e) => (e.currentTarget.value.trim() ? (r.slots = num(e.currentTarget.value)) : delete r.slots)} />
-          <input class="spells" type="text" placeholder="fireball, haste" value={r.spells.join(', ')} onchange={(e) => (r.spells = list(e.currentTarget.value))} />
-          <button type="button" class="icon-btn" title={t('pf2e.ed.delete')} onclick={() => sc.ranks.splice(j, 1)}><Trash2 size={12} /></button>
-        </div>
-      {/each}
-      <button type="button" class="btn" onclick={() => sc.ranks.push({ rank: (sc.ranks.at(-1)?.rank ?? 2) - 1 < 0 ? 0 : (sc.ranks.at(-1)?.rank ?? 2) - 1, spells: [] })}><Plus size={14} /> {t('pf2e.ed.addRank')}</button>
-    </div>
-  {/each}
-  <button type="button" class="btn add" onclick={() => stats.spellcasting.push({ name: '', dc: 15 + stats.level, attack: 7 + stats.level, ranks: [{ rank: 1, spells: [] }] })}><Plus size={14} /> {t('pf2e.ed.addSpells')}</button>
+  <StrikesEditor bind:strikes={stats.strikes} />
+  <SpellsEditor bind:spellcasting={stats.spellcasting} level={stats.level} />
 
   {@render features(stats.offensive, t('pf2e.ed.addOffensive'))}
 </section>
-
-<style>
-  section {
-    margin-bottom: 14px;
-  }
-  h4 {
-    margin: 0 0 6px;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
-  }
-  .grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 110px;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-  .field.small {
-    width: 80px;
-    min-width: 0;
-  }
-  .field.wide {
-    flex: 1;
-    min-width: 180px;
-  }
-  .field.one {
-    margin-bottom: 8px;
-  }
-  .abilities {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 6px;
-    margin-bottom: 8px;
-  }
-  .ability {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-  }
-  .abbr {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-  }
-  .ability input {
-    width: 100%;
-    min-width: 0;
-    text-align: center;
-    font-weight: 600;
-  }
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-  }
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 2px 2px 6px;
-    border-radius: var(--radius-s);
-    background: var(--bg-active);
-  }
-  .sk-name {
-    width: 110px;
-  }
-  .sk-mod,
-  .bonus {
-    width: 52px;
-    text-align: center;
-  }
-  .block {
-    margin-bottom: 8px;
-    padding: 8px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-s);
-  }
-  .head,
-  .rank {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-  .head .name {
-    flex: 1;
-    min-width: 0;
-    font-weight: 600;
-  }
-  .head .traits,
-  .rank .spells {
-    flex: 1;
-    min-width: 0;
-  }
-  .mini {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
-  textarea {
-    width: 100%;
-  }
-  .add {
-    margin-bottom: 8px;
-  }
-</style>
+</div>

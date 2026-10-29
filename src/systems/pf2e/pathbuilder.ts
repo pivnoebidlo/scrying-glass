@@ -24,7 +24,7 @@ const buildOf = (j: unknown): Build | null => {
   return b && typeof b === 'object' && typeof b.class === 'string' && !!b.abilities && !!b.proficiencies ? b : null;
 };
 
-const SKILLS: [string, Ability][] = [
+export const SKILLS: [string, Ability][] = [
   ['acrobatics', 'dex'], ['arcana', 'int'], ['athletics', 'str'], ['crafting', 'int'], ['deception', 'cha'], ['diplomacy', 'cha'],
   ['intimidation', 'cha'], ['medicine', 'wis'], ['nature', 'wis'], ['occultism', 'int'], ['performance', 'cha'], ['religion', 'wis'],
   ['society', 'int'], ['stealth', 'dex'], ['survival', 'wis'], ['thievery', 'dex'],

@@ -319,7 +319,8 @@ Electron-приложение для мастера D&D: окно управле
   `Feature` по разделам interaction / defensive / offensive, колдовство), вид — `StatBlock.svelte` (броски, ×2 —
   `rolls.damage(…, 'total')`; удары и колдовство — общие `Strikes.svelte` / `SpellLists.svelte`), редактор — `Editor.svelte`
   (списки через запятую, кубы урона в {} сами). Персонаж — `character.ts` (`Pf2eCharacter`, `sheet: 'pf2e-character'`,
-  `isCharacter`; `SystemDef.shape`), лист — `CharacterSheet.svelte`, правка листа пока JSON; импорт — `pathbuilder.ts`
+  `isCharacter`; `SystemDef.shape`), лист — `CharacterSheet.svelte`, редактор листа — `CharacterEditor.svelte` («Пересчитать по рангам»: владение + уровень +
+  модификатор); удары и колдовство в редакторах — общие `StrikesEditor.svelte` / `SpellsEditor.svelte`, стили — `editor.css` под `.pf2e-ed`; импорт — `pathbuilder.ts`
   (`pathbuilderImporter`, `fromPathbuilder`: значения характеристик → модификаторы, владение + уровень + модификатор;
   `ImportedCard.lang` — язык новой карточки, без него русский). Угроза боя берёт партию из персонажей боя, иначе из настроек. Типы записей с префиксом (`pf2e-spell`, `pf2e-condition`,
   `pf2e-action`, `pf2e-ability`; `spell` занят D&D — ключи типов общие на всё приложение). Трекер — `tracker.ts`
@@ -330,7 +331,7 @@ Electron-приложение для мастера D&D: окно управле
   Player Core 2, Monster Core, GM Core; HTML и обогащения Foundry → наша разметка; лор существ не берём — Reserved Material).
   Новая встроенная система приходит выключенной (`settings.systemsKnown`, `meetNewSystems` в main/index.ts; первый запуск
   отмечает только D&D). Данные: + снаряжение (`pf2e-item`), черты (`pf2e-feat`), родословные, наследия, предыстории, классы (GM Core тоже). Дальше:
-  другие книги, русский перевод (просили авторов модуля Foundry «PF2ERUS»), редактор листа.
+  другие книги, русский перевод (просили авторов модуля Foundry «PF2ERUS»).
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `LEGACY_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
   D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`; из плагинов и пакетов); правила —
