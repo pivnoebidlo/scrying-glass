@@ -2,7 +2,7 @@
      несколько; ниже — подписи тех, кто на экране. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { CircleHelp, Plus, X } from '@lucide/svelte';
+  import { CircleHelp, EyeOff, Plus, X } from '@lucide/svelte';
   import { currentTray, trayOwner } from '../../scenes/tray';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -33,6 +33,10 @@
 />
 
 {#if ms.onScreen.length}
+  <div class="head">
+    <span class="faint">{t('portraits.onScreenN', { count: ms.onScreen.length })}</span>
+    <button class="btn small" title={t('portraits.clearHint')} onclick={() => dispatch('portraits', 'clearScreen')}><EyeOff size={13} /> {t('portraits.clear')}</button>
+  </div>
   <ul>
     {#each ms.onScreen as path (path)}
       <li>
@@ -65,7 +69,6 @@
       </li>
     {/each}
   </ul>
-  <button class="btn" onclick={() => dispatch('portraits', 'clearScreen')}>{t('portraits.clear')}</button>
 {/if}
 
 <style>
@@ -103,7 +106,16 @@
   .name:focus::placeholder {
     color: var(--text-faint);
   }
-  .btn {
-    justify-content: center;
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 12px;
+  }
+  .head .btn {
+    padding: 2px 8px;
+    font-size: 12px;
   }
 </style>

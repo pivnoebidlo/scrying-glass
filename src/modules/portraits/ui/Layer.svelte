@@ -1,6 +1,7 @@
 <!-- Экран игроков: портреты с подписями и автоматической раскладкой. -->
 <script lang="ts">
-  import { fade, scale } from 'svelte/transition';
+  import { scale } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { assetUrl } from '../../../shared/vault';
   import { onMount } from 'svelte';
@@ -38,12 +39,29 @@
     update();
     return { destroy: () => (ro.disconnect(), img.removeEventListener('load', update)) };
   }
+
+  // When the layout changes, a portrait is at its new place and size at once and slides there from where its centre
+  // was — a shift only, no stretching (svelte's flip scales the box unevenly, and the picture with it).
+  function slide(node: HTMLElement, { from, to }: { from: DOMRect; to: DOMRect }, { duration }: { duration: number }) {
+    const k = node.offsetWidth ? to.width / node.offsetWidth : 1;
+    const dx = (from.left + from.width / 2 - (to.left + to.width / 2)) / k;
+    const dy = (from.top + from.height / 2 - (to.top + to.height / 2)) / k;
+    return { duration, easing: cubicOut, css: (_t: number, u: number) => `transform: translate(${u * dx}px, ${u * dy}px)` };
+  }
+
+  // A portrait that leaves fades out of the layout: it keeps its place on the screen but no longer takes room in the
+  // rows, so the others don't wrap to a new row while it fades (they move to their new places at once — flip).
+  function leave(node: HTMLElement, { duration }: { duration: number }) {
+    const { offsetLeft: left, offsetTop: top, offsetWidth: width, offsetHeight: height } = node;
+    Object.assign(node.style, { position: 'absolute', left: `${left}px`, top: `${top}px`, width: `${width}px`, height: `${height}px` });
+    return { duration, css: (t: number) => `opacity: ${t}` };
+  }
 </script>
 
 <div class="portraits" style:--cols={cols} style:--rows={rows} style:--cap="{cap}cqmin">
   {#each ms.onScreen as path (path)}
     {@const name = ms.unknown?.includes(path) ? '???' : caption(ms, path)}
-    <div class="portrait" use:imageWidth in:scale={{ start: 0.96, duration: 400 }} out:fade={{ duration: 250 }}>
+    <div class="portrait" use:imageWidth animate:slide={{ duration: 300 }} in:scale={{ start: 0.96, duration: 400 }} out:leave={{ duration: 250 }}>
       <div class="frame"><img src={assetUrl(path)} alt="" /></div>
       {#if ms.showNames && name}
         <div class="caption"><NamePlate {name} plate={ms.plate ?? DEFAULT_PLATE} stretch /></div>
@@ -70,7 +88,6 @@
     min-width: 0;
     height: calc(100% / var(--rows, 1));
     padding: 1.5cqmin;
-    transition: flex-basis 0.3s ease, height 0.3s ease;
   }
   .frame {
     flex: 1;
