@@ -1,5 +1,6 @@
 <!-- Боковая панель инициативы: текущий бой и заготовки боёв текущего приключения (и общие). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { Trash2 } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -67,7 +68,7 @@
     </button>
   {:else}
     <p class="hint faint">
-      {t('init.sidebarHint')}
+      <Lead text={t('init.sidebarHint')} />
     </p>
   {/each}
 </div>

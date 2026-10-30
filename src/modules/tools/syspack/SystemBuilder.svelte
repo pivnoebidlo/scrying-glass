@@ -3,6 +3,7 @@
      will look (and its values to try rolls with). Saved to the library by the core; a built-in pack is read only
      («Make a copy»). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { ArrowDown, ArrowUp, CloudUpload, Copy, Download, FilePlus, Save, Trash2, Upload } from '@lucide/svelte';
   import { repo } from '../../repo/ui/repo.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -163,7 +164,7 @@
       <button class="btn primary" disabled={!dirty || !!invalid} onclick={saveSystem}><Save size={14} /> {t('sb.save')}</button>
     {/if}
   </header>
-  <p class="faint intro">{t('sb.about')}</p>
+  <p class="faint intro"><Lead text={t('sb.about')} /></p>
   {#if builder.error}<p class="err">{builder.error}</p>{:else if invalid && d && !ro}<p class="warn">{t('sb.invalid', { what: invalid })}</p>{:else if builder.status}<p class="faint">{builder.status}</p>{:else if dirty}<p class="faint">{t('sb.unsaved')}</p>{/if}
   {#if ro && d}<p class="note">{t('sb.readonly')}</p>{/if}
 
@@ -187,7 +188,7 @@
           <summary>{t('sb.more')}</summary>
           <div class="more">
             <label class="row" title={t('sb.idHint')}><span>{t('sb.id')}</span><input type="text" class="mono" disabled={ro} value={d.id} oninput={(e) => (d.id = e.currentTarget.value.trim().toLowerCase())} /></label>
-            <p class="faint small">{t('sb.idHint')}</p>
+            <p class="faint small"><Lead text={t('sb.idHint')} /></p>
             <div class="row"><span>{t('sb.rank')}</span><FormulaInput value={d.rank ?? ''} set={(v) => (d.rank = v || undefined)} keys={allKeys} {names} disabled={ro} /></div>
           </div>
         </details>

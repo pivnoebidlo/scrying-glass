@@ -1,6 +1,7 @@
 <!-- Tools → Reshape a stat block (D&D): a base card, templates (age, build, people), abilities by hand and other
      weapons; on the right — the stat block as it comes out and what changed. "Create card" opens it in the editor. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { IdCard, Image, Minus, Plus, RotateCcw, Wand2, X } from '@lucide/svelte';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
   import type { Card } from '../../../../shared/cards';
@@ -115,7 +116,7 @@
 <div class="page">
   <header>
     <h2><Wand2 size={18} /> {t('reshape.title')}</h2>
-    <p class="faint">{t('reshape.intro')}</p>
+    <p class="faint"><Lead text={t('reshape.intro')} /></p>
   </header>
 
   <div class="cols">
@@ -183,7 +184,7 @@
             {L.crShort} {crText(base.stats.cr)}{#if rs.r.cr !== undefined}&nbsp;→ <b>{crText(rs.r.cr)}</b>
               <button class="link" onclick={() => setCr(crIndex(base.stats.cr))}>{t('reshape.asBase')}</button>{/if}
           </p>
-          <p class="faint hint">{t('reshape.powerHint')}</p>
+          <p class="faint hint"><Lead text={t('reshape.powerHint')} /></p>
         </section>
 
         <section>
@@ -257,7 +258,7 @@
           <button class="btn" disabled={!touched} onclick={reset}><RotateCcw size={14} /> {t('reshape.reset')}</button>
           <button class="btn" title={t('reshape.cancelHint')} onclick={cancel}><X size={14} /> {t('reshape.cancel')}</button>
         </div>
-        <p class="faint hint">{t('reshape.note')}</p>
+        <p class="faint hint"><Lead text={t('reshape.note')} /></p>
       {/if}
     </div>
 

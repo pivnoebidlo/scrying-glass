@@ -2,6 +2,7 @@
      tools are sold only there) and "For a warband" (equipment ×20). A click on an item puts it into the basket: how many
      and the total. What is on the page is remembered by the window. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { Minus, Plus, Search, Trash2 } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { GEAR, gearItems, NEAR_HUMANS, priceFor, type GearItem } from './shop';
@@ -64,7 +65,7 @@
   <header class="head">
     <h2>{t('mshop.title')}</h2>
   </header>
-  <p class="faint about">{t('mshop.about')}</p>
+  <p class="faint about"><Lead text={t('mshop.about')} /></p>
 
   <div class="options">
     <label class="search"><Search size={14} /><input type="search" bind:value={s.query} oninput={save} placeholder={t('mshop.search')} /></label>

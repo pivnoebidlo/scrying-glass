@@ -2,6 +2,7 @@
      off; the GM's own repositories — added by address, turned off, removed); the author's name and key (save it to a
      file or write down its recovery words, load it back); the admin's token of a repository the GM keeps. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { onMount } from 'svelte';
   import { Globe, Trash2 } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -143,7 +144,7 @@
 <div class="setting">
   <div class="info">
     <div class="name">{t('repo.set.key')}</div>
-    <div class="desc">{t('repo.set.keyAbout')}</div>
+    <div class="desc"><Lead text={t('repo.set.keyAbout')} /></div>
     <div class="desc">
       {#if repo.info?.author}{t('repo.set.keyIs')} <code title={repo.info.author}>{shortKey(repo.info.author)}</code>{:else}{t('repo.set.noKey')}{/if}
     </div>

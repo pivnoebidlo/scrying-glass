@@ -3,7 +3,7 @@ import type { Messages } from '../../shared/i18n/core';
 
 export const en = {
   'sounds.pickTitle': 'Sounds',
-  'sounds.trayHint': 'Sounds at hand: a lever is pulled — thunder. A click plays once over the music.',
+  'sounds.trayHint': "One-shot effects: a lever — thunder.",
   'sounds.volume': 'Sound volume',
   'sounds.stopAll': 'Stop all sounds',
   'sounds.builtin.swordDrawn': 'Sword drawn',
@@ -135,7 +135,7 @@ export const en = {
 
 export const ru: Messages<typeof en> = {
   'sounds.pickTitle': 'Звуки',
-  'sounds.trayHint': 'Звуки под рукой: дёрнули рычаг — гром. Щелчок играет один раз поверх музыки.',
+  'sounds.trayHint': "Разовые эффекты: рычаг — гром.",
   'sounds.volume': 'Громкость звуков',
   'sounds.stopAll': 'Остановить все звуки',
   'sounds.builtin.swordDrawn': 'Меч из ножен',

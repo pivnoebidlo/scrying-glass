@@ -3,6 +3,7 @@
      description, download or update; the GM's own — take down; others' — complain. The admin of a repository sees
      complaints and takes any entry down. Opens on repo.browsing (openRepo). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { SUPPLEMENT_KINDS, type SupplementKind } from '../../../shared/adventures';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { Ban, Check, LockOpen, CloudUpload, Download, Flag, ImageOff, Pencil, RefreshCw, Settings, ShieldCheck, Trash2, TriangleAlert, X } from '@lucide/svelte';
@@ -257,7 +258,7 @@
         <div class="empty"><p class="faint">{t('repo.admin.noBlocked')}</p></div>
       {:else}
         <div class="blocked">
-          <p class="faint">{t('repo.admin.blockedAbout')}</p>
+          <p class="faint"><Lead text={t('repo.admin.blockedAbout')} /></p>
           {#each blocked as b (`${b.source}/${b.author}/${b.id}`)}
             <div class="blocked-row">
               <Ban size={16} />

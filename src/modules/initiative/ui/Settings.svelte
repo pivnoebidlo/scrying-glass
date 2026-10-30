@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Инициатива»: как выглядит полоса очерёдности на экране игроков. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
@@ -49,7 +50,7 @@
   <div class="info">
     <div class="name">{t('init.wounds')}</div>
     <div class="desc">
-      {t('init.woundsDesc')}
+      <Lead text={t('init.woundsDesc')} />
     </div>
   </div>
   <input type="checkbox" checked={d.wounds} onchange={(e) => dispatch('initiative', 'setDisplay', { wounds: e.currentTarget.checked })} />

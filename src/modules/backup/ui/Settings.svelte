@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Резервные копии»: снимки данных приложения (делаются сами), восстановление из снимка. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { ArchiveRestore, Camera, FileArchive, FolderOpen, Upload } from '@lucide/svelte';
   import { onMount } from 'svelte';
@@ -95,7 +96,7 @@
   <div class="info">
     <div class="name">{t('backup.snapshotsTitle')}</div>
     <div class="desc">
-      {t('backup.snapshotsDesc')}
+      <Lead text={t('backup.snapshotsDesc')} />
     </div>
   </div>
 </div>
@@ -110,7 +111,7 @@
   <div class="info">
     <div class="name">{t('backup.fullTitle')}</div>
     <div class="desc">
-      {t('backup.fullDesc')}
+      <Lead text={t('backup.fullDesc')} />
     </div>
   </div>
 </div>

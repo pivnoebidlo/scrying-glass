@@ -1,6 +1,7 @@
 <!-- Раздел настроек «Инструменты»: инструменты другой системы, которые нужны и в этой (например, генератор имён D&D
      в приключениях Fate). Запоминает окно (registry.svelte.ts). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import { enabledSystems, FAMILIES } from '../../../systems';
@@ -17,7 +18,7 @@
 </script>
 
 <h3>{t('tools.set.title')}</h3>
-<p class="desc faint">{t('tools.set.desc')}</p>
+<p class="desc faint"><Lead text={t('tools.set.desc')} /></p>
 
 {#each families as f (f.id)}
   {#if others(f.id).length}

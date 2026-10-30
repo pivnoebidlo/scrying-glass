@@ -1,5 +1,6 @@
 <!-- Вкладка «Сцены»: редактор выбранной сцены. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { AlertTriangle, Play, RefreshCw, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -61,7 +62,7 @@
     {/if}
 
     <p class="faint hint">
-      {t('scenes.partsHint')}
+      <Lead text={t('scenes.partsHint')} />
     </p>
 
     {#each PARTS as part (part)}

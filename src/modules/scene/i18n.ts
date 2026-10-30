@@ -2,7 +2,7 @@
 import type { Messages } from '../../shared/i18n/core';
 
 export const en = {
-  'scene.trayHint': 'Backgrounds at hand: drag pictures here from the tabs or add them with the button.',
+  'scene.trayHint': "Drag pictures here or press “+”.",
   'scene.placement': 'Placement',
   'scene.fit': 'Fit',
   'scene.fill': 'Fill',
@@ -17,7 +17,7 @@ export const en = {
 };
 
 export const ru: Messages<typeof en> = {
-  'scene.trayHint': 'Фоны под рукой: перетащите сюда картинки из вкладок или добавьте кнопкой.',
+  'scene.trayHint': "Перетащите картинки сюда или «+».",
   'scene.placement': 'Размещение',
   'scene.fit': 'Вписать',
   'scene.fill': 'Заполнить',

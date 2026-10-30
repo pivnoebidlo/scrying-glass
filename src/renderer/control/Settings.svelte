@@ -1,6 +1,7 @@
 <!-- Settings window: the General section (interface language, theme, updates), a section of every module that has
      settings, and About (version, links, license, credits). -->
 <script lang="ts">
+  import Lead from '../lib/Lead.svelte';
   import { hint } from '../../shared/hotkeys';
   import { HIDDEN_THEMES, THEMES, type ThemeSetting } from '../../shared/vault';
   import { Globe, Info, Keyboard, X } from '@lucide/svelte';
@@ -133,7 +134,7 @@
         <div class="setting">
           <div class="info">
             <div class="name">{t('settings.theme')}</div>
-            <div class="desc">{t('settings.themeDesc')}</div>
+            <div class="desc"><Lead text={t('settings.themeDesc')} /></div>
           </div>
           <select value={store.state.vault.theme} onchange={(e) => dispatch('vault', 'setTheme', { theme: e.currentTarget.value as ThemeSetting })}>
             {#each themes as id (id)}<option value={id}>{t(`settings.theme.${id}` as never)}</option>{/each}

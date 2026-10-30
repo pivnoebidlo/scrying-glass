@@ -3,6 +3,7 @@
      without a modifier, the system's own or another shortcut's is refused, one that text fields use too is warned
      about. The rest are listed for reference. -->
 <script lang="ts">
+  import Lead from '../lib/Lead.svelte';
   import { RotateCcw, Search } from '@lucide/svelte';
   import { t } from '../lib/i18n.svelte';
   import { dispatch, store } from '../lib/store.svelte';
@@ -85,7 +86,7 @@
     <button class="btn" onclick={() => save({})}><RotateCcw size={14} /> {t('hk.resetAll')}</button>
   {/if}
 </div>
-<p class="desc">{t('hk.desc')}</p>
+<p class="desc"><Lead text={t('hk.desc')} /></p>
 
 {#each shown as { g, list } (g)}
   <h3>{t(`hk.group.${g}` as never)}</h3>

@@ -2,6 +2,7 @@
      (d6 HP, STR/DEX/WIL 10, d6 clubs and axes, warband scale; the casualty rules in its text) in the adventure's
      bestiary folder (none — the library) and starts its upkeep: 1000p for each week begun on the exploration clock. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { IdCard, Swords, Users, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
@@ -55,7 +56,7 @@
 
 <section class="warbands">
   <h3><Users size={13} /> {t('mwar.title')}</h3>
-  <p class="faint small">{t('mwar.about')}</p>
+  <p class="faint small"><Lead text={t('mwar.about')} /></p>
   {#each data.warbands ?? [] as w (w.id)}
     {@const owed = weeksOwed(w, day)}
     <div class="warband">

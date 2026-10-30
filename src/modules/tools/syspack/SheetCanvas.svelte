@@ -3,6 +3,7 @@
      adds one to the section, «＋ section» — a section; 🎲 — the field rolls on a click. A field is dragged to its place:
      before or after another (by the half of the tile), to the end of a section (its heading or «＋ field»). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { Dices, Plus } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
@@ -74,7 +75,7 @@
 </script>
 
 <div class="canvas">
-  <p class="hint faint">{t('sb.sheetHint')}</p>
+  <p class="hint faint"><Lead text={t('sb.sheetHint')} /></p>
   {#each pack.sections as sec, s (s)}
     <div class="sec">
       <button class="sec-head" class:on={sel.kind === 'section' && sel.s === s} onclick={() => onselect({ kind: 'section', s })} ondragover={(e) => hover(e, s, sec.fields.length, true)} ondrop={drop}>

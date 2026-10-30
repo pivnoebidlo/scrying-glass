@@ -1,6 +1,7 @@
 <!-- «Типы записей»: свои типы справочника (божества, фракции, места, ритуалы…) и их поля. Хранятся в библиотеке —
      общие для всех кампаний. Правки сохраняются кнопкой; записи в файлах не меняются (ключи полей — в их шапке). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { ArrowDown, ArrowUp, Plus, Save, Trash2, X } from '@lucide/svelte';
   import { untrack } from 'svelte';
@@ -171,7 +172,7 @@
         {/if}
 
         <h3>{t('cmpui.fields')}</h3>
-        <p class="faint small">{t('cmpui.fieldsHint')}</p>
+        <p class="faint small"><Lead text={t('cmpui.fieldsHint')} /></p>
         {#if cur.fields.length}
           <div class="fields">
             {#each cur.fields as f, i (i)}
@@ -213,7 +214,7 @@
       {:else}
         <div class="empty">
           <p>{t('cmpui.typesAbout1')}</p>
-          <p class="faint">{t('cmpui.typesAbout2')}</p>
+          <p class="faint"><Lead text={t('cmpui.typesAbout2')} /></p>
           <button class="btn primary" onclick={addType}><Plus size={14} /> {t('cmpui.newType')}</button>
         </div>
       {/if}

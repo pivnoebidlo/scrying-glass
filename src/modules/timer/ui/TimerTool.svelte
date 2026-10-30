@@ -1,6 +1,7 @@
 <!-- «Инструменты» → «Таймер»: запуск (заготовки времени или своё), подпись, вид на экране игроков. Идущим
      таймером управляют здесь же или в правой панели. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Play } from '@lucide/svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
@@ -26,7 +27,7 @@
 <div class="view">
   <header class="head"><h2>{t('timer.title')}</h2></header>
   <p class="faint intro">
-    {t('timer.about')}
+    <Lead text={t('timer.about')} />
   </p>
 
   {#if ms.active}

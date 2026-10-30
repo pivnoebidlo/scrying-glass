@@ -2,6 +2,7 @@
      date and time, length, repeat (and until when), table, adventure of this vault and its plan, place, reminders.
      Per game: announce to the table in Telegram, start, skip this one (a repeat), edit, delete. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { CalendarPlus, ImagePlus, Megaphone, Pencil, Play, RefreshCw, SkipForward, Trash2, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
@@ -213,7 +214,7 @@
     <div class="spacer"></div>
     <button class="btn primary" onclick={newGame}><CalendarPlus size={14} /> {t('sched.new')}</button>
   </header>
-  <p class="faint about">{t('sched.about')}</p>
+  <p class="faint about"><Lead text={t('sched.about')} /></p>
   {#if !botReady}<p class="faint">{t('sched.noBot')}</p>{/if}
   {#if message}<p class="error">{message}</p>{/if}
 

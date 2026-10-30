@@ -3,6 +3,7 @@
      goes where the GM picks. Tables are compendium entries (shared/rolltable.ts), so the same ones are in the
      Compendium and on a supplement's page. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { onMount } from 'svelte';
   import { Dices, MoreHorizontal, Pencil, Plus, Search, Trash2 } from '@lucide/svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
@@ -66,7 +67,7 @@
 <div class="page">
   <nav class="list">
     <h2>{t('tools.side.rollTables')}</h2>
-    <p class="faint about">{t('rt.about')}</p>
+    <p class="faint about"><Lead text={t('rt.about')} /></p>
     <label class="search"><Search size={13} /><input type="text" bind:value={query} placeholder={t('rt.search')} /></label>
     <div class="new">
       <select bind:value={place} title={t('cmpui.where')}>{#each places as p (p.id ?? '')}<option value={p.id}>{p.title}</option>{/each}</select>

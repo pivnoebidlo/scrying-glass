@@ -1,6 +1,7 @@
 <!-- Свои расы и подрасы: название, бонусы к характеристикам и «+1 на выбор». Подраса — к своей расе или к встроенной
      («Эльф → Лесной»). Сохраняется само, в библиотеку (общее для всех кампаний). -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { t } from '../../../../renderer/lib/i18n.svelte';
   import { Plus, Trash2 } from '@lucide/svelte';
   import { ABILITIES, type Ability } from '../../stats';
@@ -120,7 +121,7 @@
       {#each races as r (r.id)}<option value={r.id}>{r.title}</option>{/each}
     </select>
   </div>
-  <p class="faint hint">{t('tools.race.hint')}</p>
+  <p class="faint hint"><Lead text={t('tools.race.hint')} /></p>
 </div>
 
 <style>

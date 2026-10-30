@@ -4,6 +4,7 @@
      (Settings → Telegram); an image pasted or dropped into the box goes as a picture with the text as its caption.
      The app's own messages can be deleted for everyone (Telegram allows 48 hours), any message hidden in the app. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { modKey } from '../../../shared/hotkeys';
   import { onDestroy, onMount, tick } from 'svelte';
   import { CornerUpLeft, EyeOff, ImagePlus, Send, Trash2, X } from '@lucide/svelte';
@@ -171,7 +172,7 @@
       </button>
     {/if}
   </header>
-  <p class="faint about">{t('tg.composeAbout')}</p>
+  <p class="faint about"><Lead text={t('tg.composeAbout')} /></p>
   {#if !tgReady()}
     <p class="faint">{tg.status?.error ? t('tg.error', { error: tg.status.error }) : t('tg.notReady')}</p>
     <button class="btn primary" onclick={() => openSettings('telegram')}>{t('tg.openSettings')}</button>

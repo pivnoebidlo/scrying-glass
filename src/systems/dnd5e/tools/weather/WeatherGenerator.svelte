@@ -2,6 +2,7 @@
      wind and temperature, a line to read aloud, a rare event, and in D&D adventures the SRD weather rules that apply.
      Copy, to the journal, to Telegram. The last weather is remembered by the window. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { Check, CloudSun, Copy, NotebookPen, Send } from '@lucide/svelte';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
   import { openTab } from '../../../../renderer/lib/nav';
@@ -78,7 +79,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('weather.about')}</p>
+  <p class="faint about"><Lead text={t('weather.about')} /></p>
 
   <div class="options">
     <label>{t('weather.terrain')}

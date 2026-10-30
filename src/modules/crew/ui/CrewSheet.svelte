@@ -2,6 +2,7 @@
      and turf, heat and wanted level, coin, crew xp, the payoff of a score, entanglements, special abilities, upgrades,
      claims, cohorts and factions. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { Minus, Plus, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
@@ -41,7 +42,7 @@
   <header class="head">
     <h2>{t('crew.title')}</h2>
   </header>
-  <p class="faint about">{t('crew.about')}</p>
+  <p class="faint about"><Lead text={t('crew.about')} /></p>
 
   <section class="who">
     <label><span>{t('crew.name')}</span><input type="text" value={crew.name} placeholder={t('crew.namePh')} onchange={(e) => update({ name: e.currentTarget.value })} /></label>

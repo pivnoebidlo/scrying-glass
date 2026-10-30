@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Карты». -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { modKey } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
@@ -45,7 +46,7 @@
   <div class="info">
     <div class="name">{t('maps.controlsTitle')}</div>
     <div class="desc">
-      {t('maps.controlsDesc', { mod: modKey() })}
+      <Lead text={t('maps.controlsDesc', { mod: modKey() })} />
     </div>
   </div>
 </div>

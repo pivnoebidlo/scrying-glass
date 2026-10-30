@@ -1,5 +1,6 @@
 <!-- Настройки корзины (раздел «Файлы»): удалять в корзину или сразу, автоочистка. Общие для всех хранилищ. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
   import { daysTitle, loadTrash, setTrashSettings, trash, TRASH_DAYS } from './trash.svelte';
@@ -12,7 +13,7 @@
   <div class="info">
     <div class="name">{t('vault.trash.deleted')}</div>
     <div class="desc">
-      {t('vault.trash.deletedDesc')}
+      <Lead text={t('vault.trash.deletedDesc')} />
     </div>
   </div>
   <select value={trash.settings.keep ? 'trash' : 'delete'} onchange={(e) => setTrashSettings({ keep: e.currentTarget.value === 'trash' })}>

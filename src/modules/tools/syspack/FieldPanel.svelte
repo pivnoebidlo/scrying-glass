@@ -4,6 +4,7 @@
      [6] and up»), the rest under «More»; a trial roll on the sample card. The key, the hint and other rare things —
      under «More» too. Changes go straight into the draft. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { Dices, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { COLUMN_TYPES, evalFormula, FIELD_TYPES, fieldMap, loc, newField, newRoll, type FieldDef, type FieldType, type Loc, type RollSpec, POOL_KINDS, type PoolKind, type SystemPack } from '../../../shared/syspack';
@@ -215,7 +216,7 @@
             <div class="line">{t('sb.ph.roll')}</div>
             {@render formula(r.count, (v) => (r.count = v))}
             <div class="line">{t('sb.ph.d')}<input type="number" min="2" class="n" {disabled} value={r.sides} onchange={(e) => (r.sides = Math.max(2, num(e.currentTarget.value) ?? 6))} /> {t('sb.ph.best')}</div>
-            <p class="faint small">{t('sb.ph.bestHow')}</p>
+            <p class="faint small"><Lead text={t('sb.ph.bestHow')} /></p>
           {:else if r.type === 'd20' || r.type === 'fate'}
             <div class="line">{r.type === 'd20' ? t('sb.ph.d20') : t('sb.ph.fate')}</div>
             {@render formula(r.bonus, (v) => (r.bonus = v))}

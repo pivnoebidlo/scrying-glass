@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Файлы»: какое хранилище открыто. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -23,7 +24,7 @@
   <div class="info">
     <div class="name">{t('vault.settings.howTitle')}</div>
     <div class="desc">
-      {t('vault.settings.how')}
+      <Lead text={t('vault.settings.how')} />
     </div>
   </div>
 </div>

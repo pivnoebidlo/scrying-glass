@@ -4,6 +4,7 @@
      selected row): new note or folder here, rename, move to…, pin, trash. Rows are dragged within a folder to reorder
      and onto a folder (or a place) to move; files from Finder can be dropped onto a folder (FileDrop: data-drop-folder). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { BookOpen, ChevronDown, ChevronRight, ExternalLink, FilePlus, Folder, FolderInput, FolderPlus, MoreHorizontal, Pencil, Pin, PinOff, Search, Trash2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -370,7 +371,7 @@
         {t('journal.none')}
       </p>
     {:else}
-      <p class="faint hint">{t('journal.treeHint')}</p>
+      <p class="faint hint"><Lead text={t('journal.treeHint')} /></p>
     {/if}
   {/if}
 </div>

@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Карточки»: где лежит библиотека карточек; разделы систем (SystemUi.cardSettings). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -27,7 +28,7 @@
     <div class="name">{t('best.library')}</div>
     <div class="desc path" title={lib.path ?? ''}>{lib.path}</div>
     <div class="desc">
-      {t('best.libraryAbout')}
+      <Lead text={t('best.libraryAbout')} />
     </div>
   </div>
   <button class="btn" onclick={() => window.api.revealLibrary()}>{t('best.reveal')}</button>
@@ -44,7 +45,7 @@
   <div class="info">
     <div class="name">{t('best.builtin')}</div>
     <div class="desc">
-      {t('best.builtinAbout')}
+      <Lead text={t('best.builtinAbout')} />
     </div>
   </div>
 </div>

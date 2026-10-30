@@ -2,6 +2,7 @@
      and trinkets, magic items. In D&D the items come from the compendium (links open the entry) and prices are shown;
      elsewhere — curiosities and no prices. Each part can be rerolled; copy, to the journal, to Telegram. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { Check, Copy, Gem, NotebookPen, RefreshCw, Send } from '@lucide/svelte';
   import { onMount, type Snippet } from 'svelte';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
@@ -137,7 +138,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('treasure.about')}</p>
+  <p class="faint about"><Lead text={t('treasure.about')} /></p>
 
   <div class="options">
     <label>{t('treasure.source')}

@@ -2,6 +2,7 @@
      HP, pips, background and its items, weapon, birthsign, coat, physical detail, name. Two attributes can be swapped,
      the name rerolled. "Create card" opens a mouse sheet in the editor already filled; "To journal" — a note. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { ArrowLeftRight, Check, Copy, Dices, IdCard, NotebookPen, RefreshCw } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { openTab } from '../../../renderer/lib/nav';
@@ -65,7 +66,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('mouse.about')}</p>
+  <p class="faint about"><Lead text={t('mouse.about')} /></p>
 
   <div class="actions">
     <button class="btn primary big" onclick={() => ((picked = null), newMouse())}><Dices size={16} /> {t('mouse.create')}</button>

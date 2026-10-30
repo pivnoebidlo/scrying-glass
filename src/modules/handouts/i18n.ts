@@ -2,7 +2,7 @@
 import type { Messages } from '../../shared/i18n/core';
 
 export const en = {
-  'handouts.trayHint': 'Notes, clues and compendium entries at hand: drag them here or add them with the button.',
+  'handouts.trayHint': "Notes, clues, entries — drag here or “+”.",
   'handouts.editNote': 'Edit note',
   'handouts.all': 'All handouts',
   'handouts.newNoteHint': 'A letter, an order, a notice — text on parchment (the editor is in Tools)',
@@ -14,7 +14,7 @@ export const en = {
 };
 
 export const ru: Messages<typeof en> = {
-  'handouts.trayHint': 'Записки, улики и записи справочника под рукой: перетащите их сюда или добавьте кнопкой.',
+  'handouts.trayHint': "Записки, улики, записи — перетащите сюда или «+».",
   'handouts.editNote': 'Править записку',
   'handouts.all': 'Вся раздатка',
   'handouts.newNoteHint': 'Письмо, приказ, объявление — текст на пергаменте (редактор в «Инструментах»)',

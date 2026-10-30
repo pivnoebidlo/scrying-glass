@@ -1,6 +1,7 @@
 <!-- Вкладка «Журнал»: открытая заметка — в оформленном виде или в правке (⌘E), PDF — в просмотрщике; ничего не
      открыто — подсказка. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { hotkeyLabel } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronLeft, Eye, ExternalLink, Pencil, Pin, PinOff, Trash2 } from '@lucide/svelte';
@@ -135,9 +136,9 @@
       {t('journal.about1')} <RoleFolderNames role="journal" /> {t('journal.about2')}
     </p>
     <p class="faint">
-      {t('journal.about3')}
+      <Lead text={t('journal.about3')} />
     </p>
-    <p class="faint">{t('pdf.about')}</p>
+    <p class="faint"><Lead text={t('pdf.about')} /></p>
   </div>
 {/if}
 

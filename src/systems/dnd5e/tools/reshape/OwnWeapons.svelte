@@ -2,6 +2,7 @@
      ranged, finesse, reach, thrown or shot range, two hands, a magic bonus and more damage of another type. Saved by
      itself into the library beside the templates (common to all campaigns); offered in the weapon pickers. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { Trash2, X } from '@lucide/svelte';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
   import { dict } from '../../stats';
@@ -124,7 +125,7 @@
           </select>
         {/if}
       </div>
-      <p class="faint hint">{t('reshape.ow.hint')}</p>
+      <p class="faint hint"><Lead text={t('reshape.ow.hint')} /></p>
     </div>
   {/if}
 </div>

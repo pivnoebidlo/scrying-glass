@@ -1,6 +1,7 @@
 <!-- «Инструменты» → «Покупка характеристик»: 27 очков, от 8 до 15 до бонусов (правила SRD). Бонусы — предыстории
      (2024), расы SRD (2014) или свои. «Проверить персонажа» берёт итоговые значения из листа и подбирает бонусы. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { t } from '../../../../renderer/lib/i18n.svelte';
   import { ChevronDown, ChevronRight, Minus, Plus, RotateCcw, UserCheck } from '@lucide/svelte';
   import { onMount } from 'svelte';
@@ -129,7 +130,7 @@
     <span class="points" class:over={left < 0} class:exact={left === 0}>{t('tools.pb.spent', { used, budget: pb.rules.budget })}</span>
   </header>
   <p class="faint intro">
-    {t('tools.pb.rules', { min: pb.rules.min, max: pb.rules.max, budget: pb.rules.budget })}
+    <Lead text={t('tools.pb.rules', { min: pb.rules.min, max: pb.rules.max, budget: pb.rules.budget })} />
   </p>
 
   <div class="bar">
@@ -216,7 +217,7 @@
     </div>
     {#if !heroes.length}<p class="faint">{t('tools.pb.noHeroes')}</p>{/if}
     <p class="faint">
-      {t('tools.pb.checkHint')}
+      <Lead text={t('tools.pb.checkHint')} />
     </p>
     {#if pb.checked}
       <p class="verdict" class:ok={pb.checked.ok}><b>{pb.checked.name}</b> ({t('tools.pb.lvl', { n: pb.checked.level })}): {pb.checked.verdict}</p>

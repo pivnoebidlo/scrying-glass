@@ -1,5 +1,6 @@
 <!-- Вкладка «Файлы»: содержимое выбранной папки хранилища. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { BookOpen, ChevronRight, ClipboardPaste, Download, FilePlus, FolderOpen, Map, Music, Trash2 } from '@lucide/svelte';
@@ -181,7 +182,7 @@
         <ThumbSize grid="files" />
       </div>
       <p class="faint hint">
-        {t('vault.imagesHint')}
+        <Lead text={t('vault.imagesHint')} />
       </p>
       <div class="grid" style:--thumb="{thumbs.files}px">
         {#each images as f (f.path)}

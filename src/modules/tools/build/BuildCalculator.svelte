@@ -2,6 +2,7 @@
      of digging for so many tunnel diggers and their wages (rules.ts, by the SRD). The plan is remembered by the window;
      "To journal" writes it as a note of the adventure. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { NotebookPen, Plus, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { openTab } from '../../../renderer/lib/nav';
@@ -71,7 +72,7 @@
     <span class="spacer"></span>
     <button class="btn" title={t('tavern.toJournalHint')} onclick={toJournal} disabled={!b.parts.length}><NotebookPen size={14} /> {t('tavern.toJournal')}</button>
   </header>
-  <p class="faint about">{t('build.about')}</p>
+  <p class="faint about"><Lead text={t('build.about')} /></p>
 
   <table>
     <thead>
@@ -118,7 +119,7 @@
       <dt>{t('build.upkeep', { pct: UPKEEP * 100 })}</dt><dd>{pips(r.upkeep)} {t('build.perMonth')}</dd>
     </dl>
   </section>
-  <p class="faint note">{t('build.rules')}</p>
+  <p class="faint note"><Lead text={t('build.rules')} /></p>
 </div>
 
 <style>

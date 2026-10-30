@@ -2,6 +2,7 @@
      adventure's edition (from the compendium) or the GM's own, pasted as text. The result (− / + move it by one),
      spells in it open the compendium; copy, to Telegram; the table itself and the rolls of this window below. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { hint } from '../../../../shared/hotkeys';
   import { Check, Copy, Dices, Minus, Pencil, Plus, Send, Trash2, Zap } from '@lucide/svelte';
   import { onMount } from 'svelte';
@@ -113,7 +114,7 @@
   <header class="head">
     <h2>{t('wild.title')}</h2>
   </header>
-  <p class="faint about">{t('wild.about')}</p>
+  <p class="faint about"><Lead text={t('wild.about')} /></p>
 
   <div class="tables">
     {#each list as x (x.id)}

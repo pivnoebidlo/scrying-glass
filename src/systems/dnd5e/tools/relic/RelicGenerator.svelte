@@ -2,6 +2,7 @@
      the power's rarity as its base, a link to the entry), history, quirk and sometimes a curse. Each part can be
      rerolled; copy, to the journal, to Telegram (without the curse). The current item is remembered by the window. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { Check, Copy, NotebookPen, RefreshCw, Send, Sparkles } from '@lucide/svelte';
   import { onMount, type Snippet } from 'svelte';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
@@ -116,7 +117,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('relic.about')}</p>
+  <p class="faint about"><Lead text={t('relic.about')} /></p>
 
   <div class="options">
     <label>{t('relic.kind')}

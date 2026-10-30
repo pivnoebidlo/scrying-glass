@@ -2,6 +2,7 @@
      and stock, a hook. In D&D the magic shop sells compendium items (links open the entry). Each part can be
      rerolled; copy, to the journal, to Telegram (without the hook). The current shop is remembered by the window. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { Check, Copy, NotebookPen, RefreshCw, Send, Store } from '@lucide/svelte';
   import { onMount, type Snippet } from 'svelte';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
@@ -136,7 +137,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('shop.about')}</p>
+  <p class="faint about"><Lead text={t('shop.about')} /></p>
 
   <div class="options">
     <label>{t('shop.type')}

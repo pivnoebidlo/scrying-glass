@@ -1,6 +1,7 @@
 <!-- Вкладка «Справочник»: открытая запись (ссылки внутри ведут к другим записям или карточкам) или её редактор;
      ничего не открыто — подсказка. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { ChevronLeft, ExternalLink, Eye, EyeOff, Pencil, RotateCcw, Send, Trash2 } from '@lucide/svelte';
   import { entryToTelegram } from '../../../shared/telegram';
@@ -123,15 +124,15 @@
       {t('cmpui.about1')} <RoleFolderNames role="compendium" /> {t('cmpui.about2')}
     </p>
     <p class="faint">
-      {t('cmpui.about3')}
+      <Lead text={t('cmpui.about3')} />
     </p>
     {#if hereFamily() === 'fate'}
       <p class="faint">
-        {t('cmpui.aboutFate')}
+        <Lead text={t('cmpui.aboutFate')} />
       </p>
     {:else}
       <p class="faint">
-        {t('cmpui.aboutDnd')}
+        <Lead text={t('cmpui.aboutDnd')} />
       </p>
     {/if}
   </div>

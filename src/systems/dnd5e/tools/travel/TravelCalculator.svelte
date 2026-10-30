@@ -2,6 +2,7 @@
      time on the way, the pace kept and its effect, the long-day saves and the terrain's DCs. The rules follow the
      edition of the adventure's system (2014 or 2024). The inputs are remembered by the window. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
   import { store } from '../../../../renderer/lib/store.svelte';
   import { currentSystem } from '../../../../shared/adventures';
@@ -42,7 +43,7 @@
     <h2>{t('travel.title')}</h2>
     <span class="faint ed">{t('travel.edition', { edition: edition === '2014' ? '5.1' : '5.2' })}</span>
   </header>
-  <p class="faint about">{t('travel.about')}</p>
+  <p class="faint about"><Lead text={t('travel.about')} /></p>
 
   <div class="options">
     <label>{t('travel.distance')}
@@ -100,7 +101,7 @@
     {:else}
       <section class="card">
         <h3>{t(`travel.vessel.${tv.by}` as never)}</h3>
-        <p class="faint">{t('travel.vesselNote')}</p>
+        <p class="faint"><Lead text={t('travel.vesselNote')} /></p>
       </section>
     {/if}
     {#if r.saves.length}

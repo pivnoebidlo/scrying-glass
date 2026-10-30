@@ -1,6 +1,7 @@
 <!-- Подробности сложности боя: шкала бюджета, опыт противников, партия (и её настройка, если героев не нашлось
      или у кого-то нет листа). Общие для плашки в «Инициативе» и калькулятора в «Инструментах». -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import type { Analysis } from './analyze';
@@ -41,7 +42,7 @@
   {/if}
 </div>
 <p class="faint note">
-  {t('init.difficultyNote')}
+  <Lead text={t('init.difficultyNote')} />
 </p>
 
 <style>

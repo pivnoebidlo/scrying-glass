@@ -1,5 +1,6 @@
 <!-- Settings → Telegram: the bot token, its status, the chats it knows (on/off, whose player). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { modKey } from '../../../shared/hotkeys';
   import { onMount } from 'svelte';
   import { Plus, X } from '@lucide/svelte';
@@ -45,7 +46,7 @@
 <div class="setting">
   <div class="info">
     <div class="name">{t('tg.token')}</div>
-    <div class="desc">{t('tg.settingsAbout')}</div>
+    <div class="desc"><Lead text={t('tg.settingsAbout')} /></div>
     {#if s?.configured}
       <div class="desc status">
         {#if s.error}<span class="err">{t('tg.error', { error: s.error })}</span>
@@ -73,7 +74,7 @@
     </select>
   </div>
   <h3>{t('tg.tables')}</h3>
-  <p class="faint">{t('tg.tablesAbout')}</p>
+  <p class="faint"><Lead text={t('tg.tablesAbout')} /></p>
   {#if s.tables.length}
     <ul>
       {#each s.tables as x (x.id)}
@@ -91,7 +92,7 @@
   </div>
 
   <h3>{t('tg.chats')}</h3>
-  <p class="faint">{t('tg.chatsAbout', { bot: s.bot ?? '…' })}</p>
+  <p class="faint"><Lead text={t('tg.chatsAbout', { bot: s.bot ?? '…' })} /></p>
   {#if s.chats.length}
     <ul>
       {#each sortChats(s.chats) as c (c.id)}

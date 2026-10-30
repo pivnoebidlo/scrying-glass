@@ -2,6 +2,7 @@
      speeds, senses, resistances and immunities, saves and skills, traits / actions / reactions, language and subtype.
      Saved by itself into the library (common to all campaigns). -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { Plus, Trash2, X } from '@lucide/svelte';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
   import { ABILITIES, dict, SIZES, SPEEDS, type Ability, type Size } from '../../stats';
@@ -134,7 +135,7 @@
           <label><span class="label">{t('reshape.own.language')}</span><input type="text" bind:value={tpl.language} oninput={saveOwn} /></label>
           <label><span class="label">{t('reshape.own.subtype')}</span><input type="text" bind:value={tpl.subtype} oninput={saveOwn} placeholder={t('reshape.own.subtypePh')} /></label>
         </div>
-        <p class="faint hint">{t('reshape.own.hint')}</p>
+        <p class="faint hint"><Lead text={t('reshape.own.hint')} /></p>
       </div>
     {:else}
       <p class="faint hint">{t('reshape.own.none')}</p>

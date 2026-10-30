@@ -2,6 +2,7 @@
      with rooms, treasure, non-player mouse, adventure seed, season weather, reaction. A roll shows what each line got
      (and the dice); "To journal" and "Copy" take the result as Markdown. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { Check, Copy, Dices, NotebookPen } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { openTab } from '../../../renderer/lib/nav';
@@ -77,7 +78,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('mt.about')}</p>
+  <p class="faint about"><Lead text={t('mt.about')} /></p>
 
   <div class="kinds">
     {#each KINDS as k (k)}

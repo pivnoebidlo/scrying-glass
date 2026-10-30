@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Фон». -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -19,7 +20,7 @@
   <div class="info">
     <div class="name">{t('scene.howTitle')}</div>
     <div class="desc">
-      {t('scene.howDesc')}
+      <Lead text={t('scene.howDesc')} />
     </div>
   </div>
 </div>

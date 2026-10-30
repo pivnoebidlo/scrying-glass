@@ -1,6 +1,7 @@
 <!-- Раздел настроек «Ролевые системы» (модуля приключений): какие системы нужны. Отключённые не предлагаются при выборе системы,
      их карточки и встроенные записи скрыты. Общие для всех хранилищ (settings.json приложения). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -55,7 +56,7 @@
 </script>
 
 <p class="desc faint">
-  {t('adv.systemsDesc')}
+  <Lead text={t('adv.systemsDesc')} />
 </p>
 <div class="builder">
   <span class="faint">{t('adv.builderDesc')}</span>

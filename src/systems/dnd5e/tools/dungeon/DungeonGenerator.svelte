@@ -2,6 +2,7 @@
      rooms (creatures — links to their cards, puzzles, traps with SRD saves and damage in D&D) and the hoard from the
      treasure generator. Each part can be rerolled; copy or to the journal. The dungeon is remembered by the window. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { Check, Copy, DoorOpen, NotebookPen, RefreshCw, Swords } from '@lucide/svelte';
   import { toEncounter } from '../../../../modules/tools/encounter';
   import { onMount, type Snippet } from 'svelte';
@@ -149,7 +150,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('dungeon.about')}</p>
+  <p class="faint about"><Lead text={t('dungeon.about')} /></p>
 
   <div class="options">
     <label>{t('dungeon.type')}

@@ -4,6 +4,7 @@
      a new entry, an import of a Markdown file (# — a group, ## — an entry); on the right — the chosen one: the text with
      the buttons of the journal, or as the GM will see it. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { ChevronDown, ChevronRight, Eye, FileUp, Pencil, Plus, Trash2 } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
@@ -117,7 +118,7 @@
       <div class="import">
         <b>{t('sb.importTitle', { file: incoming.file })}</b>
         {#if incoming.entries.length}
-          <p class="faint small">{t('sb.importRule')}</p>
+          <p class="faint small"><Lead text={t('sb.importRule')} /></p>
           <div class="import-list">
             {#each importGroups as g (g)}
               {#if g}<div class="ig">{g}</div>{/if}
@@ -162,7 +163,7 @@
       {:else}
         <textarea bind:this={area} use:markdownKeys value={L(cur.text)} oninput={(e) => (cur.text = put(cur.text, e.currentTarget.value))} placeholder={t('sb.entryTextPh')}></textarea>
       {/if}
-      <p class="faint small">{t('sb.compendiumAbout')}</p>
+      <p class="faint small"><Lead text={t('sb.compendiumAbout')} /></p>
     {:else}
       <p class="faint">{t('sb.entryPick')}</p>
     {/if}

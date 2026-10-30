@@ -2,6 +2,7 @@
      marks — and the between-sessions roll by the SRD. Example factions of the SRD can be added in the interface
      language. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { Dices, Plus, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
@@ -52,7 +53,7 @@
       <Dices size={14} /> {t('mfac.between')}
     </button>
   </header>
-  <p class="faint about">{t('mfac.about')}</p>
+  <p class="faint about"><Lead text={t('mfac.about')} /></p>
 
   {#if data.session.length}
     <section class="session">

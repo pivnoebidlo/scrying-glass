@@ -2,6 +2,7 @@
      first letters, 1–20 names at once. Each name can be copied or starred; favorites and history export to TXT / CSV.
      Lists: built-in (in the interface language) and the GM's own from the library (names/<lang>/). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { hint } from '../../../shared/hotkeys';
   import { onMount } from 'svelte';
   import { Check, Copy, Dices, FolderOpen, Star, Trash2, Upload } from '@lucide/svelte';
@@ -92,7 +93,7 @@
     <button class="btn" title={t('names.importHint')} onclick={importLists}><Upload size={14} /> {t('names.import')}</button>
     <button class="icon-btn" title={t('names.reveal')} onclick={() => window.api.revealNameLists()}><FolderOpen size={15} /></button>
   </header>
-  <p class="faint about">{t('names.about')}</p>
+  <p class="faint about"><Lead text={t('names.about')} /></p>
   {#if status}<p class="status">{status}</p>{/if}
 
   <div class="panel">

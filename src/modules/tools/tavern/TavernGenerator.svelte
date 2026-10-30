@@ -2,6 +2,7 @@
      can be rerolled or pinned; "Reroll unpinned" keeps the pinned ones. "To journal" saves the tavern as a Markdown
      note of the current adventure (the description as a read-aloud quote, rumors as tasks); "Copy" — the same text. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { Check, Copy, Dices, NotebookPen, Pin, RefreshCw, ScrollText } from '@lucide/svelte';
   import { createNote } from '../../../renderer/lib/note/notes.svelte';
   import { editNote } from '../ui/ui.svelte';
@@ -106,7 +107,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('tavern.about')}</p>
+  <p class="faint about"><Lead text={t('tavern.about')} /></p>
 
   <div class="options">
     <label>{t('tavern.type')}

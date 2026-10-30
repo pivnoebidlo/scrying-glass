@@ -2,6 +2,7 @@
      travellers, omens and rumors. Creatures in the text open their cards on the side; in D&D adventures an obstacle
      shows its check. Each event can be rerolled; copy or save to the journal. The last roll is remembered. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { Check, Copy, Dices, NotebookPen, RefreshCw, Swords } from '@lucide/svelte';
   import { toEncounter } from '../../../../modules/tools/encounter';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
@@ -112,7 +113,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('events.about')}</p>
+  <p class="faint about"><Lead text={t('events.about')} /></p>
 
   <div class="options">
     <label>{t('weather.terrain')}

@@ -1,6 +1,7 @@
 <!-- Калькулятор сложности боя: набросать противников из карточек (с количеством), увидеть сложность для партии
      приключения (или своей) и сохранить набросок заготовкой боя. Набросок живёт, пока открыто окно. -->
 <script lang="ts">
+  import Lead from '../../../../renderer/lib/Lead.svelte';
   import { t } from '../../../../renderer/lib/i18n.svelte';
   import { Minus, Plus, Swords, X } from '@lucide/svelte';
   import { onMount } from 'svelte';
@@ -57,7 +58,7 @@
     </button>
   </header>
   <p class="faint intro">
-    {t('tools.calc.about')}
+    <Lead text={t('tools.calc.about')} />
   </p>
 
   <div class="cols">

@@ -1,6 +1,7 @@
 <!-- «New system»: what it starts from — a blank pack or a small working one of a kind of game (templates.ts); the
      examples say which games play so. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { TEMPLATES, type TemplateId } from './templates';
 
@@ -13,7 +14,7 @@
 <div class="backdrop" onclick={(e) => e.target === e.currentTarget && onclose()}>
   <div class="modal" role="dialog" aria-modal="true" aria-label={t('sb.new')}>
     <h3>{t('sb.new')}</h3>
-    <p class="faint">{t('sb.tplAbout')}</p>
+    <p class="faint"><Lead text={t('sb.tplAbout')} /></p>
     <div class="cards">
       {#each TEMPLATES as id (id)}
         <button class="tpl" onclick={() => onpick(id)}>

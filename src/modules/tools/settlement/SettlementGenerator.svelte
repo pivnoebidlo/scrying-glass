@@ -2,6 +2,7 @@
      impression, what it is known for, places with a tavern, notable people and a trouble. Each part can be rerolled
      or pinned; to the journal or copy. The current settlement is remembered by the window. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { Castle, Check, Copy, NotebookPen, Pin, RefreshCw } from '@lucide/svelte';
   import type { Snippet } from 'svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -76,7 +77,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('settlement.about')}</p>
+  <p class="faint about"><Lead text={t('settlement.about')} /></p>
 
   <div class="options">
     <label>{t('settlement.size')}

@@ -2,6 +2,7 @@
      desire, secret, what they carry (and fame for important ones). Each part can be rerolled or pinned; the history
      keeps the recent ones. "Create card" opens an NPC card in the editor already filled; "To journal" — a note. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { Check, Copy, Dices, History, IdCard, NotebookPen, Pin, RefreshCw, Trash2 } from '@lucide/svelte';
   import type { Snippet } from 'svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -78,7 +79,7 @@
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  <p class="faint about">{t('npc.about')}</p>
+  <p class="faint about"><Lead text={t('npc.about')} /></p>
 
   <div class="options">
     <label>{t('names.race')}
