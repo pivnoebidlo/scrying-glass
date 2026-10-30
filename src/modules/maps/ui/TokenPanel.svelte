@@ -1,6 +1,7 @@
 <!-- Жетоны карты: добавить участников текущего боя, размер, спрятать от игроков, убрать. Жетоны из боя берут
      имя, портрет, сторону и ранения из инициативы. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Eye, EyeOff, Trash2, X } from '@lucide/svelte';
   import type { CardSummary } from '../../../shared/cards';
@@ -74,7 +75,7 @@
         </li>
       {/each}
     </ul>
-    <p class="faint hint">{t('maps.tokensHelp')}</p>
+    <p class="faint hint"><Lead text={t('maps.tokensHelp')} /></p>
   {:else}
     <p class="faint hint">{t('maps.noTokens')}</p>
   {/if}

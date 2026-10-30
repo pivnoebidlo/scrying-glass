@@ -94,7 +94,6 @@
       <Boxes n={crew.xp} of={CREW_XP} title={t('crew.xpHint', { n: crew.xp, of: CREW_XP })} set={(v) => update({ xp: v })} />
       {#if crew.xp >= CREW_XP}
         <button class="btn primary" title={t('crew.advanceHint')} onclick={() => update({ xp: 0 })}>{t('crew.advance')}</button>
-        <span class="faint small">{t('crew.advanceHint')}</span>
       {/if}
     </div>
     {#if atWar(crew)}<p class="warn small">{t('crew.atWar')}</p>{/if}

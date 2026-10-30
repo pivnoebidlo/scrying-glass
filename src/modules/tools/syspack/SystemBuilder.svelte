@@ -272,7 +272,6 @@
           <select value={builder.previewKind} onchange={(e) => setKind(e.currentTarget.value as 'monster' | 'npc' | 'character')}>
             {#each KINDS as k (k)}<option value={k}>{t(`sb.kind.${k}`)}</option>{/each}
           </select>
-          <span class="faint small">{t('sb.trialHint')}</span>
         </div>
         {#key d.sections.length}
           <div class="trial-cols">

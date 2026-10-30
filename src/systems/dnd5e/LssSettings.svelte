@@ -1,6 +1,7 @@
 <!-- D&D in the Cards settings: the spell table of Long Story Short (number → name) for characters whose spellbook in
      LSS is kept as cards. -->
 <script lang="ts">
+  import HelpTip from '../../renderer/lib/HelpTip.svelte';
   import { t } from '../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
   import { lssImporter } from './importer';
@@ -30,7 +31,7 @@
   <div class="info">
     <div class="name">{t('best.lssSpells')}</div>
     <div class="desc">
-      {count ? t('best.lssLoaded', { count }) : t('best.lssNone')} {t('best.lssAbout')}
+      {count ? t('best.lssLoaded', { count }) : t('best.lssNone')} <HelpTip text={t('best.lssAbout')} size={13} />
     </div>
     {#if status}<div class="desc status">{status}</div>{/if}
   </div>

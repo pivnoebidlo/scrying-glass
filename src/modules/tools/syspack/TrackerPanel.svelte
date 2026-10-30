@@ -1,6 +1,7 @@
 <!-- The builder: what the initiative tracker takes from a card of the system — the order of turns, health, what a
      combatant's row shows, the conditions. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
   import { fieldMap, loc, type SystemPack } from '../../../shared/syspack';
@@ -66,7 +67,7 @@
   </div>
 
   <label class="row"><span>{t('sb.conditions')}</span><textarea rows="5" {disabled} value={condText} onchange={(e) => setConditions(e.currentTarget.value)}></textarea></label>
-  <p class="faint small">{t('sb.conditionsValued')}</p>
+  <p class="faint small"><Lead text={t('sb.conditionsValued')} /></p>
   <label class="check">
     <input type="checkbox" {disabled} checked={tr.conditions?.free ?? true} onchange={(e) => (tr.conditions = { ...tr.conditions, list: tr.conditions?.list ?? [], free: e.currentTarget.checked })} />
     {t('sb.conditionsFree')}

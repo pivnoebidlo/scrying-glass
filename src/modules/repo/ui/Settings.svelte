@@ -118,7 +118,7 @@
 <div class="setting">
   <div class="info">
     <div class="name">{t('repo.set.add')}</div>
-    <div class="desc">{t('repo.set.addAbout')}</div>
+    <div class="desc"><Lead text={t('repo.set.addAbout')} /></div>
   </div>
 </div>
 <form class="row" onsubmit={(e) => (e.preventDefault(), newUrl.trim() && add())}>
@@ -164,7 +164,7 @@
 <div class="setting">
   <div class="info">
     <div class="name">{t('repo.set.admin')}</div>
-    <div class="desc">{t('repo.set.adminAbout')}</div>
+    <div class="desc"><Lead text={t('repo.set.adminAbout')} /></div>
   </div>
 </div>
 {#each admins as s (s.id)}

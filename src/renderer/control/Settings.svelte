@@ -121,7 +121,7 @@
         <div class="setting">
           <div class="info">
             <div class="name">{t('settings.language')}</div>
-            <div class="desc">{t('settings.languageDesc')}</div>
+            <div class="desc"><Lead text={t('settings.languageDesc')} /></div>
           </div>
           <select
             value={store.state.vault.language}
@@ -152,7 +152,7 @@
         <div class="setting">
           <div class="info">
             <div class="name">{t('updates.title')}</div>
-            <div class="desc">{t('updates.desc', { version })}</div>
+            <div class="desc"><Lead text={t('updates.desc', { version })} /></div>
             {#if checking}<div class="desc">{t('updates.checking')}</div>
             {:else if found}
               <div class="desc status">

@@ -82,7 +82,7 @@
   <div class="info">
     <div class="name">{t('backup.dirTitle')}</div>
     <div class="desc">
-      {t('backup.dirDesc')}
+      <Lead text={t('backup.dirDesc')} />
       <div class="path" title={dir?.path}>{dir ? dir.path : '…'}{dir?.isDefault ? t('backup.default') : ''}</div>
     </div>
   </div>

@@ -5,6 +5,7 @@
   import { Brush, FilePlus2 } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
+  import HelpTip from '../../../renderer/lib/HelpTip.svelte';
   import { connectNotes, createNote } from '../../../renderer/lib/note/notes.svelte';
   import NoteCard from './NoteCard.svelte';
   import NoteEditor from './NoteEditor.svelte';
@@ -65,6 +66,9 @@
   <div class="view">
     <header class="head">
       <h2>{t(sketches ? 'sketch.list.title' : 'tools.notes.title')}</h2>
+      <HelpTip>
+        {t(sketches ? 'sketch.list.about1' : 'tools.notes.about1')} <RoleFolderNames role="handouts" /> {t(sketches ? 'sketch.list.about2' : 'tools.notes.about2')}
+      </HelpTip>
       <div class="spacer"></div>
       {#if sketches}
         <button class="btn primary" onclick={create}><Brush size={14} /> {t('handouts.newSketch')}</button>
@@ -72,9 +76,6 @@
         <button class="btn primary" onclick={create}><FilePlus2 size={14} /> {t('tools.notes.new')}</button>
       {/if}
     </header>
-    <p class="faint intro">
-      {t(sketches ? 'sketch.list.about1' : 'tools.notes.about1')} <RoleFolderNames role="handouts" /> {t(sketches ? 'sketch.list.about2' : 'tools.notes.about2')}
-    </p>
 
     {#each groups as g (g.key)}
       <section>
@@ -104,10 +105,6 @@
   }
   .spacer {
     flex: 1;
-  }
-  .intro {
-    max-width: 640px;
-    margin: 8px 0 16px;
   }
   h3 {
     margin: 16px 0 10px;

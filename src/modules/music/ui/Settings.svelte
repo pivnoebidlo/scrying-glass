@@ -1,5 +1,7 @@
 <!-- Раздел настроек «Музыка». -->
 <script lang="ts">
+  import HelpTip from '../../../renderer/lib/HelpTip.svelte';
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -38,7 +40,7 @@
 <div class="setting">
   <div class="info">
     <div class="name">{t('music.outputTitle')}</div>
-    <div class="desc">{t('music.outputDesc')}</div>
+    <div class="desc"><Lead text={t('music.outputDesc')} /></div>
   </div>
   <select value={output.sink} onchange={(e) => setSink(e.currentTarget.value)}>
     <option value="">{t('music.outputSystem')}</option>
@@ -50,16 +52,16 @@
 <div class="setting">
   <div class="info">
     <div class="name">{t('music.hotkeysTitle')}</div>
-    <div class="desc">{t('music.hotkeysDesc')}</div>
+    <div class="desc"><Lead text={t('music.hotkeysDesc')} /></div>
   </div>
   <button class="btn" onclick={() => openSettings('hotkeys')}>{t('music.hotkeysOpen')}</button>
 </div>
 
 <div class="setting">
   <div class="info">
-    <div class="name">{t('music.sourceTitle')}</div>
-    <div class="desc">
-      {t('music.sourceBefore')} <RoleFolderNames role="music" /> {t('music.sourceAfter')}
+    <div class="name">
+      {t('music.sourceTitle')}
+      <HelpTip>{t('music.sourceBefore')} <RoleFolderNames role="music" /> {t('music.sourceAfter')}</HelpTip>
     </div>
   </div>
 </div>

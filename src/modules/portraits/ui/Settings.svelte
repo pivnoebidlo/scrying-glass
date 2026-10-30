@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Портреты»: подписи на экране игроков (показывать ли, вид подложки, цвет, шрифт) с образцом. -->
 <script lang="ts">
+  import HelpTip from '../../../renderer/lib/HelpTip.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -63,9 +64,9 @@
 
 <div class="setting">
   <div class="info">
-    <div class="name">{t('portraits.sourceTitle')}</div>
-    <div class="desc">
-      {t('portraits.sourceBefore')} <RoleFolderNames role="characters" /> {t('portraits.sourceAfter')}
+    <div class="name">
+      {t('portraits.sourceTitle')}
+      <HelpTip>{t('portraits.sourceBefore')} <RoleFolderNames role="characters" /> {t('portraits.sourceAfter')}</HelpTip>
     </div>
   </div>
 </div>

@@ -59,7 +59,7 @@
   <Lead text={t('adv.systemsDesc')} />
 </p>
 <div class="builder">
-  <span class="faint">{t('adv.builderDesc')}</span>
+  <span class="faint"><Lead text={t('adv.builderDesc')} /></span>
   <span class="buttons">
     <button class="btn" onclick={() => (closeSettings(), openRepo('all', 'systems', 'adventures'))}><Globe size={14} /> {t('adv.findSystems')}</button>
     <button class="btn" onclick={() => (closeSettings(), openBuilder())}><Blocks size={14} /> {t('sb.title')}</button>

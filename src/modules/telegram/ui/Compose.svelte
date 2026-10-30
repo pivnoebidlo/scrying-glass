@@ -4,7 +4,7 @@
      (Settings → Telegram); an image pasted or dropped into the box goes as a picture with the text as its caption.
      The app's own messages can be deleted for everyone (Telegram allows 48 hours), any message hidden in the app. -->
 <script lang="ts">
-  import Lead from '../../../renderer/lib/Lead.svelte';
+  import HelpTip from '../../../renderer/lib/HelpTip.svelte';
   import { modKey } from '../../../shared/hotkeys';
   import { onDestroy, onMount, tick } from 'svelte';
   import { CornerUpLeft, EyeOff, ImagePlus, Send, Trash2, X } from '@lucide/svelte';
@@ -172,7 +172,6 @@
       </button>
     {/if}
   </header>
-  <p class="faint about"><Lead text={t('tg.composeAbout')} /></p>
   {#if !tgReady()}
     <p class="faint">{tg.status?.error ? t('tg.error', { error: tg.status.error }) : t('tg.notReady')}</p>
     <button class="btn primary" onclick={() => openSettings('telegram')}>{t('tg.openSettings')}</button>
@@ -221,7 +220,7 @@
           <textarea
             rows="3"
             bind:value={text}
-            placeholder={chat === null ? t('tg.composePh', { mod: modKey() }) : t('tg.composeTo', { name: nameOf(chat), mod: modKey() })}
+            placeholder={chat === null ? t('tg.composePh') : t('tg.composeTo', { name: nameOf(chat) })}
             use:markdownKeys={{ enter: !prefs.enterSends, telegram: true }}
             {onkeydown}
             {onpaste}
@@ -234,6 +233,7 @@
           <button class="icon-btn" title={t('tg.attach')} onclick={() => picker?.click()}><ImagePlus size={16} /></button>
           <input bind:this={picker} type="file" accept="image/*" hidden onchange={(e) => void takeImage(e.currentTarget.files?.[0]).then(() => picker && (picker.value = ''))} />
           <span class="faint hint">{prefs.enterSends ? t('tg.hintEnter') : t('tg.hintMod', { mod: modKey() })}</span>
+          <HelpTip text={t('tg.formatHelp', { mod: modKey() })} />
           {#if error}<span class="error">{error}</span>{/if}
         </div>
       </div>
@@ -281,9 +281,6 @@
   }
   .spacer {
     flex: 1;
-  }
-  .about {
-    margin: 6px 0 10px;
   }
   .layout {
     display: flex;

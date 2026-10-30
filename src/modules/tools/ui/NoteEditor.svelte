@@ -1,6 +1,8 @@
 <!-- Редактор записки: слева текст и оформление, справа лист, как его увидят игроки. Сохраняется само
      (через полсекунды после правки); если записка у игроков, она обновляется у них тоже. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
+  import HelpTip from '../../../renderer/lib/HelpTip.svelte';
   import { hint, hotkeyLabel, matches } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { AlignCenter, AlignJustify, AlignLeft, ArrowUpToLine, ChevronLeft, Dices, Eraser, Eye, EyeOff, PenLine, Send, Trash2, TriangleAlert, Undo2 } from '@lucide/svelte';
@@ -248,10 +250,9 @@
           {/each}
         </div>
         {#if section === 'text'}
-        <label class="field">
-          <span>{t('tools.note.text')}</span>
-          <textarea rows="12" bind:value={note.text} placeholder={t('tools.note.textPlaceholder')}></textarea>
-          <small class="faint">{t('tools.note.textHint')}</small>
+        <label class="field" for="note-text">
+          <span>{t('tools.note.text')} <HelpTip text={t('tools.note.textHint')} size={13} /></span>
+          <textarea id="note-text" rows="12" bind:value={note.text} placeholder={t('tools.note.textPlaceholder')}></textarea>
         </label>
 
         <div class="row">
@@ -368,7 +369,7 @@
               {/each}
             </div>
           </div>
-          <small class="faint">{t('tools.note.penHelp')} {t(pen.erase ? 'tools.note.penErasing' : 'tools.note.penDrawing', { keys: hotkeyLabel('noteUndo') })}</small>
+          <small class="faint">{t(pen.erase ? 'tools.note.penErasing' : 'tools.note.penDrawing', { keys: hotkeyLabel('noteUndo') })}</small>
         </section>
 
         {:else}
@@ -391,7 +392,7 @@
           {/each}
           <small class="faint">
             {#if tool}{t('tools.note.placing', { mark: NOTE_MARKS[tool].title.toLowerCase() })}
-            {:else}{t('tools.note.markHelp')}{/if}
+            {:else}<Lead text={t('tools.note.markHelp')} />{/if}
           </small>
 
           {#if mark}

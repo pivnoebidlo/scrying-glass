@@ -1,5 +1,6 @@
 <!-- Настройка «Назначение папок»: по каким названиям папка считается портретами, картами и т. д. -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { Key } from '../../../shared/i18n';
   import { X } from '@lucide/svelte';
@@ -50,7 +51,7 @@
 
 <h3>{t('vault.roles.title')}</h3>
 <div class="intro">
-  {t('vault.roles.desc')}
+  <Lead text={t('vault.roles.desc')} />
   {#if customized}
     <button class="btn reset" onclick={() => dispatch('vault', 'setRoles', { roles: null })}>{t('vault.roles.reset')}</button>
   {/if}

@@ -24,7 +24,7 @@
 <div class="setting">
   <div class="info">
     <div class="name">{t('vault.trash.prune')}</div>
-    <div class="desc">{t('vault.trash.pruneDesc')}</div>
+    <div class="desc"><Lead text={t('vault.trash.pruneDesc')} /></div>
   </div>
   <select value={trash.settings.days} onchange={(e) => setTrashSettings({ days: Number(e.currentTarget.value) })}>
     {#each TRASH_DAYS as d (d)}<option value={d}>{daysTitle(d)}</option>{/each}

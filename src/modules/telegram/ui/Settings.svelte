@@ -66,7 +66,7 @@
   <div class="setting">
     <div class="info">
       <div class="name">{t('tg.sendKey')}</div>
-      <div class="desc">{t('tg.sendKeyDesc')}</div>
+      <div class="desc"><Lead text={t('tg.sendKeyDesc')} /></div>
     </div>
     <select value={prefs.enterSends ? 'enter' : 'mod'} onchange={(e) => setEnterSends(e.currentTarget.value === 'enter')}>
       <option value="enter">{t('tg.sendKey.enter')}</option>

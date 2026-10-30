@@ -1,6 +1,7 @@
 <!-- Над боковой панелью: текущее приключение, выбор другого и создание нового; экспорт и импорт приключения
      одним файлом (.sgpack). -->
 <script lang="ts">
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Castle, Check, ChevronsUpDown, LayoutGrid, CloudUpload, Download, Globe, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
   import { openRepo, repo } from '../../repo/ui/repo.svelte';
@@ -180,7 +181,7 @@
           <button class="btn primary" type="submit" disabled={!name.trim()}>{t('adv.create')}</button>
         </form>
         <label class="system"><span class="faint">{t('adv.system')}</span><SystemSelect value={newSystem || system} onchange={(v) => (newSystem = v)} /></label>
-        <p class="hint faint">{t('adv.foldersHint')}</p>
+        <p class="hint faint"><Lead text={t('adv.foldersHint')} /></p>
       {:else}
         <button onclick={() => (creating = true)}><span class="mark"><Plus size={13} /></span> {t('adv.createAdventure')}</button>
       {/if}

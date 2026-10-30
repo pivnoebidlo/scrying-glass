@@ -1,5 +1,6 @@
 <!-- Раздел настроек «Карты». -->
 <script lang="ts">
+  import HelpTip from '../../../renderer/lib/HelpTip.svelte';
   import Lead from '../../../renderer/lib/Lead.svelte';
   import { modKey } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -53,9 +54,9 @@
 
 <div class="setting">
   <div class="info">
-    <div class="name">{t('maps.sourceTitle')}</div>
-    <div class="desc">
-      {t('maps.sourceBefore')} <RoleFolderNames role="maps" /> {t('maps.sourceAfter')}
+    <div class="name">
+      {t('maps.sourceTitle')}
+      <HelpTip>{t('maps.sourceBefore')} <RoleFolderNames role="maps" /> {t('maps.sourceAfter')}</HelpTip>
     </div>
   </div>
 </div>
