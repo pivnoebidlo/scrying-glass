@@ -25,5 +25,6 @@ import mausritter from './mausritter/main';
 import clocks from './clocks/main';
 import crew from './crew/main';
 import repo from './repo/main';
+import worldtime from './worldtime/main';
 
-export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary, order, tools, timer, backup, compendium, fate, sounds, journal, telegram, schedule, mausritter, clocks, crew, repo] as const;
+export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary, order, tools, timer, backup, compendium, fate, sounds, journal, telegram, schedule, mausritter, clocks, crew, repo, worldtime] as const;

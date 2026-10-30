@@ -657,6 +657,10 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   (`editMessageCaption` / `editMessageText`, с `notify` — ответ `changesText`); смена времени — `rekey` в `saveGames`.
   Окно: страница `SchedulePage.svelte` в «Инструментах» (блока в правой панели нет — на игре он не нужен),
   загрузка — фоновый `Load.svelte`, «Начать игру» — `startGame` (приключение, `setTable`, `journal/pin`, вкладка сцен).
+  Время в игре — модуль `modules/worldtime` (`byAdventure[приключение | '']` — `minutes` от начала дня 1 и `shown`;
+  правила — `types.ts`: `clockOf`, `partOf`, `nextMorning`; действия `advance` / `untilMorning` / `set` / `show` / `reset` /
+  `setPlace`): блок правой панели `ui/OnScreen.svelte` (не в Mausritter — там свой счётчик), слой игроков `ui/Layer.svelte`
+  (order 34, только день и время суток); в корзину — `AdventureData.worldtime`, в .sgpack не идёт (это ход игры, не содержимое).
   Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Chime` —
   сигнал WebAudio на устройство вывода музыки); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
   окна только пересчитывают остаток по `setInterval`. Страница в «Инструментах» — `timer/ui/TimerTool.svelte`.

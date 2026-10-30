@@ -467,6 +467,11 @@ center, with a caption ("While the torch burns"). Presets from 30 seconds to 30 
 runs out, the timer flashes "Time's up!" and the GM hears a chime (on the music output device). Pause, ±1 minute,
 "hide from players" and "remove" — there and in the right panel.
 
+**Game time** (a block in the right panel): the day and the time in the game world, each adventure its own. Steps
++10 minutes, +1 hour, +8 hours (a long rest) and "Until morning" (6:00); a right click on a step — back; a click on the
+time sets the day and the time by hand. The eye shows the players "Day 3, evening" in the chosen corner — the day and
+the part of the day, without the minutes. Mausritter adventures have their own exploration clock instead.
+
 **Point buy** (Tools → Point buy): 27 points, 8 to 15 before bonuses (the budget and limits can be changed for house
 rules), the cost, total and modifier of each ability, the standard array in one click. Bonuses — from the background
 (2024: +2/+1 or +1/+1/+1), from the race (2014: race → subrace, for example "Halfling → Lightfoot"; the SRD races are

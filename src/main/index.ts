@@ -824,6 +824,8 @@ interface AdventureData {
   clocks?: unknown[];
   // The Forged in the Dark crew (none before 0.54).
   crew?: AnyRec;
+  // Time in the game world (none before 0.72).
+  worldtime?: AnyRec;
   // A supplement, not an adventure: its kind (none before 0.61).
   supplement?: SupplementKind;
 }
@@ -1015,6 +1017,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     mausritter: (st['mausritter']!['byAdventure'] as Record<string, AnyRec>)[name],
     clocks: (st['clocks']!['byAdventure'] as Record<string, unknown[]>)[name],
     crew: (st['crew']!['byAdventure'] as Record<string, AnyRec>)[name],
+    worldtime: (st['worldtime']!['byAdventure'] as Record<string, AnyRec>)[name],
     ...(state.adventures.supplements?.[name] ? { supplement: state.adventures.supplements[name] } : {}),
   };
   try {
@@ -1036,6 +1039,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
   await merge('mausritter', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
   await merge('clocks', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
   await merge('crew', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
+  await merge('worldtime', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
   await merge('initiative', (st) => ({ ...st, encounters: (st['encounters'] as AnyRec[]).filter((x) => x['adventure'] !== name) }));
   await merge('maps', (st) => ({ ...st, maps: drop(st['maps'] as AnyRec, (k) => !inAdventure(name, k)) }));
   await merge('order', (st) => ({ ...st, groups: drop(st['groups'] as AnyRec, (k) => !mine(k)) }));
@@ -1114,6 +1118,7 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
     if (data.mausritter) await merge('mausritter', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.mausritter } }));
     if (data.clocks) await merge('clocks', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.clocks } }));
     if (data.crew) await merge('crew', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.crew } }));
+    if (data.worldtime) await merge('worldtime', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.worldtime } }));
     saveVault();
   }
   if (place === 'vault') {
