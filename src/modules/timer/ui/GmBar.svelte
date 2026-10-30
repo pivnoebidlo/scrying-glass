@@ -2,7 +2,7 @@
      bar with the time left while the timer runs, yellow in the last minute; «when time is up» — only then. Time up —
      a red bar: one more minute, remove the timer, or hide the bar (until the timer ends again). -->
 <script lang="ts">
-  import { Hourglass, Pause, Play, Plus, Square, X } from '@lucide/svelte';
+  import { Hourglass, Minus, Pause, Play, Plus, Square, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -35,6 +35,7 @@
       {:else}
         <button class="icon-btn" title={t('timer.resume')} onclick={() => dispatch('timer', 'resume')}><Play size={13} /></button>
       {/if}
+      <button class="icon-btn" title={t('timer.minusMinute')} onclick={() => dispatch('timer', 'add', { ms: -60000 })}><Minus size={13} /></button>
     {/if}
     <button class="icon-btn" title={t('timer.plusMinute')} onclick={() => dispatch('timer', 'add', { ms: 60000 })}><Plus size={13} /></button>
     {#if done}
