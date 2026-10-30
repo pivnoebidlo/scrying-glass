@@ -1,6 +1,6 @@
 // Таймер на экране игроков (см. types.ts). Время — от часов ядра, окна только пересчитывают остаток.
 import { defineModule } from '../../shared/module';
-import type { TimerPosition, TimerState, TimerStyle } from './types';
+import { TIMER_GM, type TimerGm, type TimerPosition, type TimerState, type TimerStyle } from './types';
 
 const initialState: TimerState = {
   active: false,
@@ -12,6 +12,7 @@ const initialState: TimerState = {
   position: 'top-right',
   sound: true,
   shown: true,
+  gm: 'end',
 };
 
 const MAX = 24 * 3600 * 1000;
@@ -55,7 +56,8 @@ export default defineModule({
       return { ...s, label };
     },
 
-    setView(s, changes: { style?: TimerStyle; position?: TimerPosition; sound?: boolean; shown?: boolean }) {
+    setView(s, changes: { style?: TimerStyle; position?: TimerPosition; sound?: boolean; shown?: boolean; gm?: TimerGm }) {
+      if (changes.gm !== undefined && !TIMER_GM.includes(changes.gm)) return s;
       return { ...s, ...changes };
     },
   },

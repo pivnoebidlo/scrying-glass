@@ -665,8 +665,8 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   правила — `types.ts`: `clockOf`, `partOf`, `nextMorning`; действия `advance` / `untilMorning` / `set` / `show` / `reset` /
   `setPlace`): блок правой панели `ui/OnScreen.svelte` (не в Mausritter — там свой счётчик), слой игроков `ui/Layer.svelte`
   (order 34, только день и время суток); в корзину — `AdventureData.worldtime`, в .sgpack не идёт (это ход игры, не содержимое).
-  Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Chime` —
-  сигнал WebAudio на устройство вывода музыки); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
+  Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Background` —
+  `Chime` (сигнал WebAudio на устройство вывода музыки) и `GmBar` (плашка мастера вверху окна: `TimerState.gm` — off / end / always)); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
   окна только пересчитывают остаток по `setInterval`. Страница в «Инструментах» — `timer/ui/TimerTool.svelte`.
   Покупка характеристик: правила, расы SRD 2014 и проверка готовых значений (перебор допустимых бонусов) —
   `systems/dnd5e/pointbuy.ts` (расы — раса + подрасы, `combine`), страница — `systems/dnd5e/tools/pointbuy/PointBuy.svelte`

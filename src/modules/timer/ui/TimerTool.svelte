@@ -5,7 +5,8 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Play } from '@lucide/svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
-  import type { TimerPosition, TimerStyle } from '../types';
+  import { TIMER_GM, type TimerPosition, type TimerStyle } from '../types';
+  import HelpTip from '../../../renderer/lib/HelpTip.svelte';
   import Controls from './Controls.svelte';
   import Hourglass from './Hourglass.svelte';
 
@@ -65,6 +66,16 @@
         {#each POSITIONS as id (id)}<button class:active={ms.position === id} onclick={() => dispatch('timer', 'setView', { position: id })}>{t(`timer.pos.${id}`)}</button>{/each}
       </div>
       <label class="check"><input type="checkbox" checked={ms.shown} onchange={(e) => dispatch('timer', 'setView', { shown: e.currentTarget.checked })} /> {t('timer.showToPlayers')}</label>
+    </div>
+    <div>
+      <h3>{t('timer.gm')}</h3>
+      <div class="gm-row">
+        <span class="faint">{t('timer.gmField')}</span>
+        <div class="seg">
+          {#each TIMER_GM as id (id)}<button class:active={(ms.gm ?? 'end') === id} onclick={() => dispatch('timer', 'setView', { gm: id })}>{t(`timer.gm.${id}`)}</button>{/each}
+        </div>
+        <HelpTip text={t('timer.gmHint')} size={13} />
+      </div>
       <label class="check"><input type="checkbox" checked={ms.sound} onchange={(e) => dispatch('timer', 'setView', { sound: e.currentTarget.checked })} /> {t('timer.sound')}</label>
     </div>
     {#if ms.style === 'hourglass'}<div class="sample"><Hourglass left={0.62} running /></div>{/if}
@@ -150,6 +161,15 @@
     align-items: center;
     gap: 6px;
     margin-top: 6px;
+  }
+  .gm-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+  .gm-row .seg {
+    margin: 0;
   }
   .sample {
     flex: none;

@@ -42,4 +42,12 @@ describe('таймер', () => {
   it('запись времени', () => {
     expect([clock(65_000), clock(999), clock(3_725_000), clock(0)]).toEqual(['1:05', '0:01', '1:02:05', '0:00']);
   });
+
+  it('the GM bar: on when time is up by default; only the known modes are taken', () => {
+    expect(timer.initialState.gm).toBe('end');
+    let s = act(timer.initialState, 'setView', { gm: 'always' });
+    expect(s.gm).toBe('always');
+    s = act(s, 'setView', { gm: 'loud' });
+    expect(s.gm).toBe('always');
+  });
 });

@@ -465,7 +465,9 @@ table, pins the plan and opens the scenes. The schedule is common to all vaults
 **Timer** (Tools → Timer): an hourglass or digits on the player screen — top right, bottom right or large in the
 center, with a caption ("While the torch burns"). Presets from 30 seconds to 30 minutes or your own time. When time
 runs out, the timer flashes "Time's up!" and the GM hears a chime (on the music output device). Pause, ±1 minute,
-"hide from players" and "remove" — there and in the right panel.
+"hide from players" and "remove" — there and in the right panel. For the GM alone — a bar at the top of the GM window:
+"When time is up" (the default) or "Always" (the time left in sight while the timer runs, yellow in the last minute);
+the players neither see nor hear it.
 
 **Game time** (a block in the right panel): the day and the time in the game world, each adventure its own. Steps
 +10 minutes, +1 hour, +8 hours (a long rest) and "Until morning" (6:00); a right click on a step — back; a click on the

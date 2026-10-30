@@ -36,7 +36,14 @@ export const en = {
   'timer.secShort': "s",
   'timer.look': "What players see",
   'timer.showToPlayers': "Show to players",
-  'timer.sound': "Signal when time is up (through the music output device)",
+  'timer.sound': "A signal when time is up — through the music speakers, the players hear it too",
+  'timer.gm': "For the GM",
+  'timer.gmField': "A bar at the top of your window",
+  'timer.gm.off': "No",
+  'timer.gm.end': "When time is up",
+  'timer.gm.always': "Always",
+  'timer.gmHint': "Only you see it, the players don't: «Always» keeps the time left in sight while the timer runs.",
+  'timer.gmHide': "Hide the bar",
 };
 
 export const ru: Messages<typeof en> = {
@@ -74,5 +81,12 @@ export const ru: Messages<typeof en> = {
   'timer.secShort': "с",
   'timer.look': "Как видят игроки",
   'timer.showToPlayers': "Показывать игрокам",
-  'timer.sound': "Сигнал, когда время вышло (через устройство вывода музыки)",
+  'timer.sound': "Сигнал, когда время вышло — через колонки музыки, его слышат и игроки",
+  'timer.gm': "Для мастера",
+  'timer.gmField': "Плашка вверху вашего окна",
+  'timer.gm.off': "Нет",
+  'timer.gm.end': "Когда время вышло",
+  'timer.gm.always': "Всегда",
+  'timer.gmHint': "Видите только вы, игроки — нет: «Всегда» держит остаток времени на виду, пока идёт таймер.",
+  'timer.gmHide': "Скрыть плашку",
 };
