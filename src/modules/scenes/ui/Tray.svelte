@@ -30,6 +30,7 @@
     caption = prettyName,
     hint,
     showLoose = true,
+    onreorder,
     children,
   }: {
     app: AppState;
@@ -44,6 +45,8 @@
     hint: string;
     // Строка «На экране: …» для показанного вне подборки (у блока может быть своя — тогда false).
     showLoose?: boolean;
+    // Dragged into a new order: what else follows it (the portraits on screen take the same order).
+    onreorder?: (ids: string[]) => unknown;
     children?: Snippet;
   } = $props();
 
@@ -70,7 +73,7 @@
 
   const accepts = (path: string | null) => !!path && kinds.includes(kindOf.get(path) as FileKind) && !tray.includes(path);
   const add = (paths: string[]) => paths.length && dispatch('scenes', 'trayAdd', { owner: $state.snapshot(owner), part, paths });
-  const reorder = (ids: string[]) => dispatch('scenes', 'traySet', { owner: $state.snapshot(owner), part, ids });
+  const reorder = (ids: string[]) => (dispatch('scenes', 'traySet', { owner: $state.snapshot(owner), part, ids }), onreorder?.(ids));
   const remove = (path: string) => dispatch('scenes', 'trayRemove', { owner: $state.snapshot(owner), part, path });
 
   function ondragover(e: DragEvent) {

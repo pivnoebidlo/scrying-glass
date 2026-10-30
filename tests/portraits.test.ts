@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import portraits from '../src/modules/portraits/main';
-import type { PortraitsState } from '../src/modules/portraits/types';
+import { inTrayOrder, type PortraitsState } from '../src/modules/portraits/types';
 import { ctx, run } from './helpers';
 
 describe('портреты', () => {
@@ -11,5 +11,10 @@ describe('портреты', () => {
     expect(s.unknown).toEqual([]);
     const old = { ...portraits.initialState, unknown: undefined } as unknown as PortraitsState;
     expect(portraits.init!(old, ctx()).unknown).toEqual([]);
+  });
+
+  it('the portraits on screen follow the order of the tray; those not in it stay after them', () => {
+    expect(inTrayOrder(['a', 'b', 'loose', 'c'], ['c', 'x', 'a', 'b'])).toEqual(['c', 'a', 'b', 'loose']);
+    expect(inTrayOrder([], ['a'])).toEqual([]);
   });
 });

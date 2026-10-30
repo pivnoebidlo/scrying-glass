@@ -33,3 +33,10 @@ export const PLATE_DEFAULT_COLOR: Record<PlateStyle, string> = { shadow: '#fffff
 export const PLATE_COLORS = ['#ffffff', '#f2ead8', '#c9a24a', '#8e1a16', '#4e2a6b', '#26407a', '#2f5d3a', '#3b2412', '#2b2118', '#17120e'];
 
 export const DEFAULT_PLATE: NamePlate = { style: 'shadow', color: '#ffffff', font: '' };
+
+// The portraits on screen in the order of the tray (dragged in the right panel); those not in the tray keep their
+// order after them.
+export function inTrayOrder(onScreen: string[], tray: string[]): string[] {
+  const at = (p: string) => tray.indexOf(p);
+  return [...onScreen.filter((p) => at(p) >= 0).sort((a, b) => at(a) - at(b)), ...onScreen.filter((p) => at(p) < 0)];
+}

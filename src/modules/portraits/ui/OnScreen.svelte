@@ -11,6 +11,7 @@
   import { caption, connectCardNames } from './cardNames.svelte';
   import { canRename, renamePortrait } from './rename';
   import Tray from '../../scenes/ui/Tray.svelte';
+  import { inTrayOrder } from '../types';
 
   let { ms, app }: ModuleProps<'portraits'> = $props();
   onMount(connectCardNames);
@@ -30,6 +31,10 @@
   toggle={(path) => dispatch('portraits', 'toggle', { path })}
   hint={t('portraits.trayHint')}
   showLoose={false}
+  onreorder={(ids) => {
+    const order = inTrayOrder(ms.onScreen, ids);
+    if (order.some((p, i) => p !== ms.onScreen[i])) dispatch('portraits', 'setOnScreen', { paths: order });
+  }}
 />
 
 {#if ms.onScreen.length}
