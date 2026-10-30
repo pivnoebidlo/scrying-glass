@@ -33,6 +33,7 @@
     void adv;
     void notes.rev;
     void book.rev;
+    void app.vault.systemsOff;
     loadEntries();
   });
 

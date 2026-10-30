@@ -72,13 +72,16 @@ export function setEdition(e: Edition) {
   }
 }
 
-// Loaded for this interface language (group and source labels are taken at load time) and this state of the
-// library (system packs bring books of their own).
+// Loaded for this interface language (group and source labels are taken at load time), this state of the library
+// (system packs bring books of their own) and the systems turned on: the books of a system turned off are not kept at
+// all (thousands of Pathfinder entries in a D&D game) — turning it on loads them.
 let builtinLoaded = '';
 async function loadBuiltin() {
-  if (builtinLoaded === `${locale.lang}|${book.rev}`) return;
-  builtinLoaded = `${locale.lang}|${book.rev}`;
-  const books = await window.api.listBuiltinEntries();
+  const key = `${locale.lang}|${book.rev}|${(store.state.vault.systemsOff ?? []).join(',')}`;
+  if (builtinLoaded === key) return;
+  builtinLoaded = key;
+  const books = (await window.api.listBuiltinEntries()).filter((b) => isEnabled(b.system));
+  if (builtinLoaded !== key) return;
   builtinLangs = {};
   for (const b of books) (builtinLangs[b.system] ??= []).push(b.lang);
   book.builtin = books.flatMap((b) => {
