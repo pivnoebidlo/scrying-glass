@@ -21,7 +21,7 @@ export default defineControl({
   view: View,
   sidebar: Sidebar,
   screen: MiniPlayer,
-  screenEmpty: (app) => (app.music.queue[app.music.index] || app.music.ambience.length || inTray(app, 'music') || inTray(app, 'ambience') ? null : t('empty.silence')),
+  screenEmpty: (app) => (app.music.queue[app.music.index] || inTray(app, 'music') ? null : t('empty.silence')),
   settings: Settings,
   background: Player,
   audioActions: [

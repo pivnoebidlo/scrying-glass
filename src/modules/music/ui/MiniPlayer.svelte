@@ -1,7 +1,7 @@
 <!-- Правая панель: что играет, управление музыкой и атмосферой. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume2, Wind, X } from '@lucide/svelte';
+  import { Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward, Volume2, X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -12,8 +12,6 @@
   import { Disc3, FolderOpen, Star } from '@lucide/svelte';
   import { trayOwner } from '../../scenes/tray';
   import TrayChips from '../../scenes/ui/TrayChips.svelte';
-  import { builtinSoundOptions } from '../../../shared/sounds';
-  import { builtin, loadBuiltin } from '../../sounds/ui/builtin.svelte';
   import { allFiles, fileKind, folderRole } from '../../../shared/vault';
   import { visibleIn } from '../../../shared/adventures';
 
@@ -37,22 +35,6 @@
     if (main === id) return dispatch('scenes', 'setInclude', { id: scene.id, part: 'music', value: false });
     await dispatch('scenes', 'setContent', { id: scene.id, content: { music: { playlist: id, shuffle: ms.shuffle } } });
     await dispatch('scenes', 'setInclude', { id: scene.id, part: 'music', value: true });
-  }
-
-  // Атмосфера в подборке: щелчок добавляет зацикленный звук (и включает атмосферу) или убирает его.
-  function toggleLoop(path: string) {
-    const has = ms.ambience.some((a) => a.path === path);
-    if (has && !ms.ambiencePlaying) return dispatch('music', 'toggleAmbience');
-    return dispatch('music', 'toggleAmbient', { path });
-  }
-  // Встроенная атмосфера, потом свои аудиофайлы приключения (их бывает много — в конце списка).
-  loadBuiltin();
-  function audioOptions() {
-    const tree = app.vault.tree;
-    const own = (tree ? allFiles(tree, 'audio') : [])
-      .filter((f) => visibleIn(app.adventures, f.path))
-      .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')), group: t('common.inVault') }));
-    return [...builtinSoundOptions(builtin.ambience, trackName), ...own];
   }
 
   // Плейлист в подборке — по названию папки (папка music — по папке, где она лежит).
@@ -142,41 +124,6 @@
   <div class="faint idle">{t('music.idle')}</div>
 {/if}
 
-<div class="amb-tray">
-  <div class="faint label-row">{t('music.ambience')}</div>
-  <TrayChips
-    {app}
-    part="ambience"
-    isOn={(path) => ms.ambiencePlaying && ms.ambience.some((a) => a.path === path)}
-    toggle={toggleLoop}
-    options={audioOptions}
-    caption={trackName}
-    iconOf={() => Wind}
-    pickTitle={t('music.ambiencePick')}
-    hint={t('music.ambienceHint')}
-  />
-</div>
-
-{#if ms.ambience.length}
-  <div class="ambience">
-    <button
-      class="icon-btn"
-      class:active={ms.ambiencePlaying}
-      title={ms.ambiencePlaying ? t('music.muteAmbience') : t('music.playAmbience')}
-      onclick={() => dispatch('music', 'toggleAmbience')}
-    >
-      <Wind size={15} />
-    </button>
-    <span class="label">{t('music.ambienceN', { count: ms.ambience.length })}</span>
-    <Slider
-      value={live.ambienceVolume ?? ms.ambienceVolume}
-      title={t('music.ambienceVolume')}
-      oninput={(v) => (live.ambienceVolume = v)}
-      onchange={(v) => dispatch('music', 'setAmbienceVolume', { value: v }).then(() => (live.ambienceVolume = null))}
-    />
-  </div>
-{/if}
-
 <style>
   .title-row {
     display: flex;
@@ -186,18 +133,6 @@
   .title-row .title {
     flex: 1;
     min-width: 0;
-  }
-  .amb-tray {
-    margin-top: 12px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border);
-  }
-  .label-row {
-    margin-bottom: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
   }
   .star {
     display: none;
@@ -265,18 +200,9 @@
   .play:hover {
     background: var(--accent-hover);
   }
-  .volume,
-  .ambience {
+  .volume {
     display: flex;
     align-items: center;
     gap: 8px;
-  }
-  .ambience {
-    margin-top: 8px;
-  }
-  .label {
-    flex: none;
-    color: var(--text-muted);
-    font-size: 12px;
   }
 </style>

@@ -789,7 +789,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   записки в подборке — `TrayNote.svelte` (лист в миниатюре), записи справочника с картинкой — картинкой; «Сохранить текущее» передаёт подборку в `scenes/create` (`tray`),
   выход из сцены — `markActive` null; порядок — `use:sortable` с `onmove` (действие `traySet`); звёздочка в музыке —
   основная музыка сцены (`music` + `include.music` сцены); имя новой сцены и переименование — поле в `QuickBar`;
-  атмосфера — часть `ambience` в блоке музыки; звуки — модуль `modules/sounds` (без вкладки: команда `play` растёт
+  атмосфера — часть `ambience`, свой блок правой панели (модуль `modules/ambience` без состояния: `ui/OnScreen.svelte`, данные — `music.ambience`, играет `music/ui/Player.svelte`); звуки — модуль `modules/sounds` (без вкладки: команда `play` растёт
   `last.seq`, играет фоновый `Sfx.svelte` на устройство вывода музыки, что звучит — `ui/playing.svelte.ts`), часть
   `sounds` (сыгранный попадает в подборку по смене `seq`); встроенные звуки — `resources/sounds/{sfx,ambience}`
   (источники и лицензии — README там; название файла = подпись), пути «sound:…» (`shared/sounds.ts`, `assetUrl` →

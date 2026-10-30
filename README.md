@@ -562,7 +562,7 @@ changes on screen, and the panel shows the adventure's tray again (for example, 
 Music in the tray is playlists (folders) and single tracks: a click plays (a track — on a loop), a click on the
 playing one pauses. For example: in the tower — the tower theme, on the second floor — "Combat". The star on a line
 (while a scene is on) marks the scene's main music: it starts with the scene; another click on the star — the scene
-doesn't change the music. Ambience in the tray (in the Music block) is looped sound over the music (rain, tavern): a
+doesn't change the music. Ambience (a block of its own, between Music and Sounds) is looped sound over the music (rain, tavern): a
 click turns it on and off. Sounds are a block of their own: one-shot effects on a button (the lever was pulled —
 thunder); a click plays the sound once over the music, on the same output device; there too — sound volume and "stop
 all". Any audio file in Files can be played as a sound. Basic sounds are built in — in the "+" window they come first,
