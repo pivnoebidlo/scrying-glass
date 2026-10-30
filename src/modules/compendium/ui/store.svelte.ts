@@ -151,19 +151,20 @@ const fitsHere = (e: EntryItem) => {
 };
 // Встроенные записи — системы приключения (её семейства, без отключённых систем); у D&D — в выбранной редакции.
 const systemOfBuiltin = (builtinPath: string) => builtinPath.slice(BUILTIN.length).split('/')[0]!;
-const editionShown = (builtinPath: string) => {
+// `ed` — the edition picked, taken once for a whole list: editionNow() goes over every built-in entry, and a call per
+// entry made opening the compendium take seconds with thousands of them.
+const editionShown = (builtinPath: string, ed: Edition = editionNow()) => {
   const system = systemOfBuiltin(builtinPath);
   if (familyOf(system) !== hereFamily() || !isEnabled(system)) return false;
-  const ed = editionNow();
   return ed === '' || ed === 'all' || (ed !== 'none' && system === ed);
 };
 // Своя запись: правка встроенной видна вместе с её редакцией и получает её английское название и подпись места.
-function ownShown(list: EntryItem[]): EntryItem[] {
+function ownShown(list: EntryItem[], ed: Edition): EntryItem[] {
   return list.flatMap((e) => {
     if (!fitsHere(e)) return [];
     const over = overrideOf(e);
     if (!over) return [e];
-    if (!editionShown(over)) return [];
+    if (!editionShown(over, ed)) return [];
     const orig = book.builtin.find((b) => b.path === over);
     return [{ ...e, en: e.en ?? orig?.en, group: t('cmpui.editOf', { group: e.group, orig: orig?.group ?? 'SRD' }), order: 3 }];
   });
@@ -173,12 +174,21 @@ const shownLang = (system: string) => {
   const langs = builtinLangs[system] ?? [];
   return langs.includes(locale.lang) ? locale.lang : langs.includes('en') ? 'en' : (langs[0] ?? '');
 };
-const builtinShown = () => {
+// Whether a system's book is shown and in which language — once per system, not per entry.
+const builtinShown = (ed: Edition) => {
   const replaced = new Set([...book.vault, ...book.library].map(overrideOf).filter(Boolean));
-  return book.builtin.filter((e) => editionShown(e.path) && e.lang === shownLang(systemOfBuiltin(e.path)) && !replaced.has(e.path));
+  const bySystem = new Map<string, string | null>();
+  const langOf = (path: string) => {
+    const system = systemOfBuiltin(path);
+    if (!bySystem.has(system)) bySystem.set(system, editionShown(path, ed) ? shownLang(system) : null);
+    return bySystem.get(system);
+  };
+  return book.builtin.filter((e) => langOf(e.path) === e.lang && !replaced.has(e.path));
 };
-export const allEntries = () =>
-  [...ownShown(book.vault), ...ownShown(book.library), ...builtinShown()].sort((a, b) => a.order - b.order || collator.compare(a.entry.title, b.entry.title));
+export const allEntries = () => {
+  const ed = editionNow();
+  return [...ownShown(book.vault, ed), ...ownShown(book.library, ed), ...builtinShown(ed)].sort((a, b) => a.order - b.order || collator.compare(a.entry.title, b.entry.title));
+};
 
 // [[Ссылка]] на запись: по названию (или английскому названию встроенной), без регистра и «ё»; запись приключения
 // важнее общей, общая — библиотечной, своя — встроенной. Встроенная ищется и в скрытой редакции (ссылка не должна
