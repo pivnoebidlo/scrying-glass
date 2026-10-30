@@ -47,6 +47,23 @@ describe('встроенные звуки', () => {
       }
     }
   });
+
+  it('every built-in sound is in a group of its kind, the groups go in order', async () => {
+    const fs = await import('node:fs');
+    const { trackName } = await import('../src/shared/vault');
+    const { builtinSoundOptions } = await import('../src/shared/sounds');
+    const { setLang } = await import('../src/shared/i18n');
+    setLang('en');
+    const kinds = { sfx: ['Combat', 'Magic', 'Creatures', 'People and town', 'Eerie', 'Doors and things', 'Nature'], ambience: ['Outdoors', 'Weather', 'Places', 'Dark places'] };
+    for (const [dir, groups] of Object.entries(kinds)) {
+      const paths = fs.readdirSync(`resources/sounds/${dir}`).filter((f) => /\.(ogg|m4a)$/.test(f)).map((f) => `sound:${dir}/${f.normalize('NFC')}`);
+      const options = builtinSoundOptions(paths, trackName);
+      expect(options).toHaveLength(paths.length);
+      for (const o of options) expect(groups, o.title).toContain(o.group);
+      const order = [...new Set(options.map((o) => o.group))];
+      expect(order).toEqual(groups.filter((g) => order.includes(g)));
+    }
+  });
 });
 
 describe('проверка обновлений', () => {

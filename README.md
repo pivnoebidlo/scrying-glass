@@ -561,12 +561,13 @@ doesn't change the music. Ambience in the tray (in the Music block) is looped so
 click turns it on and off. Sounds are a block of their own: one-shot effects on a button (the lever was pulled —
 thunder); a click plays the sound once over the music, on the same output device; there too — sound volume and "stop
 all". Any audio file in Files can be played as a sound. Basic sounds are built in — in the "+" window they come first,
-in the "Built-in" group: 38 effects (thunder, lever, doors, lock, coins, sword, spell, glass, rocks, monster roar,
-ghost, giant, werewolf howl, bell and alarm bells, war horn, explosion, chains, arrows, whip, punch, body fall, ghost
-wail, undead moan, horse and gallop, crows, owl, heartbeat, mad laughter, creaking floor, dogs…) and 23 ambience loops
-(forest by day and night, eerie forest, campfire, torch, underground river, sea, swamp, rain, thunderstorm, winter and
-desert wind, tavern, market, cave, haunted house, crypt, smithy, field at night, hearth, temple, pasture, wind in the
-chimney). Sources and licenses —
+by groups: 82 effects (combat — swords, bow, cannon, war horn, march; magic — spell, chimes, fey, burst of flame, gong;
+creatures — monster and dragon roar, werewolf, farm animals, cat, bats, rats, crows, owl; people and town — bells,
+coins, applause, children and ogre laughter, knock, glasses, gavel, drum roll, fireworks; eerie — ghost, undead, mad and
+witch laughter, whisper, chains, heartbeat; doors and things; nature — thunder, rocks, splash, steps, twigs) and 31
+ambience loops (outdoors — forest, campfire, sea, swamp, stream, pond, countryside, farm field; weather — rain,
+thunderstorm, winds; places — tavern, market, crowd in the square, farm, harbour, smithy, hearth, temple; dark places —
+cave, crypt, haunted house, eerie forest, underground river, torch, bubbling cauldron). Sources and licenses —
 `resources/sounds/README.md`. Combats in the tray are prepared encounters: a click starts that combat instead of the
 running one (heroes added by hand stay) and opens Initiative (roll initiative), the running combat is highlighted, a
 second click turns it off with all its participants. So the "Tower" scene can have both "Rats" and "Goblins" ready —

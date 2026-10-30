@@ -12,6 +12,7 @@
   import { Disc3, FolderOpen, Star } from '@lucide/svelte';
   import { trayOwner } from '../../scenes/tray';
   import TrayChips from '../../scenes/ui/TrayChips.svelte';
+  import { builtinSoundOptions } from '../../../shared/sounds';
   import { builtin, loadBuiltin } from '../../sounds/ui/builtin.svelte';
   import { allFiles, fileKind, folderRole } from '../../../shared/vault';
   import { visibleIn } from '../../../shared/adventures';
@@ -51,7 +52,7 @@
     const own = (tree ? allFiles(tree, 'audio') : [])
       .filter((f) => visibleIn(app.adventures, f.path))
       .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')), group: t('common.inVault') }));
-    return [...builtin.ambience.map((p) => ({ id: p, title: trackName(p), group: t('common.builtin') })), ...own];
+    return [...builtinSoundOptions(builtin.ambience, trackName), ...own];
   }
 
   // Плейлист в подборке — по названию папки (папка music — по папке, где она лежит).

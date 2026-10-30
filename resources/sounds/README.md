@@ -57,8 +57,8 @@ thank the authors).
 Recorded by **Joseph Sardin**, [BigSoundBank.com](https://bigsoundbank.com), license
 [CC0](https://creativecommons.org/publicdomain/zero/1.0/) (public domain; credit is not required — thank you!).
 Taken as MP3 and changed: ambience — a 90 s stretch (or the whole recording) made into a seamless loop (its last 3 s
-cross-fade into the start), levelled to about −26 dBFS RMS; effects — levelled to a −1 dBFS peak, the long ones cut to
-15–20 s with a 1 s fade-out. Encoded to AAC (ambience 112 kbit/s, effects 128 kbit/s).
+cross-fade into the start), levelled to about −26 dBFS RMS; effects — silence at the start trimmed, levelled to a −1 dBFS
+peak, the long ones cut to 6–20 s with a 1 s fade-out. Encoded to AAC (ambience 112 kbit/s, effects 128 kbit/s).
 
 Ambience:
 
@@ -75,6 +75,14 @@ Ambience:
 | Храм | Office cathedral of Chartres — https://bigsoundbank.com/search?q=0506 (#0506) |
 | Пастбище | Flock of Sheep and Cows — https://bigsoundbank.com/search?q=3220 (#3220) |
 | Ветер в трубе | Whistling of the Wind #2 — https://bigsoundbank.com/search?q=0155 (#0155) |
+| Толпа на площади | Outside Talks #1 — https://bigsoundbank.com/search?q=2968 (#2968) |
+| Ферма | 100 Meters from the Stall — https://bigsoundbank.com/search?q=0934 (#0934) |
+| Сельская округа | Countryside — https://bigsoundbank.com/search?q=0097 (#0097) |
+| Ветер в кронах | Strong wind and trees #1 — https://bigsoundbank.com/search?q=1450 (#1450) |
+| Ручей | Mountain stream #1 — https://bigsoundbank.com/search?q=2754 (#2754) |
+| Пруд | Pond in a Field — https://bigsoundbank.com/search?q=0691 (#0691) |
+| Кипящий котёл | Boiling water — https://bigsoundbank.com/search?q=0149 (#0149) |
+| Порт | Small fishing port #1 — https://bigsoundbank.com/search?q=2571 (#2571) |
 
 Effects:
 
@@ -100,3 +108,47 @@ Effects:
 | Безумный смех | Delirious Laughter #3 — https://bigsoundbank.com/search?q=2093 (#2093) |
 | Скрип половиц | Floating Floor Squeaks — https://bigsoundbank.com/search?q=0518 (#0518) |
 | Лай собак | Pack of Dogs — https://bigsoundbank.com/search?q=2953 (#2953) |
+| Звон клинков | Sword — https://bigsoundbank.com/search?q=0129 (#0129) |
+| Рубящий удар | Sword That Cuts — https://bigsoundbank.com/search?q=0127 (#0127) |
+| Выстрел из лука | Archery — https://bigsoundbank.com/search?q=0549 (#0549) |
+| Крик боли | Cry of Pain — https://bigsoundbank.com/search?q=2361 (#2361) |
+| Марш | Marching in #2 — https://bigsoundbank.com/search?q=3024 (#3024) |
+| Пушечный выстрел | Explosion #2 — https://bigsoundbank.com/search?q=1808 (#1808) |
+| Волшебный перезвон | Chimes "Dream" #1 — https://bigsoundbank.com/search?q=2079 (#2079) |
+| Феи | Chimes "butterfly" #1 — https://bigsoundbank.com/search?q=2087 (#2087) |
+| Вспышка пламени | Gasoline fire #1 — https://bigsoundbank.com/search?q=1340 (#1340) |
+| Гонг | Gong, very strong — https://bigsoundbank.com/search?q=1485 (#1485) |
+| Рёв дракона | Cat roar #1 — https://bigsoundbank.com/search?q=1881 (#1881) (slowed down 2.5×) |
+| Петух | Rooster — https://bigsoundbank.com/search?q=0104 (#0104) |
+| Куры | Henhouse — https://bigsoundbank.com/search?q=0282 (#0282) |
+| Свинья | Grumpy Pig, with the Mouth #2 — https://bigsoundbank.com/search?q=1659 (#1659) |
+| Корова | Cow Moos #1 — https://bigsoundbank.com/search?q=0546 (#0546) |
+| Коза | Bleating Goat #1 — https://bigsoundbank.com/search?q=0279 (#0279) |
+| Кошка | Meow Cat #2 — https://bigsoundbank.com/search?q=1890 (#1890) |
+| Злая кошка | Growling cat #3 — https://bigsoundbank.com/search?q=1887 (#1887) |
+| Летучие мыши | Cries of bats — https://bigsoundbank.com/search?q=0458 (#0458) |
+| Крыса | Rat nibbling — https://bigsoundbank.com/search?q=0185 (#0185) |
+| Писк мыши | Mouse screams — https://bigsoundbank.com/search?q=0459 (#0459) |
+| Хлопанье крыльев | Flight of a pigeon — https://bigsoundbank.com/search?q=0476 (#0476) |
+| Мухи | Solitary Bees or Flies — https://bigsoundbank.com/search?q=0101 (#0101) |
+| Аплодисменты | Applause about 25-50 people #1 — https://bigsoundbank.com/search?q=0812 (#0812) |
+| Детский смех | Laughter of Children — https://bigsoundbank.com/search?q=1660 (#1660) |
+| Смех ведьмы | Strident Laughter — https://bigsoundbank.com/search?q=0489 (#0489) |
+| Хохот огра | Laughter — https://bigsoundbank.com/search?q=0490 (#0490) |
+| Стук в дверь | Door — https://bigsoundbank.com/search?q=0015 (#0015) |
+| Звон бокалов | Cheers, big red wine glass #2 — https://bigsoundbank.com/search?q=1333 (#1333) |
+| Наливают пиво | Beer service #2 — https://bigsoundbank.com/search?q=1933 (#1933) |
+| Молоток судьи | Gavel, 3 Blows — https://bigsoundbank.com/search?q=1590 (#1590) |
+| Барабанная дробь | Drum Roll 1 L — https://bigsoundbank.com/search?q=2402 (#2402) |
+| Фейерверк | Fireworks #2 — https://bigsoundbank.com/search?q=2672 (#2672) |
+| Хруст | Raw carrot crunched #1 — https://bigsoundbank.com/search?q=1594 (#1594) |
+| Шёпот | Whisper #1 — https://bigsoundbank.com/search?q=3255 (#3255) |
+| Топор по дереву | Ax on Wood — https://bigsoundbank.com/search?q=0536 (#0536) |
+| Пила | Saw — https://bigsoundbank.com/search?q=0016 (#0016) |
+| Ворота амбара | Wooden barn door — https://bigsoundbank.com/search?q=0538 (#0538) |
+| Скрип решётки | Creaking metallic door — https://bigsoundbank.com/search?q=0616 (#0616) |
+| Скрип верёвки | Big rope — https://bigsoundbank.com/search?q=3426 (#3426) |
+| Всплеск | Splash, Big #3 — https://bigsoundbank.com/search?q=1521 (#1521) |
+| Шаги по листве | Feet in Leaves #1 — https://bigsoundbank.com/search?q=0137 (#0137) |
+| Шаги по доскам | Man Footsteps on the Wooden Floor — https://bigsoundbank.com/search?q=0165 (#0165) |
+| Треск веток | Broken twigs #1 — https://bigsoundbank.com/search?q=1299 (#1299) |

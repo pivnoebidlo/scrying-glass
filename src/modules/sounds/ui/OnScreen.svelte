@@ -10,18 +10,19 @@
   import { visibleIn } from '../../../shared/adventures';
   import TrayChips from '../../scenes/ui/TrayChips.svelte';
   import { sfx } from './playing.svelte';
+  import { builtinSoundOptions } from '../../../shared/sounds';
   import { builtin, loadBuiltin } from './builtin.svelte';
 
   let { ms, app }: ModuleProps<'sounds'> = $props();
 
-  // Встроенные эффекты, потом свои аудиофайлы приключения (их бывает много — в конце списка).
+  // Built-in effects by group, then the adventure's own audio files (there can be many — at the end of the list).
   loadBuiltin();
   function options() {
     const tree = app.vault.tree;
     const own = (tree ? allFiles(tree, 'audio') : [])
       .filter((f) => visibleIn(app.adventures, f.path))
       .map((f) => ({ id: f.path, title: trackName(f.path), sub: f.path.slice(0, f.path.lastIndexOf('/')), group: t('common.inVault') }));
-    return [...builtin.sfx.map((p) => ({ id: p, title: trackName(p), group: t('common.builtin') })), ...own];
+    return [...builtinSoundOptions(builtin.sfx, trackName), ...own];
   }
 </script>
 
