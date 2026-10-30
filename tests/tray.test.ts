@@ -128,6 +128,17 @@ describe('переключение сцен', () => {
     expect(leftovers(tavern, tavern, now)).toEqual({});
   });
 
+  it('music and ambience of the previous scene go too; what both scenes have keeps playing', () => {
+    const tavern = scene('tavern', { music: ['music/tavern'], ambience: ['rain.m4a', 'fire.m4a'] });
+    const street = scene('street', { ambience: ['rain.m4a'] });
+    const now = { ...shownOf(screen()), music: ['music/tavern'], ambience: ['rain.m4a', 'fire.m4a', 'mine.m4a'] };
+    expect(leftovers(tavern, street, now)).toEqual({ music: null, ambience: ['rain.m4a', 'mine.m4a'] });
+    // A scene that sets the music itself: its own part, not a leftover.
+    expect(leftovers(tavern, scene('fight', { ambience: ['rain.m4a', 'fire.m4a'] }, { ...none, music: true }), now)).toEqual({});
+    // Music that is not the previous scene's (started by hand elsewhere) stays.
+    expect(leftovers(street, tavern, { ...now, ambience: [] })).toEqual({});
+  });
+
   it('содержимое прошлой сцены (не только подборка) тоже её', () => {
     const old = scene('old', {}, { ...none, portraits: true }, { ...empty, portraits: { paths: ['strahd.png'] } });
     expect(leftovers(old, scene('next', {}), shownOf(screen({ portraits: ['strahd.png'] })))).toEqual({ portraits: [] });

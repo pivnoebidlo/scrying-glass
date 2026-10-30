@@ -38,6 +38,7 @@
   part="ambience"
   isOn={(path) => ms.ambiencePlaying && ms.ambience.some((a) => a.path === path)}
   toggle={toggleLoop}
+  onremove={(path) => ms.ambience.some((a) => a.path === path) && dispatch('music', 'toggleAmbient', { path })}
   options={audioOptions}
   caption={trackName}
   iconOf={() => Wind}

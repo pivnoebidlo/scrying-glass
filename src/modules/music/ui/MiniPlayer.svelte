@@ -63,6 +63,7 @@
   part="music"
   isOn={(id) => ms.playing && ms.playlist === id}
   toggle={toggleItem}
+  onremove={(id) => id === ms.playlist && dispatch('music', 'clear')}
   {options}
   caption={(id) => (isTrack(id) ? trackName(id) : folderTitle(id))}
   iconOf={(id) => (isTrack(id) ? Disc3 : FolderOpen)}

@@ -117,13 +117,16 @@ export function pruneTrays(s: ScenesState, keep: (path: string) => boolean): Sce
 
 // Switching scenes: what the previous scene put on the screen (its content or its tray) goes away, unless the new
 // scene has it too. Only for the parts the new scene doesn't change itself (a part it includes is set anyway).
-// Music and ambience keep playing — a playlist is not restarted. Returns what to change: null — clear the part,
-// a list — the portraits that stay; nothing — leave as is.
+// Music and ambience too: the previous scene's playlist leaves the player, its loops stop (a playlist both scenes have
+// keeps playing, not restarted). Returns what to change: null — clear the part, a list — the portraits or ambience loops
+// that stay; nothing — leave as is.
 export interface Leftovers {
   background?: null;
   map?: null;
   handout?: null;
+  music?: null;
   portraits?: string[];
+  ambience?: string[];
 }
 export function leftovers(prev: Scene | undefined, next: Scene, screen: Tray): Leftovers {
   if (!prev || prev.id === next.id) return {};
@@ -131,13 +134,14 @@ export function leftovers(prev: Scene | undefined, next: Scene, screen: Tray): L
   const ofNext = merge(full(next.tray), trayOf(next));
   const goes = (part: TrayPart, p: string) => ofPrev[part].includes(p) && !ofNext[part].includes(p);
   const out: Leftovers = {};
-  for (const part of ['background', 'map', 'handout'] as const) {
+  for (const part of ['background', 'map', 'handout', 'music'] as const) {
     const p = screen[part][0];
     if (!next.include[part] && p && goes(part, p)) out[part] = null;
   }
-  if (!next.include.portraits) {
-    const stay = screen.portraits.filter((p) => !goes('portraits', p));
-    if (stay.length !== screen.portraits.length) out.portraits = stay;
+  for (const part of ['portraits', 'ambience'] as const) {
+    if (next.include[part]) continue;
+    const stay = screen[part].filter((p) => !goes(part, p));
+    if (stay.length !== screen[part].length) out[part] = stay;
   }
   return out;
 }

@@ -23,6 +23,7 @@
     pickTitle,
     hint,
     extra,
+    onremove,
     children,
   }: {
     app: AppState;
@@ -38,6 +39,8 @@
     hint: string;
     // Своя кнопка у строки (звёздочка основной музыки сцены).
     extra?: Snippet<[string]>;
+    // Taken out of the tray: what else goes with it (a loop leaves the ambience, a playlist — the player).
+    onremove?: (id: string) => unknown;
     children?: Snippet;
   } = $props();
 
@@ -49,7 +52,7 @@
   let picking = $state(false);
   const add = (ids: string[]) => ids.length && dispatch('scenes', 'trayAdd', { owner: $state.snapshot(owner), part, paths: ids });
   const reorder = (ids: string[]) => dispatch('scenes', 'traySet', { owner: $state.snapshot(owner), part, ids });
-  const remove = (id: string) => dispatch('scenes', 'trayRemove', { owner: $state.snapshot(owner), part, path: id });
+  const remove = (id: string) => (onremove?.(id), dispatch('scenes', 'trayRemove', { owner: $state.snapshot(owner), part, path: id }));
   // A chip's menu (a right click): turn it on or off, take it out of the tray.
   let menu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
   const chipMenu = (e: MouseEvent, id: string) =>

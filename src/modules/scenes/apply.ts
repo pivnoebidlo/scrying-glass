@@ -72,8 +72,10 @@ export async function activate(app: AppState, sc: Scene) {
     await wait(450);
   }
 
-  // What the previous scene showed and the new one doesn't change goes away (its portraits, handout…).
-  const gone = leftovers(app.scenes.scenes.find((x) => x.id === app.scenes.active), sc, shown(app));
+  // What the previous scene showed and the new one doesn't change goes away (its portraits, handout, music…). Music on
+  // pause and muted ambience count too: they would stay in the player otherwise.
+  const now = { ...shown(app), music: app.music.playlist ? [app.music.playlist] : [], ambience: app.music.ambience.map((a) => a.path) };
+  const gone = leftovers(app.scenes.scenes.find((x) => x.id === app.scenes.active), sc, now);
 
   // Сначала — какая сцена включена: показанное ею попадает в её подборку правой панели.
   await dispatch('scenes', 'markActive', { id: sc.id });
@@ -82,6 +84,11 @@ export async function activate(app: AppState, sc: Scene) {
   if (gone.map === null) jobs.push(dispatch('maps', 'clear'));
   if (gone.handout === null) jobs.push(dispatch('handouts', 'clear'));
   if (gone.portraits) jobs.push(dispatch('portraits', 'setOnScreen', { paths: gone.portraits }));
+  if (gone.music === null) jobs.push(dispatch('music', 'clear'));
+  if (gone.ambience) {
+    const stay = gone.ambience;
+    jobs.push(dispatch('music', 'setAmbience', { loops: app.music.ambience.filter((a) => stay.includes(a.path)).map((a) => ({ ...a })) }));
+  }
   if (on('background')) jobs.push(dispatch('scene', 'set', { path: ok(sc.background.path), fit: sc.background.fit }));
   if (on('map')) {
     const p = ok(sc.map.path);

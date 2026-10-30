@@ -550,7 +550,8 @@ click on a tile puts it on the player screen, another click removes it; what's o
 (several portraits can be on screen, one background, map and handout each). The tray fills three ways: everything put
 on screen (from any tab) lands in it by itself; a tile can be dragged from a tab (or a map from the map list) onto a
 block; "+" opens a file picker where several can be checked. The cross on a tile removes it from the tray but not from
-the screen. Tiles show only the tray; what's on screen but not in it (say, left over from the previous scene) is a
+the screen; in Music and Ambience the cross also takes the playlist out of the player and stops the loop. On a scene
+switch, what the previous scene had and the new one doesn't (portraits, handout, music, ambience) goes away. Tiles show only the tray; what's on screen but not in it (say, left over from the previous scene) is a
 separate "On screen: …" line with "to the tray" and "remove from screen" buttons. Every scene has its own tray (a new
 scene starts it from its contents): you can stock a scene in advance and bring things out as needed during the game
 without switching tabs. While no scene is on, the tray belongs to the adventure; it travels with the adventure (one
