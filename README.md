@@ -130,7 +130,7 @@ in settings (⌘, → Files → Folder roles); the first name of a role is the o
 A picture from any folder can be shown to the players from Files.
 
 **The caption under a portrait** on the player screen can be styled (⌘, → Characters): plain text with a shadow, a
-ribbon, a scroll or a plaque, your own color and any of the note fonts; a sample is shown right away. The caption is
+ribbon, a scroll, a plaque, a stone slab, a cartouche, a brush stroke or a glow, your own color and any of the note fonts; a sample is shown right away. The caption is
 the name of the card that uses the picture as its portrait, otherwise the file name (underscores become spaces). If the players don't know a character's name yet, the "?" button by
 their row in the Characters block of the right panel shows them "???" instead. The
 name under any tile (portrait, background, handout, creature, a file in Files) and in the map list (double-click) can

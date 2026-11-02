@@ -14,8 +14,9 @@ export interface PortraitsState {
   plate: NamePlate;
 }
 
-// Подложка под именем: тень (просто текст), лента, свиток, табличка. color — цвет ткани ленты, чернил свитка,
-// таблички или самого текста (у тени); font — шрифт записок или '' (Georgia).
+// Подложка под именем: тень (просто текст), лента, свиток, табличка, каменная плита, картуш, мазок кистью, свечение.
+// color — цвет ткани ленты, чернил свитка, таблички, камня, поля картуша, краски, свечения или самого текста (у тени);
+// font — шрифт записок или '' (Georgia).
 export interface NamePlate {
   style: PlateStyle;
   color: string;
@@ -23,14 +24,14 @@ export interface NamePlate {
 }
 
 // Titles — portraits.plate.<style> in the dictionary.
-export const PLATE_STYLES = { shadow: true, ribbon: true, scroll: true, plaque: true } as const;
+export const PLATE_STYLES = { shadow: true, ribbon: true, scroll: true, plaque: true, stone: true, cartouche: true, brush: true, glow: true } as const;
 export type PlateStyle = keyof typeof PLATE_STYLES;
 
 
 // Цвет по умолчанию для стиля (когда его выбирают впервые).
-export const PLATE_DEFAULT_COLOR: Record<PlateStyle, string> = { shadow: '#ffffff', ribbon: '#8e1a16', scroll: '#3b2412', plaque: '#2b2118' };
+export const PLATE_DEFAULT_COLOR: Record<PlateStyle, string> = { shadow: '#ffffff', ribbon: '#8e1a16', scroll: '#3b2412', plaque: '#2b2118', stone: '#8a8478', cartouche: '#26407a', brush: '#17120e', glow: '#5fb8ff' };
 
-export const PLATE_COLORS = ['#ffffff', '#f2ead8', '#c9a24a', '#8e1a16', '#4e2a6b', '#26407a', '#2f5d3a', '#3b2412', '#2b2118', '#17120e'];
+export const PLATE_COLORS = ['#ffffff', '#f2ead8', '#c9a24a', '#8e1a16', '#4e2a6b', '#26407a', '#2f5d3a', '#3b2412', '#2b2118', '#17120e', '#8a8478', '#5fb8ff'];
 
 export const DEFAULT_PLATE: NamePlate = { style: 'shadow', color: '#ffffff', font: '' };
 
