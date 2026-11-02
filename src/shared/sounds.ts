@@ -131,6 +131,21 @@ const SOUNDS: Record<string, [id: string, group: SoundGroup]> = {
   'Дом с привидениями': ['hauntedHouse', 'dark'],
   'Склеп': ['crypt', 'dark'],
   'Кипящий котёл': ['cauldron', 'dark'],
+  'Бросок костей': ['diceRoll', 'people'],
+  'Глоток из фляги': ['flaskDrink', 'people'],
+  'Храп': ['snoring', 'people'],
+  'Отрыжка': ['burp', 'people'],
+  'Сигнал горна': ['bugleCall', 'combat'],
+  'Ключ в замке': ['keyInLock', 'things'],
+  'Шаги по снегу': ['snowSteps', 'nature'],
+  'Осёл': ['donkey', 'creatures'],
+  'Горный поток': ['torrent', 'outdoors'],
+  'Цикады': ['cicadas', 'outdoors'],
+  'Рассвет': ['dawn', 'outdoors'],
+  'Ночные птицы': ['nightBirds', 'outdoors'],
+  'Дождь по палатке': ['tentRain', 'weather'],
+  'Буря за стенами': ['stormOutside', 'weather'],
+  'Капель': ['drips', 'dark'],
 };
 
 // «sound:sfx/Гром.ogg» -> «Thunder» / «Гром»; null — not a built-in sound or no title for it.

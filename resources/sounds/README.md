@@ -83,6 +83,13 @@ Ambience:
 | Пруд | Pond in a Field — https://bigsoundbank.com/search?q=0691 (#0691) |
 | Кипящий котёл | Boiling water — https://bigsoundbank.com/search?q=0149 (#0149) |
 | Порт | Small fishing port #1 — https://bigsoundbank.com/search?q=2571 (#2571) |
+| Дождь по палатке | Rain and thunder in a tent — https://bigsoundbank.com/search?q=0820 (#0820) |
+| Горный поток | Mountain Stream #7 — https://bigsoundbank.com/search?q=3222 (#3222) |
+| Капель | Drops of Water #3 — https://bigsoundbank.com/search?q=1386 (#1386) |
+| Буря за стенами | Wind from inside #1 — https://bigsoundbank.com/search?q=1714 (#1714) |
+| Цикады | Cicadas — https://bigsoundbank.com/search?q=3002 (#3002) |
+| Рассвет | Birds Waking #3 — https://bigsoundbank.com/search?q=0999 (#0999) |
+| Ночные птицы | Birds at Night — https://bigsoundbank.com/search?q=0315 (#0315) |
 
 Effects:
 
@@ -152,3 +159,11 @@ Effects:
 | Шаги по листве | Feet in Leaves #1 — https://bigsoundbank.com/search?q=0137 (#0137) |
 | Шаги по доскам | Man Footsteps on the Wooden Floor — https://bigsoundbank.com/search?q=0165 (#0165) |
 | Треск веток | Broken twigs #1 — https://bigsoundbank.com/search?q=1299 (#1299) |
+| Бросок костей | Four dice on wooden table — https://bigsoundbank.com/search?q=0582 (#0582) |
+| Глоток из фляги | Drink from the gourd #1 — https://bigsoundbank.com/search?q=3247 (#3247) |
+| Храп | Man Snoring — https://bigsoundbank.com/search?q=0170 (#0170) |
+| Отрыжка | Burps — https://bigsoundbank.com/search?q=0242 (#0242) |
+| Сигнал горна | Bugle Awake for Morning Call — https://bigsoundbank.com/search?q=3263 (#3263) |
+| Ключ в замке | Lock and big key — https://bigsoundbank.com/search?q=0378 (#0378) |
+| Шаги по снегу | Steps in the snow #3 — https://bigsoundbank.com/search?q=3363 (#3363) |
+| Осёл | Donkey, Braying #3 — https://bigsoundbank.com/search?q=1551 (#1551) |
