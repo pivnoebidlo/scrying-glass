@@ -568,6 +568,10 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   Генератор поселений: `tools/settlement/` — как NPC (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — русские
   названия из основы и суффикса `fitsSuffix` или «прилагательное + существительное» по родам, `text.ts`,
   `store.svelte.ts`); таверна и жители — через `Helpers` из генераторов таверн и NPC.
+  Завязки приключений: `tools/hooks/` — как поселения (`types.ts`: темы `THEMES`, части `HOOK_PARTS`; `generate.ts`,
+  `content/{en,ru}.ts` — списки парами строка в строку, по-русски глаголы в настоящем времени — подходят заказчику любого
+  пола; `text.ts`, `store.svelte.ts`); заказчик — из генератора NPC через `helpers` поселений; инструмент `hooks` — `SOME`,
+  его берут D&D и Pathfinder (`claims`).
   Сокровища: `systems/dnd5e/tools/treasure/` — `generate.ts` (монеты, ценности, вещи, редкости магических предметов по источнику
   и уровню; `pickItems` берёт предметы из `allEntries()` справочника по `rarityOf`), тексты `content.ts` (en и ru
   парами), `text.ts`. Вне D&D — диковины из генератора NPC, без цен.

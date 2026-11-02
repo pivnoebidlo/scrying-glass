@@ -388,6 +388,10 @@ population and peoples, who rules and the defences, a first impression to read a
 (with a tavern named by the tavern generator), notable people (from the NPC generator) and a trouble to start an
 adventure. Each part can be rerolled or pinned; to the journal or copy.
 
+**Adventure hooks** (Tools → Adventure hooks): a theme (mystery, monster hunt, intrigue, exploration, rescue — or
+random) → who asks the heroes and how (the patron comes from the NPC generator), the task with a deadline and what is at
+stake, where, who stands in the way, a twist and the reward. Each part can be rerolled or pinned; to the journal or copy.
+
 **Weather generator** (Tools → Weather generator): terrain (forest, plains, city, coast, mountains, swamp, jungle,
 desert, arctic, underground), season and 1, 3 or 7 days → for each day the sky, rain or snow (sleet, sandstorm,
 thunderstorm), wind and temperature (°F and °C), a line to read aloud and, rarely, something unusual (northern lights,

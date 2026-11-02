@@ -14,5 +14,5 @@ export const pf2eUi: SystemUi = {
   editor: (_system, stats) => (isCharacter(stats) ? CharacterEditor : Editor) as StatsEditor,
   encounter: Budget,
   // The core's fantasy generators fit Golarion too.
-  claims: ['names', 'npc', 'tavern', 'settlement'],
+  claims: ['names', 'npc', 'tavern', 'settlement', 'hooks'],
 };
