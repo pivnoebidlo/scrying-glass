@@ -685,8 +685,8 @@ const IMPORTERS: CardImporter[] = PLUGINS.flatMap((p) => p.importers ?? []);
 const importerOf = (id: string) => IMPORTERS.find((i) => i.id === id);
 const importerFor = (json: unknown) => IMPORTERS.find((i) => i.detect(json));
 
-// An importer's data gathered by the GM (LSS: spell numbers → names) — a file of the library; not in the app's
-// repository.
+// An importer's data (LSS: spell numbers → names) — a file of the library that the GM's account fills; not in the
+// app's repository.
 const tableFile = (imp: CardImporter) => (libraryRoot && imp.table ? path.join(libraryRoot, imp.table.file) : null);
 function importerTable(imp: CardImporter): Record<string, unknown> {
   const file = tableFile(imp);
@@ -700,26 +700,6 @@ export const importerTableSize = (id: string) => {
   const imp = importerOf(id);
   return imp ? Object.keys(importerTable(imp)).length : 0;
 };
-// Добавить в таблицу найденное в файлах. Сколько было, сколько стало; файлы, где ничего нет, — в errors.
-export function fillImporterTable(id: string, list: string[]): { before: number; total: number; errors: string[] } {
-  const imp = importerOf(id);
-  const file = imp && tableFile(imp);
-  if (!imp?.table || !file) return { before: 0, total: 0, errors: [t('core.nowhere')] };
-  const table = importerTable(imp);
-  const before = Object.keys(table).length;
-  const errors: string[] = [];
-  for (const f of list) {
-    try {
-      const found = imp.table.collect(JSON.parse(fs.readFileSync(f, 'utf8')));
-      if (found) Object.assign(table, found);
-      else errors.push(t('core.nothingFor', { file: path.basename(f), source: imp.title }));
-    } catch (e) {
-      errors.push(`${path.basename(f)}: ${e instanceof Error ? e.message : String(e)}`);
-    }
-  }
-  writeJsonAtomic(file, table);
-  return { before, total: Object.keys(table).length, errors };
-}
 // What the GM's account brings into the table (CardImporter.account): the given requests, answers through
 // table.collect. Signed out, offline, the service changed — the table stays as it is (errors — in the answer).
 async function fetchIntoTable(imp: CardImporter, urls: string[]): Promise<{ before: number; total: number; errors: string[] }> {
@@ -769,7 +749,7 @@ export function clearImporterTable(id: string) {
 }
 export const importerDialog = (id: string) => {
   const imp = importerOf(id);
-  return imp && { title: imp.fileTitle, filter: imp.filter, table: imp.table?.title };
+  return imp && { title: imp.fileTitle, filter: imp.filter };
 };
 
 // An export file read by its importer (the given one, else the one that knows it).

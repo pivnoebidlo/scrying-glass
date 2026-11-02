@@ -55,13 +55,6 @@
     }
   }
 
-  async function load() {
-    const r = await window.api.fillImporterTable(id);
-    if (!r) return;
-    status = added(r);
-    await refresh();
-  }
-
   async function clear() {
     if (!confirm(t('best.lssClear'))) return;
     await window.api.clearImporterTable(id);
@@ -96,9 +89,6 @@
   {#if count}<button class="btn" onclick={clear}>{t('best.clear')}</button>{/if}
   {#if account?.signedIn}
     <button class="btn primary" disabled={busy === 'fetch'} onclick={fetchAll}>{busy === 'fetch' ? t('best.lssFetching') : t('best.lssFetchAll')}</button>
-    <button class="btn" onclick={load}>{t('best.loadFiles')}</button>
-  {:else}
-    <button class="btn primary" onclick={load}>{t('best.loadFiles')}</button>
   {/if}
 </div>
 

@@ -36,7 +36,7 @@ import { pages } from './journal';
 import { resolver } from './textstore';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, fillImporterTable, clearImporterTable, importerDialog, fetchImporterTable, importerAccount, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, clearImporterTable, importerDialog, fetchImporterTable, importerAccount, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { accountStatus, signIn, signOut } from './accounts';
 import { IMAGE_EXT } from '../shared/vault';
@@ -1846,16 +1846,8 @@ ipcMain.handle('cards:readExport', (_event, { file, importer }: { file: string; 
 ipcMain.handle('cards:updateFromExport', (_event, { ref, file, importer, merged }: { ref: CardRef; file: string; importer: string; merged?: { name: string; system: string; stats: unknown } }) =>
   updateFromExport(ref, file, importer, merged)
 );
-// An importer's data gathered by the GM (LSS: the spell table): how much is loaded, load files, clear.
+// An importer's data (LSS: the spell table): how much is loaded, clear.
 ipcMain.handle('importers:tableSize', (_event, importer: string) => importerTableSize(importer));
-ipcMain.handle('importers:fillTable', async (_event, importer: string) => {
-  const d = importerDialog(importer);
-  if (!d?.table) return null;
-  const win = getControlWindow();
-  const opts = { title: d.table, properties: ['openFile' as const, 'multiSelections' as const], filters: [{ name: 'JSON', extensions: ['json', 'txt'] }] };
-  const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
-  return res.canceled || !res.filePaths.length ? null : fillImporterTable(importer, res.filePaths);
-});
 ipcMain.handle('importers:clearTable', (_event, importer: string) => clearImporterTable(importer));
 // The GM's account in the importer's service: who is signed in, sign in (the service's page), sign out, the whole table.
 ipcMain.handle('importers:account', async (_event, importer: string) => {

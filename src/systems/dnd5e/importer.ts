@@ -23,9 +23,6 @@ export const lssImporter: CardImporter = {
   table: {
     // Not in the app's repository: it is LSS's data.
     file: 'lss-spells.json',
-    get title() {
-      return t('dnd.lss.tableTitle');
-    },
     collect(json) {
       const found = collectLssSpells(json);
       return Object.keys(found).length ? found : null;
