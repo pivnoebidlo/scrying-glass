@@ -33,4 +33,28 @@ export interface CardImporter {
   // Data the GM gathers for the importer (LSS: spell numbers → names): a file of the library, filled from files the
   // GM picks — collect finds what it needs in any JSON (nothing — null).
   table?: { file: string; readonly title: string; collect(json: unknown): Record<string, unknown> | null };
+  // The GM's account in the service (LSS): the core signs in on the service's own page in a window with a saved
+  // session of its own (main/accounts.ts) and then asks the service's API with the token — the table fills itself.
+  account?: ImporterAccount;
+}
+
+export interface ImporterAccount {
+  // The page to sign in on; the address its cookies belong to.
+  login: string;
+  cookieUrl: string;
+  // The token from the session's cookies (null — not signed in).
+  token(cookies: { name: string; value: string }[]): string | null;
+  // Who is signed in: the address and the name from its answer.
+  user?: { url: string; name(json: unknown): string | null };
+  // Requests that bring what an export needs and the table lacks (answers go through table.collect).
+  wanted?(json: unknown, table: Record<string, unknown>): string[];
+  // Requests that bring the whole table (LSS: the Grimoire of both editions).
+  everything?: string[];
+}
+
+// The GM's account as the window sees it: who, until when the token lives (ms; none — unknown).
+export interface AccountStatus {
+  signedIn: boolean;
+  name?: string | null;
+  until?: number;
 }

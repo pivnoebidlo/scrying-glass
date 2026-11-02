@@ -6,7 +6,7 @@ beforeAll(() => setLang('ru'));
 afterAll(() => setLang('en'));
 import type { Dnd5eCharacter } from '../src/systems/dnd5e/character';
 import { allIds, characterDiff, isEmptyDiff, lineId, mergeCharacter } from '../src/systems/dnd5e/diff';
-import { collectLssSpells, fromLss } from '../src/systems/dnd5e/lss';
+import { collectLssSpells, fromLss, lssWanted } from '../src/systems/dnd5e/lss';
 
 const base: Dnd5eCharacter = {
   classes: [{ name: 'Плут', level: 3 }],
@@ -153,5 +153,18 @@ describe('таблица заклинаний LSS', () => {
     const r = fromLss(j, table);
     expect(r.stats.spellcasting?.spells).toEqual({ 0: 'Волшебная рука', 1: 'Щит' });
     expect(r.warnings[0]).toContain('1 из 3');
+  });
+
+  it('аккаунт LSS: недостающие номера — запросами по обеим редакциям, по 50 штук', () => {
+    const table = collectLssSpells([light]);
+    const j = { jsonType: 'character', data: JSON.stringify({ name: { value: 'Майа' } }), edition: '2014', spells: { mode: 'cards', prepared: [light._id, own._id], book: [own._id, 'bad'] } };
+    expect(lssWanted(j, table)).toEqual([
+      `https://api.longstoryshort.app/spells/list/?ids=${own._id}&edition=2014`,
+      `https://api.longstoryshort.app/spells/list/?ids=${own._id}&edition=2024`,
+    ]);
+    expect(lssWanted(j, collectLssSpells([light, own]))).toEqual([]);
+    const many = Array.from({ length: 51 }, (_, i) => `6ae42888f54b39cedc8652${String(i).padStart(2, '0')}`);
+    expect(lssWanted({ ...j, spells: { mode: 'cards', prepared: many } }, {})).toHaveLength(4);
+    expect(lssWanted({ not: 'lss' }, {})).toEqual([]);
   });
 });

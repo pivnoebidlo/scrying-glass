@@ -224,7 +224,7 @@ Electron-приложение для мастера D&D: окно управле
   обновляют её через окно «Что изменилось» (`systems/dnd5e/ImportUpdate.svelte`, разница листов — `systems/dnd5e/diff.ts`; как слияние в git — галочки у
   изменений и строк списков, итог — `mergeCharacter`, уходит в `updateFromExport(…, merged)`; заклинания-карточки LSS
   в экспорте — только id: названия — из таблицы мастера `<библиотека>/lss-spells.json` (`collectLssSpells` находит
-  заклинания в любом сохранённом ответе API LSS, IPC `importers:*`, раздел в настройках «Карточки» — `LssSettings.svelte`; в репозиторий
+  заклинания в любом сохранённом ответе API LSS, IPC `importers:*`, блок в настройках «Интеграции» — `LssSettings.svelte`; в репозиторий
   её не кладём — это данные LSS), ненайденные — в `warnings` `fromLss`):
   `importCards` не трогает персонажа, у которого есть карточка (`exportMatch`: `links.lss` — id LSS есть только в адресе
   аватарки, иначе то же имя в той же папке), а возвращает `matches`; `updateFromExport` (IPC `cards:updateFromExport`,
@@ -311,8 +311,15 @@ Electron-приложение для мастера D&D: окно управле
   (`readExport`, `exportMatch`, `updateFromExport`, `importCharacter`, таблица — `fillImporterTable`), IPC
   `cards:pickExport` / `readExport` / `updateFromExport`, `importers:*`; кнопка «Обновить из {short}…» — в `CardView`
   у персонажа системы с импортёром (`importersOf`); окно «Что изменилось» — `SystemUi.importUpdate` (D&D —
-  `systems/dnd5e/ImportUpdate.svelte`; нет — `confirm` в фоне бестиария), раздел настроек «Карточки» —
-  `SystemUi.cardSettings` (D&D — `LssSettings.svelte`). LSS — `systems/dnd5e/importer.ts` поверх `lss.ts`. Встроенное
+  `systems/dnd5e/ImportUpdate.svelte`; нет — `confirm` в фоне бестиария), блок раздела настроек «Интеграции»
+  (модуль `modules/integrations` без состояния) — `SystemUi.integrations` (D&D — `LssSettings.svelte`). Аккаунт мастера в
+  сервисе — `CardImporter.account` (`ImporterAccount`: страница входа, токен из cookies, `user`, `wanted` — запросы
+  недостающего для экспорта, `everything` — вся таблица); ядро — `main/accounts.ts` (окно входа на странице сервиса
+  с сеансом `persist:account-<id>`, токен — из его cookies, пароль не видим; запросы — только при импорте и по кнопке),
+  дозапрос — `topUp` / `fetchIntoTable` в `main/cards.ts` (`readExport` и `importCards`), IPC `importers:account` /
+  `signIn` / `signOut` / `fetchTable`. LSS: JWT — cookie `lss-jwt` (в кавычках, ~30 дней), `/spells/list/?ids=…&edition=`
+  (и свои заклинания игроков — копии PHB с `playerId`; общие — только своей редакции, спрашиваем обе),
+  `/spells/?edition=` — весь «Гримуар», `/auth/user/`. LSS — `systems/dnd5e/importer.ts` поверх `lss.ts`. Встроенное
   содержимое — `resources/` (потом — скачиваемым). Строки плагина — его словарь (`systems/dnd5e/i18n.ts`). Описание
   системы — `SystemDef.about`, у пакета — поле `about` (`Loc`; конструктор — «О системе»). С выключенным D&D его не видно нигде,
   кроме «Ролевых систем» (включить) и «О программе» (атрибуция): разделы настроек и инструменты других систем — только

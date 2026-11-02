@@ -24,6 +24,7 @@ import { systemOf } from '../systems';
 import { PLUGINS } from '../systems/plugins';
 import type { CardImporter, ImportedCard } from '../systems/importer';
 import { freeName, writeJsonAtomic } from './files';
+import { accountFetch, accountToken } from './accounts';
 import { discard } from './trash';
 import { builtinDirs, setContentLibrary } from './content';
 
@@ -719,6 +720,48 @@ export function fillImporterTable(id: string, list: string[]): { before: number;
   writeJsonAtomic(file, table);
   return { before, total: Object.keys(table).length, errors };
 }
+// What the GM's account brings into the table (CardImporter.account): the given requests, answers through
+// table.collect. Signed out, offline, the service changed — the table stays as it is (errors — in the answer).
+async function fetchIntoTable(imp: CardImporter, urls: string[]): Promise<{ before: number; total: number; errors: string[] }> {
+  const file = tableFile(imp);
+  const table = importerTable(imp);
+  const before = Object.keys(table).length;
+  const errors: string[] = [];
+  if (!imp.table || !imp.account || !file || !urls.length) return { before, total: before, errors };
+  try {
+    const token = await accountToken(imp.id, imp.account);
+    if (!token) return { before, total: before, errors: [t('core.signedOut', { source: imp.title })] };
+    for (const url of urls) {
+      try {
+        const found = imp.table.collect(await accountFetch(token, url));
+        if (found) Object.assign(table, found);
+      } catch (e) {
+        errors.push(e instanceof Error ? e.message : String(e));
+      }
+    }
+  } catch (e) {
+    errors.push(e instanceof Error ? e.message : String(e));
+  }
+  if (Object.keys(table).length !== before) writeJsonAtomic(file, table);
+  return { before, total: Object.keys(table).length, errors };
+}
+// Before reading an export: what it needs and the table lacks (LSS: spells by number, players' own ones too).
+async function topUp(imp: CardImporter, raw: unknown) {
+  if (!imp.account?.wanted) return;
+  const urls = imp.account.wanted(raw, importerTable(imp));
+  if (urls.length) await fetchIntoTable(imp, urls);
+}
+// The whole table from the account (LSS: the Grimoire of both editions).
+export async function fetchImporterTable(id: string) {
+  const imp = importerOf(id);
+  if (!imp?.account?.everything) return null;
+  return fetchIntoTable(imp, imp.account.everything);
+}
+export const importerAccount = (id: string) => {
+  const imp = importerOf(id);
+  return imp?.account ? { imp, account: imp.account } : null;
+};
+
 export function clearImporterTable(id: string) {
   const imp = importerOf(id);
   const file = imp && tableFile(imp);
@@ -730,11 +773,18 @@ export const importerDialog = (id: string) => {
 };
 
 // An export file read by its importer (the given one, else the one that knows it).
-export function readExport(file: string, id?: string): ImportPreview & { importer: string } {
+function readExportNow(file: string, id?: string): ImportPreview & { importer: string } {
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
   const imp = id ? importerOf(id) : importerFor(raw);
   if (!imp || !imp.detect(raw)) throw new Error(t('core.notExport'));
   return { ...imp.read(raw, importerTable(imp)), importer: imp.id };
+}
+// The same, first asking the GM's account for what the table lacks.
+export async function readExport(file: string, id?: string): Promise<ImportPreview & { importer: string }> {
+  const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const imp = id ? importerOf(id) : importerFor(raw);
+  if (imp?.detect(raw)) await topUp(imp, raw);
+  return readExportNow(file, id);
 }
 
 // Links of a card to its character in the service: the id and the page.
@@ -764,7 +814,8 @@ function exportMatch(imp: CardImporter, r: ImportedCard, to: CardScope, dir: str
 export function updateFromExport(ref: CardRef, file: string, importer: string, merged?: { name: string; system: string; stats: unknown }): CardRef | null {
   const imp = importerOf(importer);
   if (!imp) return null;
-  const r = { ...readExport(file, importer), ...merged };
+  // The window has read the export already (readExport, with the account): the table is as full as it gets.
+  const r = { ...readExportNow(file, importer), ...merged };
   const key = refKey(ref);
   const old = cards.get(key);
   const out = files.get(key);
@@ -834,6 +885,7 @@ export async function importCards(
       const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
       const imp = importerFor(raw);
       if (imp) {
+        await topUp(imp, raw);
         const r = imp.read(raw, importerTable(imp));
         const ref = asNew ? null : exportMatch(imp, r, to, dir);
         if (ref) matches.push({ file, ref, importer: imp.id });

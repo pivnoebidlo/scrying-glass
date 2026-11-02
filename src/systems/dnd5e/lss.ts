@@ -218,6 +218,22 @@ export function collectLssSpells(json: unknown, out: LssSpellTable = {}): LssSpe
   return out;
 }
 
+// The API of LSS (the GM signed in, `CardImporter.account`): spells by number — players' own spells too — and the
+// whole Grimoire. Spells of the general database come only with their edition, so both are asked.
+export const LSS_API = 'https://api.longstoryshort.app';
+const EDITIONS = ['2014', '2024'];
+export const lssEverything = () => EDITIONS.map((e) => `${LSS_API}/spells/?edition=${e}`);
+export function lssWanted(json: unknown, table: LssSpellTable): string[] {
+  if (!isLssExport(json)) return [];
+  const missing = spellIds(json).filter((id) => LSS_ID.test(id) && !table[id]);
+  const urls: string[] = [];
+  for (let i = 0; i < missing.length; i += 50) {
+    const ids = missing.slice(i, i + 50).join(',');
+    for (const e of EDITIONS) urls.push(`${LSS_API}/spells/list/?ids=${ids}&edition=${e}`);
+  }
+  return urls;
+}
+
 const spellIds = (j: LssExport) => [...new Set([...(j.spells?.prepared ?? []), ...(j.spells?.book ?? [])].filter((x): x is string => typeof x === 'string'))];
 
 // Списки заклинаний по кругам из номеров (по таблице) и предупреждение о тех, что не нашлись.

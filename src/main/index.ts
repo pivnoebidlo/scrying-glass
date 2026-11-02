@@ -36,8 +36,9 @@ import { pages } from './journal';
 import { resolver } from './textstore';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, fillImporterTable, clearImporterTable, importerDialog, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, fillImporterTable, clearImporterTable, importerDialog, fetchImporterTable, importerAccount, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
+import { accountStatus, signIn, signOut } from './accounts';
 import { IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { resolvePdfjs } from './pdfjs';
@@ -1839,7 +1840,7 @@ ipcMain.handle('cards:pickExport', async (_event, importer: string) => {
   const opts = { title: d.title, properties: ['openFile' as const], filters: [{ name: d.filter, extensions: ['json'] }] };
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
   const file = res.canceled ? undefined : res.filePaths[0];
-  return file ? { file, preview: readExport(file, importer) } : null;
+  return file ? { file, preview: await readExport(file, importer) } : null;
 });
 ipcMain.handle('cards:readExport', (_event, { file, importer }: { file: string; importer: string }) => readExport(file, importer));
 ipcMain.handle('cards:updateFromExport', (_event, { ref, file, importer, merged }: { ref: CardRef; file: string; importer: string; merged?: { name: string; system: string; stats: unknown } }) =>
@@ -1856,6 +1857,21 @@ ipcMain.handle('importers:fillTable', async (_event, importer: string) => {
   return res.canceled || !res.filePaths.length ? null : fillImporterTable(importer, res.filePaths);
 });
 ipcMain.handle('importers:clearTable', (_event, importer: string) => clearImporterTable(importer));
+// The GM's account in the importer's service: who is signed in, sign in (the service's page), sign out, the whole table.
+ipcMain.handle('importers:account', async (_event, importer: string) => {
+  const a = importerAccount(importer);
+  return a ? accountStatus(a.imp.id, a.account) : null;
+});
+ipcMain.handle('importers:signIn', async (_event, importer: string) => {
+  const a = importerAccount(importer);
+  if (!a) return null;
+  await signIn(a.imp.id, a.account, a.imp.title);
+  return accountStatus(a.imp.id, a.account);
+});
+ipcMain.handle('importers:signOut', async (_event, importer: string) => {
+  if (importerAccount(importer)) await signOut(importer);
+});
+ipcMain.handle('importers:fetchTable', (_event, importer: string) => fetchImporterTable(importer));
 
 function noImageInClipboard() {
   const win = getControlWindow();

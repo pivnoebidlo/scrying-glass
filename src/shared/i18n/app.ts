@@ -217,6 +217,7 @@ export const en = {
   'module.tools': 'Tools',
   'module.adventures': 'Adventures',
   'module.backup': 'Backups',
+  'module.integrations': 'Integrations',
 
   'action.background': 'Show full screen',
   'action.background.off': 'As background',
@@ -576,6 +577,7 @@ export const ru: Messages<typeof en> = {
   'module.tools': 'Инструменты',
   'module.adventures': 'Приключения',
   'module.backup': 'Резервные копии',
+  'module.integrations': 'Интеграции',
 
   'action.background': 'Показать на весь экран',
   'action.background.off': 'Фоном',

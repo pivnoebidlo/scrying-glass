@@ -645,21 +645,28 @@ asks: update the card, create a new one or skip. A sheet can also be started and
 "Player character" kind in the card editor.
 
 **LSS spell cards.** If the spellbook in LSS is kept as cards, the character export has only spell numbers, without
-names. The app takes the names from the "Long Story Short spells" table (the Cards settings); it is enough to load it
-once:
+names. The app takes the names from the "Long Story Short spells" table (Settings → Integrations → Long Story Short).
+
+The easy way is to sign in to your LSS account there ("Sign in…"): the LSS page opens in a window of the app, you sign
+in as usual, and the window closes itself. After that the app asks LSS for the numbers the table lacks on every import
+and update of a character — both spells of the general database and the ones players made themselves (as long as your
+account can see the character). "Load the whole Grimoire" fills the table with the spells of both editions at once. The
+app never sees your password: it keeps only the session of that window, and asks LSS only when you import or press a
+button. "Sign out" forgets the session.
+
+Without an account the table can be loaded from files:
 
 1. Sign in to LSS in a browser and open the Grimoire (longstoryshort.app/spells/).
 2. Open the developer tools (⌥⌘I / F12) → the Network tab and reload the page.
 3. Find the request to api.longstoryshort.app with the spell list (a big response — an array by level, all the
    edition's spells at once) and save the response to a .json file (Response → right click → Save). Switch the edition
    in the Grimoire (2014 / 2024) and save the response once more.
-4. In the app: the Cards settings → "Long Story Short spells" → "Load files…" and pick the saved files. The spells are
-   found in them automatically; loading can be repeated — new ones are added to the old.
+4. In the app: Settings → Integrations → "Long Story Short spells" → "Load files…" and pick the saved files. The spells
+   are found in them automatically; loading can be repeated — new ones are added to the old.
 
-A player's own spells (created in LSS) aren't in the shared base: ask the player to save the response with them the
-same way, or load a response saved on their character's open sheet. Whatever the table lacks is listed in a warning on
-import ("not found: 3 of 8"); you can also switch the spellbook in LSS to text. The table is stored in the library
-(`lss-spells.json`) and goes into backups.
+A player's own spells (created in LSS) aren't in the shared base: without an account, load a response saved on their
+character's open sheet. Whatever the table lacks is listed in a warning on import ("not found: 3 of 8"); you can also
+switch the spellbook in LSS to text. The table is stored in the library (`lss-spells.json`) and goes into backups.
 
 A stat block or sheet opens in a side drawer on the right — from Characters, Files and the initiative tracker, without
 leaving the current tab (Esc or pressing again — close, "In a tab" — open in the Cards tab).

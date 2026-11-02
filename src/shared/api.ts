@@ -3,6 +3,7 @@ import type { BlockedEntry, RepoCatalog, RepoEntry, RepoInfo, RepoProgress, Repo
 import type { BuiltinSounds } from './sounds';
 import type { ContentManifest } from './content';
 import type { Card, CardRef, CardScope, CardSummary, ImportMatch, ImportPreview } from './cards';
+import type { AccountStatus } from '../systems/importer';
 import type { BuiltinBook } from './compendium';
 import type { Note } from './notes';
 import type { Sketch } from './sketch';
@@ -89,6 +90,12 @@ export interface Api {
   importerTableSize(importer: string): Promise<number>;
   fillImporterTable(importer: string): Promise<{ before: number; total: number; errors: string[] } | null>;
   clearImporterTable(importer: string): Promise<void>;
+  // The GM's account in the importer's service (null — the importer has none): who is signed in; sign in on the
+  // service's page (resolves when its window is closed); sign out; the whole table from the account.
+  importerAccount(importer: string): Promise<AccountStatus | null>;
+  signInImporter(importer: string): Promise<AccountStatus | null>;
+  signOutImporter(importer: string): Promise<void>;
+  fetchImporterTable(importer: string): Promise<{ before: number; total: number; errors: string[] } | null>;
   // Обновить карточку персонажа из экспорта (прежняя версия — в корзину); merged — итог, собранный из выбранных
   // мастером изменений (нет — всё из файла).
   updateFromExport(ref: CardRef, file: string, importer: string, merged?: { name: string; system: string; stats: unknown }): Promise<CardRef | null>;

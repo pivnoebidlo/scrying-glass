@@ -74,8 +74,8 @@ export interface SystemUi {
   background?: Component;
   // The window «What changed» for a character updated from an export (none — a plain question).
   importUpdate?: Component<{ request: ImportRequest }>;
-  // A section of the Cards settings (D&D: the LSS spell table).
-  cardSettings?: Component;
+  // A block of the Integrations settings (D&D: the Long Story Short account and spell table).
+  integrations?: Component;
 }
 
 export const systemUis: SystemUi[] = [dnd5eUi, pf2eUi];
