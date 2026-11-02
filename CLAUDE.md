@@ -319,7 +319,9 @@ Electron-приложение для мастера D&D: окно управле
   дозапрос — `topUp` / `fetchIntoTable` в `main/cards.ts` (`readExport` и `importCards`), IPC `importers:account` /
   `signIn` / `signOut` / `fetchTable`. LSS: JWT — cookie `lss-jwt` (в кавычках, ~30 дней), `/spells/list/?ids=…&edition=`
   (и свои заклинания игроков — копии PHB с `playerId`; общие — только своей редакции, спрашиваем обе),
-  `/spells/?edition=` — весь «Гримуар», `/auth/user/`. LSS — `systems/dnd5e/importer.ts` поверх `lss.ts`. Встроенное
+  `/spells/?edition=` — весь «Гримуар», `/auth/user/`. Русские названия LSS — официальный перевод, у SRD — OmnisGM («Огненные ладони» / «Огненные руки»):
+  лист хранит названия LSS, ссылки ведут на запись по английскому — псевдонимы `setSpellIndex(names, aliases)` из
+  таблицы LSS (`systems/dnd5e/Background.svelte`, IPC `importers:table`, событие `importers:tableChanged`). LSS — `systems/dnd5e/importer.ts` поверх `lss.ts`. Встроенное
   содержимое — `resources/` (потом — скачиваемым). Строки плагина — его словарь (`systems/dnd5e/i18n.ts`). Описание
   системы — `SystemDef.about`, у пакета — поле `about` (`Loc`; конструктор — «О системе»). С выключенным D&D его не видно нигде,
   кроме «Ролевых систем» (включить) и «О программе» (атрибуция): разделы настроек и инструменты других систем — только

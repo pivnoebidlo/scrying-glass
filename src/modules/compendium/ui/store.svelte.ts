@@ -206,7 +206,8 @@ export const altNames = (e: EntryItem): string[] => {
 export function resolveEntry(names: string | string[]): EntryItem | null {
   const keys = new Set((Array.isArray(names) ? names : [names]).map((n) => searchKey(n.trim())));
   const hit = (e: EntryItem) => keys.has(searchKey(e.entry.title)) || altNames(e).some((n) => keys.has(searchKey(n)));
-  return allEntries().find(hit) ?? book.builtin.find(hit) ?? null;
+  // Not among those shown (another edition, «own only»): a built-in one, in the interface language first.
+  return allEntries().find(hit) ?? book.builtin.find((e) => e.lang === locale.lang && hit(e)) ?? book.builtin.find(hit) ?? null;
 }
 
 // Names of all entries of a type (own and built-in of every edition, with the English ones): D&D's spell links

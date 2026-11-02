@@ -36,7 +36,7 @@ import { pages } from './journal';
 import { resolver } from './textstore';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, clearImporterTable, importerDialog, fetchImporterTable, importerAccount, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  cardsOf, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, importerTableOf, clearImporterTable, importerDialog, fetchImporterTable, importerAccount, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { accountStatus, signIn, signOut } from './accounts';
 import { IMAGE_EXT } from '../shared/vault';
@@ -1848,6 +1848,7 @@ ipcMain.handle('cards:updateFromExport', (_event, { ref, file, importer, merged 
 );
 // An importer's data (LSS: the spell table): how much is loaded, clear.
 ipcMain.handle('importers:tableSize', (_event, importer: string) => importerTableSize(importer));
+ipcMain.handle('importers:table', (_event, importer: string) => importerTableOf(importer));
 ipcMain.handle('importers:clearTable', (_event, importer: string) => clearImporterTable(importer));
 // The GM's account in the importer's service: who is signed in, sign in (the service's page), sign out, the whole table.
 ipcMain.handle('importers:account', async (_event, importer: string) => {

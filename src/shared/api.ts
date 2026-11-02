@@ -85,8 +85,11 @@ export interface Api {
   pickExport(importer: string): Promise<{ file: string; preview: ImportPreview } | null>;
   // Прочитать экспорт по пути (для совпадений импорта).
   readExport(file: string, importer: string): Promise<ImportPreview>;
-  // Данные импортёра (LSS: таблица заклинаний): сколько загружено, очистить.
+  // Данные импортёра (LSS: таблица заклинаний): сколько загружено, вся таблица, очистить; событие — таблица
+  // изменилась (id импортёра).
   importerTableSize(importer: string): Promise<number>;
+  importerTable(importer: string): Promise<Record<string, unknown>>;
+  onImporterTableChanged(cb: (importer: string) => void): void;
   clearImporterTable(importer: string): Promise<void>;
   // The GM's account in the importer's service (null — the importer has none): who is signed in; sign in on the
   // service's page (resolves when its window is closed); sign out; the whole table from the account.

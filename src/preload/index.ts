@@ -26,6 +26,8 @@ const api: Api = {
   pickExport: (importer) => ipcRenderer.invoke('cards:pickExport', importer),
   readExport: (file, importer) => ipcRenderer.invoke('cards:readExport', { file, importer }),
   importerTableSize: (importer) => ipcRenderer.invoke('importers:tableSize', importer),
+  importerTable: (importer) => ipcRenderer.invoke('importers:table', importer),
+  onImporterTableChanged: (cb) => { ipcRenderer.on('importers:tableChanged', (_e, id: string) => cb(id)); },
   clearImporterTable: (importer) => ipcRenderer.invoke('importers:clearTable', importer),
   importerAccount: (importer) => ipcRenderer.invoke('importers:account', importer),
   signInImporter: (importer) => ipcRenderer.invoke('importers:signIn', importer),

@@ -696,6 +696,14 @@ function importerTable(imp: CardImporter): Record<string, unknown> {
     return {};
   }
 }
+// The whole table (the window: D&D's spell links know LSS's own names); windows hear `importers:tableChanged`.
+export const importerTableOf = (id: string) => {
+  const imp = importerOf(id);
+  return imp ? importerTable(imp) : {};
+};
+const tableChanged = (id: string) => {
+  for (const w of BrowserWindow.getAllWindows()) w.webContents.send('importers:tableChanged', id);
+};
 export const importerTableSize = (id: string) => {
   const imp = importerOf(id);
   return imp ? Object.keys(importerTable(imp)).length : 0;
@@ -722,7 +730,10 @@ async function fetchIntoTable(imp: CardImporter, urls: string[]): Promise<{ befo
   } catch (e) {
     errors.push(e instanceof Error ? e.message : String(e));
   }
-  if (Object.keys(table).length !== before) writeJsonAtomic(file, table);
+  if (Object.keys(table).length !== before) {
+    writeJsonAtomic(file, table);
+    tableChanged(imp.id);
+  }
   return { before, total: Object.keys(table).length, errors };
 }
 // Before reading an export: what it needs and the table lacks (LSS: spells by number, players' own ones too).
@@ -746,6 +757,7 @@ export function clearImporterTable(id: string) {
   const imp = importerOf(id);
   const file = imp && tableFile(imp);
   if (file) fs.rmSync(file, { force: true });
+  tableChanged(id);
 }
 export const importerDialog = (id: string) => {
   const imp = importerOf(id);
