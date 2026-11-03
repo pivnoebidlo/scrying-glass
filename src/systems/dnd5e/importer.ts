@@ -1,7 +1,7 @@
 // Long Story Short as D&D's importer of characters: the export file, the character's page, the spell table.
 import { t } from '../../shared/i18n';
 import type { CardImporter } from '../importer';
-import { collectLssSpells, fromLss, isLssExport, LSS_API, lssEverything, lssWanted, type LssSpellTable } from './lss';
+import { collectLssSpells, fromLss, isLssExport, LSS_API, lssAsExport, lssCharacters, lssEverything, lssIdOf, lssWanted, type LssSpellTable } from './lss';
 
 export const lssImporter: CardImporter = {
   id: 'lss',
@@ -46,6 +46,14 @@ export const lssImporter: CardImporter = {
     wanted: (json, table) => lssWanted(json, table as LssSpellTable),
     get everything() {
       return lssEverything();
+    },
+    characters: {
+      list: `${LSS_API}/character/list/`,
+      item: (id) => `${LSS_API}/character/${id}/`,
+      idOf: lssIdOf,
+      example: 'https://longstoryshort.app/characters/digital/…',
+      rows: lssCharacters,
+      asExport: lssAsExport,
     },
   },
 };

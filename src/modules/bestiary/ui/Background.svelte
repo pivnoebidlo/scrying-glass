@@ -8,6 +8,7 @@
   import { bestiary } from './cards.svelte';
   import PlacePicker from './PlacePicker.svelte';
   import CardDrawer from './CardDrawer.svelte';
+  import AccountImport from './AccountImport.svelte';
 
   let { app }: ModuleProps<'bestiary'> = $props();
 
@@ -28,6 +29,10 @@
 
 {#if bestiary.placeRequest}
   <PlacePicker {app} request={bestiary.placeRequest} />
+{/if}
+
+{#if bestiary.accountImport}
+  <AccountImport importer={bestiary.accountImport.importer} />
 {/if}
 
 {#if request && Update}

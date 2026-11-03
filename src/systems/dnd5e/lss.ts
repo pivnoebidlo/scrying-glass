@@ -76,7 +76,8 @@ export interface LssImport {
 
 // Книга заклинаний LSS в режиме «карточки»: в экспорте только id заклинаний из базы LSS, без названий (база закрыта
 // входом), а списков по кругам текстом нет.
-type LssExport = { data: string; edition?: string; spells?: { mode?: string; prepared?: unknown[]; book?: unknown[] } };
+// A character from the API (the GM's account) has its `_id` too.
+type LssExport = { _id?: string; data: string; edition?: string; spells?: { mode?: string; prepared?: unknown[]; book?: unknown[] } };
 
 export const isLssExport = (j: unknown): j is LssExport =>
   !!j && typeof j === 'object' && (j as { jsonType?: string }).jsonType === 'character' && typeof (j as { data?: unknown }).data === 'string';
@@ -179,7 +180,7 @@ export function fromLss(j: LssExport, table: LssSpellTable = {}): LssImport {
     name: str(d.name) || t('dnd.lss.unnamed'),
     system: j.edition === '2024' ? 'dnd5e-2024' : 'dnd5e-2014',
     stats: character,
-    lssId: avatarUrl ? (/\/avatar\/([0-9a-f]{24})/.exec(avatarUrl)?.[1] ?? null) : null,
+    lssId: (typeof j._id === 'string' && LSS_ID.test(j._id) ? j._id : null) ?? (avatarUrl ? (/\/avatar\/([0-9a-f]{24})/.exec(avatarUrl)?.[1] ?? null) : null),
     avatarUrl,
     warnings: cards.warnings,
   };
@@ -221,6 +222,37 @@ export function collectLssSpells(json: unknown, out: LssSpellTable = {}): LssSpe
 // The API of LSS (the GM signed in, `CardImporter.account`): spells by number — players' own spells too — and the
 // whole Grimoire. Spells of the general database come only with their edition, so both are asked.
 export const LSS_API = 'https://api.longstoryshort.app';
+
+// ---------- Characters of the GM's account ----------
+// `GET /character/list/` — the GM's own characters, whole (the same sheet as in an export, plus `_id`);
+// `GET /character/<id>/` — one, the GM's own or a player's shared by a link or to the GM. Both need the sign-in.
+
+// The character's id in a link to its sheet («…/characters/digital/<id>/») or the bare id.
+export function lssIdOf(link: string): string | null {
+  const m = /(?:^|[^0-9a-f])([0-9a-f]{24})(?![0-9a-f])/i.exec(link.trim());
+  return m ? m[1]!.toLowerCase() : null;
+}
+
+// An API answer as an export file: the sheet is the same, the export marks itself.
+export const lssAsExport = (json: unknown): unknown =>
+  json && typeof json === 'object' && typeof (json as { data?: unknown }).data === 'string' ? { ...json, jsonType: 'character' } : null;
+
+// The rows of the GM's list: id, name, «Cleric 3».
+export function lssCharacters(json: unknown): { id: string; name: string; subtitle: string; raw: unknown }[] {
+  if (!Array.isArray(json)) return [];
+  return json.flatMap((c) => {
+    if (!c || typeof c !== 'object' || typeof c._id !== 'string' || typeof c.data !== 'string') return [];
+    let d: { name?: Val; info?: { charClass?: Val; level?: Val } };
+    try {
+      d = JSON.parse(c.data);
+    } catch {
+      return [];
+    }
+    const level = d.info?.level?.value;
+    const subtitle = [str(d.info?.charClass), level !== undefined && level !== '' ? String(level) : ''].filter(Boolean).join(' ');
+    return [{ id: c._id, name: str(d.name) || t('dnd.lss.unnamed'), subtitle, raw: c }];
+  });
+}
 const EDITIONS = ['2014', '2024'];
 export const lssEverything = () => EDITIONS.map((e) => `${LSS_API}/spells/?edition=${e}`);
 export function lssWanted(json: unknown, table: LssSpellTable): string[] {

@@ -635,12 +635,17 @@ players don't see it. A character can be imported from Long Story Short: export 
 character…" in the Characters tab (it goes to the current adventure's party folder) or "Import from file…" in the "+"
 menu of the Cards tab: the avatar becomes the portrait.
 
-The player remade their character (say, after the GM's notes)? The card has "Update from LSS…": pick the new export,
-and the app shows what changed — level, abilities, hit points, AC, skills, attacks, spells, lines of equipment and
+Signed in to your LSS account (Settings → Integrations), you don't need the file at all: "From Long Story Short…" in
+the "+" menu of the Cards tab lists your characters — tick them and import them into the current adventure's party
+folder. A player's character comes by a link to its sheet pasted in the same window: the player opens access to it by
+link or gives it to your account in LSS.
+
+The player remade their character (say, after the GM's notes)? The card has "Update from LSS…": signed in to LSS, the
+app takes the sheet from the account itself, otherwise pick the new export; then it shows what changed — level, abilities, hit points, AC, skills, attacks, spells, lines of equipment and
 features (+ added, − gone). As in a git merge, every change and every line has a "take new" checkbox: unchecked keeps
 the old value in the card (for example, take the new weapon but keep the removed rope). "Update the card" applies the
 selection; portraits, notes, tags and side stay, and the previous version goes to the app's trash. Importing the same
-character again (by the LSS avatar or by name in the same folder) doesn't make a copy either but shows the changes and
+character again (by its LSS sheet or by name in the same folder) doesn't make a copy either but shows the changes and
 asks: update the card, create a new one or skip. A sheet can also be started and kept right in the app: pick the
 "Player character" kind in the card editor.
 

@@ -317,7 +317,13 @@ Electron-приложение для мастера D&D: окно управле
   недостающего для экспорта, `everything` — вся таблица); ядро — `main/accounts.ts` (окно входа на странице сервиса
   с сеансом `persist:account-<id>`, токен — из его cookies, пароль не видим; запросы — только при импорте и по кнопке),
   дозапрос — `topUp` / `fetchIntoTable` в `main/cards.ts` (`readExport` и `importCards`), IPC `importers:account` /
-  `signIn` / `signOut` / `fetchTable`. LSS: JWT — cookie `lss-jwt` (в кавычках, ~30 дней), `/spells/list/?ids=…&edition=`
+  `signIn` / `signOut` / `fetchTable`. Персонажи аккаунта — `ImporterAccount.characters` (`AccountCharacters`: адрес списка,
+  листа, `idOf` ссылки, `rows`, `asExport`): ядро (`accountCharacters`, `accountExport` в `main/cards.ts`, IPC
+  `importers:characters` / `importers:character`) пишет ответ API файлом экспорта во временную папку — дальше путь файла
+  (`importInto` в `bestiary/ui/cards.svelte.ts`: совпадение, «Что изменилось»); окно «Из {source}…» — меню «+» «Карточек»,
+  `bestiary/ui/AccountImport.svelte` (`bestiary.accountImport`, в папку партии — `partyPlace`); «Обновить из…» у привязанной
+  карточки при входе берёт лист из аккаунта. LSS: `GET /character/list/` — свои целиком, `GET /character/<id>/` — и чужой,
+  открытый по ссылке или выданный мастеру (без входа — 401, без доступа — 403/404 → `core.noAccess`); id листа — `_id`. LSS: JWT — cookie `lss-jwt` (в кавычках, ~30 дней), `/spells/list/?ids=…&edition=`
   (и свои заклинания игроков — копии PHB с `playerId`; общие — только своей редакции, спрашиваем обе),
   `/spells/?edition=` — весь «Гримуар», `/auth/user/`. Русские названия LSS — официальный перевод, у SRD — OmnisGM («Огненные ладони» / «Огненные руки»):
   лист хранит названия LSS, ссылки ведут на запись по английскому — псевдонимы `setSpellIndex(names, aliases)` из

@@ -2,10 +2,10 @@
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
-  import { CloudUpload, Download, FilePlus, Globe, Plus, Search, Upload } from '@lucide/svelte';
+  import { CloudDownload, CloudUpload, Download, FilePlus, Globe, Plus, Search, Upload } from '@lucide/svelte';
   import { openRepo, repo } from '../../repo/ui/repo.svelte';
   import { langName, sameRef } from '../../../shared/cards';
-  import { familyOf, isEnabled, systemOf, systems } from '../../../systems';
+  import { familyOf, importersOf, isEnabled, systemOf, systems } from '../../../systems';
   import { systemUi } from '../../../systems/ui';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dirname, roleFolders } from '../../../shared/vault';
@@ -43,6 +43,8 @@
   const f = bestiary.filters;
   // Other ways to start a card that the adventure's system has (D&D: from another stat block).
   const newCard = $derived(systemUi(currentSystem(app.adventures))?.newCard ?? []);
+  // Importers of the adventure's system that take characters straight from the GM's account (D&D: LSS).
+  const accounts = $derived(importersOf(currentSystem(app.adventures)).filter((i) => i.account?.characters));
   // Built-in cards of the adventure's system (the SRD): a filter for them.
   const srdHere = $derived(bestiary.all.some((c) => c.ref.scope === 'srd' && inCurrentFamily(app.adventures, c.system)));
   // Длинный список рисуем частями: сотни строк сразу заметно тормозят при наборе в поиске.
@@ -103,6 +105,11 @@
           {/each}
           <div class="sep"></div>
           <button onclick={importCards}><Download size={14} /> {t('best.importFile')}</button>
+          {#each accounts as imp (imp.id)}
+            <button title={t('best.fromAccountHint', { source: imp.title })} onclick={() => ((menu = false), (bestiary.accountImport = { importer: imp.id }))}>
+              <CloudDownload size={14} /> {t('best.fromAccount', { source: imp.title })}
+            </button>
+          {/each}
           <button onclick={exportCards}><Upload size={14} /> {t('best.exportFile')}</button>
           <div class="sep"></div>
           <button onclick={() => ((menu = false), (repo.publishBestiary = true))}><CloudUpload size={14} /> {t('repo.publishBestiary')}</button>

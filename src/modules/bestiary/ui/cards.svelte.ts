@@ -5,9 +5,9 @@ import type { Card, CardKind, CardRef, CardScope, CardSummary, ImportPreview } f
 import { defaultSide, imageScope, langName, sameRef } from '../../../shared/cards';
 import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
-import { currentSystem, inCurrentFamily, visibleIn } from '../../../shared/adventures';
-import { dirname, folderRole } from '../../../shared/vault';
-import { systemOf } from '../../../systems';
+import { currentSystem, inCurrentFamily, roleFolderHere, visibleIn } from '../../../shared/adventures';
+import { dirname, folderRole, roleNames } from '../../../shared/vault';
+import { importersOf, systemOf } from '../../../systems';
 
 const KEY = 'sg.bestiary';
 
@@ -131,6 +131,8 @@ class Bestiary {
   host = $state<'bestiary' | 'adventures'>('bestiary');
   placeRequest = $state.raw<PlaceRequest | null>(null);
   importRequest = $state.raw<ImportRequest | null>(null);
+  // The window «Characters from <service>» (the GM's account of an importer: LSS) — open while set.
+  accountImport = $state.raw<{ importer: string } | null>(null);
   // Снимок черновика при открытии: есть ли несохранённые изменения.
   draftStart = '';
   // Файл карточки, открытой в редакторе, изменили снаружи (в другой программе): новая версия с диска
@@ -252,16 +254,19 @@ class Bestiary {
     });
   }
 
-  // «Обновить из…» (importer — the system's importer: LSS): выбрать свежий экспорт персонажа, посмотреть изменения и
-  // обновить карточку. Сообщение о результате или null — передумали.
+  // «Обновить из…» (importer — the system's importer: LSS): the character's sheet straight from the GM's account when
+  // the card is linked to it and the GM is signed in, else a fresh export file; then «What changed» and the update.
+  // A message about the result or null — changed their mind.
   async updateFromExport(ref: CardRef, importer: string, source: string): Promise<string | null> {
     const current = await window.api.getCard($state.snapshot(ref));
     if (!current) return null;
     let picked;
     try {
-      picked = await window.api.pickExport(importer);
+      const linked = current.links?.[importer];
+      const viaAccount = linked && importersOf(current.system).find((i) => i.id === importer)?.account?.characters && (await window.api.importerAccount(importer))?.signedIn;
+      picked = viaAccount ? await window.api.accountExport(importer, linked, true) : await window.api.pickExport(importer);
     } catch (e) {
-      return t('best.readFailed', { error: e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e) });
+      return t('best.readFailed', { error: ipcError(e) });
     }
     if (!picked) return null;
     const choice = await this.askImport({ target: $state.snapshot(ref), current, next: picked.preview, import: false });
@@ -476,6 +481,34 @@ class Bestiary {
     if (!files.length) return null;
     place ??= await this.choosePlace({ title: t('best.whereImport'), action: t('best.import'), library: true });
     if (!place) return null;
+    return this.importInto(files, place);
+  }
+
+  // The party folder of the current adventure (or of the whole vault): characters from an account go there.
+  partyPlace(): Place {
+    const app = store.state;
+    const here = app.vault.tree ? roleFolderHere(app.vault.tree, app.adventures, 'party') : null;
+    const name = roleNames().party[0]!;
+    return { scope: 'vault', folder: here?.path ?? (app.adventures.current ? `${app.adventures.current}/${name}` : name) };
+  }
+
+  // Characters of the GM's account (ids from the list or links to their pages) — into the place, like files.
+  async importFromAccount(importer: string, links: string[], place: Place, fresh = false): Promise<string> {
+    const files: string[] = [];
+    const errors: string[] = [];
+    for (const link of links) {
+      try {
+        files.push((await window.api.accountExport(importer, link, fresh)).file);
+      } catch (e) {
+        errors.push(ipcError(e));
+      }
+    }
+    const text = files.length ? await this.importInto(files, place) : '';
+    return [text, ...errors].filter(Boolean).join('\n');
+  }
+
+  // Files into a place: new cards; characters that have a card there already — «What changed», update or a new one.
+  private async importInto(files: string[], place: Place): Promise<string> {
     const { count, errors, matches } = await window.api.importCards(files, place.scope, place.folder);
     // Персонажи из экспортов, у которых карточка уже есть: показать изменения и спросить — обновить или создать новую.
     const updated: string[] = [];
@@ -513,6 +546,9 @@ class Bestiary {
 }
 
 export const bestiary = new Bestiary();
+
+// The text of an error from the core, without Electron's «Error invoking remote method …».
+export const ipcError = (e: unknown) => (e instanceof Error ? e.message.replace(/^Error invoking remote method '[^']+': (Error: )?/, '') : String(e));
 
 async function refresh() {
   bestiary.all = await window.api.listCards();

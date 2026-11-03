@@ -36,7 +36,7 @@ import { pages } from './journal';
 import { resolver } from './textstore';
 import type { Note } from '../shared/notes';
 import {
-  cardsOf, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, importerTableOf, clearImporterTable, importerDialog, fetchImporterTable, importerAccount, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  accountCharacters, accountExport, cardsOf, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, importerTableOf, clearImporterTable, importerDialog, fetchImporterTable, importerAccount, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { accountStatus, signIn, signOut } from './accounts';
 import { IMAGE_EXT } from '../shared/vault';
@@ -1865,6 +1865,11 @@ ipcMain.handle('importers:signOut', async (_event, importer: string) => {
   if (importerAccount(importer)) await signOut(importer);
 });
 ipcMain.handle('importers:fetchTable', (_event, importer: string) => fetchImporterTable(importer));
+ipcMain.handle('importers:characters', (_event, importer: string) => accountCharacters(importer));
+ipcMain.handle('importers:character', async (_event, { importer, link, fresh }: { importer: string; link: string; fresh?: boolean }) => {
+  const file = await accountExport(importer, link, fresh);
+  return { file, preview: await readExport(file, importer) };
+});
 
 function noImageInClipboard() {
   const win = getControlWindow();

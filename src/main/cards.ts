@@ -22,7 +22,7 @@ import { cardAsset, defaultSide, refKey } from '../shared/cards';
 import { folderRole, roleFolders, roleNames, type VaultFolder } from '../shared/vault';
 import { systemOf } from '../systems';
 import { PLUGINS } from '../systems/plugins';
-import type { CardImporter, ImportedCard } from '../systems/importer';
+import type { AccountCharacter, CardImporter, ImportedCard } from '../systems/importer';
 import { freeName, writeJsonAtomic } from './files';
 import { accountFetch, accountToken } from './accounts';
 import { discard } from './trash';
@@ -777,6 +777,73 @@ export async function readExport(file: string, id?: string): Promise<ImportPrevi
   const imp = id ? importerOf(id) : importerFor(raw);
   if (imp?.detect(raw)) await topUp(imp, raw);
   return readExportNow(file, id);
+}
+
+// Characters straight from the GM's account (CardImporter.account.characters): the API's answer is written as an
+// export file into a temp folder and goes the way of a file (readExport, importCards, updateFromExport) — the spell
+// top-up, the match with a card, «What changed». The list's answers are kept for the import that follows it.
+const fromList = new Map<string, unknown>();
+const accountExportDir = () => path.join(app.getPath('temp'), 'scrying-glass-import');
+
+function accountError(imp: CardImporter, e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (msg === 'account:401') return t('core.signedOut', { source: imp.title });
+  if (msg === 'account:403' || msg === 'account:404') return t('core.noAccess', { source: imp.title });
+  return msg;
+}
+
+async function accountOf(id: string) {
+  const imp = importerOf(id);
+  const chars = imp?.account?.characters;
+  if (!imp?.account || !chars) throw new Error(t('core.notExport'));
+  const token = await accountToken(imp.id, imp.account);
+  if (!token) throw new Error(t('core.signedOut', { source: imp.title }));
+  return { imp, chars, token };
+}
+
+// The GM's characters; `card` — there is a card linked to this one already (in any place).
+export async function accountCharacters(id: string): Promise<{ rows: AccountCharacter[]; error?: string }> {
+  try {
+    const { imp, chars, token } = await accountOf(id);
+    let answer: unknown;
+    try {
+      answer = await accountFetch(token, chars.list);
+    } catch (e) {
+      return { rows: [], error: accountError(imp, e) };
+    }
+    const linked = new Set([...cards.values()].map((c) => c.links?.[imp.id]).filter(Boolean));
+    return {
+      rows: chars.rows(answer).map(({ raw, ...row }) => {
+        fromList.set(`${imp.id}:${row.id}`, raw);
+        return { ...row, card: linked.has(row.id) };
+      }),
+    };
+  } catch (e) {
+    return { rows: [], error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+// One character (an id from the list or a link to its page) as an export file; its path. `fresh` — ask the API even
+// when the list has just brought it. Errors — exceptions with the text for the GM.
+export async function accountExport(id: string, link: string, fresh = false): Promise<string> {
+  const { imp, chars, token } = await accountOf(id);
+  const charId = chars.idOf(link);
+  if (!charId) throw new Error(t('core.badLink', { source: imp.title }));
+  let answer = fresh ? undefined : fromList.get(`${imp.id}:${charId}`);
+  if (answer === undefined) {
+    try {
+      answer = await accountFetch(token, chars.item(charId));
+    } catch (e) {
+      throw new Error(accountError(imp, e));
+    }
+  }
+  const json = chars.asExport(answer);
+  if (!json || !imp.detect(json)) throw new Error(t('core.notExport'));
+  const dir = accountExportDir();
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `${imp.id}-${charId}.json`);
+  writeJsonAtomic(file, json);
+  return file;
 }
 
 // Links of a card to its character in the service: the id and the page.

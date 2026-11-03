@@ -50,6 +50,30 @@ export interface ImporterAccount {
   wanted?(json: unknown, table: Record<string, unknown>): string[];
   // Requests that bring the whole table (LSS: the Grimoire of both editions).
   everything?: string[];
+  // Characters straight from the account, without an export file: the GM's own ones and a player's by a link.
+  characters?: AccountCharacters;
+}
+
+export interface AccountCharacters {
+  // The GM's characters (one request) and one character by its id.
+  list: string;
+  item(id: string): string;
+  // The id in a link to the character's page (or the bare id); null — not a link of this service.
+  idOf(link: string): string | null;
+  // An example link for the field's placeholder.
+  example: string;
+  // The rows of the list's answer; `raw` — the character as the API gave it.
+  rows(json: unknown): (AccountCharacter & { raw: unknown })[];
+  // A character from the API as an export file `detect` / `read` know; null — not a character.
+  asExport(json: unknown): unknown;
+}
+
+// A row of the GM's list in the import window. `card` — the GM has a card of this character already.
+export interface AccountCharacter {
+  id: string;
+  name: string;
+  subtitle: string;
+  card?: boolean;
 }
 
 // The GM's account as the window sees it: who, until when the token lives (ms; none — unknown).
