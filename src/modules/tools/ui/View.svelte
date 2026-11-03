@@ -26,6 +26,7 @@
   import CrewSheet from '../../crew/ui/CrewSheet.svelte';
   import SettlementGenerator from '../settlement/SettlementGenerator.svelte';
   import HookGenerator from '../hooks/HookGenerator.svelte';
+  import RiddleGenerator from '../riddles/RiddleGenerator.svelte';
   import SchedulePage from '../../schedule/ui/SchedulePage.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
   import RollTables from '../rolltables/RollTables.svelte';
@@ -40,7 +41,7 @@
   // The page of each tool; a tool hidden in this system (another system's, not turned on) — the notes instead.
   const PAGES: Partial<Record<string, Component>> = {
     schedule: SchedulePage, names: NameGenerator, 
-    settlement: SettlementGenerator, hooks: HookGenerator,
+    settlement: SettlementGenerator, hooks: HookGenerator, riddles: RiddleGenerator,
     mouse: MouseGenerator, mausTables: MausTables, factions: Factions, build: BuildCalculator, mausShop: MausShop, npc: NpcGenerator,
     tavern: TavernGenerator, telegram: TelegramCompose, timer: TimerTool, crew: CrewSheet, systems: SystemBuilder, rollTables: RollTables,
   };

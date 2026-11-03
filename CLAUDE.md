@@ -594,6 +594,13 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   `content/{en,ru}.ts` — списки парами строка в строку, по-русски глаголы в настоящем времени — подходят заказчику любого
   пола; `text.ts`, `store.svelte.ts`); заказчик — из генератора NPC через `helpers` поселений; инструмент `hooks` — `SOME`,
   его берут D&D и Pathfinder (`claims`).
+  Загадки и головоломки (общий, `ui.tool = 'riddles'`): `tools/riddles/` — `logic.ts` (чистое: шифры `encipher` /
+  `decipher` (reverse, numbers, caesar, atbash; Ё → Е), порядок — `orderClues` (условия по весам, пока не останется одна
+  перестановка, потом лишние выкидываются; `at` — не больше `maxAt`), шкатулки — `casketPuzzle` / `casketSolutions`
+  (перебор места и правдивости надписей, «на X лжёт» — ссылки на другие надписи; одинаковые надписи о третьей — заново)),
+  `generate.ts` (весь текст — сразу на языке содержимого), `content/{en,ru}.ts` (загадки свои; формы слов `Word` n/g для
+  условий, `Casket` n/p; числа в сценах — через тире: «Ниш — {count}», `{items}` — все предметы: условие может кого-то не
+  назвать), `text.ts` (Markdown, записка — `puzzleNote` без ответа), `store.svelte.ts` (localStorage окна), `RiddleGenerator.svelte`.
   Сокровища: `systems/dnd5e/tools/treasure/` — `generate.ts` (монеты, ценности, вещи, редкости магических предметов по источнику
   и уровню; `pickItems` берёт предметы из `allEntries()` справочника по `rarityOf`), тексты `content.ts` (en и ru
   парами), `text.ts`. Вне D&D — диковины из генератора NPC, без цен.

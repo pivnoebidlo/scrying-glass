@@ -392,6 +392,14 @@ adventure. Each part can be rerolled or pinned; to the journal or copy.
 random) → who asks the heroes and how (the patron comes from the NPC generator), the task with a deadline and what is at
 stake, where, who stands in the way, a twist and the reward. Each part can be rerolled or pinned; to the journal or copy.
 
+**Riddles and puzzles** (Tools → Riddles and puzzles, any system): a kind and a difficulty → a trial for a door, a
+chest or a guardian. A riddle (ours, with two hints); a cipher (mirror writing, letter numbers, a shifted or reversed
+alphabet) with a hint at the key in the world; an order puzzle — statues in niches, books on a shelf, rune stones,
+levers or bells and a few carved lines; caskets with inscriptions where only one tells the truth (or only one lies).
+Order puzzles and caskets are built anew each time and always have exactly one solution, with no needless clue. Where it
+stands, what happens if the heroes get it wrong and if they solve it; hints open one by one, the answer stays hidden
+until asked. To the journal, copy, or as a handout note — what the players see, without the answer.
+
 **Weather generator** (Tools → Weather generator): terrain (forest, plains, city, coast, mountains, swamp, jungle,
 desert, arctic, underground), season and 1, 3 or 7 days → for each day the sky, rain or snow (sleet, sandstorm,
 thunderstorm), wind and temperature (°F and °C), a line to read aloud and, rarely, something unusual (northern lights,
