@@ -95,6 +95,18 @@ export async function clipboardFiles(): Promise<string[]> {
   return out;
 }
 
+// The clipboard's text (null — none).
+export async function clipboardText(): Promise<string | null> {
+  try {
+    for (const item of await clipboard.read()) {
+      if (item.types.includes('text/plain')) return await ((await item.getType('text/plain')) as Blob).text();
+    }
+  } catch {
+    /* nothing readable */
+  }
+  return null;
+}
+
 export async function clipboardImage(): Promise<{ name: string; data: Buffer } | null> {
   let items: Electron.ClipboardItem[] = [];
   try {

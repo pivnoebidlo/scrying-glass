@@ -322,7 +322,9 @@ Electron-приложение для мастера D&D: окно управле
   `importers:characters` / `importers:character`) пишет ответ API файлом экспорта во временную папку — дальше путь файла
   (`importInto` в `bestiary/ui/cards.svelte.ts`: совпадение, «Что изменилось»); окно «Из {source}…» — меню «+» «Карточек» и меню кнопки «Импорт персонажа…» «Персонажей» (`portraits/ui/View.svelte`),
   `bestiary/ui/AccountImport.svelte` (`bestiary.accountImport`, в папку партии — `partyPlace`); «Обновить из…» у привязанной
-  карточки при входе берёт лист из аккаунта. LSS: `GET /character/list/` — свои целиком, `GET /character/<id>/` — и чужой,
+  карточки при входе берёт лист из аккаунта. «Вставить персонажа» (меню «+» и «Импорт персонажа…») — JSON любого импортёра из буфера:
+  `clipboardExport` (IPC `importers:clipboard`, `clipboardText` в main/files.ts) → `bestiary.importClipboard`. Pathbuilder по
+  номеру не берём: json.php закрыт проверкой Cloudflare от ботов (решение пользователя — только буфер). LSS: `GET /character/list/` — свои целиком, `GET /character/<id>/` — и чужой,
   открытый по ссылке или выданный мастеру (без входа — 401, без доступа — 403/404 → `core.noAccess`); id листа — `_id`. LSS: JWT — cookie `lss-jwt` (в кавычках, ~30 дней), `/spells/list/?ids=…&edition=`
   (и свои заклинания игроков — копии PHB с `playerId`; общие — только своей редакции, спрашиваем обе),
   `/spells/?edition=` — весь «Гримуар», `/auth/user/`. Русские названия LSS — официальный перевод, у SRD — OmnisGM («Огненные ладони» / «Огненные руки»):

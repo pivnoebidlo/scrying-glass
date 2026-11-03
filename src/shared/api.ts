@@ -101,6 +101,8 @@ export interface Api {
   // preview — it then goes the way of a file (importCards, updateFromExport). fresh — not from the list just read.
   accountCharacters(importer: string): Promise<{ rows: AccountCharacter[]; error?: string }>;
   accountExport(importer: string, link: string, fresh?: boolean): Promise<{ file: string; preview: ImportPreview }>;
+  // A character's JSON from the clipboard (any importer's) as an export file; not one — an error.
+  clipboardExport(): Promise<string>;
   // Обновить карточку персонажа из экспорта (прежняя версия — в корзину); merged — итог, собранный из выбранных
   // мастером изменений (нет — всё из файла).
   updateFromExport(ref: CardRef, file: string, importer: string, merged?: { name: string; system: string; stats: unknown }): Promise<CardRef | null>;

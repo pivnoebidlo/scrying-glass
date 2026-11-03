@@ -34,6 +34,7 @@ const api: Api = {
   signOutImporter: (importer) => ipcRenderer.invoke('importers:signOut', importer),
   fetchImporterTable: (importer) => ipcRenderer.invoke('importers:fetchTable', importer),
   accountCharacters: (importer) => ipcRenderer.invoke('importers:characters', importer),
+  clipboardExport: () => ipcRenderer.invoke('importers:clipboard'),
   accountExport: (importer, link, fresh) => ipcRenderer.invoke('importers:character', { importer, link, fresh }),
   updateFromExport: (ref, file, importer, merged) => ipcRenderer.invoke('cards:updateFromExport', { ref, file, importer, merged }),
   library: () => ipcRenderer.invoke('cards:library'),

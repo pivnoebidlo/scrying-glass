@@ -2,7 +2,7 @@
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { onMount } from 'svelte';
-  import { CloudDownload, CloudUpload, Download, FilePlus, Globe, Plus, Search, Upload } from '@lucide/svelte';
+  import { ClipboardPaste, CloudDownload, CloudUpload, Download, FilePlus, Globe, Plus, Search, Upload } from '@lucide/svelte';
   import { openRepo, repo } from '../../repo/ui/repo.svelte';
   import { langName, sameRef } from '../../../shared/cards';
   import { familyOf, importersOf, isEnabled, systemOf, systems } from '../../../systems';
@@ -67,6 +67,12 @@
     if (text) say(text);
   }
 
+  async function pasteCharacter() {
+    menu = false;
+    const text = await bestiary.importClipboard();
+    if (text) say(text);
+  }
+
   async function exportCards() {
     menu = false;
     const text = await bestiary.exportPlace(app.vault.name, folderTitle);
@@ -105,6 +111,7 @@
           {/each}
           <div class="sep"></div>
           <button onclick={importCards}><Download size={14} /> {t('best.importFile')}</button>
+          <button title={t('best.pasteCharacterHint')} onclick={pasteCharacter}><ClipboardPaste size={14} /> {t('best.pasteCharacter')}</button>
           {#each accounts as imp (imp.id)}
             <button title={t('best.fromAccountHint', { source: imp.title })} onclick={() => ((menu = false), (bestiary.accountImport = { importer: imp.id }))}>
               <CloudDownload size={14} /> {t('best.fromAccount', { source: imp.title })}

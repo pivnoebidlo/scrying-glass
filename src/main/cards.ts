@@ -23,7 +23,7 @@ import { folderRole, roleFolders, roleNames, type VaultFolder } from '../shared/
 import { systemOf } from '../systems';
 import { PLUGINS } from '../systems/plugins';
 import type { AccountCharacter, CardImporter, ImportedCard } from '../systems/importer';
-import { freeName, writeJsonAtomic } from './files';
+import { clipboardText, freeName, writeJsonAtomic } from './files';
 import { accountFetch, accountToken } from './accounts';
 import { discard } from './trash';
 import { builtinDirs, setContentLibrary } from './content';
@@ -842,6 +842,24 @@ export async function accountExport(id: string, link: string, fresh = false): Pr
   const dir = accountExportDir();
   fs.mkdirSync(dir, { recursive: true });
   const file = path.join(dir, `${imp.id}-${charId}.json`);
+  writeJsonAtomic(file, json);
+  return file;
+}
+
+// A character's JSON copied in another service (Pathbuilder's «Export JSON», an LSS export opened as text) as an
+// export file; its path. Not JSON or no importer knows it — an exception with the text for the GM.
+export async function clipboardExport(): Promise<string> {
+  const text = (await clipboardText())?.trim();
+  let json: unknown;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    json = null;
+  }
+  if (!json || !importerFor(json)) throw new Error(t('core.noCharacterInClipboard'));
+  const dir = accountExportDir();
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `clipboard-${Date.now()}.json`);
   writeJsonAtomic(file, json);
   return file;
 }

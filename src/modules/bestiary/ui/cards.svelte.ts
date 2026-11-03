@@ -484,6 +484,19 @@ class Bestiary {
     return this.importInto(files, place);
   }
 
+  // A character's JSON from the clipboard (Pathbuilder's «Export JSON», an LSS export) — into the place (else asked).
+  async importClipboard(place?: Place | null): Promise<string | null> {
+    let file: string;
+    try {
+      file = await window.api.clipboardExport();
+    } catch (e) {
+      return ipcError(e);
+    }
+    place ??= await this.choosePlace({ title: t('best.whereImport'), action: t('best.import'), library: true });
+    if (!place) return null;
+    return this.importInto([file], place);
+  }
+
   // The party folder of the current adventure (or of the whole vault): characters from an account go there.
   partyPlace(): Place {
     const app = store.state;
