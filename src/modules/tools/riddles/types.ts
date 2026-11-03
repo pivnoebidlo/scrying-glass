@@ -1,5 +1,9 @@
 // Riddle and puzzle generator: what the content of one language holds (content/<lang>.ts) and what a puzzle is.
-export const KINDS = ['riddle', 'cipher', 'order', 'caskets'] as const;
+import type { MosaicGrid } from './mosaic';
+
+export const KINDS = ['riddle', 'cipher', 'order', 'caskets', 'mosaic', 'path', 'switches'] as const;
+// Kinds drawn as a grid of tiles (mosaic.ts).
+export const TILE_KINDS: readonly Kind[] = ['mosaic', 'path', 'switches'];
 export type Kind = (typeof KINDS)[number];
 export const LEVELS = ['easy', 'medium', 'hard'] as const;
 export type Level = (typeof LEVELS)[number];
@@ -62,6 +66,16 @@ export interface PuzzleContent {
   casketRules: { oneTrue: string; oneFalse: string };
   // Hints: how to go about it; which inscription is true (false) — «{list}».
   casketHints: { try: string; trueOne: string; falseOne: string };
+  // Tile puzzles: the signs' names (mosaic.ts SIGNS order), a cell — «{r}», «{c}».
+  tiles: {
+    signs: string[];
+    cell: string;
+    mosaic: { scenes: string[]; rule: string; hints: [string, string] };
+    // {seq} — the signs in order; hints and answer: {c} — the first tile, {steps} — the length.
+    path: { scenes: string[]; hints: [string, string]; answer: string };
+    // {cell}, {list}.
+    switches: { scenes: string[]; hints: [string, string]; answer: string };
+  };
   places: string[];
   failures: string[];
   rewards: string[];
@@ -82,4 +96,5 @@ export interface Puzzle {
   // How it is solved (for the GM).
   solution?: string;
   cipher?: CipherKind;
+  grid?: MosaicGrid;
 }

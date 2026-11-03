@@ -395,8 +395,12 @@ stake, where, who stands in the way, a twist and the reward. Each part can be re
 **Riddles and puzzles** (Tools → Riddles and puzzles, any system): a kind and a difficulty → a trial for a door, a
 chest or a guardian. A riddle (ours, with two hints); a cipher (mirror writing, letter numbers, a shifted or reversed
 alphabet) with a hint at the key in the world; an order puzzle — statues in niches, books on a shelf, rune stones,
-levers or bells and a few carved lines; caskets with inscriptions where only one tells the truth (or only one lies).
-Order puzzles and caskets are built anew each time and always have exactly one solution, with no needless clue. Where it
+levers or bells and a few carved lines; caskets with inscriptions where only one tells the truth (or only one lies);
+tiles — a mosaic with fallen pieces (no sign twice in a row or a column, spare tiles among the fallen), a path over
+signed tiles stepping on the signs in a given order, or slabs that turn over with their neighbours until all are light
+(click them on the picture as the players step — they turn over for you too). Everything but riddles and ciphers is
+built anew each time and always has exactly one solution (the switches — the fewest presses), with no needless clue;
+tile puzzles are drawn and go to the players as a canvas. Where it
 stands, what happens if the heroes get it wrong and if they solve it; hints open one by one, the answer stays hidden
 until asked. To the journal, copy, or as a handout note — what the players see, without the answer.
 

@@ -601,6 +601,11 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   `generate.ts` (весь текст — сразу на языке содержимого), `content/{en,ru}.ts` (загадки свои; формы слов `Word` n/g для
   условий, `Casket` n/p; числа в сценах — через тире: «Ниш — {count}», `{items}` — все предметы: условие может кого-то не
   назвать), `text.ts` (Markdown, записка — `puzzleNote` без ответа), `store.svelte.ts` (localStorage окна), `RiddleGenerator.svelte`.
+  Плитки — `mosaic.ts` (`MosaicGrid` в `Puzzle.grid`; знаки `SIGNS` — форма со своим цветом): мозаика — латинский квадрат,
+  клетки вынимаются, пока `latinCompletions` = 1; тропа — `walk` снизу вверх + заполнение без соблазнов рядом с путём,
+  `pathWays` должен найти ровно этот путь; переключатели — `press`, `solveSwitches` (перебор масок до 4 × 4, меньше всего
+  нажатий). Рисунок — холст (`mosaicSketch`: тот же у мастера через `SketchView` и в раздатке — `createSketch`; `answer` —
+  с решением), щелчок по плите — `cellAt` → `riddles.play`; в журнал — таблица `mosaicTable`.
   Сокровища: `systems/dnd5e/tools/treasure/` — `generate.ts` (монеты, ценности, вещи, редкости магических предметов по источнику
   и уровню; `pickItems` берёт предметы из `allEntries()` справочника по `rarityOf`), тексты `content.ts` (en и ru
   парами), `text.ts`. Вне D&D — диковины из генератора NPC, без цен.

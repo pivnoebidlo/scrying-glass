@@ -16,9 +16,11 @@ interface Saved {
   // How many hints are open, whether the answer is.
   hints: number;
   answer: boolean;
+  // Switches pressed at the table.
+  play: number[] | null;
 }
 function load(): Saved {
-  const empty: Saved = { kind: 'random', level: 'medium', puzzle: null, hints: 0, answer: false };
+  const empty: Saved = { kind: 'random', level: 'medium', puzzle: null, hints: 0, answer: false, play: null };
   try {
     return { ...empty, ...(JSON.parse(localStorage.getItem(KEY) ?? 'null') as Partial<Saved> | null) };
   } catch {
@@ -38,5 +40,6 @@ export function createPuzzle() {
   riddles.puzzle = generatePuzzle(riddles.kind, riddles.level, CONTENT[locale.lang] ?? en);
   riddles.hints = 0;
   riddles.answer = false;
+  riddles.play = null;
   save();
 }

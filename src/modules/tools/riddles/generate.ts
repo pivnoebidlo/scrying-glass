@@ -1,5 +1,6 @@
 // Puzzles of every kind from the content of one language; all the text is made here, so a puzzle is shown as made.
 import { casketPuzzle, encipher, orderClues, plainText, shuffle, type Clue, type Inscription, type Rand } from './logic';
+import { makeMosaic, makePath, makeSwitches } from './mosaic';
 import { KINDS, type CipherKind, type Kind, type Level, type Puzzle, type PuzzleContent, type Word } from './types';
 
 const pick = <T>(list: readonly T[], rand: Rand): T => list[Math.floor(rand() * list.length)]!;
@@ -18,6 +19,12 @@ export function generatePuzzle(kind: Kind | 'random', level: Level, c: PuzzleCon
       return { ...frame, ...order(level, c, rand) };
     case 'caskets':
       return { ...frame, ...caskets(level, c, rand) };
+    case 'mosaic':
+      return { ...frame, ...mosaic(level, c, rand) };
+    case 'path':
+      return { ...frame, ...path(level, c, rand) };
+    case 'switches':
+      return { ...frame, ...switches(level, c, rand) };
   }
 }
 
@@ -91,5 +98,53 @@ function caskets(level: Level, c: PuzzleContent, rand: Rand): Body {
     lines: list.map((s, i) => `${cap(items[i]!.n)}: ${c.quotes[0]}${inscriptionText(s, items, c)}${c.quotes[1]}`),
     hints: [c.casketHints.try, fill(oneFalse ? c.casketHints.falseOne : c.casketHints.trueOne, { list: items.filter((_, i) => truth[i] === !oneFalse).map((x) => x.n).join(', ') })],
     answer: cap(items[t]!.p),
+  };
+}
+
+const cellName = (i: number, w: number, c: PuzzleContent) => fill(c.tiles.cell, { r: Math.floor(i / w) + 1, c: (i % w) + 1 });
+
+function mosaic(level: Level, c: PuzzleContent, rand: Rand): Body {
+  const [n, holes, decoys] = ({ easy: [3, 2, 0], medium: [4, 5, 1], hard: [5, 8, 2] } as const)[level];
+  const grid = makeMosaic(n, holes, decoys, rand);
+  const t = c.tiles;
+  const answer = grid.cells
+    .map((v, i) => (v < 0 ? `${cellName(i, n, c)} — ${t.signs[grid.solution![i]!]}` : ''))
+    .filter(Boolean)
+    .join('; ');
+  return {
+    intro: pick(t.mosaic.scenes, rand),
+    lines: level === 'hard' ? [] : [t.mosaic.rule],
+    hints: [...t.mosaic.hints],
+    answer,
+    grid,
+  };
+}
+
+function path(level: Level, c: PuzzleContent, rand: Rand): Body {
+  const [w, h, length, decoys, careful] = ({ easy: [4, 4, 2, 2, true], medium: [5, 5, 3, 1, true], hard: [6, 6, 3, 1, false] } as const)[level];
+  const grid = makePath(w, h, length, decoys, careful, rand);
+  const t = c.tiles;
+  const seq = grid.sequence!.map((s) => t.signs[s]!).join(' → ');
+  const first = (grid.path![0]! % w) + 1;
+  return {
+    intro: fill(pick(t.path.scenes, rand), { seq: seq.charAt(0).toUpperCase() + seq.slice(1) }),
+    lines: [],
+    hints: [t.path.hints[0], fill(t.path.hints[1], { c: first })],
+    answer: fill(t.path.answer, { c: first, steps: grid.path!.length }),
+    grid,
+  };
+}
+
+function switches(level: Level, c: PuzzleContent, rand: Rand): Body {
+  const [n, presses] = ({ easy: [3, 2], medium: [3, 4], hard: [4, 5] } as const)[level];
+  const grid = makeSwitches(n, presses, rand);
+  const t = c.tiles;
+  const list = grid.presses!.map((i) => cellName(i, n, c));
+  return {
+    intro: pick(t.switches.scenes, rand),
+    lines: [],
+    hints: [t.switches.hints[0], fill(t.switches.hints[1], { cell: list[Math.floor(rand() * list.length)]! })],
+    answer: fill(t.switches.answer, { list: list.join('; ') }),
+    grid,
   };
 }

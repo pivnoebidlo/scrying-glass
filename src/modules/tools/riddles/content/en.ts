@@ -198,6 +198,36 @@ export const en: PuzzleContent = {
     trueOne: 'The truth is told by: {list}.',
     falseOne: 'The liar is: {list}.',
   },
+  tiles: {
+    signs: ['red circle', 'blue ring', 'green square', 'purple frame', 'black cross', 'orange diamond'],
+    cell: 'row {r} from the top, place {c} from the left',
+    mosaic: {
+      scenes: [
+        'A mosaic of signed tiles covers the wall; a few tiles have fallen out and lie on the floor.',
+        'The lid of a sarcophagus is laid with signed tiles; some were taken out and lie beside it.',
+        'The floor before the altar is a mosaic with empty sockets; the fallen tiles are heaped by the wall.',
+      ],
+      rule: 'Carved above the mosaic: “No sign repeats in a row or in a column.”',
+      hints: ['Every row and every column holds each sign exactly once; spare tiles are not needed.', 'Start with a row or a column that has only one empty place.'],
+    },
+    path: {
+      scenes: [
+        'The floor of the hall is laid with signed tiles; a door stands by the far wall. Carved on the threshold: “{seq}, and again from the start.”',
+        'A bridge of signed slabs crosses the chasm. Carved on the rail: “{seq}, and so to the end.”',
+        'The corridor is laid with signed tiles; spear points stick out of slits in the walls. Above the entrance: “{seq}, and again.”',
+      ],
+      hints: ['You may step forward, back and sideways, but not diagonally.', 'The first tile is number {c} from the left in the near row.'],
+      answer: 'It starts at tile {c} from the left in the near row; the way is {steps} tiles long and marked on the picture.',
+    },
+    switches: {
+      scenes: [
+        'Slabs lie before the door, light and dark. Step on one and it turns over, and so do its neighbours in front, behind and to the sides. The door opens when every slab is light.',
+        'The lid of a chest is laid with button tiles, light and dark. A pressed tile turns over with its neighbours (not diagonally). The chest opens when all are light.',
+      ],
+      hints: ['The order of presses does not matter, and pressing a slab twice is the same as not at all.', 'One of the slabs to press: {cell}.'],
+      answer: 'Press: {list}.',
+    },
+  },
   places: [
     'a crypt door',
     'a sarcophagus lid',

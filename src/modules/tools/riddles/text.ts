@@ -1,6 +1,7 @@
 // A puzzle as Markdown (the journal and the clipboard) and as a handout note for the players; labels come from the
 // page in the interface language.
 import { newNote, type Note } from '../../../shared/notes';
+import { mosaicTable } from './mosaic';
 import type { Puzzle } from './types';
 
 export interface PuzzleLabels {
@@ -24,13 +25,15 @@ export function puzzleMarkdown(p: Puzzle, l: PuzzleLabels, title?: string): stri
   if (p.intro) out.push(`> ${p.intro}`, '>');
   if (listed(p)) out.push(...p.lines.map((x) => `> - ${end(x)}`));
   else out.push(...p.lines.map((x) => `> ${x}`));
+  if (p.grid) out.push('', mosaicTable(p.grid));
   out.push('', `## ${l.hints}`, '', ...p.hints.map((h, i) => `${i + 1}. ${h}`), '');
   out.push(`## ${l.answer}`, '', end(cap(p.answer)), '');
+  if (p.grid) out.push(mosaicTable(p.grid, true), '');
   out.push(`- **${l.failure}:** ${p.failure}`, `- **${l.reward}:** ${p.reward}`);
   return out.join('\n');
 }
 
-// What the players get: the scene and the lines, never the answer. A cipher is set larger, on its own.
+// What the players get: the scene and the lines, never the answer (a tile puzzle — a canvas: mosaicSketch). A cipher is set larger, on its own.
 export function puzzleNote(p: Puzzle): Note {
   const body = listed(p) ? p.lines.map(end) : p.lines;
   const text = p.kind === 'cipher' ? [p.intro, '', `## ${p.lines[0]}`] : [...(p.intro ? [p.intro, ''] : []), ...body];

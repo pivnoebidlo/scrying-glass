@@ -4,10 +4,12 @@
      journal, as a handout note or copy. The current puzzle is remembered by the window. -->
 <script lang="ts">
   import Lead from '../../../renderer/lib/Lead.svelte';
-  import { Check, Copy, Eye, EyeOff, Lightbulb, NotebookPen, Puzzle as PuzzleIcon, RefreshCw, ScrollText } from '@lucide/svelte';
+  import { Check, Copy, Eye, EyeOff, Lightbulb, RotateCcw, NotebookPen, Puzzle as PuzzleIcon, RefreshCw, ScrollText } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { openTab } from '../../../renderer/lib/nav';
-  import { createNote } from '../../../renderer/lib/note/notes.svelte';
+  import { createNote, notesFolder } from '../../../renderer/lib/note/notes.svelte';
+  import SketchView from '../../../renderer/lib/sketch/SketchView.svelte';
+  import { cellAt, mosaicSketch, press } from './mosaic';
   import { store } from '../../../renderer/lib/store.svelte';
   import { journalFolder } from '../../journal/ui/store.svelte';
   import { openPage } from '../../journal/ui/ui.svelte';
@@ -47,9 +49,33 @@
   }
   async function toHandout() {
     if (!p) return;
+    if (p.grid) {
+      const path = await window.api.createSketch(notesFolder(store.state.vault.tree, store.state.adventures), safe(title(p)), mosaicSketch(p.grid));
+      if (path) editNote(path);
+      return;
+    }
     const path = await createNote(store.state.vault.tree, store.state.adventures, safe(title(p)), puzzleNote(p));
     if (path) editNote(path);
   }
+  // Switches at the table: the GM presses the slabs the players step on (remembered with the puzzle).
+  const grid = $derived(p?.grid ? (p.grid.kind === 'switches' && riddles.play ? { ...p.grid, cells: riddles.play } : p.grid) : null);
+  const picture = $derived(grid ? mosaicSketch(grid, riddles.answer) : null);
+  const solved = $derived(grid?.kind === 'switches' && grid.cells.every((v) => v === 1));
+  function onPicture(e: MouseEvent) {
+    if (grid?.kind !== 'switches') return;
+    const sheet = (e.currentTarget as HTMLElement).querySelector('.sheet');
+    if (!sheet) return;
+    const r = sheet.getBoundingClientRect();
+    const i = cellAt(grid, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+    if (i < 0) return;
+    riddles.play = press(grid.cells, grid.w, i);
+    save();
+  }
+  function resetPlay() {
+    riddles.play = null;
+    save();
+  }
+
   function moreHint() {
     riddles.hints++;
     save();
@@ -100,6 +126,16 @@
       <section class="aloud">
         <h3>{t('riddles.aloud')}</h3>
         {#if p.intro}<p class="intro">{p.intro}</p>{/if}
+        {#if picture && grid}
+          <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+          <div class="picture" class:play={grid.kind === 'switches'} onclick={onPicture}><SketchView sketch={picture} /></div>
+          {#if grid.kind === 'switches'}
+            <p class="faint play-line">
+              {solved ? t('riddles.switchesSolved') : t('riddles.switchesPlay')}
+              {#if riddles.play}<button class="btn small" onclick={resetPlay}><RotateCcw size={13} /> {t('riddles.switchesReset')}</button>{/if}
+            </p>
+          {/if}
+        {/if}
         {#if p.kind === 'cipher'}
           <p class="cipher">{p.lines[0]}</p>
         {:else if listed}
@@ -244,6 +280,20 @@
     font-size: 18px;
     letter-spacing: 0.12em;
     word-break: break-all;
+  }
+  .picture {
+    width: 100%;
+    max-width: 640px;
+    aspect-ratio: 4 / 3;
+    margin-top: 8px;
+  }
+  .picture.play {
+    cursor: pointer;
+  }
+  .play-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .answer {
     font-size: 16px;
