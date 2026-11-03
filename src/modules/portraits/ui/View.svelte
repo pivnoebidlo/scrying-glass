@@ -50,11 +50,12 @@
   onMount(connectCardNames);
 
   // Where a character comes from: a file, the clipboard, or the GM's account of an importer of the adventure's system (D&D: LSS).
-  const accounts = $derived(importersOf(currentSystem(app.adventures)).filter((i) => i.account?.characters));
+  const importers = $derived(importersOf(currentSystem(app.adventures)));
+  const accounts = $derived(importers.filter((i) => i.account?.characters));
   let importMenu = $state<{ x: number; y: number } | null>(null);
   const importItems = $derived<MenuItem[]>([
     { label: t('best.importFile'), icon: FileJson, action: importCharacter },
-    { label: t('best.pasteCharacter'), icon: ClipboardPaste, action: pasteCharacter },
+    ...(importers.length ? [{ label: t('best.pasteCharacter'), icon: ClipboardPaste, action: pasteCharacter }] : []),
     ...accounts.map((imp) => ({
       label: t('best.fromAccount', { source: imp.title }),
       icon: CloudDownload,

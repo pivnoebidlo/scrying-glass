@@ -80,7 +80,8 @@ export interface Api {
   pickImportFiles(): Promise<string[]>;
   // matches — персонажи из экспортов других сервисов, у которых в этом месте уже есть карточка: окно спрашивает,
   // обновить её или создать новую (asNew — импортировать их новыми).
-  importCards(files: string[], scope: CardScope, folder?: string, asNew?: boolean): Promise<{ count: number; errors: string[]; matches: ImportMatch[] }>;
+  // system — the adventure's: a character export of another system's importer is not taken (an error).
+  importCards(files: string[], scope: CardScope, folder?: string, asNew?: boolean, system?: string): Promise<{ count: number; errors: string[]; matches: ImportMatch[] }>;
   // Выбрать экспорт персонажа для импортёра (диалог) и прочитать его для предпросмотра. null — отменили.
   pickExport(importer: string): Promise<{ file: string; preview: ImportPreview } | null>;
   // Прочитать экспорт по пути (для совпадений импорта).
@@ -102,7 +103,7 @@ export interface Api {
   accountCharacters(importer: string): Promise<{ rows: AccountCharacter[]; error?: string }>;
   accountExport(importer: string, link: string, fresh?: boolean): Promise<{ file: string; preview: ImportPreview }>;
   // A character's JSON from the clipboard (any importer's) as an export file; not one — an error.
-  clipboardExport(): Promise<string>;
+  clipboardExport(system?: string): Promise<string>;
   // Обновить карточку персонажа из экспорта (прежняя версия — в корзину); merged — итог, собранный из выбранных
   // мастером изменений (нет — всё из файла).
   updateFromExport(ref: CardRef, file: string, importer: string, merged?: { name: string; system: string; stats: unknown }): Promise<CardRef | null>;

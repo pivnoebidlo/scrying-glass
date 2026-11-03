@@ -9,6 +9,7 @@
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
   import type { AppState } from '../../../shared/types';
+  import type { CardImporter } from '../../../systems/importer';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { LANGUAGES, SIDE_TITLES, cardAsset, cardImageUrl, langName, sameRef, type Card, type CardRef, type CardSide, type CardSummary } from '../../../shared/cards';
@@ -118,6 +119,18 @@
   }
   // A portrait's actions: the screen button and «⋯» are always on it; a right click opens the same menu.
   let pmenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  // «Update from …»: a card linked to the GM's account takes the sheet from there; otherwise — a file or the clipboard.
+  function updateFrom(e: MouseEvent, cref: CardRef, imp: CardImporter) {
+    const run = (from: 'auto' | 'file' | 'clipboard') => runAction(() => bestiary.updateFromExport(cref, imp.id, imp.short, from));
+    if (imp.account?.characters && card?.links?.[imp.id]) return void run('auto');
+    pmenu = {
+      ...menuAt(e),
+      items: [
+        { label: t('best.importFile'), icon: FolderOpen, action: () => void run('file') },
+        { label: t('best.fromClipboard'), icon: ClipboardPaste, action: () => void run('clipboard') },
+      ],
+    };
+  }
   function portraitActions(e: MouseEvent, cref: CardRef, p: string, asset: string, i: number, onScreen: boolean) {
     pmenu = {
       ...menuAt(e),
@@ -160,7 +173,7 @@
             <!-- A player's character from another service (the system's importers): read a newer export. -->
             {#if summary.kind === 'character'}
               {#each importersOf(summary.system) as imp (imp.id)}
-                <button class="btn" title={t('best.fromExportHint', { source: imp.title })} onclick={() => runAction(() => bestiary.updateFromExport(cref, imp.id, imp.short))}
+                <button class="btn" title={t('best.fromExportHint', { source: imp.title })} onclick={(e) => updateFrom(e, cref, imp)}
                   ><RefreshCw size={13} /> {t('best.fromExport', { source: imp.short })}</button
                 >
               {/each}

@@ -323,7 +323,10 @@ Electron-приложение для мастера D&D: окно управле
   (`importInto` в `bestiary/ui/cards.svelte.ts`: совпадение, «Что изменилось»); окно «Из {source}…» — меню «+» «Карточек» и меню кнопки «Импорт персонажа…» «Персонажей» (`portraits/ui/View.svelte`),
   `bestiary/ui/AccountImport.svelte` (`bestiary.accountImport`, в папку партии — `partyPlace`); «Обновить из…» у привязанной
   карточки при входе берёт лист из аккаунта. «Вставить персонажа» (меню «+» и «Импорт персонажа…») — JSON любого импортёра из буфера:
-  `clipboardExport` (IPC `importers:clipboard`, `clipboardText` в main/files.ts) → `bestiary.importClipboard`. Pathbuilder по
+  `clipboardExport` (IPC `importers:clipboard`, `clipboardText` в main/files.ts) → `bestiary.importClipboard`. У карточки без привязки к аккаунту «Обновить из…» —
+  меню «из файла» / «из буфера» (`updateFromExport(…, from)`). Экспорт импортёра чужой системы не принимается (`wrongSystem` в
+  main/cards.ts: `importCards(…, system)`, `clipboardExport(system)` — система приключения); «Вставить персонажа» — только
+  если у системы есть импортёры. Pathbuilder по
   номеру не берём: json.php закрыт проверкой Cloudflare от ботов (решение пользователя — только буфер). LSS: `GET /character/list/` — свои целиком, `GET /character/<id>/` — и чужой,
   открытый по ссылке или выданный мастеру (без входа — 401, без доступа — 403/404 → `core.noAccess`); id листа — `_id`. LSS: JWT — cookie `lss-jwt` (в кавычках, ~30 дней), `/spells/list/?ids=…&edition=`
   (и свои заклинания игроков — копии PHB с `playerId`; общие — только своей редакции, спрашиваем обе),

@@ -255,18 +255,22 @@ class Bestiary {
   }
 
   // «Обновить из…» (importer — the system's importer: LSS): the character's sheet straight from the GM's account when
-  // the card is linked to it and the GM is signed in, else a fresh export file; then «What changed» and the update.
-  // A message about the result or null — changed their mind.
-  async updateFromExport(ref: CardRef, importer: string, source: string): Promise<string | null> {
+  // the card is linked to it and the GM is signed in, else a fresh export file — or `from: 'clipboard'`, the JSON copied
+  // in the service; then «What changed» and the update. A message about the result or null — changed their mind.
+  async updateFromExport(ref: CardRef, importer: string, source: string, from: 'auto' | 'file' | 'clipboard' = 'auto'): Promise<string | null> {
     const current = await window.api.getCard($state.snapshot(ref));
     if (!current) return null;
     let picked;
     try {
       const linked = current.links?.[importer];
-      const viaAccount = linked && importersOf(current.system).find((i) => i.id === importer)?.account?.characters && (await window.api.importerAccount(importer))?.signedIn;
-      picked = viaAccount ? await window.api.accountExport(importer, linked, true) : await window.api.pickExport(importer);
+      const viaAccount = from === 'auto' && linked && importersOf(current.system).find((i) => i.id === importer)?.account?.characters && (await window.api.importerAccount(importer))?.signedIn;
+      if (viaAccount) picked = await window.api.accountExport(importer, linked, true);
+      else if (from === 'clipboard') {
+        const file = await window.api.clipboardExport(current.system);
+        picked = { file, preview: await window.api.readExport(file, importer) };
+      } else picked = await window.api.pickExport(importer);
     } catch (e) {
-      return t('best.readFailed', { error: ipcError(e) });
+      return from === 'clipboard' ? ipcError(e) : t('best.readFailed', { error: ipcError(e) });
     }
     if (!picked) return null;
     const choice = await this.askImport({ target: $state.snapshot(ref), current, next: picked.preview, import: false });
@@ -488,7 +492,7 @@ class Bestiary {
   async importClipboard(place?: Place | null): Promise<string | null> {
     let file: string;
     try {
-      file = await window.api.clipboardExport();
+      file = await window.api.clipboardExport(currentSystem(store.state.adventures));
     } catch (e) {
       return ipcError(e);
     }
@@ -522,7 +526,7 @@ class Bestiary {
 
   // Files into a place: new cards; characters that have a card there already — «What changed», update or a new one.
   private async importInto(files: string[], place: Place): Promise<string> {
-    const { count, errors, matches } = await window.api.importCards(files, place.scope, place.folder);
+    const { count, errors, matches } = await window.api.importCards(files, place.scope, place.folder, false, currentSystem(store.state.adventures));
     // Персонажи из экспортов, у которых карточка уже есть: показать изменения и спросить — обновить или создать новую.
     const updated: string[] = [];
     let added = count;

@@ -1828,8 +1828,8 @@ ipcMain.handle('cards:pickImport', async () => {
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
   return res.canceled ? [] : res.filePaths;
 });
-ipcMain.handle('cards:import', (_event, { files, scope, folder, asNew }: { files: string[]; scope: CardScope; folder?: string; asNew?: boolean }) =>
-  importCards(files, scope, folder, asNew)
+ipcMain.handle('cards:import', (_event, { files, scope, folder, asNew, system }: { files: string[]; scope: CardScope; folder?: string; asNew?: boolean; system?: string }) =>
+  importCards(files, scope, folder, asNew, system)
 );
 // Обновление персонажа из экспорта другого сервиса (импортёр системы): выбрать файл и показать изменения, потом
 // обновить карточку.
@@ -1866,7 +1866,7 @@ ipcMain.handle('importers:signOut', async (_event, importer: string) => {
 });
 ipcMain.handle('importers:fetchTable', (_event, importer: string) => fetchImporterTable(importer));
 ipcMain.handle('importers:characters', (_event, importer: string) => accountCharacters(importer));
-ipcMain.handle('importers:clipboard', () => clipboardExport());
+ipcMain.handle('importers:clipboard', (_event, system?: string) => clipboardExport(system));
 ipcMain.handle('importers:character', async (_event, { importer, link, fresh }: { importer: string; link: string; fresh?: boolean }) => {
   const file = await accountExport(importer, link, fresh);
   return { file, preview: await readExport(file, importer) };

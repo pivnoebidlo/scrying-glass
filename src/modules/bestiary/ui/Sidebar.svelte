@@ -44,7 +44,8 @@
   // Other ways to start a card that the adventure's system has (D&D: from another stat block).
   const newCard = $derived(systemUi(currentSystem(app.adventures))?.newCard ?? []);
   // Importers of the adventure's system that take characters straight from the GM's account (D&D: LSS).
-  const accounts = $derived(importersOf(currentSystem(app.adventures)).filter((i) => i.account?.characters));
+  const importers = $derived(importersOf(currentSystem(app.adventures)));
+  const accounts = $derived(importers.filter((i) => i.account?.characters));
   // Built-in cards of the adventure's system (the SRD): a filter for them.
   const srdHere = $derived(bestiary.all.some((c) => c.ref.scope === 'srd' && inCurrentFamily(app.adventures, c.system)));
   // Длинный список рисуем частями: сотни строк сразу заметно тормозят при наборе в поиске.
@@ -111,7 +112,9 @@
           {/each}
           <div class="sep"></div>
           <button onclick={importCards}><Download size={14} /> {t('best.importFile')}</button>
-          <button title={t('best.pasteCharacterHint')} onclick={pasteCharacter}><ClipboardPaste size={14} /> {t('best.pasteCharacter')}</button>
+          {#if importers.length}
+            <button title={t('best.pasteCharacterHint')} onclick={pasteCharacter}><ClipboardPaste size={14} /> {t('best.pasteCharacter')}</button>
+          {/if}
           {#each accounts as imp (imp.id)}
             <button title={t('best.fromAccountHint', { source: imp.title })} onclick={() => ((menu = false), (bestiary.accountImport = { importer: imp.id }))}>
               <CloudDownload size={14} /> {t('best.fromAccount', { source: imp.title })}

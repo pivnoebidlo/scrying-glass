@@ -20,7 +20,7 @@ import { app, BrowserWindow } from 'electron';
 import type { Card, CardRef, CardScope, CardSummary, ImportMatch, ImportPreview } from '../shared/cards';
 import { cardAsset, defaultSide, refKey } from '../shared/cards';
 import { folderRole, roleFolders, roleNames, type VaultFolder } from '../shared/vault';
-import { systemOf } from '../systems';
+import { importersOf, systemOf, systems } from '../systems';
 import { PLUGINS } from '../systems/plugins';
 import type { AccountCharacter, CardImporter, ImportedCard } from '../systems/importer';
 import { clipboardText, freeName, writeJsonAtomic } from './files';
@@ -846,9 +846,17 @@ export async function accountExport(id: string, link: string, fresh = false): Pr
   return file;
 }
 
+// An export of another family's importer while the adventure plays `system` (a D&D character in «The Nineties»):
+// the text why it does not fit, null — it fits (or no system given).
+function wrongSystem(imp: CardImporter, system?: string): string | null {
+  if (!system || importersOf(system).some((i) => i.id === imp.id)) return null;
+  const here = systems.find((s) => s.id === system)?.title ?? system;
+  return t('core.wrongSystem', { source: imp.title, here });
+}
+
 // A character's JSON copied in another service (Pathbuilder's «Export JSON», an LSS export opened as text) as an
 // export file; its path. Not JSON or no importer knows it — an exception with the text for the GM.
-export async function clipboardExport(): Promise<string> {
+export async function clipboardExport(system?: string): Promise<string> {
   const text = (await clipboardText())?.trim();
   let json: unknown;
   try {
@@ -856,7 +864,10 @@ export async function clipboardExport(): Promise<string> {
   } catch {
     json = null;
   }
-  if (!json || !importerFor(json)) throw new Error(t('core.noCharacterInClipboard'));
+  const imp = json ? importerFor(json) : undefined;
+  if (!imp) throw new Error(t('core.noCharacterInClipboard'));
+  const wrong = wrongSystem(imp, system);
+  if (wrong) throw new Error(wrong);
   const dir = accountExportDir();
   fs.mkdirSync(dir, { recursive: true });
   const file = path.join(dir, `clipboard-${Date.now()}.json`);
@@ -946,7 +957,9 @@ export async function importCards(
   list: string[],
   to: CardScope,
   folder?: string,
-  asNew = false
+  asNew = false,
+  // The adventure's system: an export of another system's importer is not taken (see wrongSystem).
+  system?: string
 ): Promise<{ count: number; errors: string[]; matches: ImportMatch[]; refs: CardRef[] }> {
   const dir = targetDir(to, folder);
   const imgDir = imagesDir(to, folder);
@@ -962,6 +975,11 @@ export async function importCards(
       const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
       const imp = importerFor(raw);
       if (imp) {
+        const wrong = wrongSystem(imp, system);
+        if (wrong) {
+          errors.push(`${path.basename(file)}: ${wrong}`);
+          continue;
+        }
         await topUp(imp, raw);
         const r = imp.read(raw, importerTable(imp));
         const ref = asNew ? null : exportMatch(imp, r, to, dir);

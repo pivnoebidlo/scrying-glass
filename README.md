@@ -243,7 +243,7 @@ Core for the party's size and level. The data comes from the pf2e system for Fou
 `content/pf2e-core/README.md`). Creatures are edited in a form (lists by commas, dice in a damage roll by themselves). Player characters come from
 **Pathbuilder 2e**: «Import from file…» takes its JSON export (a file, or the page pathbuilder2e.com/json.php?id=<code>
 saved), and «Paste a character» takes the JSON copied in Pathbuilder (Export JSON → Copy) — a sheet with the totals counted by the rules (rolls of attributes, Perception, saves, skills with ranks,
-strikes, spells), feats, gear and money; «Update from Pathbuilder…» reads a newer export; the sheet is edited in a form too (skills recounted from their ranks). More books and the Russian translation
+strikes, spells), feats, gear and money; «Update from Pathbuilder…» reads a newer export (a file or the clipboard); the sheet is edited in a form too (skills recounted from their ranks). More books and the Russian translation
 come later. This product is licensed under the ORC License (paizo.com/orclicense); Scrying Glass uses
 trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy
 (paizo.com/licenses/communityuse); we are expressly prohibited from charging you to use or access this content; Scrying
@@ -638,10 +638,11 @@ menu of the Cards tab: the avatar becomes the portrait.
 Signed in to your LSS account (Settings → Integrations), you don't need the file at all: "From Long Story Short…" under
 "Import character…" in the Characters tab or in the "+" menu of the Cards tab lists your characters — tick them and import them into the current adventure's party
 folder. A player's character comes by a link to its sheet pasted in the same window: the player opens access to it by
-link or gives it to your account in LSS (by your LSS ID) and sends you the link.
+link or gives it to your account in LSS (by your LSS ID) and sends you the link. Characters of a system come only
+into adventures of that system: an LSS character won't go into a Pathfinder or "The Nineties" adventure.
 
 The player remade their character (say, after the GM's notes)? The card has "Update from LSS…": signed in to LSS, the
-app takes the sheet from the account itself, otherwise pick the new export; then it shows what changed — level, abilities, hit points, AC, skills, attacks, spells, lines of equipment and
+app takes the sheet from the account itself, otherwise pick the new export (a file or the clipboard); then it shows what changed — level, abilities, hit points, AC, skills, attacks, spells, lines of equipment and
 features (+ added, − gone). As in a git merge, every change and every line has a "take new" checkbox: unchecked keeps
 the old value in the card (for example, take the new weapon but keep the removed rope). "Update the card" applies the
 selection; portraits, notes, tags and side stay, and the previous version goes to the app's trash. Importing the same
