@@ -6,6 +6,7 @@
   import Sidebar from './Sidebar.svelte';
   import Tabs from './Tabs.svelte';
   import FKeys from './FKeys.svelte';
+  import KonamiRain from './KonamiRain.svelte';
   import FileDrop from './FileDrop.svelte';
   import ScreenPanel from './ScreenPanel.svelte';
   import Settings from './Settings.svelte';
@@ -74,6 +75,7 @@
   <FileDrop />
   <Lightbox />
   <UpdateBanner />
+  <KonamiRain />
 
   {#if workspace.settingsOpen}
     <Settings />
