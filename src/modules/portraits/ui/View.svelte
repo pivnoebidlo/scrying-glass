@@ -16,7 +16,10 @@
   import { onMount } from 'svelte';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { folderRole } from '../../../shared/vault';
-  import { Download } from '@lucide/svelte';
+  import { ChevronDown, CloudDownload, Download, FileJson } from '@lucide/svelte';
+  import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
+  import { importersOf } from '../../../systems';
+  import { currentSystem } from '../../../shared/adventures';
   import { connectCardNames } from './cardNames.svelte';
   import { ui } from './ui.svelte';
   import MonsterTile from './MonsterTile.svelte';
@@ -42,6 +45,22 @@
     }
   }
   onMount(connectCardNames);
+
+  // Where a character comes from: a file, or the GM's account of an importer of the adventure's system (D&D: LSS).
+  const accounts = $derived(importersOf(currentSystem(app.adventures)).filter((i) => i.account?.characters));
+  let importMenu = $state<{ x: number; y: number } | null>(null);
+  const importItems = $derived<MenuItem[]>([
+    { label: t('best.importFile'), icon: FileJson, action: importCharacter },
+    ...accounts.map((imp) => ({
+      label: t('best.fromAccount', { source: imp.title }),
+      icon: CloudDownload,
+      action: () => (bestiary.accountImport = { importer: imp.id }),
+    })),
+  ]);
+  function onImport(e: MouseEvent) {
+    if (accounts.length) importMenu = menuAt(e);
+    else void importCharacter();
+  }
 
   const groups = $derived(
     cardTiles(app.vault.tree ? characterGroups(app.vault.tree, app.vault.name, app.adventures) : []).map((g) => ({
@@ -83,8 +102,13 @@
     <button
       class="btn"
       title={t('portraits.importHint')}
-      onclick={importCharacter}><Download size={14} /> {t('portraits.import')}</button
+      onclick={onImport}
+      oncontextmenu={(e) => accounts.length && (importMenu = menuAt(e))}
+      ><Download size={14} /> {t('portraits.import')}{#if accounts.length}<ChevronDown size={13} />{/if}</button
     >
+    {#if importMenu}
+      <ContextMenu x={importMenu.x} y={importMenu.y} items={importItems} onclose={() => (importMenu = null)} />
+    {/if}
     {#if status}<span class="status">{status}</span>{/if}
     <div class="spacer"></div>
     <ThumbSize grid="portraits" />

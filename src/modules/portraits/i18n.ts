@@ -47,7 +47,7 @@ export const en = {
     'folders in the vault, at any depth: in an adventure, a campaign chapter, nested folders. The caption is the name of the card that has this picture as a portrait, otherwise the file name (elder_gilbert.jpg → “Elder Gilbert”). Edit it right under the tile in the Characters tab: the card or the file gets renamed.',
   'portraits.all': 'All characters',
   'portraits.importHint':
-    'A player character from Long Story Short (sheet export in JSON) or a Scrying Glass cards file. Importing the same character again updates its sheet',
+    'A player character from a file (a Long Story Short export or a Scrying Glass cards file) or straight from your LSS account. Importing the same character again updates its sheet',
   'portraits.import': 'Import character…',
   'portraits.none': 'There are no character folders in the vault yet.',
   'portraits.anyOther': 'A picture from any other folder can be shown to players from Files.',
@@ -101,7 +101,7 @@ export const ru: Messages<typeof en> = {
     'в хранилище, на любой глубине: в приключении, в главе кампании, во вложенных папках. Подпись — название карточки, у которой эта картинка стоит портретом, иначе имя файла (староста_гилберт.jpg → «Староста Гилберт»). Поправить её можно прямо под плиткой во вкладке «Персонажи»: переименуется карточка или файл.',
   'portraits.all': 'Все персонажи',
   'portraits.importHint':
-    'Персонаж игрока из Long Story Short (экспорт листа в JSON) или файл карточек Scrying Glass. Повторный импорт того же персонажа обновляет его лист',
+    'Персонаж игрока из файла (экспорт Long Story Short или файл карточек Scrying Glass) или прямо из вашего аккаунта LSS. Повторный импорт того же персонажа обновляет его лист',
   'portraits.import': 'Импорт персонажа…',
   'portraits.none': 'В хранилище пока нет папок с персонажами.',
   'portraits.anyOther': 'Картинку из любой другой папки можно показать игрокам через «Файлы».',

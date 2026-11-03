@@ -320,7 +320,7 @@ Electron-приложение для мастера D&D: окно управле
   `signIn` / `signOut` / `fetchTable`. Персонажи аккаунта — `ImporterAccount.characters` (`AccountCharacters`: адрес списка,
   листа, `idOf` ссылки, `rows`, `asExport`): ядро (`accountCharacters`, `accountExport` в `main/cards.ts`, IPC
   `importers:characters` / `importers:character`) пишет ответ API файлом экспорта во временную папку — дальше путь файла
-  (`importInto` в `bestiary/ui/cards.svelte.ts`: совпадение, «Что изменилось»); окно «Из {source}…» — меню «+» «Карточек»,
+  (`importInto` в `bestiary/ui/cards.svelte.ts`: совпадение, «Что изменилось»); окно «Из {source}…» — меню «+» «Карточек» и меню кнопки «Импорт персонажа…» «Персонажей» (`portraits/ui/View.svelte`),
   `bestiary/ui/AccountImport.svelte` (`bestiary.accountImport`, в папку партии — `partyPlace`); «Обновить из…» у привязанной
   карточки при входе берёт лист из аккаунта. LSS: `GET /character/list/` — свои целиком, `GET /character/<id>/` — и чужой,
   открытый по ссылке или выданный мастеру (без входа — 401, без доступа — 403/404 → `core.noAccess`); id листа — `_id`. LSS: JWT — cookie `lss-jwt` (в кавычках, ~30 дней), `/spells/list/?ids=…&edition=`

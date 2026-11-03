@@ -635,10 +635,10 @@ players don't see it. A character can be imported from Long Story Short: export 
 character…" in the Characters tab (it goes to the current adventure's party folder) or "Import from file…" in the "+"
 menu of the Cards tab: the avatar becomes the portrait.
 
-Signed in to your LSS account (Settings → Integrations), you don't need the file at all: "From Long Story Short…" in
-the "+" menu of the Cards tab lists your characters — tick them and import them into the current adventure's party
+Signed in to your LSS account (Settings → Integrations), you don't need the file at all: "From Long Story Short…" under
+"Import character…" in the Characters tab or in the "+" menu of the Cards tab lists your characters — tick them and import them into the current adventure's party
 folder. A player's character comes by a link to its sheet pasted in the same window: the player opens access to it by
-link or gives it to your account in LSS.
+link or gives it to your account in LSS (by your LSS ID) and sends you the link.
 
 The player remade their character (say, after the GM's notes)? The card has "Update from LSS…": signed in to LSS, the
 app takes the sheet from the account itself, otherwise pick the new export; then it shows what changed — level, abilities, hit points, AC, skills, attacks, spells, lines of equipment and
