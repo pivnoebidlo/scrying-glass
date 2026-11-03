@@ -4,7 +4,7 @@ import { generatePuzzle } from '../src/modules/tools/riddles/generate';
 import { en } from '../src/modules/tools/riddles/content/en';
 import { ru } from '../src/modules/tools/riddles/content/ru';
 import { CIPHERS, KINDS, LEVELS } from '../src/modules/tools/riddles/types';
-import { latinCompletions, makeMosaic, makePath, makeSwitches, mosaicSketch, pathWays, press, SIGNS, solveSwitches } from '../src/modules/tools/riddles/mosaic';
+import { latinCompletions, mosaicStatus, pathStatus, placeNext, stepOn, makeMosaic, makePath, makeSwitches, mosaicSketch, pathWays, press, SIGNS, solveSwitches } from '../src/modules/tools/riddles/mosaic';
 import { parseSketch } from '../src/shared/sketch';
 
 // A seeded random, so a failure can be repeated.
@@ -129,5 +129,32 @@ describe('tile puzzles', () => {
   it('both languages name every sign', () => {
     expect(en.tiles.signs.length).toBe(SIGNS.length);
     expect(ru.tiles.signs.length).toBe(SIGNS.length);
+  });
+});
+
+describe('at the table', () => {
+  it('mosaic: clicks cycle the fallen signs, the right ones solve it', () => {
+    const g = makeMosaic(3, 2, 0, seeded(21));
+    const holes = g.cells.map((v, i) => (v < 0 ? i : -1)).filter((i) => i >= 0);
+    let placed: Record<number, number> = {};
+    expect(mosaicStatus(g, placed)).toBe('partial');
+    for (const i of holes) while (placed[i] !== g.solution![i]) placed = placeNext(g, placed, i);
+    expect(mosaicStatus(g, placed)).toBe('solved');
+    const options = new Set(g.loose).size;
+    let p2 = placed;
+    for (let k = 0; k < options; k++) p2 = placeNext(g, p2, holes[0]!);
+    expect(p2[holes[0]!]).not.toBe(placed[holes[0]!]);
+    expect(placeNext(g, placed, g.cells.findIndex((v) => v >= 0))).toBe(placed);
+  });
+  it('path: steps follow neighbours, the way through is done, a wrong tile is caught', () => {
+    const g = makePath(5, 5, 3, 1, true, seeded(23));
+    let steps: number[] = [];
+    expect(stepOn(g, steps, 0)).toEqual([]);
+    for (const i of g.path!) steps = stepOn(g, steps, i);
+    expect(steps).toEqual(g.path);
+    expect(pathStatus(g, steps)).toBe('done');
+    expect(stepOn(g, steps, steps.at(-1)!)).toEqual(g.path!.slice(0, -1));
+    const wrong = g.cells.findIndex((v, i) => i >= 20 && v !== g.sequence![0]);
+    expect(pathStatus(g, stepOn(g, [], wrong))).toBe('wrong');
   });
 });

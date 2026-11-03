@@ -4,13 +4,13 @@
      journal, as a handout note or copy. The current puzzle is remembered by the window. -->
 <script lang="ts">
   import Lead from '../../../renderer/lib/Lead.svelte';
-  import { Check, Copy, Eye, EyeOff, Lightbulb, RotateCcw, NotebookPen, Puzzle as PuzzleIcon, RefreshCw, ScrollText } from '@lucide/svelte';
+  import { Check, Copy, Eye, EyeOff, Lightbulb, MonitorUp, MonitorOff, RotateCcw, NotebookPen, Puzzle as PuzzleIcon, RefreshCw, ScrollText } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { createNote, notesFolder } from '../../../renderer/lib/note/notes.svelte';
   import SketchView from '../../../renderer/lib/sketch/SketchView.svelte';
-  import { cellAt, mosaicSketch, press } from './mosaic';
-  import { store } from '../../../renderer/lib/store.svelte';
+  import { cellAt, mosaicSketch, mosaicStatus, pathStatus, placeNext, press, stepOn, type Play } from './mosaic';
+  import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import { journalFolder } from '../../journal/ui/store.svelte';
   import { openPage } from '../../journal/ui/ui.svelte';
   import { editNote } from '../ui/ui.svelte';
@@ -47,33 +47,62 @@
     openPage(path);
     openTab('journal');
   }
+  // The handout of this puzzle: made once (a canvas of the tiles as they are now, or a note), then reused.
+  async function handout(): Promise<string | null> {
+    if (!p) return null;
+    const have = riddles.handout;
+    if (have && (p.grid ? await window.api.readSketch(have) : await window.api.readNote(have))) return have;
+    const folder = notesFolder(store.state.vault.tree, store.state.adventures);
+    const path = p.grid
+      ? await window.api.createSketch(folder, safe(title(p)), mosaicSketch(p.grid, false, playNow()))
+      : await createNote(store.state.vault.tree, store.state.adventures, safe(title(p)), puzzleNote(p));
+    riddles.handout = path;
+    save();
+    return path;
+  }
   async function toHandout() {
-    if (!p) return;
-    if (p.grid) {
-      const path = await window.api.createSketch(notesFolder(store.state.vault.tree, store.state.adventures), safe(title(p)), mosaicSketch(p.grid));
-      if (path) editNote(path);
-      return;
-    }
-    const path = await createNote(store.state.vault.tree, store.state.adventures, safe(title(p)), puzzleNote(p));
+    const path = await handout();
     if (path) editNote(path);
   }
-  // Switches at the table: the GM presses the slabs the players step on (remembered with the puzzle).
-  const grid = $derived(p?.grid ? (p.grid.kind === 'switches' && riddles.play ? { ...p.grid, cells: riddles.play } : p.grid) : null);
-  const picture = $derived(grid ? mosaicSketch(grid, riddles.answer) : null);
-  const solved = $derived(grid?.kind === 'switches' && grid.cells.every((v) => v === 1));
-  function onPicture(e: MouseEvent) {
-    if (grid?.kind !== 'switches') return;
-    const sheet = (e.currentTarget as HTMLElement).querySelector('.sheet');
-    if (!sheet) return;
-    const r = sheet.getBoundingClientRect();
-    const i = cellAt(grid, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
-    if (i < 0) return;
-    riddles.play = press(grid.cells, grid.w, i);
-    save();
+  const shown = $derived(!!riddles.handout && store.state.handouts.current === riddles.handout);
+  async function toggleShown() {
+    if (shown) return dispatch('handouts', 'toggle', { path: riddles.handout! });
+    const path = await handout();
+    if (path) dispatch('handouts', 'set', { path });
   }
-  function resetPlay() {
-    riddles.play = null;
+
+  // Tile puzzles at the table: the GM clicks what the players do; the shown canvas follows at once.
+  const playNow = (): Play => ($state.snapshot(riddles.play) as Play | null) ?? {};
+  const picture = $derived(p?.grid ? mosaicSketch(p.grid, riddles.answer, riddles.play ?? {}) : null);
+  const status = $derived.by(() => {
+    const g = p?.grid;
+    const play = riddles.play ?? {};
+    if (!g) return '';
+    if (g.kind === 'switches') return (play.cells ?? g.cells).every((v) => v === 1) ? t('riddles.switchesSolved') : t('riddles.switchesPlay');
+    if (g.kind === 'mosaic') {
+      const st = mosaicStatus(g, play.placed ?? {});
+      return st === 'solved' ? t('riddles.mosaicSolved') : st === 'wrong' ? t('riddles.mosaicWrong') : t('riddles.mosaicPlay');
+    }
+    const st = pathStatus(g, play.steps ?? []);
+    return st === 'done' ? t('riddles.pathDone') : st === 'wrong' ? t('riddles.pathWrong') : t('riddles.pathPlay');
+  });
+  const tone = $derived(/!$/.test(status) ? 'good' : status === t('riddles.mosaicWrong') || status === t('riddles.pathWrong') ? 'bad' : '');
+  async function setPlay(play: Play | null) {
+    riddles.play = play;
     save();
+    if (p?.grid && riddles.handout) await window.api.writeSketch(riddles.handout, mosaicSketch(p.grid, false, playNow()));
+  }
+  function onPicture(e: MouseEvent) {
+    const g = p?.grid;
+    const sheet = (e.currentTarget as HTMLElement).querySelector('.sheet');
+    if (!g || !sheet) return;
+    const r = sheet.getBoundingClientRect();
+    const i = cellAt(g, (e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
+    if (i < 0) return;
+    const play = playNow();
+    if (g.kind === 'switches') void setPlay({ cells: press(play.cells ?? g.cells, g.w, i) });
+    else if (g.kind === 'mosaic') void setPlay({ placed: placeNext(g, play.placed ?? {}, i) });
+    else void setPlay({ steps: stepOn(g, play.steps ?? [], i) });
   }
 
   function moreHint() {
@@ -91,6 +120,9 @@
     <h2>{t('riddles.title')}</h2>
     <div class="spacer"></div>
     {#if p}
+      <button class="btn" class:primary={!shown} title={shown ? '' : t('riddles.showHint2')} onclick={toggleShown}>
+        {#if shown}<MonitorOff size={14} /> {t('tools.note.removeFromPlayers')}{:else}<MonitorUp size={14} /> {t('tools.note.showToPlayers')}{/if}
+      </button>
       <button class="btn" title={t('riddles.toHandoutHint')} onclick={toHandout}><ScrollText size={14} /> {t('riddles.toHandout')}</button>
       <button class="btn" title={t('tavern.toJournalHint')} onclick={toJournal}><NotebookPen size={14} /> {t('tavern.toJournal')}</button>
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
@@ -126,15 +158,13 @@
       <section class="aloud">
         <h3>{t('riddles.aloud')}</h3>
         {#if p.intro}<p class="intro">{p.intro}</p>{/if}
-        {#if picture && grid}
+        {#if picture}
           <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-          <div class="picture" class:play={grid.kind === 'switches'} onclick={onPicture}><SketchView sketch={picture} /></div>
-          {#if grid.kind === 'switches'}
-            <p class="faint play-line">
-              {solved ? t('riddles.switchesSolved') : t('riddles.switchesPlay')}
-              {#if riddles.play}<button class="btn small" onclick={resetPlay}><RotateCcw size={13} /> {t('riddles.switchesReset')}</button>{/if}
-            </p>
-          {/if}
+          <div class="picture" onclick={onPicture}><SketchView sketch={picture} /></div>
+          <p class="play-line {tone}">
+            <span>{status}</span>
+            {#if riddles.play}<button class="btn small" onclick={() => setPlay(null)}><RotateCcw size={13} /> {t('riddles.switchesReset')}</button>{/if}
+          </p>
         {/if}
         {#if p.kind === 'cipher'}
           <p class="cipher">{p.lines[0]}</p>
@@ -287,13 +317,20 @@
     aspect-ratio: 4 / 3;
     margin-top: 8px;
   }
-  .picture.play {
+  .picture {
     cursor: pointer;
   }
   .play-line {
     display: flex;
     align-items: center;
     gap: 8px;
+    color: var(--text-muted);
+  }
+  .play-line.good {
+    color: var(--success);
+  }
+  .play-line.bad {
+    color: var(--warning);
   }
   .answer {
     font-size: 16px;

@@ -4,6 +4,7 @@ import { locale } from '../../../renderer/lib/i18n.svelte';
 import { en } from './content/en';
 import { ru } from './content/ru';
 import { generatePuzzle } from './generate';
+import type { Play } from './mosaic';
 import type { Kind, Level, Puzzle, PuzzleContent } from './types';
 
 const CONTENT: Record<string, PuzzleContent> = { en, ru };
@@ -16,11 +17,13 @@ interface Saved {
   // How many hints are open, whether the answer is.
   hints: number;
   answer: boolean;
-  // Switches pressed at the table.
-  play: number[] | null;
+  // What the players did at the table (tile puzzles).
+  play: Play | null;
+  // The puzzle's handout (a canvas or a note) once made: shown to the players and updated as they play.
+  handout: string | null;
 }
 function load(): Saved {
-  const empty: Saved = { kind: 'random', level: 'medium', puzzle: null, hints: 0, answer: false, play: null };
+  const empty: Saved = { kind: 'random', level: 'medium', puzzle: null, hints: 0, answer: false, play: null, handout: null };
   try {
     return { ...empty, ...(JSON.parse(localStorage.getItem(KEY) ?? 'null') as Partial<Saved> | null) };
   } catch {
@@ -41,5 +44,6 @@ export function createPuzzle() {
   riddles.hints = 0;
   riddles.answer = false;
   riddles.play = null;
+  riddles.handout = null;
   save();
 }

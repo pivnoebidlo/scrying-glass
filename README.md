@@ -398,7 +398,10 @@ alphabet) with a hint at the key in the world; an order puzzle — statues in ni
 levers or bells and a few carved lines; caskets with inscriptions where only one tells the truth (or only one lies);
 tiles — a mosaic with fallen pieces (no sign twice in a row or a column, spare tiles among the fallen), a path over
 signed tiles stepping on the signs in a given order, or slabs that turn over with their neighbours until all are light
-(click them on the picture as the players step — they turn over for you too). Everything but riddles and ciphers is
+(click them on the picture as the players step — they turn over for you too).
+“Show to players” puts the puzzle on the players’ screen (tiles — as a canvas, the rest — as a note), and with tiles
+the GM plays along: presses a slab, puts a fallen tile into a hole (a click cycles the signs), clicks the tiles the
+heroes step on (footprints; the GM sees at once if a step was wrong) — the players see each move at once. Everything but riddles and ciphers is
 built anew each time and always has exactly one solution (the switches — the fewest presses), with no needless clue;
 tile puzzles are drawn and go to the players as a canvas. Where it
 stands, what happens if the heroes get it wrong and if they solve it; hints open one by one, the answer stays hidden

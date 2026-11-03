@@ -195,6 +195,48 @@ export function makeSwitches(n: number, presses: number, rand: Rand): MosaicGrid
   return { kind: 'switches', w: n, h: n, cells, presses: [0, n * n - 1] };
 }
 
+// --- At the table: what the players did --------------------------------------------------------------------------
+
+// Switches — the slabs as they are now; mosaic — the tiles put into holes (cell → sign); path — the tiles stepped on.
+export interface Play {
+  cells?: number[];
+  placed?: Record<number, Sign>;
+  steps?: number[];
+}
+
+/** A hole clicked: the next of the fallen signs, after the last — empty again. */
+export function placeNext(g: MosaicGrid, placed: Record<number, Sign>, i: number): Record<number, Sign> {
+  if (g.cells[i] !== -1 || !g.loose) return placed;
+  const options = [...new Set(g.loose)].sort((a, b) => a - b);
+  const now = placed[i];
+  const k = now === undefined ? 0 : options.indexOf(now) + 1;
+  const out = { ...placed };
+  if (k < options.length) out[i] = options[k]!;
+  else delete out[i];
+  return out;
+}
+
+export function mosaicStatus(g: MosaicGrid, placed: Record<number, Sign>): 'partial' | 'wrong' | 'solved' {
+  const holes = g.cells.map((v, i) => (v < 0 ? i : -1)).filter((i) => i >= 0);
+  if (holes.some((i) => placed[i] === undefined)) return 'partial';
+  return holes.every((i) => placed[i] === g.solution![i]) ? 'solved' : 'wrong';
+}
+
+/** A tile clicked on the path: a step from the last one (the first — in the near row); the last one again — back. */
+export function stepOn(g: MosaicGrid, steps: number[], i: number): number[] {
+  if (steps.at(-1) === i) return steps.slice(0, -1);
+  if (steps.includes(i)) return steps;
+  if (!steps.length) return i >= (g.h - 1) * g.w ? [i] : steps;
+  return near(steps.at(-1)!, g.w, g.h).includes(i) ? [...steps, i] : steps;
+}
+
+export function pathStatus(g: MosaicGrid, steps: number[]): 'none' | 'going' | 'wrong' | 'done' {
+  if (!steps.length) return 'none';
+  const seq = g.sequence!;
+  if (steps.some((i, k) => g.cells[i] !== seq[k % seq.length])) return 'wrong';
+  return steps.at(-1)! < g.w ? 'done' : 'going';
+}
+
 // --- Drawing ----------------------------------------------------------------------------------------------------
 
 const SHAPE = 'landscape';
@@ -255,8 +297,10 @@ function tile(x: number, y: number, size: number, fill = TILE): SketchItem {
   return { t: 'rect', color: EDGE, width: size * 0.03, x1: x + pad, y1: y + pad * ASPECT, x2: x + size - pad, y2: y + (size - pad) * ASPECT, fill: 'solid', fillColor: fill };
 }
 
-/** The picture; `answer` — with the solution marked (for the GM). */
-export function mosaicSketch(g: MosaicGrid, answer = false): Sketch {
+/** The picture; `answer` — with the solution marked (for the GM), `play` — what the players did. */
+export function mosaicSketch(grid: MosaicGrid, answer = false, play: Play = {}): Sketch {
+  const g = grid.kind === 'switches' && play.cells ? { ...grid, cells: play.cells } : grid;
+  const placed = play.placed ?? {};
   const sk = newSketch({ kind: 'paper', paper: 'parchment', edge: 'straight', shape: SHAPE });
   const { x, y, cell } = layout(g);
   const items: SketchItem[] = [];
@@ -266,6 +310,10 @@ export function mosaicSketch(g: MosaicGrid, answer = false): Sketch {
     const p = at(i);
     if (g.kind === 'switches') {
       items.push(tile(p.x, p.y, cell, v ? LIGHT : DARK));
+      return;
+    }
+    if (v < 0 && placed[i] !== undefined) {
+      items.push(tile(p.x, p.y, cell), ...signItems(placed[i]!, p.cx, p.cy, cell));
       return;
     }
     if (v < 0) {
@@ -280,9 +328,12 @@ export function mosaicSketch(g: MosaicGrid, answer = false): Sketch {
   if (g.kind === 'mosaic' && g.loose) {
     // The fallen tiles in a row below, a little smaller.
     const s = Math.min(cell * 0.8, 0.9 / g.loose.length);
-    const lx = (1 - s * g.loose.length) / 2;
     const ly = y + (g.h + 0.5) * cell * ASPECT;
-    g.loose.forEach((v, k) => items.push(tile(lx + k * s, ly, s * 0.92), ...signItems(v, lx + k * s + s * 0.46, ly + s * 0.46 * ASPECT, s * 0.92)));
+    // The tiles put in are no longer on the floor.
+    const left = [...g.loose];
+    for (const v of Object.values(placed)) if (left.includes(v)) left.splice(left.indexOf(v), 1);
+    const lx = (1 - s * left.length) / 2;
+    left.forEach((v, k) => items.push(tile(lx + k * s, ly, s * 0.92), ...signItems(v, lx + k * s + s * 0.46, ly + s * 0.46 * ASPECT, s * 0.92)));
   }
   if (g.kind === 'path' && g.sequence) {
     // The order above the grid, the way in below and out above.
@@ -298,6 +349,15 @@ export function mosaicSketch(g: MosaicGrid, answer = false): Sketch {
     const mid = x + (g.w * cell) / 2;
     const bottom = y + g.h * cell * ASPECT;
     items.push({ t: 'arrow', color: EDGE, width: cell * 0.05, x1: mid, y1: bottom + cell * 1.0 * ASPECT, x2: mid, y2: bottom + cell * 0.25 * ASPECT, fill: 'none' });
+  }
+  if (g.kind === 'path' && play.steps?.length) {
+    // Footprints on the tiles stepped on; a wrong one — red.
+    const seq = g.sequence!;
+    play.steps.forEach((i, k) => {
+      const p = at(i);
+      const wrong = g.cells[i] !== seq[k % seq.length];
+      items.push({ t: 'rect', color: wrong ? MARK : '#5d4037', width: cell * 0.06, x1: p.x + cell * 0.1, y1: p.y + cell * 0.1 * ASPECT, x2: p.x + cell * 0.9, y2: p.y + cell * 0.9 * ASPECT, fill: 'tint', fillColor: wrong ? MARK : '#8d6e63' });
+    });
   }
   if (answer && g.kind === 'path' && g.path) {
     const pts = g.path.flatMap((i) => [at(i).cx, at(i).cy]);
