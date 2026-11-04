@@ -5,6 +5,7 @@ import { generateTreasure, type Tier, type Treasure } from '../treasure/generate
 import { SIZES } from '../treasure/content';
 import { ATMOSPHERES, BUILDERS, ENTRANCES, FATES, FEATURES, HOOKS, MONSTERS, PLACES, PUZZLES, ROOMS, TRAPS, TWISTS } from './content';
 import { OWNERS } from '../relic/content';
+import { TRAP_DAMAGE } from '../trap/generate';
 
 export const DUNGEON_TYPES = ['tomb', 'cave', 'mine', 'temple', 'fortress', 'tower', 'sewer', 'ruins'] as const;
 export type DungeonType = (typeof DUNGEON_TYPES)[number];
@@ -52,8 +53,7 @@ const MINION_CR: Record<Tier, [number, number]> = { 1: [0.125, 1], 2: [1, 4], 3:
 const BOSS_CR: Record<Tier, [number, number]> = { 1: [2, 3], 2: [4, 8], 3: [9, 14], 4: [15, 30] };
 // A group's total challenge, to tell how many of a creature come together.
 const GROUP_CR: Record<Tier, number> = { 1: 1, 2: 5, 3: 12, 4: 30 };
-// Trap damage (SRD «damage severity by level», dangerous).
-export const TRAP_DICE: Record<Tier, string> = { 1: '2d10', 2: '4d10', 3: '10d10', 4: '18d10' };
+export const TRAP_DICE = TRAP_DAMAGE.dangerous;
 
 export function pickMonster(type: DungeonType, [lo, hi]: [number, number], r: Random, not: number[] = []): number {
   const ok = (i: number) => MONSTERS[i]![2] >= lo && MONSTERS[i]![2] <= hi && !not.includes(i);

@@ -371,6 +371,12 @@ save, DC and damage by the SRD, and the hoard comes from the treasure generator 
 Each part can be rerolled; copy or to the journal (creatures and items as [[links]]). "To an encounter" on a room
 with creatures makes an encounter preset of the current adventure with them and opens it in Initiative.
 
+**Trap generator** (D&D, Tools → Trap generator): the heroes' level, severity (setback, dangerous, deadly), kind
+(mechanical, magical) and place (corridor, door, room, treasure) → a trap ready to run: the mechanism with its save or
+attack and its damage by the SRD tables, what sets it off, how to notice and disarm it, how the locals go past it, a
+complication and who set it. A button rolls the damage or the attack into the roll log. Each part can be rerolled;
+copy or to the journal (with rollable dice).
+
 **Magic item generator** (Tools → Magic item generator): kind (weapon, armour, jewellery, wand or staff, clothing, a
 wondrous thing) and power (curio, minor, major, legendary) → a name, the look, a minor property, who made it and what
 happened to it, a quirk and sometimes a curse. In D&D adventures a minor, major or legendary item stands on an SRD

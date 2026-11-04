@@ -1,6 +1,6 @@
 // D&D 5e in the control window: the stat block and the character sheet, their editors, its tools.
 import type { Component } from 'svelte';
-import { Calculator as CalculatorIcon, CloudSun, DoorOpen, Footprints, Gauge, Gem, Signpost, Sparkles, Store, Wand2, Zap } from '@lucide/svelte';
+import { Bomb, Calculator as CalculatorIcon, CloudSun, DoorOpen, Footprints, Gauge, Gem, Signpost, Sparkles, Store, Wand2, Zap } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import type { ToolDef } from '../../modules/tools/ui/registry.svelte';
 import type { PaperView, SystemUi, StatsEditor, StatsView } from '../ui';
@@ -19,6 +19,7 @@ import WildMagic from './tools/wildmagic/WildMagic.svelte';
 import ShopGenerator from './tools/shop/ShopGenerator.svelte';
 import RelicGenerator from './tools/relic/RelicGenerator.svelte';
 import DungeonGenerator from './tools/dungeon/DungeonGenerator.svelte';
+import TrapGenerator from './tools/trap/TrapGenerator.svelte';
 import WeatherGenerator from './tools/weather/WeatherGenerator.svelte';
 import EventsGenerator from './tools/events/EventsGenerator.svelte';
 import TreasureGenerator from './tools/treasure/TreasureGenerator.svelte';
@@ -47,6 +48,7 @@ export const dnd5eUi: SystemUi = {
     tool('shop', Store, 'tools.side.shop', ShopGenerator),
     tool('relic', Sparkles, 'tools.side.relic', RelicGenerator),
     tool('dungeon', DoorOpen, 'tools.side.dungeon', DungeonGenerator),
+    tool('trap', Bomb, 'tools.side.trap', TrapGenerator),
     tool('weather', CloudSun, 'tools.side.weather', WeatherGenerator),
     tool('events', Signpost, 'tools.side.events', EventsGenerator),
     tool('treasure', Gem, 'tools.side.treasure', TreasureGenerator),
