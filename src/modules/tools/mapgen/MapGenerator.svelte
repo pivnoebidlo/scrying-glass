@@ -1,11 +1,11 @@
-<!-- Map generator (Tools → Map generator, any system): a building, a cave or open country with some rooms or clearings
+<!-- Map generator (Tools → Map generator, any system): a building, a cave, a town quarter or open country with some rooms or places
      → a map for the Maps tab, with fog, a matching grid and a pin on every one. The current map is remembered by the window. -->
 <script lang="ts">
   import { Map as MapIcon } from '@lucide/svelte';
   import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import LayoutCanvas from './LayoutCanvas.svelte';
-  import { generateLayout, isWild, LAYOUT_STYLES, MAX_ROOMS, MIN_ROOMS, roomCount, type Layout, type LayoutStyle } from './layout';
+  import { generateLayout, isOpenAir, LAYOUT_STYLES, MAX_ROOMS, MIN_ROOMS, roomCount, type Layout, type LayoutStyle } from './layout';
   import { layoutToMaps } from './toMaps';
 
   const KEY = 'mapgen.state';
@@ -40,8 +40,8 @@
   async function toMaps() {
     if (!mg.layout) return;
     const l = $state.snapshot(mg.layout) as Layout;
-    const wild = isWild(l.style);
-    const room = (i: number) => ({ title: t(wild ? 'mapgen.place' : 'mapgen.room', { n: i + 1 }), note: '', color: wild ? ('green' as const) : ('gold' as const) });
+    const open = isOpenAir(l.style);
+    const room = (i: number) => ({ title: t(open ? 'mapgen.place' : 'mapgen.room', { n: i + 1 }), note: '', color: open ? ('green' as const) : ('gold' as const) });
     failed = !(await layoutToMaps(l, t(`mapgen.style.${l.style}` as never), l.rooms.map((_, i) => room(i))));
   }
 </script>
@@ -59,7 +59,7 @@
         {#each LAYOUT_STYLES as id (id)}<option value={id}>{t(`mapgen.style.${id}` as never)}</option>{/each}
       </select>
     </label>
-    <label>{t(isWild(mg.style) ? 'mapgen.places' : 'mapgen.rooms')}
+    <label>{t(isOpenAir(mg.style) ? 'mapgen.places' : 'mapgen.rooms')}
       <input type="number" min={MIN_ROOMS} max={MAX_ROOMS} bind:value={mg.rooms} onchange={save} />
     </label>
   </div>

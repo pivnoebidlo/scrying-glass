@@ -1,12 +1,14 @@
 // A generated map as data: floor cells, rooms and doors. Pure and system-free: the picture is drawn from it (draw.ts),
 // and later styles, assets and editing work on the same data. One cell is one square of the map's grid.
 
-export const LAYOUT_STYLES = ['building', 'cave', 'forest', 'meadow', 'shore', 'swamp'] as const;
+export const LAYOUT_STYLES = ['building', 'cave', 'town', 'forest', 'meadow', 'shore', 'swamp'] as const;
 export type LayoutStyle = (typeof LAYOUT_STYLES)[number];
 // Under the open sky: places are clearings joined by paths, not rooms.
 export const WILD_STYLES = ['forest', 'meadow', 'shore', 'swamp'] as const;
 export type WildStyle = (typeof WILD_STYLES)[number];
 export const isWild = (style: LayoutStyle): style is WildStyle => (WILD_STYLES as readonly string[]).includes(style);
+// No walls round a place: it is a clearing, a square or a crossroads, not a room.
+export const isOpenAir = (style: LayoutStyle) => style === 'town' || isWild(style);
 
 export interface LayoutRoom {
   // In cells, the whole room (a cave's chamber lies inside it).
@@ -27,12 +29,14 @@ export interface Layout {
   seed: number;
   w: number;
   h: number;
-  // Rows of h strings of w characters. Walkable: '.' floor or grass, ',' path, 'S' sand, '=' a ford;
-  // not: '#' rock, 'T' tree, 'R' boulder, '~' water.
+  // Rows of h strings of w characters. Walkable: '.' floor or grass, ',' path or street, 'P' paved square, 'S' sand,
+  // '=' a ford; not: '#' rock, 'T' tree, 'R' boulder, '~' water, 'H' a house.
   cells: string[];
   rooms: LayoutRoom[];
   doors: LayoutDoor[];
   pillars: { x: number; y: number }[];
+  // A town's houses, for their roofs; their cells are 'H'.
+  houses?: LayoutRoom[];
 }
 export interface LayoutOptions {
   rooms: number;
@@ -123,7 +127,7 @@ function corridor(a: LayoutRoom, b: LayoutRoom, others: LayoutRoom[], r: Random)
   return null;
 }
 
-export const walkable = (c: string | undefined) => c === '.' || c === ',' || c === 'S' || c === '=';
+export const walkable = (c: string | undefined) => c === '.' || c === ',' || c === 'P' || c === 'S' || c === '=';
 
 interface Margins {
   left: number;
@@ -362,6 +366,92 @@ function wild(placed: Placed, style: WildStyle, r: Random, seed: number): Layout
   return { style, seed, w, h, cells: grid.map((row) => row.join('')), rooms, doors: [], pillars: [] };
 }
 
+// A town quarter: paved squares at the places, streets two cells wide between them, roads out of town, and houses in
+// rows along the streets. Houses never touch, even at a corner, so the alleys between them all join up.
+function town(placed: Placed, o: LayoutOptions, r: Random, seed: number): Layout {
+  const { rooms, links, w, h } = shifted(placed, { left: 6, top: 6, right: 6, bottom: 6 });
+  const grid = Array.from({ length: h }, () => Array.from({ length: w }, () => '.'));
+  // Every third place is a square; the rest are crossroads, a little wider than the streets that meet there.
+  rooms.forEach((a, i) => {
+    const c = centre(a);
+    const small = i % 3 !== 0 && !o.big?.includes(i);
+    const part = small ? { x: c.x - 2, y: c.y - 2, w: 6, h: 6 } : a;
+    for (let y = part.y; y < part.y + part.h; y++) for (let x = part.x; x < part.x + part.w; x++) grid[y]![x] = 'P';
+  });
+  const pave = (x: number, y: number) => {
+    for (let dy = 0; dy < 2; dy++) for (let dx = 0; dx < 2; dx++) if (grid[y + dy]?.[x + dx] === '.') grid[y + dy]![x + dx] = ',';
+  };
+  const street = (from: Cell, to: Cell) => {
+    const bend = r() < 0.5 ? { x: to.x, y: from.y } : { x: from.x, y: to.y };
+    for (const [a, b] of [[from, bend], [bend, to]] as const) {
+      let { x, y } = a;
+      for (;;) {
+        pave(x, y);
+        if (x === b.x && y === b.y) break;
+        x += Math.sign(b.x - x);
+        y += Math.sign(b.y - y);
+      }
+    }
+  };
+  const ways = [...links];
+  // One way round: a town is not a single street.
+  if (!o.chain && rooms.length > 3) {
+    const a = index(rooms.length - 2, r);
+    ways.push([a, a + 2 + index(rooms.length - a - 2, r)]);
+  }
+  for (const [from, to] of ways) street(centre(rooms[from]!), centre(rooms[to]!));
+  // Roads out of town, to the nearest edge.
+  for (const a of [rooms[0]!, rooms[rooms.length - 1]!]) {
+    const c = centre(a);
+    const edges = [{ x: 0, y: c.y }, { x: w - 2, y: c.y }, { x: c.x, y: 0 }, { x: c.x, y: h - 2 }];
+    const far = (e: Cell) => Math.abs(e.x - c.x) + Math.abs(e.y - c.y);
+    street(c, [...edges].sort((p, q) => far(p) - far(q))[0]!);
+  }
+
+  const houses: LayoutRoom[] = [];
+  // The cells of the houses and those next to them.
+  const close = emptyGrid(w, h);
+  const paved = (c: string | undefined) => c === ',' || c === 'P';
+  const fits = (a: LayoutRoom) => {
+    if (a.x < 2 || a.y < 2 || a.x + a.w > w - 2 || a.y + a.h > h - 2) return false;
+    for (let y = a.y; y < a.y + a.h; y++) for (let x = a.x; x < a.x + a.w; x++) if (grid[y]![x] !== '.' || close[y]![x]) return false;
+    return true;
+  };
+  // Does a house look onto the street with a whole side?
+  const onStreet = (a: LayoutRoom) => {
+    const along = (n: number, f: (i: number) => string | undefined) => Array.from({ length: n }, (_, i) => f(i)).every(paved);
+    return along(a.w, (i) => grid[a.y - 1]?.[a.x + i]) || along(a.w, (i) => grid[a.y + a.h]?.[a.x + i]) || along(a.h, (i) => grid[a.y + i]?.[a.x - 1]) || along(a.h, (i) => grid[a.y + i]?.[a.x + a.w]);
+  };
+  const spots: Cell[] = [];
+  for (let y = 2; y < h - 2; y++) for (let x = 2; x < w - 2; x++) if (grid[y]![x] === '.') spots.push({ x, y });
+  const mixed = spots.map((c) => ({ c, k: r() })).sort((a, b) => a.k - b.k).map((a) => a.c);
+  // First the fronts of the streets, then what fits behind them.
+  for (const front of [true, false]) {
+    for (const c of mixed) {
+      for (let t = 0; t < 6; t++) {
+        const a = { ...c, w: 3 + index(4, r), h: 3 + index(3, r) };
+        if (fits(a) && (front ? onStreet(a) : r() < 0.35)) {
+          houses.push(a);
+          for (let y = a.y - 1; y <= a.y + a.h; y++) for (let x = a.x - 1; x <= a.x + a.w; x++) close[y]![x] = true;
+          break;
+        }
+      }
+    }
+  }
+  for (const a of houses) for (let y = a.y; y < a.y + a.h; y++) for (let x = a.x; x < a.x + a.w; x++) grid[y]![x] = 'H';
+  // Trees in the yards, away from the walls; alone, so that nothing gets shut in.
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      let clear = grid[y]![x] === '.';
+      for (let dy = -1; dy <= 1 && clear; dy++) for (let dx = -1; dx <= 1; dx++) if (grid[y + dy]![x + dx] === 'H' || grid[y + dy]![x + dx] === 'T') clear = false;
+      if (clear && r() < 0.14) grid[y]![x] = 'T';
+    }
+  }
+  // A well on a large square, off its middle.
+  const pillars = rooms.flatMap((a, i) => (i % 3 === 0 && a.w >= 9 && a.h >= 9 && r() < 0.7 ? [{ x: a.x + (a.w >> 1) - 3, y: a.y + (a.h >> 1) - 2 }] : []));
+  return { style: 'town', seed, w, h, cells: grid.map((row) => row.join('')), rooms, doors: [], pillars, houses };
+}
+
 // A small deterministic random (mulberry32): from a layout's seed, the same picture and the same places every time.
 export function seededRandom(seed: number): Random {
   let a = seed >>> 0;
@@ -435,7 +525,7 @@ export const cellCentre = (l: Layout, c: Cell, size = 1) => ({ x: (c.x + size / 
 // tunnel is not given away. Rows of cells as [x, y, w, h, …], shares of the map (a fog op).
 export function roomReveal(l: Layout, i: number): number[] {
   const a = l.rooms[i]!;
-  if (isWild(l.style)) {
+  if (isOpenAir(l.style)) {
     // No walls outdoors: an open circle of sight round the clearing.
     const c = { x: a.x + a.w / 2, y: a.y + a.h / 2 };
     const rx = a.w / 2 + 2;
@@ -447,6 +537,13 @@ export function roomReveal(l: Layout, i: number): number[] {
       const x1 = Math.min(l.w, Math.round(c.x + half));
       if (x1 > x0) rows.push(x0 / l.w, y / l.h, (x1 - x0) / l.w, 1 / l.h);
     }
+    // A house the circle reaches shows whole, not cut across its roof.
+    const near = (b: LayoutRoom) => {
+      const dx = Math.max(b.x - c.x, 0, c.x - b.x - b.w) / rx;
+      const dy = Math.max(b.y - c.y, 0, c.y - b.y - b.h) / ry;
+      return dx * dx + dy * dy < 1;
+    };
+    for (const b of l.houses ?? []) if (near(b)) rows.push(b.x / l.w, b.y / l.h, b.w / l.w, b.h / l.h);
     return rows;
   }
   const key = (x: number, y: number) => `${x},${y}`;
@@ -559,12 +656,13 @@ export function ringCells(l: Layout, at: Cell, count: number, r: Random, { near,
 
 export function generateLayout(style: LayoutStyle, o: LayoutOptions, r: Random = Math.random): Layout {
   const seed = index(2 ** 31, r);
-  if (isWild(style)) {
+  if (style === 'town' || isWild(style)) {
+    const make = (placed: Placed) => (style === 'town' ? town(placed, o, r, seed) : wild(placed, style, r, seed));
     for (let t = 0; t < 60; t++) {
       const placed = place(o, true, r, false);
-      if (placed) return wild(placed, style, r, seed);
+      if (placed) return make(placed);
     }
-    return wild(place({ ...o, chain: true }, true, r, true)!, style, r, seed);
+    return make(place({ ...o, chain: true }, true, r, true)!);
   }
   const cavey = style === 'cave';
   for (let t = 0; t < 60; t++) {

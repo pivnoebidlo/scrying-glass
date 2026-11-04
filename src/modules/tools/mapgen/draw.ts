@@ -1,13 +1,21 @@
 // Draws a layout on a canvas, by the app, so that no assets are needed: dark rock with hatching round the walls and a
 // pale floor; outdoors grass, water, paths, trees and boulders. The picture holds nothing secret: it goes to the players; room numbers are the preview's only.
-import { isWild, seededRandom as noise, type Cell, type Layout, type WildStyle } from './layout';
+import { isWild, seededRandom as noise, type Cell, type Layout, type LayoutRoom, type WildStyle } from './layout';
 
 export const CELL = 40;
 const ROCK = '#26221d';
 const HATCH = '#4b443a';
 const WALL = '#120f0b';
 const FLOOR = { building: ['#d9cfb8', '#d3c8af', '#ddd3bd'], cave: ['#b9ad96', '#b2a58d', '#bfb39d'] };
-const GROUND: Record<WildStyle, { grass: string; tuft: string; tree: string[] }> = {
+interface Look {
+  grass: string;
+  tuft: string;
+  tree: string[];
+}
+const TOWN: Look = { grass: '#7f9558', tuft: '#6d8349', tree: ['#3f6a35', '#4a7a3c', '#35592e'] };
+// Lit slope, shaded slope, ridge.
+const ROOFS = [['#a9583c', '#8e4830', '#6f3724'], ['#8f4f3a', '#77412f', '#5b3123'], ['#6a6d78', '#565963', '#42454d'], ['#b59a5e', '#99814d', '#7a673c']] as const;
+const GROUND: Record<WildStyle, Look> = {
   forest: { grass: '#5f7a43', tuft: '#4f6a37', tree: ['#2f5230', '#376036', '#29492c'] },
   meadow: { grass: '#8aa356', tuft: '#769148', tree: ['#3f6a35', '#4a7a3c', '#35592e'] },
   shore: { grass: '#92a35e', tuft: '#7d9050', tree: ['#46733e', '#3c6636', '#528045'] },
@@ -78,13 +86,10 @@ function fillArea(ctx: CanvasRenderingContext2D, area: Path2D, colour: string) {
   ctx.stroke(area);
 }
 
-function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: WildStyle) {
-  const r = noise(l.seed);
-  const look = GROUND[style];
-  const at = (x: number, y: number) => l.cells[y]?.[x];
+// Grass with tufts: small marks that keep it from looking flat.
+function drawGrass(ctx: CanvasRenderingContext2D, l: Layout, c: number, look: Look, r: () => number) {
   ctx.fillStyle = look.grass;
   ctx.fillRect(0, 0, l.w * c, l.h * c);
-  // Tufts: small marks that keep the grass from looking flat.
   ctx.strokeStyle = look.tuft;
   ctx.lineWidth = Math.max(1, c / 20);
   ctx.lineCap = 'round';
@@ -101,6 +106,35 @@ function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: Wi
     }
   }
   ctx.stroke();
+}
+
+function drawTree(ctx: CanvasRenderingContext2D, px: number, py: number, c: number, look: Look, r: () => number) {
+  const size = c * (0.5 + r() * 0.22);
+  ctx.fillStyle = 'rgba(15, 25, 12, 0.35)';
+  ctx.beginPath();
+  ctx.arc(px + size * 0.18, py + size * 0.22, size, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = look.tree[Math.floor(r() * look.tree.length)]!;
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 2 + r();
+    const lobeX = px + Math.cos(angle) * size * 0.48;
+    const lobeY = py + Math.sin(angle) * size * 0.48;
+    ctx.moveTo(lobeX + size * 0.6, lobeY);
+    ctx.arc(lobeX, lobeY, size * 0.6, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255, 255, 220, 0.09)';
+  ctx.beginPath();
+  ctx.arc(px - size * 0.2, py - size * 0.22, size * 0.5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: WildStyle) {
+  const r = noise(l.seed);
+  const look = GROUND[style];
+  const at = (x: number, y: number) => l.cells[y]?.[x];
+  drawGrass(ctx, l, c, look, r);
 
   fillArea(ctx, contour(l, c, (x, y) => at(x, y) === 'S' || at(x, y) === '~').area, '#d9c893');
   fillArea(ctx, contour(l, c, (x, y) => at(x, y) === ',').area, '#a98f63');
@@ -135,26 +169,113 @@ function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: Wi
         ctx.stroke();
         continue;
       }
-      const size = c * (0.5 + r() * 0.22);
-      ctx.fillStyle = 'rgba(15, 25, 12, 0.35)';
-      ctx.beginPath();
-      ctx.arc(px + size * 0.18, py + size * 0.22, size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = look.tree[Math.floor(r() * look.tree.length)]!;
-      ctx.beginPath();
-      for (let i = 0; i < 5; i++) {
-        const angle = (i / 5) * Math.PI * 2 + r();
-        const lobeX = px + Math.cos(angle) * size * 0.48;
-        const lobeY = py + Math.sin(angle) * size * 0.48;
-        ctx.moveTo(lobeX + size * 0.6, lobeY);
-        ctx.arc(lobeX, lobeY, size * 0.6, 0, Math.PI * 2);
-      }
-      ctx.fill();
-      ctx.fillStyle = 'rgba(255, 255, 220, 0.09)';
-      ctx.beginPath();
-      ctx.arc(px - size * 0.2, py - size * 0.22, size * 0.5, 0, Math.PI * 2);
-      ctx.fill();
+      drawTree(ctx, px, py, c, look, r);
     }
+  }
+}
+
+// A roof from above: two slopes that meet at the ridge, rows of tiles or thatch, a chimney on some.
+function drawHouse(ctx: CanvasRenderingContext2D, a: LayoutRoom, c: number, r: () => number) {
+  const roof = ROOFS[Math.floor(r() * ROOFS.length)]!;
+  const x = a.x * c + c * 0.06;
+  const y = a.y * c + c * 0.06;
+  const w = a.w * c - c * 0.12;
+  const h = a.h * c - c * 0.12;
+  ctx.fillStyle = 'rgba(20, 16, 10, 0.4)';
+  ctx.fillRect(x + c * 0.16, y + c * 0.2, w, h);
+  const across = w >= h;
+  // Across the ridge: the lit slope, then the one in shade.
+  ctx.fillStyle = roof[0];
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = roof[1];
+  if (across) ctx.fillRect(x, y + h / 2, w, h / 2);
+  else ctx.fillRect(x + w / 2, y, w / 2, h);
+  ctx.strokeStyle = 'rgba(30, 20, 12, 0.3)';
+  ctx.lineWidth = Math.max(1, c / 26);
+  ctx.beginPath();
+  const step = c * 0.32;
+  for (let t = step; t < (across ? h : w); t += step) {
+    if (across) {
+      ctx.moveTo(x, y + t);
+      ctx.lineTo(x + w, y + t);
+    } else {
+      ctx.moveTo(x + t, y);
+      ctx.lineTo(x + t, y + h);
+    }
+  }
+  ctx.stroke();
+  ctx.strokeStyle = roof[2];
+  ctx.lineWidth = Math.max(1, c / 9);
+  ctx.beginPath();
+  ctx.moveTo(across ? x : x + w / 2, across ? y + h / 2 : y);
+  ctx.lineTo(across ? x + w : x + w / 2, across ? y + h / 2 : y + h);
+  ctx.stroke();
+  ctx.strokeStyle = WALL;
+  ctx.lineWidth = Math.max(1, c / 12);
+  ctx.strokeRect(x, y, w, h);
+  if (r() < 0.6) {
+    const s = c * 0.34;
+    const cx = x + w * (0.2 + r() * 0.6) - s / 2;
+    const cy = y + h * (0.2 + r() * 0.6) - s / 2;
+    ctx.fillStyle = '#6b5f55';
+    ctx.fillRect(cx, cy, s, s);
+    ctx.strokeRect(cx, cy, s, s);
+  }
+}
+
+function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
+  const r = noise(l.seed);
+  const at = (x: number, y: number) => l.cells[y]?.[x];
+  drawGrass(ctx, l, c, TOWN, r);
+  const stone = (x: number, y: number) => at(x, y) === ',' || at(x, y) === 'P';
+  const road = contour(l, c, stone);
+  fillArea(ctx, road.area, '#b3a78f');
+  // Cobbles on the streets, flagstones on the squares.
+  ctx.save();
+  ctx.clip(road.area);
+  ctx.strokeStyle = 'rgba(70, 60, 46, 0.3)';
+  ctx.lineWidth = Math.max(1, c / 26);
+  ctx.beginPath();
+  for (let y = 0; y < l.h; y++) {
+    for (let x = 0; x < l.w; x++) {
+      if (at(x, y) === 'P') {
+        const half = (y % 2) * c * 0.5;
+        ctx.rect(x * c + half, y * c, c, c * 0.5);
+      } else if (at(x, y) === ',') {
+        for (let i = 0; i < 3; i++) {
+          const px = (x + 0.15 + r() * 0.7) * c;
+          const py = (y + 0.15 + r() * 0.7) * c;
+          ctx.moveTo(px + c * 0.1, py);
+          ctx.arc(px, py, c * 0.1, 0, Math.PI * 2);
+        }
+      }
+    }
+  }
+  ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(60, 50, 36, 0.55)';
+  ctx.lineWidth = Math.max(1, c / 14);
+  ctx.lineCap = 'round';
+  ctx.stroke(road.edges);
+  for (let y = 0; y < l.h; y++) {
+    for (let x = 0; x < l.w; x++) if (at(x, y) === 'T') drawTree(ctx, (x + 0.5) * c, (y + 0.5) * c, c, TOWN, r);
+  }
+  for (const a of l.houses ?? []) drawHouse(ctx, a, c, r);
+  // Wells.
+  for (const p of l.pillars) {
+    const px = (p.x + 0.5) * c;
+    const py = (p.y + 0.5) * c;
+    ctx.fillStyle = '#7d7a72';
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1, c / 12);
+    ctx.beginPath();
+    ctx.arc(px, py, c * 0.46, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#2c5566';
+    ctx.beginPath();
+    ctx.arc(px, py, c * 0.26, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
@@ -260,6 +381,7 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
 
 export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, over: Overlay = {}) {
   if (isWild(l.style)) drawWild(ctx, l, c, l.style);
+  else if (l.style === 'town') drawTown(ctx, l, c);
   else drawIndoor(ctx, l, c);
 
   for (const m of over.marks ?? []) {

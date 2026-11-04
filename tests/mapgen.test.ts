@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cellCentre, generateLayout, groupCells, LAYOUT_STYLES, roomCells, roomCentre, roomReveal, walkable, WILD_STYLES, type Layout } from '../src/modules/tools/mapgen/layout';
+import { cellCentre, generateLayout, groupCells, inReveal, LAYOUT_STYLES, roomCells, roomCentre, roomReveal, walkable, WILD_STYLES, type Layout } from '../src/modules/tools/mapgen/layout';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
@@ -153,6 +153,37 @@ describe('генератор карт', () => {
     for (let n = 0; n < rects.length; n += 4) {
       expect(rects[n]! * l.w).toBeGreaterThanOrEqual(a.x - 2.5);
       expect((rects[n]! + rects[n + 2]!) * l.w).toBeLessThanOrEqual(a.x + a.w + 2.5);
+    }
+  });
+
+  it('город: площади связаны улицами, дома не на них и не касаются друг друга, у домов есть подход', () => {
+    const r = seeded(29);
+    for (const rooms of [3, 5, 9, 16, 30]) {
+      for (let i = 0; i < 10; i++) {
+        const l = generateLayout('town', { rooms }, r);
+        expect(l.rooms).toHaveLength(rooms);
+        for (const row of l.cells) expect(row).toHaveLength(l.w);
+        const seen = reached(l);
+        for (const a of l.rooms) {
+          expect(seen.has(`${a.x + (a.w >> 1)},${a.y + (a.h >> 1)}`)).toBe(true);
+          expect(roomCells(l, l.rooms.indexOf(a)).length).toBeGreaterThan(20);
+        }
+        // All free ground joins up: no yard is shut in by houses.
+        expect(seen.size).toBe(l.cells.join('').split('').filter(walkable).length);
+        const houses = l.houses!;
+        expect(houses.length).toBeGreaterThan(rooms);
+        expect(houses.reduce((n, a) => n + a.w * a.h, 0)).toBe(l.cells.join('').split('H').length - 1);
+        const apart = houses.every((a) => houses.every((b) => a === b || a.x > b.x + b.w || b.x > a.x + a.w || a.y > b.y + b.h || b.y > a.y + a.h));
+        expect(apart).toBe(true);
+        for (const p of l.pillars) expect(l.cells[p.y]![p.x]).toBe('P');
+        const sight = roomReveal(l, 0);
+        expect(sight.length).toBeGreaterThan(0);
+        // A house is seen whole or not at all.
+        for (const a of houses) {
+          const cells = Array.from({ length: a.w * a.h }, (_, n) => inReveal(l, sight, { x: a.x + (n % a.w), y: a.y + Math.floor(n / a.w) }));
+          expect(new Set(cells).size).toBe(1);
+        }
+      }
     }
   });
 });
