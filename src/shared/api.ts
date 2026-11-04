@@ -133,6 +133,8 @@ export interface Api {
   readSketch(path: string): Promise<Sketch | null>;
   writeSketch(path: string, sketch: Sketch): Promise<boolean>;
   createSketch(folder: string, title: string, sketch: Sketch): Promise<string | null>;
+  // A generated picture into a maps folder, under a free name; its path.
+  addMapImage(folder: string, title: string, data: Uint8Array): Promise<string | null>;
   renameSketch(path: string, title: string): Promise<string | null>;
 
   // Справочник (shared/compendium.ts): Markdown-записи в папках справочника хранилища и в библиотеке

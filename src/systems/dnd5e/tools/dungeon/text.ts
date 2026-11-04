@@ -38,20 +38,27 @@ export interface DungeonLabels {
 }
 
 // rollable — the dice of the traps as {2d10} (the journal rolls them).
+function roomLines(x: Room, lang: DungeonLang, l: DungeonLabels, rollable: boolean): string[] {
+  const out = [roomText(x, lang)];
+  if (x.monster) out.push(`**${l.creatures}:** [[${monsterName(x, lang)}]]${x.monster.count > 1 ? ` ×${x.monster.count}` : ''}`);
+  if (x.puzzle !== undefined) out.push(`**${l.puzzle}:** ${puzzleText(x, lang)}`);
+  if (x.trap) out.push(`**${l.trap}: ${trapName(x.trap, lang)}**`, ...trapLines(x.trap, lang, l.trapLabels, rollable));
+  if (x.role === 'reward') {
+    out.push(`**${l.hoard}:**\n${l.hoardLines.map((h) => `- ${h}`).join('\n')}`);
+    if (x.twist !== undefined) out.push(`**${l.twist}:** ${twistText(x, lang)}`);
+  }
+  return out;
+}
+
+// What the pin of a room says to the GM on the map.
+export const roomNote = (x: Room, lang: DungeonLang, l: DungeonLabels) => roomLines(x, lang, l, false).join('\n\n').replace(/\*|\[\[|\]\]/g, '');
+
 export function dungeonMarkdown(d: Dungeon, lang: DungeonLang, l: DungeonLabels, heading = true, rollable = false): string {
   const o = overview(d, lang);
   const out = heading ? [`# ${dungeonName(d, lang)}`, ''] : [];
   out.push(`> ${o.atmosphere}`, '', `- **${l.builder}:** ${o.builder}. ${o.fate}`, `- **${l.entrance}:** ${o.entrance}`, `- **${l.hook}:** ${o.hook}`, '');
   d.rooms.forEach((x, i) => {
-    out.push(`## ${l.room(i + 1)} — ${l.role(x.role)}`, '', roomText(x, lang));
-    if (x.monster) out.push('', `**${l.creatures}:** [[${monsterName(x, lang)}]]${x.monster.count > 1 ? ` ×${x.monster.count}` : ''}`);
-    if (x.puzzle !== undefined) out.push('', `**${l.puzzle}:** ${puzzleText(x, lang)}`);
-    if (x.trap) out.push('', `### ${l.trap}: ${trapName(x.trap, lang)}`, ...trapLines(x.trap, lang, l.trapLabels, rollable).flatMap((line) => ['', line]));
-    if (x.role === 'reward') {
-      out.push('', `**${l.hoard}:**`, ...l.hoardLines.map((h) => `- ${h}`));
-      if (x.twist !== undefined) out.push('', `**${l.twist}:** ${twistText(x, lang)}`);
-    }
-    out.push('');
+    out.push(`## ${l.room(i + 1)} — ${l.role(x.role)}`, '', ...roomLines(x, lang, l, rollable).flatMap((line) => [line, '']));
   });
   return out.join('\n').trim();
 }

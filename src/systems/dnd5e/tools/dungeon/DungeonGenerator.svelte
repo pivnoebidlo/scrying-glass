@@ -3,7 +3,7 @@
      treasure generator. Each part can be rerolled; copy or to the journal. The dungeon is remembered by the window. -->
 <script lang="ts">
   import Lead from '../../../../renderer/lib/Lead.svelte';
-  import { Check, Copy, DoorOpen, NotebookPen, RefreshCw, Swords } from '@lucide/svelte';
+  import { Check, Copy, DoorOpen, Map as MapIcon, NotebookPen, RefreshCw, Swords } from '@lucide/svelte';
   import { toEncounter } from '../../../../modules/tools/encounter';
   import { onMount, type Snippet } from 'svelte';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
@@ -20,12 +20,18 @@
   import { ru as npcRu } from '../../../../modules/tools/npc/content/ru';
   import { pickItems, rarityOf, TIERS, type Rarity, type Tier } from '../treasure/generate';
   import { coinsLine, valuableLines, type TreasureWords } from '../treasure/text';
-  import { DUNGEON_TYPES, dungeonTrap, generateDungeon, generateDungeonPart, upgradeDungeon, type Dungeon, type DungeonPart, type DungeonType, type Room } from './generate';
-  import { dungeonMarkdown, dungeonName, monsterName, overview, puzzleText, roomText, twistText, type DungeonLabels, type DungeonLang } from './text';
+  import { DUNGEON_TYPES, dungeonTrap, generateDungeon, generateDungeonPart, upgradeDungeon, type Dungeon, type DungeonPart, type DungeonType, type Role, type Room } from './generate';
+  import { dungeonMarkdown, dungeonName, monsterName, overview, puzzleText, roomNote, roomText, twistText, type DungeonLabels, type DungeonLang } from './text';
   import { trapDice } from '../trap/generate';
   import { trapFacts, trapLabels, trapName, trapTexts } from '../trap/text';
   import TrapRoll from '../trap/TrapRoll.svelte';
+  import LayoutCanvas from '../../../../modules/tools/mapgen/LayoutCanvas.svelte';
+  import { layoutToMaps, type RoomPin } from '../../../../modules/tools/mapgen/toMaps';
+  import { connectCards } from '../../../../modules/bestiary/ui/cards.svelte';
+  import { findCard } from '../../../../modules/tools/encounter';
 
+  const PIN_COLOR: Record<Role, RoomPin['color']> = { guardian: 'red', puzzle: 'blue', lair: 'red', empty: 'white', trap: 'gold', climax: 'violet', reward: 'green' };
+  const PIN_ICON: Record<Role, RoomPin['icon']> = { guardian: 'shield', puzzle: 'question', lair: 'swords', empty: 'pin', trap: 'flame', climax: 'skull', reward: 'gem' };
   const KEY = 'dungeon.state';
   interface Saved {
     type: DungeonType | 'random';
@@ -77,6 +83,22 @@
     dg.dnd = dnd;
     dg.items = chooseItems(d.hoard.magic, dnd);
     save();
+  }
+  // The plan goes to Maps: on each room a hidden pin with what the GM needs there and its creatures' cards.
+  let noMaps = $state(false);
+  async function toMaps(d: Dungeon) {
+    await connectCards();
+    const pins = d.rooms.map((x, i): RoomPin => {
+      const card = x.monster ? findCard(monsterName(x, lang), lang) : undefined;
+      return {
+        title: `${i + 1}. ${t(`dungeon.role.${x.role}` as never)}`,
+        note: roomNote(x, lang, labels(d)),
+        color: PIN_COLOR[x.role],
+        icon: PIN_ICON[x.role],
+        ...(card ? { cards: [card.ref] } : {}),
+      };
+    });
+    noMaps = !(await layoutToMaps(d.map, dungeonName(d, lang), pins));
   }
   function rerollTrap(i: number) {
     if (!dg.dungeon) return;
@@ -234,6 +256,12 @@
         {#if missing}<p class="faint">{missing}</p>{/if}
       {/snippet}
       {@render part('rooms', roomsBody)}
+      {#snippet mapBody()}
+        <LayoutCanvas layout={d.map} />
+        <div class="map-actions"><button class="btn" title={t('mapgen.toMapsHint')} onclick={() => toMaps(d)}><MapIcon size={14} /> {t('mapgen.toMaps')}</button></div>
+        {#if noMaps}<p class="faint">{t('mapgen.noFolder')}</p>{/if}
+      {/snippet}
+      {@render part('map', mapBody)}
       {#snippet hoardBody()}
         <ul>
           {#each hoardLines(d) as h, i (i)}
@@ -372,7 +400,8 @@
   .room p {
     margin: 4px 0 0;
   }
-  .trap-roll {
+  .trap-roll,
+  .map-actions {
     margin-top: 6px;
   }
   .rule {

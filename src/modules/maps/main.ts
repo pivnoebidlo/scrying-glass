@@ -56,6 +56,11 @@ export default defineModule({
       return s.maps[path] ? s : withMap(s, path, (d) => d);
     },
 
+    // A map the generator just made: the grid matches its cells, the pins are its rooms.
+    generated(s, { path, cells, pins }: { path: string; cells: number; pins: MapPin[] }) {
+      return withMap(s, path, (d) => ({ ...d, grid: { ...d.grid, on: true, cells: Math.min(200, Math.max(2, cells)), ox: 0, oy: 0 }, pins }));
+    },
+
     show(s, { path }: { path: string }) {
       return { ...withMap(s, path, (d) => d), current: path };
     },

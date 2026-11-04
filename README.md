@@ -369,8 +369,14 @@ fight and the reward (eight rooms add lairs and a quiet room); who built it and 
 atmosphere and a hook. Creatures are SRD cards by the level (a click opens the card); traps come from the trap generator, with how to
 notice, disarm and pass them (saves, DCs and damage by the SRD in D&D adventures, a button rolls the damage, a trap
 can be rerolled on its own), and the hoard comes from the treasure generator with magic items from the compendium.
-Each part can be rerolled; copy or to the journal (creatures and items as [[links]]). "To an encounter" on a room
+The Map part draws the plan: built places as rooms and corridors, caves, mines and sewers as caves. "To Maps" makes it a
+map with a hidden pin on each room: the room's text is the pin's note, its creatures are linked. Each part can be
+rerolled; copy or to the journal (creatures and items as [[links]]). "To an encounter" on a room
 with creatures makes an encounter preset of the current adventure with them and opens it in Initiative.
+
+**Map generator** (Tools → Map generator, any system): a building or a cave with 3–12 rooms, drawn by the app. "To Maps"
+adds the picture to the current adventure with the fog of war, a grid that matches its cells and a hidden pin on every
+room. Room numbers are only in the preview and on your pins: the players see a clean map.
 
 **Trap generator** (D&D, Tools → Trap generator): the heroes' level, severity (setback, dangerous, deadly), kind
 (mechanical, magical) and place (corridor, door, room, treasure) → a trap ready to run: the mechanism with its save or

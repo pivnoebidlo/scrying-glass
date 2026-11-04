@@ -541,6 +541,15 @@ ipcMain.handle('sketches:create', async (_event, { folder, title, sketch }: { fo
   if (rel) await afterNoteWrite();
   return rel;
 });
+// A generated map: the window draws it, the core only writes the file.
+ipcMain.handle('maps:addImage', async (_event, { folder, title, data }: { folder: string; title: string; data: Uint8Array }) => {
+  const dir = resolveInVault(folder);
+  if (!dir || !isDir(dir)) return null;
+  const name = freeName(dir, `${title.replace(/[/\\:*?"<>|]/g, ' ').trim().slice(0, 120) || 'map'}.png`);
+  fs.writeFileSync(path.join(dir, name), data, { flag: 'wx' });
+  await afterNoteWrite();
+  return folder ? `${folder}/${name}` : name;
+});
 // Text files (compendium entries) in the vault or the library («library:…»).
 const resolveText = resolver(resolveInVault, resolveInLibrary);
 // Справочник: записи в папках справочника хранилища и в библиотеке («library:compendium/…»).

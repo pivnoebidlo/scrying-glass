@@ -6,6 +6,7 @@ import { SIZES } from '../treasure/content';
 import { ATMOSPHERES, BUILDERS, ENTRANCES, FATES, FEATURES, HOOKS, MONSTERS, PLACES, PUZZLES, ROOMS, TWISTS } from './content';
 import { OWNERS } from '../relic/content';
 import { generateTrap, type Trap } from '../trap/generate';
+import { generateLayout, type Layout, type LayoutStyle } from '../../../../modules/tools/mapgen/layout';
 
 export const DUNGEON_TYPES = ['tomb', 'cave', 'mine', 'temple', 'fortress', 'tower', 'sewer', 'ruins'] as const;
 export type DungeonType = (typeof DUNGEON_TYPES)[number];
@@ -35,9 +36,11 @@ export interface Dungeon {
   atmosphere: number;
   hook: number;
   rooms: Room[];
+  // The plan: rooms in the order of `rooms`, one after another.
+  map: Layout;
   hoard: Treasure;
 }
-export const DUNGEON_PARTS = ['name', 'overview', 'rooms', 'hoard'] as const;
+export const DUNGEON_PARTS = ['name', 'overview', 'rooms', 'map', 'hoard'] as const;
 export type DungeonPart = (typeof DUNGEON_PARTS)[number];
 
 type Random = () => number;
@@ -72,9 +75,10 @@ export function dungeonTrap(tier: Tier, r: Random = Math.random, not?: number): 
   return x;
 }
 
-// A dungeon remembered from before 0.78: its traps were one line ({ index, dc }), now they are the generator's.
+// A dungeon remembered from an older version: traps were one line ({ index, dc }), there was no plan.
 export function upgradeDungeon(d: Dungeon, r: Random = Math.random): Dungeon {
-  return { ...d, rooms: d.rooms.map((x) => (x.trap && !('mechanism' in x.trap) ? { ...x, trap: dungeonTrap(d.tier, r) } : x)) };
+  const rooms = d.rooms.map((x) => (x.trap && !('mechanism' in x.trap) ? { ...x, trap: dungeonTrap(d.tier, r) } : x));
+  return { ...d, rooms, map: d.map ?? planOf({ type: d.type, rooms }, r) };
 }
 
 function roomFor(role: Role, d: Pick<Dungeon, 'type' | 'tier'>, r: Random, used: number[]): Room {
@@ -112,6 +116,14 @@ export function generateRooms(d: Pick<Dungeon, 'type' | 'tier'>, count: number, 
   return rooms.map((room, i) => ({ ...room, room: kinds[i] ?? room.room, feature: features[i] ?? room.feature }));
 }
 
+// Natural or dug places are caves on the map, the rest are built.
+const MAP_STYLE: Record<DungeonType, LayoutStyle> = { tomb: 'building', cave: 'cave', mine: 'cave', temple: 'building', fortress: 'building', tower: 'building', sewer: 'cave', ruins: 'building' };
+
+const planOf = (d: Pick<Dungeon, 'type' | 'rooms'>, r: Random) => {
+  const climax = d.rooms.findIndex((x) => x?.role === 'climax');
+  return generateLayout(MAP_STYLE[d.type], { rooms: d.rooms.length, chain: true, big: climax < 0 ? [] : [climax] }, r);
+};
+
 export function generateDungeonPart(part: DungeonPart, d: Dungeon, r: Random = Math.random): Partial<Dungeon> {
   switch (part) {
     case 'name':
@@ -126,6 +138,8 @@ export function generateDungeonPart(part: DungeonPart, d: Dungeon, r: Random = M
       };
     case 'rooms':
       return { rooms: generateRooms(d, d.rooms?.length ?? 5, r) };
+    case 'map':
+      return { map: planOf(d, r) };
     case 'hoard':
       return { hoard: generateTreasure('hoard', d.tier, SIZES, r) };
   }

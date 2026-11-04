@@ -85,7 +85,7 @@ describe('подземелья', () => {
     });
     const dice = TRAP_DAMAGE.dangerous[2];
     const journal = dungeonMarkdown(d, 'en', l(true), false, true);
-    expect(journal).toContain(`### Trap: ${trapName(trap, 'en')}`);
+    expect(journal).toContain(`**Trap: ${trapName(trap, 'en')}**`);
     if (mechanismOf(trap)?.damage) expect(journal).toContain(`{${dice}}`);
     expect(dungeonMarkdown(d, 'en', l(true))).not.toContain(`{${dice}}`);
     const plain = dungeonMarkdown(d, 'en', l(false));
@@ -99,5 +99,16 @@ describe('подземелья', () => {
     const next = upgradeDungeon(old, seeded(5));
     expect(next.rooms.find((x) => x.trap)!.trap!.tier).toBe(2);
     expect(upgradeDungeon(d, seeded(5))).toEqual(d);
+  });
+
+  it('у подземелья есть план: комнат столько же, вид по месту, финальная комната больше', () => {
+    const r = seeded(31);
+    expect(generateDungeon('cave', 1, 8, r).map).toMatchObject({ style: 'cave' });
+    const d = generateDungeon('tomb', 1, 5, r);
+    expect(d.map.style).toBe('building');
+    expect(d.map.rooms).toHaveLength(5);
+    expect(d.map.rooms[3]!.w).toBeGreaterThanOrEqual(8);
+    const { map: _gone, ...old } = d;
+    expect(upgradeDungeon(old as typeof d, r).map.rooms).toHaveLength(5);
   });
 });
