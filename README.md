@@ -366,8 +366,9 @@ Player's Handbook and other books are not open, so they are not built in — pas
 **Dungeon generator** (Tools → Dungeon generator): kind (tomb, caves, mine, temple, fortress, wizard's tower, sewers,
 ruins), the heroes' level and 5 or 8 rooms → a "five-room dungeon": a guarded entrance, a puzzle, a trap, the final
 fight and the reward (eight rooms add lairs and a quiet room); who built it and what happened to it, the entrance, the
-atmosphere and a hook. Creatures are SRD cards by the level (a click opens the card); in D&D adventures traps have a
-save, DC and damage by the SRD, and the hoard comes from the treasure generator with magic items from the compendium.
+atmosphere and a hook. Creatures are SRD cards by the level (a click opens the card); traps come from the trap generator, with how to
+notice, disarm and pass them (saves, DCs and damage by the SRD in D&D adventures, a button rolls the damage, a trap
+can be rerolled on its own), and the hoard comes from the treasure generator with magic items from the compendium.
 Each part can be rerolled; copy or to the journal (creatures and items as [[links]]). "To an encounter" on a room
 with creatures makes an encounter preset of the current adventure with them and opens it in Initiative.
 

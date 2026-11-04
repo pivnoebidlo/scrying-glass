@@ -249,31 +249,6 @@ export const PUZZLES: Pair[] = [
   ['A sand clock that must be turned at the exact moment a bell rings.', 'Песочные часы, которые нужно перевернуть точно в момент удара колокола.'],
 ];
 
-// [en, ru, save ability (systems/dnd5e key), damage type en, damage type ru (genitive)].
-export type Trap = [en: string, ru: string, save: string, dmgEn: string, dmgRu: string];
-export const TRAPS: Trap[] = [
-  ['A pressure plate fires poisoned darts from the walls.', 'Нажимная плита — из стен вылетают отравленные дротики.', 'dex', 'poison', 'урона ядом'],
-  ['A section of floor tilts into a pit with spikes.', 'Часть пола опрокидывается в яму с кольями.', 'dex', 'piercing', 'колющего урона'],
-  ['A tripwire brings down a block of stone.', 'Растяжка обрушивает каменный блок.', 'dex', 'bludgeoning', 'дробящего урона'],
-  ['A glyph on the door explodes in flame.', 'Знак на двери взрывается пламенем.', 'dex', 'fire', 'урона огнём'],
-  ['The door seals and the room fills with sand.', 'Дверь запирается, и комната заполняется песком.', 'str', 'bludgeoning', 'дробящего урона'],
-  ['A blade swings out of the ceiling at neck height.', 'Из потолка на уровне шеи вылетает лезвие.', 'dex', 'slashing', 'рубящего урона'],
-  ['Green gas hisses out of the skulls on the walls.', 'Из черепов на стенах с шипением выходит зелёный газ.', 'con', 'poison', 'урона ядом'],
-  ['A cursed idol whispers to whoever touches it.', 'Проклятый идол шепчет тому, кто к нему прикоснётся.', 'wis', 'psychic', 'психического урона'],
-  ['Lightning arcs between two bronze pillars.', 'Между двумя бронзовыми колоннами бьёт молния.', 'dex', 'lightning', 'урона электричеством'],
-  ['Frost spreads from a rune on the floor.', 'От руны на полу расползается иней.', 'con', 'cold', 'урона холодом'],
-  ['A rune releases a thunderclap that shakes dust from the ceiling.', 'Руна выпускает громовой раскат, с потолка сыплется пыль.', 'con', 'thunder', 'урона звуком'],
-  ['Acid sprays from the mouths of carved gargoyles.', 'Из пастей резных горгулий брызжет кислота.', 'dex', 'acid', 'урона кислотой'],
-  ['A sarcophagus lid slides open and a black mist pours out.', 'Крышка саркофага отъезжает, и выползает чёрный туман.', 'con', 'necrotic', 'некротического урона'],
-  ['A holy symbol on the floor blazes at anyone unworthy.', 'Священный символ на полу вспыхивает перед недостойными.', 'con', 'radiant', 'урона излучением'],
-  ['An invisible wall of force slams shut and pushes toward a pit.', 'Невидимая силовая стена захлопывается и толкает к яме.', 'str', 'force', 'урона силовым полем'],
-  ['The floor turns into a slide toward spinning blades.', 'Пол превращается в горку, ведущую к вращающимся лезвиям.', 'dex', 'slashing', 'рубящего урона'],
-  ['A cage drops from the ceiling, and spikes rise from its floor.', 'С потолка падает клетка, а из её пола поднимаются шипы.', 'dex', 'piercing', 'колющего урона'],
-  ['Burning oil pours from holes in the walls.', 'Из отверстий в стенах льётся горящее масло.', 'dex', 'fire', 'урона огнём'],
-  ['A mirror shows a hero’s worst memory.', 'Зеркало показывает худшее воспоминание героя.', 'wis', 'psychic', 'психического урона'],
-  ['A rolling boulder comes down the corridor.', 'По коридору катится валун.', 'dex', 'bludgeoning', 'дробящего урона'],
-];
-
 export const TWISTS: Pair[] = [
   ['The real treasure is a map to a second, deeper level.', 'Настоящее сокровище — карта второго, более глубокого уровня.'],
   ['The hoard belongs to someone still alive who will want it back.', 'Клад принадлежит тому, кто ещё жив и захочет его вернуть.'],

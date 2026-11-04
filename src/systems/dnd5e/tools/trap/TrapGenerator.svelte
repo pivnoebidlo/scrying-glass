@@ -1,21 +1,20 @@
 <!-- Trap generator (Tools → Trap generator): level, severity, kind and place → a mechanism with SRD numbers, its trigger,
      how to notice and disarm it, a way past, a complication and who set it. Each part can be rerolled; damage and
-     attacks roll into the roll log; copy and to the journal. Not for Telegram: the page is the GM's secret. The current
+     attacks roll into the roll log (TrapRoll); copy and to the journal. Not for Telegram: the page is the GM's secret. The current
      trap is remembered by the window. -->
 <script lang="ts">
   import Lead from '../../../../renderer/lib/Lead.svelte';
-  import { Bomb, Check, Copy, Dices, NotebookPen, RefreshCw } from '@lucide/svelte';
+  import { Bomb, Check, Copy, NotebookPen, RefreshCw } from '@lucide/svelte';
   import type { Snippet } from 'svelte';
   import { locale, t } from '../../../../renderer/lib/i18n.svelte';
   import { openTab } from '../../../../renderer/lib/nav';
-  import { rolls } from '../../../../renderer/lib/rolls.svelte';
   import { store } from '../../../../renderer/lib/store.svelte';
   import { journalFolder } from '../../../../modules/journal/ui/store.svelte';
   import { openPage } from '../../../../modules/journal/ui/ui.svelte';
-  import { dict } from '../../stats';
   import { TIERS, type Tier } from '../treasure/generate';
   import { generateTrap, generateTrapPart, SEVERITIES, TRAP_KINDS, TRAP_PLACES, trapDice, type Severity, type Trap, type TrapKind, type TrapPart, type TrapPlace } from './generate';
-  import { damageType, mechanismOf, trapMarkdown, trapName, trapTexts, type TrapLabels, type TrapLang } from './text';
+  import TrapRoll from './TrapRoll.svelte';
+  import { trapLabels, trapMarkdown, trapName, trapTexts, type TrapLang } from './text';
 
   const KEY = 'trap.state';
   interface Saved {
@@ -58,50 +57,18 @@
 
   const subtitle = (x: Trap) =>
     `${t(`trap.kind.${x.kind}` as never)} · ${t(`trap.place.${x.place}` as never)} · ${t(`trap.severity.${x.severity}` as never)} · ${t('trap.levels', { levels: TIER_LEVELS[x.tier] })}`;
-  const skill = (id: string) => (dict(locale.lang).skills as Record<string, string>)[id] ?? id;
-  const ability = (id: string) => (dict(locale.lang).abilities as Record<string, string>)[id] ?? id;
-  function rule(x: Trap, dice: string) {
-    const m = mechanismOf(x);
-    if (!m) return '';
-    const type = damageType(x, lang);
-    if (!m.save) return t('trap.rule.attack', { bonus: x.attack, dice, type });
-    const save = ability(m.save);
-    if (!m.damage) return t('trap.rule.save', { save, dc: x.saveDc });
-    return t(m.success === 'half' ? 'trap.rule.half' : 'trap.rule.none', { save, dc: x.saveDc, dice, type });
-  }
-  const detectCheck = (x: Trap) => t('trap.check', { skill: skill(mechanismOf(x)?.detect ?? ''), dc: x.detectDc });
-  const disarmCheck = (x: Trap) => t('trap.check', { skill: skill(mechanismOf(x)?.disable ?? ''), dc: x.disarmDc });
-  const labels = (x: Trap): TrapLabels => ({
-    subtitle: subtitle(x),
-    trigger: t('trap.part.trigger'),
-    effect: t('trap.effect'),
-    detect: t('trap.detect'),
-    disarm: t('trap.disarm'),
-    bypass: t('trap.part.bypass'),
-    complication: t('trap.part.complication'),
-    story: t('trap.part.story'),
-    rule,
-    detectCheck,
-    disarmCheck,
-  });
-
-  function roll(x: Trap) {
-    const m = mechanismOf(x);
-    if (!m?.damage) return;
-    if (m.save) rolls.damage(trapName(x, lang), t('trap.effect'), trapDice(x));
-    else rolls.attack(trapName(x, lang), t('trap.effect'), x.attack, [trapDice(x)]);
-  }
+  const labels = $derived(trapLabels(lang));
 
   let copied = $state(false);
   function copy() {
     if (!tp.trap) return;
-    void navigator.clipboard.writeText(trapMarkdown(tp.trap, lang, labels(tp.trap), { heading: true, rollable: false }));
+    void navigator.clipboard.writeText(trapMarkdown(tp.trap, lang, labels, subtitle(tp.trap), { heading: true, rollable: false }));
     copied = true;
     setTimeout(() => (copied = false), 1200);
   }
   async function toJournal() {
     if (!tp.trap) return;
-    const body = trapMarkdown(tp.trap, lang, labels(tp.trap), { heading: false, rollable: true });
+    const body = trapMarkdown(tp.trap, lang, labels, subtitle(tp.trap), { heading: false, rollable: true });
     const path = await window.api.createPage(journalFolder(store.state.adventures.current), trapName(tp.trap, lang), body);
     if (!path) return;
     openPage(path);
@@ -169,12 +136,10 @@
         <p class="name">{trapName(x, lang)}</p>
         <p class="faint">{subtitle(x)}</p>
         <p>{s.effect}</p>
-        <p class="rule">{rule(x, trapDice(x))}</p>
-        {#if mechanismOf(x)?.damage}
-          <button class="btn roll" onclick={() => roll(x)}><Dices size={14} /> {mechanismOf(x)?.save ? trapDice(x) : t('trap.rollAttack', { bonus: x.attack })}</button>
-        {/if}
-        <p><b>{t('trap.detect')}:</b> {s.clue} <span class="rule">{detectCheck(x)}</span></p>
-        <p><b>{t('trap.disarm')}:</b> {s.disarm} <span class="rule">{disarmCheck(x)}</span></p>
+        <p class="rule">{labels.rule(x, trapDice(x))}</p>
+        <div class="roll"><TrapRoll trap={x} {lang} /></div>
+        <p><b>{labels.detect}:</b> {s.clue} <span class="rule">{labels.detectCheck(x)}</span></p>
+        <p><b>{labels.disarm}:</b> {s.disarm} <span class="rule">{labels.disarmCheck(x)}</span></p>
       {/snippet}
       {@render part('mechanism', mechanismBody)}
       {#snippet triggerBody()}<p>{s.trigger}</p>{/snippet}

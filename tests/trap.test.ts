@@ -1,14 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { BYPASSES, COMPLICATIONS, MAKERS, MECHANISMS, REMAINS, TRIGGERS } from '../src/systems/dnd5e/tools/trap/content';
 import { generateTrap, generateTrapPart, mechanismsFor, SEVERITIES, TRAP_DAMAGE, TRAP_KINDS, TRAP_PARTS, TRAP_PLACES, trapDice } from '../src/systems/dnd5e/tools/trap/generate';
-import { trapMarkdown, trapName, trapTexts } from '../src/systems/dnd5e/tools/trap/text';
-import { TRAP_DICE } from '../src/systems/dnd5e/tools/dungeon/generate';
+import { mechanismOf, trapLabels, trapMarkdown, trapName, trapTexts } from '../src/systems/dnd5e/tools/trap/text';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-const labels = {
-  subtitle: 'Sub', trigger: 'Trigger', effect: 'Effect', detect: 'Notice', disarm: 'Disarm', bypass: 'Past', complication: 'Worse', story: 'Who',
-  rule: (_: unknown, dice: string) => `roll ${dice}`, detectCheck: () => 'DC A', disarmCheck: () => 'DC B',
-};
 
 describe('ловушки', () => {
   it('все строки на двух языках; у каждого вида и места есть из чего выбрать', () => {
@@ -39,7 +34,7 @@ describe('ловушки', () => {
     }
     expect(trapDice({ severity: 'setback', tier: 1 })).toBe('1d10');
     expect(trapDice({ severity: 'deadly', tier: 4 })).toBe('24d10');
-    expect(TRAP_DICE).toBe(TRAP_DAMAGE.dangerous);
+    expect(TRAP_DAMAGE.dangerous[2]).toBe('4d10');
   });
 
   it('выбранные вид и место соблюдаются, случайные — разные', () => {
@@ -73,9 +68,31 @@ describe('ловушки', () => {
     expect(trapName(x, 'ru')).toMatch(/[А-Яа-я]/);
     expect(trapName(x, 'en')).not.toMatch(/[А-Яа-я]/);
     expect(trapTexts(x, 'ru').trigger).toMatch(/[А-Яа-я]/);
-    const md = trapMarkdown(x, 'en', labels, { heading: true, rollable: true });
+    const l = trapLabels('en');
+    const md = trapMarkdown(x, 'en', l, 'Sub', { heading: true, rollable: true });
     expect(md).toMatch(/^# /);
-    expect(md).toContain('roll {2d10}');
-    expect(trapMarkdown(x, 'en', labels, { heading: false, rollable: false })).toContain('roll 2d10');
+    expect(md).toContain('*Sub*');
+    const rolled = mechanismOf(x)?.damage;
+    if (rolled) expect(md).toContain('{2d10}');
+    expect(trapMarkdown(x, 'en', l, 'Sub', { heading: false, rollable: false })).not.toContain('{');
+  });
+
+  it('строка правила: спасбросок с половиной, без урона, атака', () => {
+    const r = seeded(13);
+    const l = trapLabels('en');
+    const seen = new Set<string>();
+    for (let i = 0; i < 300; i++) {
+      const x = generateTrap({ tier: 1, severity: 'setback', kind: 'random', place: 'random' }, r);
+      const m = mechanismOf(x)!;
+      const line = l.rule(x, '1d10');
+      seen.add(m.save ? (m.damage ? m.success! : 'nodamage') : 'attack');
+      if (!m.save) expect(line).toMatch(/^\+\d+ to hit: 1d10 \w+ damage$/);
+      else if (!m.damage) expect(line).toMatch(/^[A-Z]{3} save DC \d+$/);
+      else expect(line).toMatch(m.success === 'half' ? /half on a success$/ : /none on a success$/);
+      expect(l.detectCheck(x)).toMatch(/ DC \d+$/);
+      expect(l.disarmCheck(x)).toMatch(/ DC \d+$/);
+    }
+    expect(seen.size).toBe(4);
+    expect(trapLabels('en', false).rule(generateTrap({ tier: 1, severity: 'setback', kind: 'random', place: 'random' }, r), '1d10')).toBe('');
   });
 });

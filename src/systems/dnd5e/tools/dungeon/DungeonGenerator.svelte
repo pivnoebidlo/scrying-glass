@@ -1,5 +1,5 @@
 <!-- Dungeon generator (Tools → Dungeon generator): kind, the heroes' level and five or eight rooms → name, overview,
-     rooms (creatures — links to their cards, puzzles, traps with SRD saves and damage in D&D) and the hoard from the
+     rooms (creatures — links to their cards, puzzles, the trap generator's traps, with SRD numbers in D&D) and the hoard from the
      treasure generator. Each part can be rerolled; copy or to the journal. The dungeon is remembered by the window. -->
 <script lang="ts">
   import Lead from '../../../../renderer/lib/Lead.svelte';
@@ -20,8 +20,11 @@
   import { ru as npcRu } from '../../../../modules/tools/npc/content/ru';
   import { pickItems, rarityOf, TIERS, type Rarity, type Tier } from '../treasure/generate';
   import { coinsLine, valuableLines, type TreasureWords } from '../treasure/text';
-  import { DUNGEON_TYPES, generateDungeon, generateDungeonPart, TRAP_DICE, type Dungeon, type DungeonPart, type DungeonType, type Room } from './generate';
-  import { dungeonMarkdown, dungeonName, monsterName, overview, puzzleText, roomText, trapDamage, trapSave, trapText, twistText, type DungeonLabels, type DungeonLang } from './text';
+  import { DUNGEON_TYPES, dungeonTrap, generateDungeon, generateDungeonPart, upgradeDungeon, type Dungeon, type DungeonPart, type DungeonType, type Room } from './generate';
+  import { dungeonMarkdown, dungeonName, monsterName, overview, puzzleText, roomText, twistText, type DungeonLabels, type DungeonLang } from './text';
+  import { trapDice } from '../trap/generate';
+  import { trapFacts, trapLabels, trapName, trapTexts } from '../trap/text';
+  import TrapRoll from '../trap/TrapRoll.svelte';
 
   const KEY = 'dungeon.state';
   interface Saved {
@@ -36,7 +39,8 @@
   const DEFAULTS: Saved = { type: 'random', tier: 1, rooms: 5, dungeon: null, items: [], dnd: true };
   function load(): Saved {
     try {
-      return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
+      const saved: Saved = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
+      return { ...saved, dungeon: saved.dungeon && upgradeDungeon(saved.dungeon) };
     } catch {
       return { ...DEFAULTS };
     }
@@ -74,6 +78,13 @@
     dg.items = chooseItems(d.hoard.magic, dnd);
     save();
   }
+  function rerollTrap(i: number) {
+    if (!dg.dungeon) return;
+    const d = $state.snapshot(dg.dungeon) as Dungeon;
+    const trap = dungeonTrap(d.tier, Math.random, d.rooms[i]?.trap?.mechanism);
+    dg.dungeon = { ...d, rooms: d.rooms.map((x, n) => (n === i ? { ...x, trap } : x)) };
+    save();
+  }
   function reroll(part: DungeonPart) {
     if (!dg.dungeon) return;
     const d = $state.snapshot(dg.dungeon) as Dungeon;
@@ -83,12 +94,7 @@
   }
 
   const words = (): TreasureWords => ({ coin: (c) => t(`treasure.coin.${c}` as never), each: (value) => t('treasure.each', { value }) });
-  const trapRule = (x: Room) => {
-    if (!dg.dnd || !x.trap || !dg.dungeon) return '';
-    const l = dict(locale.lang);
-    const save = l.abilities[trapSave(x) as keyof typeof l.abilities] ?? trapSave(x);
-    return t('dungeon.trapRule', { save, dc: x.trap.dc, dice: TRAP_DICE[dg.dungeon.tier], type: trapDamage(x, lang) });
-  };
+  const trapWords = $derived(trapLabels(lang, dg.dnd));
   const hoardLines = (d: Dungeon) => [coinsLine(d.hoard, lang, words()), ...valuableLines(d.hoard, lang, words(), dg.dnd), ...dg.items].filter(Boolean);
   const labels = (d: Dungeon): DungeonLabels => ({
     role: (role) => t(`dungeon.role.${role}` as never),
@@ -99,7 +105,7 @@
     creatures: t('dungeon.creatures'),
     puzzle: t('dungeon.puzzle'),
     trap: t('dungeon.trap'),
-    trapRule,
+    trapLabels: trapWords,
     hoard: t('dungeon.part.hoard'),
     hoardLines: hoardLines(d).map((h, i, all) => (dg.dnd && i >= all.length - dg.items.length ? `[[${h}]]` : h)),
     twist: t('dungeon.twist'),
@@ -114,7 +120,7 @@
   }
   async function toJournal() {
     if (!dg.dungeon) return;
-    const path = await window.api.createPage(journalFolder(store.state.adventures.current), dungeonName(dg.dungeon, lang), dungeonMarkdown(dg.dungeon, lang, labels(dg.dungeon), false));
+    const path = await window.api.createPage(journalFolder(store.state.adventures.current), dungeonName(dg.dungeon, lang), dungeonMarkdown(dg.dungeon, lang, labels(dg.dungeon), false, true));
     if (!path) return;
     openPage(path);
     openTab('journal');
@@ -199,6 +205,9 @@
             <li class="room role-{x.role}">
               <header class="room-head">
                 <h4>{t('dungeon.room', { n: i + 1 })} — {t(`dungeon.role.${x.role}` as never)}</h4>
+                {#if x.trap}
+                  <button class="icon-btn" title={t('tavern.rerollPart')} onclick={() => rerollTrap(i)}><RefreshCw size={13} /></button>
+                {/if}
                 {#if x.monster}
                   <button class="btn small" title={t('tools.toEncounterHint')} onclick={() => roomToEncounter(d, x, i)}><Swords size={13} /> {t('tools.toEncounter')}</button>
                 {/if}
@@ -209,8 +218,14 @@
               {/if}
               {#if x.puzzle !== undefined}<p><b>{t('dungeon.puzzle')}:</b> {puzzleText(x, lang)}</p>{/if}
               {#if x.trap}
-                <p><b>{t('dungeon.trap')}:</b> {trapText(x, lang)}</p>
-                {#if trapRule(x)}<p class="rule">{trapRule(x)}</p>{/if}
+                <p><b>{t('dungeon.trap')}:</b> {trapName(x.trap, lang)}. {trapTexts(x.trap, lang).effect}</p>
+                {#if dg.dnd}
+                  <p class="rule">{trapWords.rule(x.trap, trapDice(x.trap))}</p>
+                  <div class="trap-roll"><TrapRoll trap={x.trap} {lang} /></div>
+                {/if}
+                {#each trapFacts(x.trap, lang, trapWords) as f (f.label)}
+                  <p><b>{f.label}:</b> {f.text} {#if f.check}<span class="rule">{f.check}</span>{/if}</p>
+                {/each}
               {/if}
               {#if x.role === 'reward' && x.twist !== undefined}<p><b>{t('dungeon.twist')}:</b> {twistText(x, lang)}</p>{/if}
             </li>
@@ -356,6 +371,9 @@
   }
   .room p {
     margin: 4px 0 0;
+  }
+  .trap-roll {
+    margin-top: 6px;
   }
   .rule {
     color: var(--text-muted);

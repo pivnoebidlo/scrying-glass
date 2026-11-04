@@ -1,11 +1,11 @@
 // Dungeon generation, a «five-room dungeon»: a guarded entrance, a puzzle, a trap, the climax and the reward (eight
-// rooms add a lair, an empty room and another trap). Everything is indexes into the content lists (content.ts), so
+// rooms add lairs and an empty room). Everything is indexes into the content lists (content.ts), so
 // the dungeon shows in the interface language; the hoard is the treasure generator's.
 import { generateTreasure, type Tier, type Treasure } from '../treasure/generate';
 import { SIZES } from '../treasure/content';
-import { ATMOSPHERES, BUILDERS, ENTRANCES, FATES, FEATURES, HOOKS, MONSTERS, PLACES, PUZZLES, ROOMS, TRAPS, TWISTS } from './content';
+import { ATMOSPHERES, BUILDERS, ENTRANCES, FATES, FEATURES, HOOKS, MONSTERS, PLACES, PUZZLES, ROOMS, TWISTS } from './content';
 import { OWNERS } from '../relic/content';
-import { TRAP_DAMAGE } from '../trap/generate';
+import { generateTrap, type Trap } from '../trap/generate';
 
 export const DUNGEON_TYPES = ['tomb', 'cave', 'mine', 'temple', 'fortress', 'tower', 'sewer', 'ruins'] as const;
 export type DungeonType = (typeof DUNGEON_TYPES)[number];
@@ -19,7 +19,8 @@ export interface Room {
   // Creatures: an index into MONSTERS and how many.
   monster?: { index: number; count: number };
   puzzle?: number;
-  trap?: { index: number; dc: number };
+  // The trap generator's trap, dangerous for the dungeon's level.
+  trap?: Trap;
   twist?: number;
 }
 export interface Dungeon {
@@ -53,8 +54,6 @@ const MINION_CR: Record<Tier, [number, number]> = { 1: [0.125, 1], 2: [1, 4], 3:
 const BOSS_CR: Record<Tier, [number, number]> = { 1: [2, 3], 2: [4, 8], 3: [9, 14], 4: [15, 30] };
 // A group's total challenge, to tell how many of a creature come together.
 const GROUP_CR: Record<Tier, number> = { 1: 1, 2: 5, 3: 12, 4: 30 };
-export const TRAP_DICE = TRAP_DAMAGE.dangerous;
-
 export function pickMonster(type: DungeonType, [lo, hi]: [number, number], r: Random, not: number[] = []): number {
   const ok = (i: number) => MONSTERS[i]![2] >= lo && MONSTERS[i]![2] <= hi && !not.includes(i);
   const all = MONSTERS.map((_, i) => i).filter(ok);
@@ -64,6 +63,19 @@ export function pickMonster(type: DungeonType, [lo, hi]: [number, number], r: Ra
 }
 const groupOf = (i: number, tier: Tier, r: Random) =>
   Math.max(1, Math.min(8, Math.round((GROUP_CR[tier] / Math.max(MONSTERS[i]![2], 0.125)) * (0.7 + r() * 0.6))));
+
+// A room's trap: dangerous for the level, not the mechanism it replaces.
+export function dungeonTrap(tier: Tier, r: Random = Math.random, not?: number): Trap {
+  const make = () => generateTrap({ tier, severity: 'dangerous', kind: 'random', place: 'random' }, r);
+  let x = make();
+  while (x.mechanism === not) x = make();
+  return x;
+}
+
+// A dungeon remembered from before 0.78: its traps were one line ({ index, dc }), now they are the generator's.
+export function upgradeDungeon(d: Dungeon, r: Random = Math.random): Dungeon {
+  return { ...d, rooms: d.rooms.map((x) => (x.trap && !('mechanism' in x.trap) ? { ...x, trap: dungeonTrap(d.tier, r) } : x)) };
+}
 
 function roomFor(role: Role, d: Pick<Dungeon, 'type' | 'tier'>, r: Random, used: number[]): Room {
   const base: Room = { role, room: index(ROOMS.length, r), feature: index(FEATURES.length, r) };
@@ -82,7 +94,7 @@ function roomFor(role: Role, d: Pick<Dungeon, 'type' | 'tier'>, r: Random, used:
     case 'puzzle':
       return { ...base, puzzle: index(PUZZLES.length, r) };
     case 'trap':
-      return { ...base, trap: { index: index(TRAPS.length, r), dc: 12 + index(4, r) } };
+      return { ...base, trap: dungeonTrap(d.tier, r) };
     case 'reward':
       return { ...base, twist: r() < 0.5 ? index(TWISTS.length, r) : undefined };
     default:

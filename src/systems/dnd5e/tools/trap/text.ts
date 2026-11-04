@@ -1,4 +1,7 @@
-// A trap as text in one language: its parts and the whole as Markdown (for the journal, the dice are {rollable}).
+// A trap as text in one language: its parts, rule lines and the whole as Markdown (for the journal, the dice are
+// {rollable}). The dungeon generator shows its traps through the same functions.
+import { t } from '../../../../shared/i18n';
+import { dict } from '../../stats';
 import { BYPASSES, COMPLICATIONS, DAMAGE, MAKERS, MECHANISMS, REMAINS, TRIGGERS, type Mechanism } from './content';
 import { trapDice, type Trap } from './generate';
 
@@ -27,8 +30,6 @@ export const trapTexts = (x: Trap, lang: TrapLang) => {
 };
 
 export interface TrapLabels {
-  // Kind, place, level and severity on one line.
-  subtitle: string;
   trigger: string;
   effect: string;
   detect: string;
@@ -36,33 +37,60 @@ export interface TrapLabels {
   bypass: string;
   complication: string;
   story: string;
-  // The rule line of the effect with these dice; the checks to notice and to disarm.
+  // The rule line of the effect with these dice; the checks to notice and to disarm. '' — no rules (not D&D).
   rule: (x: Trap, dice: string) => string;
   detectCheck: (x: Trap) => string;
   disarmCheck: (x: Trap) => string;
 }
 
-export function trapMarkdown(x: Trap, lang: TrapLang, l: TrapLabels, o: { heading: boolean; rollable: boolean }): string {
+export function trapLabels(lang: TrapLang, rules = true): TrapLabels {
+  const words = dict(lang);
+  const check = (skill: string | undefined, dc: number) =>
+    rules && skill ? t('trap.check', { skill: (words.skills as Record<string, string>)[skill] ?? skill, dc }) : '';
+  return {
+    trigger: t('trap.part.trigger'),
+    effect: t('trap.effect'),
+    detect: t('trap.detect'),
+    disarm: t('trap.disarm'),
+    bypass: t('trap.part.bypass'),
+    complication: t('trap.part.complication'),
+    story: t('trap.part.story'),
+    rule(x, dice) {
+      const m = mechanismOf(x);
+      if (!rules || !m) return '';
+      const type = damageType(x, lang);
+      if (!m.save) return t('trap.rule.attack', { bonus: x.attack, dice, type });
+      const save = words.abilities[m.save];
+      if (!m.damage) return t('trap.rule.save', { save, dc: x.saveDc });
+      return t(m.success === 'half' ? 'trap.rule.half' : 'trap.rule.none', { save, dc: x.saveDc, dice, type });
+    },
+    detectCheck: (x) => check(mechanismOf(x)?.detect, x.detectDc),
+    disarmCheck: (x) => check(mechanismOf(x)?.disable, x.disarmDc),
+  };
+}
+
+// What to do with it, as labelled lines: the same in the trap generator's Markdown and in a dungeon room.
+export function trapFacts(x: Trap, lang: TrapLang, l: TrapLabels) {
   const s = trapTexts(x, lang);
-  const dice = trapDice(x);
   return [
-    ...(o.heading ? [`# ${trapName(x, lang)}`, ''] : []),
-    `*${l.subtitle}*`,
-    '',
-    `**${l.trigger}:** ${s.trigger}`,
-    '',
-    `**${l.effect}:** ${s.effect}`,
-    '',
-    `*${l.rule(x, o.rollable ? `{${dice}}` : dice)}*`,
-    '',
-    `**${l.detect}:** ${s.clue} *${l.detectCheck(x)}*`,
-    '',
-    `**${l.disarm}:** ${s.disarm} *${l.disarmCheck(x)}*`,
-    '',
-    `**${l.bypass}:** ${s.bypass}`,
-    '',
-    `**${l.complication}:** ${s.complication}`,
-    '',
-    `**${l.story}:** ${s.maker} ${s.remains}`,
-  ].join('\n');
+    { label: l.trigger, text: s.trigger, check: '' },
+    { label: l.detect, text: s.clue, check: l.detectCheck(x) },
+    { label: l.disarm, text: s.disarm, check: l.disarmCheck(x) },
+    { label: l.bypass, text: s.bypass, check: '' },
+    { label: l.complication, text: s.complication, check: '' },
+  ];
+}
+
+// The effect and the facts as Markdown paragraphs.
+export function trapLines(x: Trap, lang: TrapLang, l: TrapLabels, rollable: boolean): string[] {
+  const dice = trapDice(x);
+  const rule = l.rule(x, rollable ? `{${dice}}` : dice);
+  const facts = trapFacts(x, lang, l).map((f) => `**${f.label}:** ${f.text}${f.check ? ` *${f.check}*` : ''}`);
+  return [`**${l.effect}:** ${trapTexts(x, lang).effect}`, ...(rule ? [`*${rule}*`] : []), ...facts];
+}
+
+export function trapMarkdown(x: Trap, lang: TrapLang, l: TrapLabels, subtitle: string, o: { heading: boolean; rollable: boolean }): string {
+  const s = trapTexts(x, lang);
+  const out = [...(o.heading ? [`# ${trapName(x, lang)}`] : []), `*${subtitle}*`, ...trapLines(x, lang, l, o.rollable), `**${l.story}:** ${s.maker} ${s.remains}`];
+  return out.join('\n\n');
 }
