@@ -7,7 +7,7 @@ import { roleFolderHere } from '../../../shared/adventures';
 import type { MapPin, MapToken } from '../../maps/types';
 import { ui as mapsUi } from '../../maps/ui/ui.svelte';
 import { layoutPng } from './draw';
-import { cellCentre, roomCentre, roomReveal, type Cell, type Layout } from './layout';
+import { cellCentre, roomCentre, roomReveal, type Cell, type Landmark, type Layout } from './layout';
 
 export type RoomPin = Pick<MapPin, 'title' | 'note' | 'color'> & Partial<Pick<MapPin, 'icon' | 'cards'>>;
 // What else stands on the map: a pin at a cell (a trap), creatures as tokens (the fog hides them until the room opens).
@@ -17,6 +17,12 @@ export interface MapExtras {
   // A room the players see from the start.
   open?: number;
 }
+
+// The middle cell of a landmark's house.
+export const landmarkCell = (l: Layout, m: Landmark): Cell => {
+  const a = l.houses![m.house]!;
+  return { x: a.x + (a.w >> 1), y: a.y + (a.h >> 1) };
+};
 
 const hidden = { shown: false };
 export const layoutPins = (l: Layout, rooms: RoomPin[], extra: MapExtras['pins'] = []): MapPin[] => [

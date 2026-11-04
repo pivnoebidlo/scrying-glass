@@ -176,6 +176,12 @@ describe('генератор карт', () => {
         const apart = houses.every((a) => houses.every((b) => a === b || a.x > b.x + b.w || b.x > a.x + a.w || a.y > b.y + b.h || b.y > a.y + a.h));
         expect(apart).toBe(true);
         for (const p of l.pillars) expect(l.cells[p.y]![p.x]).toBe('P');
+        const marks = l.landmarks!;
+        expect(marks.length).toBeGreaterThanOrEqual(2);
+        expect(marks.length).toBeLessThanOrEqual(8);
+        expect(new Set(marks.map((m) => m.house)).size).toBe(marks.length);
+        expect(marks.map((m) => m.kind).slice(0, 2)).toEqual(['tavern', 'temple']);
+        for (const m of marks) expect(houses[m.house]).toBeTruthy();
         const sight = roomReveal(l, 0);
         expect(sight.length).toBeGreaterThan(0);
         // A house is seen whole or not at all.

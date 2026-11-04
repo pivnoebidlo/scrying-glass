@@ -381,7 +381,10 @@ with fords, the sea or ponds around them. "To Maps"
 adds the picture to the current adventure with the fog of war, a grid that matches its cells and a hidden pin on every
 room or place. Numbers are only in the preview and on your pins: the players see a clean map.
 
-**Wilderness encounter** (D&D, Tools → Wilderness encounter): forest, field, shore or swamp, the party's level and size
+A town quarter has squares, crossroads, streets and rows of houses. Its tavern, temple, shop, town hall and smithy stand
+out on the map, and each gets a hidden pin with who runs it.
+
+**Wilderness encounter** (D&D, Tools → Wilderness encounter): forest, field, shore, swamp or a town quarter, the party's level and size
 and the difficulty → a scene (ambush, roadblock, lair ahead, pursuit, surrounded, chance meeting) with what the foes want,
 a complication and what the ground means at the table. Foes are SRD creatures of that place, a group or a leader with
 followers, matched to the 2024 encounter budget. "To Maps" adds a small map with the heroes and the foes as tokens: the

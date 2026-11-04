@@ -12,7 +12,7 @@ export function skirmishTexts(x: Skirmish, lang: SkirmishLang) {
   const s = SCENES[x.scene]!;
   return {
     title: s.title[at(lang)],
-    text: s.text[at(lang)],
+    text: (x.terrain === 'town' && s.inTown ? s.inTown : s.text)[at(lang)],
     start: s.start[at(lang)],
     motive: motives(x.foes)[x.motive]?.[at(lang)] ?? '',
     complication: complicationsOf(x.terrain)[x.complication]?.[at(lang)] ?? '',

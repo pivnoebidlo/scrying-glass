@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { inReveal, roomCells, roomReveal, routeBetween, walkable, WILD_STYLES } from '../src/modules/tools/mapgen/layout';
+import { inReveal, roomCells, roomReveal, routeBetween, walkable } from '../src/modules/tools/mapgen/layout';
 import { partyBudget, rate } from '../src/systems/dnd5e/difficulty';
-import { BEAST_MOTIVES, complicationsOf, GROUND, SCENES, TALKING_MOTIVES, WILD_FOES } from '../src/systems/dnd5e/tools/skirmish/content';
+import { BEAST_MOTIVES, complicationsOf, GROUND, SCENES, TALKING_MOTIVES, TERRAINS, WILD_FOES } from '../src/systems/dnd5e/tools/skirmish/content';
 import { DIFFICULTIES, foesXp, generateSkirmish, generateSkirmishPart, pickFoes, skirmishSpots, xpOf } from '../src/systems/dnd5e/tools/skirmish/generate';
 import { skirmishMarkdown, skirmishTexts } from '../src/systems/dnd5e/tools/skirmish/text';
 
@@ -26,9 +26,9 @@ describe('встреча на местности', () => {
       expect(card!.stats.cr, en).toBe(cr);
       expect(Math.max(...card!.stats.size.map((s) => CELLS[s]!)), en).toBe(cells);
       expect(xpOf(cr), en).toBeGreaterThan(0);
-      for (const t of terrains.split(' ')) expect(WILD_STYLES as readonly string[], en).toContain(t);
+      for (const t of terrains.split(' ')) expect(TERRAINS as readonly string[], en).toContain(t);
     }
-    for (const t of WILD_STYLES) for (const p of [...complicationsOf(t), GROUND[t]]) expect(p[0] && p[1]).toBeTruthy();
+    for (const t of TERRAINS) for (const p of [...complicationsOf(t), GROUND[t]]) expect(p[0] && p[1]).toBeTruthy();
     for (const p of [...TALKING_MOTIVES, ...BEAST_MOTIVES, ...SCENES.flatMap((s) => [s.title, s.text, s.start])]) expect(p[0] && p[1]).toBeTruthy();
   });
 
@@ -36,7 +36,7 @@ describe('встреча на местности', () => {
     const r = seeded(5);
     let exact = 0;
     let all = 0;
-    for (const terrain of WILD_STYLES) {
+    for (const terrain of TERRAINS) {
       for (const difficulty of DIFFICULTIES) {
         for (const level of [1, 2, 3, 5, 8, 11, 15, 20]) {
           for (const heroes of [3, 4, 6]) {
@@ -58,7 +58,7 @@ describe('встреча на местности', () => {
   it('сцена с разговором — только с теми, кто говорит; выбранная сцена сохраняется', () => {
     const r = seeded(7);
     for (let i = 0; i < 200; i++) {
-      const x = generateSkirmish({ terrain: WILD_STYLES[i % 4]!, level: 1 + (i % 20), heroes: 4, difficulty: 'moderate' }, null, r);
+      const x = generateSkirmish({ terrain: TERRAINS[i % 5]!, level: 1 + (i % 20), heroes: 4, difficulty: 'moderate' }, null, r);
       if (SCENES[x.scene]!.talks) expect(WILD_FOES[x.foes[0]!.index]![5]).toBe(true);
     }
     const parley = SCENES.findIndex((s) => s.id === 'parley');
@@ -71,7 +71,7 @@ describe('встреча на местности', () => {
   it('все стоят на земле, не друг на друге; герои на своём месте, враги в тумане; расстановка постоянна', () => {
     const r = seeded(11);
     for (let i = 0; i < 300; i++) {
-      const x = generateSkirmish({ terrain: WILD_STYLES[i % 4]!, level: 1 + (i % 20), heroes: 1 + (i % 8), difficulty: DIFFICULTIES[i % 3]! }, i % SCENES.length, r);
+      const x = generateSkirmish({ terrain: TERRAINS[i % 5]!, level: 1 + (i % 20), heroes: 1 + (i % 8), difficulty: DIFFICULTIES[i % 3]! }, i % SCENES.length, r);
       const s = SCENES[x.scene]!;
       expect(x.map.rooms).toHaveLength(3);
       expect(routeBetween(x.map, 0, 1).length).toBeGreaterThan(0);
@@ -81,7 +81,7 @@ describe('встреча на местности', () => {
       expect(spots.filter((c) => c.kind === 'party')).toHaveLength(x.heroes);
       expect(spots.filter((c) => c.kind === 'creature')).toHaveLength(x.foes.reduce((n, f) => n + f.count, 0));
       const sight = roomReveal(x.map, s.heroes);
-      const seen = new Set<string>();
+      const seen = new Set(x.map.pillars.map((c) => `${c.x},${c.y}`));
       const home = new Set(roomCells(x.map, s.heroes).map((c) => `${c.x},${c.y}`));
       for (const c of spots) {
         for (let a = 0; a < c.size; a++) {
@@ -104,5 +104,7 @@ describe('встреча на местности', () => {
     expect(md).toContain('# Засада (Болото)');
     expect(md).toMatch(/\*\*Враги:\*\* \[\[/);
     expect(skirmishTexts(x, 'en').title).toBe('Ambush');
+    const ring = SCENES.findIndex((s) => s.id === 'surrounded');
+    expect(skirmishTexts(generateSkirmish({ terrain: 'town', level: 5, heroes: 4, difficulty: 'high' }, ring, seeded(3)), 'ru').text).toContain('переулков');
   });
 });

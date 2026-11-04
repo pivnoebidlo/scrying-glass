@@ -1,8 +1,8 @@
 // A wilderness encounter: a scene on a small map of three places, foes picked by the 2024 budget of the party. Text is
 // indexes into content.ts, so it shows in the interface language. What stands where comes from the map's seed.
-import { seededRandom, generateLayout, inReveal, ringCells, middleCell, roomReveal, routeBetween, WILD_STYLES, type Cell, type Layout, type WildStyle } from '../../../../modules/tools/mapgen/layout';
+import { seededRandom, generateLayout, inReveal, ringCells, middleCell, roomReveal, routeBetween, type Cell, type Layout } from '../../../../modules/tools/mapgen/layout';
 import { partyBudget, rate, type Budget, type Rating } from '../../difficulty';
-import { BEAST_MOTIVES, complicationsOf, SCENES, TALKING_MOTIVES, WILD_FOES } from './content';
+import { BEAST_MOTIVES, complicationsOf, SCENES, TALKING_MOTIVES, TERRAINS, WILD_FOES, type Terrain } from './content';
 
 export const DIFFICULTIES = ['low', 'moderate', 'high'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
@@ -12,7 +12,7 @@ export interface Foe {
   count: number;
 }
 export interface SkirmishOptions {
-  terrain: WildStyle;
+  terrain: Terrain;
   level: number;
   heroes: number;
   difficulty: Difficulty;
@@ -108,7 +108,7 @@ export function generateSkirmish(o: SkirmishOptions, scene: number | null = null
   const base: Skirmish = { ...o, foes, scene: chosen, motive: motiveFor(foes, r), complication: index(complicationsOf(o.terrain).length, r), map: null as unknown as Layout };
   return { ...base, ...generateSkirmishPart('map', base, r) };
 }
-export const randomTerrain = (r: Random = Math.random) => WILD_STYLES[index(WILD_STYLES.length, r)]!;
+export const randomTerrain = (r: Random = Math.random) => TERRAINS[index(TERRAINS.length, r)]!;
 
 // What stands where, the same every time: the heroes' `party` tokens on their place, each group of foes.
 export interface SkirmishSpot extends Cell {

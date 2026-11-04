@@ -15,17 +15,16 @@
   import { partyTokens } from '../../../../modules/maps/ui/party';
   import { findCard, toEncounter } from '../../../../modules/tools/encounter';
   import LayoutCanvas from '../../../../modules/tools/mapgen/LayoutCanvas.svelte';
-  import { WILD_STYLES, type WildStyle } from '../../../../modules/tools/mapgen/layout';
   import { layoutToMaps, type MapExtras, type RoomPin } from '../../../../modules/tools/mapgen/toMaps';
   import { cardAsset } from '../../../../shared/cards';
   import { RATING_TITLES } from '../../difficulty';
-  import { SCENES } from './content';
+  import { SCENES, TERRAINS, type Terrain } from './content';
   import { DIFFICULTIES, foesRating, foesXp, generateSkirmish, generateSkirmishPart, heroCount, heroLevel, randomTerrain, skirmishSpots, type Difficulty, type Skirmish, type SkirmishPart } from './generate';
   import { foeLine, foeName, foesLine, skirmishMarkdown, skirmishTexts, type SkirmishLabels, type SkirmishLang } from './text';
 
   const KEY = 'skirmish.state';
   interface Saved {
-    terrain: WildStyle | 'random';
+    terrain: Terrain | 'random';
     scene: number | 'random';
     level: number;
     heroes: number;
@@ -152,7 +151,7 @@
     <label>{t('skirmish.terrain')}
       <select bind:value={sk.terrain} onchange={save}>
         <option value="random">{t('skirmish.random')}</option>
-        {#each WILD_STYLES as id (id)}<option value={id}>{t(`mapgen.style.${id}`)}</option>{/each}
+        {#each TERRAINS as id (id)}<option value={id}>{t(`mapgen.style.${id}`)}</option>{/each}
       </select>
     </label>
     <label>{t('skirmish.scene')}

@@ -37,6 +37,15 @@ export interface Layout {
   pillars: { x: number; y: number }[];
   // A town's houses, for their roofs; their cells are 'H'.
   houses?: LayoutRoom[];
+  // Which of the houses are more than houses, each by the place it stands at.
+  landmarks?: Landmark[];
+}
+export const LANDMARKS = ['tavern', 'temple', 'shop', 'hall', 'smithy'] as const;
+export type LandmarkKind = (typeof LANDMARKS)[number];
+export interface Landmark {
+  // In `houses`.
+  house: number;
+  kind: LandmarkKind;
 }
 export interface LayoutOptions {
   rooms: number;
@@ -447,9 +456,19 @@ function town(placed: Placed, o: LayoutOptions, r: Random, seed: number): Layout
       if (clear && r() < 0.14) grid[y]![x] = 'T';
     }
   }
+  // The buildings a quarter is known by: each next to a place, the temple and the hall among the larger ones.
+  const order: LandmarkKind[] = ['tavern', 'temple', 'shop', 'hall', 'smithy', 'shop', 'tavern', 'shop'];
+  const landmarks: Landmark[] = [];
+  order.slice(0, Math.max(2, Math.min(order.length, Math.ceil(rooms.length * 0.8)))).forEach((kind, i) => {
+    const place = centre(rooms[i % rooms.length]!);
+    const score = (a: LayoutRoom) => Math.hypot(a.x + a.w / 2 - place.x, a.y + a.h / 2 - place.y) - (kind === 'temple' || kind === 'hall' ? a.w * a.h * 0.4 : 0);
+    const free = houses.map((a, house) => ({ a, house })).filter(({ house }) => !landmarks.some((m) => m.house === house));
+    const best = free.sort((p, q) => score(p.a) - score(q.a))[0];
+    if (best) landmarks.push({ house: best.house, kind });
+  });
   // A well on a large square, off its middle.
   const pillars = rooms.flatMap((a, i) => (i % 3 === 0 && a.w >= 9 && a.h >= 9 && r() < 0.7 ? [{ x: a.x + (a.w >> 1) - 3, y: a.y + (a.h >> 1) - 2 }] : []));
-  return { style: 'town', seed, w, h, cells: grid.map((row) => row.join('')), rooms, doors: [], pillars, houses };
+  return { style: 'town', seed, w, h, cells: grid.map((row) => row.join('')), rooms, doors: [], pillars, houses, landmarks };
 }
 
 // A small deterministic random (mulberry32): from a layout's seed, the same picture and the same places every time.
@@ -639,7 +658,7 @@ export function ringCells(l: Layout, at: Cell, count: number, r: Random, { near,
   for (let y = 0; y < l.h - size + 1; y++) for (let x = 0; x < l.w - size + 1; x++) if (square({ x, y }).every(open)) all.push({ x, y });
   const off = (p: Cell) => Math.hypot(p.x + (size - 1) / 2 - at.x, p.y + (size - 1) / 2 - at.y);
   const shuffled = all.map((p) => ({ p, k: r() + (l.cells[p.y]?.[p.x] === '.' ? 0 : 1) })).sort((a, b) => a.k - b.k).map((a) => a.p);
-  const taken = new Set<string>();
+  const taken = new Set(l.pillars.map((c) => `${c.x},${c.y}`));
   const out: Cell[] = [];
   for (let reach = far; out.length < count && reach <= far + Math.max(l.w, l.h); reach += 2) {
     for (const p of shuffled) {

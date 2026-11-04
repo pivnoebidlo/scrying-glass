@@ -3,10 +3,12 @@
 <script lang="ts">
   import { Map as MapIcon } from '@lucide/svelte';
   import Lead from '../../../renderer/lib/Lead.svelte';
-  import { t } from '../../../renderer/lib/i18n.svelte';
+  import { locale, t } from '../../../renderer/lib/i18n.svelte';
+  import type { PinIcon } from '../../maps/icons';
   import LayoutCanvas from './LayoutCanvas.svelte';
-  import { generateLayout, isOpenAir, LAYOUT_STYLES, MAX_ROOMS, MIN_ROOMS, roomCount, type Layout, type LayoutStyle } from './layout';
-  import { layoutToMaps } from './toMaps';
+  import { generateLayout, isOpenAir, LAYOUT_STYLES, MAX_ROOMS, MIN_ROOMS, roomCount, type Layout, type LandmarkKind, type LayoutStyle } from './layout';
+  import { helpers } from '../settlement/store.svelte';
+  import { landmarkCell, layoutToMaps, type MapExtras } from './toMaps';
 
   const KEY = 'mapgen.state';
   interface Saved {
@@ -36,13 +38,27 @@
     mg.layout = generateLayout(mg.style, { rooms: mg.rooms });
     save();
   }
+  // A town's buildings as pins: what it is, who runs it, a name for the tavern. Made afresh for each map.
+  const ICON: Record<LandmarkKind, PinIcon> = { tavern: 'beer', temple: 'church', shop: 'store', hall: 'landmark', smithy: 'anvil' };
+  async function landmarkPins(l: Layout): Promise<MapExtras['pins']> {
+    if (!l.landmarks?.length) return [];
+    const h = await helpers(locale.lang === 'ru' ? 'ru' : 'en');
+    return l.landmarks.map((m) => {
+      const who = h.person('');
+      const kind = t(`mapgen.landmark.${m.kind}`);
+      const title = m.kind === 'tavern' ? h.tavernName() || kind : kind;
+      const trait = who.trait.charAt(0).toUpperCase() + who.trait.slice(1);
+      const note = `${m.kind === 'tavern' ? `${kind}\n\n` : ''}${t('mapgen.inCharge', { name: who.name })}\n\n${trait}`;
+      return { ...landmarkCell(l, m), title, note, color: 'gold' as const, icon: ICON[m.kind] };
+    });
+  }
   let failed = $state(false);
   async function toMaps() {
     if (!mg.layout) return;
     const l = $state.snapshot(mg.layout) as Layout;
     const open = isOpenAir(l.style);
     const room = (i: number) => ({ title: t(open ? 'mapgen.place' : 'mapgen.room', { n: i + 1 }), note: '', color: open ? ('green' as const) : ('gold' as const) });
-    failed = !(await layoutToMaps(l, t(`mapgen.style.${l.style}` as never), l.rooms.map((_, i) => room(i))));
+    failed = !(await layoutToMaps(l, t(`mapgen.style.${l.style}` as never), l.rooms.map((_, i) => room(i)), { pins: await landmarkPins(l) }));
   }
 </script>
 

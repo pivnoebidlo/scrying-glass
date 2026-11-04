@@ -1,6 +1,6 @@
 // Draws a layout on a canvas, by the app, so that no assets are needed: dark rock with hatching round the walls and a
 // pale floor; outdoors grass, water, paths, trees and boulders. The picture holds nothing secret: it goes to the players; room numbers are the preview's only.
-import { isWild, seededRandom as noise, type Cell, type Layout, type LayoutRoom, type WildStyle } from './layout';
+import { isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type WildStyle } from './layout';
 
 export const CELL = 40;
 const ROCK = '#26221d';
@@ -15,6 +15,11 @@ interface Look {
 const TOWN: Look = { grass: '#7f9558', tuft: '#6d8349', tree: ['#3f6a35', '#4a7a3c', '#35592e'] };
 // Lit slope, shaded slope, ridge.
 const ROOFS = [['#a9583c', '#8e4830', '#6f3724'], ['#8f4f3a', '#77412f', '#5b3123'], ['#6a6d78', '#565963', '#42454d'], ['#b59a5e', '#99814d', '#7a673c']] as const;
+const SPECIAL_ROOFS: Partial<Record<LandmarkKind, readonly [string, string, string]>> = {
+  temple: ['#d6d0bf', '#bcb5a2', '#8d8674'],
+  hall: ['#5c7388', '#4a5e70', '#384856'],
+  smithy: ['#4d4a48', '#3e3b39', '#2c2a28'],
+};
 const GROUND: Record<WildStyle, Look> = {
   forest: { grass: '#5f7a43', tuft: '#4f6a37', tree: ['#2f5230', '#376036', '#29492c'] },
   meadow: { grass: '#8aa356', tuft: '#769148', tree: ['#3f6a35', '#4a7a3c', '#35592e'] },
@@ -175,8 +180,9 @@ function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: Wi
 }
 
 // A roof from above: two slopes that meet at the ridge, rows of tiles or thatch, a chimney on some.
-function drawHouse(ctx: CanvasRenderingContext2D, a: LayoutRoom, c: number, r: () => number) {
-  const roof = ROOFS[Math.floor(r() * ROOFS.length)]!;
+function drawHouse(ctx: CanvasRenderingContext2D, a: LayoutRoom, c: number, r: () => number, kind?: LandmarkKind) {
+  const plain = ROOFS[Math.floor(r() * ROOFS.length)]!;
+  const roof = (kind && SPECIAL_ROOFS[kind]) ?? plain;
   const x = a.x * c + c * 0.06;
   const y = a.y * c + c * 0.06;
   const w = a.w * c - c * 0.12;
@@ -213,6 +219,10 @@ function drawHouse(ctx: CanvasRenderingContext2D, a: LayoutRoom, c: number, r: (
   ctx.strokeStyle = WALL;
   ctx.lineWidth = Math.max(1, c / 12);
   ctx.strokeRect(x, y, w, h);
+  if (kind) {
+    drawLandmark(ctx, kind, x, y, w, h, c, across);
+    return;
+  }
   if (r() < 0.6) {
     const s = c * 0.34;
     const cx = x + w * (0.2 + r() * 0.6) - s / 2;
@@ -220,6 +230,78 @@ function drawHouse(ctx: CanvasRenderingContext2D, a: LayoutRoom, c: number, r: (
     ctx.fillStyle = '#6b5f55';
     ctx.fillRect(cx, cy, s, s);
     ctx.strokeRect(cx, cy, s, s);
+  }
+}
+
+// What tells a building from the street: a bell tower, a sign, an awning, a flag, a forge's glow.
+function drawLandmark(ctx: CanvasRenderingContext2D, kind: LandmarkKind, x: number, y: number, w: number, h: number, c: number, across: boolean) {
+  const mx = x + w / 2;
+  const my = y + h / 2;
+  const box = (px: number, py: number, pw: number, ph: number, fill: string) => {
+    ctx.fillStyle = fill;
+    ctx.fillRect(px, py, pw, ph);
+    ctx.strokeRect(px, py, pw, ph);
+  };
+  ctx.strokeStyle = WALL;
+  ctx.lineWidth = Math.max(1, c / 12);
+  if (kind === 'temple') {
+    const s = c * 1.2;
+    box(mx - s / 2, my - s / 2, s, s, '#a9a292');
+    ctx.fillStyle = '#7d8f8c';
+    ctx.beginPath();
+    ctx.arc(mx, my, s * 0.36, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(mx - s * 0.22, my);
+    ctx.lineTo(mx + s * 0.22, my);
+    ctx.moveTo(mx, my - s * 0.22);
+    ctx.lineTo(mx, my + s * 0.22);
+    ctx.stroke();
+  } else if (kind === 'tavern') {
+    const s = c * 0.34;
+    box(x + w * 0.25 - s / 2, y + h * 0.25 - s / 2, s, s, '#6b5f55');
+    box(x + w * 0.75 - s / 2, y + h * 0.75 - s / 2, s, s, '#6b5f55');
+    box(mx - c * 0.55, my - c * 0.34, c * 1.1, c * 0.68, '#8a5f33');
+    ctx.fillStyle = '#e0b552';
+    ctx.beginPath();
+    ctx.arc(mx, my, c * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (kind === 'shop') {
+    // Stripes along the long side.
+    const deep = c * 0.55;
+    const long = across ? w : h;
+    const count = Math.max(4, Math.round(long / (c * 0.4)));
+    for (let i = 0; i < count; i++) {
+      const t = (i / count) * long;
+      ctx.fillStyle = i % 2 ? '#efe6d2' : '#b5453a';
+      if (across) ctx.fillRect(x + t, y + h - deep, long / count + 0.5, deep);
+      else ctx.fillRect(x + w - deep, y + t, deep, long / count + 0.5);
+    }
+    if (across) ctx.strokeRect(x, y + h - deep, w, deep);
+    else ctx.strokeRect(x + w - deep, y, deep, h);
+  } else if (kind === 'hall') {
+    const s = c * 1;
+    box(mx - s / 2, my - s / 2, s, s, '#8a8f8e');
+    ctx.beginPath();
+    ctx.moveTo(mx, my);
+    ctx.lineTo(mx, my - s * 0.9);
+    ctx.stroke();
+    ctx.fillStyle = '#b5453a';
+    ctx.beginPath();
+    ctx.moveTo(mx, my - s * 0.9);
+    ctx.lineTo(mx + s * 0.6, my - s * 0.68);
+    ctx.lineTo(mx, my - s * 0.46);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    const s = c * 0.7;
+    box(mx - s / 2, my - s / 2, s, s, '#5c534c');
+    ctx.fillStyle = '#e8772e';
+    ctx.beginPath();
+    ctx.arc(mx, my, s * 0.27, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
@@ -260,7 +342,7 @@ function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   for (let y = 0; y < l.h; y++) {
     for (let x = 0; x < l.w; x++) if (at(x, y) === 'T') drawTree(ctx, (x + 0.5) * c, (y + 0.5) * c, c, TOWN, r);
   }
-  for (const a of l.houses ?? []) drawHouse(ctx, a, c, r);
+  (l.houses ?? []).forEach((a, i) => drawHouse(ctx, a, c, r, l.landmarks?.find((m) => m.house === i)?.kind));
   // Wells.
   for (const p of l.pillars) {
     const px = (p.x + 0.5) * c;
