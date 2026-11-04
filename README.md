@@ -375,9 +375,11 @@ each room has a hidden pin with its text, its creature card and an "Open the roo
 rerolled; copy or to the journal (creatures and items as [[links]]). "To an encounter" on a room
 with creatures makes an encounter preset of the current adventure with them and opens it in Initiative.
 
-**Map generator** (Tools → Map generator, any system): a building or a cave with 3–30 rooms, drawn by the app. "To Maps"
+**Map generator** (Tools → Map generator, any system): a building, a cave, a forest, an open field, a shore or a swamp, with
+3–30 rooms or places, drawn by the app. Outdoors the places are clearings joined by paths, with trees, boulders, rivers
+with fords, the sea or ponds around them. "To Maps"
 adds the picture to the current adventure with the fog of war, a grid that matches its cells and a hidden pin on every
-room. Room numbers are only in the preview and on your pins: the players see a clean map.
+room or place. Numbers are only in the preview and on your pins: the players see a clean map.
 
 **Trap generator** (D&D, Tools → Trap generator): the heroes' level, severity (setback, dangerous, deadly), kind
 (mechanical, magical) and place (corridor, door, room, treasure) → a trap ready to run: the mechanism with its save or

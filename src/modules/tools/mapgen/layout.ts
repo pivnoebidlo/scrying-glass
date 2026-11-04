@@ -1,8 +1,12 @@
 // A generated map as data: floor cells, rooms and doors. Pure and system-free: the picture is drawn from it (draw.ts),
 // and later styles, assets and editing work on the same data. One cell is one square of the map's grid.
 
-export const LAYOUT_STYLES = ['building', 'cave'] as const;
+export const LAYOUT_STYLES = ['building', 'cave', 'forest', 'meadow', 'shore', 'swamp'] as const;
 export type LayoutStyle = (typeof LAYOUT_STYLES)[number];
+// Under the open sky: places are clearings joined by paths, not rooms.
+export const WILD_STYLES = ['forest', 'meadow', 'shore', 'swamp'] as const;
+export type WildStyle = (typeof WILD_STYLES)[number];
+export const isWild = (style: LayoutStyle): style is WildStyle => (WILD_STYLES as readonly string[]).includes(style);
 
 export interface LayoutRoom {
   // In cells, the whole room (a cave's chamber lies inside it).
@@ -23,7 +27,8 @@ export interface Layout {
   seed: number;
   w: number;
   h: number;
-  // Rows of h strings of w characters: '.' floor, '#' rock.
+  // Rows of h strings of w characters. Walkable: '.' floor or grass, ',' path, 'S' sand, '=' a ford;
+  // not: '#' rock, 'T' tree, 'R' boulder, '~' water.
   cells: string[];
   rooms: LayoutRoom[];
   doors: LayoutDoor[];
@@ -118,12 +123,22 @@ function corridor(a: LayoutRoom, b: LayoutRoom, others: LayoutRoom[], r: Random)
   return null;
 }
 
-function shifted({ rooms, links }: Placed) {
-  const x0 = Math.min(...rooms.map((a) => a.x)) - MARGIN;
-  const y0 = Math.min(...rooms.map((a) => a.y)) - MARGIN;
+export const walkable = (c: string | undefined) => c === '.' || c === ',' || c === 'S' || c === '=';
+
+interface Margins {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+const AROUND: Margins = { left: MARGIN, top: MARGIN, right: MARGIN, bottom: MARGIN };
+
+function shifted({ rooms, links }: Placed, m: Margins = AROUND) {
+  const x0 = Math.min(...rooms.map((a) => a.x)) - m.left;
+  const y0 = Math.min(...rooms.map((a) => a.y)) - m.top;
   const moved = rooms.map((a) => ({ ...a, x: a.x - x0, y: a.y - y0 }));
-  const w = Math.max(...moved.map((a) => a.x + a.w)) + MARGIN;
-  const h = Math.max(...moved.map((a) => a.y + a.h)) + MARGIN;
+  const w = Math.max(...moved.map((a) => a.x + a.w)) + m.right;
+  const h = Math.max(...moved.map((a) => a.y + a.h)) + m.bottom;
   return { rooms: moved, links, w, h };
 }
 const toRows = (grid: boolean[][]) => grid.map((row) => row.map((c) => (c ? '.' : '#')).join(''));
@@ -242,6 +257,111 @@ function cave(placed: Placed, r: Random, seed: number): Layout {
   return { style: 'cave', seed, w, h, cells: toRows(seen), rooms, doors: [], pillars: [] };
 }
 
+// Smooth noise 0..1: random heights on a coarse lattice, blended between its points.
+function smoothNoise(w: number, h: number, step: number, r: Random) {
+  const cols = Math.ceil(w / step) + 2;
+  const heights = Array.from({ length: (Math.ceil(h / step) + 2) * cols }, () => r());
+  const at = (x: number, y: number) => heights[y * cols + x]!;
+  const ease = (t: number) => t * t * (3 - 2 * t);
+  return (x: number, y: number) => {
+    const gx = Math.floor(x / step);
+    const gy = Math.floor(y / step);
+    const fx = ease(x / step - gx);
+    const fy = ease(y / step - gy);
+    const top = at(gx, gy) + (at(gx + 1, gy) - at(gx, gy)) * fx;
+    const low = at(gx, gy + 1) + (at(gx + 1, gy + 1) - at(gx, gy + 1)) * fx;
+    return top + (low - top) * fy;
+  };
+}
+
+// How much of what grows in a place: trees and boulders per cell, and whether a river may run through it.
+const BIOMES: Record<WildStyle, { trees: number; boulders: number; river: number; ponds: boolean; sea: boolean }> = {
+  forest: { trees: 0.62, boulders: 0.02, river: 0.4, ponds: false, sea: false },
+  meadow: { trees: 0.07, boulders: 0.02, river: 0.6, ponds: false, sea: false },
+  shore: { trees: 0.16, boulders: 0.05, river: 0, ponds: false, sea: true },
+  swamp: { trees: 0.2, boulders: 0, river: 0, ponds: true, sea: false },
+};
+const SEA = 15;
+
+function wild(placed: Placed, style: WildStyle, r: Random, seed: number): Layout {
+  const biome = BIOMES[style];
+  const side = index(4, r);
+  const sides: (keyof Margins)[] = ['left', 'top', 'right', 'bottom'];
+  const margins: Margins = { left: 6, top: 6, right: 6, bottom: 6 };
+  if (biome.sea) margins[sides[side]!] = SEA;
+  const { rooms, links, w, h } = shifted(placed, margins);
+  const grid = Array.from({ length: h }, () => Array.from({ length: w }, () => '.'));
+  const big = smoothNoise(w, h, 9, r);
+  const fine = smoothNoise(w, h, 4, r);
+
+  if (biome.sea) {
+    const wave = smoothNoise(w, h, 7, r);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const depth = [x, y, w - 1 - x, h - 1 - y][side]!;
+        const coast = 5 + wave(x, y) * 6;
+        if (depth < coast) grid[y]![x] = '~';
+        else if (depth < coast + 2.5) grid[y]![x] = 'S';
+      }
+    }
+  }
+  if (biome.ponds) {
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (big(x, y) * 0.55 + fine(x, y) * 0.45 > 0.6) grid[y]![x] = '~';
+  }
+  if (r() < biome.river) {
+    // Bank to bank, drifting sideways.
+    const across = r() < 0.5;
+    const length = across ? w : h;
+    const span = across ? h : w;
+    let at = span * (0.25 + r() * 0.5);
+    for (let t = 0; t < length; t++) {
+      at = Math.max(2, Math.min(span - 3, at + (r() - 0.5) * 1.8));
+      for (let n = -1; n <= 1; n++) {
+        const x = across ? t : Math.round(at) + n;
+        const y = across ? Math.round(at) + n : t;
+        grid[y]![x] = '~';
+      }
+    }
+  }
+  // Thickets rather than an even scatter.
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (grid[y]![x] !== '.') continue;
+      const chance = r();
+      if (chance < biome.boulders) grid[y]![x] = 'R';
+      else if (r() < biome.trees * (0.3 + big(x, y) * 1.4)) grid[y]![x] = 'T';
+    }
+  }
+  // Keep off the water; a ford where a way has to cross it.
+  const clear = (x: number, y: number, ground: string, firm = false) => {
+    if (x < 1 || y < 1 || x >= w - 1 || y >= h - 1) return;
+    const was = grid[y]![x]!;
+    grid[y]![x] = !firm && (was === '~' || was === '=') ? '=' : ground;
+  };
+  for (const a of rooms) {
+    const c = { x: a.x + a.w / 2 - 0.5, y: a.y + a.h / 2 - 0.5 };
+    for (let y = a.y; y < a.y + a.h; y++) {
+      for (let x = a.x; x < a.x + a.w; x++) {
+        if (((x - c.x) / (a.w / 2)) ** 2 + ((y - c.y) / (a.h / 2)) ** 2 < 0.8 + fine(x, y) * 0.35) clear(x, y, '.', biome.ponds);
+      }
+    }
+  }
+  for (const [from, to] of links) {
+    let { x, y } = centre(rooms[from]!);
+    const end = centre(rooms[to]!);
+    for (let t = 0; t < 4000 && (x !== end.x || y !== end.y); t++) {
+      const toward = r() < 0.7;
+      if (toward ? r() < Math.abs(end.x - x) / (Math.abs(end.x - x) + Math.abs(end.y - y)) : r() < 0.5) x += toward ? Math.sign(end.x - x) : r() < 0.5 ? 1 : -1;
+      else y += toward ? Math.sign(end.y - y) : r() < 0.5 ? 1 : -1;
+      x = Math.max(2, Math.min(w - 3, x));
+      y = Math.max(2, Math.min(h - 3, y));
+      clear(x, y, ',');
+      clear(x + 1, y, ',');
+    }
+  }
+  return { style, seed, w, h, cells: grid.map((row) => row.join('')), rooms, doors: [], pillars: [] };
+}
+
 // A small deterministic random (mulberry32): from a layout's seed, the same picture and the same places every time.
 export function seededRandom(seed: number): Random {
   let a = seed >>> 0;
@@ -258,12 +378,12 @@ export interface Cell {
   x: number;
   y: number;
 }
-// Free floor of a room: not a pillar, not a door.
+// Free ground of a room or a clearing: not a pillar, not a door.
 export function roomCells(l: Layout, i: number): Cell[] {
   const a = l.rooms[i]!;
   const taken = new Set([...l.pillars, ...l.doors].map((c) => `${c.x},${c.y}`));
   const out: Cell[] = [];
-  for (let y = a.y; y < a.y + a.h; y++) for (let x = a.x; x < a.x + a.w; x++) if (l.cells[y]?.[x] === '.' && !taken.has(`${x},${y}`)) out.push({ x, y });
+  for (let y = a.y; y < a.y + a.h; y++) for (let x = a.x; x < a.x + a.w; x++) if (walkable(l.cells[y]?.[x]) && !taken.has(`${x},${y}`)) out.push({ x, y });
   return out;
 }
 // A group of creatures `size` cells wide, together and away from the room's number: the corners of their squares.
@@ -315,6 +435,20 @@ export const cellCentre = (l: Layout, c: Cell, size = 1) => ({ x: (c.x + size / 
 // tunnel is not given away. Rows of cells as [x, y, w, h, …], shares of the map (a fog op).
 export function roomReveal(l: Layout, i: number): number[] {
   const a = l.rooms[i]!;
+  if (isWild(l.style)) {
+    // No walls outdoors: an open circle of sight round the clearing.
+    const c = { x: a.x + a.w / 2, y: a.y + a.h / 2 };
+    const rx = a.w / 2 + 2;
+    const ry = a.h / 2 + 2;
+    const rows: number[] = [];
+    for (let y = Math.max(0, Math.floor(c.y - ry)); y < Math.min(l.h, Math.ceil(c.y + ry)); y++) {
+      const half = rx * Math.sqrt(Math.max(0, 1 - ((y + 0.5 - c.y) / ry) ** 2));
+      const x0 = Math.max(0, Math.round(c.x - half));
+      const x1 = Math.min(l.w, Math.round(c.x + half));
+      if (x1 > x0) rows.push(x0 / l.w, y / l.h, (x1 - x0) / l.w, 1 / l.h);
+    }
+    return rows;
+  }
   const key = (x: number, y: number) => `${x},${y}`;
   const start = roomCells(l, i)[0];
   const floor = new Set<string>();
@@ -358,6 +492,13 @@ export const roomCentre = (l: Layout, i: number) => {
 
 export function generateLayout(style: LayoutStyle, o: LayoutOptions, r: Random = Math.random): Layout {
   const seed = index(2 ** 31, r);
+  if (isWild(style)) {
+    for (let t = 0; t < 60; t++) {
+      const placed = place(o, true, r, false);
+      if (placed) return wild(placed, style, r, seed);
+    }
+    return wild(place({ ...o, chain: true }, true, r, true)!, style, r, seed);
+  }
   const cavey = style === 'cave';
   for (let t = 0; t < 60; t++) {
     const placed = place(o, cavey, r, false);

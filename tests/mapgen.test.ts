@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cellCentre, generateLayout, groupCells, LAYOUT_STYLES, roomCentre, roomReveal, type Layout } from '../src/modules/tools/mapgen/layout';
+import { cellCentre, generateLayout, groupCells, LAYOUT_STYLES, roomCells, roomCentre, roomReveal, walkable, WILD_STYLES, type Layout } from '../src/modules/tools/mapgen/layout';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
@@ -15,7 +15,7 @@ function reached(l: Layout) {
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
       const x = start.x + dx;
       const y = start.y + dy;
-      if (l.cells[y]?.[x] === '.' && !seen.has(key(x, y))) {
+      if (walkable(l.cells[y]?.[x]) && !seen.has(key(x, y))) {
         seen.add(key(x, y));
         stack.push({ x, y });
       }
@@ -26,7 +26,7 @@ function reached(l: Layout) {
 
 describe('генератор карт', () => {
   const r = seeded(17);
-  const variants = LAYOUT_STYLES.flatMap((style) => [3, 5, 8, 12].flatMap((rooms) => [false, true].map((chain) => ({ style, rooms, chain }))));
+  const variants = (['building', 'cave'] as const).flatMap((style) => [3, 5, 8, 12].flatMap((rooms) => [false, true].map((chain) => ({ style, rooms, chain }))));
 
   it('любой вид и размер: все комнаты связаны, вся земля достижима, края — камень', () => {
     for (const v of variants) {
@@ -94,7 +94,7 @@ describe('генератор карт', () => {
   });
 
   it('открытая комната показывает её и стены, но не другие комнаты и не проходы дальше', () => {
-    for (const style of LAYOUT_STYLES) {
+    for (const style of ['building', 'cave'] as const) {
       for (let i = 0; i < 40; i++) {
         const l = generateLayout(style, { rooms: 6, chain: true }, r);
         const rects = roomReveal(l, 2);
@@ -119,6 +119,40 @@ describe('генератор карт', () => {
           if (out && l.cells[y]![x] === '.') expect(l.doors.some((d) => d.x === x && d.y === y), `${style} ${k}`).toBe(true);
         }
       }
+    }
+  });
+
+  it('открытые пространства: все места связаны тропами, в них можно встать, у края — своя природа', () => {
+    for (const style of WILD_STYLES) {
+      for (const rooms of [3, 8, 20]) {
+        for (let i = 0; i < 15; i++) {
+          const l = generateLayout(style, { rooms }, r);
+          expect(l.style).toBe(style);
+          expect(l.cells).toHaveLength(l.h);
+          for (const row of l.cells) expect(row).toHaveLength(l.w);
+          expect(Math.max(l.w, l.h)).toBeLessThanOrEqual(200);
+          const seen = reached({ ...l, rooms: [l.rooms[0]!] });
+          for (const a of l.rooms) expect(seen.has(`${a.x + (a.w >> 1)},${a.y + (a.h >> 1)}`), `${style} ${rooms}`).toBe(true);
+          l.rooms.forEach((_, n) => expect(roomCells(l, n).length, style).toBeGreaterThan(8));
+          expect(l.doors).toEqual([]);
+        }
+      }
+    }
+    const all = (style: (typeof WILD_STYLES)[number]) => generateLayout(style, { rooms: 6 }, r).cells.join('');
+    expect(all('shore')).toMatch(/~/);
+    expect(all('shore')).toMatch(/S/);
+    expect(all('forest').split('T').length).toBeGreaterThan(all('meadow').split('T').length);
+    expect(all('swamp')).toMatch(/~/);
+  });
+
+  it('место открывается кругом вокруг себя, не дальше двух клеток от поляны', () => {
+    const l = generateLayout('forest', { rooms: 5 }, r);
+    const rects = roomReveal(l, 1);
+    const a = l.rooms[1]!;
+    expect(rects.length).toBeGreaterThan(0);
+    for (let n = 0; n < rects.length; n += 4) {
+      expect(rects[n]! * l.w).toBeGreaterThanOrEqual(a.x - 2.5);
+      expect((rects[n]! + rects[n + 2]!) * l.w).toBeLessThanOrEqual(a.x + a.w + 2.5);
     }
   });
 });
