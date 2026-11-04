@@ -57,8 +57,8 @@ export default defineModule({
     },
 
     // A map the generator just made: the grid matches its cells, the pins are its rooms.
-    generated(s, { path, cells, pins }: { path: string; cells: number; pins: MapPin[] }) {
-      return withMap(s, path, (d) => ({ ...d, grid: { ...d.grid, on: true, cells: Math.min(200, Math.max(2, cells)), ox: 0, oy: 0 }, pins }));
+    generated(s, { path, cells, pins, tokens }: { path: string; cells: number; pins: MapPin[]; tokens: MapToken[] }) {
+      return withMap(s, path, (d) => ({ ...d, grid: { ...d.grid, on: true, cells: Math.min(200, Math.max(2, cells)), ox: 0, oy: 0 }, pins, tokens }));
     },
 
     show(s, { path }: { path: string }) {

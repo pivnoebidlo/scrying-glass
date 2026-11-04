@@ -1,6 +1,6 @@
 // Draws a layout on a canvas: dark rock with hatching round the walls and a pale floor, drawn by the app so that no
 // assets are needed. The picture holds nothing secret: it goes to the players; room numbers are the preview's only.
-import type { Layout } from './layout';
+import { seededRandom as noise, type Cell, type Layout } from './layout';
 
 export const CELL = 40;
 const ROCK = '#26221d';
@@ -9,19 +9,16 @@ const WALL = '#120f0b';
 const FLOOR = { building: ['#d9cfb8', '#d3c8af', '#ddd3bd'], cave: ['#b9ad96', '#b2a58d', '#bfb39d'] };
 const LINE = 'rgba(70, 58, 42, 0.22)';
 
-// A small deterministic random (mulberry32): the same layout looks the same in the preview and in the file.
-function noise(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+// What the preview shows over the picture; the map gets tokens and hidden pins instead.
+export interface LayoutMark extends Cell {
+  kind: 'creature' | 'trap' | 'hoard';
+}
+export interface Overlay {
+  labels?: (i: number) => string;
+  marks?: LayoutMark[];
 }
 
-export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, labels?: (i: number) => string) {
+export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, over: Overlay = {}) {
   const r = noise(l.seed);
   const floor = (x: number, y: number) => l.cells[y]?.[x] === '.';
   ctx.fillStyle = ROCK;
@@ -163,7 +160,36 @@ export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, 
     }
   }
 
-  if (!labels) return;
+  for (const m of over.marks ?? []) {
+    const px = (m.x + 0.5) * c;
+    const py = (m.y + 0.5) * c;
+    const q = c * 0.36;
+    ctx.beginPath();
+    if (m.kind === 'creature') {
+      ctx.fillStyle = '#c0392b';
+      ctx.arc(px, py, q, 0, Math.PI * 2);
+    } else if (m.kind === 'trap') {
+      ctx.fillStyle = '#e8a33d';
+      ctx.moveTo(px, py - q * 1.2);
+      ctx.lineTo(px + q * 1.2, py + q);
+      ctx.lineTo(px - q * 1.2, py + q);
+      ctx.closePath();
+    } else {
+      ctx.fillStyle = '#3fa66b';
+      ctx.moveTo(px, py - q * 1.2);
+      ctx.lineTo(px + q * 1.2, py);
+      ctx.lineTo(px, py + q * 1.2);
+      ctx.lineTo(px - q * 1.2, py);
+      ctx.closePath();
+    }
+    ctx.fill();
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1, c / 14);
+    ctx.stroke();
+  }
+
+  if (!over.labels) return;
+  const { labels } = over;
   ctx.font = `bold ${c * 0.8}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';

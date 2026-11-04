@@ -20,8 +20,8 @@
   import { ru as npcRu } from '../../../../modules/tools/npc/content/ru';
   import { pickItems, rarityOf, TIERS, type Rarity, type Tier } from '../treasure/generate';
   import { coinsLine, valuableLines, type TreasureWords } from '../treasure/text';
-  import { DUNGEON_TYPES, dungeonTrap, generateDungeon, generateDungeonPart, upgradeDungeon, type Dungeon, type DungeonPart, type DungeonType, type Role, type Room } from './generate';
-  import { dungeonMarkdown, dungeonName, monsterName, overview, puzzleText, roomNote, roomText, twistText, type DungeonLabels, type DungeonLang } from './text';
+  import { DUNGEON_TYPES, dungeonSpots, dungeonTrap, generateDungeon, generateDungeonPart, upgradeDungeon, type Dungeon, type DungeonPart, type DungeonType, type Role, type Room } from './generate';
+  import { dungeonMarkdown, dungeonName, monsterName, overview, puzzleText, roomNote, roomText, trapNote, twistText, type DungeonLabels, type DungeonLang } from './text';
   import { trapDice } from '../trap/generate';
   import { trapFacts, trapLabels, trapName, trapTexts } from '../trap/text';
   import TrapRoll from '../trap/TrapRoll.svelte';
@@ -29,6 +29,8 @@
   import { layoutToMaps, type RoomPin } from '../../../../modules/tools/mapgen/toMaps';
   import { connectCards } from '../../../../modules/bestiary/ui/cards.svelte';
   import { findCard } from '../../../../modules/tools/encounter';
+  import { cardAsset } from '../../../../shared/cards';
+  import { MAX_ROOMS, MIN_ROOMS, roomCount } from '../../../../modules/tools/mapgen/layout';
 
   const PIN_COLOR: Record<Role, RoomPin['color']> = { guardian: 'red', puzzle: 'blue', lair: 'red', empty: 'white', trap: 'gold', climax: 'violet', reward: 'green' };
   const PIN_ICON: Record<Role, RoomPin['icon']> = { guardian: 'shield', puzzle: 'question', lair: 'swords', empty: 'pin', trap: 'flame', climax: 'skull', reward: 'gem' };
@@ -78,6 +80,7 @@
 
   function create() {
     const type = dg.type === 'random' ? DUNGEON_TYPES[Math.floor(Math.random() * DUNGEON_TYPES.length)]! : dg.type;
+    dg.rooms = roomCount(dg.rooms);
     const d = generateDungeon(type, dg.tier, dg.rooms);
     dg.dungeon = d;
     dg.dnd = dnd;
@@ -88,22 +91,32 @@
   let noMaps = $state(false);
   async function toMaps(d: Dungeon) {
     await connectCards();
-    const pins = d.rooms.map((x, i): RoomPin => {
-      const card = x.monster ? findCard(monsterName(x, lang), lang) : undefined;
-      return {
-        title: `${i + 1}. ${t(`dungeon.role.${x.role}` as never)}`,
-        note: roomNote(x, lang, labels(d)),
-        color: PIN_COLOR[x.role],
-        icon: PIN_ICON[x.role],
-        ...(card ? { cards: [card.ref] } : {}),
-      };
+    const cards = d.rooms.map((x) => (x.monster ? findCard(monsterName(x, lang), lang) : undefined));
+    const pins = d.rooms.map((x, i): RoomPin => ({
+      title: `${i + 1}. ${t(`dungeon.role.${x.role}` as never)}`,
+      note: roomNote(x, lang, labels(d)),
+      color: PIN_COLOR[x.role],
+      icon: PIN_ICON[x.role],
+      ...(cards[i] ? { cards: [cards[i]!.ref] } : {}),
+    }));
+    const spots = dungeonSpots(d);
+    const traps = spots.flatMap((c) => {
+      const x = d.rooms[c.room]!;
+      return c.kind === 'trap' && x.trap ? [{ x: c.x, y: c.y, title: `${t('dungeon.trap')}: ${trapName(x.trap, lang)}`, note: trapNote(x, lang, labels(d)), color: 'gold' as const, icon: 'flame' as const }] : [];
     });
-    noMaps = !(await layoutToMaps(d.map, dungeonName(d, lang), pins));
+    const tokens = spots.flatMap((c) => {
+      const card = cards[c.room];
+      const x = d.rooms[c.room]!;
+      if (c.kind !== 'creature') return [];
+      const portrait = card?.portrait ? cardAsset(card.ref.scope, card.portrait) : null;
+      return [{ x: c.x, y: c.y, name: card?.name ?? monsterName(x, lang), portrait, side: card?.side ?? ('enemy' as const) }];
+    });
+    noMaps = !(await layoutToMaps(d.map, dungeonName(d, lang), pins, { pins: traps, tokens }));
   }
   function rerollTrap(i: number) {
     if (!dg.dungeon) return;
     const d = $state.snapshot(dg.dungeon) as Dungeon;
-    const trap = dungeonTrap(d.tier, Math.random, d.rooms[i]?.trap?.mechanism);
+    const trap = dungeonTrap(d.tier, Math.random, d.rooms.flatMap((x) => (x.trap ? [x.trap.mechanism] : [])));
     dg.dungeon = { ...d, rooms: d.rooms.map((x, n) => (n === i ? { ...x, trap } : x)) };
     save();
   }
@@ -193,10 +206,7 @@
       </select>
     </label>
     <label>{t('dungeon.size')}
-      <select bind:value={dg.rooms} onchange={save}>
-        <option value={5}>5</option>
-        <option value={8}>8</option>
-      </select>
+      <input type="number" min={MIN_ROOMS} max={MAX_ROOMS} bind:value={dg.rooms} onchange={save} />
     </label>
   </div>
   <div class="actions">
@@ -257,7 +267,8 @@
       {/snippet}
       {@render part('rooms', roomsBody)}
       {#snippet mapBody()}
-        <LayoutCanvas layout={d.map} />
+        <LayoutCanvas layout={d.map} marks={dungeonSpots(d)} />
+        <p class="faint legend">{t('dungeon.mapLegend')}</p>
         <div class="map-actions"><button class="btn" title={t('mapgen.toMapsHint')} onclick={() => toMaps(d)}><MapIcon size={14} /> {t('mapgen.toMaps')}</button></div>
         {#if noMaps}<p class="faint">{t('mapgen.noFolder')}</p>{/if}
       {/snippet}
@@ -399,6 +410,9 @@
   }
   .room p {
     margin: 4px 0 0;
+  }
+  .legend {
+    text-align: center;
   }
   .trap-roll,
   .map-actions {

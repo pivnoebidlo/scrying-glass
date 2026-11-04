@@ -1,9 +1,9 @@
-<!-- A layout's preview, with room numbers (the map itself goes without them). -->
+<!-- A layout's preview, with room numbers and marks (the map itself goes without them). -->
 <script lang="ts">
-  import { drawLayout } from './draw';
+  import { drawLayout, type LayoutMark } from './draw';
   import type { Layout } from './layout';
 
-  let { layout }: { layout: Layout } = $props();
+  let { layout, marks = [] }: { layout: Layout; marks?: LayoutMark[] } = $props();
   let canvas = $state<HTMLCanvasElement>();
   const CELL = 22;
 
@@ -11,7 +11,7 @@
     if (!canvas) return;
     canvas.width = layout.w * CELL;
     canvas.height = layout.h * CELL;
-    drawLayout(canvas.getContext('2d')!, layout, CELL, (i) => String(i + 1));
+    drawLayout(canvas.getContext('2d')!, layout, CELL, { labels: (i) => String(i + 1), marks });
   });
 </script>
 

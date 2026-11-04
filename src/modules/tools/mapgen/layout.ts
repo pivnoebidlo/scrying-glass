@@ -37,6 +37,11 @@ export interface LayoutOptions {
   big?: number[];
 }
 
+// How many rooms a generated map can have.
+export const MIN_ROOMS = 3;
+export const MAX_ROOMS = 30;
+export const roomCount = (n: unknown) => Math.min(MAX_ROOMS, Math.max(MIN_ROOMS, Math.round(Number(n)) || MIN_ROOMS));
+
 type Random = () => number;
 const MARGIN = 3;
 const GAP = 2;
@@ -235,6 +240,64 @@ function cave(placed: Placed, r: Random, seed: number): Layout {
     }
   }
   return { style: 'cave', seed, w, h, cells: toRows(seen), rooms, doors: [], pillars: [] };
+}
+
+// A small deterministic random (mulberry32): from a layout's seed, the same picture and the same places every time.
+export function seededRandom(seed: number): Random {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export interface Cell {
+  x: number;
+  y: number;
+}
+// Free floor of a room: not a pillar, not a door.
+export function roomCells(l: Layout, i: number): Cell[] {
+  const a = l.rooms[i]!;
+  const taken = new Set([...l.pillars, ...l.doors].map((c) => `${c.x},${c.y}`));
+  const out: Cell[] = [];
+  for (let y = a.y; y < a.y + a.h; y++) for (let x = a.x; x < a.x + a.w; x++) if (l.cells[y]?.[x] === '.' && !taken.has(`${x},${y}`)) out.push({ x, y });
+  return out;
+}
+// A group standing together, away from the room's number.
+export function groupCells(l: Layout, i: number, count: number, r: Random): Cell[] {
+  const a = l.rooms[i]!;
+  const c = { x: a.x + a.w / 2 - 0.5, y: a.y + a.h / 2 - 0.5 };
+  const all = roomCells(l, i);
+  const free = all.filter((p) => Math.max(Math.abs(p.x - c.x), Math.abs(p.y - c.y)) >= 1.5);
+  const cells = free.length >= count ? free : all;
+  const anchor = cells[index(cells.length, r)]!;
+  const far = (p: Cell) => (p.x - anchor.x) ** 2 + (p.y - anchor.y) ** 2;
+  return [...cells].sort((p, q) => far(p) - far(q)).slice(0, count);
+}
+// Where a trap of this place stands: in a doorway of the room, in the passage next to it, or inside.
+export function trapCell(l: Layout, i: number, place: 'corridor' | 'door' | 'room' | 'treasure', r: Random): Cell {
+  const a = l.rooms[i]!;
+  const near = (c: Cell, gap: number) => overlaps(a, { ...c, w: 1, h: 1 }, gap);
+  const pick = (list: Cell[]) => list[index(list.length, r)];
+  const doors = l.doors.filter((d) => near(d, 1));
+  const passage: Cell[] = [];
+  for (let y = a.y - 4; y < a.y + a.h + 4; y++) {
+    for (let x = a.x - 4; x < a.x + a.w + 4; x++) {
+      if (l.cells[y]?.[x] === '.' && !l.rooms.some((b) => inside(b, x, y))) passage.push({ x, y });
+    }
+  }
+  if (place === 'door' && doors.length) return pick(doors)!;
+  if ((place === 'corridor' || place === 'door') && passage.length) return pick(passage)!;
+  return groupCells(l, i, 1, r)[0]!;
+}
+// A cell's middle and a room with half a cell round it, as shares of the map.
+export const cellCentre = (l: Layout, c: Cell) => ({ x: (c.x + 0.5) / l.w, y: (c.y + 0.5) / l.h });
+export function roomArea(l: Layout, i: number) {
+  const a = l.rooms[i]!;
+  return { x: (a.x - 0.5) / l.w, y: (a.y - 0.5) / l.h, w: (a.w + 1) / l.w, h: (a.h + 1) / l.h };
 }
 
 export const roomCentre = (l: Layout, i: number) => {

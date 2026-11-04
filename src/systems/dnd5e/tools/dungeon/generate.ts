@@ -1,12 +1,12 @@
-// Dungeon generation, a «five-room dungeon»: a guarded entrance, a puzzle, a trap, the climax and the reward (eight
-// rooms add lairs and an empty room). Everything is indexes into the content lists (content.ts), so
+// Dungeon generation, a «five-room dungeon»: a guarded entrance, a puzzle, a trap, the climax and the reward (more
+// rooms add lairs, empty rooms and more puzzles and traps). Everything is indexes into the content lists (content.ts), so
 // the dungeon shows in the interface language; the hoard is the treasure generator's.
 import { generateTreasure, type Tier, type Treasure } from '../treasure/generate';
 import { SIZES } from '../treasure/content';
 import { ATMOSPHERES, BUILDERS, ENTRANCES, FATES, FEATURES, HOOKS, MONSTERS, PLACES, PUZZLES, ROOMS, TWISTS } from './content';
 import { OWNERS } from '../relic/content';
 import { generateTrap, type Trap } from '../trap/generate';
-import { generateLayout, type Layout, type LayoutStyle } from '../../../../modules/tools/mapgen/layout';
+import { generateLayout, groupCells, roomCells, seededRandom, trapCell, type Cell, type Layout, type LayoutStyle } from '../../../../modules/tools/mapgen/layout';
 
 export const DUNGEON_TYPES = ['tomb', 'cave', 'mine', 'temple', 'fortress', 'tower', 'sewer', 'ruins'] as const;
 export type DungeonType = (typeof DUNGEON_TYPES)[number];
@@ -59,7 +59,9 @@ const BOSS_CR: Record<Tier, [number, number]> = { 1: [2, 3], 2: [4, 8], 3: [9, 1
 const GROUP_CR: Record<Tier, number> = { 1: 1, 2: 5, 3: 12, 4: 30 };
 export function pickMonster(type: DungeonType, [lo, hi]: [number, number], r: Random, not: number[] = []): number {
   const ok = (i: number) => MONSTERS[i]![2] >= lo && MONSTERS[i]![2] <= hi && !not.includes(i);
-  const all = MONSTERS.map((_, i) => i).filter(ok);
+  const fresh = MONSTERS.map((_, i) => i).filter(ok);
+  // A long dungeon runs out of creatures of the level: they may repeat then.
+  const all = fresh.length ? fresh : MONSTERS.map((_, i) => i).filter((i) => MONSTERS[i]![2] >= lo && MONSTERS[i]![2] <= hi);
   const fit = all.filter((i) => MONSTERS[i]![3].split(' ').includes(type));
   const list = fit.length ? fit : all;
   return list[index(list.length, r)] ?? 0;
@@ -67,11 +69,11 @@ export function pickMonster(type: DungeonType, [lo, hi]: [number, number], r: Ra
 const groupOf = (i: number, tier: Tier, r: Random) =>
   Math.max(1, Math.min(8, Math.round((GROUP_CR[tier] / Math.max(MONSTERS[i]![2], 0.125)) * (0.7 + r() * 0.6))));
 
-// A room's trap: dangerous for the level, not the mechanism it replaces.
-export function dungeonTrap(tier: Tier, r: Random = Math.random, not?: number): Trap {
+// A room's trap: dangerous for the level, with another mechanism than the dungeon's other traps.
+export function dungeonTrap(tier: Tier, r: Random = Math.random, not: number[] = []): Trap {
   const make = () => generateTrap({ tier, severity: 'dangerous', kind: 'random', place: 'random' }, r);
   let x = make();
-  while (x.mechanism === not) x = make();
+  for (let i = 0; i < 100 && not.includes(x.mechanism); i++) x = make();
   return x;
 }
 
@@ -81,7 +83,7 @@ export function upgradeDungeon(d: Dungeon, r: Random = Math.random): Dungeon {
   return { ...d, rooms, map: d.map ?? planOf({ type: d.type, rooms }, r) };
 }
 
-function roomFor(role: Role, d: Pick<Dungeon, 'type' | 'tier'>, r: Random, used: number[]): Room {
+function roomFor(role: Role, d: Pick<Dungeon, 'type' | 'tier'>, r: Random, used: number[], traps: number[]): Room {
   const base: Room = { role, room: index(ROOMS.length, r), feature: index(FEATURES.length, r) };
   switch (role) {
     case 'guardian':
@@ -97,8 +99,11 @@ function roomFor(role: Role, d: Pick<Dungeon, 'type' | 'tier'>, r: Random, used:
     }
     case 'puzzle':
       return { ...base, puzzle: index(PUZZLES.length, r) };
-    case 'trap':
-      return { ...base, trap: dungeonTrap(d.tier, r) };
+    case 'trap': {
+      const trap = dungeonTrap(d.tier, r, traps);
+      traps.push(trap.mechanism);
+      return { ...base, trap };
+    }
     case 'reward':
       return { ...base, twist: r() < 0.5 ? index(TWISTS.length, r) : undefined };
     default:
@@ -106,10 +111,22 @@ function roomFor(role: Role, d: Pick<Dungeon, 'type' | 'tier'>, r: Random, used:
   }
 }
 
+// Between the entrance and the end: first what a five-room dungeon has, then more of everything, in a mixed order.
+const MIDDLE: Role[] = ['puzzle', 'trap', 'lair', 'empty', 'lair', 'trap', 'puzzle', 'empty'];
+export function rolesFor(count: number, r: Random): Role[] {
+  const middle = Array.from({ length: Math.max(0, count - 3) }, (_, i) => MIDDLE[i % MIDDLE.length]!);
+  if (count > 5) for (let i = middle.length - 1; i > 0; i--) {
+    const j = index(i + 1, r);
+    [middle[i], middle[j]] = [middle[j]!, middle[i]!];
+  }
+  return ['guardian', ...middle, 'climax', 'reward'];
+}
+
 export function generateRooms(d: Pick<Dungeon, 'type' | 'tier'>, count: number, r: Random = Math.random): Room[] {
-  const roles: Role[] = count > 5 ? ['guardian', 'puzzle', 'lair', 'empty', 'trap', 'lair', 'climax', 'reward'] : ['guardian', 'puzzle', 'trap', 'climax', 'reward'];
+  const roles = rolesFor(count, r);
   const used: number[] = [];
-  const rooms = roles.map((role) => roomFor(role, d, r, used));
+  const traps: number[] = [];
+  const rooms = roles.map((role) => roomFor(role, d, r, used, traps));
   // Rooms of one dungeon do not repeat their description or feature.
   const kinds = some(rooms.length, ROOMS.length, r);
   const features = some(rooms.length, FEATURES.length, r);
@@ -123,6 +140,20 @@ const planOf = (d: Pick<Dungeon, 'type' | 'rooms'>, r: Random) => {
   const climax = d.rooms.findIndex((x) => x?.role === 'climax');
   return generateLayout(MAP_STYLE[d.type], { rooms: d.rooms.length, chain: true, big: climax < 0 ? [] : [climax] }, r);
 };
+
+// What stands where on the plan, the same every time: creatures in a group, a trap at its place, the hoard.
+export interface DungeonSpot extends Cell {
+  room: number;
+  kind: 'creature' | 'trap' | 'hoard';
+}
+export function dungeonSpots(d: Pick<Dungeon, 'rooms' | 'map'>): DungeonSpot[] {
+  const r = seededRandom(d.map.seed);
+  return d.rooms.flatMap((x, room) => [
+    ...(x.monster ? groupCells(d.map, room, x.monster.count, r).map((c) => ({ ...c, room, kind: 'creature' as const })) : []),
+    ...(x.trap ? [{ ...trapCell(d.map, room, x.trap.place, r), room, kind: 'trap' as const }] : []),
+    ...(x.role === 'reward' ? [{ ...(groupCells(d.map, room, 1, r)[0] ?? roomCells(d.map, room)[0]!), room, kind: 'hoard' as const }] : []),
+  ]);
+}
 
 export function generateDungeonPart(part: DungeonPart, d: Dungeon, r: Random = Math.random): Partial<Dungeon> {
   switch (part) {

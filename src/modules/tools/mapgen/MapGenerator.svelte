@@ -5,11 +5,10 @@
   import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import LayoutCanvas from './LayoutCanvas.svelte';
-  import { generateLayout, LAYOUT_STYLES, type Layout, type LayoutStyle } from './layout';
+  import { generateLayout, LAYOUT_STYLES, MAX_ROOMS, MIN_ROOMS, roomCount, type Layout, type LayoutStyle } from './layout';
   import { layoutToMaps } from './toMaps';
 
   const KEY = 'mapgen.state';
-  const SIZES = [3, 5, 8, 12];
   interface Saved {
     style: LayoutStyle;
     rooms: number;
@@ -33,6 +32,7 @@
   };
 
   function create() {
+    mg.rooms = roomCount(mg.rooms);
     mg.layout = generateLayout(mg.style, { rooms: mg.rooms });
     save();
   }
@@ -59,9 +59,7 @@
       </select>
     </label>
     <label>{t('mapgen.rooms')}
-      <select bind:value={mg.rooms} onchange={save}>
-        {#each SIZES as n (n)}<option value={n}>{n}</option>{/each}
-      </select>
+      <input type="number" min={MIN_ROOMS} max={MAX_ROOMS} bind:value={mg.rooms} onchange={save} />
     </label>
   </div>
   <div class="actions">
@@ -106,6 +104,9 @@
     gap: 3px;
     color: var(--text-muted);
     font-size: 12px;
+  }
+  .options input {
+    width: 72px;
   }
   .actions {
     margin: 12px 0 16px;

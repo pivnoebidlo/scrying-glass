@@ -50,8 +50,10 @@ function roomLines(x: Room, lang: DungeonLang, l: DungeonLabels, rollable: boole
   return out;
 }
 
-// What the pin of a room says to the GM on the map.
-export const roomNote = (x: Room, lang: DungeonLang, l: DungeonLabels) => roomLines(x, lang, l, false).join('\n\n').replace(/\*|\[\[|\]\]/g, '');
+const plain = (lines: string[]) => lines.join('\n\n').replace(/\*|\[\[|\]\]/g, '');
+// What the pin of a room says to the GM on the map; a trap has its own pin, where it stands.
+export const roomNote = (x: Room, lang: DungeonLang, l: DungeonLabels) => plain(roomLines({ ...x, trap: undefined }, lang, l, false));
+export const trapNote = (x: Room, lang: DungeonLang, l: DungeonLabels) => (x.trap ? plain(trapLines(x.trap, lang, l.trapLabels, false)) : '');
 
 export function dungeonMarkdown(d: Dungeon, lang: DungeonLang, l: DungeonLabels, heading = true, rollable = false): string {
   const o = overview(d, lang);

@@ -58,6 +58,8 @@ export interface MapPin {
   // Связанные карточки (трактирщик таверны, жрец храма): открываются из метки. Игроки их не видят.
   cards?: CardRef[];
   shown: boolean;
+  // The room a generated map's pin stands for: its button lifts the fog there.
+  area?: { x: number; y: number; w: number; h: number };
 }
 
 export const PIN_COLORS = {

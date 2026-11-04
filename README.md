@@ -364,17 +364,18 @@ compendium; copy, to Telegram, the whole table with the rolled row and the rolls
 Player's Handbook and other books are not open, so they are not built in — paste them as your own.
 
 **Dungeon generator** (Tools → Dungeon generator): kind (tomb, caves, mine, temple, fortress, wizard's tower, sewers,
-ruins), the heroes' level and 5 or 8 rooms → a "five-room dungeon": a guarded entrance, a puzzle, a trap, the final
-fight and the reward (eight rooms add lairs and a quiet room); who built it and what happened to it, the entrance, the
+ruins), the heroes' level and any number of rooms from 3 to 30 → a "five-room dungeon": a guarded entrance, a puzzle, a
+trap, the final fight and the reward (more rooms add lairs, quiet rooms, puzzles and traps); who built it and what happened to it, the entrance, the
 atmosphere and a hook. Creatures are SRD cards by the level (a click opens the card); traps come from the trap generator, with how to
 notice, disarm and pass them (saves, DCs and damage by the SRD in D&D adventures, a button rolls the damage, a trap
 can be rerolled on its own), and the hoard comes from the treasure generator with magic items from the compendium.
-The Map part draws the plan: built places as rooms and corridors, caves, mines and sewers as caves. "To Maps" makes it a
-map with a hidden pin on each room: the room's text is the pin's note, its creatures are linked. Each part can be
+The Map part draws the plan: built places as rooms and corridors, caves, mines and sewers as caves. The preview marks creatures, traps
+and the hoard. "To Maps" makes it a map: creatures stand as tokens under the fog, traps have hidden pins where they are,
+each room has a hidden pin with its text, its creature card and an "Open the room" button that lifts the fog there. Each part can be
 rerolled; copy or to the journal (creatures and items as [[links]]). "To an encounter" on a room
 with creatures makes an encounter preset of the current adventure with them and opens it in Initiative.
 
-**Map generator** (Tools → Map generator, any system): a building or a cave with 3–12 rooms, drawn by the app. "To Maps"
+**Map generator** (Tools → Map generator, any system): a building or a cave with 3–30 rooms, drawn by the app. "To Maps"
 adds the picture to the current adventure with the fog of war, a grid that matches its cells and a hidden pin on every
 room. Room numbers are only in the preview and on your pins: the players see a clean map.
 

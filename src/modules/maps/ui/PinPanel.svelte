@@ -3,7 +3,7 @@
 <script lang="ts">
   import { hint } from '../../../shared/hotkeys';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { ChevronLeft, Eye, EyeOff, Trash2, X } from '@lucide/svelte';
+  import { ChevronLeft, DoorOpen, Eye, EyeOff, Trash2, X } from '@lucide/svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { PIN_ICONS, type PinIcon } from '../icons';
   import { PIN_COLORS, type MapPin, type PinColor } from '../types';
@@ -51,7 +51,7 @@
     ui.pinList = false;
   }
 
-  const sorted = $derived([...pins].sort((a, b) => (a.title || '￿').localeCompare(b.title || '￿', 'ru')));
+  const sorted = $derived([...pins].sort((a, b) => (a.title || '￿').localeCompare(b.title || '￿', 'ru', { numeric: true })));
 </script>
 
 <!-- Щелчки по панели не должны доходить до карты. -->
@@ -90,7 +90,11 @@
         {/each}
       </div>
 
-      <button class="btn shown" class:primary={!pin.shown} onclick={() => update(pin, { shown: !pin.shown })}>
+      {#if pin.area}
+        {@const area = pin.area}
+        <button class="btn shown primary" onclick={() => dispatch('maps', 'addFog', { path, op: { mode: 'reveal', kind: 'rect', ...area } })}><DoorOpen size={14} /> {t('maps.openRoom')}</button>
+      {/if}
+      <button class="btn shown" class:primary={!pin.shown && !pin.area} onclick={() => update(pin, { shown: !pin.shown })}>
         {#if pin.shown}<EyeOff size={14} /> {t('maps.hideFromPlayers')}{:else}<Eye size={14} /> {t('maps.showToPlayers')}{/if}
       </button>
       <div class="hint faint">
