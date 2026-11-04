@@ -18,7 +18,9 @@ export type FogMode = 'reveal' | 'hide';
 // Операция тумана: открыть или скрыть кистью (ломаная с радиусом) или прямоугольником.
 export type FogOp =
   | { mode: FogMode; kind: 'brush'; r: number; points: number[] } // r — доля ширины; points — [x0, y0, x1, y1, …]
-  | { mode: FogMode; kind: 'rect'; x: number; y: number; w: number; h: number };
+  | { mode: FogMode; kind: 'rect'; x: number; y: number; w: number; h: number }
+  // Many rectangles as one step: the shape of a room ([x, y, w, h, …]).
+  | { mode: FogMode; kind: 'rects'; rects: number[] };
 
 export interface Fog {
   // С чего начинается туман: всё скрыто или всё открыто. Дальше применяются операции по порядку.
@@ -58,8 +60,8 @@ export interface MapPin {
   // Связанные карточки (трактирщик таверны, жрец храма): открываются из метки. Игроки их не видят.
   cards?: CardRef[];
   shown: boolean;
-  // The room a generated map's pin stands for: its button lifts the fog there.
-  area?: { x: number; y: number; w: number; h: number };
+  // The room a generated map's pin stands for: its button lifts the fog there ([x, y, w, h, …], a 'rects' fog op).
+  area?: number[];
 }
 
 export const PIN_COLORS = {

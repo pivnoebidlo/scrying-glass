@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateLayout, LAYOUT_STYLES, roomCentre, type Layout } from '../src/modules/tools/mapgen/layout';
+import { cellCentre, generateLayout, groupCells, LAYOUT_STYLES, roomCentre, roomReveal, type Layout } from '../src/modules/tools/mapgen/layout';
 
 const seeded = (seed: number) => () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 
@@ -71,5 +71,54 @@ describe('генератор карт', () => {
     const p = roomCentre(c, 2);
     expect(p.x > 0 && p.x < 1 && p.y > 0 && p.y < 1).toBe(true);
     expect(JSON.parse(JSON.stringify(c))).toEqual(c);
+  });
+
+  it('крупные существа: квадрат на полу, не друг на друге; у чётного размера центр — на углу клетки', () => {
+    for (let i = 0; i < 60; i++) {
+      const l = generateLayout('building', { rooms: 3, chain: true, big: [0] }, r);
+      const group = groupCells(l, 0, 2, r, 2);
+      const taken = new Set<string>();
+      for (const c of group) {
+        for (let y = 0; y < 2; y++) {
+          for (let x = 0; x < 2; x++) {
+            expect(l.cells[c.y + y]![c.x + x]).toBe('.');
+            expect(taken.has(`${c.x + x},${c.y + y}`)).toBe(false);
+            taken.add(`${c.x + x},${c.y + y}`);
+          }
+        }
+      }
+    }
+    const l = generateLayout('building', { rooms: 3 }, r);
+    expect(cellCentre(l, { x: 4, y: 6 }, 2)).toEqual({ x: 5 / l.w, y: 7 / l.h });
+    expect(cellCentre(l, { x: 4, y: 6 })).toEqual({ x: 4.5 / l.w, y: 6.5 / l.h });
+  });
+
+  it('открытая комната показывает её и стены, но не другие комнаты и не проходы дальше', () => {
+    for (const style of LAYOUT_STYLES) {
+      for (let i = 0; i < 40; i++) {
+        const l = generateLayout(style, { rooms: 6, chain: true }, r);
+        const rects = roomReveal(l, 2);
+        expect(rects.length % 4).toBe(0);
+        const seen = new Set<string>();
+        for (let n = 0; n < rects.length; n += 4) {
+          const x0 = Math.round(rects[n]! * l.w);
+          const y = Math.round(rects[n + 1]! * l.h);
+          const w = Math.round(rects[n + 2]! * l.w);
+          for (let x = x0; x < x0 + w; x++) seen.add(`${x},${y}`);
+        }
+        const a = l.rooms[2]!;
+        expect(seen.has(`${a.x + (a.w >> 1)},${a.y + (a.h >> 1)}`)).toBe(true);
+        for (const other of [0, 5]) {
+          const b = l.rooms[other]!;
+          expect(seen.has(`${b.x + (b.w >> 1)},${b.y + (b.h >> 1)}`)).toBe(false);
+        }
+        // Floor outside the room is shown only at its doors.
+        for (const k of seen) {
+          const [x, y] = k.split(',').map(Number) as [number, number];
+          const out = x < a.x || y < a.y || x >= a.x + a.w || y >= a.y + a.h;
+          if (out && l.cells[y]![x] === '.') expect(l.doors.some((d) => d.x === x && d.y === y), `${style} ${k}`).toBe(true);
+        }
+      }
+    }
   });
 });

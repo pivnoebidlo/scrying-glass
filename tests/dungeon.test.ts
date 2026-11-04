@@ -136,7 +136,9 @@ describe('подземелья', () => {
       for (let i = 0; i < 40; i++) {
         const d = generateDungeon(type, 1, 12, r);
         const spots = dungeonSpots(d);
-        for (const c of spots) expect(d.map.cells[c.y]![c.x], `${c.kind} ${c.x},${c.y}`).toBe('.');
+        for (const c of spots) {
+          for (let y = 0; y < c.size; y++) for (let x = 0; x < c.size; x++) expect(d.map.cells[c.y + y]![c.x + x], `${c.kind} ${c.x},${c.y} ×${c.size}`).toBe('.');
+        }
         d.rooms.forEach((x, room) => {
           const here = spots.filter((c) => c.room === room);
           expect(here.filter((c) => c.kind === 'creature')).toHaveLength(x.monster?.count ?? 0);
@@ -148,5 +150,17 @@ describe('подземелья', () => {
         expect(dungeonSpots(d)).toEqual(spots);
       }
     }
+  });
+
+  it('размер существа совпадает с карточкой SRD 2024: жетон по клеткам сетки', () => {
+    const cards = JSON.parse(fs.readFileSync('content/dnd5e-srd/bestiary/dnd5e-2024.json', 'utf8'));
+    const CELLS: Record<string, number> = { tiny: 1, small: 1, medium: 1, large: 2, huge: 3, gargantuan: 4 };
+    const size = new Map((cards.cards ?? cards).filter((c: { lang: string }) => c.lang === 'en').map((c: { name: string; stats: { size: string[] } }) => [c.name, Math.max(...c.stats.size.map((x) => CELLS[x]!))]));
+    for (const [en, , , , cells] of MONSTERS) expect(cells ?? 1, en).toBe(size.get(en));
+    const r = seeded(47);
+    const d = generateDungeon('fortress', 4, 8, r);
+    const boss = d.rooms.findIndex((x) => x.role === 'climax');
+    const spots = dungeonSpots(d).filter((c) => c.room === boss && c.kind === 'creature');
+    expect(spots[0]!.size).toBe(MONSTERS[d.rooms[boss]!.monster!.index]![4] ?? 1);
   });
 });

@@ -145,14 +145,19 @@ const planOf = (d: Pick<Dungeon, 'type' | 'rooms'>, r: Random) => {
 export interface DungeonSpot extends Cell {
   room: number;
   kind: 'creature' | 'trap' | 'hoard';
+  size: number;
 }
 export function dungeonSpots(d: Pick<Dungeon, 'rooms' | 'map'>): DungeonSpot[] {
   const r = seededRandom(d.map.seed);
-  return d.rooms.flatMap((x, room) => [
-    ...(x.monster ? groupCells(d.map, room, x.monster.count, r).map((c) => ({ ...c, room, kind: 'creature' as const })) : []),
-    ...(x.trap ? [{ ...trapCell(d.map, room, x.trap.place, r), room, kind: 'trap' as const }] : []),
-    ...(x.role === 'reward' ? [{ ...(groupCells(d.map, room, 1, r)[0] ?? roomCells(d.map, room)[0]!), room, kind: 'hoard' as const }] : []),
-  ]);
+  const spot = (c: Cell, room: number, kind: DungeonSpot['kind'], size = 1): DungeonSpot => ({ ...c, room, kind, size });
+  return d.rooms.flatMap((x, room) => {
+    const size = x.monster ? (MONSTERS[x.monster.index]?.[4] ?? 1) : 1;
+    return [
+      ...(x.monster ? groupCells(d.map, room, x.monster.count, r, size).map((c) => spot(c, room, 'creature', size)) : []),
+      ...(x.trap ? [spot(trapCell(d.map, room, x.trap.place, r), room, 'trap')] : []),
+      ...(x.role === 'reward' ? [spot(groupCells(d.map, room, 1, r)[0] ?? roomCells(d.map, room)[0]!, room, 'hoard')] : []),
+    ];
+  });
 }
 
 export function generateDungeonPart(part: DungeonPart, d: Dungeon, r: Random = Math.random): Partial<Dungeon> {

@@ -48,6 +48,11 @@ export function applyFogOp(c: HTMLCanvasElement, op: FogOp) {
   ctx.fillStyle = ctx.strokeStyle = '#000';
   if (op.kind === 'rect') {
     ctx.fillRect(op.x * W, op.y * H, op.w * W, op.h * H);
+  } else if (op.kind === 'rects') {
+    // One path: no seams between the rows.
+    ctx.beginPath();
+    for (let i = 0; i + 3 < op.rects.length; i += 4) ctx.rect(op.rects[i]! * W, op.rects[i + 1]! * H, op.rects[i + 2]! * W, op.rects[i + 3]! * H);
+    ctx.fill();
   } else {
     const p = op.points;
     const r = op.r * W;

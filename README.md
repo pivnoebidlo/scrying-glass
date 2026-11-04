@@ -370,8 +370,8 @@ atmosphere and a hook. Creatures are SRD cards by the level (a click opens the c
 notice, disarm and pass them (saves, DCs and damage by the SRD in D&D adventures, a button rolls the damage, a trap
 can be rerolled on its own), and the hoard comes from the treasure generator with magic items from the compendium.
 The Map part draws the plan: built places as rooms and corridors, caves, mines and sewers as caves. The preview marks creatures, traps
-and the hoard. "To Maps" makes it a map: creatures stand as tokens under the fog, traps have hidden pins where they are,
-each room has a hidden pin with its text, its creature card and an "Open the room" button that lifts the fog there. Each part can be
+and the hoard. "To Maps" makes it a map: creatures stand as tokens of their size under the fog, traps have hidden pins where they are,
+each room has a hidden pin with its text, its creature card and an "Open the room" button that lifts the fog over exactly that room. Each part can be
 rerolled; copy or to the journal (creatures and items as [[links]]). "To an encounter" on a room
 with creatures makes an encounter preset of the current adventure with them and opens it in Initiative.
 

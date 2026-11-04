@@ -7,22 +7,22 @@ import { roleFolderHere } from '../../../shared/adventures';
 import type { MapPin, MapToken } from '../../maps/types';
 import { ui as mapsUi } from '../../maps/ui/ui.svelte';
 import { layoutPng } from './draw';
-import { cellCentre, roomArea, roomCentre, type Cell, type Layout } from './layout';
+import { cellCentre, roomCentre, roomReveal, type Cell, type Layout } from './layout';
 
 export type RoomPin = Pick<MapPin, 'title' | 'note' | 'color'> & Partial<Pick<MapPin, 'icon' | 'cards'>>;
 // What else stands on the map: a pin at a cell (a trap), creatures as tokens (the fog hides them until the room opens).
 export interface MapExtras {
   pins?: (RoomPin & Cell)[];
-  tokens?: (Omit<MapToken, 'id' | 'x' | 'y' | 'hidden' | 'size'> & Cell)[];
+  tokens?: (Omit<MapToken, 'id' | 'x' | 'y' | 'hidden'> & Cell)[];
 }
 
 const hidden = { shown: false };
 export const layoutPins = (l: Layout, rooms: RoomPin[], extra: MapExtras['pins'] = []): MapPin[] => [
-  ...rooms.slice(0, l.rooms.length).map((p, i) => ({ ...p, id: crypto.randomUUID(), ...roomCentre(l, i), area: roomArea(l, i), ...hidden })),
+  ...rooms.slice(0, l.rooms.length).map((p, i) => ({ ...p, id: crypto.randomUUID(), ...roomCentre(l, i), area: roomReveal(l, i), ...hidden })),
   ...extra.map((p) => ({ ...p, id: crypto.randomUUID(), ...cellCentre(l, p), ...hidden })),
 ];
 const layoutTokens = (l: Layout, tokens: MapExtras['tokens'] = []): MapToken[] =>
-  tokens.map((t) => ({ ...t, id: crypto.randomUUID(), ...cellCentre(l, t), size: 1, hidden: false }));
+  tokens.map((t) => ({ ...t, id: crypto.randomUUID(), ...cellCentre(l, t, t.size), hidden: false }));
 
 // false — the adventure has no maps folder to put it in.
 export async function layoutToMaps(l: Layout, title: string, rooms: RoomPin[], extras: MapExtras = {}): Promise<boolean> {

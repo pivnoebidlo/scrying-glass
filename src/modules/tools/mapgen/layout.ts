@@ -266,16 +266,31 @@ export function roomCells(l: Layout, i: number): Cell[] {
   for (let y = a.y; y < a.y + a.h; y++) for (let x = a.x; x < a.x + a.w; x++) if (l.cells[y]?.[x] === '.' && !taken.has(`${x},${y}`)) out.push({ x, y });
   return out;
 }
-// A group standing together, away from the room's number.
-export function groupCells(l: Layout, i: number, count: number, r: Random): Cell[] {
+// A group of creatures `size` cells wide, together and away from the room's number: the corners of their squares.
+// When they cannot all fit they stand over each other: every creature is on the map.
+export function groupCells(l: Layout, i: number, count: number, r: Random, size = 1): Cell[] {
   const a = l.rooms[i]!;
   const c = { x: a.x + a.w / 2 - 0.5, y: a.y + a.h / 2 - 0.5 };
-  const all = roomCells(l, i);
-  const free = all.filter((p) => Math.max(Math.abs(p.x - c.x), Math.abs(p.y - c.y)) >= 1.5);
-  const cells = free.length >= count ? free : all;
+  const floor = roomCells(l, i);
+  const free = new Set(floor.map((p) => `${p.x},${p.y}`));
+  const square = (p: Cell) => Array.from({ length: size * size }, (_, n) => `${p.x + (n % size)},${p.y + Math.floor(n / size)}`);
+  const fit = floor.filter((p) => square(p).every((k) => free.has(k)));
+  const wide = fit.length ? fit : floor;
+  const clear = wide.filter((p) => Math.abs(p.x + (size - 1) / 2 - c.x) >= 1.5 + (size - 1) / 2 || Math.abs(p.y + (size - 1) / 2 - c.y) >= 1.5 + (size - 1) / 2);
+  const cells = clear.length >= count ? clear : wide;
   const anchor = cells[index(cells.length, r)]!;
   const far = (p: Cell) => (p.x - anchor.x) ** 2 + (p.y - anchor.y) ** 2;
-  return [...cells].sort((p, q) => far(p) - far(q)).slice(0, count);
+  const near = [...cells].sort((p, q) => far(p) - far(q));
+  const taken = new Set<string>();
+  const out: Cell[] = [];
+  for (const p of near) {
+    if (out.length === count) break;
+    if (square(p).some((k) => taken.has(k))) continue;
+    square(p).forEach((k) => taken.add(k));
+    out.push(p);
+  }
+  for (let n = 0; out.length < count; n++) out.push(near[n % near.length]!);
+  return out;
 }
 // Where a trap of this place stands: in a doorway of the room, in the passage next to it, or inside.
 export function trapCell(l: Layout, i: number, place: 'corridor' | 'door' | 'room' | 'treasure', r: Random): Cell {
@@ -293,11 +308,47 @@ export function trapCell(l: Layout, i: number, place: 'corridor' | 'door' | 'roo
   if ((place === 'corridor' || place === 'door') && passage.length) return pick(passage)!;
   return groupCells(l, i, 1, r)[0]!;
 }
-// A cell's middle and a room with half a cell round it, as shares of the map.
-export const cellCentre = (l: Layout, c: Cell) => ({ x: (c.x + 0.5) / l.w, y: (c.y + 0.5) / l.h });
-export function roomArea(l: Layout, i: number) {
+// The middle of a square `size` cells wide, as a share of the map.
+export const cellCentre = (l: Layout, c: Cell, size = 1) => ({ x: (c.x + size / 2) / l.w, y: (c.y + size / 2) / l.h });
+
+// What opening a room shows: its floor and doors, and the rock next to them. Passages stay in the dark, so a cave's
+// tunnel is not given away. Rows of cells as [x, y, w, h, …], shares of the map (a fog op).
+export function roomReveal(l: Layout, i: number): number[] {
   const a = l.rooms[i]!;
-  return { x: (a.x - 0.5) / l.w, y: (a.y - 0.5) / l.h, w: (a.w + 1) / l.w, h: (a.h + 1) / l.h };
+  const key = (x: number, y: number) => `${x},${y}`;
+  const start = roomCells(l, i)[0];
+  const floor = new Set<string>();
+  // One chamber: the floor of the room's rectangle that joins its middle (another tunnel may cross a corner).
+  const c = centre(a);
+  const stack = [l.cells[c.y]?.[c.x] === '.' ? c : start!];
+  floor.add(key(stack[0]!.x, stack[0]!.y));
+  while (stack.length) {
+    const p = stack.pop()!;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const x = p.x + dx;
+      const y = p.y + dy;
+      if (inside(a, x, y) && l.cells[y]?.[x] === '.' && !floor.has(key(x, y))) {
+        floor.add(key(x, y));
+        stack.push({ x, y });
+      }
+    }
+  }
+  for (const d of l.doors) if (overlaps(a, { ...d, w: 1, h: 1 }, 1)) floor.add(key(d.x, d.y));
+  const seen = new Set(floor);
+  for (const k of floor) {
+    const [x, y] = k.split(',').map(Number) as [number, number];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (l.cells[y + dy]?.[x + dx] === '#') seen.add(key(x + dx, y + dy));
+  }
+  const out: number[] = [];
+  for (let y = 0; y < l.h; y++) {
+    for (let x = 0; x < l.w; x++) {
+      if (!seen.has(key(x, y)) || seen.has(key(x - 1, y))) continue;
+      let w = 1;
+      while (seen.has(key(x + w, y))) w++;
+      out.push(x / l.w, y / l.h, w / l.w, 1 / l.h);
+    }
+  }
+  return out;
 }
 
 export const roomCentre = (l: Layout, i: number) => {

@@ -91,8 +91,8 @@
       </div>
 
       {#if pin.area}
-        {@const area = pin.area}
-        <button class="btn shown primary" onclick={() => dispatch('maps', 'addFog', { path, op: { mode: 'reveal', kind: 'rect', ...area } })}><DoorOpen size={14} /> {t('maps.openRoom')}</button>
+        {@const rects = pin.area}
+        <button class="btn shown primary" onclick={() => dispatch('maps', 'addFog', { path, op: { mode: 'reveal', kind: 'rects', rects } })}><DoorOpen size={14} /> {t('maps.openRoom')}</button>
       {/if}
       <button class="btn shown" class:primary={!pin.shown && !pin.area} onclick={() => update(pin, { shown: !pin.shown })}>
         {#if pin.shown}<EyeOff size={14} /> {t('maps.hideFromPlayers')}{:else}<Eye size={14} /> {t('maps.showToPlayers')}{/if}

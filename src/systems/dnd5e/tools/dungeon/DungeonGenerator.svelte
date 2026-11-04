@@ -109,7 +109,7 @@
       const x = d.rooms[c.room]!;
       if (c.kind !== 'creature') return [];
       const portrait = card?.portrait ? cardAsset(card.ref.scope, card.portrait) : null;
-      return [{ x: c.x, y: c.y, name: card?.name ?? monsterName(x, lang), portrait, side: card?.side ?? ('enemy' as const) }];
+      return [{ x: c.x, y: c.y, size: c.size, name: card?.name ?? monsterName(x, lang), portrait, side: card?.side ?? ('enemy' as const) }];
     });
     noMaps = !(await layoutToMaps(d.map, dungeonName(d, lang), pins, { pins: traps, tokens }));
   }
