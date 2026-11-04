@@ -20,9 +20,7 @@
   import { periodOf, shapeOf, type GridShape } from '../grid';
   import type { CardSummary } from '../../../shared/cards';
   import { cardAsset } from '../../../shared/cards';
-  import { visibleIn } from '../../../shared/adventures';
-  import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
-  import { caption, imageGroups } from '../../portraits/library';
+  import { partyTokens } from './party';
   import PinPanel from './PinPanel.svelte';
   import TokenPanel from './TokenPanel.svelte';
   import { ui, type Tab, type Tool } from './ui.svelte';
@@ -614,22 +612,7 @@
   // Партия текущего приключения: карточки персонажей игроков и портреты из папок партии, кого ещё нет на карте.
   async function addParty() {
     if (!data) return;
-    await connectCards();
-    const has = (name: string, portrait: string | null) => data!.tokens.some((t) => t.name === name && t.portrait === portrait);
-    const list: NewToken[] = [];
-    for (const c of bestiary.all) {
-      if (c.kind !== 'character' || c.ref.scope !== 'vault' || c.folder === undefined || !visibleIn(app.adventures, c.folder)) continue;
-      const portrait = c.portrait ? cardAsset(c.ref.scope, c.portrait) : null;
-      if (!has(c.name, portrait)) list.push({ size: 1, name: c.name, portrait, side: 'party', hidden: false });
-    }
-    const tree = app.vault.tree;
-    for (const g of tree ? imageGroups(tree, app.vault.name, 'party', app.adventures) : []) {
-      for (const f of g.items) {
-        if (bestiary.cardFor(f.path)) continue;
-        const name = caption(app.portraits, f.path);
-        if (!has(name, f.path)) list.push({ size: 1, name, portrait: f.path, side: 'party', hidden: false });
-      }
-    }
+    const list = (await partyTokens(app)).filter((p) => !data!.tokens.some((t) => t.name === p.name && t.portrait === p.portrait));
     placeTokens(list);
     return list.length;
   }

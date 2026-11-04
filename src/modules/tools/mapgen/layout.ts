@@ -489,6 +489,73 @@ export const roomCentre = (l: Layout, i: number) => {
   const a = l.rooms[i]!;
   return { x: (a.x + a.w / 2) / l.w, y: (a.y + a.h / 2) / l.h };
 };
+// The same in cells: the cell at the middle of a room.
+export const middleCell = (l: Layout, i: number): Cell => centre(l.rooms[i]!);
+
+// The shortest way on foot from the middle of one room to the middle of another; empty when there is none.
+export function routeBetween(l: Layout, from: number, to: number): Cell[] {
+  const start = middleCell(l, from);
+  const end = middleCell(l, to);
+  const key = (c: Cell) => `${c.x},${c.y}`;
+  const came = new Map<string, Cell | null>([[key(start), null]]);
+  const queue = [start];
+  for (let i = 0; i < queue.length; i++) {
+    const c = queue[i]!;
+    if (c.x === end.x && c.y === end.y) {
+      const way: Cell[] = [];
+      for (let at: Cell | null = c; at; at = came.get(key(at)) ?? null) way.unshift(at);
+      return way;
+    }
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const next = { x: c.x + dx, y: c.y + dy };
+      if (walkable(l.cells[next.y]?.[next.x]) && !came.has(key(next))) {
+        came.set(key(next), c);
+        queue.push(next);
+      }
+    }
+  }
+  return [];
+}
+
+// Is this cell inside what a room's reveal shows (roomReveal)?
+export function inReveal(l: Layout, rects: number[], c: Cell): boolean {
+  const x = (c.x + 0.5) / l.w;
+  const y = (c.y + 0.5) / l.h;
+  for (let i = 0; i + 3 < rects.length; i += 4) {
+    if (x >= rects[i]! && y >= rects[i + 1]! && x < rects[i]! + rects[i + 2]! && y < rects[i + 1]! + rects[i + 3]!) return true;
+  }
+  return false;
+}
+
+// Free squares `size` cells wide, scattered near..far cells from a point, the corners of the squares. On plain ground
+// when there is room, and farther out when `count` does not fit; every creature gets a square, or stands over another.
+export interface Ring {
+  near: number;
+  far: number;
+  size?: number;
+  free?: (c: Cell) => boolean;
+}
+export function ringCells(l: Layout, at: Cell, count: number, r: Random, { near, far, size = 1, free = () => true }: Ring): Cell[] {
+  const square = (p: Cell) => Array.from({ length: size * size }, (_, n) => ({ x: p.x + (n % size), y: p.y + Math.floor(n / size) }));
+  const open = (c: Cell) => walkable(l.cells[c.y]?.[c.x]) && free(c);
+  const all: Cell[] = [];
+  for (let y = 0; y < l.h - size + 1; y++) for (let x = 0; x < l.w - size + 1; x++) if (square({ x, y }).every(open)) all.push({ x, y });
+  const off = (p: Cell) => Math.hypot(p.x + (size - 1) / 2 - at.x, p.y + (size - 1) / 2 - at.y);
+  const shuffled = all.map((p) => ({ p, k: r() + (l.cells[p.y]?.[p.x] === '.' ? 0 : 1) })).sort((a, b) => a.k - b.k).map((a) => a.p);
+  const taken = new Set<string>();
+  const out: Cell[] = [];
+  for (let reach = far; out.length < count && reach <= far + Math.max(l.w, l.h); reach += 2) {
+    for (const p of shuffled) {
+      if (out.length === count) break;
+      if (off(p) < near || off(p) > reach || square(p).some((c) => taken.has(`${c.x},${c.y}`))) continue;
+      square(p).forEach((c) => taken.add(`${c.x},${c.y}`));
+      out.push(p);
+    }
+  }
+  const spare = out[0] ?? at;
+  while (out.length < count) out.push(spare);
+  return out;
+}
 
 export function generateLayout(style: LayoutStyle, o: LayoutOptions, r: Random = Math.random): Layout {
   const seed = index(2 ** 31, r);

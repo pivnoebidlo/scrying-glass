@@ -56,9 +56,10 @@ export default defineModule({
       return s.maps[path] ? s : withMap(s, path, (d) => d);
     },
 
-    // A map the generator just made: the grid matches its cells, the pins are its rooms.
-    generated(s, { path, cells, pins, tokens }: { path: string; cells: number; pins: MapPin[]; tokens: MapToken[] }) {
-      return withMap(s, path, (d) => ({ ...d, grid: { ...d.grid, on: true, cells: Math.min(200, Math.max(2, cells)), ox: 0, oy: 0 }, pins, tokens }));
+    // A map the generator just made: the grid matches its cells, the pins are its rooms; `open` — fog lifted at the start.
+    generated(s, { path, cells, pins, tokens, open }: { path: string; cells: number; pins: MapPin[]; tokens: MapToken[]; open?: number[] }) {
+      const ops: FogOp[] = open ? [{ mode: 'reveal', kind: 'rects', rects: open }] : [];
+      return withMap(s, path, (d) => ({ ...d, grid: { ...d.grid, on: true, cells: Math.min(200, Math.max(2, cells)), ox: 0, oy: 0 }, pins, tokens, fog: { ...d.fog, ops: [...d.fog.ops, ...ops] } }));
     },
 
     show(s, { path }: { path: string }) {

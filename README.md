@@ -381,6 +381,13 @@ with fords, the sea or ponds around them. "To Maps"
 adds the picture to the current adventure with the fog of war, a grid that matches its cells and a hidden pin on every
 room or place. Numbers are only in the preview and on your pins: the players see a clean map.
 
+**Wilderness encounter** (D&D, Tools → Wilderness encounter): forest, field, shore or swamp, the party's level and size
+and the difficulty → a scene (ambush, roadblock, lair ahead, pursuit, surrounded, chance meeting) with what the foes want,
+a complication and what the ground means at the table. Foes are SRD creatures of that place, a group or a leader with
+followers, matched to the 2024 encounter budget. "To Maps" adds a small map with the heroes and the foes as tokens: the
+heroes' place is open and the fog hides the rest. Each part can be rerolled; send the foes to an encounter preset, copy,
+or save to the journal.
+
 **Trap generator** (D&D, Tools → Trap generator): the heroes' level, severity (setback, dangerous, deadly), kind
 (mechanical, magical) and place (corridor, door, room, treasure) → a trap ready to run: the mechanism with its save or
 attack and its damage by the SRD tables, what sets it off, how to notice and disarm it, how the locals go past it, a

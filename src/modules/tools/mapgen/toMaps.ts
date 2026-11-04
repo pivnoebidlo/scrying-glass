@@ -14,6 +14,8 @@ export type RoomPin = Pick<MapPin, 'title' | 'note' | 'color'> & Partial<Pick<Ma
 export interface MapExtras {
   pins?: (RoomPin & Cell)[];
   tokens?: (Omit<MapToken, 'id' | 'x' | 'y' | 'hidden'> & Cell)[];
+  // A room the players see from the start.
+  open?: number;
 }
 
 const hidden = { shown: false };
@@ -31,7 +33,7 @@ export async function layoutToMaps(l: Layout, title: string, rooms: RoomPin[], e
   if (!folder) return false;
   const path = await window.api.addMapImage(folder.path, title, await layoutPng(l));
   if (!path) return false;
-  await dispatch('maps', 'generated', { path, cells: l.w, pins: layoutPins(l, rooms, extras.pins), tokens: layoutTokens(l, extras.tokens) });
+  await dispatch('maps', 'generated', { path, cells: l.w, pins: layoutPins(l, rooms, extras.pins), tokens: layoutTokens(l, extras.tokens), ...(extras.open === undefined ? {} : { open: roomReveal(l, extras.open) }) });
   mapsUi.selected = path;
   // The list of rooms is open; the hand tool, so that a click on the map adds no pin by accident.
   mapsUi.tab = 'pins';

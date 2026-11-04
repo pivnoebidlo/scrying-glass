@@ -17,7 +17,7 @@ const LINE = 'rgba(70, 58, 42, 0.22)';
 
 // What the preview shows over the picture; the map gets tokens and hidden pins instead.
 export interface LayoutMark extends Cell {
-  kind: 'creature' | 'trap' | 'hoard';
+  kind: 'creature' | 'party' | 'trap' | 'hoard';
   // The side in cells: a large creature's mark is as wide as its token.
   size?: number;
 }
@@ -268,8 +268,8 @@ export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, 
     const py = (m.y + size / 2) * c;
     const q = c * 0.36 * size;
     ctx.beginPath();
-    if (m.kind === 'creature') {
-      ctx.fillStyle = '#c0392b';
+    if (m.kind === 'creature' || m.kind === 'party') {
+      ctx.fillStyle = m.kind === 'party' ? '#e8b94a' : '#c0392b';
       ctx.arc(px, py, q, 0, Math.PI * 2);
     } else if (m.kind === 'trap') {
       ctx.fillStyle = '#e8a33d';
