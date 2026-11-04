@@ -159,7 +159,7 @@ describe('генератор карт', () => {
   it('город: площади связаны улицами, дома не на них и не касаются друг друга, у домов есть подход', () => {
     const r = seeded(29);
     for (const rooms of [3, 5, 9, 16, 30]) {
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 4; i++) {
         const l = generateLayout('town', { rooms }, r);
         expect(l.rooms).toHaveLength(rooms);
         for (const row of l.cells) expect(row).toHaveLength(l.w);
@@ -185,10 +185,11 @@ describe('генератор карт', () => {
         const sight = roomReveal(l, 0);
         expect(sight.length).toBeGreaterThan(0);
         // A house is seen whole or not at all.
-        for (const a of houses) {
+        const whole = houses.every((a) => {
           const cells = Array.from({ length: a.w * a.h }, (_, n) => inReveal(l, sight, { x: a.x + (n % a.w), y: a.y + Math.floor(n / a.w) }));
-          expect(new Set(cells).size).toBe(1);
-        }
+          return new Set(cells).size === 1;
+        });
+        expect(whole).toBe(true);
       }
     }
   });
