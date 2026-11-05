@@ -7,7 +7,7 @@ import { PlayerServer } from '../src/main/playerserver';
 import type { Card } from '../src/shared/cards';
 import { bookIndex, entryNamesOf, namesInText, publicEntry, sheetText, type BookEntry } from '../src/shared/playerbook';
 import type { Entry } from '../src/shared/compendium';
-import { checkAction, usedAfter, hpShare, lanAddresses, playerCard, playerLive, playerUrl, type PlayerView } from '../src/shared/players';
+import { afterReset, checkAction, usedAfter, hpShare, lanAddresses, playerCard, playerLive, playerUrl, type PlayerView } from '../src/shared/players';
 import type { Combatant } from '../src/modules/initiative/types';
 
 const card: Card = {
@@ -79,17 +79,18 @@ describe('the compendium on a phone', () => {
 });
 
 describe('what a phone may do', () => {
-  const limits = { 'slot:1': 4, 'slot:2': 2 };
+  const limits = { limits: { 'slot:1': 4, 'slot:2': 2 }, resets: { long: ['slot:1', 'slot:2'] } };
 
   it('spends within the limit and rests', () => {
     expect(checkAction({ type: 'use', key: 'slot:1', used: 3 }, limits)).toEqual({ type: 'use', key: 'slot:1', used: 3 });
     expect(checkAction({ type: 'use', key: 'slot:2', used: 0 }, limits)).toEqual({ type: 'use', key: 'slot:2', used: 0 });
-    expect(checkAction({ type: 'rest', extra: 'x' }, limits)).toEqual({ type: 'rest' });
+    expect(checkAction({ type: 'reset', id: 'long', extra: 'x' }, limits)).toEqual({ type: 'reset', id: 'long' });
   });
 
   it('anything else is refused', () => {
     for (const a of [
-      null, 'rest', 5, {}, { type: 'hack' },
+      null, 'reset', 5, {}, { type: 'hack' },
+      { type: 'reset' }, { type: 'reset', id: 'short' }, { type: 'reset', id: 'constructor' }, { type: 'reset', id: 1 },
       { type: 'use', key: 'slot:1', used: 5 },
       { type: 'use', key: 'slot:1', used: -1 },
       { type: 'use', key: 'slot:1', used: 1.5 },
@@ -99,6 +100,16 @@ describe('what a phone may do', () => {
       { type: 'use', key: '__proto__', used: 0 },
       { type: 'use', key: 'constructor', used: 0 },
     ]) expect(checkAction(a, limits)).toBeNull();
+  });
+
+  it('a game without resources allows nothing', () => {
+    expect(checkAction({ type: 'use', key: 'slot:1', used: 1 }, { limits: {}, resets: {} })).toBeNull();
+    expect(checkAction({ type: 'reset', id: 'long' }, { limits: {}, resets: {} })).toBeNull();
+  });
+
+  it('a reset clears only its keys', () => {
+    expect(afterReset({ 'slot:1': 2, hunger: 3 }, ['slot:1'])).toEqual({ hunger: 3 });
+    expect(afterReset({}, ['slot:1'])).toEqual({});
   });
 
   it('boxes: a press spends up to it, the last spent gives one back', () => {

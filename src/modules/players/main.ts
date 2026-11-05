@@ -1,6 +1,6 @@
 // The players' sheets in a browser: links and the server live in the core (main/players.ts); here — what the characters
 // have spent at the table (shared/players.ts), by card. The GM's window and a phone both change it through these actions.
-import type { PlayerUsage } from '../../shared/players';
+import { afterReset, type PlayerUsage } from '../../shared/players';
 import { defineModule } from '../../shared/module';
 
 export interface PlayersState {
@@ -20,9 +20,8 @@ export default defineModule({
       else delete next[key];
       return { ...s, used: { ...s.used, [card]: next } };
     },
-    rest(s, { card }: { card: string }) {
-      const { [card]: _gone, ...rest } = s.used;
-      return { ...s, used: rest };
+    reset(s, { card, keys }: { card: string; keys: string[] }) {
+      return { ...s, used: { ...s.used, [card]: afterReset(s.used[card] ?? {}, keys) } };
     },
   },
 });

@@ -839,7 +839,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   белый список `playerCard` (не `notes`, не `links`, не пути), `playerLive` (только свой участник боя), `lanAddresses`.
   Сервер `main/playerserver.ts` без Electron (тесты запускают его как есть): `/p/<токен>` — страница, `/assets/*`,
   `/api/<токен>/view|portrait|entry|events` (SSE, heartbeat). Вход один — POST `/api/<токен>/action`: только JSON до 1 КБ, `checkAction`
-  (shared/players.ts) пропускает известные действия в пределах `SystemPlugin.sheetLimits`, дальше — действие модуля, как у окна мастера;
+  (shared/players.ts) пропускает только то, что есть в листе (`SheetResources` из `SystemPlugin.sheetResources`: ресурс — счётчик от 0 до предела, сброс — именованное событие; игрового смысла ядро не знает), дальше — действие модуля, как у окна мастера;
   новое действие игрока — случай в `checkAction` и `actOn` (main/players.ts). Общее состояние наружу не идёт никогда.
   Потраченное за столом — состояние модуля `players.used[id карточки]` (`state.json`, не в карточке: импорт из сервиса сравнивает листы), ключи `slot:<уровень>`,
   лишнее сверх предела считается потраченным до отдыха. Лист спрашивает хозяина окна — `sheetUsage.host` (`renderer/lib/sheetusage.svelte.ts`):

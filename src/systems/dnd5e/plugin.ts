@@ -32,7 +32,7 @@ export const dnd5ePlugin: SystemPlugin = {
   // Adventures from before the choice of systems are D&D.
   legacy: 'dnd5e-2024',
   sheetEntries: ['spell'],
-  sheetLimits: character.sheetLimits,
+  sheetResources: character.sheetResources,
   entryTypes: ENTRY_TYPES,
   entrySubtitle: ENTRY_SUBTITLES,
   importers: [lssImporter],

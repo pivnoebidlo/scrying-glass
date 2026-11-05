@@ -2,6 +2,7 @@
 // the core. Shared part — pure, read by the core and by the windows; the windows' part (views, editors, tools…) is
 // `SystemUi` in systems/ui.ts. The core knows no system by name: it asks the plugins (systems/plugins.ts).
 // Systems described by packs (systems/packs.ts) need no plugin; a plugin may add to a pack's family later.
+import type { SheetResources } from '../shared/players';
 import type { SystemDef } from '.';
 import type { FieldValue, TypeDef } from '../shared/entrytypes';
 import type { CardImporter } from './importer';
@@ -19,8 +20,8 @@ export interface SystemPlugin {
   entrySubtitle?: Record<string, (fields: Record<string, FieldValue>) => string>;
   // The types of entries a character's sheet names: a player can open those from their phone (shared/playerbook.ts).
   sheetEntries?: string[];
-  // What a character's sheet lets spend at the table: a key → how many there are (D&D: spell slots by level).
-  sheetLimits?(stats: unknown): Record<string, number>;
+  // What a character's sheet tracks at the table (shared/players.ts; D&D: spell slots, a long rest).
+  sheetResources?(stats: unknown): SheetResources;
   // Importers of characters from other services (D&D: Long Story Short).
   importers?: CardImporter[];
   // Ids of the official content of the family (shared/content.ts), downloaded from the Community (D&D: its SRD).

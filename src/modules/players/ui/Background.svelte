@@ -4,6 +4,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { sheetUsage } from '../../../renderer/lib/sheetusage.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
+  import { sheetResources } from '../../../systems';
   import QrDialog from './QrDialog.svelte';
   import { connectPlayers, players } from './players.svelte';
 
@@ -14,7 +15,7 @@
     sheetUsage.host = {
       used: (card) => store.state.players.used[card.id] ?? {},
       set: (card, key, used) => void dispatch('players', 'setUsed', { card: card.id, key, used }),
-      rest: (card) => void dispatch('players', 'rest', { card: card.id }),
+      reset: (card, id) => void dispatch('players', 'reset', { card: card.id, keys: sheetResources(card.system, card.stats).resets[id] ?? [] }),
     };
   });
 </script>

@@ -4,8 +4,9 @@
   import type { Component } from 'svelte';
   import { onMount } from 'svelte';
   import type { Card } from '../../shared/cards';
-  import { hpShare, type PlayerAction, type PlayerUsage, type PlayerView } from '../../shared/players';
+  import { afterReset, hpShare, type PlayerAction, type PlayerUsage, type PlayerView } from '../../shared/players';
   import { setSpellIndex } from '../../systems/dnd5e/spellindex';
+  import { sheetResources } from '../../systems';
   import { registerPacks } from '../../systems/packs';
   import { sheetOf } from '../../systems/sheets';
   import { peekEntry } from '../lib/entry/peek.svelte';
@@ -39,7 +40,7 @@
   sheetUsage.host = {
     used: () => view?.usage ?? {},
     set: (_card, key, used) => void act({ type: 'use', key, used }, { ...view?.usage, [key]: used }),
-    rest: () => void act({ type: 'rest' }, {}),
+    reset: (card, id) => void act({ type: 'reset', id }, afterReset(view?.usage ?? {}, sheetResources(card.system, card.stats).resets[id] ?? [])),
   };
 
   async function apply(next: PlayerView) {

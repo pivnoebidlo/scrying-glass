@@ -12,7 +12,7 @@
   import { usedAfter } from '../../shared/players';
   import { ABILITIES, dict, mod, signed, sizeText, SKILL_ABILITY } from './stats';
   import {
-    characterInitiative, characterPb, saveBonus, skillBonus, slotKey, totalLevel, type CharacterText, type Dnd5eCharacter,
+    characterInitiative, characterPb, LONG_REST, saveBonus, skillBonus, slotKey, totalLevel, type CharacterText, type Dnd5eCharacter,
     CHARACTER_TEXTS,
   } from './character';
 
@@ -65,7 +65,7 @@
   const anySpent = $derived(Object.values(spent).some((n) => n > 0));
   const useSlot = (lvl: string, box: number) => host?.set(card, slotKey(lvl), usedAfter(usedOf(lvl), box));
   function longRest() {
-    if (confirm(t('dnd.sh.longRestQ', { name: card.name }))) host?.rest(card);
+    if (confirm(t('dnd.sh.longRestQ', { name: card.name }))) host?.reset(card, LONG_REST);
   }
 
   const DETAILS: Record<string, string> = labels(['age', 'height', 'weight', 'eyes', 'skin', 'hair'], 'dnd.detail');

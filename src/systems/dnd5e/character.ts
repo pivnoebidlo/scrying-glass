@@ -1,5 +1,6 @@
 // D&D 5e: лист персонажа игрока (карточка вида «character»). Справка для мастера, а не живое состояние:
 // текущие хиты, потраченные ячейки и состояния живут в трекере инициативы и на игре.
+import type { SheetResources } from '../../shared/players';
 import type { CombatStats } from '../../shared/cards';
 import { mod, type Ability, type Size } from './stats';
 
@@ -75,9 +76,15 @@ export type CharacterText = (typeof CHARACTER_TEXTS)[number];
 export const isCharacter = (s: unknown): s is Dnd5eCharacter => !!s && typeof s === 'object' && 'classes' in s;
 
 export const slotKey = (level: string) => `slot:${level}`;
-// What the sheet lets spend at the table: spell slots by level.
-export const sheetLimits = (s: unknown): Record<string, number> =>
-  isCharacter(s) && s.spellcasting ? Object.fromEntries(Object.entries(s.spellcasting.slots).filter(([, n]) => n > 0).map(([l, n]) => [slotKey(l), n])) : {};
+export const LONG_REST = 'long';
+// What the sheet tracks at the table: spell slots by level, all back after a long rest.
+export function sheetResources(s: unknown): SheetResources {
+  const slots = isCharacter(s) && s.spellcasting ? Object.entries(s.spellcasting.slots).filter(([, n]) => n > 0) : [];
+  return {
+    limits: Object.fromEntries(slots.map(([l, n]) => [slotKey(l), n])),
+    resets: slots.length ? { [LONG_REST]: slots.map(([l]) => slotKey(l)) } : {},
+  };
+}
 
 export const totalLevel = (c: Dnd5eCharacter) => c.classes.reduce((n, x) => n + (x.level || 0), 0) || 1;
 // Бонус мастерства по уровню персонажа: +2 на 1–4, +3 на 5–8, …

@@ -1,4 +1,4 @@
-// What a character has spent at the table (spell slots), kept apart from the sheet. A sheet asks the host of its window
+// What a sheet tracks at the table (shared/players.ts), kept apart from it. A sheet asks the host of its window
 // and does not know whose it is: the GM's window (modules/players) or a player's phone (renderer/player).
 import type { Card } from '../../shared/cards';
 import type { PlayerUsage } from '../../shared/players';
@@ -6,7 +6,7 @@ import type { PlayerUsage } from '../../shared/players';
 export interface SheetUsage {
   used(card: Card): PlayerUsage;
   set(card: Card, key: string, used: number): void;
-  rest(card: Card): void;
+  reset(card: Card, id: string): void;
 }
 
 class Host {
