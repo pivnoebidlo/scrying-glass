@@ -97,6 +97,7 @@
     const key = d.sections[s]!.fields[f]!.key;
     d.sections[s]!.fields.splice(f, 1);
     d.tracker.cells = d.tracker.cells?.filter((k) => k !== key);
+    for (const r of d.resets ?? []) r.fields = r.fields.filter((k) => k !== key);
     if (d.tracker.hp === key) delete d.tracker.hp;
     select({ kind: 'section', s });
   }
@@ -122,6 +123,7 @@
     const tr = d.tracker;
     if (tr.hp === from) tr.hp = to;
     tr.cells = tr.cells?.map((k) => (k === from ? to : k));
+    for (const r of d.resets ?? []) r.fields = r.fields.map((k) => (k === from ? to : k));
     if (tr.init.type === 'roll' && tr.init.bonus) tr.init.bonus = fix(tr.init.bonus);
     if (tr.init.type === 'value') tr.init.value = fix(tr.init.value);
     if (to !== from && from in builder.previewStats) {

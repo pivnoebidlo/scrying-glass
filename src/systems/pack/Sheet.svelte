@@ -5,14 +5,32 @@
   import { t } from '../../renderer/lib/i18n.svelte';
   import type { Card } from '../../shared/cards';
   import { modeOf, rolls } from '../../renderer/lib/rolls.svelte';
-  import { boxesOf, evalFormula, loc, sectionsFor, slotGroups, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { usedAfter } from '../../shared/players';
+  import { boxesOf, evalFormula, loc, packResources, sectionsFor, slotGroups, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { sheetUsage } from '../../renderer/lib/sheetusage.svelte';
   import { packOf } from '../packs';
 
   // draft — a pack not saved yet (the builder's preview); otherwise the card's system.
   let { card, draft }: { card: Card<PackStats>; draft?: SystemPack } = $props();
 
   const pack = $derived(draft ?? (packOf(card.system) as SystemPack));
-  const s = $derived(card.stats ?? {});
+  // Fields marked at the table win over the card's values, in formulas too. A draft has no table.
+  const host = $derived(draft ? null : sheetUsage.host);
+  const res = $derived(pack ? packResources(pack, card.stats ?? {}, card.kind) : null);
+  const s = $derived.by(() => {
+    const out: PackStats = { ...card.stats };
+    const used = host?.used(card) ?? {};
+    for (const [k, limit] of Object.entries(res?.limits ?? {})) if (used[k] !== undefined) out[k] = Math.min(used[k]!, limit);
+    return out;
+  });
+  // The field can be changed here.
+  const marks = (f: FieldDef) => !!host && !!res && Object.hasOwn(res.limits, f.key) && !(host.player && res.gmOnly?.includes(f.key));
+  const mark = (f: FieldDef, box: number) => host?.set(card, f.key, usedAfter(num(f), box));
+  const step = (f: FieldDef, by: number) => host?.set(card, f.key, Math.max(0, Math.min(res?.limits[f.key] ?? 0, num(f) + by)));
+  const resets = $derived(host && pack ? (pack.resets ?? []).filter((r) => res?.resets[r.id] && !(host.player && res.resets[r.id]!.some((k) => res.gmOnly?.includes(k)))) : []);
+  function reset(id: string, title: string) {
+    if (confirm(t('pack.resetQ', { title, name: card.name }))) host?.reset(card, id);
+  }
   const lang = $derived(card.lang);
   const L = (x: Parameters<typeof loc>[0]) => loc(x, lang);
   const num = (f: FieldDef) => evalFormula(pack, s, f.key);
@@ -63,6 +81,11 @@
         <button class="icon-btn" title={t('pack.askCancel')} onclick={() => (asking = null)}>✕</button>
       </div>
     {/if}
+    {#if resets.length}
+      <div class="resets">
+        {#each resets as r (r.id)}<button class="btn" onclick={() => reset(r.id, L(r.title))}>{L(r.title)}</button>{/each}
+      </div>
+    {/if}
     {#each sections as sec (sec.id)}
       <section>
         <h3>{L(sec.title)}</h3>
@@ -70,23 +93,33 @@
           {#each sec.fields as f (f.key)}
             {#if !wide(f)}
               <svelte:element
-                this={f.roll ? 'button' : 'div'}
+                this={f.roll && !marks(f) ? 'button' : 'div'}
                 class="field"
-                class:rolls={!!f.roll}
+                class:rolls={!!f.roll && !marks(f)}
                 title={f.roll ? t('pack.rollHint') : L(f.hint)}
-                onclick={(e: MouseEvent) => roll(f, e)}
-                role={f.roll ? undefined : 'group'}
+                onclick={(e: MouseEvent) => !marks(f) && roll(f, e)}
+                role={f.roll && !marks(f) ? undefined : 'group'}
               >
-                <span class="name">{L(f.title)}</span>
+                {#if f.roll && marks(f)}
+                  <button class="name title-roll" onclick={(e) => roll(f, e)}>{L(f.title)}</button>
+                {:else}
+                  <span class="name">{L(f.title)}</span>
+                {/if}
                 {#if f.type === 'dots'}
-                  <span class="dots" aria-label={String(num(f))}>{#each { length: f.max ?? 5 } as _, i (i)}<i class:on={i < num(f)}></i>{/each}</span>
+                  <span class="dots" aria-label={String(num(f))}>{#each { length: f.max ?? 5 } as _, i (i)}{#if marks(f)}<button class="mark" class:on={i < num(f)} aria-label={String(i + 1)} onclick={() => mark(f, i)}></button>{:else}<i class:on={i < num(f)}></i>{/if}{/each}</span>
                 {:else if f.type === 'track'}
                   {@const n = boxesOf(pack, s, f)}
-                  <span class="boxes" aria-label="{num(f)} / {n}">{#each { length: n } as _, i (i)}<i class:on={i < num(f)}></i>{/each}</span>
+                  <span class="boxes" aria-label="{num(f)} / {n}">{#each { length: n } as _, i (i)}{#if marks(f)}<button class="mark" class:on={i < num(f)} aria-label={String(i + 1)} onclick={() => mark(f, i)}></button>{:else}<i class:on={i < num(f)}></i>{/if}{/each}</span>
                 {:else if f.type === 'select'}
                   <span class="value">{L(f.options?.[s[f.key] as number])}</span>
                 {:else if f.type === 'text'}
                   <span class="value">{text(f)}</span>
+                {:else if marks(f)}
+                  <span class="stepper">
+                    <button class="btn" aria-label="−1" onclick={() => step(f, -1)}>−</button>
+                    <span class="value big">{num(f)}</span>
+                    <button class="btn" aria-label="+1" onclick={() => step(f, 1)}>+</button>
+                  </span>
                 {:else}
                   <span class="value big">{Math.round(num(f) * 100) / 100}</span>
                 {/if}
@@ -311,5 +344,55 @@
   }
   tr.rolls:hover td {
     background: var(--bg-hover);
+  }
+  .resets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .title-roll {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    cursor: pointer;
+  }
+  .stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mark {
+    width: 12px;
+    height: 12px;
+    padding: 0;
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    background: none;
+    cursor: pointer;
+  }
+  .dots .mark {
+    border-radius: 50%;
+  }
+  .mark.on {
+    background: var(--accent);
+  }
+  /* Last: it has to outweigh .mark. */
+  @media (pointer: coarse) {
+    .boxes,
+    .dots {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 4px;
+    }
+    .stepper .btn {
+      min-width: 40px;
+      min-height: 36px;
+    }
   }
 </style>

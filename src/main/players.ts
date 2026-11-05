@@ -10,7 +10,8 @@ import { bookIndex, entryNamesOf, namesInText, publicEntry, sheetText, type Book
 import { checkAction, lanAddresses, playerCard, playerLive, type PlayerStatus, type PlayerView } from '../shared/players';
 import type { AppState } from '../shared/types';
 import { allFiles, dirname } from '../shared/vault';
-import { familyOf, importersOf, sheetEntryTypes, sheetResources, systemOf } from '../systems';
+import { familyOf, importersOf, sheetEntryTypes, systemOf } from '../systems';
+import { sheetResources } from '../systems/packs';
 import { getCard, importerTableOf, libraryPath, listCards, resolveInLibrary } from './cards';
 import { builtinEntries, entries } from './compendium';
 import { PlayerServer } from './playerserver';
@@ -179,7 +180,7 @@ async function actOn(token: string, raw: unknown): Promise<boolean> {
   const link = Object.hasOwn(links, token) ? links[token] : undefined;
   const card = link && cardOf(link);
   if (!card) return false;
-  const sheet = sheetResources(card.system, card.stats);
+  const sheet = sheetResources(card);
   const action = checkAction(raw, sheet);
   if (!action) return false;
   if (action.type === 'reset') await deps.dispatch('reset', { card: card.id, keys: sheet.resets[action.id] });

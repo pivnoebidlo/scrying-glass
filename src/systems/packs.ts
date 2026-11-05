@@ -1,13 +1,14 @@
 // Systems described by packs (shared/syspack.ts) next to the built-in ones: each pack becomes a SystemDef in
 // `systems` and a family in FAMILIES. The core registers the packs it read, the windows — the ones that came with
 // the state (vault.systems). Built-in systems keep their ids: a pack can't take one.
-import type { CardKind, CombatStats } from '../shared/cards';
+import type { Card, CardKind, CombatStats } from '../shared/cards';
 import type { Combatant } from '../modules/initiative/types';
 import { getLang, t } from '../shared/i18n';
 import { die } from '../shared/dice';
-import { blankStats, evalFormula, fieldMap, loc, packCombat, packSubtitle, type SystemPack } from '../shared/syspack';
+import type { SheetResources } from '../shared/players';
+import { blankStats, evalFormula, fieldMap, loc, packCombat, packResources, packSubtitle, type PackStats, type SystemPack } from '../shared/syspack';
 import type { CombatField, TrackerDef } from './tracker';
-import { FAMILIES, systems, type SystemDef } from '.';
+import { FAMILIES, pluginResources, systems, type SystemDef } from '.';
 
 const packs = new Map<string, SystemPack>();
 const families = new Set<string>();
@@ -174,4 +175,10 @@ export function packTracker(p: SystemPack): TrackerDef {
       };
     },
   };
+}
+
+// What a card tracks at the table, whether its system is a pack or a plugin.
+export function sheetResources(card: Pick<Card, 'system' | 'stats' | 'kind'>): SheetResources {
+  const pack = packOf(card.system);
+  return pack ? packResources(pack, (card.stats ?? {}) as PackStats, card.kind) : pluginResources(card.system, card.stats);
 }

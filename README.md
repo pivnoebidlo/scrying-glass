@@ -661,7 +661,8 @@ updated the moment you change them in the tracker. Nothing else leaves your comp
 characters, or hidden enemies. A tap on a spell or a condition shows its description from the compendium, your own
 spells included: only what this sheet names, so players cannot browse your entries. Rolls from the sheet stay on the phone. In D&D a player marks spent spell slots right on the sheet
 and restores them with "Long rest"; you see the same boxes on the card and can change them too. Spent slots are kept
-in the vault, apart from the sheet, so importing the character again does not touch them. Everything else is read only. The first time, the system may ask whether the app can accept connections: allow it. The sheets work while
+in the vault, apart from the sheet, so importing the character again does not touch them. A system pack can do the same: in the system builder, a track, dots or a number can be "Marked at the table" by the
+player and the GM or by the GM only, and the Tracker step adds resets such as a rest or a new day. Everything else is read only. The first time, the system may ask whether the app can accept connections: allow it. The sheets work while
 the switch is on and the app is open.
 
 ## Cards

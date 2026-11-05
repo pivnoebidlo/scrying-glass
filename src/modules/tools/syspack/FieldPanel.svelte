@@ -4,10 +4,11 @@
      [6] and up»), the rest under «More»; a trial roll on the sample card. The key, the hint and other rare things —
      under «More» too. Changes go straight into the draft. -->
 <script lang="ts">
+  import HelpTip from '../../../renderer/lib/HelpTip.svelte';
   import Lead from '../../../renderer/lib/Lead.svelte';
   import { Dices, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { COLUMN_TYPES, evalFormula, FIELD_TYPES, fieldMap, loc, newField, newRoll, type FieldDef, type FieldType, type Loc, type RollSpec, POOL_KINDS, type PoolKind, type SystemPack } from '../../../shared/syspack';
+  import { COLUMN_TYPES, evalFormula, FIELD_TYPES, fieldMap, LIVE_TYPES, loc, newField, newRoll, type FieldDef, type FieldType, type LiveBy, type Loc, type RollSpec, POOL_KINDS, type PoolKind, type SystemPack } from '../../../shared/syspack';
   import { keyFrom } from '../../../shared/compendium';
   import { getLang } from '../../../shared/i18n';
   import { rolls } from '../../../renderer/lib/rolls.svelte';
@@ -164,7 +165,24 @@
         {/if}
       </div>
     </div>
-  {:else if f.type === 'select'}
+  {/if}
+  {#if LIVE_TYPES.includes(f.type)}
+    <div class="row">
+      <label class="sentence">
+        <input type="checkbox" {disabled} checked={!!f.live} onchange={(e) => (f.live = e.currentTarget.checked ? 'both' : undefined)} />
+        {t('sb.live')}
+        <HelpTip text={t('sb.liveHint')} />
+      </label>
+      {#if f.live}
+        <select {disabled} value={f.live} onchange={(e) => (f.live = e.currentTarget.value as LiveBy)}>
+          <option value="both">{t('sb.liveBoth')}</option>
+          <option value="gm">{t('sb.liveGm')}</option>
+        </select>
+        {#if f.type === 'number' && f.max === undefined}<p class="warn">{t('sb.liveNeedsMax')}</p>{/if}
+      {/if}
+    </div>
+  {/if}
+  {#if f.type === 'select'}
     <label class="row"><span>{t('sb.options')}</span><textarea rows="4" {disabled} value={optionsText} oninput={(e) => setOptions(e.currentTarget.value)} onblur={trimOptions}></textarea></label>
   {:else if f.type === 'list'}
     <div class="row">

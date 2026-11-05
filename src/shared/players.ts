@@ -6,19 +6,21 @@ import type { SystemPack } from './syspack';
 import { down } from '../modules/initiative/order';
 import type { InitiativeState } from '../modules/initiative/types';
 
-// What a sheet tracks at the table, in terms any game can use: a resource is a count of marked boxes between 0 and its
-// limit (spent spell slots, Hunger), a reset is a named event that clears some of them (a long rest); a game may have
-// neither. What they mean and how they look is the system's. Not in the card: a sheet read again from a service must
-// not meet them.
+// What a sheet tracks at the table, in terms any game can use: a resource is a number between 0 and its limit (spent
+// spell slots, Hunger, Sanity), a reset is a named event that returns some of them to the sheet's own value (a long
+// rest); a game may have neither. What they mean and how they look is the system's. Not in the card: a sheet read
+// again from a service must not meet them.
 export interface SheetResources {
   // A key → how many there are.
   limits: Record<string, number>;
   // A reset's id → the keys it clears.
   resets: Record<string, string[]>;
+  // Keys only the GM changes: a phone can't, nor a reset with one of them.
+  gmOnly?: string[];
 }
 export const NO_RESOURCES: SheetResources = { limits: {}, resets: {} };
 
-// A key → how many are marked.
+// A key → the value now; none — the sheet's own.
 export type PlayerUsage = Record<string, number>;
 
 export type PlayerAction = { type: 'use'; key: string; used: number } | { type: 'reset'; id: string };
@@ -27,8 +29,12 @@ export type PlayerAction = { type: 'use'; key: string; used: number } | { type: 
 export function checkAction(raw: unknown, sheet: SheetResources): PlayerAction | null {
   if (!raw || typeof raw !== 'object') return null;
   const a = raw as Record<string, unknown>;
-  if (a['type'] === 'reset') return typeof a['id'] === 'string' && Object.hasOwn(sheet.resets, a['id']) ? { type: 'reset', id: a['id'] } : null;
-  if (a['type'] !== 'use' || typeof a['key'] !== 'string' || !Object.hasOwn(sheet.limits, a['key'])) return null;
+  const gm = sheet.gmOnly ?? [];
+  if (a['type'] === 'reset') {
+    if (typeof a['id'] !== 'string' || !Object.hasOwn(sheet.resets, a['id']) || sheet.resets[a['id']]!.some((k) => gm.includes(k))) return null;
+    return { type: 'reset', id: a['id'] };
+  }
+  if (a['type'] !== 'use' || typeof a['key'] !== 'string' || !Object.hasOwn(sheet.limits, a['key']) || gm.includes(a['key'])) return null;
   const used = a['used'];
   if (typeof used !== 'number' || !Number.isInteger(used) || used < 0 || used > sheet.limits[a['key']]!) return null;
   return { type: 'use', key: a['key'], used };

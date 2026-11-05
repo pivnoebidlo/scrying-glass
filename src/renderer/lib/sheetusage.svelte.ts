@@ -4,6 +4,8 @@ import type { Card } from '../../shared/cards';
 import type { PlayerUsage } from '../../shared/players';
 
 export interface SheetUsage {
+  // A player's page: what only the GM changes is not offered.
+  player?: boolean;
   used(card: Card): PlayerUsage;
   set(card: Card, key: string, used: number): void;
   reset(card: Card, id: string): void;

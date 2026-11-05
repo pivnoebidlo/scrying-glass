@@ -7,6 +7,7 @@ import { PlayerServer } from '../src/main/playerserver';
 import type { Card } from '../src/shared/cards';
 import { bookIndex, entryNamesOf, namesInText, publicEntry, sheetText, type BookEntry } from '../src/shared/playerbook';
 import type { Entry } from '../src/shared/compendium';
+import { fieldMap, packResources, validatePack } from '../src/shared/syspack';
 import { afterReset, checkAction, usedAfter, hpShare, lanAddresses, playerCard, playerLive, playerUrl, type PlayerView } from '../src/shared/players';
 import type { Combatant } from '../src/modules/initiative/types';
 
@@ -107,6 +108,14 @@ describe('what a phone may do', () => {
     expect(checkAction({ type: 'reset', id: 'long' }, { limits: {}, resets: {} })).toBeNull();
   });
 
+  it('what only the GM changes stays with the GM', () => {
+    const sheet = { limits: { sanity: 99, luck: 50 }, resets: { rest: ['luck'], session: ['sanity', 'luck'] }, gmOnly: ['sanity'] };
+    expect(checkAction({ type: 'use', key: 'luck', used: 3 }, sheet)).not.toBeNull();
+    expect(checkAction({ type: 'use', key: 'sanity', used: 3 }, sheet)).toBeNull();
+    expect(checkAction({ type: 'reset', id: 'rest' }, sheet)).not.toBeNull();
+    expect(checkAction({ type: 'reset', id: 'session' }, sheet)).toBeNull();
+  });
+
   it('a reset clears only its keys', () => {
     expect(afterReset({ 'slot:1': 2, hunger: 3 }, ['slot:1'])).toEqual({ hunger: 3 });
     expect(afterReset({}, ['slot:1'])).toEqual({});
@@ -118,6 +127,58 @@ describe('what a phone may do', () => {
     expect(usedAfter(2, 1)).toBe(1);
     expect(usedAfter(1, 0)).toBe(0);
     expect(usedAfter(3, 0)).toBe(1);
+  });
+});
+
+describe('a pack says what is marked at the table', () => {
+  const field = (key: string, type: string, more: object = {}) => ({ key, type, title: key, ...more });
+  const raw = (extra: object = {}) => ({
+    scryingGlass: 'system', version: 1, id: 'horror', title: 'Horror',
+    sections: [
+      { id: 'a', title: 'A', fields: [
+        field('sanity', 'number', { max: 99, live: 'gm' }), field('luck', 'number', { max: 50, live: 'both' }), field('hunger', 'track', { boxes: 5, live: 'both' }),
+        field('power', 'dots', { max: 5, live: 'both' }), field('size', 'number'), field('wounds', 'track', { boxes: 'size', live: 'both' }),
+        field('free', 'number', { live: 'both' }), field('name', 'text', { live: 'both' }),
+      ] },
+      { id: 'b', title: 'B', kinds: ['monster'], fields: [field('rage', 'track', { boxes: 3, live: 'both' })] },
+    ],
+    tracker: {}, ...extra,
+  });
+  const pack = () => {
+    const p = validatePack(raw({ resets: [{ id: 'night', title: 'Night', fields: ['hunger', 'power', 'name', 'nothing'] }, { id: 'mad', title: 'Mad', fields: ['sanity'] }, { id: 'empty', title: 'E', fields: ['size'] }] }));
+    if (typeof p === 'string') throw new Error(p);
+    return p;
+  };
+
+  it('live is kept where it can work and dropped elsewhere', () => {
+    const f = fieldMap(pack());
+    expect(f.get('sanity')?.live).toBe('gm');
+    expect(f.get('free')?.live).toBeUndefined(); // a number without a maximum
+    expect(f.get('name')?.live).toBeUndefined();
+  });
+
+  it('resets: known marked fields only, an empty one is gone, none at all is fine', () => {
+    expect(pack().resets).toEqual([{ id: 'night', title: 'Night', fields: ['hunger', 'power'] }, { id: 'mad', title: 'Mad', fields: ['sanity'] }]);
+    const none = validatePack(raw());
+    expect(typeof none !== 'string' && none.resets).toBeUndefined();
+  });
+
+  it('limits by the card: boxes from a field, sections of its kind only', () => {
+    const sheet = packResources(pack(), { size: 3 }, 'character');
+    expect(sheet.limits).toEqual({ sanity: 99, luck: 50, hunger: 5, power: 5, wounds: 3 });
+    expect(sheet.gmOnly).toEqual(['sanity']);
+    expect(sheet.resets).toEqual({ night: ['hunger', 'power'], mad: ['sanity'] });
+    expect(packResources(pack(), { size: 0 }, 'character').limits).not.toHaveProperty('wounds');
+    expect(packResources(pack(), {}, 'monster').limits).toHaveProperty('rage');
+  });
+
+  it('the phone follows it; the old value of a key stays until it is reset', () => {
+    const sheet = packResources(pack(), { size: 3 }, 'character');
+    expect(checkAction({ type: 'use', key: 'hunger', used: 5 }, sheet)).not.toBeNull();
+    expect(checkAction({ type: 'use', key: 'hunger', used: 6 }, sheet)).toBeNull();
+    expect(checkAction({ type: 'use', key: 'sanity', used: 40 }, sheet)).toBeNull();
+    expect(checkAction({ type: 'reset', id: 'mad' }, sheet)).toBeNull();
+    expect(afterReset({ hunger: 2, luck: 9 }, sheet.resets['night']!)).toEqual({ luck: 9 });
   });
 });
 

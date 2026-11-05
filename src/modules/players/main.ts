@@ -15,10 +15,7 @@ export default defineModule({
   initialState,
   actions: {
     setUsed(s, { card, key, used }: { card: string; key: string; used: number }) {
-      const next = { ...s.used[card] };
-      if (used > 0) next[key] = used;
-      else delete next[key];
-      return { ...s, used: { ...s.used, [card]: next } };
+      return { ...s, used: { ...s.used, [card]: { ...s.used[card], [key]: used } } };
     },
     reset(s, { card, keys }: { card: string; keys: string[] }) {
       return { ...s, used: { ...s.used, [card]: afterReset(s.used[card] ?? {}, keys) } };

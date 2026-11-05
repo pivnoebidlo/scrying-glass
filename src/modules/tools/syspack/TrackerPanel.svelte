@@ -1,11 +1,14 @@
 <!-- The builder: what the initiative tracker takes from a card of the system — the order of turns, health, what a
      combatant's row shows, the conditions. -->
 <script lang="ts">
+  import { X } from '@lucide/svelte';
+  import HelpTip from '../../../renderer/lib/HelpTip.svelte';
   import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
   import { fieldMap, loc, type SystemPack } from '../../../shared/syspack';
   import FormulaInput from './FormulaInput.svelte';
+  import LocInput from './LocInput.svelte';
 
   let { pack = $bindable(), disabled = false }: { pack: SystemPack; disabled?: boolean } = $props();
 
@@ -18,6 +21,18 @@
   // One condition a line; «Frightened #» — it carries a number.
   const valuedNames = $derived(new Set((tr.conditions?.valued ?? []).map((c) => loc(c, getLang()))));
   const condText = $derived((tr.conditions?.list ?? []).map((c) => loc(c, getLang())).map((c) => (valuedNames.has(c) ? `${c} #` : c)).join('\n'));
+
+  const live = $derived(fields.filter((f) => f.live));
+  function addReset() {
+    const used = new Set((pack.resets ?? []).map((r) => r.id));
+    let n = 1;
+    while (used.has(`reset${n}`)) n++;
+    pack.resets = [...(pack.resets ?? []), { id: `reset${n}`, title: '', fields: live.map((f) => f.key) }];
+  }
+  function toggleReset(i: number, k: string, on: boolean) {
+    const r = pack.resets![i]!;
+    r.fields = on ? [...r.fields.filter((x) => x !== k), k] : r.fields.filter((x) => x !== k);
+  }
 
   function setInit(type: string) {
     tr.init = type === 'roll' ? { type: 'roll', dice: '1d20' } : type === 'value' ? { type: 'value', value: keys[0] ?? '0' } : { type: 'none' };
@@ -72,6 +87,26 @@
     <input type="checkbox" {disabled} checked={tr.conditions?.free ?? true} onchange={(e) => (tr.conditions = { ...tr.conditions, list: tr.conditions?.list ?? [], free: e.currentTarget.checked })} />
     {t('sb.conditionsFree')}
   </label>
+
+  <div class="row">
+    <span>{t('sb.resets')} <HelpTip text={t('sb.resetsHint')} /></span>
+    {#if live.length}
+      {#each pack.resets ?? [] as r, i (r.id)}
+        <div class="reset">
+          <div class="head">
+            <LocInput value={r.title} set={(v) => (r.title = v)} {disabled} />
+            <button type="button" class="icon-btn" title={t('sb.remove')} {disabled} onclick={() => (pack.resets = pack.resets!.filter((_, j) => j !== i))}><X size={13} /></button>
+          </div>
+          {#each live as f (f.key)}
+            <label class="check"><input type="checkbox" {disabled} checked={r.fields.includes(f.key)} onchange={(e) => toggleReset(i, f.key, e.currentTarget.checked)} /> {title(f.key)}</label>
+          {/each}
+        </div>
+      {/each}
+      <button type="button" class="btn small add" {disabled} onclick={addReset}>{t('sb.addReset')}</button>
+    {:else}
+      <p class="faint small">{t('sb.noLive')}</p>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -93,6 +128,19 @@
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+  .reset {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 0;
+  }
+  .head {
+    display: flex;
+    gap: 6px;
+  }
+  .add {
+    align-self: flex-start;
   }
   .mono {
     font-family: ui-monospace, Menlo, monospace;

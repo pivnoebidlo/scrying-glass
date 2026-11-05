@@ -6,6 +6,7 @@
 //
 // A pack may come from a stranger (the Community): `validatePack` takes only what it knows, with sizes capped, and
 // formulas are a tiny language of their own (numbers, fields, + − × ÷, a few functions) — never code.
+import type { SheetResources } from './players';
 import type { CardKind, CombatStats } from './cards';
 
 // Text in several languages ({ en, ru }) or one string for all.
@@ -97,6 +98,19 @@ export interface FieldDef {
   hideZero?: boolean;
   // A roll by a click on the field (on a row of a list).
   roll?: RollSpec;
+  // A track, dots or a number (with `max`) marked at the table, apart from the card: 'both' — by the player too, 'gm' —
+  // by the GM only (shared/players.ts).
+  live?: LiveBy;
+}
+
+export type LiveBy = 'both' | 'gm';
+export const LIVE_TYPES: FieldType[] = ['track', 'dots', 'number'];
+
+// A named event of the game that returns fields marked at the table to the card's values (a rest, a new day).
+export interface PackReset {
+  id: string;
+  title: Loc;
+  fields: string[];
 }
 
 export interface SectionDef {
@@ -141,6 +155,8 @@ export interface SystemPack {
   rank?: string;
   sections: SectionDef[];
   tracker: TrackerSpec;
+  // None — a game with nothing to return: fields stay as marked.
+  resets?: PackReset[];
   // Its own compendium: rules, conditions, gear… (Markdown), shown in adventures of this system as built-in entries.
   compendium?: PackEntry[];
   // Set by the core, never read from a file: the GM's own pack (in the library), not a built-in one.
@@ -274,7 +290,7 @@ export const blankPack = (id: string, title: Loc): SystemPack => ({
 const KEY_RE = /^[a-z][a-z0-9_]{0,31}$/;
 const ID_RE = /^[a-z][a-z0-9-]{1,31}$/;
 const KINDS: CardKind[] = ['monster', 'npc', 'character'];
-const LIMIT = { sections: 40, fields: 80, options: 60, columns: 8, text: 200, long: 4000, formula: 200, entries: 500, entry: 30000 };
+const LIMIT = { resets: 8, sections: 40, fields: 80, options: 60, columns: 8, text: 200, long: 4000, formula: 200, entries: 500, entry: 30000 };
 
 const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
 function locOf(x: unknown, max = LIMIT.text): Loc | null {
@@ -374,6 +390,9 @@ function fieldOf(x: unknown): FieldDef | null {
   if (hint) f.hint = hint;
   for (const k of ['min', 'max'] as const) if (num(x[k]) !== undefined) f[k] = num(x[k]);
   if (typeof x['default'] === 'number' || typeof x['default'] === 'string') f.default = typeof x['default'] === 'string' ? x['default'].slice(0, LIMIT.long) : x['default'];
+  if (x['live'] === 'both' || x['live'] === 'gm') {
+    if (LIVE_TYPES.includes(type) && (type !== 'number' || f.max !== undefined)) f.live = x['live'];
+  }
   if (type === 'track') {
     const b = x['boxes'];
     if (typeof b === 'number' && b >= 1 && b <= 40) f.boxes = Math.round(b);
@@ -479,6 +498,15 @@ export function validatePack(x: unknown): SystemPack | string {
         return title ? [{ title, text, ...(category ? { category } : {}) }] : [];
       })
     : [];
+  const live = new Set(sections.flatMap((s) => s.fields).filter((f) => f.live).map((f) => f.key));
+  const resets = Array.isArray(x['resets'])
+    ? x['resets'].slice(0, LIMIT.resets).flatMap((r) => {
+        const title = isObj(r) ? locOf(r['title']) : null;
+        if (!isObj(r) || !title || typeof r['id'] !== 'string' || !KEY_RE.test(r['id']) || !Array.isArray(r['fields'])) return [];
+        const fields = r['fields'].filter((k): k is string => typeof k === 'string' && live.has(k));
+        return fields.length ? [{ id: r['id'], title, fields }] : [];
+      })
+    : [];
   const str = (k: string, max = LIMIT.text) => (typeof x[k] === 'string' ? { [k]: (x[k] as string).slice(0, max) } : {});
   return {
     scryingGlass: 'system',
@@ -496,8 +524,23 @@ export function validatePack(x: unknown): SystemPack | string {
     ...(formulaOf(x['rank']) ? { rank: x['rank'] as string } : {}),
     sections,
     tracker,
+    ...(resets.length ? { resets } : {}),
     ...(compendium.length ? { compendium } : {}),
   };
+}
+
+// How far a field marked at the table goes.
+export const liveLimit = (pack: SystemPack, stats: PackStats, f: FieldDef) => (f.type === 'track' ? boxesOf(pack, stats, f) : (f.max ?? (f.type === 'dots' ? 5 : 0)));
+
+// What a card of the system tracks at the table.
+export function packResources(pack: SystemPack, stats: PackStats, kind: CardKind): SheetResources {
+  const live = sectionsFor(pack, kind).flatMap((s) => s.fields).filter((f) => f.live && liveLimit(pack, stats, f) > 0);
+  const limits = Object.fromEntries(live.map((f) => [f.key, liveLimit(pack, stats, f)]));
+  const resets = (pack.resets ?? []).flatMap((r) => {
+    const keys = r.fields.filter((k) => Object.hasOwn(limits, k));
+    return keys.length ? [[r.id, keys] as const] : [];
+  });
+  return { limits, resets: Object.fromEntries(resets), gmOnly: live.filter((f) => f.live === 'gm').map((f) => f.key) };
 }
 
 // The languages a pack's texts are in (a text in one string — for any language: 'en', the window's fallback).
