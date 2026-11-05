@@ -118,16 +118,18 @@
 </main>
 
 <style>
-  :global(html) {
+  /* theme.css comes after this and is written for a window that does not scroll: these selectors must outweigh it. */
+  :global(html:root) {
+    height: auto;
     -webkit-text-size-adjust: 100%;
   }
-  :global(body) {
+  :global(html:root body) {
     height: auto;
     min-height: 100dvh;
-    overflow: auto;
-    background: var(--bg-primary);
+    overflow: visible;
     font-size: 15px;
     user-select: text;
+    -webkit-user-select: text;
   }
   main {
     max-width: 760px;
