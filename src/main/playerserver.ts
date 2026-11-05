@@ -1,6 +1,6 @@
 // The players' sheets over HTTP: a page and one character's data by its token. No Electron here, so tests run it
 // as it is. Without a token nothing but the page's code can be fetched; the token is the whole key, as with a link
-// to a shared document. Read only: the server takes nothing from a browser.
+// to a shared document. The one way in is POST …/action: a small JSON that the source checks against its own list.
 import { createReadStream, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -14,6 +14,8 @@ export interface PlayerSource {
   portrait(token: string): Promise<string | null>;
   // An entry named on the sheet: nothing else of the compendium can be asked for.
   entry(token: string, name: string): Entry | null;
+  // What a player did; false — not allowed.
+  act(token: string, action: unknown): Promise<boolean>;
 }
 
 const TYPES: Record<string, string> = {
@@ -32,6 +34,7 @@ const TYPES: Record<string, string> = {
 const PICTURE = /^image\//;
 const HEARTBEAT = 25_000;
 const TRIES = 10;
+const BODY = 1024;
 
 const SECURITY = {
   'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
@@ -140,8 +143,10 @@ export class PlayerServer {
   }
 
   private async handle(req: IncomingMessage, res: ServerResponse) {
-    if (req.method !== 'GET' && req.method !== 'HEAD') return this.fail(res, 405);
     const [url = '/', query = ''] = (req.url ?? '/').split('?');
+    const posted = /^\/api\/([\w-]+)\/action$/.exec(url);
+    if (posted && req.method === 'POST') return this.action(req, res, posted[1]!);
+    if (req.method !== 'GET' && req.method !== 'HEAD') return this.fail(res, 405);
     if (url.startsWith('/p/')) return this.file(req, res, path.join(this.root, 'player/index.html'), 'text/html; charset=utf-8');
     if (url.startsWith('/assets/')) return this.asset(req, res, url);
     const api = /^\/api\/([\w-]+)\/(view|portrait|events|entry)$/.exec(url);
@@ -164,6 +169,26 @@ export class PlayerServer {
     const type = file ? TYPES[path.extname(file).toLowerCase()] : undefined;
     if (!file || !type || !PICTURE.test(type)) return this.fail(res, 404);
     this.file(req, res, file, type);
+  }
+
+  // Only JSON: a form on some other page cannot send it, and a browser asks first for a request of this type.
+  private async action(req: IncomingMessage, res: ServerResponse, token: string) {
+    if (!this.source.view(token)) return this.fail(res, 404);
+    if (!req.headers['content-type']?.startsWith('application/json')) return this.fail(res, 415);
+    let body = '';
+    for await (const chunk of req) {
+      body += String(chunk);
+      if (body.length > BODY) return this.fail(res, 413);
+    }
+    let action: unknown;
+    try {
+      action = JSON.parse(body);
+    } catch {
+      return this.fail(res, 400);
+    }
+    if (!(await this.source.act(token, action))) return this.fail(res, 400);
+    res.writeHead(204, SECURITY);
+    res.end();
   }
 
   private asset(req: IncomingMessage, res: ServerResponse, url: string) {

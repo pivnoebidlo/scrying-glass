@@ -2054,6 +2054,7 @@ app.whenReady().then(async () => {
     vaultRoot: () => vaultRoot,
     resolveInVault,
     thumbnail,
+    dispatch: (name, payload) => runAction('players', name, payload),
     notify: (status) => {
       for (const win of BrowserWindow.getAllWindows()) win.webContents.send('players:status', status);
     },

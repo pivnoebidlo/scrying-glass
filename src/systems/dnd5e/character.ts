@@ -74,6 +74,11 @@ export type CharacterText = (typeof CHARACTER_TEXTS)[number];
 
 export const isCharacter = (s: unknown): s is Dnd5eCharacter => !!s && typeof s === 'object' && 'classes' in s;
 
+export const slotKey = (level: string) => `slot:${level}`;
+// What the sheet lets spend at the table: spell slots by level.
+export const sheetLimits = (s: unknown): Record<string, number> =>
+  isCharacter(s) && s.spellcasting ? Object.fromEntries(Object.entries(s.spellcasting.slots).filter(([, n]) => n > 0).map(([l, n]) => [slotKey(l), n])) : {};
+
 export const totalLevel = (c: Dnd5eCharacter) => c.classes.reduce((n, x) => n + (x.level || 0), 0) || 1;
 // Бонус мастерства по уровню персонажа: +2 на 1–4, +3 на 5–8, …
 export const characterPb = (c: Dnd5eCharacter) => c.pb ?? 2 + Math.floor((totalLevel(c) - 1) / 4);

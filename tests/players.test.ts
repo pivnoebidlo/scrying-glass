@@ -7,7 +7,7 @@ import { PlayerServer } from '../src/main/playerserver';
 import type { Card } from '../src/shared/cards';
 import { bookIndex, entryNamesOf, namesInText, publicEntry, sheetText, type BookEntry } from '../src/shared/playerbook';
 import type { Entry } from '../src/shared/compendium';
-import { hpShare, lanAddresses, playerCard, playerLive, playerUrl, type PlayerView } from '../src/shared/players';
+import { checkAction, usedAfter, hpShare, lanAddresses, playerCard, playerLive, playerUrl, type PlayerView } from '../src/shared/players';
 import type { Combatant } from '../src/modules/initiative/types';
 
 const card: Card = {
@@ -78,6 +78,38 @@ describe('the compendium on a phone', () => {
   });
 });
 
+describe('what a phone may do', () => {
+  const limits = { 'slot:1': 4, 'slot:2': 2 };
+
+  it('spends within the limit and rests', () => {
+    expect(checkAction({ type: 'use', key: 'slot:1', used: 3 }, limits)).toEqual({ type: 'use', key: 'slot:1', used: 3 });
+    expect(checkAction({ type: 'use', key: 'slot:2', used: 0 }, limits)).toEqual({ type: 'use', key: 'slot:2', used: 0 });
+    expect(checkAction({ type: 'rest', extra: 'x' }, limits)).toEqual({ type: 'rest' });
+  });
+
+  it('anything else is refused', () => {
+    for (const a of [
+      null, 'rest', 5, {}, { type: 'hack' },
+      { type: 'use', key: 'slot:1', used: 5 },
+      { type: 'use', key: 'slot:1', used: -1 },
+      { type: 'use', key: 'slot:1', used: 1.5 },
+      { type: 'use', key: 'slot:1', used: '2' },
+      { type: 'use', key: 'slot:9', used: 1 },
+      { type: 'use', key: 'hp', used: 1 },
+      { type: 'use', key: '__proto__', used: 0 },
+      { type: 'use', key: 'constructor', used: 0 },
+    ]) expect(checkAction(a, limits)).toBeNull();
+  });
+
+  it('boxes: a press spends up to it, the last spent gives one back', () => {
+    expect(usedAfter(0, 0)).toBe(1);
+    expect(usedAfter(1, 3)).toBe(4);
+    expect(usedAfter(2, 1)).toBe(1);
+    expect(usedAfter(1, 0)).toBe(0);
+    expect(usedAfter(3, 0)).toBe(1);
+  });
+});
+
 describe('addresses on the table\'s network', () => {
   const a = (address: string, family: string | number = 'IPv4', internal = false) => ({ address, family, internal });
 
@@ -101,8 +133,9 @@ describe('addresses on the table\'s network', () => {
 
 describe('the server', () => {
   let server: PlayerServer;
-  const view = (hp: number): PlayerView => ({ lang: 'en', card: playerCard(card), portrait: null, live: { hp, maxHp: 20, conditions: [], down: false, round: 0, turn: false }, entries: ['Shield'], conditions: [] });
+  const view = (hp: number): PlayerView => ({ lang: 'en', card: playerCard(card), portrait: null, live: { hp, maxHp: 20, conditions: [], down: false, round: 0, turn: false }, usage: {}, entries: ['Shield'], conditions: [] });
   let current: PlayerView | null;
+  const acted: unknown[] = [];
 
   function start() {
     const root = mkdtempSync(path.join(tmpdir(), 'sg-players-'));
@@ -117,6 +150,11 @@ describe('the server', () => {
     server = new PlayerServer({
       view: (t) => (t === 'good' ? current : null),
       portrait: async (t) => (t === 'good' ? path.join(root, 'portrait.png') : t === 'text' ? path.join(root, 'notes.txt') : null),
+      act: async (t, a) => {
+        if (t !== 'good' || (a as { ok?: boolean }).ok !== true) return false;
+        acted.push(a);
+        return true;
+      },
       entry: (t, name) => (t === 'good' && name === 'Щит и меч' ? { title: name, type: 'spell', fields: {}, body: 'text' } : null),
     }, root);
     return server.listen(0);
@@ -166,6 +204,30 @@ describe('the server', () => {
     expect((await get(port, '/api/good/entry?name=Secret')).status).toBe(404);
     expect((await get(port, '/api/good/entry')).status).toBe(404);
     expect((await get(port, `/api/bad/entry?name=${encodeURIComponent('Щит и меч')}`)).status).toBe(404);
+  });
+
+  const post = (port: number, url: string, body: string, type = 'application/json') =>
+    new Promise<number>((resolve, reject) => {
+      const req = request({ port, path: url, method: 'POST', host: '127.0.0.1', headers: { 'Content-Type': type } }, (res) => {
+        res.resume();
+        resolve(res.statusCode ?? 0);
+      });
+      req.on('error', reject);
+      req.end(body);
+    });
+
+  it('the way in: one address, JSON, a known token, what the source allows', async () => {
+    const port = await start();
+    expect(await post(port, '/api/good/action', '{"ok":true}')).toBe(204);
+    expect(acted).toEqual([{ ok: true }]);
+    expect(await post(port, '/api/good/action', '{"ok":false}')).toBe(400);
+    expect(await post(port, '/api/bad/action', '{"ok":true}')).toBe(404);
+    expect(await post(port, '/api/good/action', 'not json')).toBe(400);
+    expect(await post(port, '/api/good/action', '{"ok":true}', 'text/plain')).toBe(415);
+    expect(await post(port, '/api/good/action', JSON.stringify({ ok: true, pad: 'x'.repeat(2000) }))).toBe(413);
+    expect(await post(port, '/api/good/view', '{"ok":true}')).toBe(405);
+    expect(await post(port, '/p/good', '{"ok":true}')).toBe(405);
+    expect(acted).toHaveLength(1);
   });
 
   it('a portrait is a picture', async () => {

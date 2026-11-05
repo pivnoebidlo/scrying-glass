@@ -6,6 +6,26 @@ import type { SystemPack } from './syspack';
 import { down } from '../modules/initiative/order';
 import type { InitiativeState } from '../modules/initiative/types';
 
+// What a character has spent at the table: a key → how many («slot:1»). Limits — a key → how many there are; they come
+// from the sheet (SystemPlugin.sheetLimits). Not in the card: a sheet read again from a service must not meet it.
+export type PlayerUsage = Record<string, number>;
+
+export type PlayerAction = { type: 'use'; key: string; used: number } | { type: 'rest' };
+
+// What came from a phone, checked: only known keys, only whole numbers within the limit. Anything else — null.
+export function checkAction(raw: unknown, limits: PlayerUsage): PlayerAction | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const a = raw as Record<string, unknown>;
+  if (a['type'] === 'rest') return { type: 'rest' };
+  if (a['type'] !== 'use' || typeof a['key'] !== 'string' || !Object.hasOwn(limits, a['key'])) return null;
+  const used = a['used'];
+  if (typeof used !== 'number' || !Number.isInteger(used) || used < 0 || used > limits[a['key']]!) return null;
+  return { type: 'use', key: a['key'], used };
+}
+
+// A box of a track pressed: it and those before it are spent, the last spent one pressed again gives it back.
+export const usedAfter = (used: number, box: number) => (used === box + 1 ? box : box + 1);
+
 // The character in the running fight: what the GM changes in the tracker.
 export interface PlayerLive {
   hp: number | null;
@@ -25,6 +45,7 @@ export interface PlayerView {
   // A key of the picture (it changes with the picture); null — no portrait.
   portrait: string | null;
   live: PlayerLive | null;
+  usage: PlayerUsage;
   // The names of the sheet with a description to open (shared/playerbook.ts).
   entries: string[];
   // The conditions on the character that have one.

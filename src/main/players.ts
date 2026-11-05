@@ -7,10 +7,10 @@ import { visibleIn } from '../shared/adventures';
 import { refKey, type CardRef, type CardScope } from '../shared/cards';
 import { entryTitle, parseEntry, searchKey, type BuiltinBook, type Entry } from '../shared/compendium';
 import { bookIndex, entryNamesOf, namesInText, publicEntry, sheetText, type BookEntry, type BookIndex } from '../shared/playerbook';
-import { lanAddresses, playerCard, playerLive, type PlayerStatus, type PlayerView } from '../shared/players';
+import { checkAction, lanAddresses, playerCard, playerLive, type PlayerStatus, type PlayerView } from '../shared/players';
 import type { AppState } from '../shared/types';
 import { allFiles, dirname } from '../shared/vault';
-import { familyOf, importersOf, sheetEntryTypes, systemOf } from '../systems';
+import { familyOf, importersOf, sheetEntryTypes, sheetLimits, systemOf } from '../systems';
 import { getCard, importerTableOf, libraryPath, listCards, resolveInLibrary } from './cards';
 import { builtinEntries, entries } from './compendium';
 import { PlayerServer } from './playerserver';
@@ -36,6 +36,8 @@ interface Deps {
   vaultRoot(): string | null;
   resolveInVault(rel: string): string | null;
   thumbnail(file: string, width: number): Promise<string | null>;
+  // An action of the module, as the GM's window does it.
+  dispatch(name: string, payload: unknown): Promise<unknown>;
   // The status changed: to the windows.
   notify(status: PlayerStatus): void;
 }
@@ -155,6 +157,7 @@ function viewOf(token: string): PlayerView | null {
     // Not the path: the name of a folder can say more than the GM wants.
     portrait: card.portraits[0] ? createHash('sha1').update(card.portraits[0]).digest('hex').slice(0, 10) : null,
     live,
+    usage: state.players.used[card.id] ?? {},
     entries: book.names,
     conditions: (live?.conditions ?? []).filter((c) => conditionEntry(book, card.system, c)),
   };
@@ -169,6 +172,18 @@ function entryOf(token: string, name: string): Entry | null {
   const conditions = playerLive(deps.state().initiative, { scope: link.scope, id: link.id })?.conditions ?? [];
   const found = hit ?? (conditions.includes(name) ? conditionEntry(book, card.system, name) : null);
   return found ? publicEntry(found) : null;
+}
+
+// A player's own character and only what its sheet has.
+async function actOn(token: string, raw: unknown): Promise<boolean> {
+  const link = Object.hasOwn(links, token) ? links[token] : undefined;
+  const card = link && cardOf(link);
+  if (!card) return false;
+  const action = checkAction(raw, sheetLimits(card.system, card.stats));
+  if (!action) return false;
+  if (action.type === 'rest') await deps.dispatch('rest', { card: card.id });
+  else await deps.dispatch('setUsed', { card: card.id, key: action.key, used: action.used });
+  return true;
 }
 
 async function portraitOf(token: string): Promise<string | null> {
@@ -215,7 +230,7 @@ export function playersChanged() {
 export async function setPlayersOn(on: boolean): Promise<PlayerStatus> {
   error = undefined;
   if (on && !server) {
-    const s = new PlayerServer({ view: viewOf, portrait: portraitOf, entry: entryOf }, deps.root);
+    const s = new PlayerServer({ view: viewOf, portrait: portraitOf, entry: entryOf, act: actOn }, deps.root);
     s.onClients = tell;
     try {
       await s.listen(PLAYER_PORT);

@@ -837,8 +837,13 @@ min(15, x) — «x, не больше 15»), вставка — числовые
 - Листы на телефонах — модуль `modules/players` (без состояния; только за одним столом, приложение офлайновое): приложение мастера — сервер
   в локальной сети, у игрока страница в браузере (без магазинов и своих приложений). Чистое — `shared/players.ts`: что уходит игроку —
   белый список `playerCard` (не `notes`, не `links`, не пути), `playerLive` (только свой участник боя), `lanAddresses`.
-  Сервер `main/playerserver.ts` без Electron (тесты запускают его как есть): только GET, `/p/<токен>` — страница,
-  `/assets/*`, `/api/<токен>/view|portrait|events` (SSE, heartbeat); ничего не принимает. Общее состояние наружу не идёт никогда.
+  Сервер `main/playerserver.ts` без Electron (тесты запускают его как есть): `/p/<токен>` — страница, `/assets/*`,
+  `/api/<токен>/view|portrait|entry|events` (SSE, heartbeat). Вход один — POST `/api/<токен>/action`: только JSON до 1 КБ, `checkAction`
+  (shared/players.ts) пропускает известные действия в пределах `SystemPlugin.sheetLimits`, дальше — действие модуля, как у окна мастера;
+  новое действие игрока — случай в `checkAction` и `actOn` (main/players.ts). Общее состояние наружу не идёт никогда.
+  Потраченное за столом — состояние модуля `players.used[id карточки]` (`state.json`, не в карточке: импорт из сервиса сравнивает листы), ключи `slot:<уровень>`,
+  лишнее сверх предела считается потраченным до отдыха. Лист спрашивает хозяина окна — `sheetUsage.host` (`renderer/lib/sheetusage.svelte.ts`):
+  у мастера ставит фон модуля, у игрока — `Player.svelte` (сразу показывает нажатие, отказ возвращает правду). Сейчас только ячейки D&D.
   `main/players.ts`: токены — `<userData>/players.json` (на персонажа и хранилище, переживают перезапуск, «Новая ссылка» — `renewPlayer`),
   порт `PLAYER_PORT` (занят — следующий), партия — `character` в хранилище, `visibleIn`; `playersChanged` зовут `broadcastState` и `onCardsChanged`.
   Включает только мастер, по кнопке, при запуске сервер выключен. IPC `players:*`. Окно: `ui/players.svelte.ts`, блок `OnScreen.svelte`,
@@ -847,7 +852,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   Справочник на телефоне — `shared/playerbook.ts` + `bookOf` в `main/players.ts`: в `PlayerView.entries` только названия, найденные в тексте листа
   (`sheetText`, `namesInText`; типы — `SystemPlugin.sheetEntries`, русские названия сервиса — `importer.table.aliases`), `conditions` — состояния с записью;
   `/api/<токен>/entry?name=` отдаёт `publicEntry` только для них, весь справочник не листается. Записи читаются с диска раз в `BOOK_LIFE` (30 с): правка мастера доходит с задержкой.
-  На странице — те же `spellLinks` / `peekEntry`, панель `renderer/player/EntrySheet.svelte`. Дальше: броски в журнал мастера, загадки с телефона (нужен канал телефон → окно мастера).
+  На странице — те же `spellLinks` / `peekEntry`, панель `renderer/player/EntrySheet.svelte`. Дальше: расходники (Pathfinder, пакеты), броски в журнал мастера, загадки с телефона (ход живёт в окне мастера).
 - Подборка правой панели (`modules/scenes/tray.ts`, вид — `scenes/ui/Tray.svelte` в блоках фона, карты, портретов и
   раздатки, `TrayChips.svelte` + `renderer/lib/ListPicker.svelte` — в музыке (плейлисты и треки; трек — действие
   `music/playTrack`, тогда `playlist` — путь трека) и инициативе (id заготовок; `Combatant.encounter` от

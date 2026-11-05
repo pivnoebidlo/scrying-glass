@@ -70,6 +70,7 @@ const unknown = (id: string): SystemDef => ({
 export const systemOf = (id: string) => systems.find((s) => s.id === id) ?? unknown(id);
 
 export const familyOf = (id: string) => systemOf(id).family;
+export const sheetLimits = (id: string, stats: unknown): Record<string, number> => PLUGINS.find((p) => p.family === familyOf(id))?.sheetLimits?.(stats) ?? {};
 // The types of entries a character sheet of the system names (a player opens them on the phone).
 export const sheetEntryTypes = (id: string): string[] => PLUGINS.find((p) => p.family === familyOf(id))?.sheetEntries ?? [];
 // The importers of characters of a system's family (D&D: Long Story Short).

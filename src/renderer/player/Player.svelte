@@ -4,12 +4,13 @@
   import type { Component } from 'svelte';
   import { onMount } from 'svelte';
   import type { Card } from '../../shared/cards';
-  import { hpShare, type PlayerView } from '../../shared/players';
+  import { hpShare, type PlayerAction, type PlayerUsage, type PlayerView } from '../../shared/players';
   import { setSpellIndex } from '../../systems/dnd5e/spellindex';
   import { registerPacks } from '../../systems/packs';
   import { sheetOf } from '../../systems/sheets';
   import { peekEntry } from '../lib/entry/peek.svelte';
   import { applyLang, t } from '../lib/i18n.svelte';
+  import { sheetUsage } from '../lib/sheetusage.svelte';
   import EntrySheet from './EntrySheet.svelte';
   import LastRoll from './LastRoll.svelte';
 
@@ -24,6 +25,22 @@
   let gone = $state(false);
   let source: EventSource | null = null;
   let retry: ReturnType<typeof setTimeout> | null = null;
+
+  // A press shows at once; the answer of the core comes with the stream, and a refusal puts the truth back.
+  async function act(action: PlayerAction, usage: PlayerUsage) {
+    if (view) view = { ...view, usage };
+    try {
+      const res = await fetch(api('action'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(action) });
+      if (!res.ok) await load();
+    } catch {
+      later();
+    }
+  }
+  sheetUsage.host = {
+    used: () => view?.usage ?? {},
+    set: (_card, key, used) => void act({ type: 'use', key, used }, { ...view?.usage, [key]: used }),
+    rest: () => void act({ type: 'rest' }, {}),
+  };
 
   async function apply(next: PlayerView) {
     registerPacks(next.pack ? [next.pack] : []);

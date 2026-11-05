@@ -19,6 +19,8 @@ export interface SystemPlugin {
   entrySubtitle?: Record<string, (fields: Record<string, FieldValue>) => string>;
   // The types of entries a character's sheet names: a player can open those from their phone (shared/playerbook.ts).
   sheetEntries?: string[];
+  // What a character's sheet lets spend at the table: a key → how many there are (D&D: spell slots by level).
+  sheetLimits?(stats: unknown): Record<string, number>;
   // Importers of characters from other services (D&D: Long Story Short).
   importers?: CardImporter[];
   // Ids of the official content of the family (shared/content.ts), downloaded from the Community (D&D: its SRD).
