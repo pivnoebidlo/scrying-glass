@@ -5,9 +5,12 @@
   import { onMount } from 'svelte';
   import type { Card } from '../../shared/cards';
   import { hpShare, type PlayerView } from '../../shared/players';
+  import { setSpellIndex } from '../../systems/dnd5e/spellindex';
   import { registerPacks } from '../../systems/packs';
   import { sheetOf } from '../../systems/sheets';
+  import { peekEntry } from '../lib/entry/peek.svelte';
   import { applyLang, t } from '../lib/i18n.svelte';
+  import EntrySheet from './EntrySheet.svelte';
   import LastRoll from './LastRoll.svelte';
 
   const RETRY = 3000;
@@ -25,6 +28,7 @@
   async function apply(next: PlayerView) {
     registerPacks(next.pack ? [next.pack] : []);
     applyLang(next.lang);
+    setSpellIndex(next.entries);
     const key = `${next.card.system}|${next.card.kind}|${!!next.pack}`;
     if (key !== sheetFor) {
       sheetFor = key;
@@ -108,12 +112,13 @@
           {#if live.maxHp}<div class="bar"><i style:width="{hpShare(live.hp, live.maxHp) * 100}%"></i></div>{/if}
         {/if}
         {#if live.down}<p>{t('pl.page.down')}</p>{/if}
-        {#if live.conditions.length}<ul>{#each live.conditions as c (c)}<li>{c}</li>{/each}</ul>{/if}
+        {#if live.conditions.length}<ul>{#each live.conditions as c (c)}<li>{#if view.conditions.includes(c)}<button onclick={() => peekEntry(c)}>{c}</button>{:else}{c}{/if}</li>{/each}</ul>{/if}
         {#if live.round}<small>{t('pl.page.round', { round: live.round })}</small>{/if}
       </section>
     {/if}
     {#if Sheet}<div class="sheet"><Sheet card={view.card} /></div>{/if}
     <LastRoll />
+    <EntrySheet {api} />
   {/if}
 </main>
 
@@ -232,6 +237,12 @@
     padding: 1px 8px;
     border-radius: 10px;
     background: var(--accent-soft);
+  }
+  .live li button {
+    padding: 0;
+    border: none;
+    background: none;
+    text-decoration: underline dotted;
   }
   small {
     color: var(--text-muted);

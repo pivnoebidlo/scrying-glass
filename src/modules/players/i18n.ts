@@ -28,6 +28,8 @@ export const en = {
   'pl.page.round': 'Round {round}',
   'pl.page.down': 'Out of the fight',
   'pl.page.local': 'Only you see this roll',
+  'pl.page.noEntry': 'No description in the compendium.',
+  'pl.page.loading': 'Loading…',
 };
 
 export const ru: Messages<typeof en> = {
@@ -56,4 +58,6 @@ export const ru: Messages<typeof en> = {
   'pl.page.round': 'Раунд {round}',
   'pl.page.down': 'Выбыл из боя',
   'pl.page.local': 'Этот бросок видите только вы',
+  'pl.page.noEntry': 'В справочнике нет описания.',
+  'pl.page.loading': 'Загрузка…',
 };

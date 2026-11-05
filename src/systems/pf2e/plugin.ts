@@ -33,6 +33,7 @@ export const pf2ePlugin: SystemPlugin = {
     return t('pf2e.title');
   },
   systems: [pf2e],
+  sheetEntries: ['pf2e-spell', 'pf2e-feat', 'pf2e-action', 'pf2e-ability'],
   entryTypes: ENTRY_TYPES,
   entrySubtitle: ENTRY_SUBTITLES,
   // Monster Core creatures, Player Core conditions, spells, actions (content/pf2e-core/).

@@ -5,13 +5,21 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { networkInterfaces } from 'node:os';
 import { visibleIn } from '../shared/adventures';
 import { refKey, type CardRef, type CardScope } from '../shared/cards';
+import { entryTitle, parseEntry, searchKey, type BuiltinBook, type Entry } from '../shared/compendium';
+import { bookIndex, entryNamesOf, namesInText, publicEntry, sheetText, type BookEntry, type BookIndex } from '../shared/playerbook';
 import { lanAddresses, playerCard, playerLive, type PlayerStatus, type PlayerView } from '../shared/players';
 import type { AppState } from '../shared/types';
-import { getCard, listCards, resolveInLibrary } from './cards';
+import { allFiles, dirname } from '../shared/vault';
+import { familyOf, importersOf, sheetEntryTypes, systemOf } from '../systems';
+import { getCard, importerTableOf, libraryPath, listCards, resolveInLibrary } from './cards';
+import { builtinEntries, entries } from './compendium';
 import { PlayerServer } from './playerserver';
+import { packBooks } from './syspacks';
 
 export const PLAYER_PORT = 47820;
 const PORTRAIT = 320;
+// How long the compendium read from files stands: the GM's edits reach the phones within this time.
+const BOOK_LIFE = 30_000;
 
 interface Link {
   // The vault it belongs to: ids of cards are only unique inside one.
@@ -61,20 +69,106 @@ function tokenOf(ref: CardRef): string {
   return token;
 }
 
+// ---------- The compendium for phones ----------
+interface Source extends BookEntry {
+  system?: string;
+  lang?: string;
+  builtin: boolean;
+}
+let read: { at: number; adventure: string | null; lang: string; list: Source[] } | null = null;
+
+const own = (text: string, title: string, rank: number): Source => {
+  const entry = parseEntry(text, title);
+  return { entry, names: entryNamesOf(entry), rank, builtin: false };
+};
+const builtin = (b: BuiltinBook): Source[] =>
+  b.entries.map((e) => ({ entry: e, names: entryNamesOf(e, [e.en, e.ru]), rank: 2, system: b.system, lang: b.lang, builtin: true }));
+
+function readBook(): Source[] {
+  const state = deps.state();
+  const fresh = read && Date.now() - read.at < BOOK_LIFE && read.adventure === state.adventures.current && read.lang === state.vault.lang;
+  if (fresh) return read!.list;
+  const tree = state.vault.tree;
+  const vaultFiles = tree ? allFiles(tree, 'entry').filter((f) => visibleIn(state.adventures, dirname(f.path))) : [];
+  const list = [
+    ...vaultFiles.flatMap((f) => {
+      const text = entries.read(deps.resolveInVault, f.path);
+      return text === null ? [] : [own(text, entryTitle(f.path), 0)];
+    }),
+    ...entries.listLibrary(libraryPath()).map((f) => own(f.text, entryTitle(f.path), 1)),
+    ...[...builtinEntries(), ...packBooks()].flatMap(builtin),
+  ];
+  read = { at: Date.now(), adventure: state.adventures.current, lang: state.vault.lang, list };
+  return list;
+}
+
+// Of the built-in books, the card's system and the GM's language come first (the other edition is a fallback).
+function ranked(list: Source[], system: string, lang: string): Source[] {
+  const family = familyOf(system);
+  return list
+    .filter((s) => !s.builtin || familyOf(s.system!) === family)
+    .map((s) => (s.builtin ? { ...s, rank: 2 + (s.system === system ? 0 : 2) + (s.lang === lang ? 0 : 1) } : s));
+}
+
+interface SheetBook {
+  from: Source[];
+  names: string[];
+  sheet: BookIndex;
+  rules: BookIndex;
+}
+const books = new WeakMap<object, SheetBook>();
+
+function bookOf(card: { system: string; stats: unknown }): SheetBook {
+  const list = readBook();
+  const known = books.get(card);
+  if (known?.from === list) return known;
+  const all = ranked(list, card.system, deps.state().vault.lang);
+  const types = new Set(sheetEntryTypes(card.system));
+  const aliases = Object.assign({}, ...importersOf(card.system).map((imp) => imp.table?.aliases?.(importerTableOf(imp.id)) ?? {})) as Record<string, string>;
+  const sheet = bookIndex(all.filter((s) => types.has(s.entry.type)), aliases);
+  const book = { from: list, sheet, names: namesInText(sheet, sheetText(card.stats)), rules: bookIndex(all.filter((s) => s.entry.type !== 'note')) };
+  books.set(card, book);
+  return book;
+}
+
+function conditionEntry(book: SheetBook, system: string, condition: string): Entry | null {
+  const names = systemOf(system).tracker?.conditions.entry?.(condition) ?? [condition];
+  for (const n of [...names, condition, condition.replace(/\s+\d+$/, '')]) {
+    const hit = book.rules.get(searchKey(n.trim()));
+    if (hit) return hit.entry;
+  }
+  return null;
+}
+
 function viewOf(token: string): PlayerView | null {
   const link = Object.hasOwn(links, token) ? links[token] : undefined;
   const card = link && cardOf(link);
   if (!link || !card) return null;
   const state = deps.state();
   const pack = state.vault.systems.find((p) => p.id === card.system);
+  const live = playerLive(state.initiative, { scope: link.scope, id: link.id });
+  const book = bookOf(card);
   return {
     lang: state.vault.lang,
     card: playerCard(card),
     ...(pack ? { pack } : {}),
     // Not the path: the name of a folder can say more than the GM wants.
     portrait: card.portraits[0] ? createHash('sha1').update(card.portraits[0]).digest('hex').slice(0, 10) : null,
-    live: playerLive(state.initiative, { scope: link.scope, id: link.id }),
+    live,
+    entries: book.names,
+    conditions: (live?.conditions ?? []).filter((c) => conditionEntry(book, card.system, c)),
   };
+}
+
+function entryOf(token: string, name: string): Entry | null {
+  const link = Object.hasOwn(links, token) ? links[token] : undefined;
+  const card = link && cardOf(link);
+  if (!link || !card) return null;
+  const book = bookOf(card);
+  const hit = book.names.some((n) => searchKey(n) === searchKey(name.trim())) ? book.sheet.get(searchKey(name.trim()))?.entry : undefined;
+  const conditions = playerLive(deps.state().initiative, { scope: link.scope, id: link.id })?.conditions ?? [];
+  const found = hit ?? (conditions.includes(name) ? conditionEntry(book, card.system, name) : null);
+  return found ? publicEntry(found) : null;
 }
 
 async function portraitOf(token: string): Promise<string | null> {
@@ -121,7 +215,7 @@ export function playersChanged() {
 export async function setPlayersOn(on: boolean): Promise<PlayerStatus> {
   error = undefined;
   if (on && !server) {
-    const s = new PlayerServer({ view: viewOf, portrait: portraitOf }, deps.root);
+    const s = new PlayerServer({ view: viewOf, portrait: portraitOf, entry: entryOf }, deps.root);
     s.onClients = tell;
     try {
       await s.listen(PLAYER_PORT);

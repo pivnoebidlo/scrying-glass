@@ -844,7 +844,10 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   Включает только мастер, по кнопке, при запуске сервер выключен. IPC `players:*`. Окно: `ui/players.svelte.ts`, блок `OnScreen.svelte`,
   `QrDialog.svelte`, `Qr.svelte` (uqr). Страница — вход `renderer/player/` (без `window.api` и `store`; лист грузит `systems/sheets.ts` —
   новому плагину строка в `SHEETS`; броски локальные, `LastRoll.svelte`). В разработке страницу отдаёт сборка: сначала `npm run build`.
-  Дальше: броски в журнал мастера, ссылки на справочник (у страницы нет записей: щелчок по заклинанию Pathfinder пока ничего не делает).
+  Справочник на телефоне — `shared/playerbook.ts` + `bookOf` в `main/players.ts`: в `PlayerView.entries` только названия, найденные в тексте листа
+  (`sheetText`, `namesInText`; типы — `SystemPlugin.sheetEntries`, русские названия сервиса — `importer.table.aliases`), `conditions` — состояния с записью;
+  `/api/<токен>/entry?name=` отдаёт `publicEntry` только для них, весь справочник не листается. Записи читаются с диска раз в `BOOK_LIFE` (30 с): правка мастера доходит с задержкой.
+  На странице — те же `spellLinks` / `peekEntry`, панель `renderer/player/EntrySheet.svelte`. Дальше: броски в журнал мастера, загадки с телефона (нужен канал телефон → окно мастера).
 - Подборка правой панели (`modules/scenes/tray.ts`, вид — `scenes/ui/Tray.svelte` в блоках фона, карты, портретов и
   раздатки, `TrayChips.svelte` + `renderer/lib/ListPicker.svelte` — в музыке (плейлисты и треки; трек — действие
   `music/playTrack`, тогда `playlist` — путь трека) и инициативе (id заготовок; `Combatant.encounter` от

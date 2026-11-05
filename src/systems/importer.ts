@@ -32,7 +32,8 @@ export interface CardImporter {
   url?(linkId: string): string;
   // The importer's data (LSS: spell numbers → names): a file of the library, filled by the GM's account (below) —
   // collect finds what it needs in the service's answers (nothing — null).
-  table?: { file: string; collect(json: unknown): Record<string, unknown> | null };
+  // aliases — the service's own names of compendium entries → the name to find them by.
+  table?: { file: string; collect(json: unknown): Record<string, unknown> | null; aliases?(table: Record<string, unknown>): Record<string, string> };
   // The GM's account in the service (LSS): the core signs in on the service's own page in a window with a saved
   // session of its own (main/accounts.ts) and then asks the service's API with the token — the table fills itself.
   account?: ImporterAccount;

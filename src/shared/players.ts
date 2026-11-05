@@ -25,6 +25,10 @@ export interface PlayerView {
   // A key of the picture (it changes with the picture); null — no portrait.
   portrait: string | null;
   live: PlayerLive | null;
+  // The names of the sheet with a description to open (shared/playerbook.ts).
+  entries: string[];
+  // The conditions on the character that have one.
+  conditions: string[];
 }
 
 // The card as a player may see it. A list of what goes, not of what is removed: a new field of a card stays home

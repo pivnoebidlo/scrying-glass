@@ -5,6 +5,8 @@ import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { PlayerServer } from '../src/main/playerserver';
 import type { Card } from '../src/shared/cards';
+import { bookIndex, entryNamesOf, namesInText, publicEntry, sheetText, type BookEntry } from '../src/shared/playerbook';
+import type { Entry } from '../src/shared/compendium';
 import { hpShare, lanAddresses, playerCard, playerLive, playerUrl, type PlayerView } from '../src/shared/players';
 import type { Combatant } from '../src/modules/initiative/types';
 
@@ -42,6 +44,40 @@ describe('what a player gets', () => {
   });
 });
 
+describe('the compendium on a phone', () => {
+  const entry = (title: string, fields: Entry['fields'] = {}): Entry => ({ title, type: 'spell', fields, body: title });
+  const item = (e: Entry, rank = 2, more: string[] = []): BookEntry => ({ entry: e, names: entryNamesOf(e, more), rank });
+
+  it('the names of a sheet: whole words, any shape, ё like е', () => {
+    const index = bookIndex([item(entry('Shield')), item(entry('Огненный шар')), item(entry('Fly')), item(entry('Ёж'))]);
+    const text = sheetText({ spellcasting: { spells: { 1: ['shield', 'огненный ШАР'] } }, text: { notes: 'A butterfly' }, level: 5 });
+    expect(namesInText(index, text).sort()).toEqual(['Shield', 'Огненный шар']);
+    expect(namesInText(index, 'еж')).toEqual([]); // too short to be a name
+  });
+
+  it('own entries before the book, by rank', () => {
+    const mine = entry('Shield', { homebrew: true });
+    const index = bookIndex([item(entry('Shield'), 2), item(mine, 0)]);
+    expect(index.get('shield')?.entry).toBe(mine);
+  });
+
+  it('another translation finds the entry by the English name, and never hides a real name', () => {
+    const hands = entry('Огненные руки', { aliases: ['Опаляющие руки'] });
+    const real = entry('Щит');
+    const index = bookIndex([item(hands, 2, ['Burning Hands']), item(real)], { 'Огненные ладони': 'Burning Hands', Щит: 'Burning Hands', Нечто: 'Unknown' });
+    expect(index.get('огненные ладони')?.entry).toBe(hands);
+    expect(index.get('опаляющие руки')?.entry).toBe(hands);
+    expect(index.get('щит')?.entry).toBe(real);
+    expect(index.has('нечто')).toBe(false);
+  });
+
+  it('what leaves with an entry', () => {
+    const e = publicEntry(entry('Shield', { level: 1, image: 'secret/map.png', overrides: 'dnd/spell/Shield', tags: ['gm'], source: 'Book', aliases: ['x'] }));
+    expect(e.fields).toEqual({ level: 1 });
+    expect(e.body).toBe('Shield');
+  });
+});
+
 describe('addresses on the table\'s network', () => {
   const a = (address: string, family: string | number = 'IPv4', internal = false) => ({ address, family, internal });
 
@@ -65,7 +101,7 @@ describe('addresses on the table\'s network', () => {
 
 describe('the server', () => {
   let server: PlayerServer;
-  const view = (hp: number): PlayerView => ({ lang: 'en', card: playerCard(card), portrait: null, live: { hp, maxHp: 20, conditions: [], down: false, round: 0, turn: false } });
+  const view = (hp: number): PlayerView => ({ lang: 'en', card: playerCard(card), portrait: null, live: { hp, maxHp: 20, conditions: [], down: false, round: 0, turn: false }, entries: ['Shield'], conditions: [] });
   let current: PlayerView | null;
 
   function start() {
@@ -81,6 +117,7 @@ describe('the server', () => {
     server = new PlayerServer({
       view: (t) => (t === 'good' ? current : null),
       portrait: async (t) => (t === 'good' ? path.join(root, 'portrait.png') : t === 'text' ? path.join(root, 'notes.txt') : null),
+      entry: (t, name) => (t === 'good' && name === 'Щит и меч' ? { title: name, type: 'spell', fields: {}, body: 'text' } : null),
     }, root);
     return server.listen(0);
   }
@@ -121,6 +158,14 @@ describe('the server', () => {
     expect((await get(port, '/assets/%2e%2e/secret.js')).status).toBe(404);
     expect((await get(port, '/assets/%E0%A4%A')).status).toBe(400);
     expect((await get(port, '/secret.js')).status).toBe(404);
+  });
+
+  it('an entry: only what the source allows, the name as it was typed', async () => {
+    const port = await start();
+    expect(JSON.parse((await get(port, `/api/good/entry?name=${encodeURIComponent('Щит и меч')}`)).body).body).toBe('text');
+    expect((await get(port, '/api/good/entry?name=Secret')).status).toBe(404);
+    expect((await get(port, '/api/good/entry')).status).toBe(404);
+    expect((await get(port, `/api/bad/entry?name=${encodeURIComponent('Щит и меч')}`)).status).toBe(404);
   });
 
   it('a portrait is a picture', async () => {

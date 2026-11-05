@@ -17,6 +17,8 @@ export interface SystemPlugin {
   // Types of compendium entries of the family (spells, items…) and the line under an entry's title by type.
   entryTypes?: Record<string, TypeDef>;
   entrySubtitle?: Record<string, (fields: Record<string, FieldValue>) => string>;
+  // The types of entries a character's sheet names: a player can open those from their phone (shared/playerbook.ts).
+  sheetEntries?: string[];
   // Importers of characters from other services (D&D: Long Story Short).
   importers?: CardImporter[];
   // Ids of the official content of the family (shared/content.ts), downloaded from the Community (D&D: its SRD).

@@ -3,6 +3,10 @@ import { t } from '../../shared/i18n';
 import type { CardImporter } from '../importer';
 import { collectLssSpells, fromLss, isLssExport, LSS_API, lssAsExport, lssCharacters, lssEverything, lssIdOf, lssWanted, type LssSpellTable } from './lss';
 
+// LSS's Russian spell names are the official translation, the SRD's are another one: the English name links them.
+export const lssAliases = (table: LssSpellTable): Record<string, string> =>
+  Object.fromEntries(Object.values(table).flatMap((s) => (s.en && s.name !== s.en ? [[s.name, s.en]] : [])));
+
 export const lssImporter: CardImporter = {
   id: 'lss',
   title: 'Long Story Short',
@@ -27,6 +31,7 @@ export const lssImporter: CardImporter = {
       const found = collectLssSpells(json);
       return Object.keys(found).length ? found : null;
     },
+    aliases: (table) => lssAliases(table as LssSpellTable),
   },
   account: {
     login: 'https://longstoryshort.app/',

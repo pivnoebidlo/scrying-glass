@@ -5,12 +5,15 @@ import { createReadStream, statSync } from 'node:fs';
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
+import type { Entry } from '../shared/compendium';
 import type { PlayerView } from '../shared/players';
 
 export interface PlayerSource {
   view(token: string): PlayerView | null;
   // The picture's file.
   portrait(token: string): Promise<string | null>;
+  // An entry named on the sheet: nothing else of the compendium can be asked for.
+  entry(token: string, name: string): Entry | null;
 }
 
 const TYPES: Record<string, string> = {
@@ -138,10 +141,10 @@ export class PlayerServer {
 
   private async handle(req: IncomingMessage, res: ServerResponse) {
     if (req.method !== 'GET' && req.method !== 'HEAD') return this.fail(res, 405);
-    const url = req.url?.split('?')[0] ?? '/';
+    const [url = '/', query = ''] = (req.url ?? '/').split('?');
     if (url.startsWith('/p/')) return this.file(req, res, path.join(this.root, 'player/index.html'), 'text/html; charset=utf-8');
     if (url.startsWith('/assets/')) return this.asset(req, res, url);
-    const api = /^\/api\/([\w-]+)\/(view|portrait|events)$/.exec(url);
+    const api = /^\/api\/([\w-]+)\/(view|portrait|events|entry)$/.exec(url);
     if (!api) return this.fail(res, 404);
     const token = api[1]!;
     const view = this.source.view(token);
@@ -151,6 +154,12 @@ export class PlayerServer {
       return void res.end(JSON.stringify(view));
     }
     if (api[2] === 'events') return this.stream(res, token, view);
+    if (api[2] === 'entry') {
+      const entry = this.source.entry(token, new URLSearchParams(query).get('name') ?? '');
+      if (!entry) return this.fail(res, 404);
+      res.writeHead(200, { ...SECURITY, 'Content-Type': 'application/json; charset=utf-8' });
+      return void res.end(JSON.stringify(entry));
+    }
     const file = await this.source.portrait(token);
     const type = file ? TYPES[path.extname(file).toLowerCase()] : undefined;
     if (!file || !type || !PICTURE.test(type)) return this.fail(res, 404);
