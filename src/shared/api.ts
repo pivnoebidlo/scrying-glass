@@ -12,6 +12,7 @@ import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 import type { UpdateInfo, UpdateSettings } from './updates';
 import type { TgChat, TgMessage, TgStatus, TgTable } from './telegram';
 import type { Game, ScheduleData } from './schedule';
+import type { PlayerStatus } from './players';
 
 // The control window's title bar (main/windows.ts): the system one, or the tab bar as the title bar — with the
 // traffic lights inside (macOS) or the system buttons over the corner (Windows, Linux).
@@ -50,6 +51,12 @@ export interface Api {
   // Карточки живут отдельно от состояния: их сотни, рассылать их после каждого действия незачем.
   // Встроенные звуки (resources/sounds): пути «sound:…».
   builtinSounds(): Promise<BuiltinSounds>;
+
+  // The players' sheets in a browser on the local network (shared/players.ts).
+  playerStatus(): Promise<PlayerStatus>;
+  setPlayersOn(on: boolean): Promise<PlayerStatus>;
+  renewPlayer(ref: CardRef): Promise<PlayerStatus>;
+  onPlayerStatus(cb: (status: PlayerStatus) => void): void;
 
   listCards(): Promise<CardSummary[]>;
   getCard(ref: CardRef): Promise<Card | null>;

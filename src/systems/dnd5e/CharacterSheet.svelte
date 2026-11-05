@@ -300,6 +300,12 @@
     grid-template-columns: minmax(240px, 300px) 1fr;
     gap: 24px;
   }
+  /* A phone (renderer/player). */
+  @media (max-width: 560px) {
+    .cols {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
   .skills {
     margin: 0;
     padding: 0;

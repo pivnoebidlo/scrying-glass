@@ -253,9 +253,14 @@ function loadVault() {
 // Systems came or went (packs installed, deleted): the cards' lines are made by them — made again.
 export const systemsChanged = () => changed();
 
+// The core's own watcher of the cards (the players' sheets).
+let onChanged = () => {};
+export const onCardsChanged = (f: () => void) => (onChanged = f);
+
 function changed() {
   summaries = null;
   for (const win of BrowserWindow.getAllWindows()) win.webContents.send('cards:changed');
+  onChanged();
 }
 
 export function initCards(library: string) {

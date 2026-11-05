@@ -834,6 +834,17 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   out/renderer/pdfjs/, ядро отдаёт `sg-asset://p/…` (`main/pdfjs.ts`, в разработке — из node_modules).
   Сам журнал игрокам не показывается; в .sgpack файлы уходят с папкой приключения, `pinned` — тоже
   (`PackSlices.pinned`, и в корзину — `AdventureData.pinned`).
+- Листы на телефонах — модуль `modules/players` (без состояния; только за одним столом, приложение офлайновое): приложение мастера — сервер
+  в локальной сети, у игрока страница в браузере (без магазинов и своих приложений). Чистое — `shared/players.ts`: что уходит игроку —
+  белый список `playerCard` (не `notes`, не `links`, не пути), `playerLive` (только свой участник боя), `lanAddresses`.
+  Сервер `main/playerserver.ts` без Electron (тесты запускают его как есть): только GET, `/p/<токен>` — страница,
+  `/assets/*`, `/api/<токен>/view|portrait|events` (SSE, heartbeat); ничего не принимает. Общее состояние наружу не идёт никогда.
+  `main/players.ts`: токены — `<userData>/players.json` (на персонажа и хранилище, переживают перезапуск, «Новая ссылка» — `renewPlayer`),
+  порт `PLAYER_PORT` (занят — следующий), партия — `character` в хранилище, `visibleIn`; `playersChanged` зовут `broadcastState` и `onCardsChanged`.
+  Включает только мастер, по кнопке, при запуске сервер выключен. IPC `players:*`. Окно: `ui/players.svelte.ts`, блок `OnScreen.svelte`,
+  `QrDialog.svelte`, `Qr.svelte` (uqr). Страница — вход `renderer/player/` (без `window.api` и `store`; лист грузит `systems/sheets.ts` —
+  новому плагину строка в `SHEETS`; броски локальные, `LastRoll.svelte`). В разработке страницу отдаёт сборка: сначала `npm run build`.
+  Дальше: броски в журнал мастера, ссылки на справочник (у страницы нет записей: щелчок по заклинанию Pathfinder пока ничего не делает).
 - Подборка правой панели (`modules/scenes/tray.ts`, вид — `scenes/ui/Tray.svelte` в блоках фона, карты, портретов и
   раздатки, `TrayChips.svelte` + `renderer/lib/ListPicker.svelte` — в музыке (плейлисты и треки; трек — действие
   `music/playTrack`, тогда `playlist` — путь трека) и инициативе (id заготовок; `Combatant.encounter` от

@@ -31,6 +31,7 @@ export default defineConfig({
         input: {
           control: resolve('src/renderer/control/index.html'),
           display: resolve('src/renderer/display/index.html'),
+          player: resolve('src/renderer/player/index.html'),
         },
       },
     },

@@ -26,6 +26,7 @@ import type { TrashPlace, TrashSettings } from '../shared/trash';
 import { migrateOldCampaign } from './migrate';
 import { serveFile } from './assets';
 import { canThumb, pruneThumbs, thumbnail } from './thumbs';
+import { initPlayers, playersChanged, playerStatus, renewPlayer, setPlayersOn, stopPlayers } from './players';
 import { createNote, readNote, renameNote, writeNote } from './notes';
 import { createSketch, readSketch, renameSketch, writeSketch } from './sketches';
 import type { Sketch } from '../shared/sketch';
@@ -36,7 +37,7 @@ import { pages } from './journal';
 import { resolver } from './textstore';
 import type { Note } from '../shared/notes';
 import {
-  accountCharacters, accountExport, clipboardExport, cardsOf, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, importerTableOf, clearImporterTable, importerDialog, fetchImporterTable, importerAccount, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
+  accountCharacters, accountExport, clipboardExport, cardsOf, onCardsChanged, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, importerTableOf, clearImporterTable, importerDialog, fetchImporterTable, importerAccount, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { accountStatus, signIn, signOut } from './accounts';
 import { IMAGE_EXT } from '../shared/vault';
@@ -444,6 +445,7 @@ function broadcastState() {
   for (const win of BrowserWindow.getAllWindows()) {
     win.webContents.send('state:changed', state);
   }
+  playersChanged();
 }
 
 // ---------- Контекст модулей ----------
@@ -512,6 +514,10 @@ function reactTo(id: string, before: Record<string, unknown>) {
 }
 
 ipcMain.handle('sounds:builtin', () => builtinSounds());
+
+ipcMain.handle('players:status', () => playerStatus());
+ipcMain.handle('players:setOn', (_event, on: boolean) => setPlayersOn(on));
+ipcMain.handle('players:renew', (_event, ref: CardRef) => renewPlayer(ref));
 
 ipcMain.handle('action', (_event, { module: id, name, payload }: { module: string; name: string; payload: unknown }) => runAction(id, name, payload));
 
@@ -676,6 +682,7 @@ function snapshotNow(reason: Reason, force = false) {
 // Раз в полчаса работы — снимок, если что-то изменилось.
 setInterval(() => vaultRoot && snapshotNow('auto'), 30 * 60 * 1000);
 app.on('before-quit', () => {
+  void stopPlayers();
   if (vaultRoot) snapshotNow('quit');
   stopTelegram();
   releaseVault();
@@ -2040,6 +2047,18 @@ app.whenReady().then(async () => {
   loadSystemPacks(settings.library ?? defaultLibrary());
   stateById['vault'] = vaultState();
   initCards(settings.library ?? defaultLibrary());
+  initPlayers({
+    file: path.join(app.getPath('userData'), 'players.json'),
+    root: path.join(__dirname, '../renderer'),
+    state: () => state,
+    vaultRoot: () => vaultRoot,
+    resolveInVault,
+    thumbnail,
+    notify: (status) => {
+      for (const win of BrowserWindow.getAllWindows()) win.webContents.send('players:status', status);
+    },
+  });
+  onCardsChanged(playersChanged);
 
   // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>,
   // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>, встроенные звуки: sg-asset://s/<путь>,

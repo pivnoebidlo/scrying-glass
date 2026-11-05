@@ -649,6 +649,19 @@ in the Field" — and when it happens, press "To combat": the participants join 
 encounter belongs to an adventure and is kept (the fight can be repeated); the current combat can be saved as an
 encounter.
 
+## Sheets on phones
+
+Players can open their own character in a phone's browser: no app, no account. Everyone only needs to be on the same
+network as the GM's computer (the Wi-Fi of the room, or one shared from the laptop). In the right panel → Sheets on
+phones, turn on "Open to the local network" and click a character: a player scans the QR code with the camera (← →
+go to the next character). The link works from game to game; "New link" (also in the right-click menu) replaces it.
+
+The phone shows the sheet of that character and, during a fight, hit points, conditions, the round and "Your turn!",
+updated the moment you change them in the tracker. Nothing else leaves your computer: not your notes, other
+characters, or hidden enemies. Rolls from the sheet stay on the phone. The sheets are read only: players change
+nothing. The first time, the system may ask whether the app can accept connections: allow it. The sheets work while
+the switch is on and the app is open.
+
 ## Cards
 
 The Cards tab (bestiary): monsters and NPCs with a stat block, party characters with a sheet. All monsters of SRD 5.1

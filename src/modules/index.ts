@@ -28,5 +28,6 @@ import repo from './repo/main';
 import worldtime from './worldtime/main';
 import ambience from './ambience/main';
 import integrations from './integrations/main';
+import players from './players/main';
 
-export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary, order, tools, timer, backup, compendium, fate, sounds, journal, telegram, schedule, mausritter, clocks, crew, repo, worldtime, ambience, integrations] as const;
+export const moduleList = [core, vault, adventures, scene, maps, handouts, portraits, music, scenes, initiative, bestiary, order, tools, timer, backup, compendium, fate, sounds, journal, telegram, schedule, mausritter, clocks, crew, repo, worldtime, ambience, integrations, players] as const;

@@ -9,6 +9,11 @@ const api: Api = {
 
   builtinSounds: () => ipcRenderer.invoke('sounds:builtin'),
 
+  playerStatus: () => ipcRenderer.invoke('players:status'),
+  setPlayersOn: (on) => ipcRenderer.invoke('players:setOn', on),
+  renewPlayer: (ref) => ipcRenderer.invoke('players:renew', ref),
+  onPlayerStatus: (cb) => { ipcRenderer.on('players:status', (_e, s) => cb(s)); },
+
   listCards: () => ipcRenderer.invoke('cards:list'),
   getCard: (ref) => ipcRenderer.invoke('cards:get', ref),
   onCardsChanged: (cb) => { ipcRenderer.on('cards:changed', () => cb()); },
