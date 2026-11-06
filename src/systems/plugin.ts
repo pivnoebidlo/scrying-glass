@@ -24,6 +24,8 @@ export interface SystemPlugin {
   sheetResources?(stats: unknown): SheetResources;
   // Importers of characters from other services (D&D: Long Story Short).
   importers?: CardImporter[];
+  // What of the core its systems use (shared/features.ts).
+  uses?: string[];
   // Ids of the official content of the family (shared/content.ts), downloaded from the Community (D&D: its SRD).
   content?: string[];
 }

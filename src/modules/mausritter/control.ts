@@ -1,10 +1,10 @@
-// Mausritter in the control window: the exploration clock in the right panel (Mausritter adventures only);
+// The exploration clock in the right panel, for the systems that use it;
 // factions are a page in Tools.
 import { Compass } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import Clock from './ui/Clock.svelte';
-import { mausHere } from './here';
+import { usesHere } from '../../shared/adventures';
 
 export default defineControl({
   id: 'mausritter',
@@ -14,5 +14,5 @@ export default defineControl({
   icon: Compass,
   order: 28,
   screen: Clock,
-  screenWhen: mausHere,
+  screenWhen: (app) => usesHere(app.adventures, 'exploration'),
 });

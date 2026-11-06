@@ -5,12 +5,12 @@
   import { Moon, Sun, Sunrise, Sunset } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { mausHere } from '../../mausritter/here';
+  import { usesHere } from '../../../shared/adventures';
   import { clockOf, partOf, type DayPart } from '../types';
 
   let { ms, app }: ModuleProps<'worldtime'> = $props();
 
-  const w = $derived(mausHere(app) ? undefined : ms.byAdventure[app.adventures.current ?? '']);
+  const w = $derived(!usesHere(app.adventures, 'worldtime') ? undefined : ms.byAdventure[app.adventures.current ?? '']);
   const now = $derived(w?.shown ? clockOf(w.minutes) : null);
   const part = $derived(now ? partOf(now.hour) : 'day');
   const ICON: Record<DayPart, typeof Sun> = { night: Moon, morning: Sunrise, day: Sun, evening: Sunset };

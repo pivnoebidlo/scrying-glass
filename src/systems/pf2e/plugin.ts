@@ -37,6 +37,7 @@ export const pf2ePlugin: SystemPlugin = {
   entryTypes: ENTRY_TYPES,
   entrySubtitle: ENTRY_SUBTITLES,
   // Monster Core creatures, Player Core conditions, spells, actions (content/pf2e-core/).
+  uses: ['worldtime'],
   content: ['pf2e-core'],
   importers: [pathbuilderImporter],
 };

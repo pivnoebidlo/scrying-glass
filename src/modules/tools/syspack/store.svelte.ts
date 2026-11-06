@@ -5,13 +5,13 @@ import { openTab } from '../../../renderer/lib/nav';
 import { store } from '../../../renderer/lib/store.svelte';
 import { keyFrom } from '../../../shared/compendium';
 import { getLang } from '../../../shared/i18n';
-import { blankPack, blankStats, loc, type PackStats, type SystemPack } from '../../../shared/syspack';
+import { blankPack, blankStats, loc, type PackStats, type SystemPack, PACK_FORMAT } from '../../../shared/syspack';
 import { systems } from '../../../systems';
 import { ui as tools } from '../ui/ui.svelte';
 import { fromTemplate, type TemplateId } from './templates';
 
 // The steps of the builder (its tabs) and, on the sheet step, the chosen section or field.
-export type Step = 'about' | 'sheet' | 'tracker' | 'compendium' | 'trial';
+export type Step = 'about' | 'sheet' | 'tracker' | 'features' | 'compendium' | 'trial';
 export type Selection = { kind: 'none' } | { kind: 'section'; s: number } | { kind: 'field'; s: number; f: number };
 
 export const builder = $state({
@@ -109,7 +109,9 @@ export async function saveSystem() {
     const plain = $state.snapshot(d) as SystemPack;
     const id = await window.api.saveSystem(plain, builder.was ?? undefined);
     builder.was = id;
-    builder.saved = snapshot(plain);
+    // The core wrote it in the current format: nothing is new for it any more.
+    d.format = PACK_FORMAT;
+    builder.saved = snapshot({ ...plain, format: PACK_FORMAT });
     builder.status = t('sb.saved');
     setTimeout(() => builder.status === t('sb.saved') && (builder.status = ''), 3000);
   } catch (e) {

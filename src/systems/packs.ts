@@ -54,6 +54,7 @@ function systemOfPack(p: SystemPack): SystemDef {
       return loc(p.title, getLang());
     },
     family: p.family ?? p.id,
+    uses: p.uses ?? [],
     get about() {
       return p.about ? loc(p.about, getLang()) : undefined;
     },

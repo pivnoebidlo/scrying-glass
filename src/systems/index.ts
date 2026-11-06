@@ -24,6 +24,8 @@ export interface SystemDef {
   short?: string;
   // What the system gives, a line under its title in Settings → Game systems.
   readonly about?: string;
+  // What of the core the system uses (shared/features.ts); a plugin says it for the whole family.
+  uses?: string[];
   // Stats of different shapes by the kind of card (D&D: a character's sheet, a stat block for the rest): changing
   // the kind to another shape starts the stats anew. None — one shape for every kind.
   shape?: { ofKind(kind: CardKind): string; ofStats(stats: unknown): string };
@@ -71,6 +73,7 @@ const unknown = (id: string): SystemDef => ({
 export const systemOf = (id: string) => systems.find((s) => s.id === id) ?? unknown(id);
 
 export const familyOf = (id: string) => systemOf(id).family;
+export const usesOf = (id: string): string[] => systemOf(id).uses ?? PLUGINS.find((p) => p.family === familyOf(id))?.uses ?? [];
 export const pluginResources = (id: string, stats: unknown): SheetResources => PLUGINS.find((p) => p.family === familyOf(id))?.sheetResources?.(stats) ?? NO_RESOURCES;
 // The types of entries a character sheet of the system names (a player opens them on the phone).
 export const sheetEntryTypes = (id: string): string[] => PLUGINS.find((p) => p.family === familyOf(id))?.sheetEntries ?? [];

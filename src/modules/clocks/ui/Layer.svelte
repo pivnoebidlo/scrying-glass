@@ -6,11 +6,11 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import ClockFace from './ClockFace.svelte';
   import type { ClockTone } from '../types';
-  import { fitdHere } from '../../crew/here';
+  import { usesHere } from '../../../shared/adventures';
 
   let { ms, app }: ModuleProps<'clocks'> = $props();
 
-  const clocks = $derived(fitdHere(app) ? (ms.byAdventure[app.adventures.current ?? ''] ?? []).filter((c) => c.shown) : []);
+  const clocks = $derived(usesHere(app.adventures, 'clocks') ? (ms.byAdventure[app.adventures.current ?? ''] ?? []).filter((c) => c.shown) : []);
   const COLOR: Record<ClockTone, string> = { danger: '#c0392b', progress: '#d9a441', neutral: '#9aa3ad' };
   const SIZE = { small: 7, medium: 10, large: 14 } as const;
 </script>

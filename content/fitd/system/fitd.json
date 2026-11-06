@@ -1,6 +1,8 @@
 {
  "scryingGlass": "system",
  "version": 1,
+ "format": 2,
+ "uses": ["worldtime", "clocks", "crew"],
  "id": "fitd",
  "family": "fitd",
  "release": 2,

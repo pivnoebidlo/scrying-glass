@@ -8,6 +8,7 @@
 // formulas are a tiny language of their own (numbers, fields, + − × ÷, a few functions) — never code.
 import type { SheetResources } from './players';
 import type { CardKind, CombatStats } from './cards';
+import { oldUses } from './features';
 
 // Text in several languages ({ en, ru }) or one string for all.
 export type Loc = string | Record<string, string>;
@@ -135,12 +136,14 @@ export interface TrackerSpec {
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 1;
+export const PACK_FORMAT = 2;
 
 export interface SystemPack {
   scryingGlass: 'system';
   version: 1;
   format?: number;
+  // What of the core the system uses (shared/features.ts). Unknown ids stay: a newer app may know them.
+  uses?: string[];
   id: string;
   title: Loc;
   // Editions of one game share a family (none — the pack's own).
@@ -296,7 +299,8 @@ export const blankPack = (id: string, title: Loc): SystemPack => ({
 const KEY_RE = /^[a-z][a-z0-9_]{0,31}$/;
 const ID_RE = /^[a-z][a-z0-9-]{1,31}$/;
 const KINDS: CardKind[] = ['monster', 'npc', 'character'];
-const LIMIT = { resets: 8, sections: 40, fields: 80, options: 60, columns: 8, text: 200, long: 4000, formula: 200, entries: 500, entry: 30000 };
+const USE_RE = /^[a-z][A-Za-z0-9-]{0,40}$/;
+const LIMIT = { uses: 40, resets: 8, sections: 40, fields: 80, options: 60, columns: 8, text: 200, long: 4000, formula: 200, entries: 500, entry: 30000 };
 
 const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
 function locOf(x: unknown, max = LIMIT.text): Loc | null {
@@ -523,6 +527,7 @@ export function validatePack(x: unknown): SystemPack | string {
     scryingGlass: 'system',
     version: 1,
     ...(Number.isInteger(x['format']) && (x['format'] as number) > 0 ? { format: x['format'] as number } : {}),
+    uses: Array.isArray(x['uses']) ? [...new Set(x['uses'].filter((u): u is string => typeof u === 'string' && USE_RE.test(u)))].slice(0, LIMIT.uses) : oldUses(typeof x['family'] === 'string' ? x['family'] : x['id']),
     id: x['id'],
     title,
     ...(typeof x['family'] === 'string' && ID_RE.test(x['family']) ? { family: x['family'] } : {}),

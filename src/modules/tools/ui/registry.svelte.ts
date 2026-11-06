@@ -5,7 +5,7 @@
 import type { Component } from 'svelte';
 import { Beer, Blocks, Map as MapIcon, Dices, CalendarClock, Castle, Flag, Hourglass, Pickaxe, Compass, Puzzle, Rat, Send, Signature, Store, Swords, Table2, UserRound } from '@lucide/svelte';
 import { systemUis } from '../../../systems/ui';
-import { enabledSystems } from '../../../systems';
+import { enabledSystems, systems, usesOf } from '../../../systems';
 import { t } from '../../../renderer/lib/i18n.svelte';
 import type { ToolId } from './ui.svelte';
 
@@ -26,18 +26,20 @@ function tool(id: ToolDef['id'], icon: ToolDef['icon'], key: string, families?: 
     get title() {
       return t(key as never);
     },
-    ...(families && families !== SOME ? { families } : {}),
   };
-  // A generator of some systems belongs to the plugins that claim it (a getter: not spread anywhere).
+  // A generator of some systems belongs to the plugins that claim it, a feature — to the systems that use it
+  // (getters: packs come and go; not spread anywhere).
   if (families === SOME) Object.defineProperty(def, 'families', { get: () => claimed(id), enumerable: true });
+  if (families === USED) Object.defineProperty(def, 'families', { get: () => usedBy(id), enumerable: true });
   return def;
 }
 
 // A generator of some systems: its families are the plugins that claim it.
 const SOME: string[] = [];
 const claimed = (id: string) => systemUis.filter((u) => u.claims?.includes(id)).map((u) => u.family);
-const MAUS = ['mausritter'];
-const FITD = ['fitd'];
+// A tool of a feature (shared/features.ts): the id is the same.
+const USED: string[] = [];
+const usedBy = (id: string) => [...new Set(systems.filter((s) => usesOf(s.id).includes(id)).map((s) => s.family))];
 
 // In the order of the sidebar (notes come first and are drawn apart: they have their list).
 const CORE: ToolDef[] = [
@@ -53,12 +55,12 @@ const CORE: ToolDef[] = [
   tool('hooks', Compass, 'tools.side.hooks', SOME),
   tool('riddles', Puzzle, 'tools.side.riddles'),
   tool('mapgen', MapIcon, 'tools.side.mapgen'),
-  tool('mouse', Rat, 'tools.side.mouse', MAUS),
-  tool('mausTables', Table2, 'tools.side.mausTables', MAUS),
-  tool('factions', Flag, 'tools.side.factions', MAUS),
-  tool('mausShop', Store, 'tools.side.mausShop', MAUS),
-  tool('build', Pickaxe, 'tools.side.build', MAUS),
-  tool('crew', Swords, 'tools.side.crew', FITD),
+  tool('mouse', Rat, 'tools.side.mouse', USED),
+  tool('mausTables', Table2, 'tools.side.mausTables', USED),
+  tool('factions', Flag, 'tools.side.factions', USED),
+  tool('mausShop', Store, 'tools.side.mausShop', USED),
+  tool('build', Pickaxe, 'tools.side.build', USED),
+  tool('crew', Swords, 'tools.side.crew', USED),
 ];
 
 export const TOOLS: ToolDef[] = [

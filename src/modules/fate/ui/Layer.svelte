@@ -5,12 +5,12 @@
   import { flip } from 'svelte/animate';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { assetUrl } from '../../../shared/vault';
-  import { fateHere } from '../here';
+  import { usesHere } from '../../../shared/adventures';
   import { CORNERS } from '../types';
 
   let { ms, app }: ModuleProps<'fate'> = $props();
 
-  const here = $derived(fateHere(app));
+  const here = $derived(usesHere(app.adventures, 'aspects'));
   const aspects = $derived(here && ms.show.aspects ? ms.aspects.filter((a) => !a.hidden) : []);
   const holders = $derived(here && ms.show.points ? ms.holders : []);
 </script>

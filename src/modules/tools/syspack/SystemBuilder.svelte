@@ -22,7 +22,9 @@
   import { builder, type Step, copySystem, deleteSystem, freeKey, importSystem, isDirty, newSystem, packError, packs, pickSystem, saveSystem } from './store.svelte';
 
   const KINDS: CardKind[] = ['monster', 'npc', 'character'];
-  const STEPS: Step[] = ['about', 'sheet', 'tracker', 'compendium', 'trial'];
+  import FeaturesPanel from './FeaturesPanel.svelte';
+  import { freshFeatures } from '../../../shared/features';
+  const STEPS: Step[] = ['about', 'sheet', 'tracker', 'features', 'compendium', 'trial'];
   // «New system» asks what to start from.
   let choosing = $state(false);
 
@@ -174,7 +176,7 @@
     <div class="steps" role="tablist">
       {#each STEPS as st (st)}
         <button role="tab" aria-selected={builder.step === st} onclick={() => (builder.step = st)}>
-          {t(`sb.step.${st}`)}{#if st === 'sheet'}<span class="count">{fieldCount}</span>{:else if st === 'compendium'}<span class="count">{d.compendium?.length ?? 0}</span>{/if}
+          {t(`sb.step.${st}`)}{#if st === 'sheet'}<span class="count">{fieldCount}</span>{:else if st === 'compendium'}<span class="count">{d.compendium?.length ?? 0}</span>{:else if st === 'features' && !ro && freshFeatures(d.format, d.uses ?? []).length}<span class="count fresh">{t('sb.feat.new')}</span>{/if}
         </button>
       {/each}
     </div>
@@ -260,6 +262,8 @@
           {/if}
         </section>
       </div>
+    {:else if builder.step === 'features'}
+      <section class="pane"><FeaturesPanel pack={d} disabled={ro} /></section>
     {:else if builder.step === 'tracker'}
       <section class="pane narrow">
         <TrackerPanel bind:pack={builder.draft!} disabled={ro} />
@@ -364,6 +368,13 @@
     color: var(--text-faint);
     font-weight: 400;
     font-variant-numeric: tabular-nums;
+  }
+  .count.fresh {
+    padding: 0 6px;
+    border-radius: 8px;
+    font-size: 11px;
+    color: var(--on-accent);
+    background: var(--accent);
   }
   .pane {
     display: flex;

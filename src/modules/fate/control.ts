@@ -3,7 +3,7 @@ import { Sparkles } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import OnScreen from './ui/OnScreen.svelte';
-import { fateHere } from './here';
+import { usesHere } from '../../shared/adventures';
 
 export default defineControl({
   id: 'fate',
@@ -13,6 +13,6 @@ export default defineControl({
   icon: Sparkles,
   order: 27,
   screen: OnScreen,
-  screenWhen: fateHere,
+  screenWhen: (app) => usesHere(app.adventures, 'aspects'),
   screenEmpty: (app) => (app.fate.aspects.length || app.fate.holders.length ? null : t('empty.none')),
 });

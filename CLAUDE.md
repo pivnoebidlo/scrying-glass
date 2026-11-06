@@ -377,6 +377,7 @@ Electron-приложение для мастера D&D: окно управле
   нет): аспекты, 18 навыков числами (`hideZero`, бросок `fate` с `labels` — лестница), трюки, восстановление, дорожки
   стресса по формулам от Телосложения и Воли, последствия текстом (ячейки трекера — `Combatant.texts`); «Партия»
   модуля fate берёт `refresh` из полей карточки.
+- Возможности ядра (`shared/features.ts`, с 0.83): ядро не спрашивает, какая это игра. `FEATURES` — реестр: `id` (инструмент с тем же id принадлежит возможности), `since` — формат пакета, `bound` — написано под одну игру (пакет держит, конструктор не предлагает, потом станет данными). Система перечисляет свои в `uses`: пакет — `SystemPack.uses`, плагин — `SystemPlugin.uses`, спросить — `usesHere(adventures, id)` / `usesOf(system)`; инструмент возможности — `USED` в `tools/ui/registry.svelte.ts`. Новая возможность — строка в `FEATURES`, поднять `PACK_FORMAT` и `since`, подписи `sb.feat.<id>` + `.desc`: конструктор (вкладка «Возможности», `FeaturesPanel.svelte`) покажет её с пометкой «новое» у пакетов старого формата (`freshFeatures`); мастер включает, сохраняет (формат обновится сам) и публикует новую версию, систему переделывать не нужно. Проверки по названию семейства в модулях не писать. Пакеты формата 1 без `uses` получают список по семейству (`oldUses`). Незнакомые id в `uses` сохраняются.
 - Пакеты систем (система — JSON-файл, не код; первая версия): формат, проверка, формулы и броски — `shared/syspack.ts`
   (`SystemPack`: `sections` → поля `FieldDef` типов number / text / textarea / select / dots / track (`boxes` — число или
   ключ поля) / tags / list (`columns`) / formula; `roll` у поля — `RollSpec`: d20, under (к100 со ступенями `levels`),
@@ -450,8 +451,8 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   стража, состояния «Измотан / Напуган / Голоден / Ранен / Опустошён», к6, [СУММА] / [КУБЫ]. У русской карточки кубы
   показываются «к8» (`Sheet.svelte`). [[Ссылка]] на карточку по имени —
   `bestiary.named` (сначала системы приключения: «Owl» есть и в D&D).
-- Часы прогресса — модуль `modules/clocks` (только в приключениях FitD — `fitdHere` из `crew/here.ts`: блок `screenWhen`, слой
-  игроков тоже; в D&D, Fate, Mausritter их нет — решение пользователя): `byAdventure[приключение | '']` — `Clock` (`segments`
+- Часы прогресса — модуль `modules/clocks` (возможность `clocks`: блок `screenWhen`, слой
+  игроков тоже; из коробки — только в FitD, в D&D, Fate, Mausritter их нет — решение пользователя): `byAdventure[приключение | '']` — `Clock` (`segments`
   2–12, `filled`, `tone` danger / progress / neutral, `shown`), `place` (угол, `CornerPick` из fate) и `size`; действия
   `add` / `update` / `tick` / `remove` / `reorder`. Блок правой панели `ui/OnScreen.svelte` (щелчок — вперёд, правый —
   назад), слой игроков `ui/Layer.svelte` (order 33), круг — `ui/ClockFace.svelte` + `draw.ts`. В .sgpack —
@@ -477,11 +478,11 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   крепкая, крепкая → уровень за (уровень + 1) × 8), `repFor`, `heatFor`, `entanglementsFor`; действия `update`, `heat`,
   `rep`, `develop`, `payoff`, `entanglement` (четвёртый аргумент — пул, для тестов), подручные и фракции). Страница
   «Банда» в «Инструментах» (`ui/CrewSheet.svelte`, инструмент `crew` семейства fitd), блок правой панели
-  `ui/Panel.svelte` (`fitdHere`); названия неприятностей `crew.ent.*` — синонимы записи «Неприятности» справочника
+  `ui/Panel.svelte` (возможность `crew`); названия неприятностей `crew.ent.*` — синонимы записи «Неприятности» справочника
   (тест сверяет). В .sgpack — `PackSlices.crew`, в корзину — `AdventureData.crew`.
 - Аспекты сцены и жетоны судьбы — модуль `modules/fate` (состояние: `aspects` с `invokes` / `hidden`, `holders` —
   персонажи с `points` / `refresh`, `gm` — запас мастера, `show`). Блок правой панели `OnScreen.svelte` и слой игроков
-  `Layer.svelte` (order 32; угол — `place`, выбор — `CornerPick.svelte`, в одном углу встают друг под другом) — только в приключениях Fate (`fateHere`; блок
+  `Layer.svelte` (order 32; угол — `place`, выбор — `CornerPick.svelte`, в одном углу встают друг под другом) — возможность `aspects` (блок
   прячет `screenWhen` из контрибуции). «Партия» — `ui/party.ts` (карточки Fate в папках партии, восстановление из
   карточки), «Новая сессия» — до восстановления, «Новая сцена» у мастера — по жетону на персонажа.
   Ненужные системы отключаются в настройках — раздел «Ролевые системы» модуля приключений (`settingsTitle` в `contrib.ts`, `adventures/ui/Settings.svelte`): `settings.systemsOff` в
@@ -653,7 +654,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   с целями `FactionGoal` (`marks`, `progress`, `relevant`, `rival`), `session` — итог «между сессиями» (`betweenSessions`:
   к6 + relevant − rival, 4–5 +1, 6+ +2), `clock` — ход / стража / день, `last` — бросок встречи; у бросающих действий
   четвёртый аргумент — куб, для тестов). Страница «Фракции» в «Инструментах» (`ui/Factions.svelte`, примеры SRD —
-  `EXAMPLE_FACTIONS` в `tools/maus/srd.ts`), блок «Исследование» в правой панели (`ui/Clock.svelte`, `mausHere`). Данные
+  `EXAMPLE_FACTIONS` в `tools/maus/srd.ts`), блок «Исследование» в правой панели (`ui/Clock.svelte`, возможность `exploration`, страница — `factions`). Данные
   приключения уходят в `.sgpack` (`PackSlices.mausritter`) и в корзину (`AdventureData.mausritter`). Наёмники — в
   «Таблицах Mausritter» (`hirelings`).
   Отряды (`Warband` в `byAdventure[…].warbands`: `formed` — день счётчика, `paid` — оплаченные недели, `card` — ссылка;
@@ -710,7 +711,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   загрузка — фоновый `Load.svelte`, «Начать игру» — `startGame` (приключение, `setTable`, `journal/pin`, вкладка сцен).
   Время в игре — модуль `modules/worldtime` (`byAdventure[приключение | '']` — `minutes` от начала дня 1 и `shown`;
   правила — `types.ts`: `clockOf`, `partOf`, `nextMorning`; действия `advance` / `untilMorning` / `set` / `show` / `reset` /
-  `setPlace`): блок правой панели `ui/OnScreen.svelte` (не в Mausritter — там свой счётчик), слой игроков `ui/Layer.svelte`
+  `setPlace`): блок правой панели `ui/OnScreen.svelte` (возможность `worldtime`; у Mausritter её нет — там свой счётчик), слой игроков `ui/Layer.svelte`
   (order 34, только день и время суток); в корзину — `AdventureData.worldtime`, в .sgpack не идёт (это ход игры, не содержимое).
   Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Background` —
   `Chime` (сигнал WebAudio на устройство вывода музыки) и `GmBar` (плашка мастера вверху окна: `TimerState.gm` — off / end / always)); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),

@@ -4,7 +4,7 @@ import { CircleDashed } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import OnScreen from './ui/OnScreen.svelte';
-import { fitdHere } from '../crew/here';
+import { usesHere } from '../../shared/adventures';
 
 export default defineControl({
   id: 'clocks',
@@ -14,6 +14,6 @@ export default defineControl({
   icon: CircleDashed,
   order: 29,
   screen: OnScreen,
-  screenWhen: fitdHere,
+  screenWhen: (app) => usesHere(app.adventures, 'clocks'),
   screenEmpty: (app) => ((app.clocks.byAdventure[app.adventures.current ?? ''] ?? []).length ? null : t('empty.none')),
 });

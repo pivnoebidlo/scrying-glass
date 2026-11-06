@@ -3,7 +3,7 @@
 // по-прежнему показывает хранилище целиком. Только типы и чистые функции: используются ядром и окнами.
 import { t } from './i18n';
 import { basename, folderRole, roleNames, type FolderRole, type VaultFolder } from './vault';
-import { LEGACY_SYSTEM, defaultSystem, familyOf, isEnabled, systems } from '../systems';
+import { LEGACY_SYSTEM, defaultSystem, familyOf, isEnabled, systems, usesOf } from '../systems';
 
 export interface AdventuresState {
   // Пути папок приключений (первый уровень хранилища, то есть просто имена).
@@ -91,6 +91,8 @@ export function recentAdventures(adv: AdventuresState, count = RECENT_SHOWN): st
   return [...new Set(order)].filter((a) => a === adv.current || adventures.includes(a)).slice(0, count);
 }
 export const currentSystem = (adv: AdventuresState) => systemFor(adv, adv.current);
+// Whether the system of the current adventure uses a feature of the core (shared/features.ts).
+export const usesHere = (adv: AdventuresState, feature: string) => usesOf(currentSystem(adv)).includes(feature);
 // Подходит ли карточка или запись этой системы текущему приключению: то же семейство (2014 и 2024 — вместе), и
 // система не отключена в настройках.
 export const inCurrentFamily = (adv: AdventuresState, system: string) =>

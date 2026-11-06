@@ -1,6 +1,8 @@
 {
  "scryingGlass": "system",
  "version": 1,
+ "format": 2,
+ "uses": ["worldtime", "aspects"],
  "id": "fate-core",
  "family": "fate",
  "release": 2,

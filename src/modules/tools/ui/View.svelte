@@ -46,7 +46,7 @@
     mouse: MouseGenerator, mausTables: MausTables, factions: Factions, build: BuildCalculator, mausShop: MausShop, npc: NpcGenerator,
     tavern: TavernGenerator, telegram: TelegramCompose, timer: TimerTool, crew: CrewSheet, systems: SystemBuilder, rollTables: RollTables,
   };
-  const Page = $derived(ui.tool !== 'notes' && ui.tool !== 'sketches' && shown(ui.tool, family) ? (PAGES[ui.tool] ?? TOOLS.find((d) => d.id === ui.tool)?.page) : undefined);
+  const Page = $derived(app.vault.systems && ui.tool !== 'notes' && ui.tool !== 'sketches' && shown(ui.tool, family) ? (PAGES[ui.tool] ?? TOOLS.find((d) => d.id === ui.tool)?.page) : undefined);
 
   connectNotes();
   // The notes' page or the canvases' (both live in the handouts folders).

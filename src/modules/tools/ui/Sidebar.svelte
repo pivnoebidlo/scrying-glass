@@ -20,7 +20,8 @@
   let { app }: ModuleProps<'tools'> = $props();
   const family = $derived(familyOf(currentSystem(app.adventures)));
   const familyTitle = $derived(FAMILIES.find((f) => f.id === family)?.title ?? family);
-  const at = (place: Place) => TOOLS.filter((d) => placeOf(d, family) === place);
+  // Features come and go with the packs (`vault.systems`).
+  const at = (place: Place) => (app.vault.systems, TOOLS.filter((d) => placeOf(d, family) === place));
   const notes = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures).flatMap((g) => g.items) : []);
   const sketches = $derived(app.vault.tree ? noteGroups(app.vault.tree, app.vault.name, app.adventures, 'sketch').flatMap((g) => g.items) : []);
   // A count next to a tool: unread messages, a running timer.

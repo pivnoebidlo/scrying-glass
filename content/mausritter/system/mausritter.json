@@ -1,6 +1,8 @@
 {
  "scryingGlass": "system",
  "version": 1,
+ "format": 2,
+ "uses": ["exploration", "factions", "mouse", "mausTables", "mausShop", "build"],
  "id": "mausritter",
  "family": "mausritter",
  "release": 2,

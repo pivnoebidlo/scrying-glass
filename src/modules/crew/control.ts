@@ -4,7 +4,7 @@ import { Swords } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import Panel from './ui/Panel.svelte';
-import { fitdHere } from './here';
+import { usesHere } from '../../shared/adventures';
 
 export default defineControl({
   id: 'crew',
@@ -14,5 +14,5 @@ export default defineControl({
   icon: Swords,
   order: 29,
   screen: Panel,
-  screenWhen: fitdHere,
+  screenWhen: (app) => usesHere(app.adventures, 'crew'),
 });
