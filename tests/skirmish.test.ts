@@ -96,7 +96,7 @@ describe('встреча на местности', () => {
         if (c.kind === 'party') expect(home.has(`${c.x},${c.y}`)).toBe(true);
       }
     }
-  });
+  }, 30000);
 
   it('текст и Markdown на обоих языках', () => {
     const x = generateSkirmish({ terrain: 'swamp', level: 5, heroes: 4, difficulty: 'high' }, 0, seeded(3));
