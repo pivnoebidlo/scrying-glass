@@ -1533,7 +1533,11 @@ ipcMain.handle('repo:publishContent', async (_event, p: { source: string; file: 
   const mark = info.content.published[m.id];
   const known =
     (mark?.source === p.source ? mark : undefined) ??
-    (await repoCatalog(p.source).then((c) => c.entries.find((e) => e.kind === 'content' && e.system === m.family && e.author === info.author && e.title === p.title), () => undefined));
+    (await repoCatalog(p.source).then((c) => {
+      // The author's entry of this title; a new title isn't a new package when the family has only one.
+      const own = c.entries.filter((e) => e.kind === 'content' && e.system === m.family && e.author === info.author);
+      return own.find((e) => e.title === p.title) ?? (own.length === 1 ? own[0] : undefined);
+    }, () => undefined));
   const entry = await repoPublish(p.source, p.file, {
     id: known?.id ?? newAdventureId(),
     title: p.title,
