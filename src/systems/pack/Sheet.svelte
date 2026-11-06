@@ -6,7 +6,9 @@
   import type { Card } from '../../shared/cards';
   import { modeOf, rolls } from '../../renderer/lib/rolls.svelte';
   import { usedAfter } from '../../shared/players';
-  import { boxesOf, evalFormula, loc, packResources, sectionsFor, slotGroups, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { aloneOnLine, boxesOf, evalFormula, lineGroups, loc, longColumn, packResources, sectionsFor, signedNum, slotGroups, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { entryHtml } from '../../renderer/lib/entry/markup';
+  import { peekEntry } from '../../renderer/lib/entry/peek.svelte';
   import { sheetUsage } from '../../renderer/lib/sheetusage.svelte';
   import { packOf } from '../packs';
 
@@ -80,8 +82,103 @@
     const n = f?.roll?.type === 'pool' ? (f.roll.askRange ?? 3) : 3;
     return Array.from({ length: 2 * n + 1 }, (_, i) => i - n);
   };
+  // Text with markup: [[links]] open the compendium on the side, {dice} roll.
+  const md = (x: string) => entryHtml(x, { dice: true });
+  function onText(e: MouseEvent, what: string) {
+    const el = e.target as HTMLElement;
+    const link = el.closest<HTMLElement>('a.wikilink');
+    if (link?.dataset['link']) {
+      e.preventDefault();
+      return peekEntry(link.dataset['link']);
+    }
+    const dice = el.closest<HTMLElement>('button.dice');
+    if (dice?.dataset['dice']) rolls.damage(card.name, what, dice.dataset['dice']);
+  }
+  // A cell on a line of text: a number with its sign if the column says so.
+  const inlineCell = (c: ColumnDef, v: unknown) => (c.signed && typeof v === 'number' ? signedNum(v) : v === undefined || v === null ? '' : String(v));
+  const shownCols = (f: FieldDef) => (f.columns ?? []).filter((c) => c.type !== 'long');
+  // The cell a click on a row of a line rolls: its first number, else its last cell.
+  const rollCell = (f: FieldDef) => {
+    const cols = shownCols(f);
+    return cols.find((c) => c.type === 'number') ?? cols.at(-1);
+  };
+  const inlineValue = (f: FieldDef) => (f.signed ? signedNum(num(f)) : String(Math.round(num(f) * 100) / 100));
   const cell = (v: unknown) => (v === undefined || v === null || v === '' ? t('pack.empty') : String(v));
 </script>
+
+{#snippet lineValue(f: FieldDef)}
+  {#if f.type === 'list'}
+    {@const main = rollCell(f)}
+    {#each rows(f) as row, r (r)}{r ? ', ' : ''}{#each shownCols(f) as c, n (c.key)}{n ? ' ' : ''}{#if f.roll && c.key === main?.key}<button class="inroll" title={t('pack.rollHint')} onclick={(e) => roll(f, e, row)}>{inlineCell(c, row[c.key])}</button>{:else if c.note}<span class="note">({row[c.key]})</span>{:else}{inlineCell(c, row[c.key])}{/if}{/each}{/each}
+  {:else if f.type === 'tags'}
+    {tags(f).join(', ')}
+  {:else if f.type === 'text'}
+    {text(f)}
+  {:else if f.type === 'select'}
+    {L(f.options?.[s[f.key] as number])}
+  {:else if marks(f)}
+    {#if f.type === 'dots' || f.type === 'track'}
+      {@const n = f.type === 'track' ? boxesOf(pack, s, f) : (f.max ?? 5)}
+      <span class={f.type === 'track' ? 'boxes' : 'dots'}>{#each { length: n } as _, i (i)}<button class="mark" class:on={i < num(f)} aria-label={String(i + 1)} onclick={() => mark(f, i + 1)}><i class:on={i < num(f)}></i></button>{/each}</span>
+    {:else}
+      <span class="stepper">
+        <button class="btn" aria-label="−1" onclick={() => step(f, -1)}>−</button>
+        <span class="value">{num(f)}{#if f.type === 'formula'}<span class="of"> / {res?.limits[f.key]}</span>{/if}</span>
+        <button class="btn" aria-label="+1" onclick={() => step(f, 1)}>+</button>
+      </span>
+    {/if}
+  {:else if f.type === 'dots' || f.type === 'track'}
+    {@const n = f.type === 'track' ? boxesOf(pack, s, f) : (f.max ?? 5)}
+    <span class={f.type === 'track' ? 'boxes' : 'dots'} aria-label="{num(f)} / {n}">{#each { length: n } as _, i (i)}<i class:on={i < num(f)}></i>{/each}</span>
+  {:else if f.roll}
+    <button class="inroll" title={t('pack.rollHint')} onclick={(e) => roll(f, e)}>{inlineValue(f)}</button>
+  {:else}
+    {inlineValue(f)}
+  {/if}
+{/snippet}
+
+{#snippet wideField(f: FieldDef)}
+    {#if f.type === 'textarea'}
+      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+      <div class="long md" onclick={(e) => onText(e, L(f.title))}>{@html md(`**${L(f.title)}.** ${text(f)}`)}</div>
+    {:else if f.type === 'tags'}
+      <p class="long"><b>{L(f.title)}:</b> {#each tags(f) as tag, i (i)}<span class="tag">{tag}</span>{/each}</p>
+    {:else if f.type === 'slots'}
+      <div class="slots">
+        <b>{L(f.title)}</b>
+        {#each slotGroups(f, s[f.key]) as g, gi (gi)}
+          <div class="group">
+            <span class="faint gname">{L(g.title)}</span>
+            {#each g.cells as c (c.i)}
+              <span class="slot" class:cond={c.slot.condition} class:empty={!c.slot.name?.trim()}>
+                {c.slot.name || '—'}
+                {#if c.slot.usage}<i class="usage">{'●'.repeat(c.slot.usage)}</i>{/if}
+              </span>
+            {/each}
+          </div>
+        {/each}
+      </div>
+    {:else}
+      <table>
+        <thead>
+          <tr>{#each f.columns ?? [] as c (c.key)}<th>{L(c.title)}</th>{/each}</tr>
+        </thead>
+        <tbody>
+          {#each rows(f) as row, i (i)}
+            <tr class:rolls={!!f.roll} title={f.roll ? t('pack.rollHint') : ''} onclick={(e) => roll(f, e, row)}>
+              {#each f.columns ?? [] as c (c.key)}
+                <td>
+                  {#if c.type === 'dots'}
+                    <span class="dots">{#each { length: c.max ?? 5 } as _, j (j)}<i class:on={j < Number(row[c.key] ?? 0)}></i>{/each}</span>
+                  {:else}{cell(row[c.key])}{/if}
+                </td>
+              {/each}
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    {/if}
+{/snippet}
 
 {#if pack}
   <article class="sheet">
@@ -99,8 +196,37 @@
       </div>
     {/if}
     {#each sections as sec (sec.id)}
-      <section>
-        <h3>{L(sec.title)}</h3>
+      <section class:lines={sec.view === 'lines'}>
+        {#if !sec.noTitle}<h3>{L(sec.title)}</h3>{/if}
+        {#if sec.view === 'lines'}
+          {#each lineGroups(sec.fields) as line, l (l)}
+            {@const first = line[0]!}
+            {#if first.chips}
+              <div class="chips">{#each tags(first) as tag, i (i)}<span class="chip">{tag}</span>{/each}</div>
+            {:else if first.type === 'textarea'}
+              <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+              <div class="md" onclick={(e) => onText(e, L(first.title))}>{@html md(first.bare ? text(first) : `**${L(first.title)}** ${text(first)}`)}</div>
+            {:else if first.type === 'list' && longColumn(first)}
+              {#each rows(first) as row, r (r)}
+                {@const name = String(row[shownCols(first)[0]?.key ?? ''] ?? '')}
+                <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+                <div class="feature" onclick={(e) => onText(e, name)}>
+                  <strong>{name}</strong>
+                  {#each shownCols(first).slice(1) as c (c.key)}
+                    {#if String(row[c.key] ?? '').trim()}{' '}{#if c.note}<span class="note">({row[c.key]})</span>{:else}<span>{inlineCell(c, row[c.key])}</span>{/if}{/if}
+                  {/each}
+                  {#if String(row[longColumn(first)!.key] ?? '').trim()}<div class="md">{@html md(String(row[longColumn(first)!.key]))}</div>{/if}
+                </div>
+              {/each}
+            {:else if aloneOnLine(first)}
+              {@render wideField(first)}
+            {:else}
+              <p class="line">
+                {#each line as f, i (f.key)}{i ? `${f.join} ` : ''}{#if !f.bare}<strong>{L(f.title)}</strong>{' '}{/if}{@render lineValue(f)}{/each}
+              </p>
+            {/if}
+          {/each}
+        {:else}
         <div class="grid">
           {#each sec.fields as f (f.key)}
             {#if !wide(f)}
@@ -140,46 +266,9 @@
           {/each}
         </div>
         {#each sec.fields.filter(wide) as f (f.key)}
-          {#if f.type === 'textarea'}
-            <p class="long"><b>{L(f.title)}.</b> {text(f)}</p>
-          {:else if f.type === 'tags'}
-            <p class="long"><b>{L(f.title)}:</b> {#each tags(f) as tag, i (i)}<span class="tag">{tag}</span>{/each}</p>
-          {:else if f.type === 'slots'}
-            <div class="slots">
-              <b>{L(f.title)}</b>
-              {#each slotGroups(f, s[f.key]) as g, gi (gi)}
-                <div class="group">
-                  <span class="faint gname">{L(g.title)}</span>
-                  {#each g.cells as c (c.i)}
-                    <span class="slot" class:cond={c.slot.condition} class:empty={!c.slot.name?.trim()}>
-                      {c.slot.name || '—'}
-                      {#if c.slot.usage}<i class="usage">{'●'.repeat(c.slot.usage)}</i>{/if}
-                    </span>
-                  {/each}
-                </div>
-              {/each}
-            </div>
-          {:else}
-            <table>
-              <thead>
-                <tr>{#each f.columns ?? [] as c (c.key)}<th>{L(c.title)}</th>{/each}</tr>
-              </thead>
-              <tbody>
-                {#each rows(f) as row, i (i)}
-                  <tr class:rolls={!!f.roll} title={f.roll ? t('pack.rollHint') : ''} onclick={(e) => roll(f, e, row)}>
-                    {#each f.columns ?? [] as c (c.key)}
-                      <td>
-                        {#if c.type === 'dots'}
-                          <span class="dots">{#each { length: c.max ?? 5 } as _, j (j)}<i class:on={j < Number(row[c.key] ?? 0)}></i>{/each}</span>
-                        {:else}{cell(row[c.key])}{/if}
-                      </td>
-                    {/each}
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          {/if}
+          {@render wideField(f)}
         {/each}
+        {/if}
       </section>
     {/each}
   </article>
@@ -290,7 +379,71 @@
   }
   .long {
     margin: 8px 0 0;
-    white-space: pre-line;
+  }
+  .md :global(p) {
+    margin: 0 0 4px;
+  }
+  .md :global(hr) {
+    margin: 4px 0;
+    border: none;
+    border-top: 1px dashed var(--border);
+  }
+  .md :global(a.wikilink) {
+    color: var(--accent);
+    text-decoration: underline dotted;
+    cursor: pointer;
+  }
+  .md :global(button.dice) {
+    padding: 0 4px;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    cursor: pointer;
+  }
+  section.lines {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+  }
+  section.lines:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+  .line {
+    margin: 2px 0;
+  }
+  .inroll {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    cursor: pointer;
+  }
+  .inroll:hover {
+    text-decoration: underline;
+  }
+  .note {
+    color: var(--text-muted);
+  }
+  .feature {
+    margin: 4px 0;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .chip {
+    padding: 0 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: var(--bg-secondary);
+    font-size: 12px;
+    font-weight: 600;
   }
   .slots {
     margin-top: 8px;

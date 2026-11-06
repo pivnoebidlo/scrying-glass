@@ -18,8 +18,9 @@ export const loc = (l: Loc | undefined, lang: string): string =>
 
 export type FieldType = 'number' | 'text' | 'textarea' | 'select' | 'dots' | 'track' | 'tags' | 'list' | 'formula' | 'slots';
 export const FIELD_TYPES: FieldType[] = ['number', 'text', 'textarea', 'select', 'dots', 'track', 'tags', 'list', 'formula', 'slots'];
-export type ColumnType = 'text' | 'number' | 'dots' | 'dice';
-export const COLUMN_TYPES: ColumnType[] = ['text', 'number', 'dots', 'dice'];
+// long — text with markup: a row with one reads as a paragraph in a section of lines.
+export type ColumnType = 'text' | 'number' | 'dots' | 'dice' | 'long';
+export const COLUMN_TYPES: ColumnType[] = ['text', 'number', 'dots', 'dice', 'long'];
 
 // Names of a total: the highest one whose `min` it reaches (the Fate ladder: +3 — «Good»).
 export type RollLabels = { min: number; title: Loc }[];
@@ -89,6 +90,9 @@ export interface ColumnDef {
   type: ColumnType;
   title: Loc;
   max?: number;
+  // In a section of lines: a number with its sign (+3); a text in brackets, quieter.
+  signed?: boolean;
+  note?: boolean;
 }
 
 export interface FieldDef {
@@ -111,6 +115,12 @@ export interface FieldDef {
   slots?: { title: Loc; count: number }[];
   // number, dots: not shown on the card while 0 (eighteen skills of Fate, most of them none).
   hideZero?: boolean;
+  // In a section of lines: goes on the previous field's line after this mark; a number with its sign; no title;
+  // tags as chips.
+  join?: FieldJoin;
+  signed?: boolean;
+  bare?: boolean;
+  chips?: boolean;
   // A roll by a click on the field (on a row of a list).
   roll?: RollSpec;
   // A track, dots, a number (with `max`) or a formula (its value is the most there can be: hit points) marked at the
@@ -119,6 +129,8 @@ export interface FieldDef {
   live?: LiveBy;
 }
 
+export type FieldJoin = ',' | ';';
+export const FIELD_JOINS: FieldJoin[] = [',', ';'];
 export type LiveBy = 'both' | 'gm';
 export const LIVE_TYPES: FieldType[] = ['track', 'dots', 'number', 'formula'];
 
@@ -134,6 +146,9 @@ export interface SectionDef {
   title: Loc;
   // Only for these kinds of cards (none — for all).
   kinds?: CardKind[];
+  // 'lines' — a stat block: fields as lines of text, in the order of a book (none — tiles).
+  view?: 'lines';
+  noTitle?: boolean;
   fields: FieldDef[];
 }
 
@@ -153,7 +168,7 @@ export interface TrackerSpec {
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 4;
+export const PACK_FORMAT = 5;
 
 export interface SystemPack {
   scryingGlass: 'system';
@@ -463,7 +478,7 @@ function fieldOf(x: unknown): FieldDef | null {
       ? x['columns'].flatMap((c) => {
           if (!isObj(c) || typeof c['key'] !== 'string' || !KEY_RE.test(c['key']) || !COLUMN_TYPES.includes(c['type'] as ColumnType)) return [];
           const t = locOf(c['title']);
-          return t ? [{ key: c['key'], type: c['type'] as ColumnType, title: t, ...(num(c['max']) ? { max: num(c['max']) } : {}) }] : [];
+          return t ? [{ key: c['key'], type: c['type'] as ColumnType, title: t, ...(num(c['max']) ? { max: num(c['max']) } : {}), ...(c['signed'] === true ? { signed: true } : {}), ...(c['note'] === true ? { note: true } : {}) }] : [];
         })
       : [];
     if (!columns.length) return null;
@@ -482,6 +497,10 @@ function fieldOf(x: unknown): FieldDef | null {
     f.slots = groups;
   }
   if (x['hideZero'] === true && (type === 'number' || type === 'dots')) f.hideZero = true;
+  if (FIELD_JOINS.includes(x['join'] as FieldJoin)) f.join = x['join'] as FieldJoin;
+  if (x['signed'] === true) f.signed = true;
+  if (x['bare'] === true) f.bare = true;
+  if (x['chips'] === true && type === 'tags') f.chips = true;
   if (x['roll'] !== undefined) {
     const roll = rollOf(x['roll']);
     if (roll) f.roll = roll;
@@ -539,7 +558,7 @@ export function validatePack(x: unknown): SystemPack | string {
       fields.push(f);
     }
     const kinds = Array.isArray(s['kinds']) ? s['kinds'].filter((k): k is CardKind => KINDS.includes(k as CardKind)) : [];
-    sections.push({ id: s['id'], title: st, fields, ...(kinds.length ? { kinds } : {}) });
+    sections.push({ id: s['id'], title: st, fields, ...(kinds.length ? { kinds } : {}), ...(s['view'] === 'lines' ? { view: 'lines' as const } : {}), ...(s['noTitle'] === true ? { noTitle: true } : {}) });
   }
   if (!sections.length) return 'sections';
   const t = isObj(x['tracker']) ? x['tracker'] : {};
@@ -857,6 +876,19 @@ function fieldNumber(f: FieldDef, v: unknown): number {
 
 // The fields by key. Not cached: the builder edits a pack in place, and a pack has only dozens of fields.
 export const fieldMap = (pack: SystemPack): Map<string, FieldDef> => new Map(pack.sections.flatMap((s) => s.fields.map((f) => [f.key, f] as const)));
+
+// A section of lines: the fields on one line (a field that joins goes on the previous one's). A long field — alone.
+export function lineGroups(fields: FieldDef[]): FieldDef[][] {
+  const out: FieldDef[][] = [];
+  for (const f of fields) {
+    if (f.join && out.length && !aloneOnLine(f) && !aloneOnLine(out.at(-1)![0]!)) out.at(-1)!.push(f);
+    else out.push([f]);
+  }
+  return out;
+}
+export const longColumn = (f: FieldDef) => f.columns?.find((c) => c.type === 'long');
+export const aloneOnLine = (f: FieldDef) => f.type === 'textarea' || f.type === 'slots' || !!f.chips || (f.type === 'list' && !!longColumn(f));
+export const signedNum = (n: number) => (n < 0 ? `−${-n}` : `+${n}`);
 
 // The sections a kind of card has.
 export const sectionsFor = (pack: SystemPack, kind: CardKind) => pack.sections.filter((s) => !s.kinds || s.kinds.includes(kind));

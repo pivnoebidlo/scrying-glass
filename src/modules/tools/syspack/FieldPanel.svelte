@@ -9,7 +9,7 @@
   import { Dices, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import ChangeInput from './ChangeInput.svelte';
-  import { COLUMN_TYPES, evalFormula, FIELD_TYPES, fieldMap, LIVE_TYPES, loc, newField, newRoll, type FieldDef, type FieldType, type LiveBy, type Loc, type RollSpec, POOL_KINDS, type PoolKind, type SystemPack } from '../../../shared/syspack';
+  import { COLUMN_TYPES, evalFormula, FIELD_JOINS, type FieldJoin, FIELD_TYPES, fieldMap, LIVE_TYPES, loc, newField, newRoll, type FieldDef, type FieldType, type LiveBy, type Loc, type RollSpec, POOL_KINDS, type PoolKind, type SystemPack } from '../../../shared/syspack';
   import { keyFrom } from '../../../shared/compendium';
   import { getLang } from '../../../shared/i18n';
   import { rolls } from '../../../renderer/lib/rolls.svelte';
@@ -17,7 +17,7 @@
   import LocInput from './LocInput.svelte';
   import { builder, freeKey } from './store.svelte';
 
-  let { f = $bindable(), keys, disabled = false, onkey }: { f: FieldDef; keys: string[]; disabled?: boolean; onkey: (from: string, to: string) => void } = $props();
+  let { f = $bindable(), keys, disabled = false, lines = false, onkey }: { f: FieldDef; keys: string[]; disabled?: boolean; lines?: boolean; onkey: (from: string, to: string) => void } = $props();
 
   const L = (x: Loc | undefined) => loc(x, getLang());
   const others = $derived(keys.filter((k) => k !== f.key));
@@ -34,7 +34,7 @@
   const sampleRow = $derived.by(() => {
     const rows = builder.previewStats[f.key];
     const first = Array.isArray(rows) ? (rows[0] as Record<string, unknown> | undefined) : undefined;
-    return first ?? Object.fromEntries((f.columns ?? []).map((c) => [c.key, c.type === 'text' || c.type === 'dice' ? '' : 0]));
+    return first ?? Object.fromEntries((f.columns ?? []).map((c) => [c.key, c.type === 'number' || c.type === 'dots' ? 0 : '']));
   });
   // The fields with a number (for a formula): numbers, dots, tracks, choices, formulas.
   const numeric = $derived(pack ? [...fieldMap(pack)].filter(([k, x]) => k !== f.key && ['number', 'dots', 'track', 'select', 'formula'].includes(x.type)).map(([k]) => k) : []);
@@ -196,6 +196,11 @@
           <select {disabled} value={c.type} onchange={(e) => (c.type = e.currentTarget.value as typeof c.type)}>
             {#each COLUMN_TYPES as ct (ct)}<option value={ct}>{t(`sb.ct.${ct}`)}</option>{/each}
           </select>
+          {#if lines && c.type === 'number'}
+            <label class="check"><input type="checkbox" {disabled} checked={!!c.signed} onchange={(e) => (e.currentTarget.checked ? (c.signed = true) : delete c.signed)} /> {t('sb.signed')}</label>
+          {:else if lines && c.type === 'text'}
+            <label class="check"><input type="checkbox" {disabled} checked={!!c.note} onchange={(e) => (e.currentTarget.checked ? (c.note = true) : delete c.note)} /> {t('sb.note')}</label>
+          {/if}
           <button type="button" class="icon-btn" title={t('sb.remove')} {disabled} onclick={() => (f.columns = f.columns!.filter((_, j) => j !== i))}><X size={13} /></button>
         </div>
       {/each}
@@ -395,6 +400,17 @@
   <details>
     <summary>{t('sb.more')}</summary>
     <div class="expert">
+      {#if lines}
+        <label class="row"><span>{t('sb.join')}</span>
+          <select {disabled} value={f.join ?? ''} onchange={(e) => (e.currentTarget.value ? (f.join = e.currentTarget.value as FieldJoin) : delete f.join)}>
+            <option value="">{t('sb.joinNone')}</option>
+            {#each FIELD_JOINS as j (j)}<option value={j}>{t('sb.joinAfter', { mark: j })}</option>{/each}
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" {disabled} checked={!!f.bare} onchange={(e) => (e.currentTarget.checked ? (f.bare = true) : delete f.bare)} /> {t('sb.bare')}</label>
+        {#if f.type === 'number' || f.type === 'formula'}<label class="check"><input type="checkbox" {disabled} checked={!!f.signed} onchange={(e) => (e.currentTarget.checked ? (f.signed = true) : delete f.signed)} /> {t('sb.signed')}</label>{/if}
+        {#if f.type === 'tags'}<label class="check"><input type="checkbox" {disabled} checked={!!f.chips} onchange={(e) => (e.currentTarget.checked ? (f.chips = true) : delete f.chips)} /> {t('sb.chips')}</label>{/if}
+      {/if}
       <label class="row"><span>{t('sb.hint')}</span><LocInput value={f.hint} set={(v) => (f.hint = v)} {disabled} /></label>
       {#if f.type === 'number' || f.type === 'dots'}
         <label class="check"><input type="checkbox" {disabled} checked={!!f.hideZero} onchange={(e) => (e.currentTarget.checked ? (f.hideZero = true) : delete f.hideZero)} /> {t('sb.hideZero')}</label>

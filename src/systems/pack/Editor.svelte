@@ -132,8 +132,10 @@
                   <tr>
                     {#each f.columns ?? [] as c (c.key)}
                       <td>
-                        {#if c.type === 'number' || c.type === 'dots'}
-                          <input type="number" class="n" min="0" max={c.max} value={Number(row[c.key] ?? 0)} onchange={(e) => setRow(f, i, c.key, int(c, e.currentTarget.value))} />
+                        {#if c.type === 'long'}
+                          <textarea rows="3" value={String(row[c.key] ?? '')} oninput={(e) => setRow(f, i, c.key, e.currentTarget.value)}></textarea>
+                        {:else if c.type === 'number' || c.type === 'dots'}
+                          <input type="number" class="n" min={c.type === 'dots' ? 0 : undefined} max={c.max} value={Number(row[c.key] ?? 0)} onchange={(e) => setRow(f, i, c.key, int(c, e.currentTarget.value))} />
                         {:else}
                           <input type="text" value={String(row[c.key] ?? '')} oninput={(e) => setRow(f, i, c.key, e.currentTarget.value)} />
                         {/if}

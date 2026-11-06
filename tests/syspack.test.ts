@@ -2,7 +2,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
+import { lineGroups, signedNum, type FieldDef, blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
 
 const words: RollWords = { success: 'Success', failure: 'Failure', successes: (n) => `${n} successes`, critical: 'Critical' };
 // Dice that fall as told, in order.
@@ -423,6 +423,35 @@ describe('a pool with special dice', () => {
     expect(rollPack(dice, () => 10, 'en', words, seq(20, 3, 4)).change).toEqual({ field: 'san', by: -7 });
     const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', tracker: {}, sections: [{ id: 'm', title: 'M', fields: [{ key: 'a', title: 'A', type: 'number', roll: { type: 'under', sides: 20, target: 'a', onFail: { field: 'a', by: 'eval()' } } }] }] };
     expect(fieldMap(validatePack(raw) as SystemPack).get('a')!.roll).not.toHaveProperty('onFail');
+  });
+
+  it('a section of lines: fields that join go on one line, a long field and chips stand alone', () => {
+    const f = (key: string, more: Partial<FieldDef> = {}) => ({ key, title: key, type: 'number', ...more }) as FieldDef;
+    const lines = lineGroups([
+      f('ac'), f('fort', { join: ';' }), f('ref', { join: ',' }), f('hp'),
+      f('text', { type: 'textarea', join: ',' }), f('after', { join: ',' }),
+      f('tags', { type: 'tags', chips: true }), f('skills', { type: 'list', join: ',', columns: [{ key: 'name', type: 'text', title: 'n' }] }),
+      f('feats', { type: 'list', join: ',', columns: [{ key: 'text', type: 'long', title: 't' }] }),
+    ]);
+    expect(lines.map((l) => l.map((x) => x.key))).toEqual([['ac', 'fort', 'ref'], ['hp'], ['text'], ['after'], ['tags'], ['skills'], ['feats']]);
+    expect(signedNum(3)).toBe('+3');
+    expect(signedNum(-1)).toBe('−1');
+    expect(signedNum(0)).toBe('+0');
+    const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', tracker: {}, sections: [{ id: 'm', title: 'M', view: 'lines', noTitle: true, fields: [
+      { key: 'a', title: 'A', type: 'number', join: ';', signed: true, bare: true },
+      { key: 'b', title: 'B', type: 'number', join: 'x', chips: true },
+      { key: 'c', title: 'C', type: 'tags', chips: true },
+      { key: 'd', title: 'D', type: 'list', columns: [{ key: 'n', type: 'number', title: 'N', signed: true }, { key: 't', type: 'long', title: 'T' }, { key: 'o', type: 'text', title: 'O', note: true }] },
+    ] }, { id: 'z', title: 'Z', view: 'cards', fields: [] }] };
+    const p = validatePack(raw) as SystemPack;
+    expect(p.sections[0]).toMatchObject({ view: 'lines', noTitle: true });
+    expect(p.sections[1]).not.toHaveProperty('view');
+    const m = fieldMap(p);
+    expect(m.get('a')).toMatchObject({ join: ';', signed: true, bare: true });
+    expect(m.get('b')).not.toHaveProperty('join');
+    expect(m.get('b')).not.toHaveProperty('chips');
+    expect(m.get('c')?.chips).toBe(true);
+    expect(m.get('d')?.columns).toEqual([{ key: 'n', type: 'number', title: 'N', signed: true }, { key: 't', type: 'long', title: 'T' }, { key: 'o', type: 'text', title: 'O', note: true }]);
   });
 
   it('its fields and kit are valid: a whole game without code', () => {

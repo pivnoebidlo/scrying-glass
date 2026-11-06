@@ -216,6 +216,13 @@
               {/if}
             </div>
             <label class="row"><span>{t('sb.name')}</span><LocInput value={sec.title} set={(v) => (sec.title = v)} disabled={ro} /></label>
+            <label class="row"><span>{t('sb.view')}</span>
+              <select disabled={ro} value={sec.view ?? ''} onchange={(e) => (e.currentTarget.value ? (sec.view = 'lines') : delete sec.view)}>
+                <option value="">{t('sb.viewTiles')}</option>
+                <option value="lines">{t('sb.viewLines')}</option>
+              </select>
+            </label>
+            {#if sec.view === 'lines'}<label class="check"><input type="checkbox" disabled={ro} checked={!!sec.noTitle} onchange={(e) => (e.currentTarget.checked ? (sec.noTitle = true) : delete sec.noTitle)} /> {t('sb.noTitle')}</label>{/if}
             <div class="row">
               <span>{t('sb.sectionKinds')}</span>
               {#each KINDS as k (k)}
@@ -256,7 +263,7 @@
               </label>
             {/if}
             {#key `${s}/${i}`}
-              <FieldPanel bind:f={d.sections[s]!.fields[i]!} keys={allKeys} disabled={ro} onkey={renameKey} />
+              <FieldPanel bind:f={d.sections[s]!.fields[i]!} keys={allKeys} disabled={ro} lines={d.sections[s]!.view === 'lines'} onkey={renameKey} />
             {/key}
           {:else}
             <p class="faint">{t('sb.pickOnSheet')}</p>
