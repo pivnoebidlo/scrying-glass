@@ -167,6 +167,50 @@ export interface GenCalculator {
   totals: { key: string; title: GenText; formula: string; text?: GenText; strong?: boolean }[];
 }
 
+// A form: inputs, numbers counted from them and text that follows. No dice. A select's option carries numbers and words:
+// `pace_hour`, `{terrain_encounter}`, `{by_title}`. `only` — for these systems of the family; hidden by it, an input
+// counts as 0. `when` — a formula.
+export interface FormOption {
+  id: string;
+  title: GenText;
+  values?: Record<string, number>;
+  texts?: Record<string, GenText>;
+}
+export interface FormInput {
+  key: string;
+  title: GenText;
+  type: 'number' | 'select' | 'check';
+  default?: number;
+  min?: number;
+  max?: number;
+  options?: FormOption[];
+  when?: string;
+  only?: string[];
+}
+export interface FormResult {
+  kind?: 'big' | 'warn' | 'card';
+  title?: GenText;
+  text: GenText;
+  // Repeated `each` times with `i` from 0, the parts counted by `vars`, joined by «; ».
+  each?: string;
+  vars?: Record<string, string>;
+  note?: GenText;
+  when?: string;
+  only?: string[];
+}
+export interface GenForm {
+  id: string;
+  title: GenText;
+  about?: GenText;
+  inputs: FormInput[];
+  lets?: { key: string; formula: string }[];
+  // An option's title by a number counted: the pace kept, not the one chosen.
+  picks?: { key: string; from: string; at: string }[];
+  // Numbers said in words, by the language: { en: { one: '{count} day', other: '{count} days' } }; 0 — nothing.
+  words?: Record<string, Record<string, Record<string, string>>>;
+  results: FormResult[];
+}
+
 export interface GeneratorFile {
   scryingGlass: 'generators';
   version: 1;
@@ -177,6 +221,7 @@ export interface GeneratorFile {
   generators: Generator[];
   lists?: GenList[];
   calculators?: GenCalculator[];
+  forms?: GenForm[];
   // Ready factions for the Factions tool, by language.
   factions?: Record<string, { name: string; resources: string[]; goals: { text: string; marks: number }[] }[]>;
   // The card of a warband: stats as they are, { "$text": … } in the card's language, { "$roll": "d(6)" } rolled.
@@ -295,7 +340,62 @@ export function validateGenerators(x: unknown): GeneratorFile | string {
   }
   if (x['lists'] !== undefined && !(Array.isArray(x['lists']) && x['lists'].length <= CAP.generators && x['lists'].every((l) => isObj(l) && str(l['id']) && text(l['title']) && text(l['unit']) && Array.isArray(l['sections']) && l['sections'].every((s) => isObj(s) && str(s['id']) && str(s['table']) && text(s['title']))))) return 'lists';
   if (x['calculators'] !== undefined && !(Array.isArray(x['calculators']) && x['calculators'].length <= CAP.generators && x['calculators'].every((c) => isObj(c) && str(c['id']) && text(c['title']) && text(c['unit']) && isObj(c['labels']) && Array.isArray(c['kinds']) && c['kinds'].every((k) => isObj(k) && str(k['id']) && typeof k['value'] === 'number') && isObj(c['row']) && Object.values(c['row']).every(form) && Array.isArray(c['totals']) && c['totals'].every((t) => isObj(t) && str(t['key']) && form(t['formula']))))) return 'calculators';
+  if (x['forms'] !== undefined && !(Array.isArray(x['forms']) && x['forms'].length <= CAP.generators && x['forms'].every(formOk))) return 'forms';
   return x as unknown as GeneratorFile;
+}
+
+const parses = (f: unknown) => f === undefined || (typeof f === 'string' && !!parseFormula(f));
+function formOk(f: unknown): boolean {
+  if (!isObj(f) || !str(f['id']) || !ID_RE.test(f['id']) || !text(f['title']) || !Array.isArray(f['inputs']) || !Array.isArray(f['results'])) return false;
+  const inputs = f['inputs'].every((i) => isObj(i) && str(i['key']) && ID_RE.test(i['key']) && text(i['title']) && ['number', 'select', 'check'].includes(i['type'] as string) && parses(i['when']) && (i['type'] !== 'select' || (Array.isArray(i['options']) && i['options'].length > 0 && i['options'].length <= CAP.rows && i['options'].every((o) => isObj(o) && str(o['id']) && text(o['title'])))));
+  const lets = f['lets'] === undefined || (Array.isArray(f['lets']) && f['lets'].length <= CAP.steps && f['lets'].every((l) => isObj(l) && str(l['key']) && ID_RE.test(l['key']) && parses(l['formula'])));
+  const results = f['results'].length <= CAP.steps && f['results'].every((r) => isObj(r) && text(r['text']) && parses(r['when']) && parses(r['each']));
+  return f['inputs'].length <= CAP.options && inputs && lets && results;
+}
+
+const formNumber = (n: number, lang: Lang) => (Math.round(n * 10) / 10).toLocaleString(lang);
+
+// What a form says for these values: the inputs to show and the results, on this system of the family.
+export function runForm(f: GenForm, values: Record<string, number>, system: string, lang: Lang) {
+  const nums: Record<string, number> = {};
+  const words: Record<string, string> = {};
+  const on = (x: { only?: string[] }) => !x.only || x.only.includes(system);
+  const get = (name: string) => nums[name] ?? 0;
+  const count = (formula: string) => calc(formula, get, noDice);
+  for (const i of f.inputs) {
+    if (!on(i)) continue;
+    const v = values[i.key] ?? i.default ?? 0;
+    nums[i.key] = v;
+    const o = i.options?.[v];
+    if (!o) continue;
+    words[`${i.key}_title`] = genText(o.title, lang);
+    for (const [k, n] of Object.entries(o.values ?? {})) nums[`${i.key}_${k}`] = n;
+    for (const [k, t] of Object.entries(o.texts ?? {})) words[`${i.key}_${k}`] = genText(t, lang);
+  }
+  for (const l of f.lets ?? []) nums[l.key] = count(l.formula);
+  for (const p of f.picks ?? []) words[p.key] = genText(f.inputs.find((i) => i.key === p.from)?.options?.[get(p.at)]?.title, lang);
+  const params = (extra: Record<string, number> = {}) => {
+    const out: Record<string, string> = { ...words };
+    for (const [k, n] of Object.entries({ ...nums, ...extra })) out[k] = formNumber(n, lang);
+    for (const [k, w] of Object.entries(f.words ?? {})) {
+      const n = get(k);
+      const m = w[lang] ?? w['en'];
+      out[k] = n > 0 && m ? format(lang, m as Parameters<typeof format>[1], { count: Math.round(n * 10) / 10, n: formNumber(n, lang) }) : '';
+    }
+    return out;
+  };
+  const say = (t: GenText | undefined, extra?: Record<string, number>) => genText(t, lang, params(extra)).replace(/\s+/g, ' ').trim();
+  const results = f.results.filter((r) => on(r) && (!r.when || count(r.when))).flatMap((r) => {
+    const parts = r.each
+      ? Array.from({ length: Math.min(24, Math.max(0, Math.round(count(r.each)))) }, (_, i) => {
+          nums['i'] = i;
+          return say(r.text, Object.fromEntries(Object.entries(r.vars ?? {}).map(([k, x]) => [k, count(x)])));
+        })
+      : [say(r.text)];
+    const text = parts.join('; ');
+    return text ? [{ kind: r.kind ?? 'card', title: say(r.title), text, note: say(r.note) }] : [];
+  });
+  return { inputs: f.inputs.filter((i) => on(i) && (!i.when || count(i.when))), results };
 }
 
 // ---- Rolling ----

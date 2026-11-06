@@ -348,7 +348,7 @@ on the side (in the journal they stay [[links]]). In D&D adventures an obstacle 
 dangerous road an event can come with a complication. "To an encounter" on an encounter makes an encounter preset
 with its creatures (weaker ones come in groups) and opens it in Initiative. Copy or to the journal.
 
-**Travel** (Tools → Travel, D&D only): distance in miles, on foot / mounted / by cart or a ship (airship, galley,
+**Travel** (Tools → Generators, D&D only, comes with the SRD package): distance in miles, on foot / mounted / by cart or a ship (airship, galley,
 sailing ship…), pace, terrain, road and hours a day → the time on the way and the speed by the SRD travel rules of
 the adventure's edition. In the 2024 rules the terrain caps the pace (a good road raises the cap a step) and gives the
 encounter distance and the foraging, navigation and search DCs; in 2014 — difficult terrain halves the distance.

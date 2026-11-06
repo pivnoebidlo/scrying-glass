@@ -1,6 +1,6 @@
 // D&D 5e in the control window: the stat block and the character sheet, their editors, its tools.
 import type { Component } from 'svelte';
-import { Bomb, Calculator as CalculatorIcon, CloudSun, DoorOpen, Footprints, Gauge, Gem, Signpost, Sparkles, Store, Trees, Wand2, Zap } from '@lucide/svelte';
+import { Bomb, Calculator as CalculatorIcon, CloudSun, DoorOpen, Gauge, Gem, Signpost, Sparkles, Store, Trees, Wand2, Zap } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import type { ToolDef } from '../../modules/tools/ui/registry.svelte';
 import type { PaperView, SystemUi, StatsEditor, StatsView } from '../ui';
@@ -14,7 +14,6 @@ import LssSettings from './LssSettings.svelte';
 import Calculator from './tools/difficulty/Calculator.svelte';
 import PointBuy from './tools/pointbuy/PointBuy.svelte';
 import Reshape from './tools/reshape/Reshape.svelte';
-import TravelCalculator from './tools/travel/TravelCalculator.svelte';
 import WildMagic from './tools/wildmagic/WildMagic.svelte';
 import ShopGenerator from './tools/shop/ShopGenerator.svelte';
 import RelicGenerator from './tools/relic/RelicGenerator.svelte';
@@ -57,7 +56,6 @@ export const dnd5eUi: SystemUi = {
     tool('difficulty', Gauge, 'tools.side.difficulty', Calculator),
     tool('pointbuy', CalculatorIcon, 'tools.side.pointbuy', PointBuy),
     tool('reshape', Wand2, 'tools.side.reshape', Reshape),
-    tool('travel', Footprints, 'tools.side.travel', TravelCalculator),
     tool('wildMagic', Zap, 'tools.side.wildMagic', WildMagic),
   ],
   cardActions: (c) => [

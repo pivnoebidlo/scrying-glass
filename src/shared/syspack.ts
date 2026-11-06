@@ -732,6 +732,7 @@ const FNS: Record<string, (...a: number[]) => number> = {
   abs: Math.abs,
   min: (...a) => Math.min(...a),
   max: (...a) => Math.max(...a),
+  if: (c = 0, a = 0, b = 0) => (c ? a : b),
   // Comparisons give 1 or 0 (generators: shared/generators.ts).
   eq: (a = 0, b = 0) => (a === b ? 1 : 0),
   lt: (a = 0, b = 0) => (a < b ? 1 : 0),

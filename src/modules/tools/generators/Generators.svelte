@@ -9,6 +9,7 @@
   import { currentSystem } from '../../../shared/adventures';
   import { genCardOf, genText, lineWords, plainText, resultMarkdown, rollWords, type GeneratorFile, type GenLine, type GenOption, type GenOptions, type GenResult } from '../../../shared/generators';
   import Calculator from './Calculator.svelte';
+  import Form from './Form.svelte';
   import PriceList from './PriceList.svelte';
   import { calc } from '../../../shared/syspack';
   import { familyOf } from '../../../systems';
@@ -22,10 +23,12 @@
   const all = $derived(filesOf(family).flatMap((file) => file.generators.map((g) => ({ file, g }))));
   const lists = $derived(filesOf(family).flatMap((file) => (file.lists ?? []).map((l) => ({ file, l }))));
   const calcs = $derived(filesOf(family).flatMap((file) => (file.calculators ?? []).map((c) => ({ file, c }))));
+  const forms = $derived(filesOf(family).flatMap((file) => (file.forms ?? []).map((f) => ({ file, f }))));
   // Nothing chosen yet: the first there is, a generator, a price list or a calculator.
-  const list = $derived(lists.find((x) => x.l.id === gen.open[family]) ?? (all.length ? undefined : lists[0]));
-  const calculator = $derived(calcs.find((x) => x.c.id === gen.open[family]) ?? (all.length || lists.length ? undefined : calcs[0]));
-  const now = $derived(list || calculator ? undefined : (all.find((x) => x.g.id === gen.open[family]) ?? all[0]));
+  const formNow = $derived(forms.find((x) => x.f.id === gen.open[family]) ?? (all.length || lists.length || calcs.length ? undefined : forms[0]));
+  const list = $derived(formNow ? undefined : (lists.find((x) => x.l.id === gen.open[family]) ?? (all.length ? undefined : lists[0])));
+  const calculator = $derived(formNow ? undefined : (calcs.find((x) => x.c.id === gen.open[family]) ?? (all.length || lists.length ? undefined : calcs[0])));
+  const now = $derived(list || calculator || formNow ? undefined : (all.find((x) => x.g.id === gen.open[family]) ?? all[0]));
   const file = $derived(now?.file ?? list?.file ?? calculator?.file ?? filesOf(family)[0]);
   const opts = $derived(now ? optionsOf(now.file, now.g) : ({} as GenOptions));
   const result = $derived(now ? resultOf(now.file, now.g) : undefined);
@@ -97,9 +100,14 @@
     {#each calcs as x (`${x.file.system}/${x.c.id}`)}
       <button class="chip" class:on={calculator?.c.id === x.c.id} onclick={() => pick(x.c.id)}>{genText(x.c.title, lang)}</button>
     {/each}
+    {#each forms as x (`${x.file.system}/${x.f.id}`)}
+      <button class="chip" class:on={formNow?.f.id === x.f.id} onclick={() => pick(x.f.id)}>{genText(x.f.title, lang)}</button>
+    {/each}
   </div>
 
-  {#if list}
+  {#if formNow}
+    {#key `${formNow.file.system}/${formNow.f.id}`}<Form id={`${formNow.file.system}/${formNow.f.id}`} form={formNow.f} />{/key}
+  {:else if list}
     {#key `${list.file.system}/${list.l.id}`}<PriceList file={list.file} list={list.l} />{/key}
   {:else if calculator}
     {#key `${calculator.file.system}/${calculator.c.id}`}<Calculator file={calculator.file} calc={calculator.c} />{/key}

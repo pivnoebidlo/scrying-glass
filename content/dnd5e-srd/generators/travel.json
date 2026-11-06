@@ -1,0 +1,775 @@
+{
+ "scryingGlass": "generators",
+ "version": 1,
+ "system": "dnd5e-2024",
+ "title": {
+  "en": "D&D tools",
+  "ru": "Инструменты D&D"
+ },
+ "tables": {},
+ "generators": [],
+ "forms": [
+  {
+   "id": "travel",
+   "title": {
+    "en": "Travel",
+    "ru": "Путь"
+   },
+   "about": {
+    "en": "How long the way takes by the SRD travel rules: the pace and what it means, the terrain (in the 2024 rules it limits the pace and gives the encounter distance and DCs), good roads, long days with Constitution saves, and ships by their speed. The rules follow the adventure’s edition.",
+    "ru": "Сколько займёт дорога по правилам перемещения SRD: темп и что он даёт, местность (по правилам 2024 она ограничивает темп и даёт дистанцию встреч и СЛ), хорошие дороги, долгие дни со спасбросками Телосложения и корабли по их скорости. Правила — по редакции приключения."
+   },
+   "inputs": [
+    {
+     "key": "distance",
+     "title": {
+      "en": "Distance, miles",
+      "ru": "Расстояние, миль"
+     },
+     "type": "number",
+     "default": 60,
+     "min": 0
+    },
+    {
+     "key": "by",
+     "title": {
+      "en": "How",
+      "ru": "Как"
+     },
+     "type": "select",
+     "default": 0,
+     "options": [
+      {
+       "id": "land",
+       "title": {
+        "en": "On foot, mounted or by cart",
+        "ru": "Пешком, верхом или в повозке"
+       },
+       "values": {
+        "mph": 0
+       }
+      },
+      {
+       "id": "airship",
+       "title": {
+        "en": "Airship (8 mph)",
+        "ru": "Воздушный корабль (8 миль/ч)"
+       },
+       "values": {
+        "mph": 8
+       },
+       "texts": {
+        "name": {
+         "en": "Airship",
+         "ru": "Воздушный корабль"
+        }
+       }
+      },
+      {
+       "id": "galley",
+       "title": {
+        "en": "Galley (4 mph)",
+        "ru": "Галера (4 миль/ч)"
+       },
+       "values": {
+        "mph": 4
+       },
+       "texts": {
+        "name": {
+         "en": "Galley",
+         "ru": "Галера"
+        }
+       }
+      },
+      {
+       "id": "keelboat",
+       "title": {
+        "en": "Keelboat (1 mph)",
+        "ru": "Килевая лодка (1 миль/ч)"
+       },
+       "values": {
+        "mph": 1
+       },
+       "texts": {
+        "name": {
+         "en": "Keelboat",
+         "ru": "Килевая лодка"
+        }
+       }
+      },
+      {
+       "id": "longship",
+       "title": {
+        "en": "Longship (3 mph)",
+        "ru": "Ладья (3 миль/ч)"
+       },
+       "values": {
+        "mph": 3
+       },
+       "texts": {
+        "name": {
+         "en": "Longship",
+         "ru": "Ладья"
+        }
+       }
+      },
+      {
+       "id": "rowboat",
+       "title": {
+        "en": "Rowboat (1.5 mph)",
+        "ru": "Гребная лодка (1.5 миль/ч)"
+       },
+       "values": {
+        "mph": 1.5
+       },
+       "texts": {
+        "name": {
+         "en": "Rowboat",
+         "ru": "Гребная лодка"
+        }
+       }
+      },
+      {
+       "id": "sailingShip",
+       "title": {
+        "en": "Sailing ship (2 mph)",
+        "ru": "Парусный корабль (2 миль/ч)"
+       },
+       "values": {
+        "mph": 2
+       },
+       "texts": {
+        "name": {
+         "en": "Sailing ship",
+         "ru": "Парусный корабль"
+        }
+       }
+      },
+      {
+       "id": "warship",
+       "title": {
+        "en": "Warship (2.5 mph)",
+        "ru": "Военный корабль (2.5 миль/ч)"
+       },
+       "values": {
+        "mph": 2.5
+       },
+       "texts": {
+        "name": {
+         "en": "Warship",
+         "ru": "Военный корабль"
+        }
+       }
+      }
+     ]
+    },
+    {
+     "key": "pace",
+     "title": {
+      "en": "Pace",
+      "ru": "Темп"
+     },
+     "type": "select",
+     "default": 1,
+     "when": "eq(by, 0)",
+     "options": [
+      {
+       "id": "slow",
+       "title": {
+        "en": "Slow",
+        "ru": "Медленный"
+       }
+      },
+      {
+       "id": "normal",
+       "title": {
+        "en": "Normal",
+        "ru": "Обычный"
+       }
+      },
+      {
+       "id": "fast",
+       "title": {
+        "en": "Fast",
+        "ru": "Быстрый"
+       }
+      }
+     ]
+    },
+    {
+     "key": "terrain",
+     "title": {
+      "en": "Terrain",
+      "ru": "Местность"
+     },
+     "type": "select",
+     "default": 4,
+     "only": [
+      "dnd5e-2024"
+     ],
+     "when": "eq(by, 0)",
+     "options": [
+      {
+       "id": "arctic",
+       "title": {
+        "en": "Arctic",
+        "ru": "Арктика"
+       },
+       "values": {
+        "max": 3,
+        "foraging": 20,
+        "navigation": 10,
+        "search": 10
+       },
+       "texts": {
+        "encounter": {
+         "en": "6d6 × 10 feet",
+         "ru": "6d6 × 10 футов"
+        }
+       }
+      },
+      {
+       "id": "coastal",
+       "title": {
+        "en": "Coast",
+        "ru": "Побережье"
+       },
+       "values": {
+        "max": 2,
+        "foraging": 10,
+        "navigation": 5,
+        "search": 15
+       },
+       "texts": {
+        "encounter": {
+         "en": "2d10 × 10 feet",
+         "ru": "2d10 × 10 футов"
+        }
+       }
+      },
+      {
+       "id": "desert",
+       "title": {
+        "en": "Desert",
+        "ru": "Пустыня"
+       },
+       "values": {
+        "max": 2,
+        "foraging": 20,
+        "navigation": 10,
+        "search": 10
+       },
+       "texts": {
+        "encounter": {
+         "en": "6d6 × 10 feet",
+         "ru": "6d6 × 10 футов"
+        }
+       }
+      },
+      {
+       "id": "forest",
+       "title": {
+        "en": "Forest",
+        "ru": "Лес"
+       },
+       "values": {
+        "max": 2,
+        "foraging": 10,
+        "navigation": 15,
+        "search": 15
+       },
+       "texts": {
+        "encounter": {
+         "en": "2d8 × 10 feet",
+         "ru": "2d8 × 10 футов"
+        }
+       }
+      },
+      {
+       "id": "grassland",
+       "title": {
+        "en": "Grassland",
+        "ru": "Равнины"
+       },
+       "values": {
+        "max": 3,
+        "foraging": 15,
+        "navigation": 5,
+        "search": 15
+       },
+       "texts": {
+        "encounter": {
+         "en": "6d6 × 10 feet",
+         "ru": "6d6 × 10 футов"
+        }
+       }
+      },
+      {
+       "id": "hill",
+       "title": {
+        "en": "Hills",
+        "ru": "Холмы"
+       },
+       "values": {
+        "max": 2,
+        "foraging": 15,
+        "navigation": 10,
+        "search": 15
+       },
+       "texts": {
+        "encounter": {
+         "en": "2d10 × 10 feet",
+         "ru": "2d10 × 10 футов"
+        }
+       }
+      },
+      {
+       "id": "mountain",
+       "title": {
+        "en": "Mountains",
+        "ru": "Горы"
+       },
+       "values": {
+        "max": 1,
+        "foraging": 20,
+        "navigation": 15,
+        "search": 20
+       },
+       "texts": {
+        "encounter": {
+         "en": "4d10 × 10 feet",
+         "ru": "4d10 × 10 футов"
+        }
+       }
+      },
+      {
+       "id": "swamp",
+       "title": {
+        "en": "Swamp",
+        "ru": "Болото"
+       },
+       "values": {
+        "max": 1,
+        "foraging": 10,
+        "navigation": 15,
+        "search": 20
+       },
+       "texts": {
+        "encounter": {
+         "en": "2d8 × 10 feet",
+         "ru": "2d8 × 10 футов"
+        }
+       }
+      },
+      {
+       "id": "underdark",
+       "title": {
+        "en": "Underdark",
+        "ru": "Подземье"
+       },
+       "values": {
+        "max": 2,
+        "foraging": 20,
+        "navigation": 10,
+        "search": 20
+       },
+       "texts": {
+        "encounter": {
+         "en": "2d6 × 10 feet",
+         "ru": "2d6 × 10 футов"
+        }
+       }
+      },
+      {
+       "id": "urban",
+       "title": {
+        "en": "Town",
+        "ru": "Город"
+       },
+       "values": {
+        "max": 2,
+        "foraging": 20,
+        "navigation": 15,
+        "search": 15
+       },
+       "texts": {
+        "encounter": {
+         "en": "2d6 × 10 feet",
+         "ru": "2d6 × 10 футов"
+        }
+       }
+      }
+     ]
+    },
+    {
+     "key": "hours",
+     "title": {
+      "en": "Hours a day",
+      "ru": "Часов в день"
+     },
+     "type": "number",
+     "default": 8,
+     "min": 1,
+     "max": 24
+    },
+    {
+     "key": "road",
+     "title": {
+      "en": "Good road",
+      "ru": "Хорошая дорога"
+     },
+     "type": "check",
+     "default": 1,
+     "only": [
+      "dnd5e-2024"
+     ],
+     "when": "eq(by, 0)"
+    },
+    {
+     "key": "difficult",
+     "title": {
+      "en": "Difficult terrain (half speed)",
+      "ru": "Труднопроходимая местность (вдвое медленнее)"
+     },
+     "type": "check",
+     "default": 0,
+     "only": [
+      "dnd5e-2014"
+     ],
+     "when": "eq(by, 0)"
+    }
+   ],
+   "lets": [
+    {
+     "key": "hd",
+     "formula": "max(1, min(24, round(hours)))"
+    },
+    {
+     "key": "land",
+     "formula": "eq(by, 0)"
+    },
+    {
+     "key": "limit",
+     "formula": "if(terrain_max, min(2, terrain_max - 1 + road), 2)"
+    },
+    {
+     "key": "kept",
+     "formula": "min(pace, limit)"
+    },
+    {
+     "key": "capped",
+     "formula": "land * gt(pace, kept)"
+    },
+    {
+     "key": "half",
+     "formula": "if(difficult, 0.5, 1)"
+    },
+    {
+     "key": "rate_hour",
+     "formula": "2 + kept"
+    },
+    {
+     "key": "rate_day",
+     "formula": "18 + 6 * kept"
+    },
+    {
+     "key": "per_hour",
+     "formula": "if(land, rate_hour * half, by_mph)"
+    },
+    {
+     "key": "per_day",
+     "formula": "if(land, if(ge(hd, 8), rate_day + (hd - 8) * rate_hour, rate_hour * hd) * half, per_hour * hd)"
+    },
+    {
+     "key": "dist",
+     "formula": "max(0, distance)"
+    },
+    {
+     "key": "days",
+     "formula": "floor(dist / per_day + 0.000000001)"
+    },
+    {
+     "key": "rest",
+     "formula": "dist - days * per_day"
+    },
+    {
+     "key": "last",
+     "formula": "if(gt(rest, 0.000000001), min(hd, ceil(rest / (per_day / hd) - 0.000000001)), 0)"
+    },
+    {
+     "key": "none",
+     "formula": "land * 0 + eq(days + last, 0)"
+    }
+   ],
+   "picks": [
+    {
+     "key": "kept_title",
+     "from": "pace",
+     "at": "kept"
+    }
+   ],
+   "words": {
+    "days": {
+     "en": {
+      "one": "{count} day",
+      "other": "{count} days"
+     },
+     "ru": {
+      "one": "{count} день",
+      "few": "{count} дня",
+      "many": "{count} дней",
+      "other": "{count} дня"
+     }
+    },
+    "last": {
+     "en": {
+      "one": "{count} hour",
+      "other": "{count} hours"
+     },
+     "ru": {
+      "one": "{count} час",
+      "few": "{count} часа",
+      "many": "{count} часов",
+      "other": "{count} часа"
+     }
+    },
+    "per_hour": {
+     "en": {
+      "one": "{n} mile",
+      "other": "{n} miles"
+     },
+     "ru": {
+      "one": "{n} миля",
+      "few": "{n} мили",
+      "many": "{n} миль",
+      "other": "{n} мили"
+     }
+    },
+    "per_day": {
+     "en": {
+      "one": "{n} mile",
+      "other": "{n} miles"
+     },
+     "ru": {
+      "one": "{n} миля",
+      "few": "{n} мили",
+      "many": "{n} миль",
+      "other": "{n} мили"
+     }
+    }
+   },
+   "results": [
+    {
+     "kind": "big",
+     "text": "{days} {last}"
+    },
+    {
+     "kind": "big",
+     "text": "—",
+     "when": "none"
+    },
+    {
+     "kind": "big",
+     "text": {
+      "en": "{per_hour} an hour, {per_day} a day · {kept_title}",
+      "ru": "{per_hour} в час, {per_day} в день · {kept_title}"
+     },
+     "when": "land"
+    },
+    {
+     "kind": "big",
+     "text": {
+      "en": "{per_hour} an hour, {per_day} a day",
+      "ru": "{per_hour} в час, {per_day} в день"
+     },
+     "when": "not(land)"
+    },
+    {
+     "kind": "warn",
+     "text": {
+      "en": "The terrain allows no pace above {kept_title}.",
+      "ru": "Местность позволяет темп не выше: {kept_title}."
+     },
+     "when": "capped*not(road)"
+    },
+    {
+     "kind": "warn",
+     "text": {
+      "en": "The terrain allows no pace above {kept_title}, even with the road.",
+      "ru": "Местность позволяет темп не выше: {kept_title}, даже с дорогой."
+     },
+     "when": "capped*road"
+    },
+    {
+     "title": {
+      "en": "Pace effect",
+      "ru": "Что даёт темп"
+     },
+     "text": {
+      "en": "Advantage on Wisdom (Perception or Survival) checks.",
+      "ru": "Преимущество на проверки Мудрости (Внимательность или Выживание)."
+     },
+     "note": {
+      "en": "Mounted: twice the distance for 1 hour, then the mounts need a rest.",
+      "ru": "Верхом: вдвое дальше в течение 1 часа, потом скакунам нужен отдых."
+     },
+     "when": "land * eq(kept, 0)",
+     "only": [
+      "dnd5e-2024"
+     ]
+    },
+    {
+     "title": {
+      "en": "Pace effect",
+      "ru": "Что даёт темп"
+     },
+     "text": {
+      "en": "The group can move stealthily.",
+      "ru": "Группа может передвигаться скрытно."
+     },
+     "note": {
+      "en": "Mounted: twice the distance for 1 hour, then the mounts need a rest.",
+      "ru": "Верхом: вдвое дальше в течение 1 часа, потом скакунам нужен отдых."
+     },
+     "when": "land * eq(kept, 0)",
+     "only": [
+      "dnd5e-2014"
+     ]
+    },
+    {
+     "title": {
+      "en": "Pace effect",
+      "ru": "Что даёт темп"
+     },
+     "text": {
+      "en": "Disadvantage on Dexterity (Stealth) checks.",
+      "ru": "Помеха на проверки Ловкости (Скрытность)."
+     },
+     "note": {
+      "en": "Mounted: twice the distance for 1 hour, then the mounts need a rest.",
+      "ru": "Верхом: вдвое дальше в течение 1 часа, потом скакунам нужен отдых."
+     },
+     "when": "land * eq(kept, 1)",
+     "only": [
+      "dnd5e-2024"
+     ]
+    },
+    {
+     "title": {
+      "en": "Pace effect",
+      "ru": "Что даёт темп"
+     },
+     "text": {
+      "en": "No effect.",
+      "ru": "Без особенностей."
+     },
+     "note": {
+      "en": "Mounted: twice the distance for 1 hour, then the mounts need a rest.",
+      "ru": "Верхом: вдвое дальше в течение 1 часа, потом скакунам нужен отдых."
+     },
+     "when": "land * eq(kept, 1)",
+     "only": [
+      "dnd5e-2014"
+     ]
+    },
+    {
+     "title": {
+      "en": "Pace effect",
+      "ru": "Что даёт темп"
+     },
+     "text": {
+      "en": "Disadvantage on Wisdom (Perception or Survival) and Dexterity (Stealth) checks.",
+      "ru": "Помеха на проверки Мудрости (Внимательность или Выживание) и Ловкости (Скрытность)."
+     },
+     "note": {
+      "en": "Mounted: twice the distance for 1 hour, then the mounts need a rest.",
+      "ru": "Верхом: вдвое дальше в течение 1 часа, потом скакунам нужен отдых."
+     },
+     "when": "land * eq(kept, 2)",
+     "only": [
+      "dnd5e-2024"
+     ]
+    },
+    {
+     "title": {
+      "en": "Pace effect",
+      "ru": "Что даёт темп"
+     },
+     "text": {
+      "en": "−5 to passive Wisdom (Perception).",
+      "ru": "−5 к пассивной Мудрости (Внимательность)."
+     },
+     "note": {
+      "en": "Mounted: twice the distance for 1 hour, then the mounts need a rest.",
+      "ru": "Верхом: вдвое дальше в течение 1 часа, потом скакунам нужен отдых."
+     },
+     "when": "land * eq(kept, 2)",
+     "only": [
+      "dnd5e-2014"
+     ]
+    },
+    {
+     "title": {
+      "en": "{by_name}",
+      "ru": "{by_name}"
+     },
+     "text": {
+      "en": "Ships keep their speed and choose no pace; with a full crew they can sail up to 24 hours a day. Against a strong wind — half speed; downstream add the current (about 3 mph).",
+      "ru": "Корабли идут со своей скоростью и темп не выбирают; с полной командой — до 24 часов в сутки. Против сильного ветра — вдвое медленнее; по течению прибавьте его скорость (около 3 миль в час)."
+     },
+     "when": "not(land)"
+    },
+    {
+     "title": {
+      "en": "Long day",
+      "ru": "Долгий марш"
+     },
+     "text": {
+      "en": "Past 8 hours, at the end of each hour every traveller makes a Constitution save or gains 1 Exhaustion level:",
+      "ru": "После 8 часов в конце каждого часа каждый путник совершает спасбросок Телосложения, иначе получает 1 уровень истощения:"
+     },
+     "when": "land * gt(hd, 8)"
+    },
+    {
+     "title": {
+      "en": "Long day",
+      "ru": "Долгий марш"
+     },
+     "text": {
+      "en": "hour {h}: DC {dc}",
+      "ru": "{h}-й час: СЛ {dc}"
+     },
+     "each": "land * (hd - 8)",
+     "vars": {
+      "h": "9 + i",
+      "dc": "11 + i"
+     }
+    },
+    {
+     "title": {
+      "en": "Terrain: {terrain_title}",
+      "ru": "Местность: {terrain_title}"
+     },
+     "text": {
+      "en": "Encounter distance: {terrain_encounter}\nForaging DC: {terrain_foraging}\nNavigation DC: {terrain_navigation}\nSearch DC: {terrain_search}",
+      "ru": "Дистанция встреч: {terrain_encounter}\nСЛ добычи пищи: {terrain_foraging}\nСЛ ориентирования: {terrain_navigation}\nСЛ поиска: {terrain_search}"
+     },
+     "when": "land",
+     "only": [
+      "dnd5e-2024"
+     ]
+    },
+    {
+     "text": {
+      "en": "A fast pace in the arctic needs equipment such as skis.",
+      "ru": "Для быстрого темпа в арктике нужно снаряжение — например, лыжи."
+     },
+     "when": "land * eq(terrain, 0)",
+     "only": [
+      "dnd5e-2024"
+     ]
+    }
+   ]
+  }
+ ]
+}
