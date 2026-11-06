@@ -1,7 +1,10 @@
 // The price list of the Mausritter SRD (Gear and prices) for Tools → Shop: its sections in the SRD order, the price of
 // a row in pips, and the warband price — equipment costs 20 times as much for a warband (Warbands → Equipping).
 import { SRD_TABLES } from './srd';
-import type { TablesLang } from './text';
+
+export type TablesLang = 'en' | 'ru';
+export const tablesLang = (lang: string): TablesLang => (lang === 'ru' ? 'ru' : 'en');
+export const plain = (s: string) => s.replace(/\*\*/g, '');
 
 export const GEAR = ['gearMouse', 'gearHuman', 'gearWeapons', 'gearLight', 'gearClothing', 'gearLodging', 'gearTransport', 'gearHired'] as const;
 export type GearSection = (typeof GEAR)[number];

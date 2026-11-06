@@ -31,6 +31,7 @@ import { createNote, readNote, renameNote, writeNote } from './notes';
 import { createSketch, readSketch, renameSketch, writeSketch } from './sketches';
 import type { Sketch } from '../shared/sketch';
 import { builtinEntries, entries, resetBuiltinEntries, watchLibraryCompendium } from './compendium';
+import { generatorFiles } from './generators';
 import { contentSystems, installContent, installedContent, removeContent } from './content';
 import { CONTENT_EXT, CONTENT_MANIFEST, validContent } from '../shared/content';
 import { pages } from './journal';
@@ -568,6 +569,7 @@ const afterEntryWrite = async (rel: string) => {
 ipcMain.handle('compendium:read', (_event, rel: string) => entries.read(resolveText, rel));
 ipcMain.handle('compendium:listLibrary', () => entries.listLibrary(libraryPath()));
 ipcMain.handle('compendium:builtin', () => [...builtinEntries(), ...packBooks()]);
+ipcMain.handle('generators:list', () => generatorFiles());
 ipcMain.handle('compendium:write', async (_event, { path: rel, text }: { path: string; text: string }) => {
   const ok = entries.write(resolveText, rel, text);
   if (ok) await afterEntryWrite(rel);

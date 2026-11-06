@@ -846,7 +846,7 @@ new mouse by the SRD procedure: attributes (3d6, the two highest — the dice ar
 HP and pips, the background with its two items (a weak mouse gets items of another background), torches, rations, a
 weapon, birthsign, coat, physical detail and a name; "Create card" opens a mouse sheet with the inventory laid out
 (weapon in the paws, armour on the body, the rest in the pack), "To journal" and "Copy" — as text. **Tools →
-Mausritter tables** rolls on the GM tables of the SRD by its rules: a mouse settlement (size — the lower of 2d6,
+Mausritter tables** (Tools → Generators, they come with the package as data) rolls on the GM tables of the SRD by its rules: a mouse settlement (size — the lower of 2d6,
 governance — d6 + size, cities and towns get two features or trades, a name and, from a hamlet up, a tavern), a hex
 (the landmark by hex type, its detail by d6 and d8), an adventure site (theme and N rooms: type, creature, treasure
 and what is there), a treasure horde (a d20 more for each "yes"; magic swords with a 1-in-6 curse, spells, pips

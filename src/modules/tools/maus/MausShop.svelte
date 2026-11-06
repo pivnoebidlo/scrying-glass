@@ -6,7 +6,7 @@
   import { Minus, Plus, Search, Trash2 } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { GEAR, gearItems, NEAR_HUMANS, priceFor, type GearItem } from './shop';
-  import { plain, tablesLang } from './text';
+  import { plain, tablesLang } from './shop';
 
   const KEY = 'mausShop.state';
   type Saved = { query: string; humans: boolean; warband: boolean; basket: Record<string, number> };

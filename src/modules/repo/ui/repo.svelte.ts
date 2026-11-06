@@ -287,8 +287,11 @@ export async function autoContent() {
   const families = [...new Set(systems.filter((s) => isEnabled(s.id)).map((s) => s.family))].filter(
     (f) => !done.includes(f) && !store.state.vault.content.some((c) => c.family === f),
   );
-  if (!families.length) return;
+  if (!families.length && !store.state.vault.content.length) return;
   await loadCatalogs(OFFICIAL_SOURCE);
+  // Official content follows its catalog: what the system's tools read comes with it (generators in a new release).
+  for (const c of store.state.vault.content)
+    for (const e of officialContent(c.family)) if (contentVersion(e) && e.version > contentVersion(e)) await installContent(e);
   for (const f of families) {
     const list = officialContent(f);
     if (!list.length) continue;

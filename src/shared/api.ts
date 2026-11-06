@@ -1,4 +1,5 @@
 // API, который preload открывает окнам как window.api.
+import type { GeneratorFile } from './generators';
 import type { BlockedEntry, RepoCatalog, RepoEntry, RepoInfo, RepoProgress, ReportedEntry, ReportReason } from './repo';
 import type { BuiltinSounds } from './sounds';
 import type { ContentManifest } from './content';
@@ -150,6 +151,7 @@ export interface Api {
   listLibraryEntries(): Promise<{ path: string; text: string }[]>;
   // Встроенный справочник (SRD по редакциям), только чтение.
   listBuiltinEntries(): Promise<BuiltinBook[]>;
+  listGenerators(): Promise<GeneratorFile[]>;
   writeEntry(path: string, text: string): Promise<boolean>;
   createEntry(folder: string, title: string, text: string): Promise<string | null>;
   renameEntry(path: string, title: string): Promise<string | null>;

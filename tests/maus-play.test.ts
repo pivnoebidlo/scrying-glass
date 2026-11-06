@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import mausritter from '../src/modules/mausritter/main';
 import type { MausState } from '../src/modules/mausritter/types';
 import { currentGoal } from '../src/modules/mausritter/types';
-import { hirelings } from '../src/modules/tools/maus/generate';
-import { lineText } from '../src/modules/tools/maus/text';
 import { EXAMPLE_FACTIONS } from '../src/modules/tools/maus/srd';
 import { ctx, run } from './helpers';
 
@@ -69,20 +67,6 @@ describe('Mausritter clock', () => {
     s = rolled(s, 'watch', []);
     s = rolled(s, 'watch', [5]);
     expect(of(s).clock).toMatchObject({ watch: 1, day: 2, last: { roll: 5 } });
-  });
-});
-
-describe('Mausritter hirelings', () => {
-  const seq = (...v: number[]) => {
-    let i = 0;
-    return () => v[i++] ?? 1;
-  };
-  it('a failed WIL save — nobody; paid — Number of them with SRD numbers', () => {
-    expect(hirelings({ hireling: 0, paid: false, wil: 8 }, seq(15)).lines).toHaveLength(1);
-    // Torchbearer: d6 → 2; each: name, HP, STR 2d6, DEX 2d6, WIL 2d6.
-    const r = hirelings({ hireling: 0, paid: true, wil: 8 }, seq(2, 1, 3, 1, 1, 2, 2, 3, 3, 0));
-    expect(r.lines).toHaveLength(3);
-    expect(lineText(r.lines[1]!, 'en')).toBe('Bramble (torchbearer) — HP 3, STR 2, DEX 4, WIL 6');
   });
 });
 

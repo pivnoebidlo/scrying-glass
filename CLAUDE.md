@@ -172,7 +172,7 @@ Electron-приложение для мастера D&D: окно управле
   типы, подписи на разных языках, статблок; реестры `systems/index.ts` и `systems/ui.ts`). Неизвестная система
   показывается как «поле — значение». Одна карточка — один язык, перевод — отдельная карточка с `origin`.
 - Пакет игры — «содержимое» в коде (с 0.66; `shared/content.ts`, ядро — `main/content.ts`): `.sgcontent` — ZIP с `content.json`
-  (`ContentManifest`: id, family, release, cards, books, license), `system/<id>.json` (`SystemPack`; у семейства плагина нет), `bestiary/<система>.json`, `compendium/<система>.<lang>.json`;
+  (`ContentManifest`: id, family, release, cards, books, license), `system/<id>.json` (`SystemPack`; у семейства плагина нет), `bestiary/<система>.json`, `compendium/<система>.<lang>.json`, `generators/<имя>.json`;
   незнакомую папку ZIP старое приложение просто не берёт. Ставится в `<библиотека>/content/<id>/` (`installContent`: во временную папку, проверка, только известные файлы),
   в установщике ничего игрового нет: системы, карточки и книги читаются только отсюда (`contentDirs`; при установке, удалении, смене библиотеки —
   `contentChanged` в main/index.ts: `loadSystemPacks`, `reloadBuiltin`, `resetBuiltinEntries`), список — `vault.content`. Система из пакета — только чтение, своя копия мастера с тем же id
@@ -639,11 +639,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   свои), `generate.ts` (мышь — индексы; `extraFor` — слабая мышь, `swap`), `text.ts` (правила вещи — по английской
   строке: броня, кубы, наёмник; `mouseSlots` раскладывает инвентарь, `mouseCard` → `bestiary.create(…, { system, stats })`),
   `MouseGenerator.svelte`, `store.svelte.ts` (последняя мышь — localStorage окна).
-  Таблицы Mausritter (только Mausritter, `ui.tool = 'mausTables'`): `tools/maus/` — `srd.ts` (48 таблиц SRD en/ru,
-  собирает `build-mausritter`: все таблицы файлов по порядку, нужные — по пути заголовков оригинала, `WANT`),
-  `generate.ts` (результат — ячейки `{ table, row, col }`, текст — по языку интерфейса; `rangeOf` / `rowFor` по первому
-  столбцу английской таблицы; поселение, гекс, место с комнатами, сокровища, мышь мастера, завязка, погода, реакция),
-  `text.ts` (`lineText`, Markdown), `MausTables.svelte`, `store.svelte.ts` (localStorage окна).
+  Генераторы из пакетов (`ui.tool = 'generators'`, показываются там, где пакет их привёз): данные — `generators/<имя>.json` пакета (`GeneratorFile`: таблицы по языкам + рецепты), движок — `shared/generators.ts` (шаги `let` / `line` / `repeat` / `if`, `sub`, `notes`, `card`; числа — язык формул с `d(n)` и сравнениями `eq lt le gt ge not`; `validateGenerators`, лимиты вложенности и шагов — файл может быть чужим, никакого кода), ядро — `main/generators.ts` (IPC `generators:list`, вне состояния), страница — `tools/generators/Generators.svelte` (игр не знает), `store.svelte.ts` (localStorage окна). Результат — ячейки `{ table, row, col }`: текст идёт за языком интерфейса. Mausritter: рецепты — `scripts/mausritter-generators.json`, таблицы — из `WANT` (`build-mausritter` кладёт в пакет те, что упомянуты в рецептах + `mouseNames`; `tools/maus/srd.ts` — только цены лавки). Официальные пакеты обновляются сами (`autoContent`).
   Постройки (только Mausritter, `ui.tool = 'build'`): `tools/build/rules.ts` (`build`: цена за куб 6" — `ROOM_COST`,
   содержание 1 % в месяц, три землекопа — куб земли в день, «не земля» вдвое дольше, 5 п в день), страница
   `BuildCalculator.svelte` (план — localStorage окна, «В журнал» — таблица Markdown).
@@ -655,8 +651,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   к6 + relevant − rival, 4–5 +1, 6+ +2), `clock` — ход / стража / день, `last` — бросок встречи; у бросающих действий
   четвёртый аргумент — куб, для тестов). Страница «Фракции» в «Инструментах» (`ui/Factions.svelte`, примеры SRD —
   `EXAMPLE_FACTIONS` в `tools/maus/srd.ts`), блок «Исследование» в правой панели (`ui/Clock.svelte`, возможность `exploration`, страница — `factions`). Данные
-  приключения уходят в `.sgpack` (`PackSlices.mausritter`) и в корзину (`AdventureData.mausritter`). Наёмники — в
-  «Таблицах Mausritter» (`hirelings`).
+  приключения уходят в `.sgpack` (`PackSlices.mausritter`) и в корзину (`AdventureData.mausritter`). Наёмники — генератор `hirelings` пакета.
   Отряды (`Warband` в `byAdventure[…].warbands`: `formed` — день счётчика, `paid` — оплаченные недели, `card` — ссылка;
   `weeksDue` / `weeksOwed`, `WARBAND_UPKEEP`; действия `formWarband` / `updateWarband` / `payWarband` / `disbandWarband`):
   блок `ui/Warbands.svelte` под фракциями (карточку по SRD пишет окно — `saveCard` в папку бестиария приключения, иначе

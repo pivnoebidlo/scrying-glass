@@ -8,6 +8,7 @@ import { systemUis } from '../../../systems/ui';
 import { enabledSystems, systems, usesOf } from '../../../systems';
 import { t } from '../../../renderer/lib/i18n.svelte';
 import type { ToolId } from './ui.svelte';
+import { generatorFamilies } from '../generators/store.svelte';
 
 export interface ToolDef {
   id: Exclude<ToolId, 'notes'>;
@@ -31,12 +32,15 @@ function tool(id: ToolDef['id'], icon: ToolDef['icon'], key: string, families?: 
   // (getters: packs come and go; not spread anywhere).
   if (families === SOME) Object.defineProperty(def, 'families', { get: () => claimed(id), enumerable: true });
   if (families === USED) Object.defineProperty(def, 'families', { get: () => usedBy(id), enumerable: true });
+  if (families === FROM_PACKAGES) Object.defineProperty(def, 'families', { get: generatorFamilies, enumerable: true });
   return def;
 }
 
 // A generator of some systems: its families are the plugins that claim it.
 const SOME: string[] = [];
 const claimed = (id: string) => systemUis.filter((u) => u.claims?.includes(id)).map((u) => u.family);
+// What the packages bring: where they brought it.
+const FROM_PACKAGES: string[] = [];
 // A tool of a feature (shared/features.ts): the id is the same.
 const USED: string[] = [];
 const usedBy = (id: string) => [...new Set(systems.filter((s) => usesOf(s.id).includes(id)).map((s) => s.family))];
@@ -55,8 +59,8 @@ const CORE: ToolDef[] = [
   tool('hooks', Compass, 'tools.side.hooks', SOME),
   tool('riddles', Puzzle, 'tools.side.riddles'),
   tool('mapgen', MapIcon, 'tools.side.mapgen'),
+  tool('generators', Table2, 'tools.side.generators', FROM_PACKAGES),
   tool('mouse', Rat, 'tools.side.mouse', USED),
-  tool('mausTables', Table2, 'tools.side.mausTables', USED),
   tool('factions', Flag, 'tools.side.factions', USED),
   tool('mausShop', Store, 'tools.side.mausShop', USED),
   tool('build', Pickaxe, 'tools.side.build', USED),

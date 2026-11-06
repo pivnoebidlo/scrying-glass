@@ -1,0 +1,1555 @@
+{
+ "title": {
+  "en": "Mausritter tables",
+  "ru": "Таблицы Mausritter"
+ },
+ "about": {
+  "en": "The GM tables of the Mausritter SRD: pick a table and roll. Settlements, hexes, adventure sites with rooms, treasure, mice of the GM, adventure seeds, the weather and a reaction.",
+  "ru": "Таблицы мастера из Mausritter SRD: выберите таблицу и бросьте. Поселения, гексы, места приключений с комнатами, сокровища, мыши мастера, завязки приключений, погода и реакция."
+ },
+ "generators": [
+  {
+   "id": "settlement",
+   "title": {
+    "en": "Settlement",
+    "ru": "Поселение"
+   },
+   "steps": [
+    {
+     "let": "size",
+     "dice": "2d6",
+     "keep": "low",
+     "count": 1
+    },
+    {
+     "line": {
+      "en": "Size",
+      "ru": "Размер"
+     },
+     "table": "size",
+     "row": "size - 1"
+    },
+    {
+     "let": "gov",
+     "dice": "d6",
+     "quiet": true
+    },
+    {
+     "line": {
+      "en": "Governance",
+      "ru": "Управление"
+     },
+     "table": "governance",
+     "lookup": "gov + size"
+    },
+    {
+     "line": {
+      "en": "Inhabitants",
+      "ru": "Жители"
+     },
+     "table": "inhabitants",
+     "dice": "d20"
+    },
+    {
+     "repeat": "1 + ge(size, 6)",
+     "steps": [
+      {
+       "line": {
+        "en": "Notable feature",
+        "ru": "Особенность"
+       },
+       "table": "feature",
+       "dice": "d20"
+      }
+     ]
+    },
+    {
+     "repeat": "1 + ge(size, 5)",
+     "steps": [
+      {
+       "line": {
+        "en": "Industry",
+        "ru": "Промысел"
+       },
+       "table": "industry",
+       "dice": "d20"
+      }
+     ]
+    },
+    {
+     "line": {
+      "en": "On arrival",
+      "ru": "Когда мыши прибывают"
+     },
+     "table": "event",
+     "dice": "d20"
+    },
+    {
+     "line": {
+      "en": "Name",
+      "ru": "Название"
+     },
+     "join": "name",
+     "parts": [
+      {
+       "table": "names",
+       "row": "d(12) - 1",
+       "col": "d(2)"
+      },
+      {
+       "table": "names",
+       "row": "d(12) - 1",
+       "col": "2 + d(2)"
+      }
+     ]
+    },
+    {
+     "if": "ge(size, 3)",
+     "then": [
+      {
+       "line": {
+        "en": "Tavern",
+        "ru": "Таверна"
+       },
+       "text": "{0} {1} · {2}",
+       "parts": [
+        {
+         "table": "tavern",
+         "row": "d(12) - 1",
+         "col": "1"
+        },
+        {
+         "table": "tavern",
+         "row": "d(12) - 1",
+         "col": "2"
+        },
+        {
+         "table": "tavern",
+         "row": "d(12) - 1",
+         "col": "3"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "hex",
+   "title": {
+    "en": "Hex",
+    "ru": "Гекс"
+   },
+   "steps": [
+    {
+     "let": "r",
+     "dice": "d6"
+    },
+    {
+     "let": "type",
+     "table": "hexType",
+     "lookup": "r"
+    },
+    {
+     "line": {
+      "en": "Hex type",
+      "ru": "Вид гекса"
+     },
+     "table": "hexType",
+     "row": "type"
+    },
+    {
+     "let": "lm",
+     "dice": "d20"
+    },
+    {
+     "line": {
+      "en": "Landmark",
+      "ru": "Ориентир"
+     },
+     "table": "landmark",
+     "row": "lm - 1",
+     "col": "type + 1"
+    },
+    {
+     "let": "a",
+     "dice": "d6"
+    },
+    {
+     "let": "b",
+     "dice": "d8"
+    },
+    {
+     "line": {
+      "en": "Detail",
+      "ru": "Подробность"
+     },
+     "table": "landmarkDetail",
+     "group": [
+      "a",
+      "b"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "site",
+   "title": {
+    "en": "Adventure site",
+    "ru": "Место приключения"
+   },
+   "options": [
+    {
+     "key": "rooms",
+     "title": {
+      "en": "Rooms",
+      "ru": "Комнат"
+     },
+     "type": "number",
+     "default": 6,
+     "min": 1,
+     "max": 20
+    }
+   ],
+   "steps": [
+    {
+     "line": {
+      "en": "Built as",
+      "ru": "Постройка"
+     },
+     "table": "construction",
+     "dice": "d20"
+    },
+    {
+     "line": {
+      "en": "Ruined by",
+      "ru": "Разрушение"
+     },
+     "table": "ruination",
+     "dice": "d12"
+    },
+    {
+     "line": {
+      "en": "Inhabitants",
+      "ru": "Обитатели"
+     },
+     "table": "denizens",
+     "dice": "d10"
+    },
+    {
+     "line": {
+      "en": "Searching for or protecting",
+      "ru": "Ищут или охраняют"
+     },
+     "table": "seeking",
+     "dice": "d8"
+    },
+    {
+     "line": {
+      "en": "Secret",
+      "ru": "Тайна"
+     },
+     "table": "secret",
+     "dice": "d6"
+    },
+    {
+     "repeat": "rooms",
+     "as": "n",
+     "steps": [
+      {
+       "let": "r",
+       "dice": "d6"
+      },
+      {
+       "let": "type",
+       "table": "roomType",
+       "lookup": "r"
+      },
+      {
+       "let": "c",
+       "dice": "d6",
+       "quiet": true
+      },
+      {
+       "let": "t",
+       "dice": "d6",
+       "quiet": true
+      },
+      {
+       "let": "beast",
+       "table": "roomCreature",
+       "row": "c - 1",
+       "col": "type + 1",
+       "is": "X"
+      },
+      {
+       "let": "loot",
+       "table": "roomTreasure",
+       "row": "t - 1",
+       "col": "type + 1",
+       "is": "X"
+      },
+      {
+       "if": "eq(type, 0)",
+       "then": [
+        {
+         "let": "v",
+         "dice": "d20"
+        },
+        {
+         "line": {
+          "en": "Room {n}",
+          "ru": "Комната {n}"
+         },
+         "sep": true,
+         "parts": [
+          {
+           "table": "roomType",
+           "row": "type"
+          },
+          {
+           "table": "empty",
+           "lookup": "v"
+          }
+         ],
+         "notes": [
+          {
+           "if": "not(beast + loot)",
+           "text": {
+            "en": "no creature, no treasure",
+            "ru": "ни существа, ни сокровища"
+           }
+          },
+          {
+           "if": "beast * not(loot)",
+           "text": {
+            "en": "a creature",
+            "ru": "существо"
+           }
+          },
+          {
+           "if": "loot * not(beast)",
+           "text": {
+            "en": "treasure",
+            "ru": "сокровище"
+           }
+          },
+          {
+           "if": "beast * loot",
+           "text": {
+            "en": "a creature and treasure",
+            "ru": "существо и сокровище"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(type, 1)",
+       "then": [
+        {
+         "let": "v",
+         "dice": "d8"
+        },
+        {
+         "line": {
+          "en": "Room {n}",
+          "ru": "Комната {n}"
+         },
+         "sep": true,
+         "parts": [
+          {
+           "table": "roomType",
+           "row": "type"
+          },
+          {
+           "table": "obstacle",
+           "lookup": "v"
+          }
+         ],
+         "notes": [
+          {
+           "if": "not(beast + loot)",
+           "text": {
+            "en": "no creature, no treasure",
+            "ru": "ни существа, ни сокровища"
+           }
+          },
+          {
+           "if": "beast * not(loot)",
+           "text": {
+            "en": "a creature",
+            "ru": "существо"
+           }
+          },
+          {
+           "if": "loot * not(beast)",
+           "text": {
+            "en": "treasure",
+            "ru": "сокровище"
+           }
+          },
+          {
+           "if": "beast * loot",
+           "text": {
+            "en": "a creature and treasure",
+            "ru": "существо и сокровище"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(type, 2)",
+       "then": [
+        {
+         "let": "v",
+         "dice": "d8"
+        },
+        {
+         "line": {
+          "en": "Room {n}",
+          "ru": "Комната {n}"
+         },
+         "sep": true,
+         "parts": [
+          {
+           "table": "roomType",
+           "row": "type"
+          },
+          {
+           "table": "trap",
+           "lookup": "v"
+          }
+         ],
+         "notes": [
+          {
+           "if": "not(beast + loot)",
+           "text": {
+            "en": "no creature, no treasure",
+            "ru": "ни существа, ни сокровища"
+           }
+          },
+          {
+           "if": "beast * not(loot)",
+           "text": {
+            "en": "a creature",
+            "ru": "существо"
+           }
+          },
+          {
+           "if": "loot * not(beast)",
+           "text": {
+            "en": "treasure",
+            "ru": "сокровище"
+           }
+          },
+          {
+           "if": "beast * loot",
+           "text": {
+            "en": "a creature and treasure",
+            "ru": "существо и сокровище"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(type, 3)",
+       "then": [
+        {
+         "let": "v",
+         "dice": "d6"
+        },
+        {
+         "line": {
+          "en": "Room {n}",
+          "ru": "Комната {n}"
+         },
+         "sep": true,
+         "parts": [
+          {
+           "table": "roomType",
+           "row": "type"
+          },
+          {
+           "table": "puzzle",
+           "lookup": "v"
+          }
+         ],
+         "notes": [
+          {
+           "if": "not(beast + loot)",
+           "text": {
+            "en": "no creature, no treasure",
+            "ru": "ни существа, ни сокровища"
+           }
+          },
+          {
+           "if": "beast * not(loot)",
+           "text": {
+            "en": "a creature",
+            "ru": "существо"
+           }
+          },
+          {
+           "if": "loot * not(beast)",
+           "text": {
+            "en": "treasure",
+            "ru": "сокровище"
+           }
+          },
+          {
+           "if": "beast * loot",
+           "text": {
+            "en": "a creature and treasure",
+            "ru": "существо и сокровище"
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(type, 4)",
+       "then": [
+        {
+         "let": "v",
+         "dice": "d6"
+        },
+        {
+         "line": {
+          "en": "Room {n}",
+          "ru": "Комната {n}"
+         },
+         "sep": true,
+         "parts": [
+          {
+           "table": "roomType",
+           "row": "type"
+          },
+          {
+           "table": "lair",
+           "lookup": "v"
+          }
+         ],
+         "notes": [
+          {
+           "if": "not(beast + loot)",
+           "text": {
+            "en": "no creature, no treasure",
+            "ru": "ни существа, ни сокровища"
+           }
+          },
+          {
+           "if": "beast * not(loot)",
+           "text": {
+            "en": "a creature",
+            "ru": "существо"
+           }
+          },
+          {
+           "if": "loot * not(beast)",
+           "text": {
+            "en": "treasure",
+            "ru": "сокровище"
+           }
+          },
+          {
+           "if": "beast * loot",
+           "text": {
+            "en": "a creature and treasure",
+            "ru": "существо и сокровище"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "treasure",
+   "title": {
+    "en": "Treasure",
+    "ru": "Сокровища"
+   },
+   "options": [
+    {
+     "key": "former",
+     "title": {
+      "en": "In a former settlement, castle or dungeon",
+      "ru": "В бывшем поселении, замке или подземелье"
+     },
+     "type": "check",
+     "default": false
+    },
+    {
+     "key": "magical",
+     "title": {
+      "en": "In a highly magical area",
+      "ru": "В месте, насыщенном магией"
+     },
+     "type": "check",
+     "default": false
+    },
+    {
+     "key": "guarded",
+     "title": {
+      "en": "Guarded by a great beast or a devious trap",
+      "ru": "Охраняется огромным зверем или коварной ловушкой"
+     },
+     "type": "check",
+     "default": false
+    },
+    {
+     "key": "adversity",
+     "title": {
+      "en": "The mice overcame great adversity",
+      "ru": "Мыши преодолели большие трудности"
+     },
+     "type": "check",
+     "default": false
+    }
+   ],
+   "footer": {
+    "if": "total",
+    "text": {
+     "en": {
+      "one": "{count} pip in total",
+      "other": "{count} pips in total"
+     },
+     "ru": {
+      "one": "{count} пипс всего",
+      "few": "{count} пипса всего",
+      "many": "{count} пипсов всего",
+      "other": "{count} пипса всего"
+     }
+    }
+   },
+   "steps": [
+    {
+     "let": "total",
+     "formula": "0"
+    },
+    {
+     "repeat": "2 + former + magical + guarded + adversity",
+     "steps": [
+      {
+       "let": "r",
+       "dice": "d20"
+      },
+      {
+       "let": "row",
+       "table": "treasure",
+       "lookup": "r"
+      },
+      {
+       "if": "eq(row, 0)",
+       "then": [
+        {
+         "let": "cursed",
+         "formula": "eq(d(6), 1)"
+        },
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "notes": [
+          {
+           "if": "cursed",
+           "text": {
+            "en": "cursed",
+            "ru": "проклят"
+           },
+           "warn": true
+          }
+         ],
+         "sub": [
+          {
+           "line": {
+            "en": "Class",
+            "ru": "Класс"
+           },
+           "table": "swordClass",
+           "dice": "d6"
+          },
+          {
+           "let": "s",
+           "dice": "d10"
+          },
+          {
+           "line": {
+            "en": "Sword",
+            "ru": "Меч"
+           },
+           "parts": [
+            {
+             "table": "sword",
+             "row": "s - 1",
+             "col": "1"
+            },
+            {
+             "table": "sword",
+             "row": "s - 1",
+             "col": "2"
+            }
+           ]
+          },
+          {
+           "if": "cursed",
+           "then": [
+            {
+             "let": "k",
+             "dice": "d6"
+            },
+            {
+             "line": {
+              "en": "Curse",
+              "ru": "Проклятие"
+             },
+             "parts": [
+              {
+               "table": "curse",
+               "row": "k - 1",
+               "col": "1"
+              },
+              {
+               "table": "curse",
+               "row": "k - 1",
+               "col": "2"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(row, 1)",
+       "then": [
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "sub": [
+          {
+           "let": "s",
+           "dice": "2d8"
+          },
+          {
+           "line": {
+            "en": "Spell",
+            "ru": "Заклинание"
+           },
+           "table": "spells",
+           "lookup": "s",
+           "col": "1"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(row, 2)",
+       "then": [
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "sub": [
+          {
+           "line": {
+            "en": "Trinket",
+            "ru": "Безделушка"
+           },
+           "table": "trinket",
+           "dice": "d6"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(row, 3)",
+       "then": [
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "sub": [
+          {
+           "line": {
+            "en": "Valuable",
+            "ru": "Ценность"
+           },
+           "table": "valuable",
+           "dice": "d6"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(row, 4)",
+       "then": [
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "sub": [
+          {
+           "line": {
+            "en": "Unusual",
+            "ru": "Диковина"
+           },
+           "table": "unusual",
+           "dice": "d6"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(row, 5)",
+       "then": [
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "sub": [
+          {
+           "line": {
+            "en": "Large",
+            "ru": "Громоздкое"
+           },
+           "table": "large",
+           "dice": "d6"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(row, 6)",
+       "then": [
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "sub": [
+          {
+           "line": {
+            "en": "Useful",
+            "ru": "Полезное"
+           },
+           "table": "useful",
+           "dice": "d6"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(row, 7)",
+       "then": [
+        {
+         "let": "k",
+         "dice": "d6",
+         "quiet": true
+        },
+        {
+         "let": "count",
+         "formula": "k * 100"
+        },
+        {
+         "let": "total",
+         "formula": "total + count"
+        },
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "notes": [
+          {
+           "text": {
+            "en": {
+             "one": "{count} pip",
+             "other": "{count} pips"
+            },
+            "ru": {
+             "one": "{count} пипс",
+             "few": "{count} пипса",
+             "many": "{count} пипсов",
+             "other": "{count} пипса"
+            }
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(row, 8)",
+       "then": [
+        {
+         "let": "k",
+         "dice": "d6",
+         "quiet": true
+        },
+        {
+         "let": "count",
+         "formula": "k * 50"
+        },
+        {
+         "let": "total",
+         "formula": "total + count"
+        },
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "notes": [
+          {
+           "text": {
+            "en": {
+             "one": "{count} pip",
+             "other": "{count} pips"
+            },
+            "ru": {
+             "one": "{count} пипс",
+             "few": "{count} пипса",
+             "many": "{count} пипсов",
+             "other": "{count} пипса"
+            }
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(row, 9)",
+       "then": [
+        {
+         "let": "k",
+         "dice": "d6",
+         "quiet": true
+        },
+        {
+         "let": "count",
+         "formula": "k * 10"
+        },
+        {
+         "let": "total",
+         "formula": "total + count"
+        },
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "notes": [
+          {
+           "text": {
+            "en": {
+             "one": "{count} pip",
+             "other": "{count} pips"
+            },
+            "ru": {
+             "one": "{count} пипс",
+             "few": "{count} пипса",
+             "many": "{count} пипсов",
+             "other": "{count} пипса"
+            }
+           }
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "if": "eq(row, 10)",
+       "then": [
+        {
+         "let": "k",
+         "dice": "d6",
+         "quiet": true
+        },
+        {
+         "let": "count",
+         "formula": "k * 5"
+        },
+        {
+         "let": "total",
+         "formula": "total + count"
+        },
+        {
+         "line": {
+          "en": "Treasure",
+          "ru": "Сокровище"
+         },
+         "table": "treasure",
+         "row": "row",
+         "notes": [
+          {
+           "text": {
+            "en": {
+             "one": "{count} pip",
+             "other": "{count} pips"
+            },
+            "ru": {
+             "one": "{count} пипс",
+             "few": "{count} пипса",
+             "many": "{count} пипсов",
+             "other": "{count} пипса"
+            }
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "let": "count",
+     "formula": "total"
+    }
+   ]
+  },
+  {
+   "id": "npc",
+   "title": {
+    "en": "GM mouse",
+    "ru": "Мышь мастера"
+   },
+   "steps": [
+    {
+     "line": {
+      "en": "Name",
+      "ru": "Название"
+     },
+     "table": "mouseNames",
+     "col": "0",
+     "any": true
+    },
+    {
+     "let": "a",
+     "dice": "d6"
+    },
+    {
+     "line": {
+      "en": "Social position",
+      "ru": "Положение"
+     },
+     "parts": [
+      {
+       "table": "social",
+       "row": "a - 1",
+       "col": "1"
+      },
+      {
+       "table": "social",
+       "row": "a - 1",
+       "col": "2"
+      }
+     ]
+    },
+    {
+     "let": "b",
+     "dice": "d6"
+    },
+    {
+     "line": {
+      "en": "Birthsign",
+      "ru": "Знак рождения"
+     },
+     "parts": [
+      {
+       "table": "npcSign",
+       "row": "b - 1",
+       "col": "1"
+      },
+      {
+       "table": "npcSign",
+       "row": "b - 1",
+       "col": "2"
+      }
+     ]
+    },
+    {
+     "line": {
+      "en": "Appearance",
+      "ru": "Внешность"
+     },
+     "dice": "d20",
+     "table": "npcDetails",
+     "col": "1"
+    },
+    {
+     "line": {
+      "en": "Quirk",
+      "ru": "Причуда"
+     },
+     "dice": "d20",
+     "table": "npcDetails",
+     "col": "2"
+    },
+    {
+     "line": {
+      "en": "Wants",
+      "ru": "Хочет"
+     },
+     "dice": "d20",
+     "table": "npcDetails",
+     "col": "3"
+    },
+    {
+     "line": {
+      "en": "Relationship",
+      "ru": "Отношения"
+     },
+     "dice": "d20",
+     "table": "npcDetails",
+     "col": "4"
+    }
+   ]
+  },
+  {
+   "id": "hirelings",
+   "title": {
+    "en": "Hirelings",
+    "ru": "Наёмники"
+   },
+   "options": [
+    {
+     "key": "hireling",
+     "title": {
+      "en": "Hireling",
+      "ru": "Наёмник"
+     },
+     "type": "select",
+     "default": 0,
+     "rows": {
+      "table": "hirelings",
+      "cols": [
+       0,
+       2
+      ]
+     }
+    },
+    {
+     "key": "paid",
+     "title": {
+      "en": "Pay 20p instead of a WIL save",
+      "ru": "Заплатить 20 п вместо спасброска ВОЛ"
+     },
+     "type": "check",
+     "default": false
+    },
+    {
+     "key": "wil",
+     "title": {
+      "en": "WIL of the mouse",
+      "ru": "ВОЛ мыши"
+     },
+     "hint": {
+      "en": "The recruiting mouse's WIL: the save is d20 at or under it",
+      "ru": "ВОЛ мыши, которая нанимает: спасбросок — к20 не выше неё"
+     },
+     "type": "number",
+     "default": 9,
+     "min": 1,
+     "max": 20,
+     "when": "not(paid)"
+    }
+   ],
+   "steps": [
+    {
+     "if": "paid",
+     "then": [
+      {
+       "let": "found",
+       "formula": "1"
+      }
+     ],
+     "else": [
+      {
+       "let": "save",
+       "dice": "d20"
+      },
+      {
+       "let": "found",
+       "formula": "le(save, wil)"
+      }
+     ]
+    },
+    {
+     "if": "found",
+     "then": [
+      {
+       "let": "count",
+       "of": {
+        "table": "hirelings",
+        "row": "hireling",
+        "col": "1"
+       },
+       "quiet": true
+      }
+     ]
+    },
+    {
+     "line": {
+      "en": "Looking for",
+      "ru": "Кого ищут"
+     },
+     "parts": [
+      {
+       "table": "hirelings",
+       "row": "hireling",
+       "col": "0"
+      },
+      {
+       "table": "hirelings",
+       "row": "hireling",
+       "col": "2"
+      }
+     ],
+     "notes": [
+      {
+       "if": "paid",
+       "text": {
+        "en": {
+         "one": "20p paid: {count} looks for work",
+         "other": "20p paid: {count} look for work"
+        },
+        "ru": {
+         "one": "заплачено 20 п: работу ищет {count}",
+         "few": "заплачено 20 п: работу ищут {count}",
+         "many": "заплачено 20 п: работу ищут {count}",
+         "other": "заплачено 20 п: работу ищут {count}"
+        }
+       }
+      },
+      {
+       "if": "found * not(paid)",
+       "text": {
+        "en": {
+         "one": "save passed: {count} looks for work",
+         "other": "save passed: {count} look for work"
+        },
+        "ru": {
+         "one": "спасбросок пройден: работу ищет {count}",
+         "few": "спасбросок пройден: работу ищут {count}",
+         "many": "спасбросок пройден: работу ищут {count}",
+         "other": "спасбросок пройден: работу ищут {count}"
+        }
+       }
+      },
+      {
+       "if": "not(found)",
+       "text": {
+        "en": "WIL save failed: nobody today",
+        "ru": "спасбросок ВОЛ провален: сегодня никого"
+       },
+       "warn": true
+      }
+     ]
+    },
+    {
+     "if": "found",
+     "then": [
+      {
+       "repeat": "count",
+       "steps": [
+        {
+         "let": "who",
+         "table": "mouseNames",
+         "any": true
+        },
+        {
+         "let": "hp",
+         "dice": "d6",
+         "quiet": true
+        },
+        {
+         "let": "str",
+         "dice": "2d6",
+         "quiet": true
+        },
+        {
+         "let": "dex",
+         "dice": "2d6",
+         "quiet": true
+        },
+        {
+         "let": "wils",
+         "dice": "2d6",
+         "quiet": true
+        },
+        {
+         "line": {
+          "en": "Hireling",
+          "ru": "Наёмник"
+         },
+         "parts": [
+          {
+           "table": "mouseNames",
+           "row": "who",
+           "col": "0"
+          },
+          {
+           "table": "hirelings",
+           "row": "hireling",
+           "col": "0"
+          }
+         ],
+         "text": {
+          "en": "{0} ({low1}) — HP {hp}, STR {str}, DEX {dex}, WIL {wils}",
+          "ru": "{0} ({low1}) — ПЗ {hp}, СИЛ {str}, ЛОВ {dex}, ВОЛ {wils}"
+         },
+         "card": {
+          "kind": "npc",
+          "name": {
+           "table": "mouseNames",
+           "row": "who",
+           "col": "0"
+          },
+          "stats": {
+           "hp": "hp",
+           "str": "str",
+           "dex": "dex",
+           "wil": "wils"
+          },
+          "fixed": {
+           "armour": 0,
+           "attacks": [],
+           "critical": "",
+           "abilities": [],
+           "wants": ""
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "seed",
+   "title": {
+    "en": "Adventure seed",
+    "ru": "Завязка"
+   },
+   "steps": [
+    {
+     "let": "a",
+     "dice": "d6",
+     "quiet": true
+    },
+    {
+     "let": "b",
+     "dice": "d6",
+     "quiet": true
+    },
+    {
+     "line": {
+      "en": "Creature",
+      "ru": "Существо"
+     },
+     "text": "{0}",
+     "table": "seed",
+     "row": "(a - 1) * 6 + b - 1",
+     "col": "1"
+    },
+    {
+     "let": "a",
+     "dice": "d6",
+     "quiet": true
+    },
+    {
+     "let": "b",
+     "dice": "d6",
+     "quiet": true
+    },
+    {
+     "line": {
+      "en": "Problem",
+      "ru": "Беда"
+     },
+     "text": "{0}",
+     "table": "seed",
+     "row": "(a - 1) * 6 + b - 1",
+     "col": "2"
+    },
+    {
+     "let": "a",
+     "dice": "d6",
+     "quiet": true
+    },
+    {
+     "let": "b",
+     "dice": "d6",
+     "quiet": true
+    },
+    {
+     "line": {
+      "en": "Complication",
+      "ru": "Сложность"
+     },
+     "text": "{0}",
+     "table": "seed",
+     "row": "(a - 1) * 6 + b - 1",
+     "col": "3"
+    }
+   ]
+  },
+  {
+   "id": "weather",
+   "title": {
+    "en": "Weather",
+    "ru": "Погода"
+   },
+   "options": [
+    {
+     "key": "season",
+     "title": {
+      "en": "Season",
+      "ru": "Время года"
+     },
+     "type": "select",
+     "default": "Spring",
+     "choices": [
+      {
+       "value": "Spring",
+       "title": {
+        "en": "Spring",
+        "ru": "Весна"
+       }
+      },
+      {
+       "value": "Summer",
+       "title": {
+        "en": "Summer",
+        "ru": "Лето"
+       }
+      },
+      {
+       "value": "Autumn",
+       "title": {
+        "en": "Autumn",
+        "ru": "Осень"
+       }
+      },
+      {
+       "value": "Winter",
+       "title": {
+        "en": "Winter",
+        "ru": "Зима"
+       }
+      }
+     ]
+    }
+   ],
+   "steps": [
+    {
+     "let": "w",
+     "dice": "2d6"
+    },
+    {
+     "let": "row",
+     "table": "weather{season}",
+     "lookup": "w"
+    },
+    {
+     "let": "poor",
+     "table": "weather{season}",
+     "row": "row",
+     "col": "1",
+     "is": "**"
+    },
+    {
+     "line": {
+      "en": "Weather",
+      "ru": "Погода"
+     },
+     "table": "weather{season}",
+     "row": "row",
+     "notes": [
+      {
+       "if": "poor",
+       "text": {
+        "en": "poor for travel: STR save or Exhausted",
+        "ru": "плохая для пути: спасбросок СИЛ или «Измотан»"
+       },
+       "warn": true
+      }
+     ]
+    },
+    {
+     "line": {
+      "en": "Seasonal event",
+      "ru": "Событие сезона"
+     },
+     "table": "events{season}",
+     "dice": "d6"
+    }
+   ]
+  },
+  {
+   "id": "reaction",
+   "title": {
+    "en": "Reaction",
+    "ru": "Реакция"
+   },
+   "steps": [
+    {
+     "line": {
+      "en": "Reaction",
+      "ru": "Реакция"
+     },
+     "table": "reaction",
+     "dice": "2d6"
+    }
+   ]
+  }
+ ]
+}

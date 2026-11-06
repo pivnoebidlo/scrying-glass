@@ -1,6 +1,8 @@
 <!-- Боковая панель «Инструментов»: записки (и их быстрый список), общие инструменты и раздел системы текущего
      приключения; инструменты других систем — только включённые в настройках (registry.svelte.ts). -->
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { loadGenerators } from '../generators/store.svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { Pencil, Scroll, Send, Trash2 } from '@lucide/svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
@@ -18,6 +20,7 @@
   import { placeOf, TOOLS, type Place, type ToolDef } from './registry.svelte';
 
   let { app }: ModuleProps<'tools'> = $props();
+  onMount(() => void loadGenerators());
   const family = $derived(familyOf(currentSystem(app.adventures)));
   const familyTitle = $derived(FAMILIES.find((f) => f.id === family)?.title ?? family);
   // Features come and go with the packs (`vault.systems`).

@@ -21,7 +21,6 @@ export const FEATURES: FeatureDef[] = [
   { id: 'exploration', since: 2 },
   { id: 'factions', since: 2 },
   { id: 'mouse', since: 2, bound: true },
-  { id: 'mausTables', since: 2, bound: true },
   { id: 'mausShop', since: 2, bound: true },
   { id: 'build', since: 2, bound: true },
 ];
@@ -40,7 +39,7 @@ export const freshFeatures = (format: number | undefined, uses: string[]) => new
 const OLD_USES: Record<string, string[]> = {
   fate: ['worldtime', 'aspects'],
   fitd: ['worldtime', 'clocks', 'crew'],
-  mausritter: ['exploration', 'factions', 'mouse', 'mausTables', 'mausShop', 'build'],
+  mausritter: ['exploration', 'factions', 'mouse', 'mausShop', 'build'],
 };
 export const oldUses = (family: string) => OLD_USES[family] ?? ['worldtime'];
 // The same for the rule of damage past health (TrackerSpec.overflow).

@@ -12,6 +12,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { Card, CardSource } from '../src/shared/cards';
+import { NAMES } from '../src/modules/tools/mouse/content.ts';
 
 // The SRD stat block as this script reads it; a card gets it as the fields of the Mausritter system pack
 // (content/mausritter/system/mausritter.json): hp, str, dex, wil, armour, warband (0 — warband scale), attacks (rows: name,
@@ -399,6 +400,14 @@ const WANT: [string, string, number?][] = [
   ]),
 ];
 
+// What the recipes roll on goes to the package with them; the rest of WANT stays in the app (the shop's price list).
+const recipes = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, 'mausritter-generators.json'), 'utf8'));
+const usedTables = new Set(
+  [...JSON.stringify(recipes).matchAll(/"table":"([^"]+)"/g)].flatMap((m) =>
+    m[1]!.includes('{season}') ? ['Spring', 'Summer', 'Autumn', 'Winter'].map((s) => m[1]!.replace('{season}', s)) : [m[1]!],
+  ),
+);
+
 const enTables = allTables('en');
 const ruTables = allTables('ru');
 if (enTables.length !== ruTables.length) throw new Error(`tables: en ${enTables.length}, ru ${ruTables.length}`);
@@ -411,6 +420,20 @@ for (const [id, where, nth = 0] of WANT) {
   picked.en[id] = e;
   picked.ru[id] = r;
 }
+const generators = { scryingGlass: 'generators', version: 1, system: 'mausritter', ...recipes, tables: { en: {} as Record<string, Table>, ru: {} as Record<string, Table> } };
+for (const lang of ['en', 'ru'] as const) {
+  for (const id of Object.keys(picked[lang])) {
+    if (!usedTables.has(id)) continue;
+    generators.tables[lang][id] = picked[lang][id]!;
+    delete picked[lang][id];
+  }
+  generators.tables[lang]['mouseNames'] = { head: ['Name'], rows: NAMES[lang].map((n) => [n]) };
+}
+const generatorsOut = path.join(RES, 'generators', 'mausritter.json');
+fs.mkdirSync(path.dirname(generatorsOut), { recursive: true });
+fs.writeFileSync(generatorsOut, JSON.stringify(generators) + '\n');
+console.log(`${generatorsOut}: ${recipes.generators.length} generators, ${Object.keys(generators.tables.en).length} tables`);
+
 // One row of a table per line of the file: readable and easy to compare.
 const tablesTs = (all: typeof picked) =>
   Object.entries(all)
@@ -426,8 +449,8 @@ fs.mkdirSync(path.dirname(tablesOut), { recursive: true });
 fs.writeFileSync(
   tablesOut,
   `// Built by scripts/build-mausritter.ts from scripts/mausritter-srd.<lang>.md — do not edit by hand.
-// Tables of the Mausritter SRD 2.3.1 (CC BY 4.0, Losing Games and Isaac Williams; Russian — our translation) for
-// Tools → Mausritter tables: the header and the rows as in the SRD, cells with their Markdown (**bold**).
+// The price list of the Mausritter SRD 2.3.1 (CC BY 4.0, Losing Games and Isaac Williams; Russian — our translation)
+// for Tools → Shop: the header and the rows as in the SRD, cells with their Markdown (**bold**).
 
 export interface SrdTable {
   head: string[];
@@ -438,7 +461,7 @@ export const SRD_TABLES: Record<'en' | 'ru', Record<string, SrdTable>> = {
 ${tablesTs(picked)}};
 `
 );
-console.log(`${tablesOut}: ${WANT.length} tables`);
+console.log(`${tablesOut}: ${Object.keys(picked.en).length} tables`);
 
 // ---------- Example factions (Tools → Factions) ----------
 // «### 1. Cat lord / #### Resources (list) / #### Goals (list with ○ marks)» → { name, resources, goals: [text, marks] }.

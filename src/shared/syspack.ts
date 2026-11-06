@@ -587,6 +587,15 @@ const FNS: Record<string, (...a: number[]) => number> = {
   abs: Math.abs,
   min: (...a) => Math.min(...a),
   max: (...a) => Math.max(...a),
+  // Comparisons give 1 or 0 (generators: shared/generators.ts).
+  eq: (a = 0, b = 0) => (a === b ? 1 : 0),
+  lt: (a = 0, b = 0) => (a < b ? 1 : 0),
+  le: (a = 0, b = 0) => (a <= b ? 1 : 0),
+  gt: (a = 0, b = 0) => (a > b ? 1 : 0),
+  ge: (a = 0, b = 0) => (a >= b ? 1 : 0),
+  not: (a = 0) => (a ? 0 : 1),
+  // A die: only a generator rolls (`calc`), a field of a sheet stays the same every time it is read.
+  d: () => 0,
 };
 const cache = new Map<string, Node | null>();
 
@@ -730,14 +739,24 @@ export function readFormula(text: string, name: (key: string) => string, words: 
   return say(node);
 }
 
-function evalNode(n: Node, vars: (name: string) => number): number {
+function evalNode(n: Node, vars: (name: string) => number, die?: (sides: number) => number): number {
   if ('n' in n) return n.n;
   if ('v' in n) return vars(n.v);
-  if ('neg' in n) return -evalNode(n.neg, vars);
-  if ('fn' in n) return FNS[n.fn]!(...n.args.map((a) => evalNode(a, vars)));
-  const a = evalNode(n.a, vars);
-  const b = evalNode(n.b, vars);
+  if ('neg' in n) return -evalNode(n.neg, vars, die);
+  if ('fn' in n) {
+    const args = n.args.map((a) => evalNode(a, vars, die));
+    return n.fn === 'd' && die ? die(Math.max(1, Math.round(args[0] ?? 1))) : FNS[n.fn]!(...args);
+  }
+  const a = evalNode(n.a, vars, die);
+  const b = evalNode(n.b, vars, die);
   return n.op === '+' ? a + b : n.op === '-' ? a - b : n.op === '*' ? a * b : b === 0 ? 0 : a / b;
+}
+
+// A formula over named numbers, with `d(n)` rolled by `die`.
+export function calc(text: string, vars: (name: string) => number, die: (sides: number) => number): number {
+  const node = parseFormula(text);
+  const value = node ? evalNode(node, vars, die) : 0;
+  return Number.isFinite(value) ? value : 0;
 }
 
 // A field as a number: numbers and dots as they are, a track — the boxes marked, a select — the option's number
