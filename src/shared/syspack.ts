@@ -95,6 +95,8 @@ export interface ColumnDef {
   // In a section of lines: a number with its sign (+3); how the cell looks.
   signed?: boolean;
   show?: ColumnShow;
+  // long: names of the compendium in it become links.
+  links?: LinkKind;
   // dice: the cell rolls ({1d8+11} piercing, or just dice) and has a ×2 button: doubling the dice or the total.
   crit?: CritBy;
 }
@@ -130,6 +132,8 @@ export interface FieldDef {
   signed?: boolean;
   bare?: boolean;
   chips?: boolean;
+  // textarea: names of the compendium in it become links: 'em' — in italics, 'text' — anywhere.
+  links?: LinkKind;
   // number: left empty, it counts by this formula (a typed value wins).
   auto?: string;
   // A roll by a click on the field (on a row of a list).
@@ -140,6 +144,8 @@ export interface FieldDef {
   live?: LiveBy;
 }
 
+export type LinkKind = 'em' | 'text';
+const LINK_KINDS: LinkKind[] = ['em', 'text'];
 export type FieldJoin = ',' | ';';
 export const FIELD_JOINS: FieldJoin[] = [',', ';'];
 export type LiveBy = 'both' | 'gm';
@@ -157,6 +163,8 @@ export interface SectionDef {
   title: Loc;
   // Only for these kinds of cards (none — for all).
   kinds?: CardKind[];
+  // A tab of the card: sections of one tab go together; none — above the tabs, always in view.
+  tab?: Loc;
   // 'lines' — a stat block: fields as lines of text, in the order of a book; 'grid' — a table the fields fill row by
   // row (`grid`); none — tiles.
   view?: 'lines' | 'grid';
@@ -184,7 +192,7 @@ export interface TrackerSpec {
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 7;
+export const PACK_FORMAT = 8;
 
 export interface SystemPack {
   scryingGlass: 'system';
@@ -509,7 +517,7 @@ function fieldOf(x: unknown): FieldDef | null {
       ? x['columns'].flatMap((c) => {
           if (!isObj(c) || typeof c['key'] !== 'string' || !KEY_RE.test(c['key']) || !COLUMN_TYPES.includes(c['type'] as ColumnType)) return [];
           const t = locOf(c['title']);
-          return t ? [{ key: c['key'], type: c['type'] as ColumnType, title: t, ...(num(c['max']) ? { max: num(c['max']) } : {}), ...(c['signed'] === true ? { signed: true } : {}), ...(COLUMN_SHOWS.includes(c['show'] as ColumnShow) ? { show: c['show'] as ColumnShow } : {}), ...(CRIT_BYS.includes(c['crit'] as CritBy) ? { crit: c['crit'] as CritBy } : {}) }] : [];
+          return t ? [{ key: c['key'], type: c['type'] as ColumnType, title: t, ...(num(c['max']) ? { max: num(c['max']) } : {}), ...(c['signed'] === true ? { signed: true } : {}), ...(COLUMN_SHOWS.includes(c['show'] as ColumnShow) ? { show: c['show'] as ColumnShow } : {}), ...(CRIT_BYS.includes(c['crit'] as CritBy) ? { crit: c['crit'] as CritBy } : {}), ...(LINK_KINDS.includes(c['links'] as LinkKind) ? { links: c['links'] as LinkKind } : {}) }] : [];
         })
       : [];
     if (!columns.length) return null;
@@ -534,6 +542,7 @@ function fieldOf(x: unknown): FieldDef | null {
   if (x['chips'] === true && type === 'tags') f.chips = true;
   if (x['rowLines'] === true && type === 'list') f.rowLines = true;
   if (type === 'number' && formulaOf(x['auto'])) f.auto = x['auto'] as string;
+  if (type === 'textarea' && LINK_KINDS.includes(x['links'] as LinkKind)) f.links = x['links'] as LinkKind;
   if (x['roll'] !== undefined) {
     const roll = rollOf(x['roll']);
     if (roll) f.roll = roll;
@@ -608,7 +617,7 @@ export function validatePack(x: unknown): SystemPack | string {
       fields.push(f);
     }
     const kinds = Array.isArray(s['kinds']) ? s['kinds'].filter((k): k is CardKind => KINDS.includes(k as CardKind)) : [];
-    sections.push({ id: s['id'], title: st, fields, ...(kinds.length ? { kinds } : {}), ...viewOf(s), ...(s['noTitle'] === true ? { noTitle: true } : {}) });
+    sections.push({ id: s['id'], title: st, fields, ...(kinds.length ? { kinds } : {}), ...viewOf(s), ...(locOf(s['tab']) ? { tab: locOf(s['tab'])! } : {}), ...(s['noTitle'] === true ? { noTitle: true } : {}) });
   }
   if (!sections.length) return 'sections';
   const t = isObj(x['tracker']) ? x['tracker'] : {};
@@ -981,6 +990,12 @@ export const aloneOnLine = (f: FieldDef) => f.type === 'textarea' || f.type === 
 export const cellDice = (text: string) => [...text.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]!).join('+') || (diceOf(text.trim()) ? text.trim() : '');
 export const cellText = (text: string) => text.replace(/\{([^}]+)\}/g, '$1');
 export const signedNum = (n: number) => (n < 0 ? `−${-n}` : `+${n}`);
+
+// Tabs of a card: the titles in order, the sections above them and those of a tab.
+export function tabsOf<T extends { tab?: Loc }>(sections: T[], lang: string) {
+  const title = (s: T) => (s.tab ? loc(s.tab, lang) : '');
+  return { tabs: [...new Set(sections.map(title).filter(Boolean))], top: sections.filter((s) => !s.tab), of: (tab: string) => sections.filter((s) => title(s) === tab) };
+}
 
 // The sections a kind of card has.
 export const sectionsFor = (pack: SystemPack, kind: CardKind) => pack.sections.filter((s) => !s.kinds || s.kinds.includes(kind));

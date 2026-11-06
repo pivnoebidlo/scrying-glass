@@ -244,6 +244,7 @@
               <label class="row" title={t('sb.gridHint')}><span>{t('sb.gridRows')}</span><textarea rows="3" disabled={ro} value={sec.grid.rows.map(L).join('\n')} onchange={(e) => (sec.grid!.rows = gridLines(sec.grid!.rows, e.currentTarget.value))}></textarea></label>
             {/if}
             {#if sec.view}<label class="check"><input type="checkbox" disabled={ro} checked={!!sec.noTitle} onchange={(e) => (e.currentTarget.checked ? (sec.noTitle = true) : delete sec.noTitle)} /> {t('sb.noTitle')}</label>{/if}
+            <div class="row" title={t('sb.tabHint')}><span>{t('sb.tab')}</span><LocInput value={sec.tab} set={(v) => (v ? (sec.tab = v) : delete sec.tab)} disabled={ro} /></div>
             <div class="row">
               <span>{t('sb.sectionKinds')}</span>
               {#each KINDS as k (k)}

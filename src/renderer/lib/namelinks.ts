@@ -3,8 +3,8 @@
 //   'em'   — статблок: заклинания там пишут курсивом («*огненный шар*»), ссылкой становится курсив с точным названием;
 //   'text' — список заклинаний в листе персонажа: названия ищутся во всём тексте.
 // Текст перерисовывается Svelte ({@html}) — MutationObserver применяет ссылки заново.
-import { t } from '../../renderer/lib/i18n.svelte';
-import { peekEntry } from '../../renderer/lib/entry/peek.svelte';
+import { t } from './i18n.svelte';
+import { peekEntry } from './entry/peek.svelte';
 import { onNameIndex, linkedName, namePattern } from '../../shared/nameindex';
 
 const link = (name: string, text: string) => {
@@ -53,13 +53,16 @@ function linkText(root: HTMLElement) {
   }
 }
 
-export function spellLinks(node: HTMLElement, mode: 'em' | 'text' = 'em') {
+export type LinkMode = 'em' | 'text';
+
+// null — nothing is linked.
+export function spellLinks(node: HTMLElement, mode: LinkMode | null = 'em') {
   let current = mode;
   const observer = new MutationObserver(() => apply());
   function apply() {
     observer.disconnect();
     if (current === 'em') linkEm(node);
-    else linkText(node);
+    else if (current === 'text') linkText(node);
     observer.observe(node, { childList: true, subtree: true, characterData: true });
   }
   function click(e: MouseEvent) {
@@ -73,7 +76,7 @@ export function spellLinks(node: HTMLElement, mode: 'em' | 'text' = 'em') {
   const off = onNameIndex(apply);
   apply();
   return {
-    update(m: 'em' | 'text') {
+    update(m: LinkMode | null) {
       current = m;
       apply();
     },

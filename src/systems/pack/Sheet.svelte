@@ -6,9 +6,10 @@
   import type { Card } from '../../shared/cards';
   import { modeOf, rolls } from '../../renderer/lib/rolls.svelte';
   import { usedAfter } from '../../shared/players';
-  import { aloneOnLine, boxesOf, cellDice, cellText, evalFormula, lineGroups, loc, longColumn, packResources, sectionsFor, signedNum, slotGroups, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { aloneOnLine, boxesOf, cellDice, cellText, evalFormula, lineGroups, loc, longColumn, packResources, sectionsFor, signedNum, slotGroups, tabsOf, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
   import { entryHtml } from '../../renderer/lib/entry/markup';
   import { peekEntry } from '../../renderer/lib/entry/peek.svelte';
+  import { spellLinks } from '../../renderer/lib/namelinks';
   import { sheetUsage } from '../../renderer/lib/sheetusage.svelte';
   import { packOf } from '../packs';
 
@@ -108,6 +109,17 @@
   // A cell on a line of text: a number with its sign if the column says so.
   const inlineCell = (c: ColumnDef, v: unknown) => (c.signed && typeof v === 'number' ? signedNum(v) : cell_(v));
   const cell_ = (v: unknown) => (Array.isArray(v) ? v.join(', ') : v === undefined || v === null ? '' : String(v));
+  // Tabs of the card: remembered while the card is open.
+  const split = $derived(tabsOf(sections, lang));
+  let tab = $state('');
+  const tabNow = $derived(split.tabs.includes(tab) ? tab : (split.tabs[0] ?? ''));
+  const shownSections = $derived(split.tabs.length ? [...split.top, ...split.of(tabNow)] : sections);
+  // A paragraph with an attack: the number and its damage, the dice in one roll.
+  const attackOf = (f: FieldDef, row: Record<string, unknown>) => {
+    const main = f.columns?.find((c) => c.type === 'number' && hasCell(row[c.key]));
+    return f.roll?.type === 'd20' && main ? Number(row[main.key]) : null;
+  };
+  const damageOf = (f: FieldDef, row: Record<string, unknown>) => (f.columns ?? []).filter((c) => c.type === 'dice' && hasCell(row[c.key])).map((c) => String(row[c.key]));
   const shownCols = (f: FieldDef) => (f.columns ?? []).filter((c) => c.type !== 'long' && c.show !== 'hidden');
   const visibleCols = (f: FieldDef) => (f.columns ?? []).filter((c) => c.show !== 'hidden');
   const hasCell = (v: unknown) => cell_(v).trim() !== '';
@@ -158,7 +170,7 @@
 {#snippet wideField(f: FieldDef)}
     {#if f.type === 'textarea'}
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-      <div class="long md" onclick={(e) => onText(e, L(f.title))}>{@html md(`**${L(f.title)}.** ${text(f)}`)}</div>
+      <div class="long md" use:spellLinks={f.links ?? null} onclick={(e) => onText(e, L(f.title))}>{@html md(`**${L(f.title)}.** ${text(f)}`)}</div>
     {:else if f.type === 'tags'}
       <p class="long"><b>{L(f.title)}:</b> {#each tags(f) as tag, i (i)}<span class="tag">{tag}</span>{/each}</p>
     {:else if f.type === 'slots'}
@@ -213,7 +225,12 @@
         {#each resets as r (r.id)}<button class="btn" onclick={() => reset(r.id, L(r.title))}>{L(r.title)}</button>{/each}
       </div>
     {/if}
-    {#each sections as sec (sec.id)}
+    {#if split.tabs.length}
+      <div class="tabs" role="tablist">
+        {#each split.tabs as x (x)}<button role="tab" aria-selected={x === tabNow} class:active={x === tabNow} onclick={() => (tab = x)}>{x}</button>{/each}
+      </div>
+    {/if}
+    {#each shownSections as sec (sec.id)}
       <section class:lines={sec.view === 'lines' || sec.view === 'grid'}>
         {#if !sec.noTitle}<h3>{L(sec.title)}</h3>{/if}
         {#if sec.view === 'grid' && sec.grid}
@@ -236,17 +253,24 @@
               <div class="chips">{#each tags(first) as tag, i (i)}<span class="chip">{tag}</span>{/each}</div>
             {:else if first.type === 'textarea'}
               <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-              <div class="md" onclick={(e) => onText(e, L(first.title))}>{@html md(first.bare ? text(first) : `**${L(first.title)}** ${text(first)}`)}</div>
+              <div class="md" use:spellLinks={first.links ?? null} onclick={(e) => onText(e, L(first.title))}>{@html md(first.bare ? text(first) : `**${L(first.title)}** ${text(first)}`)}</div>
             {:else if first.type === 'list' && longColumn(first)}
               {#each rows(first) as row, r (r)}
                 {@const name = String(row[shownCols(first)[0]?.key ?? ''] ?? '')}
                 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
                 <div class="feature" onclick={(e) => onText(e, name)}>
                   <strong>{name}</strong>
-                  {#each shownCols(first).slice(1) as c (c.key)}
+                  {#each shownCols(first).slice(1).filter((c) => c.type === 'text') as c (c.key)}
                     {#if hasCell(row[c.key])}{' '}{#if c.show === 'note'}<span class="note">({cell_(row[c.key])})</span>{:else}<span>{inlineCell(c, row[c.key])}</span>{/if}{/if}
                   {/each}
-                  {#if String(row[longColumn(first)!.key] ?? '').trim()}<div class="md">{@html md(String(row[longColumn(first)!.key]))}</div>{/if}
+                  {#if String(row[longColumn(first)!.key] ?? '').trim()}<div class="md" use:spellLinks={longColumn(first)!.links ?? null}>{@html md(String(row[longColumn(first)!.key]))}</div>{/if}
+                  {#if attackOf(first, row) !== null}
+                    {@const bonus = attackOf(first, row)!}
+                    <div class="attack">
+                      <button class="btn small" title={t('pack.rollHint')} onclick={(e) => rolls.attack(card.name, name, bonus, damageOf(first, row), modeOf(e))}>{t('pack.attack', { bonus: signedNum(bonus) })}</button>
+                      {#each damageOf(first, row) as d, i (i)}<button class="btn small" title={t('pack.damageHint')} onclick={(e) => rolls.damage(card.name, name, d, e.shiftKey)}>{d}</button>{/each}
+                    </div>
+                  {/if}
                 </div>
               {/each}
             {:else if first.type === 'list' && first.rowLines}
@@ -446,6 +470,32 @@
   }
   .line {
     margin: 2px 0;
+  }
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    margin: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tabs button {
+    padding: 4px 10px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    cursor: pointer;
+  }
+  .tabs button.active {
+    border-bottom-color: var(--accent);
+    color: var(--text-normal);
+  }
+  .attack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 3px;
   }
   table.fields {
     width: auto;

@@ -9,7 +9,7 @@
   import { Dices, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import ChangeInput from './ChangeInput.svelte';
-  import { COLUMN_SHOWS, COLUMN_TYPES, CRIT_BYS, evalFormula, type ColumnShow, type CritBy, FIELD_JOINS, type FieldJoin, FIELD_TYPES, fieldMap, LIVE_TYPES, loc, newField, newRoll, type FieldDef, type FieldType, type LiveBy, type Loc, type RollSpec, POOL_KINDS, type PoolKind, type SystemPack } from '../../../shared/syspack';
+  import { COLUMN_SHOWS, COLUMN_TYPES, CRIT_BYS, evalFormula, type ColumnShow, type CritBy, FIELD_JOINS, type FieldJoin, FIELD_TYPES, fieldMap, LIVE_TYPES, loc, newField, newRoll, type FieldDef, type FieldType, type LinkKind, type LiveBy, type Loc, type RollSpec, POOL_KINDS, type PoolKind, type SystemPack } from '../../../shared/syspack';
   import { keyFrom } from '../../../shared/compendium';
   import { getLang } from '../../../shared/i18n';
   import { rolls } from '../../../renderer/lib/rolls.svelte';
@@ -103,6 +103,16 @@
     c.title = title;
   };
 </script>
+
+{#snippet linksOf(value: LinkKind | undefined, set: (v: LinkKind | undefined) => void)}
+  <label class="row"><span>{t('sb.links')}</span>
+    <select {disabled} value={value ?? ''} onchange={(e) => set((e.currentTarget.value || undefined) as LinkKind | undefined)}>
+      <option value="">{t('sb.linksNone')}</option>
+      <option value="em">{t('sb.linksEm')}</option>
+      <option value="text">{t('sb.linksText')}</option>
+    </select>
+  </label>
+{/snippet}
 
 {#snippet formula(value: string, set: (v: string) => void, placeholder = '')}
   <FormulaInput {value} {set} {keys} row={cols} {names} {numeric} example={example(value)} {disabled} {placeholder} />
@@ -205,6 +215,7 @@
               {#each COLUMN_SHOWS as sh (sh)}<option value={sh}>{t(`sb.colShow.${sh}`)}</option>{/each}
             </select>
           {/if}
+          {#if c.type === 'long'}{@render linksOf(c.links, (v) => (v ? (c.links = v) : delete c.links))}{/if}
           {#if lines && c.type === 'dice'}
             <select {disabled} aria-label={t('sb.crit')} value={c.crit ?? ''} onchange={(e) => (e.currentTarget.value ? (c.crit = e.currentTarget.value as CritBy) : delete c.crit)}>
               <option value="">{t('sb.critNone')}</option>
@@ -427,6 +438,7 @@
         {#if f.type === 'list'}<label class="check"><input type="checkbox" {disabled} checked={!!f.rowLines} onchange={(e) => (e.currentTarget.checked ? (f.rowLines = true) : delete f.rowLines)} /> {t('sb.rowLines')}</label>{/if}
         {#if f.type === 'tags'}<label class="check"><input type="checkbox" {disabled} checked={!!f.chips} onchange={(e) => (e.currentTarget.checked ? (f.chips = true) : delete f.chips)} /> {t('sb.chips')}</label>{/if}
       {/if}
+      {#if f.type === 'textarea'}{@render linksOf(f.links, (v) => (v ? (f.links = v) : delete f.links))}{/if}
       {#if f.type === 'number'}
         <div class="row" title={t('sb.autoHint')}><span>{t('sb.auto')}</span>{@render formula(f.auto ?? '', (v) => (v.trim() ? (f.auto = v) : delete f.auto))}</div>
       {/if}

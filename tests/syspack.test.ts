@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { threatByHeroes, threatOfRaw } from '../src/shared/threat';
 import { describe, expect, it } from 'vitest';
-import { cellDice, cellText, entryLine, filterMatches, filterValues, groupOfEntry, lineGroups, signedNum, type FieldDef, blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
+import { cellDice, cellText, tabsOf, entryLine, filterMatches, filterValues, groupOfEntry, lineGroups, signedNum, type FieldDef, blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
 
 const words: RollWords = { success: 'Success', failure: 'Failure', successes: (n) => `${n} successes`, critical: 'Critical' };
 // Dice that fall as told, in order.
@@ -537,6 +537,24 @@ describe('a pool with special dice', () => {
     expect(filterMatches(b, t.filters!, { ritual: 'no' })).toBe(true);
     expect(groupOfEntry({ rank: 0 }, t.groupBy!, 'en')).toEqual({ order: 0, title: 'Cantrips' });
     expect(groupOfEntry({ rank: 3 }, t.groupBy!, 'en')).toEqual({ order: 3, title: 'Rank 3' });
+  });
+
+  it('tabs of a card and names into links', () => {
+    const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', tracker: {}, sections: [
+      { id: 'a', title: 'A', fields: [{ key: 't', title: 'T', type: 'textarea', links: 'text' }, { key: 'u', title: 'U', type: 'number', links: 'text' }] },
+      { id: 'b', title: 'B', tab: { en: 'Skills', ru: 'Навыки' }, fields: [{ key: 'l', title: 'L', type: 'list', columns: [{ key: 'x', type: 'long', title: 'X', links: 'em' }, { key: 'y', type: 'text', title: 'Y', links: 'no' }] }] },
+      { id: 'c', title: 'C', tab: 'Gear', fields: [] },
+      { id: 'd', title: 'D', tab: { en: 'Skills', ru: 'Навыки' }, fields: [] },
+    ] };
+    const p = validatePack(raw) as SystemPack;
+    const m = fieldMap(p);
+    expect(m.get('t')?.links).toBe('text');
+    expect(m.get('u')).not.toHaveProperty('links');
+    expect(m.get('l')?.columns).toEqual([{ key: 'x', type: 'long', title: 'X', links: 'em' }, { key: 'y', type: 'text', title: 'Y' }]);
+    const tabs = tabsOf(p.sections, 'ru');
+    expect(tabs.tabs).toEqual(['Навыки', 'Gear']);
+    expect(tabs.top.map((s) => s.id)).toEqual(['a']);
+    expect(tabs.of('Навыки').map((s) => s.id)).toEqual(['b', 'd']);
   });
 
   it('its fields and kit are valid: a whole game without code', () => {

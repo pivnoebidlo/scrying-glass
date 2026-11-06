@@ -5,7 +5,7 @@
   import { labels } from '../../shared/i18n';
   import type { Card } from '../../shared/cards';
   import { markdown } from '../../renderer/lib/markdown';
-  import { spellLinks } from './links';
+  import { spellLinks } from '../../renderer/lib/namelinks';
   import { modeOf, rolls, rollHint } from '../../renderer/lib/rolls.svelte';
   import { sheetUsage } from '../../renderer/lib/sheetusage.svelte';
   import { parseBonus, parseDice } from '../../shared/dice';
