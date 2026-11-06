@@ -148,8 +148,9 @@ export interface FieldDef {
 
 export type LinkKind = 'em' | 'text';
 const LINK_KINDS: LinkKind[] = ['em', 'text'];
-export type FieldJoin = ',' | ';';
-export const FIELD_JOINS: FieldJoin[] = [',', ';'];
+// '(' — in brackets after the previous field: 10 (3d6).
+export type FieldJoin = ',' | ';' | '(';
+export const FIELD_JOINS: FieldJoin[] = [',', ';', '('];
 export type LiveBy = 'both' | 'gm';
 export const LIVE_TYPES: FieldType[] = ['track', 'dots', 'number', 'formula'];
 
@@ -194,7 +195,7 @@ export interface TrackerSpec {
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 8;
+export const PACK_FORMAT = 9;
 
 export interface SystemPack {
   scryingGlass: 'system';

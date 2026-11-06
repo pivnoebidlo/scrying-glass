@@ -435,6 +435,7 @@ describe('a pool with special dice', () => {
       f('feats', { type: 'list', join: ',', columns: [{ key: 'text', type: 'long', title: 't' }] }),
     ]);
     expect(lines.map((l) => l.map((x) => x.key))).toEqual([['ac', 'fort', 'ref'], ['hp'], ['text'], ['after'], ['tags'], ['skills'], ['feats']]);
+    expect(lineGroups([f('hp'), f('dice', { join: '(' })]).map((l) => l.length)).toEqual([2]);
     expect(signedNum(3)).toBe('+3');
     expect(signedNum(-1)).toBe('−1');
     expect(signedNum(0)).toBe('+0');

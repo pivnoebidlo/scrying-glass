@@ -7,7 +7,9 @@
   import { modeOf, rolls } from '../../renderer/lib/rolls.svelte';
   import { usedAfter } from '../../shared/players';
   import { aloneOnLine, boxesOf, cellDice, cellText, evalFormula, lineGroups, loc, longColumn, packResources, sectionsFor, signedNum, slotGroups, tabsOf, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { Dices } from '@lucide/svelte';
   import { entryHtml } from '../../renderer/lib/entry/markup';
+  import { escape } from '../../renderer/lib/markdown';
   import { peekEntry } from '../../renderer/lib/entry/peek.svelte';
   import { spellLinks } from '../../renderer/lib/namelinks';
   import { sheetUsage } from '../../renderer/lib/sheetusage.svelte';
@@ -105,6 +107,14 @@
     }
     const dice = el.closest<HTMLElement>('button.dice');
     if (dice?.dataset['dice']) rolls.damage(card.name, what, dice.dataset['dice']);
+  }
+  // A paragraph of an ability: its name opens the text, «Bite (Recharge 5–6). In melee…».
+  function featureHtml(f: FieldDef, row: Record<string, unknown>, name: string) {
+    const rest = shownCols(f).slice(1).filter((c) => c.type === 'text' && hasCell(row[c.key]));
+    const marks = rest.map((c) => (c.show === 'note' ? ` <span class="note">(${escape(cell_(row[c.key]))})</span>` : ` ${escape(inlineCell(c, row[c.key]))}`)).join('');
+    const head = `<strong><em>${escape(name)}</em></strong>${marks}`;
+    const body = md(String(row[longColumn(f)!.key] ?? '').trim());
+    return body.startsWith('<p>') ? `<p>${head}. ${body.slice(3)}` : `<p>${head}</p>${body}`;
   }
   // A cell on a line of text: a number with its sign if the column says so.
   const inlineCell = (c: ColumnDef, v: unknown) => (c.signed && typeof v === 'number' ? signedNum(v) : cell_(v));
@@ -231,7 +241,7 @@
           {#each split.tabs as x (x)}<button role="tab" aria-selected={x === tabNow} class:active={x === tabNow} onclick={() => (tab = x)}>{x}</button>{/each}
         </div>
       {/if}
-      <section class:lines={sec.view === 'lines' || sec.view === 'grid'}>
+      <section class:lines={sec.view === 'lines' || sec.view === 'grid'} class:titled={!!sec.view && !sec.noTitle}>
         {#if !sec.noTitle}<h3>{L(sec.title)}</h3>{/if}
         {#if sec.view === 'grid' && sec.grid}
           {@const n = sec.grid.columns.length}
@@ -259,16 +269,12 @@
                 {@const name = String(row[shownCols(first)[0]?.key ?? ''] ?? '')}
                 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
                 <div class="feature" onclick={(e) => onText(e, name)}>
-                  <strong>{name}</strong>
-                  {#each shownCols(first).slice(1).filter((c) => c.type === 'text') as c (c.key)}
-                    {#if hasCell(row[c.key])}{' '}{#if c.show === 'note'}<span class="note">({cell_(row[c.key])})</span>{:else}<span>{inlineCell(c, row[c.key])}</span>{/if}{/if}
-                  {/each}
-                  {#if String(row[longColumn(first)!.key] ?? '').trim()}<div class="md" use:spellLinks={longColumn(first)!.links ?? null}>{@html md(String(row[longColumn(first)!.key]))}</div>{/if}
+                  <div class="md" use:spellLinks={longColumn(first)!.links ?? null}>{@html featureHtml(first, row, name)}</div>
                   {#if attackOf(first, row) !== null}
                     {@const bonus = attackOf(first, row)!}
                     <div class="attack">
-                      <button class="btn small" title={t('pack.rollHint')} onclick={(e) => rolls.attack(card.name, name, bonus, damageOf(first, row), modeOf(e))}>{t('pack.attack', { bonus: signedNum(bonus) })}</button>
-                      {#each damageOf(first, row) as d, i (i)}<button class="btn small" title={t('pack.damageHint')} onclick={(e) => rolls.damage(card.name, name, d, e.shiftKey)}>{d}</button>{/each}
+                      <button class="roll-btn" title={t('pack.rollHint')} onclick={(e) => rolls.attack(card.name, name, bonus, damageOf(first, row), modeOf(e))}><Dices size={13} /> {t('pack.attack', { bonus: signedNum(bonus) })}</button>
+                      {#each damageOf(first, row) as d, i (i)}<button class="roll-btn" title={t('pack.damageHint')} onclick={(e) => rolls.damage(card.name, name, d, e.shiftKey)}>{d}</button>{/each}
                     </div>
                   {/if}
                 </div>
@@ -279,7 +285,7 @@
               {@render wideField(first)}
             {:else}
               <p class="line">
-                {#each line as f, i (f.key)}{i ? `${f.join} ` : ''}{#if !f.bare}<strong>{L(f.title)}</strong>{' '}{/if}{@render lineValue(f)}{/each}
+                {#each line as f, i (f.key)}{i ? (f.join === '(' ? ' (' : `${f.join} `) : ''}{#if !f.bare}<strong>{L(f.title)}</strong>{' '}{/if}{@render lineValue(f)}{i && f.join === '(' ? ')' : ''}{/each}
               </p>
             {/if}
           {/each}
@@ -459,14 +465,30 @@
     cursor: pointer;
   }
   section.lines {
-    margin-top: 8px;
-    padding-top: 6px;
-    border-top: 1px solid var(--border);
+    max-width: 720px;
+    margin-top: 10px;
+    line-height: 1.5;
+    user-select: text;
   }
-  section.lines:first-child {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
+  section.lines:not(:first-child)::before {
+    content: '';
+    display: block;
+    height: 2px;
+    margin-bottom: 10px;
+    background: linear-gradient(to right, var(--accent), transparent);
+    opacity: 0.6;
+  }
+  section.titled:not(:first-child)::before {
+    display: none;
+  }
+  section.titled h3 {
+    margin: 18px 0 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--border);
+    color: var(--accent-hover);
+    font-size: 15px;
+    letter-spacing: 0;
+    text-transform: none;
   }
   .line {
     margin: 2px 0;
@@ -495,33 +517,75 @@
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-    margin-top: 3px;
+    margin: -2px 0 8px;
   }
   table.fields {
-    width: auto;
-    min-width: 60%;
+    width: 100%;
+    max-width: 460px;
+    border-collapse: collapse;
     text-align: center;
   }
-  table.fields th:first-child {
-    text-align: right;
-    font-weight: 400;
+  table.fields th,
+  table.fields td {
+    padding: 2px 4px;
+    border: 0;
   }
+  table.fields thead th {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: none;
+  }
+  table.fields tbody th {
+    color: var(--text-faint);
+    font-size: 11px;
+    font-weight: 400;
+    text-align: right;
+  }
+  table.fields tbody tr:first-child td {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  /* A number that rolls reads as text and lights up under the mouse. */
   .inroll {
-    padding: 0;
-    border: none;
+    margin: 0 -2px;
+    padding: 0 2px;
+    border: 0;
+    border-radius: 3px;
     background: none;
-    color: var(--accent);
+    color: inherit;
     font: inherit;
     cursor: pointer;
   }
   .inroll:hover {
-    text-decoration: underline;
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .roll-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+  }
+  .roll-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-normal);
   }
   .note {
     color: var(--text-muted);
   }
   .feature {
-    margin: 4px 0;
+    margin-bottom: 4px;
+  }
+  .md :global(.note) {
+    color: var(--text-muted);
   }
   .chips {
     display: flex;

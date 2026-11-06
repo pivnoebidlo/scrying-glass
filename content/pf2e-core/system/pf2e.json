@@ -1,7 +1,7 @@
 {
  "scryingGlass": "system",
  "version": 1,
- "format": 7,
+ "format": 9,
  "id": "pf2e",
  "family": "pf2e",
  "title": "Pathfinder 2e",
@@ -1060,7 +1060,7 @@
      },
      "type": "text",
      "bare": true,
-     "join": ";"
+     "join": "("
     },
     {
      "key": "immunities",
