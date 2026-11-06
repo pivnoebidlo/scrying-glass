@@ -30,7 +30,7 @@ function tool(id: ToolDef['id'], icon: ToolDef['icon'], key: string, families?: 
   };
   // A generator of some systems belongs to the plugins that claim it, a feature — to the systems that use it
   // (getters: packs come and go; not spread anywhere).
-  if (families === SOME) Object.defineProperty(def, 'families', { get: () => claimed(id), enumerable: true });
+  if (families === SOME) Object.defineProperty(def, 'families', { get: () => [...new Set([...claimed(id), ...usedBy(id)])], enumerable: true });
   if (families === USED) Object.defineProperty(def, 'families', { get: () => usedBy(id), enumerable: true });
   if (families === FROM_PACKAGES) Object.defineProperty(def, 'families', { get: generatorFamilies, enumerable: true });
   return def;

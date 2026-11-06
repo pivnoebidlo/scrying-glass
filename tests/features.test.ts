@@ -54,6 +54,7 @@ describe('features of the core', () => {
   });
 
   it('what is written for one game is kept, not offered', () => {
+    expect(offeredFeatures().map((f) => f.id)).toContain('names');
     expect(offeredFeatures().map((f) => f.id)).not.toContain('mouse');
     const p = validatePack(raw({ format: 2, uses: ['mouse'] })) as SystemPack;
     expect(p.uses).toEqual(['mouse']);

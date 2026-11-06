@@ -130,6 +130,8 @@ export interface FieldDef {
   signed?: boolean;
   bare?: boolean;
   chips?: boolean;
+  // number: left empty, it counts by this formula (a typed value wins).
+  auto?: string;
   // A roll by a click on the field (on a row of a list).
   roll?: RollSpec;
   // A track, dots, a number (with `max`) or a formula (its value is the most there can be: hit points) marked at the
@@ -155,9 +157,11 @@ export interface SectionDef {
   title: Loc;
   // Only for these kinds of cards (none — for all).
   kinds?: CardKind[];
-  // 'lines' — a stat block: fields as lines of text, in the order of a book (none — tiles).
-  view?: 'lines';
+  // 'lines' — a stat block: fields as lines of text, in the order of a book; 'grid' — a table the fields fill row by
+  // row (`grid`); none — tiles.
+  view?: 'lines' | 'grid';
   noTitle?: boolean;
+  grid?: { columns: Loc[]; rows: Loc[] };
   fields: FieldDef[];
 }
 
@@ -180,7 +184,7 @@ export interface TrackerSpec {
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 6;
+export const PACK_FORMAT = 7;
 
 export interface SystemPack {
   scryingGlass: 'system';
@@ -309,6 +313,7 @@ export function formulaProblems(pack: SystemPack): { where: string; text: string
     if (typeof f.boxes === 'string') check(f.key, f.boxes);
     const r = f.roll as Record<string, unknown> | undefined;
     for (const k of ['bonus', 'target', 'count', 'sides']) if (typeof r?.[k] === 'string') check(f.key, r[k] as string, f.columns?.map((c) => c.key));
+    if (f.auto) check(f.key, f.auto);
     if (Array.isArray(r?.['steps'])) for (const x of r['steps'] as string[]) check(f.key, x, f.columns?.map((c) => c.key));
   }
   if (pack.tracker.init.type === 'roll' && pack.tracker.init.bonus) check('tracker', pack.tracker.init.bonus);
@@ -519,11 +524,20 @@ function fieldOf(x: unknown): FieldDef | null {
   if (x['bare'] === true) f.bare = true;
   if (x['chips'] === true && type === 'tags') f.chips = true;
   if (x['rowLines'] === true && type === 'list') f.rowLines = true;
+  if (type === 'number' && formulaOf(x['auto'])) f.auto = x['auto'] as string;
   if (x['roll'] !== undefined) {
     const roll = rollOf(x['roll']);
     if (roll) f.roll = roll;
   }
   return f;
+}
+
+function viewOf(s: Record<string, unknown>): Pick<SectionDef, 'view' | 'grid'> {
+  if (s['view'] === 'lines') return { view: 'lines' };
+  const g = isObj(s['grid']) ? s['grid'] : {};
+  const locs = (v: unknown) => (Array.isArray(v) ? v.map((x) => locOf(x)).filter((x): x is Loc => x !== null).slice(0, 12) : []);
+  const [columns, rows] = [locs(g['columns']), locs(g['rows'])];
+  return s['view'] === 'grid' && columns.length && rows.length ? { view: 'grid', grid: { columns, rows } } : {};
 }
 
 const stepsOf = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string' && !!formulaOf(v)).slice(0, 4) : []);
@@ -579,7 +593,7 @@ export function validatePack(x: unknown): SystemPack | string {
       fields.push(f);
     }
     const kinds = Array.isArray(s['kinds']) ? s['kinds'].filter((k): k is CardKind => KINDS.includes(k as CardKind)) : [];
-    sections.push({ id: s['id'], title: st, fields, ...(kinds.length ? { kinds } : {}), ...(s['view'] === 'lines' ? { view: 'lines' as const } : {}), ...(s['noTitle'] === true ? { noTitle: true } : {}) });
+    sections.push({ id: s['id'], title: st, fields, ...(kinds.length ? { kinds } : {}), ...viewOf(s), ...(s['noTitle'] === true ? { noTitle: true } : {}) });
   }
   if (!sections.length) return 'sections';
   const t = isObj(x['tracker']) ? x['tracker'] : {};
@@ -887,7 +901,9 @@ export function evalFormula(pack: SystemPack, stats: PackStats, text: string, ro
     if (!f) return 0;
     // A value marked at the table comes in the stats (pack/Sheet.svelte); a card keeps no value of a formula.
     if (f.type === 'formula') return typeof stats[f.key] === 'number' ? (stats[f.key] as number) : evalFormula(pack, stats, f.formula!, row, depth + 1);
-    return fieldNumber(f, stats[f.key]);
+    const v = stats[f.key];
+    if (f.auto && (v === undefined || v === null || v === '')) return evalFormula(pack, stats, f.auto, undefined, depth + 1);
+    return fieldNumber(f, v);
   });
   return Number.isFinite(value) ? value : 0;
 }
@@ -940,6 +956,7 @@ export function blankStats(pack: SystemPack, kind: CardKind): PackStats {
   for (const s of sectionsFor(pack, kind)) {
     for (const f of s.fields) {
       if (f.type === 'formula') continue;
+      if (f.auto) continue;
       if (f.default !== undefined) out[f.key] = f.default;
       else if (f.type === 'list' || f.type === 'tags' || f.type === 'slots') out[f.key] = [];
       else if (f.type === 'number' || f.type === 'dots' || f.type === 'track') out[f.key] = f.type === 'number' ? (f.min ?? 0) : 0;
@@ -975,6 +992,7 @@ export function packCombat(pack: SystemPack, stats: PackStats): CombatStats {
   return {
     hp: hp && hp > 0 ? Math.round(hp) : null,
     ac: t.defence && fields.has(t.defence) ? evalFormula(pack, stats, t.defence) : null,
+    ...(pack.threat?.xpField && fields.has(pack.threat.xpField) ? { xp: evalFormula(pack, stats, pack.threat.xpField) } : {}),
     initiative: Math.round(initiative),
     stress: cells.filter((f) => f.type === 'track').map((f) => ({ id: f.key, boxes: boxesOf(pack, stats, f) })),
     attrs: cells.filter((f) => f.type === 'number' || f.type === 'dots' || f.type === 'formula').map((f) => ({ id: f.key, value: Math.round(evalFormula(pack, stats, f.key)) })),

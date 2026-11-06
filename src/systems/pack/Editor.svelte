@@ -61,7 +61,11 @@
           <label class="field" class:small={f.type === 'number' || f.type === 'formula'} title={L(f.hint)}>
             <span>{L(f.title)}</span>
             {#if f.type === 'number'}
-              <input type="number" min={f.min} max={f.max} value={num(f.key)} onchange={(e) => (stats[f.key] = int(f, e.currentTarget.value))} />
+              {#if f.auto}
+                <input type="number" min={f.min} max={f.max} value={stats[f.key] ?? ''} placeholder={String(evalFormula(pack, stats, f.auto))} onchange={(e) => (e.currentTarget.value === '' ? delete stats[f.key] : (stats[f.key] = int(f, e.currentTarget.value)))} />
+              {:else}
+                <input type="number" min={f.min} max={f.max} value={num(f.key)} onchange={(e) => (stats[f.key] = int(f, e.currentTarget.value))} />
+              {/if}
             {:else if f.type === 'text'}
               <input type="text" value={str(f.key)} oninput={(e) => (stats[f.key] = e.currentTarget.value)} />
             {:else if f.type === 'select'}

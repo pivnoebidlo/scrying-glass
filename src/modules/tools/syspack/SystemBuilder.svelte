@@ -9,7 +9,7 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import type { Card, CardKind } from '../../../shared/cards';
   import { getLang } from '../../../shared/i18n';
-  import { blankStats, fieldMap, formulaProblems, loc, newField, validatePack, type FieldType, type SystemPack } from '../../../shared/syspack';
+  import { blankStats, fieldMap, formulaProblems, loc, newField, validatePack, type FieldType, type Loc, type SectionDef, type SystemPack } from '../../../shared/syspack';
   import PackSheet from '../../../systems/pack/Sheet.svelte';
   import PackEditor from '../../../systems/pack/Editor.svelte';
   import FieldPanel from './FieldPanel.svelte';
@@ -32,6 +32,22 @@
   const d = $derived(builder.draft);
   const ro = $derived(builder.readonly);
   const L = (x: Parameters<typeof loc>[0]) => loc(x, getLang());
+  // A section's look; a table starts with what a GM will rename.
+  function setView(sec: SectionDef, view: string) {
+    delete sec.view;
+    delete sec.grid;
+    if (view === 'lines') sec.view = 'lines';
+    if (view === 'grid') {
+      sec.view = 'grid';
+      sec.grid = { columns: ['A', 'B'], rows: ['1'] };
+    }
+  }
+  // Lines of a table's headers: the other language of a line stays.
+  const gridLines = (old: Loc[], text: string): Loc[] =>
+    text.split('\n').map((x) => x.trim()).filter(Boolean).map((line, i) => {
+      const was = old[i];
+      return was !== undefined && typeof was !== 'string' ? { ...was, [getLang()]: line } : line;
+    });
   const allKeys = $derived(d ? [...fieldMap(d).keys()] : []);
   const names = $derived(d ? Object.fromEntries([...fieldMap(d)].map(([k, x]) => [k, L(x.title) || k])) : {});
   const fieldCount = $derived(d ? d.sections.reduce((n, x) => n + x.fields.length, 0) : 0);
@@ -217,12 +233,17 @@
             </div>
             <label class="row"><span>{t('sb.name')}</span><LocInput value={sec.title} set={(v) => (sec.title = v)} disabled={ro} /></label>
             <label class="row"><span>{t('sb.view')}</span>
-              <select disabled={ro} value={sec.view ?? ''} onchange={(e) => (e.currentTarget.value ? (sec.view = 'lines') : delete sec.view)}>
+              <select disabled={ro} value={sec.view ?? ''} onchange={(e) => setView(sec, e.currentTarget.value)}>
                 <option value="">{t('sb.viewTiles')}</option>
                 <option value="lines">{t('sb.viewLines')}</option>
+                <option value="grid">{t('sb.viewGrid')}</option>
               </select>
             </label>
-            {#if sec.view === 'lines'}<label class="check"><input type="checkbox" disabled={ro} checked={!!sec.noTitle} onchange={(e) => (e.currentTarget.checked ? (sec.noTitle = true) : delete sec.noTitle)} /> {t('sb.noTitle')}</label>{/if}
+            {#if sec.view === 'grid' && sec.grid}
+              <label class="row" title={t('sb.gridHint')}><span>{t('sb.gridColumns')}</span><textarea rows="3" disabled={ro} value={sec.grid.columns.map(L).join('\n')} onchange={(e) => (sec.grid!.columns = gridLines(sec.grid!.columns, e.currentTarget.value))}></textarea></label>
+              <label class="row" title={t('sb.gridHint')}><span>{t('sb.gridRows')}</span><textarea rows="3" disabled={ro} value={sec.grid.rows.map(L).join('\n')} onchange={(e) => (sec.grid!.rows = gridLines(sec.grid!.rows, e.currentTarget.value))}></textarea></label>
+            {/if}
+            {#if sec.view}<label class="check"><input type="checkbox" disabled={ro} checked={!!sec.noTitle} onchange={(e) => (e.currentTarget.checked ? (sec.noTitle = true) : delete sec.noTitle)} /> {t('sb.noTitle')}</label>{/if}
             <div class="row">
               <span>{t('sb.sectionKinds')}</span>
               {#each KINDS as k (k)}

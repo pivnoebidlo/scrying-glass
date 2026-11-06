@@ -1,6 +1,7 @@
 // System packs (shared/syspack.ts): checking a pack from a stranger, formulas over a card's fields, the rolls.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { threatByHeroes, threatOfRaw } from '../src/shared/threat';
 import { describe, expect, it } from 'vitest';
 import { cellDice, cellText, entryLine, lineGroups, signedNum, type FieldDef, blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
 
@@ -486,6 +487,38 @@ describe('a pool with special dice', () => {
     const line = (v: Record<string, unknown>) => entryLine(p.entryTypes![0]!.subtitle as string, (k) => v[k]);
     expect(line({ rank: 3, actions: '◆◆', traits: ['fire', 'mental'] })).toBe('Spell 3 · ◆◆ · fire, mental');
     expect(line({ rank: 3 })).toBe('Spell 3');
+  });
+
+  it('a threat counted hero by hero, XP from a card', () => {
+    const s = threatOfRaw({ party: 4, xpField: 'xp', below: 'Trivial', levels: [{ title: 'Low' }, { title: 'Moderate' }, { title: 'High' }], perHero: [[50, 75, 100], [100, 150, 200]] }, (v: unknown) => (typeof v === 'string' ? v : null))!;
+    expect(threatByHeroes(s, 100, [1, 2])).toMatchObject({ level: 0, budgets: [150, 225, 300], next: 150 });
+    expect(threatByHeroes(s, 151, [1, 2]).level).toBe(1);
+    expect(threatByHeroes(s, 74, [1, 2]).level).toBe('below');
+    expect(threatByHeroes(s, 301, [1, 2]).level).toBe('beyond');
+    expect(threatByHeroes(s, 100, [99]).budgets).toEqual([100, 150, 200]);
+  });
+
+  it('a number left empty counts by its formula, a typed one wins; a table of fields', () => {
+    const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', tracker: {}, sections: [
+      { id: 'm', title: 'M', view: 'grid', grid: { columns: ['Str', 'Dex'], rows: ['Score', 'Save'] }, fields: [
+        { key: 'str', title: 'S', type: 'number', default: 10 }, { key: 'dex', title: 'D', type: 'number', default: 14 },
+        { key: 'str_save', title: 'SS', type: 'number', auto: 'floor((str - 10) / 2)' }, { key: 'dex_save', title: 'DS', type: 'number', auto: 'floor((dex - 10) / 2) + pb' },
+        { key: 'bad', title: 'B', type: 'text', auto: '1' },
+      ] },
+      { id: 'n', title: 'N', view: 'grid', fields: [{ key: 'pb', title: 'PB', type: 'number' }] },
+    ] };
+    const p = validatePack(raw) as SystemPack;
+    expect(p.sections[0]).toMatchObject({ view: 'grid', grid: { columns: ['Str', 'Dex'], rows: ['Score', 'Save'] } });
+    expect(p.sections[1]).not.toHaveProperty('view');
+    expect(formulaProblems(p)).toEqual([]);
+    expect(fieldMap(p).get('bad')).not.toHaveProperty('auto');
+    expect(blankStats(p, 'monster')).not.toHaveProperty('dex_save');
+    const stats = { ...blankStats(p, 'monster'), pb: 2 };
+    expect(evalFormula(p, stats, 'dex_save')).toBe(4);
+    expect(evalFormula(p, { ...stats, dex_save: 9 }, 'dex_save')).toBe(9);
+    expect(evalFormula(p, { ...stats, dex_save: 0 }, 'dex_save')).toBe(0);
+    const loop = validatePack({ ...raw, sections: [{ id: 'm', title: 'M', fields: [{ key: 'a', title: 'A', type: 'number', auto: 'b' }, { key: 'b', title: 'B', type: 'number', auto: 'a' }] }] }) as SystemPack;
+    expect(evalFormula(loop, {}, 'a')).toBe(0);
   });
 
   it('its fields and kit are valid: a whole game without code', () => {

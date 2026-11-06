@@ -39,14 +39,21 @@
   const levelsText = $derived((pack.threat?.levels ?? []).map((l) => `${loc(l.title, getLang())} | ${l.base} | ${l.extra}`).join('\n'));
   function setXp(text: string) {
     const xp = xpOfText(text);
-    if (Object.keys(xp).length) pack.threat = { party: 4, levels: [], ...pack.threat, xp };
+    if (Object.keys(xp).length || pack.threat?.perHero) pack.threat = { party: 4, levels: [], ...pack.threat, xp };
     else delete pack.threat;
+  }
+  // By a hero's level, one line each: «50 | 75 | 100».
+  const heroText = $derived((pack.threat?.perHero ?? []).map((r) => r.join(' | ')).join('\n'));
+  function setHeroes(text: string) {
+    const rows = text.split('\n').map((l) => l.split('|').map((v) => Number(v.trim()))).filter((r) => r.length && r.every(Number.isFinite) && r[0] !== 0);
+    const { perHero: _, ...rest } = pack.threat ?? { party: 4, xp: {}, levels: [] };
+    pack.threat = rows.length ? { ...rest, perHero: rows } : rest;
   }
   function setLevels(text: string) {
     const levels = text.split('\n').flatMap((line, i) => {
       const [title, base, extra] = line.split('|').map((v) => v.trim());
       const old = pack.threat?.levels[i];
-      return title && Number.isFinite(Number(base)) ? [{ title: old && typeof old.title !== 'string' ? { ...old.title, [getLang()]: title } : title, base: Number(base), extra: Number(extra) || 0 }] : [];
+      return title && Number.isFinite(Number(base ?? 0)) ? [{ title: old && typeof old.title !== 'string' ? { ...old.title, [getLang()]: title } : title, base: Number(base), extra: Number(extra) || 0 }] : [];
     });
     if (levels.length) pack.threat = { party: 4, xp: {}, ...pack.threat, levels };
     else delete pack.threat;
@@ -146,6 +153,13 @@
     <summary>{t('sb.threat')}</summary>
     <p class="faint"><Lead text={t('sb.threatHint')} /></p>
     <label class="row"><span>{t('sb.threatXp')}</span><textarea rows="5" class="mono" {disabled} placeholder="-1 | 30" value={xpText(pack.threat)} onchange={(e) => setXp(e.currentTarget.value)}></textarea></label>
+    <label class="row"><span>{t('sb.threatXpField')}</span>
+      <select {disabled} value={pack.threat?.xpField ?? ''} onchange={(e) => { if (!pack.threat) return; if (e.currentTarget.value) pack.threat.xpField = e.currentTarget.value; else delete pack.threat.xpField; }}>
+        <option value="">{t('sb.threatXpDiff')}</option>
+        {#each shown as x (x.key)}<option value={x.key}>{title(x.key)}</option>{/each}
+      </select>
+    </label>
+    <label class="row"><span>{t('sb.threatPerHero')}</span><textarea rows="4" class="mono" {disabled} placeholder="50 | 75 | 100" value={heroText} onchange={(e) => setHeroes(e.currentTarget.value)}></textarea></label>
     <label class="row"><span>{t('sb.threatLevels')}</span><textarea rows="5" class="mono" {disabled} placeholder="Low | 60 | 20" value={levelsText} onchange={(e) => setLevels(e.currentTarget.value)}></textarea></label>
   </details>
 </div>

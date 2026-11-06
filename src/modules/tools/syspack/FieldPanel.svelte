@@ -427,6 +427,9 @@
         {#if f.type === 'list'}<label class="check"><input type="checkbox" {disabled} checked={!!f.rowLines} onchange={(e) => (e.currentTarget.checked ? (f.rowLines = true) : delete f.rowLines)} /> {t('sb.rowLines')}</label>{/if}
         {#if f.type === 'tags'}<label class="check"><input type="checkbox" {disabled} checked={!!f.chips} onchange={(e) => (e.currentTarget.checked ? (f.chips = true) : delete f.chips)} /> {t('sb.chips')}</label>{/if}
       {/if}
+      {#if f.type === 'number'}
+        <div class="row" title={t('sb.autoHint')}><span>{t('sb.auto')}</span>{@render formula(f.auto ?? '', (v) => (v.trim() ? (f.auto = v) : delete f.auto))}</div>
+      {/if}
       <label class="row"><span>{t('sb.hint')}</span><LocInput value={f.hint} set={(v) => (f.hint = v)} {disabled} /></label>
       {#if f.type === 'number' || f.type === 'dots'}
         <label class="check"><input type="checkbox" {disabled} checked={!!f.hideZero} onchange={(e) => (e.currentTarget.checked ? (f.hideZero = true) : delete f.hideZero)} /> {t('sb.hideZero')}</label>

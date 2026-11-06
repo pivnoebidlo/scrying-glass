@@ -9,7 +9,7 @@
   import { currentSystem } from '../shared/adventures';
   import { getLang } from '../shared/i18n';
   import { loc } from '../shared/syspack';
-  import { threatOf, type ThreatSpec } from '../shared/threat';
+  import { threatByHeroes, threatOf, type ThreatSpec } from '../shared/threat';
   import { bestiary, connectCards } from '../modules/bestiary/ui/cards.svelte';
   import type { Combatant } from '../modules/initiative/types';
   import { packOf } from './packs';
@@ -23,11 +23,18 @@
   const setting = $derived(store.state.initiative.party);
   const party = $derived(heroes.length ? { size: heroes.length, level: Math.round(heroes.reduce((a, b) => a + b, 0) / heroes.length) } : setting);
   const enemies = $derived(list.filter((c) => c.side === 'enemy'));
-  const a = $derived((bestiary.all, s ? threatOf(s, enemies.map(levelOf), party) : null));
-  const unknown = $derived(enemies.filter((c) => levelOf(c) === null).map((c) => c.name));
-  const name = $derived(!s || !a ? '' : a.level === 'beyond' ? (s.beyond ? loc(s.beyond, getLang()) : t('threat.beyond')) : loc(s.levels[a.level]?.title, getLang()));
+  const cardOf = (c: Combatant) => (c.card ? bestiary.all.find((x) => sameRef(x.ref, c.card!)) : undefined);
+  // Hero by hero, XP from the cards: the fight's heroes, else the party's size and level.
+  const byHeroes = $derived.by(() => {
+    if (!s?.perHero) return null;
+    const levels = heroes.length ? heroes : Array.from({ length: party.size }, () => party.level);
+    return threatByHeroes(s, enemies.reduce((sum, c) => sum + (cardOf(c)?.combat.xp ?? 0), 0), levels);
+  });
+  const a = $derived((bestiary.all, byHeroes ?? (s ? { ...threatOf(s, enemies.map(levelOf), party) } : null)));
+  const unknown = $derived(enemies.filter((c) => (s?.perHero ? cardOf(c)?.combat.xp === undefined : levelOf(c) === null)).map((c) => c.name));
+  const name = $derived(!s || !a ? '' : a.level === 'beyond' ? (s.beyond ? loc(s.beyond, getLang()) : t('threat.beyond')) : a.level === 'below' ? loc(s.below ?? s.levels[0]!.title, getLang()) : loc(s.levels[a.level]?.title, getLang()));
   // The border goes from calm to danger along the levels.
-  const tone = $derived(!a || !s ? '' : a.level === 'beyond' ? 'high' : a.level === 0 ? '' : a.level >= s.levels.length - 2 ? 'high' : a.level >= s.levels.length / 2 ? 'mid' : 'low');
+  const tone = $derived(!a || !s ? '' : a.level === 'beyond' ? 'high' : a.level === 'below' || a.level === 0 ? '' : a.level >= s.levels.length - 2 ? 'high' : a.level >= s.levels.length / 2 ? 'mid' : 'low');
   let open = $state(false);
 </script>
 

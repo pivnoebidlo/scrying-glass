@@ -11,7 +11,12 @@
  },
  "author": "Scrying Glass",
  "uses": [
-  "worldtime"
+  "worldtime",
+  "names",
+  "npc",
+  "tavern",
+  "settlement",
+  "hooks"
  ],
  "rank": "level",
  "subtitle": "{class} {level} · {ancestry} · {badges}",

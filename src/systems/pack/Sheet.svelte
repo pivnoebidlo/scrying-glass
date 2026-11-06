@@ -52,7 +52,8 @@
             ? typeof s[f.key] === 'number'
             : !(f.hideZero && num(f) === 0);
   const wide = (f: FieldDef) => f.type === 'textarea' || f.type === 'list' || f.type === 'tags' || f.type === 'slots';
-  const sections = $derived(sectionsFor(pack, card.kind).map((sec) => ({ ...sec, fields: sec.fields.filter(filled) })).filter((sec) => sec.fields.length));
+  // A table keeps its empty cells: the fields fill it by their place.
+  const sections = $derived(sectionsFor(pack, card.kind).map((sec) => (sec.view === 'grid' ? sec : { ...sec, fields: sec.fields.filter(filled) })).filter((sec) => sec.fields.length));
 
   function roll(f: FieldDef, e: MouseEvent, row?: Record<string, unknown>, extra = 0, step = 0) {
     if (!f.roll) return;
@@ -213,9 +214,22 @@
       </div>
     {/if}
     {#each sections as sec (sec.id)}
-      <section class:lines={sec.view === 'lines'}>
+      <section class:lines={sec.view === 'lines' || sec.view === 'grid'}>
         {#if !sec.noTitle}<h3>{L(sec.title)}</h3>{/if}
-        {#if sec.view === 'lines'}
+        {#if sec.view === 'grid' && sec.grid}
+          {@const n = sec.grid.columns.length}
+          <table class="fields">
+            <thead><tr><th></th>{#each sec.grid.columns as c, i (i)}<th>{L(c)}</th>{/each}</tr></thead>
+            <tbody>
+              {#each sec.grid.rows as r, y (y)}
+                <tr>
+                  <th>{L(r)}</th>
+                  {#each sec.fields.slice(y * n, (y + 1) * n) as f (f.key)}<td>{@render lineValue(f)}</td>{/each}
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        {:else if sec.view === 'lines'}
           {#each lineGroups(sec.fields) as line, l (l)}
             {@const first = line[0]!}
             {#if first.chips}
@@ -432,6 +446,15 @@
   }
   .line {
     margin: 2px 0;
+  }
+  table.fields {
+    width: auto;
+    min-width: 60%;
+    text-align: center;
+  }
+  table.fields th:first-child {
+    text-align: right;
+    font-weight: 400;
   }
   .inroll {
     padding: 0;

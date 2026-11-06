@@ -31,7 +31,7 @@ export const dnd5ePlugin: SystemPlugin = {
   systems: [dnd('dnd5e-2024', 'D&D 5e (2024)', '2024'), dnd('dnd5e-2014', 'D&D 5e (2014)', '2014')],
   // Adventures from before the choice of systems are D&D.
   legacy: 'dnd5e-2024',
-  uses: ['worldtime'],
+  uses: ['worldtime', 'names', 'npc', 'tavern', 'settlement', 'hooks'],
   sheetEntries: ['spell'],
   sheetResources: character.sheetResources,
   entryTypes: ENTRY_TYPES,

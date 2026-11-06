@@ -18,6 +18,11 @@ export const FEATURES: FeatureDef[] = [
   { id: 'crew', since: 2 },
   { id: 'exploration', since: 2 },
   { id: 'factions', since: 2 },
+  { id: 'names', since: 7 },
+  { id: 'npc', since: 7 },
+  { id: 'tavern', since: 7 },
+  { id: 'settlement', since: 7 },
+  { id: 'hooks', since: 7 },
 ];
 
 // What the builder offers.
