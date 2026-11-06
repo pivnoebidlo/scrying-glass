@@ -7,7 +7,12 @@
   import { openTab } from '../../../renderer/lib/nav';
   import { store } from '../../../renderer/lib/store.svelte';
   import { currentSystem } from '../../../shared/adventures';
-  import { genCardOf, genText, lineWords, plainText, resultMarkdown, rollWords, type GeneratorFile, type GenLine, type GenOption, type GenOptions, type GenResult } from '../../../shared/generators';
+  import { entryHtml } from '../../../renderer/lib/entry/markup';
+  import { peekEntry } from '../../../renderer/lib/entry/peek.svelte';
+  import { rolls } from '../../../renderer/lib/rolls.svelte';
+  import { RefreshCw, Swords } from '@lucide/svelte';
+  import { toEncounter } from '../encounter';
+  import { genCardOf, genCell, genText, lineLabel, lineNames, lineWords, plainText, resultMarkdown, rollWords, type GeneratorFile, type GenLine, type GenOption, type GenOptions, type GenResult } from '../../../shared/generators';
   import Calculator from './Calculator.svelte';
   import Form from './Form.svelte';
   import PriceList from './PriceList.svelte';
@@ -16,7 +21,7 @@
   import { bestiary } from '../../bestiary/ui/cards.svelte';
   import { journalFolder } from '../../journal/ui/store.svelte';
   import { openPage } from '../../journal/ui/ui.svelte';
-  import { filesOf, gen, optionsOf, resultOf, rollNow, save } from './store.svelte';
+  import { filesOf, gen, optionsOf, rerollAt as rerollIn, resultOf, rollNow, save, setOption } from './store.svelte';
 
   const lang = $derived(locale.lang);
   const family = $derived(familyOf(currentSystem(store.state.adventures)));
@@ -38,6 +43,7 @@
     save();
   }
   // An option shown only while its condition holds.
+  const setOpt = (key: string, value: GenOptions[string]) => now && setOption(now.file, now.g, key, value);
   const shown = (o: GenOption) => !o.when || !!calc(o.when, (k) => Number(opts[k] ?? 0), () => 1);
   const rowsOf = (f: GeneratorFile, o: GenOption) => f.tables[lang]?.[o.rows!.table]?.rows ?? f.tables['en']?.[o.rows!.table]?.rows ?? [];
 
@@ -53,6 +59,22 @@
     copied = true;
     setTimeout(() => (copied = false), 1200);
   }
+  // A line's text: its markup, [[links]] open on the side, {dice} roll.
+  const lineHtml = (s: string) => entryHtml(s, { dice: true }).replace(/^<p>|<\/p>$/g, '');
+  function onText(e: MouseEvent, what: string) {
+    const el = e.target as HTMLElement;
+    const link = el.closest<HTMLElement>('a.wikilink');
+    if (link?.dataset['link']) return peekEntry(link.dataset['link']);
+    const dice = el.closest<HTMLElement>('button.dice');
+    if (dice?.dataset['dice']) rolls.damage(what, what, dice.dataset['dice']);
+  }
+  let missing = $state('');
+  const rerollAt = (f: GeneratorFile, i: number) => now && rerollIn(f, now.g, i);
+  async function fightOf(f: GeneratorFile, l: GenLine) {
+    const names = lineNames(lineWords(f, l, lang));
+    const lost = await toEncounter(`${lineLabel(f, l, lang)}: ${names.join(', ')}`, names.map((name) => ({ name })), lang);
+    missing = lost.length ? t('tools.noCards', { names: lost.join(', ') }) : '';
+  }
   async function toJournal() {
     if (!result || !file || !now) return;
     const body = resultMarkdown(file, result, lang).replace(/^## .*\n\n/, '');
@@ -63,13 +85,17 @@
   }
 </script>
 
-{#snippet row(f: GeneratorFile, l: GenLine)}
+{#snippet row(f: GeneratorFile, l: GenLine, at?: number)}
   <li class:sep={l.sep}>
-    <span class="label">{genText(l.label, lang, l.params)}</span>
-    <span class="text">{plainText(lineWords(f, l, lang))}</span>
+    <span class="label">{lineLabel(f, l, lang)}</span>
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <span class="text rich" onclick={(e) => onText(e, lineLabel(f, l, lang))}>{@html lineHtml(lineWords(f, l, lang))}</span>
+    {#if l.noteCell}<span class="tag">{genCell(f, l.noteCell, lang)}</span>{/if}
     {#each l.notes ?? [] as n, i (i)}<span class="tag" class:warn={n.warn}>{genText(n.text, lang, l.params)}</span>{/each}
     {#if l.roll}<span class="dice faint">{rollWords(l.roll, lang)}</span>{/if}
     {#if l.card}<button class="icon-btn" title={t('gen.card')} onclick={() => card(f, l)}><IdCard size={13} /></button>{/if}
+    {#if l.fight && lineNames(lineWords(f, l, lang)).length}<button class="btn small" title={t('tools.toEncounterHint')} onclick={() => fightOf(f, l)}><Swords size={13} /> {t('tools.toEncounter')}</button>{/if}
+    {#if at !== undefined && l.picked}<button class="icon-btn" title={t('gen.reroll')} onclick={() => rerollAt(f, at)}><RefreshCw size={13} /></button>{/if}
     {#if l.sub?.length}
       <ul>{#each l.sub as s, i (i)}{@render row(f, s)}{/each}</ul>
     {/if}
@@ -115,12 +141,12 @@
     <div class="options">
       {#each (now.g.options ?? []).filter(shown) as o (o.key)}
         {#if o.type === 'check'}
-          <label class="check"><input type="checkbox" checked={!!opts[o.key]} onchange={(e) => ((opts[o.key] = e.currentTarget.checked), save())} /> {genText(o.title, lang)}</label>
+          <label class="check"><input type="checkbox" checked={!!opts[o.key]} onchange={(e) => setOpt(o.key, e.currentTarget.checked)} /> {genText(o.title, lang)}</label>
         {:else if o.type === 'number'}
-          <label title={genText(o.hint, lang)}>{genText(o.title, lang)} <input type="number" min={o.min} max={o.max} value={opts[o.key]} onchange={(e) => ((opts[o.key] = Number(e.currentTarget.value)), save())} /></label>
+          <label title={genText(o.hint, lang)}>{genText(o.title, lang)} <input type="number" min={o.min} max={o.max} value={opts[o.key]} onchange={(e) => (setOpt(o.key, Number(e.currentTarget.value)))} /></label>
         {:else}
           <label>{genText(o.title, lang)}
-            <select value={opts[o.key]} onchange={(e) => ((opts[o.key] = o.rows ? Number(e.currentTarget.value) : e.currentTarget.value), save())}>
+            <select value={opts[o.key]} onchange={(e) => setOpt(o.key, o.rows ? Number(e.currentTarget.value) : e.currentTarget.value)}>
               {#if o.rows}
                 {#each rowsOf(file, o) as r, i (i)}<option value={i}>{o.rows.cols.map((c) => r[c]).join(' · ')}</option>{/each}
               {:else}
@@ -139,7 +165,8 @@
       <p class="faint placeholder">{t('gen.empty')}</p>
     {:else}
       <section class="result">
-        <ul>{#each result.lines as l, i (i)}{@render row(file, l)}{/each}</ul>
+        <ul>{#each result.lines as l, i (i)}{@render row(file, l, i)}{/each}</ul>
+        {#if missing}<p class="faint">{missing}</p>{/if}
         {#if result.footer}<p class="total">{genText(result.footer, lang, result.params)}</p>{/if}
       </section>
     {/if}
@@ -258,5 +285,18 @@
   .total {
     margin: 8px 0 0;
     font-weight: 600;
+  }
+ .rich :global(a.wikilink) {
+    color: var(--accent);
+    text-decoration: underline dotted;
+    cursor: pointer;
+  }
+  .rich :global(button.dice) {
+    padding: 0 3px;
+    border: none;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    cursor: pointer;
   }
 </style>

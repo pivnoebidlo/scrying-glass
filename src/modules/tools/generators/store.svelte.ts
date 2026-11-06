@@ -1,7 +1,7 @@
 // Generators in the control window: the files of the packages, the chosen generator of each family, its options and
 // last results (remembered by the window). A result keeps table rows, so its text follows the interface language.
 import { familyOf } from '../../../systems';
-import { runGenerator, type Generator, type GeneratorFile, type GenOption, type GenOptions, type GenResult } from '../../../shared/generators';
+import { rerollLine, runGenerator, type Generator, type GeneratorFile, type GenOption, type GenOptions, type GenResult } from '../../../shared/generators';
 import { die } from '../../../shared/dice';
 
 const KEY = 'generators.state';
@@ -45,10 +45,21 @@ export const generatorFamilies = () => [...new Set(gen.files.map((f) => familyOf
 export const filesOf = (family: string) => gen.files.filter((f) => familyOf(f.system) === family);
 
 const keyOf = (f: GeneratorFile, g: Generator) => `${f.system}/${g.id}`;
-export const optionsOf = (f: GeneratorFile, g: Generator): GenOptions => (gen.options[keyOf(f, g)] ??= Object.fromEntries((g.options ?? []).map((o) => [o.key, defaultOf(o)])));
+// What is asked before a roll: what the GM set, else the defaults. Read while drawing: nothing is written here.
+export const optionsOf = (f: GeneratorFile, g: Generator): GenOptions => ({ ...Object.fromEntries((g.options ?? []).map((o) => [o.key, defaultOf(o)])), ...gen.options[keyOf(f, g)] });
+export function setOption(f: GeneratorFile, g: Generator, key: string, value: GenOptions[string]) {
+  gen.options[keyOf(f, g)] = { ...gen.options[keyOf(f, g)], [key]: value };
+  save();
+}
 const defaultOf = (o: GenOption) => o.default ?? (o.type === 'check' ? false : 0);
 export const resultOf = (f: GeneratorFile, g: Generator): GenResult | undefined => gen.results[keyOf(f, g)];
 
+export function rerollAt(f: GeneratorFile, g: Generator, i: number) {
+  const r = resultOf(f, g);
+  if (!r) return;
+  gen.results[keyOf(f, g)] = rerollLine($state.snapshot(f) as GeneratorFile, $state.snapshot(r) as GenResult, i, $state.snapshot(optionsOf(f, g)) as GenOptions, die);
+  save();
+}
 export function rollNow(f: GeneratorFile, g: Generator) {
   gen.results[keyOf(f, g)] = runGenerator($state.snapshot(f) as GeneratorFile, g.id, $state.snapshot(optionsOf(f, g)) as GenOptions, die);
   save();

@@ -1,6 +1,6 @@
 // D&D 5e in the control window: the stat block and the character sheet, their editors, its tools.
 import type { Component } from 'svelte';
-import { Bomb, Calculator as CalculatorIcon, CloudSun, DoorOpen, Gauge, Gem, Signpost, Sparkles, Store, Trees, Wand2 } from '@lucide/svelte';
+import { Bomb, Calculator as CalculatorIcon, CloudSun, DoorOpen, Gauge, Gem, Sparkles, Store, Trees, Wand2 } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import type { ToolDef } from '../../modules/tools/ui/registry.svelte';
 import type { PaperView, SystemUi, StatsEditor, StatsView } from '../ui';
@@ -20,7 +20,6 @@ import DungeonGenerator from './tools/dungeon/DungeonGenerator.svelte';
 import TrapGenerator from './tools/trap/TrapGenerator.svelte';
 import SkirmishGenerator from './tools/skirmish/SkirmishGenerator.svelte';
 import WeatherGenerator from './tools/weather/WeatherGenerator.svelte';
-import EventsGenerator from './tools/events/EventsGenerator.svelte';
 import TreasureGenerator from './tools/treasure/TreasureGenerator.svelte';
 import StatBlock from './StatBlock.svelte';
 import Editor from './Editor.svelte';
@@ -50,7 +49,6 @@ export const dnd5eUi: SystemUi = {
     tool('trap', Bomb, 'tools.side.trap', TrapGenerator),
     tool('skirmish', Trees, 'tools.side.skirmish', SkirmishGenerator),
     tool('weather', CloudSun, 'tools.side.weather', WeatherGenerator),
-    tool('events', Signpost, 'tools.side.events', EventsGenerator),
     tool('treasure', Gem, 'tools.side.treasure', TreasureGenerator),
     tool('difficulty', Gauge, 'tools.side.difficulty', Calculator),
     tool('pointbuy', CalculatorIcon, 'tools.side.pointbuy', PointBuy),

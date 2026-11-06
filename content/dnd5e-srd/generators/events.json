@@ -1,0 +1,4365 @@
+{
+ "scryingGlass": "generators",
+ "version": 1,
+ "system": "dnd5e-2024",
+ "title": {
+  "en": "D&D tools",
+  "ru": "Инструменты D&D"
+ },
+ "tables": {
+  "en": {
+   "events": {
+    "head": [
+     "kind",
+     "where",
+     "when",
+     "danger",
+     "label",
+     "text",
+     "check"
+    ],
+    "rows": [
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Traveller",
+      "A peddler with a laden mule offers trinkets, gossip and a dubious map.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Traveller",
+      "Pilgrims on their way to a holy site invite the heroes to walk with them.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Traveller",
+      "A wounded courier with a sealed letter begs to be taken to the nearest town.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Traveller",
+      "A wanderer offers to tell fortunes — and knows far too much about the heroes.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Traveller",
+      "A [[Knight|knight]] blocks the way and demands a duel for the honour of an unknown lady.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Traveller",
+      "A [[Scout|scout]] from a nearby garrison asks whether the heroes have seen anything strange.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Traveller",
+      "Travelling players perform by the road; one of them slips something into a hero’s pack.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Discovery",
+      "An abandoned camp, the embers still warm. Someone left in a hurry.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Discovery",
+      "An overgrown shrine; fresh flowers lie on the altar.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Discovery",
+      "A broken cart by the road: the owner is gone, the goods are untouched.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Discovery",
+      "A hanged man on an old oak, with a note pinned to his coat: “Thief”.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Discovery",
+      "A standing stone with a carving that matches a mark on a hero’s gear.",
+      "History, DC 12"
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Discovery",
+      "A spring of clear water — the first in a day’s walk.",
+      ""
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Obstacle",
+      "The signpost has been turned: the road leads the wrong way.",
+      "Survival, DC 12"
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Obstacle",
+      "The bridge is washed out — find a ford or lose half a day.",
+      "Athletics, DC 13"
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Obstacle",
+      "A toll post: the guards want {1d4} silver from each — or a bribe.",
+      "Persuasion, DC 13"
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Encounter",
+      "A pack of [[Wolf|wolves]] keeps its distance and follows the heroes.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "2",
+      "Encounter",
+      "Ambush: [[Bandit|bandits]] and their [[Bandit Captain|captain]] demand a “road fee”.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Encounter",
+      "A [[Boar|boar]] bursts out of the bushes, furious and wounded by someone’s arrow.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "2",
+      "Encounter",
+      "An [[Ogre|ogre]] sits by the road eating a cow — and looking for dessert.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "2",
+      "Encounter",
+      "A [[Wyvern|wyvern]] circles overhead, lower with every pass.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "1",
+      "Encounter",
+      "A [[Swarm of Bats|swarm of bats]] pours out of the dark, and something big follows it.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "2",
+      "Encounter",
+      "[[Ghoul|Ghouls]] dig at an old grave by the road and smell the living.",
+      ""
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Omen",
+      "A white raven follows the heroes all day and caws when they take a wrong turn.",
+      ""
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "0",
+      "Omen",
+      "A falling star lands somewhere close; the ground still glows there.",
+      ""
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "1",
+      "Omen",
+      "Someone calls a hero by name from the darkness. Nobody is there.",
+      "Insight, DC 13"
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "2",
+      "Encounter",
+      "An [[Owlbear|owlbear]] guards its nest across the path.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "2",
+      "Encounter",
+      "Webs between the trees: [[Giant Spider|giant spiders]] wait above.",
+      "Perception, DC 14"
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "1",
+      "Encounter",
+      "A [[Brown Bear|brown bear]] with cubs — do not get between them.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest",
+      "",
+      "0",
+      "Traveller",
+      "A [[Dryad|dryad]] asks the heroes to drive woodcutters away from her oak.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest",
+      "",
+      "0",
+      "Discovery",
+      "A ring of mushrooms; whoever steps inside hears distant music.",
+      "Arcana, DC 12"
+     ],
+     [
+      "obstacle",
+      "forest",
+      "",
+      "0",
+      "Obstacle",
+      "A fallen giant tree blocks the path; the way around is through brambles.",
+      "Athletics, DC 11"
+     ],
+     [
+      "encounter",
+      "forest,swamp",
+      "night",
+      "1",
+      "Encounter",
+      "A [[Will-o’-Wisp|will-o’-wisp]] beckons from between the trees.",
+      ""
+     ],
+     [
+      "encounter",
+      "plains",
+      "",
+      "1",
+      "Encounter",
+      "A herd of wild horses thunders past; a foal is caught in a hunter’s snare.",
+      "Animal Handling, DC 12"
+     ],
+     [
+      "encounter",
+      "plains",
+      "",
+      "2",
+      "Encounter",
+      "A [[Griffon|griffon]] dives at the horses.",
+      ""
+     ],
+     [
+      "discovery",
+      "plains,forest",
+      "",
+      "0",
+      "Discovery",
+      "An old battlefield: rusted armor in the grass, and a banner nobody remembers.",
+      "History, DC 13"
+     ],
+     [
+      "obstacle",
+      "plains",
+      "",
+      "1",
+      "Obstacle",
+      "Prairie fire on the horizon, and the wind is blowing this way.",
+      "Survival, DC 13"
+     ],
+     [
+      "encounter",
+      "plains,desert",
+      "",
+      "2",
+      "Encounter",
+      "The ground shakes: an [[Ankheg|ankheg]] surfaces under the cart.",
+      ""
+     ],
+     [
+      "obstacle",
+      "mountains",
+      "",
+      "1",
+      "Obstacle",
+      "A rockslide has buried the path; the only way on is along a narrow ledge.",
+      "Acrobatics, DC 13"
+     ],
+     [
+      "encounter",
+      "mountains",
+      "",
+      "1",
+      "Encounter",
+      "[[Giant Eagle|Giant eagles]] watch from the cliffs; they might help — for a price.",
+      ""
+     ],
+     [
+      "encounter",
+      "mountains",
+      "",
+      "2",
+      "Encounter",
+      "A [[Hill Giant|hill giant]] throws boulders “for fun” at anything that moves.",
+      ""
+     ],
+     [
+      "discovery",
+      "mountains",
+      "",
+      "0",
+      "Discovery",
+      "A dwarven waystone with a carved map of tunnels nobody uses any more.",
+      ""
+     ],
+     [
+      "encounter",
+      "mountains,arctic",
+      "",
+      "2",
+      "Encounter",
+      "A [[Troll|troll]] lives under the only bridge over the gorge.",
+      ""
+     ],
+     [
+      "obstacle",
+      "swamp",
+      "",
+      "1",
+      "Obstacle",
+      "The firm path ends; the bog sucks at boots, and one wrong step is enough.",
+      "Survival, DC 13"
+     ],
+     [
+      "encounter",
+      "swamp",
+      "",
+      "2",
+      "Encounter",
+      "Something huge moves under the water: a [[Crocodile|crocodile]] — or worse.",
+      ""
+     ],
+     [
+      "traveler",
+      "swamp",
+      "",
+      "1",
+      "Traveller",
+      "An old woman in a hut on stilts offers a cure — she is a [[Green Hag|green hag]].",
+      "Insight, DC 14"
+     ],
+     [
+      "encounter",
+      "swamp",
+      "",
+      "1",
+      "Encounter",
+      "[[Giant Frog|Giant frogs]] croak all around, and one of them is very hungry.",
+      ""
+     ],
+     [
+      "encounter",
+      "swamp,jungle",
+      "",
+      "1",
+      "Encounter",
+      "A cloud of [[Stirge|stirges]] rises from the reeds.",
+      ""
+     ],
+     [
+      "discovery",
+      "coast",
+      "",
+      "0",
+      "Discovery",
+      "A shipwreck on the shore; the cargo hold is still sealed.",
+      ""
+     ],
+     [
+      "encounter",
+      "coast",
+      "",
+      "1",
+      "Encounter",
+      "[[Giant Crab|Giant crabs]] defend the beach where the heroes want to camp.",
+      ""
+     ],
+     [
+      "traveler",
+      "coast",
+      "",
+      "0",
+      "Traveller",
+      "Smugglers unload a boat at dusk and offer to share — for silence.",
+      ""
+     ],
+     [
+      "encounter",
+      "coast",
+      "night",
+      "2",
+      "Encounter",
+      "A [[Sea Hag|sea hag]] sings from the rocks; the song pulls toward the water.",
+      "WIS save, DC 13"
+     ],
+     [
+      "obstacle",
+      "coast",
+      "",
+      "1",
+      "Obstacle",
+      "The tide comes in fast and cuts off the way back along the beach.",
+      "Athletics, DC 12"
+     ],
+     [
+      "encounter",
+      "desert",
+      "",
+      "2",
+      "Encounter",
+      "A [[Giant Scorpion|giant scorpion]] waits under the sand by the only well.",
+      ""
+     ],
+     [
+      "discovery",
+      "desert",
+      "",
+      "0",
+      "Discovery",
+      "The tip of a buried pyramid sticks out of a dune.",
+      ""
+     ],
+     [
+      "obstacle",
+      "desert",
+      "",
+      "1",
+      "Obstacle",
+      "The water ran out sooner than expected; the next oasis is a day away.",
+      "Survival, DC 14"
+     ],
+     [
+      "traveler",
+      "desert",
+      "",
+      "0",
+      "Traveller",
+      "A caravan of [[Camel|camels]] heads to the oasis; the caravan master wants guards.",
+      ""
+     ],
+     [
+      "encounter",
+      "desert",
+      "night",
+      "2",
+      "Encounter",
+      "A [[Mummy|mummy]] walks out of the sand toward the old tomb.",
+      ""
+     ],
+     [
+      "encounter",
+      "arctic",
+      "",
+      "2",
+      "Encounter",
+      "A [[Polar Bear|polar bear]] is hunting, and the heroes smell like food.",
+      ""
+     ],
+     [
+      "encounter",
+      "arctic",
+      "",
+      "2",
+      "Encounter",
+      "[[Winter Wolf|Winter wolves]] howl on three sides at once.",
+      ""
+     ],
+     [
+      "obstacle",
+      "arctic",
+      "",
+      "1",
+      "Obstacle",
+      "Thin ice over dark water; the far shore is close, the way around is long.",
+      "Acrobatics, DC 13"
+     ],
+     [
+      "discovery",
+      "arctic",
+      "",
+      "0",
+      "Discovery",
+      "A [[Mammoth|mammoth]] frozen in the ice, with a spear stuck in its side.",
+      ""
+     ],
+     [
+      "encounter",
+      "jungle",
+      "",
+      "2",
+      "Encounter",
+      "A [[Tiger|tiger]] has been stalking the heroes since morning.",
+      "Perception, DC 15"
+     ],
+     [
+      "encounter",
+      "jungle",
+      "",
+      "1",
+      "Encounter",
+      "A [[Constrictor Snake|constrictor snake]] drops from a branch onto the last in line.",
+      ""
+     ],
+     [
+      "discovery",
+      "jungle",
+      "",
+      "0",
+      "Discovery",
+      "A stone face, overgrown with vines, looks out of the green — its eyes are gems.",
+      ""
+     ],
+     [
+      "obstacle",
+      "jungle",
+      "",
+      "1",
+      "Obstacle",
+      "A river full of hungry fish; the vine bridge is half rotten.",
+      "Athletics, DC 13"
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "0",
+      "Traveller",
+      "A street urchin offers to show a shortcut — and the way to anything for a coin.",
+      ""
+     ],
+     [
+      "encounter",
+      "city",
+      "",
+      "1",
+      "Encounter",
+      "A pickpocket brushes past; a purse is gone.",
+      "Perception, DC 14"
+     ],
+     [
+      "encounter",
+      "city",
+      "night",
+      "2",
+      "Encounter",
+      "In a dark alley, [[Bandit|thugs]] with clubs wait for the heroes by name.",
+      ""
+     ],
+     [
+      "obstacle",
+      "city",
+      "",
+      "1",
+      "Obstacle",
+      "The [[Guard|guard]] closes the street and checks papers; the heroes have none.",
+      "Deception, DC 13"
+     ],
+     [
+      "discovery",
+      "city",
+      "",
+      "0",
+      "Discovery",
+      "A wanted poster with a very familiar face on it.",
+      ""
+     ],
+     [
+      "omen",
+      "city",
+      "",
+      "0",
+      "Omen",
+      "All the temple bells ring at once, in the middle of the day.",
+      ""
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "0",
+      "Traveller",
+      "A herald announces a fair tomorrow, with a prize for the strongest.",
+      ""
+     ],
+     [
+      "discovery",
+      "city",
+      "",
+      "0",
+      "Discovery",
+      "A stall of a foreign merchant with very strange goods.",
+      ""
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "0",
+      "Traveller",
+      "A street preacher blesses the heroes and asks for help with the poorhouse.",
+      ""
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "1",
+      "Traveller",
+      "A [[Cultist|cultist]] hands out leaflets about the end of the world — tomorrow.",
+      ""
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Encounter",
+      "A [[Gelatinous Cube|gelatinous cube]] fills the corridor; things float inside it.",
+      "Perception, DC 15"
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "1",
+      "Encounter",
+      "[[Giant Rat|Giant rats]] swarm out of a crack, fleeing something.",
+      ""
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Encounter",
+      "The treasure chest in the alcove has teeth — it is a [[Mimic|mimic]].",
+      "Investigation, DC 14"
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "1",
+      "Encounter",
+      "A [[Darkmantle|darkmantle]] hangs from the ceiling like a stalactite.",
+      "Perception, DC 13"
+     ],
+     [
+      "obstacle",
+      "underground",
+      "",
+      "1",
+      "Obstacle",
+      "The tunnel floods; the air pocket ahead may or may not be there.",
+      "Athletics, DC 14"
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Discovery",
+      "A cavern of glowing mushrooms — and a campsite someone left long ago.",
+      ""
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "1",
+      "Discovery",
+      "A [[Rust Monster|rust monster]]’s nest full of half-eaten weapons.",
+      ""
+     ],
+     [
+      "traveler",
+      "underground",
+      "",
+      "0",
+      "Traveller",
+      "A lost miner with a dying lamp begs to be led back to the surface.",
+      ""
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Discovery",
+      "An underground lake; blind white fish circle in the lamplight.",
+      ""
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Discovery",
+      "Old rails of a mine cart lead into the dark — the cart is still on them.",
+      ""
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Discovery",
+      "Dwarven runes on the wall: a warning, or directions.",
+      "History, DC 13"
+     ],
+     [
+      "omen",
+      "underground",
+      "",
+      "0",
+      "Omen",
+      "A faint breeze — somewhere ahead there is a way out.",
+      ""
+     ],
+     [
+      "omen",
+      "underground",
+      "",
+      "1",
+      "Omen",
+      "Drums far below, steady as a heartbeat.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Traveller",
+      "A shepherd counts the sheep twice and swears one more appeared overnight.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Traveller",
+      "A [[Priest|priest]] on a donkey carries a relic to a far temple and fears thieves.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Traveller",
+      "A [[Noble|noble]] with a broken carriage wheel orders the heroes to help — and does not say please.",
+      "Persuasion, DC 12"
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Traveller",
+      "A runaway apprentice with a bag of stolen tools begs not to be sent back.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Traveller",
+      "A [[Spy|stranger]] asks too many questions about where the heroes are going.",
+      "Insight, DC 13"
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Traveller",
+      "A wedding procession crosses the road; the guests insist the heroes drink to the couple.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Traveller",
+      "A [[Veteran|veteran]] with one arm offers to sell a map of a battlefield “full of loot”.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Discovery",
+      "A milestone with fresh blood on it and tracks leading off the road.",
+      "Survival, DC 12"
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Discovery",
+      "An empty cage on a cart; its bars are bent outwards.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Discovery",
+      "A scarecrow in an empty field wears a very good cloak.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Discovery",
+      "A burned farmhouse; the well in the yard is covered with a stone slab, and something knocks from below.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Discovery",
+      "A message carved into a tree: names, a date and the words “do not follow us”.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Discovery",
+      "A dead horse with a saddle; the saddlebags hold letters to a lady.",
+      ""
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Obstacle",
+      "Rain washes the road into mud; the cart sinks to the axles.",
+      "Athletics, DC 12"
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Obstacle",
+      "A flock of sheep fills the road from edge to edge, and the shepherd is asleep.",
+      "Animal Handling, DC 10"
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Obstacle",
+      "A hornet nest above the path; one careless step, and the swarm wakes.",
+      "Stealth, DC 12"
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Obstacle",
+      "A fallen tree blocks the road — cut too cleanly to be the wind.",
+      "Perception, DC 13"
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Encounter",
+      "[[Goblin|Goblins]] argue loudly over a stolen pig and notice the heroes too late.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "2",
+      "Encounter",
+      "A war band of [[Orc|orcs]] marches along the road and sends a scout ahead.",
+      "Stealth, DC 13"
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Encounter",
+      "A [[Giant Boar|giant boar]] roots in a field and does not like being watched.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "2",
+      "Encounter",
+      "[[Gnoll|Gnolls]] laugh in the dark around the camp, closer each time.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "2",
+      "Encounter",
+      "A [[Wight|wight]] rides out of the fog on a dead horse and asks the way to a castle that burned a century ago.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Encounter",
+      "A [[Harpy|harpy]] sings from a dead tree; the song sounds like a hero’s mother.",
+      "WIS save, DC 12"
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Omen",
+      "Every bird falls silent at once, then starts again as if nothing happened.",
+      ""
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Omen",
+      "The heroes’ shadows point the wrong way for a moment.",
+      "Arcana, DC 13"
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "1",
+      "Omen",
+      "A black dog walks beside the heroes for a mile and vanishes at a crossroads.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "1",
+      "Encounter",
+      "[[Sprite|Sprites]] steal the heroes’ food and leave acorns instead.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "2",
+      "Encounter",
+      "An [[Ettercap|ettercap]] has strung the trees with webs and waits for its spiders to bring dinner.",
+      "Perception, DC 13"
+     ],
+     [
+      "traveler",
+      "forest",
+      "",
+      "0",
+      "Traveller",
+      "A [[Treant|treant]] asks the heroes why they cut the young birch last night.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest",
+      "",
+      "0",
+      "Discovery",
+      "A woodcutter’s hut with a hot stove and no woodcutter.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest",
+      "",
+      "0",
+      "Discovery",
+      "A tree with a door in its trunk, shut from the inside.",
+      "Investigation, DC 13"
+     ],
+     [
+      "obstacle",
+      "forest",
+      "",
+      "0",
+      "Obstacle",
+      "The path splits into three, and every one looks less used than the last.",
+      "Survival, DC 12"
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "1",
+      "Encounter",
+      "A [[Dire Wolf|dire wolf]] watches from the trees and does not run away.",
+      ""
+     ],
+     [
+      "traveler",
+      "plains",
+      "",
+      "0",
+      "Traveller",
+      "[[Centaur|Centaurs]] gallop up, curious about the strangers on their land.",
+      ""
+     ],
+     [
+      "encounter",
+      "plains",
+      "",
+      "2",
+      "Encounter",
+      "A pride of [[Lion|lions]] lies in the tall grass right by the road.",
+      "Perception, DC 14"
+     ],
+     [
+      "obstacle",
+      "plains",
+      "",
+      "0",
+      "Obstacle",
+      "A thunderstorm on the open plain; the heroes are the tallest things for miles.",
+      ""
+     ],
+     [
+      "encounter",
+      "mountains",
+      "",
+      "2",
+      "Encounter",
+      "A [[Manticore|manticore]] circles the pass and asks for a toll in meat.",
+      ""
+     ],
+     [
+      "traveler",
+      "mountains",
+      "",
+      "0",
+      "Traveller",
+      "A goatherd with a [[Giant Goat|giant goat]] offers to show a shorter way across the ridge.",
+      ""
+     ],
+     [
+      "obstacle",
+      "mountains",
+      "",
+      "1",
+      "Obstacle",
+      "Thin air and cold: the climb takes twice as long as planned.",
+      "CON save, DC 12"
+     ],
+     [
+      "discovery",
+      "mountains",
+      "",
+      "0",
+      "Discovery",
+      "An abandoned watchtower with a signal fire still laid and ready.",
+      ""
+     ],
+     [
+      "encounter",
+      "mountains",
+      "",
+      "2",
+      "Encounter",
+      "A [[Stone Giant|stone giant]] sits motionless on the slope, and the heroes realise it is not a rock.",
+      ""
+     ],
+     [
+      "traveler",
+      "swamp",
+      "",
+      "1",
+      "Traveller",
+      "[[Lizardfolk|Lizardfolk]] hunters offer a guide through the bog in exchange for iron.",
+      ""
+     ],
+     [
+      "encounter",
+      "swamp",
+      "",
+      "1",
+      "Encounter",
+      "A [[Giant Toad|giant toad]] snaps up the last hero’s pack and dives.",
+      ""
+     ],
+     [
+      "discovery",
+      "swamp",
+      "",
+      "0",
+      "Discovery",
+      "A drowned village; only the church tower rises above the water.",
+      ""
+     ],
+     [
+      "obstacle",
+      "swamp",
+      "",
+      "1",
+      "Obstacle",
+      "Swamp gas; a lit torch could end badly.",
+      "Nature, DC 12"
+     ],
+     [
+      "encounter",
+      "swamp",
+      "night",
+      "2",
+      "Encounter",
+      "A [[Will-o’-Wisp|will-o’-wisp]] leads a lost child deeper into the marsh.",
+      ""
+     ],
+     [
+      "encounter",
+      "coast",
+      "",
+      "2",
+      "Encounter",
+      "[[Sahuagin|Sahuagin]] raid a fishing village at low tide.",
+      ""
+     ],
+     [
+      "traveler",
+      "coast",
+      "",
+      "0",
+      "Traveller",
+      "A [[Merfolk|merfolk]] trader surfaces with pearls and wants news from the land.",
+      ""
+     ],
+     [
+      "discovery",
+      "coast",
+      "",
+      "0",
+      "Discovery",
+      "A message in a bottle: a map and a plea for help, signed by a famous captain.",
+      ""
+     ],
+     [
+      "encounter",
+      "coast",
+      "",
+      "2",
+      "Encounter",
+      "[[Pirate|Pirates]] land on the beach to bury something — and do not want witnesses.",
+      ""
+     ],
+     [
+      "omen",
+      "coast",
+      "",
+      "0",
+      "Omen",
+      "Every gull on the shore faces the same way, out to sea.",
+      ""
+     ],
+     [
+      "obstacle",
+      "desert",
+      "",
+      "2",
+      "Obstacle",
+      "A sandstorm on the horizon, coming fast.",
+      "Survival, DC 14"
+     ],
+     [
+      "encounter",
+      "desert",
+      "",
+      "1",
+      "Encounter",
+      "[[Vulture|Vultures]] circle the heroes and wait patiently.",
+      ""
+     ],
+     [
+      "discovery",
+      "desert",
+      "",
+      "0",
+      "Discovery",
+      "A mirage of a city — that does not fade when the heroes come closer.",
+      "Arcana, DC 14"
+     ],
+     [
+      "encounter",
+      "desert",
+      "",
+      "2",
+      "Encounter",
+      "A [[Dust Mephit|dust mephit]] whirls up from a dune and steals a waterskin.",
+      ""
+     ],
+     [
+      "traveler",
+      "desert",
+      "",
+      "0",
+      "Traveller",
+      "A hermit in a cave offers water and asks only for a story.",
+      ""
+     ],
+     [
+      "encounter",
+      "arctic",
+      "",
+      "2",
+      "Encounter",
+      "A [[Frost Giant|frost giant]] hunts with a pack of [[Winter Wolf|winter wolves]].",
+      ""
+     ],
+     [
+      "obstacle",
+      "arctic",
+      "",
+      "1",
+      "Obstacle",
+      "A whiteout: the heroes cannot see their own feet.",
+      "Survival, DC 14"
+     ],
+     [
+      "discovery",
+      "arctic",
+      "",
+      "0",
+      "Discovery",
+      "An ice cave with a frozen adventurer inside, still holding a lantern.",
+      ""
+     ],
+     [
+      "encounter",
+      "arctic",
+      "",
+      "1",
+      "Encounter",
+      "An [[Ice Mephit|ice mephit]] mocks the heroes from an icicle and throws snow.",
+      ""
+     ],
+     [
+      "omen",
+      "arctic",
+      "night",
+      "0",
+      "Omen",
+      "The northern lights spell out a word nobody knows.",
+      ""
+     ],
+     [
+      "encounter",
+      "jungle",
+      "",
+      "2",
+      "Encounter",
+      "A [[Allosaurus|allosaurus]] crashes through the trees, chasing something.",
+      ""
+     ],
+     [
+      "encounter",
+      "jungle",
+      "",
+      "1",
+      "Encounter",
+      "[[Ape|Apes]] throw fruit — and then stones.",
+      ""
+     ],
+     [
+      "discovery",
+      "jungle",
+      "",
+      "0",
+      "Discovery",
+      "A temple stair rises out of the trees, swept clean as if someone tends it.",
+      ""
+     ],
+     [
+      "obstacle",
+      "jungle",
+      "",
+      "1",
+      "Obstacle",
+      "A fever spreads through the camp; the healer’s supplies are running out.",
+      "Medicine, DC 13"
+     ],
+     [
+      "encounter",
+      "jungle",
+      "",
+      "2",
+      "Encounter",
+      "A [[Giant Poisonous Snake|giant poisonous snake]] coils in the heroes’ boots by morning.",
+      "Perception, DC 13"
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "0",
+      "Traveller",
+      "A [[Noble|noble]]’s servant offers good coin for “a small, quiet job”.",
+      ""
+     ],
+     [
+      "encounter",
+      "city",
+      "",
+      "1",
+      "Encounter",
+      "A [[Thug|thug]] demands the heroes step aside — this street belongs to his boss.",
+      "Intimidation, DC 13"
+     ],
+     [
+      "discovery",
+      "city",
+      "",
+      "0",
+      "Discovery",
+      "A door in an alley opens by itself as the heroes pass.",
+      ""
+     ],
+     [
+      "obstacle",
+      "city",
+      "",
+      "0",
+      "Obstacle",
+      "A parade fills the main street; crossing it takes an hour.",
+      ""
+     ],
+     [
+      "encounter",
+      "city",
+      "",
+      "2",
+      "Encounter",
+      "An [[Assassin|assassin]] in the crowd is following a hero — or someone right behind them.",
+      "Perception, DC 15"
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "0",
+      "Traveller",
+      "A [[Mage|mage]]’s apprentice has lost a familiar and offers a reward.",
+      ""
+     ],
+     [
+      "omen",
+      "city",
+      "",
+      "0",
+      "Omen",
+      "A statue in the square is weeping — real tears.",
+      ""
+     ],
+     [
+      "obstacle",
+      "city",
+      "",
+      "1",
+      "Obstacle",
+      "A fire breaks out two streets away; the watch calls everyone to the buckets.",
+      ""
+     ],
+     [
+      "discovery",
+      "city",
+      "",
+      "0",
+      "Discovery",
+      "A street artist draws a picture of the heroes — of tomorrow.",
+      ""
+     ],
+     [
+      "encounter",
+      "city",
+      "",
+      "1",
+      "Encounter",
+      "A [[Doppelganger|doppelganger]] wears the face of the heroes’ employer.",
+      "Insight, DC 15"
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Encounter",
+      "A [[Grick|grick]] waits in a crack at head height.",
+      "Perception, DC 13"
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Encounter",
+      "An [[Ochre Jelly|ochre jelly]] seeps under the door behind the heroes.",
+      ""
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "1",
+      "Encounter",
+      "[[Kobold|Kobolds]] have trapped the corridor and argue about who goes first.",
+      "Investigation, DC 12"
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Encounter",
+      "A [[Roper|roper]] looks like a stalagmite until it smiles.",
+      ""
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Encounter",
+      "An [[Otyugh|otyugh]] lives in the refuse pit and guards it jealously.",
+      ""
+     ],
+     [
+      "obstacle",
+      "underground",
+      "",
+      "1",
+      "Obstacle",
+      "Bad air: the torches burn low and heads start to ache.",
+      "CON save, DC 12"
+     ],
+     [
+      "obstacle",
+      "underground",
+      "",
+      "1",
+      "Obstacle",
+      "A collapsed passage; digging through takes hours — or a way around through a narrow crawl.",
+      "Athletics, DC 13"
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Discovery",
+      "An abandoned forge of the old dwarves, the anvil still warm.",
+      ""
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Discovery",
+      "A chamber of statues of adventurers, all with terrified faces.",
+      "Perception, DC 12"
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "1",
+      "Discovery",
+      "A pool of quicksilver; something shines at the bottom.",
+      ""
+     ],
+     [
+      "traveler",
+      "underground",
+      "",
+      "0",
+      "Traveller",
+      "[[Hobgoblin|Hobgoblin]] deserters offer to trade a map for safe passage.",
+      ""
+     ],
+     [
+      "omen",
+      "underground",
+      "",
+      "0",
+      "Omen",
+      "Every echo comes back one word too many.",
+      ""
+     ],
+     [
+      "omen",
+      "underground",
+      "",
+      "1",
+      "Omen",
+      "The walls are warm and slowly pulsing.",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A passing traveller shares a rumor: “The miller cuts his flour with chalk — two people have already fallen ill.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "At the campfire someone says: “Someone sings at night down in the old well.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A merchant, lowering his voice: “A whole wagon train vanished on the north road — no people, no horses.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A drunk soldier swears it is true: “The temple priest walks to the graveyard every night.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A child repeats what the grown-ups say: “Someone is buying up every silver spoon in the county.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "Scratched on a milestone: “A stag with burning eyes was seen in the forest.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A passing traveller shares a rumor: “The witch from the marsh is taking commissions again.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "At the campfire someone says: “Not everyone came back from the mines — and those who did won’t talk.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A merchant, lowering his voice: “A merchant from the capital is hiring guards and paying double.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A drunk soldier swears it is true: “They say the countess died long ago and a double rules in her place.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A child repeats what the grown-ups say: “The goblins from the hills want to trade instead of raid.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "Scratched on a milestone: “The old lighthouse lit itself.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A passing traveller shares a rumor: “A peddler at the fair is selling dreams.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "At the campfire someone says: “The smith forged a sword and hasn’t slept since.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A merchant, lowering his voice: “A hundred gold for the one-eyed thief, dead or alive.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A drunk soldier swears it is true: “The bridge toll doubled overnight, and nobody knows on whose orders.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A child repeats what the grown-ups say: “A dragon was seen over the mountains — or a very large eagle.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "Scratched on a milestone: “The old baron’s tomb was found open, and empty.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A passing traveller shares a rumor: “Wolves have started to walk on two legs near the eastern farms.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "At the campfire someone says: “The river ran red for an hour at dawn.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A merchant, lowering his voice: “A lost princess is said to work in a tavern somewhere in this town.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A drunk soldier swears it is true: “The mayor’s new advisor never eats and never sleeps.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A child repeats what the grown-ups say: “Treasure hunters dug up something in the hills and then all vanished.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "Scratched on a milestone: “The bells of the drowned village ring when a storm is coming.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A passing traveller shares a rumor: “The baker’s new apprentice has no shadow.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "At the campfire someone says: “Someone has been buying all the rope in town.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A merchant, lowering his voice: “The old queen’s crown was never found — it is said to be in the marsh.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A drunk soldier swears it is true: “A ship came into harbour last night with no one aboard.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A child repeats what the grown-ups say: “The temple bell rang thirteen times at midnight.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "Scratched on a milestone: “The hermit on the hill has started paying in ancient coins.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A passing traveller shares a rumor: “Wolves are afraid of something in the north woods.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "At the campfire someone says: “The lord’s daughter ran off with a travelling bard.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A merchant, lowering his voice: “There is a new gang in the docks, and they wear white masks.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A drunk soldier swears it is true: “A wizard is offering gold for live rats — lots of them.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A child repeats what the grown-ups say: “The river has been flowing backwards for a few minutes every dawn.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "Scratched on a milestone: “Someone dug up the old gallows tree.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A passing traveller shares a rumor: “A stranger paid for a room with a ruby and never came down.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "At the campfire someone says: “The miller swears his millstone talks.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A merchant, lowering his voice: “Cattle on the east farms are being shorn, not stolen — someone wants their hair.”",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Rumor",
+      "A drunk soldier swears it is true: “The town’s founder is said to be buried with his treasure under the fountain.”",
+      ""
+     ]
+    ]
+   },
+   "kinds": {
+    "head": [
+     "kind",
+     "calm",
+     "tense",
+     "dangerous"
+    ],
+    "rows": [
+     [
+      "encounter",
+      "1",
+      "3",
+      "5"
+     ],
+     [
+      "discovery",
+      "3",
+      "2",
+      "1"
+     ],
+     [
+      "obstacle",
+      "2",
+      "2",
+      "3"
+     ],
+     [
+      "traveler",
+      "3",
+      "2",
+      "1"
+     ],
+     [
+      "omen",
+      "1",
+      "1",
+      "1"
+     ],
+     [
+      "rumor",
+      "2",
+      "1",
+      "1"
+     ]
+    ]
+   },
+   "complications": {
+    "head": [
+     "text"
+    ],
+    "rows": [
+     [
+      "At the worst moment it starts to rain hard."
+     ],
+     [
+      "Night is falling; they have an hour of light left."
+     ],
+     [
+      "One of the horses goes lame."
+     ],
+     [
+      "Someone has been watching all this from a distance."
+     ],
+     [
+      "A second group arrives, drawn by the noise."
+     ],
+     [
+      "The road behind is blocked."
+     ],
+     [
+      "Someone among the heroes is recognised — and not kindly."
+     ],
+     [
+      "A wheel cracks, or a strap snaps, at the worst time."
+     ],
+     [
+      "The heroes are already tired: a long day behind them."
+     ],
+     [
+      "Somebody innocent is caught in the middle."
+     ],
+     [
+      "The fog rolls in and hides everything beyond ten paces."
+     ],
+     [
+      "A reward is promised — but only if no one gets hurt."
+     ]
+    ]
+   }
+  },
+  "ru": {
+   "events": {
+    "head": [
+     "kind",
+     "where",
+     "when",
+     "danger",
+     "label",
+     "text",
+     "check"
+    ],
+    "rows": [
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Путник",
+      "Коробейник с навьюченным мулом предлагает безделушки, сплетни и сомнительную карту.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Путник",
+      "Паломники идут к святому месту и зовут героев с собой.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Путник",
+      "Раненый гонец с запечатанным письмом просит довести его до ближайшего города.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Путник",
+      "Странник предлагает погадать — и знает о героях слишком много.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Путник",
+      "[[Рыцарь]] перегораживает путь и требует поединка во имя неизвестной дамы.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Путник",
+      "[[Разведчик]] из ближнего гарнизона спрашивает, не видели ли герои чего-нибудь странного.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Путник",
+      "Бродячие артисты дают представление у дороги; один из них что-то подсовывает в сумку героя.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Находка",
+      "Брошенный лагерь, угли ещё тёплые. Кто-то ушёл в спешке.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Находка",
+      "Заросшее святилище; на алтаре — свежие цветы.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Находка",
+      "Сломанная телега у дороги: хозяина нет, товар нетронут.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Находка",
+      "Повешенный на старом дубе, к одежде приколота записка: «Вор».",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Находка",
+      "Стоячий камень с резьбой — такой же знак есть на снаряжении одного из героев.",
+      "История, СЛ 12"
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Находка",
+      "Родник с чистой водой — первый за день пути.",
+      ""
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Препятствие",
+      "Указатель кто-то повернул: дорога ведёт не туда.",
+      "Выживание, СЛ 12"
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Препятствие",
+      "Мост размыт — нужен брод или крюк в полдня.",
+      "Атлетика, СЛ 13"
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Препятствие",
+      "Пост на дороге: стража требует по {1d4} серебра с каждого — или взятку.",
+      "Убеждение, СЛ 13"
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Встреча",
+      "Стая [[Волк|волков]] держится поодаль и идёт следом.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "2",
+      "Встреча",
+      "Засада: [[Бандит|бандиты]] и их [[Капитан бандитов|капитан]] требуют «плату за проезд».",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Встреча",
+      "Из кустов вылетает [[Кабан|кабан]], разъярённый и раненный чьей-то стрелой.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "2",
+      "Встреча",
+      "У дороги [[Огр|огр]] доедает корову — и присматривает десерт.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "2",
+      "Встреча",
+      "Над головой кружит [[Виверна|виверна]], с каждым кругом всё ниже.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "1",
+      "Встреча",
+      "Из темноты вырывается [[Рой летучих мышей|рой летучих мышей]], а за ним — что-то большое.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "2",
+      "Встреча",
+      "[[Упырь|Упыри]] раскапывают старую могилу у дороги и чуют живых.",
+      ""
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Знамение",
+      "Белый ворон весь день летит за героями и каркает, когда они сворачивают не туда.",
+      ""
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "0",
+      "Знамение",
+      "Падающая звезда падает где-то рядом; там до сих пор светится земля.",
+      ""
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "1",
+      "Знамение",
+      "Из темноты кто-то зовёт героя по имени. Там никого.",
+      "Проницательность, СЛ 13"
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "2",
+      "Встреча",
+      "[[Совомедведь]] охраняет гнездо прямо на тропе.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "2",
+      "Встреча",
+      "Между деревьями паутина: наверху ждут [[Гигантский паук|гигантские пауки]].",
+      "Внимательность, СЛ 14"
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "1",
+      "Встреча",
+      "[[Бурый медведь|Медведица]] с медвежатами — только не вставать между ними.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest",
+      "",
+      "0",
+      "Путник",
+      "[[Дриада]] просит прогнать лесорубов от её дуба.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest",
+      "",
+      "0",
+      "Находка",
+      "Кольцо грибов; ступившему внутрь слышится далёкая музыка.",
+      "Магия, СЛ 12"
+     ],
+     [
+      "obstacle",
+      "forest",
+      "",
+      "0",
+      "Препятствие",
+      "Тропу перегородил упавший великан-дуб; обход — через бурелом и терновник.",
+      "Атлетика, СЛ 11"
+     ],
+     [
+      "encounter",
+      "forest,swamp",
+      "night",
+      "1",
+      "Встреча",
+      "[[Блуждающий огонёк]] манит из-за деревьев.",
+      ""
+     ],
+     [
+      "encounter",
+      "plains",
+      "",
+      "1",
+      "Встреча",
+      "Мимо проносится табун диких лошадей; жеребёнок запутался в силке охотника.",
+      "Уход за животными, СЛ 12"
+     ],
+     [
+      "encounter",
+      "plains",
+      "",
+      "2",
+      "Встреча",
+      "[[Грифон]] пикирует на лошадей.",
+      ""
+     ],
+     [
+      "discovery",
+      "plains,forest",
+      "",
+      "0",
+      "Находка",
+      "Старое поле битвы: ржавые доспехи в траве и знамя, которого никто не помнит.",
+      "История, СЛ 13"
+     ],
+     [
+      "obstacle",
+      "plains",
+      "",
+      "1",
+      "Препятствие",
+      "На горизонте пал, и ветер дует сюда.",
+      "Выживание, СЛ 13"
+     ],
+     [
+      "encounter",
+      "plains,desert",
+      "",
+      "2",
+      "Встреча",
+      "Земля дрожит: под телегой выныривает [[Анхег|анхег]].",
+      ""
+     ],
+     [
+      "obstacle",
+      "mountains",
+      "",
+      "1",
+      "Препятствие",
+      "Тропу завалило камнепадом; дальше — только по узкому карнизу.",
+      "Акробатика, СЛ 13"
+     ],
+     [
+      "encounter",
+      "mountains",
+      "",
+      "1",
+      "Встреча",
+      "[[Гигантский орёл|Гигантские орлы]] наблюдают со скал; могут помочь — за плату.",
+      ""
+     ],
+     [
+      "encounter",
+      "mountains",
+      "",
+      "2",
+      "Встреча",
+      "[[Холмовой великан]] «для забавы» швыряет валуны во всё, что движется.",
+      ""
+     ],
+     [
+      "discovery",
+      "mountains",
+      "",
+      "0",
+      "Находка",
+      "Дварфийский путевой камень с картой тоннелей, которыми больше никто не ходит.",
+      ""
+     ],
+     [
+      "encounter",
+      "mountains,arctic",
+      "",
+      "2",
+      "Встреча",
+      "Под единственным мостом через ущелье живёт [[Тролль|тролль]].",
+      ""
+     ],
+     [
+      "obstacle",
+      "swamp",
+      "",
+      "1",
+      "Препятствие",
+      "Твёрдая тропа кончается; трясина засасывает сапоги, и хватит одного неверного шага.",
+      "Выживание, СЛ 13"
+     ],
+     [
+      "encounter",
+      "swamp",
+      "",
+      "2",
+      "Встреча",
+      "Под водой движется что-то огромное: [[Крокодил|крокодил]] — или хуже.",
+      ""
+     ],
+     [
+      "traveler",
+      "swamp",
+      "",
+      "1",
+      "Путник",
+      "Старуха в хижине на сваях предлагает лекарство — это [[Зелёная карга|зелёная карга]].",
+      "Проницательность, СЛ 14"
+     ],
+     [
+      "encounter",
+      "swamp",
+      "",
+      "1",
+      "Встреча",
+      "Вокруг квакают [[Гигантская лягушка|гигантские лягушки]], и одна очень голодна.",
+      ""
+     ],
+     [
+      "encounter",
+      "swamp,jungle",
+      "",
+      "1",
+      "Встреча",
+      "Из камышей поднимается туча [[Стирж|стирджей]].",
+      ""
+     ],
+     [
+      "discovery",
+      "coast",
+      "",
+      "0",
+      "Находка",
+      "На берегу обломки корабля; трюм всё ещё запечатан.",
+      ""
+     ],
+     [
+      "encounter",
+      "coast",
+      "",
+      "1",
+      "Встреча",
+      "[[Гигантский краб|Гигантские крабы]] защищают пляж, где герои хотят встать лагерем.",
+      ""
+     ],
+     [
+      "traveler",
+      "coast",
+      "",
+      "0",
+      "Путник",
+      "В сумерках контрабандисты разгружают лодку и предлагают поделиться — за молчание.",
+      ""
+     ],
+     [
+      "encounter",
+      "coast",
+      "night",
+      "2",
+      "Встреча",
+      "С камней поёт [[Морская карга|морская карга]]; песня тянет к воде.",
+      "Спасбросок МДР, СЛ 13"
+     ],
+     [
+      "obstacle",
+      "coast",
+      "",
+      "1",
+      "Препятствие",
+      "Прилив наступает быстро и отрезает путь назад по пляжу.",
+      "Атлетика, СЛ 12"
+     ],
+     [
+      "encounter",
+      "desert",
+      "",
+      "2",
+      "Встреча",
+      "У единственного колодца под песком поджидает [[Гигантский скорпион|гигантский скорпион]].",
+      ""
+     ],
+     [
+      "discovery",
+      "desert",
+      "",
+      "0",
+      "Находка",
+      "Из бархана торчит верхушка занесённой пирамиды.",
+      ""
+     ],
+     [
+      "obstacle",
+      "desert",
+      "",
+      "1",
+      "Препятствие",
+      "Вода кончилась раньше, чем думали; до следующего оазиса — день пути.",
+      "Выживание, СЛ 14"
+     ],
+     [
+      "traveler",
+      "desert",
+      "",
+      "0",
+      "Путник",
+      "Караван [[Верблюд|верблюдов]] идёт к оазису; караванщику нужна охрана.",
+      ""
+     ],
+     [
+      "encounter",
+      "desert",
+      "night",
+      "2",
+      "Встреча",
+      "Из песков к старой гробнице бредёт [[Мумия|мумия]].",
+      ""
+     ],
+     [
+      "encounter",
+      "arctic",
+      "",
+      "2",
+      "Встреча",
+      "[[Белый медведь]] на охоте, а герои пахнут едой.",
+      ""
+     ],
+     [
+      "encounter",
+      "arctic",
+      "",
+      "2",
+      "Встреча",
+      "[[Зимний волк|Зимние волки]] воют сразу с трёх сторон.",
+      ""
+     ],
+     [
+      "obstacle",
+      "arctic",
+      "",
+      "1",
+      "Препятствие",
+      "Тонкий лёд над тёмной водой; другой берег близко, обход — долгий.",
+      "Акробатика, СЛ 13"
+     ],
+     [
+      "discovery",
+      "arctic",
+      "",
+      "0",
+      "Находка",
+      "Вмёрзший в лёд [[Мамонт|мамонт]] с копьём в боку.",
+      ""
+     ],
+     [
+      "encounter",
+      "jungle",
+      "",
+      "2",
+      "Встреча",
+      "С самого утра за героями крадётся [[Тигр|тигр]].",
+      "Внимательность, СЛ 15"
+     ],
+     [
+      "encounter",
+      "jungle",
+      "",
+      "1",
+      "Встреча",
+      "[[Удав]] падает с ветки на идущего последним.",
+      ""
+     ],
+     [
+      "discovery",
+      "jungle",
+      "",
+      "0",
+      "Находка",
+      "Из зелени смотрит каменное лицо, заросшее лианами, — глаза у него из самоцветов.",
+      ""
+     ],
+     [
+      "obstacle",
+      "jungle",
+      "",
+      "1",
+      "Препятствие",
+      "Река, полная голодных рыб; мост из лиан наполовину сгнил.",
+      "Атлетика, СЛ 13"
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "0",
+      "Путник",
+      "Уличный мальчишка предлагает показать короткую дорогу — и что угодно за монету.",
+      ""
+     ],
+     [
+      "encounter",
+      "city",
+      "",
+      "1",
+      "Встреча",
+      "Мимо проскальзывает карманник — кошель исчез.",
+      "Внимательность, СЛ 14"
+     ],
+     [
+      "encounter",
+      "city",
+      "night",
+      "2",
+      "Встреча",
+      "В тёмном переулке героев по именам поджидают [[Бандит|громилы]] с дубинками.",
+      ""
+     ],
+     [
+      "obstacle",
+      "city",
+      "",
+      "1",
+      "Препятствие",
+      "[[Стражник|Стража]] перекрывает улицу и проверяет бумаги; у героев их нет.",
+      "Обман, СЛ 13"
+     ],
+     [
+      "discovery",
+      "city",
+      "",
+      "0",
+      "Находка",
+      "Объявление о розыске — с очень знакомым лицом.",
+      ""
+     ],
+     [
+      "omen",
+      "city",
+      "",
+      "0",
+      "Знамение",
+      "Посреди дня разом звонят все колокола храмов.",
+      ""
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "0",
+      "Путник",
+      "Глашатай объявляет завтрашнюю ярмарку — с призом самому сильному.",
+      ""
+     ],
+     [
+      "discovery",
+      "city",
+      "",
+      "0",
+      "Находка",
+      "Лоток заморского купца с очень странными товарами.",
+      ""
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "0",
+      "Путник",
+      "Уличный проповедник благословляет героев и просит помочь богадельне.",
+      ""
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "1",
+      "Путник",
+      "[[Культист]] раздаёт листки о конце света — завтра.",
+      ""
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Встреча",
+      "Коридор заполняет [[Желатиновый куб|желатиновый куб]]; внутри что-то плавает.",
+      "Внимательность, СЛ 15"
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "1",
+      "Встреча",
+      "Из трещины валят [[Гигантская крыса|гигантские крысы]] — бегут от чего-то.",
+      ""
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Встреча",
+      "У сундука в нише есть зубы — это [[Мимик|мимик]].",
+      "Анализ, СЛ 14"
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "1",
+      "Встреча",
+      "С потолка, как сталактит, свисает [[Тёмная мантия|тёмная мантия]].",
+      "Внимательность, СЛ 13"
+     ],
+     [
+      "obstacle",
+      "underground",
+      "",
+      "1",
+      "Препятствие",
+      "Тоннель затоплен; впереди, может быть, есть воздушный карман.",
+      "Атлетика, СЛ 14"
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Находка",
+      "Пещера светящихся грибов — и давно брошенная кем-то стоянка.",
+      ""
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "1",
+      "Находка",
+      "Гнездо [[Ржавник|ржавника]], полное надъеденного оружия.",
+      ""
+     ],
+     [
+      "traveler",
+      "underground",
+      "",
+      "0",
+      "Путник",
+      "Заблудившийся рудокоп с гаснущей лампой просит вывести его наверх.",
+      ""
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Находка",
+      "Подземное озеро; в свете лампы кружат слепые белые рыбы.",
+      ""
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Находка",
+      "Старые рельсы рудничной вагонетки уходят в темноту — вагонетка всё ещё на них.",
+      ""
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Находка",
+      "Дварфийские руны на стене — предупреждение или указатель.",
+      "История, СЛ 13"
+     ],
+     [
+      "omen",
+      "underground",
+      "",
+      "0",
+      "Знамение",
+      "Лёгкий сквозняк — где-то впереди есть выход.",
+      ""
+     ],
+     [
+      "omen",
+      "underground",
+      "",
+      "1",
+      "Знамение",
+      "Где-то глубоко внизу — барабаны, ровные, как сердцебиение.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Путник",
+      "Пастух дважды пересчитывает овец и клянётся, что за ночь их стало на одну больше.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Путник",
+      "[[Жрец]] на осле везёт реликвию в дальний храм и боится воров.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Путник",
+      "[[Дворянин]] со сломанным колесом кареты велит героям помочь — и не говорит «пожалуйста».",
+      "Убеждение, СЛ 12"
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Путник",
+      "Сбежавший подмастерье с мешком краденых инструментов просит не отправлять его назад.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Путник",
+      "[[Шпион|Незнакомец]] слишком много расспрашивает, куда идут герои.",
+      "Проницательность, СЛ 13"
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Путник",
+      "Свадебный поезд пересекает дорогу; гости настаивают, чтобы герои выпили за молодых.",
+      ""
+     ],
+     [
+      "traveler",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Путник",
+      "Однорукий [[Ветеран|ветеран]] предлагает купить карту поля битвы, «где полно добычи».",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Находка",
+      "Верстовой столб в свежей крови, и следы уходят с дороги.",
+      "Выживание, СЛ 12"
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Находка",
+      "Пустая клетка на телеге; прутья выгнуты наружу.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Находка",
+      "Пугало посреди пустого поля одето в очень хороший плащ.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Находка",
+      "Сгоревший хутор; колодец во дворе закрыт каменной плитой, и снизу кто-то стучит.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Находка",
+      "Вырезанная на дереве надпись: имена, дата и слова «не ходите за нами».",
+      ""
+     ],
+     [
+      "discovery",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Находка",
+      "Павшая лошадь под седлом; в перемётных сумах — письма к даме.",
+      ""
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Препятствие",
+      "Дождь превращает дорогу в грязь; телега увязает по оси.",
+      "Атлетика, СЛ 12"
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Препятствие",
+      "Отара овец заполняет дорогу от края до края, а пастух спит.",
+      "Уход за животными, СЛ 10"
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Препятствие",
+      "Над тропой осиное гнездо; один неосторожный шаг — и рой проснётся.",
+      "Скрытность, СЛ 12"
+     ],
+     [
+      "obstacle",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Препятствие",
+      "Дорогу перегораживает упавшее дерево — срублено слишком ровно для ветра.",
+      "Внимательность, СЛ 13"
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Встреча",
+      "[[Гоблин|Гоблины]] громко спорят из-за украденной свиньи и замечают героев слишком поздно.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "2",
+      "Встреча",
+      "По дороге идёт военный отряд [[Орк|орков]] и высылает вперёд разведчика.",
+      "Скрытность, СЛ 13"
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Встреча",
+      "[[Гигантский кабан]] роет землю в поле и не любит, когда на него смотрят.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "2",
+      "Встреча",
+      "[[Гнолл|Гноллы]] хохочут в темноте вокруг лагеря — каждый раз ближе.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "2",
+      "Встреча",
+      "Из тумана на мёртвой лошади выезжает [[Умертвие|умертвие]] и спрашивает дорогу к замку, сгоревшему век назад.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "1",
+      "Встреча",
+      "С мёртвого дерева поёт [[Гарпия|гарпия]]; песня звучит голосом матери одного из героев.",
+      "Спасбросок МДР, СЛ 12"
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Знамение",
+      "Разом умолкают все птицы, а потом снова поют, будто ничего не было.",
+      ""
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Знамение",
+      "На миг тени героев ложатся не в ту сторону.",
+      "Магия, СЛ 13"
+     ],
+     [
+      "omen",
+      "forest,plains,coast,mountains,swamp,jungle,desert,arctic",
+      "night",
+      "1",
+      "Знамение",
+      "Чёрный пёс милю идёт рядом с героями и исчезает на перекрёстке.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "1",
+      "Встреча",
+      "[[Спрайт|Спрайты]] таскают еду героев и оставляют вместо неё жёлуди.",
+      ""
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "2",
+      "Встреча",
+      "[[Эттеркап]] опутал деревья паутиной и ждёт, когда пауки принесут ужин.",
+      "Внимательность, СЛ 13"
+     ],
+     [
+      "traveler",
+      "forest",
+      "",
+      "0",
+      "Путник",
+      "[[Древень]] спрашивает героев, зачем они вчера срубили молодую берёзу.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest",
+      "",
+      "0",
+      "Находка",
+      "Хижина лесоруба: печь горячая, а лесоруба нет.",
+      ""
+     ],
+     [
+      "discovery",
+      "forest",
+      "",
+      "0",
+      "Находка",
+      "Дерево с дверью в стволе, запертой изнутри.",
+      "Анализ, СЛ 13"
+     ],
+     [
+      "obstacle",
+      "forest",
+      "",
+      "0",
+      "Препятствие",
+      "Тропа расходится натрое, и каждая выглядит заброшеннее предыдущей.",
+      "Выживание, СЛ 12"
+     ],
+     [
+      "encounter",
+      "forest",
+      "",
+      "1",
+      "Встреча",
+      "[[Лютый волк]] смотрит из-за деревьев и не убегает.",
+      ""
+     ],
+     [
+      "traveler",
+      "plains",
+      "",
+      "0",
+      "Путник",
+      "Подскакивают [[Кентавр|кентавры]] — им любопытно, что чужаки делают на их земле.",
+      ""
+     ],
+     [
+      "encounter",
+      "plains",
+      "",
+      "2",
+      "Встреча",
+      "Прямо у дороги в высокой траве лежит прайд [[Лев|львов]].",
+      "Внимательность, СЛ 14"
+     ],
+     [
+      "obstacle",
+      "plains",
+      "",
+      "0",
+      "Препятствие",
+      "Гроза в открытой степи; на мили вокруг выше героев ничего нет.",
+      ""
+     ],
+     [
+      "encounter",
+      "mountains",
+      "",
+      "2",
+      "Встреча",
+      "Над перевалом кружит [[Мантикора|мантикора]] и требует плату мясом.",
+      ""
+     ],
+     [
+      "traveler",
+      "mountains",
+      "",
+      "0",
+      "Путник",
+      "Козопас с [[Гигантский козёл|гигантским козлом]] предлагает показать короткий путь через хребет.",
+      ""
+     ],
+     [
+      "obstacle",
+      "mountains",
+      "",
+      "1",
+      "Препятствие",
+      "Разреженный воздух и холод: подъём занимает вдвое больше времени.",
+      "Спасбросок ТЕЛ, СЛ 12"
+     ],
+     [
+      "discovery",
+      "mountains",
+      "",
+      "0",
+      "Находка",
+      "Брошенная сторожевая башня — сигнальный костёр сложен и готов.",
+      ""
+     ],
+     [
+      "encounter",
+      "mountains",
+      "",
+      "2",
+      "Встреча",
+      "На склоне неподвижно сидит [[Каменный великан|каменный великан]] — и герои понимают, что это не скала.",
+      ""
+     ],
+     [
+      "traveler",
+      "swamp",
+      "",
+      "1",
+      "Путник",
+      "Охотники-[[Ящеролюд|ящеролюды]] предлагают проводника через топь в обмен на железо.",
+      ""
+     ],
+     [
+      "encounter",
+      "swamp",
+      "",
+      "1",
+      "Встреча",
+      "[[Гигантская жаба]] хватает сумку идущего последним и ныряет.",
+      ""
+     ],
+     [
+      "discovery",
+      "swamp",
+      "",
+      "0",
+      "Находка",
+      "Затопленная деревня; из воды торчит только колокольня.",
+      ""
+     ],
+     [
+      "obstacle",
+      "swamp",
+      "",
+      "1",
+      "Препятствие",
+      "Болотный газ; зажжённый факел может плохо кончиться.",
+      "Природа, СЛ 12"
+     ],
+     [
+      "encounter",
+      "swamp",
+      "night",
+      "2",
+      "Встреча",
+      "[[Блуждающий огонёк]] уводит заблудившегося ребёнка глубже в болото.",
+      ""
+     ],
+     [
+      "encounter",
+      "coast",
+      "",
+      "2",
+      "Встреча",
+      "В отлив [[Сахуагин|сахуагины]] нападают на рыбацкую деревню.",
+      ""
+     ],
+     [
+      "traveler",
+      "coast",
+      "",
+      "0",
+      "Путник",
+      "Из воды появляется торговец-[[Мерфолк|мерфолк]] с жемчугом и хочет новостей с суши.",
+      ""
+     ],
+     [
+      "discovery",
+      "coast",
+      "",
+      "0",
+      "Находка",
+      "Послание в бутылке: карта и мольба о помощи за подписью знаменитого капитана.",
+      ""
+     ],
+     [
+      "encounter",
+      "coast",
+      "",
+      "2",
+      "Встреча",
+      "[[Пират|Пираты]] высаживаются на берег, чтобы что-то закопать, — и свидетели им не нужны.",
+      ""
+     ],
+     [
+      "omen",
+      "coast",
+      "",
+      "0",
+      "Знамение",
+      "Все чайки на берегу смотрят в одну сторону — в море.",
+      ""
+     ],
+     [
+      "obstacle",
+      "desert",
+      "",
+      "2",
+      "Препятствие",
+      "На горизонте песчаная буря — и она быстро приближается.",
+      "Выживание, СЛ 14"
+     ],
+     [
+      "encounter",
+      "desert",
+      "",
+      "1",
+      "Встреча",
+      "Над героями кружат [[Гриф|грифы]] и терпеливо ждут.",
+      ""
+     ],
+     [
+      "discovery",
+      "desert",
+      "",
+      "0",
+      "Находка",
+      "Мираж города — который не тает, когда герои подходят ближе.",
+      "Магия, СЛ 14"
+     ],
+     [
+      "encounter",
+      "desert",
+      "",
+      "2",
+      "Встреча",
+      "Из бархана взвивается [[Пылевой мефит|пылевой мефит]] и крадёт бурдюк.",
+      ""
+     ],
+     [
+      "traveler",
+      "desert",
+      "",
+      "0",
+      "Путник",
+      "Отшельник в пещере предлагает воды и просит взамен только историю.",
+      ""
+     ],
+     [
+      "encounter",
+      "arctic",
+      "",
+      "2",
+      "Встреча",
+      "[[Ледяной великан]] охотится со стаей [[Зимний волк|зимних волков]].",
+      ""
+     ],
+     [
+      "obstacle",
+      "arctic",
+      "",
+      "1",
+      "Препятствие",
+      "Белая мгла: герои не видят собственных ног.",
+      "Выживание, СЛ 14"
+     ],
+     [
+      "discovery",
+      "arctic",
+      "",
+      "0",
+      "Находка",
+      "Ледяная пещера; внутри вмёрзший искатель приключений, всё ещё с фонарём в руке.",
+      ""
+     ],
+     [
+      "encounter",
+      "arctic",
+      "",
+      "1",
+      "Встреча",
+      "[[Ледяной мефит]] дразнит героев с сосульки и кидается снегом.",
+      ""
+     ],
+     [
+      "omen",
+      "arctic",
+      "night",
+      "0",
+      "Знамение",
+      "Северное сияние складывается в слово, которого никто не знает.",
+      ""
+     ],
+     [
+      "encounter",
+      "jungle",
+      "",
+      "2",
+      "Встреча",
+      "Сквозь заросли ломится [[Аллозавр|аллозавр]], за кем-то гонясь.",
+      ""
+     ],
+     [
+      "encounter",
+      "jungle",
+      "",
+      "1",
+      "Встреча",
+      "[[Обезьяна|Обезьяны]] кидаются фруктами — а потом и камнями.",
+      ""
+     ],
+     [
+      "discovery",
+      "jungle",
+      "",
+      "0",
+      "Находка",
+      "Из зарослей поднимается лестница храма, подметённая, будто за ней кто-то ухаживает.",
+      ""
+     ],
+     [
+      "obstacle",
+      "jungle",
+      "",
+      "1",
+      "Препятствие",
+      "По лагерю ползёт лихорадка; снадобья заканчиваются.",
+      "Медицина, СЛ 13"
+     ],
+     [
+      "encounter",
+      "jungle",
+      "",
+      "2",
+      "Встреча",
+      "К утру в сапогах у героев сворачивается [[Гигантская ядовитая змея|гигантская ядовитая змея]].",
+      "Внимательность, СЛ 13"
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "0",
+      "Путник",
+      "Слуга [[Дворянин|дворянина]] предлагает хорошие деньги за «небольшое тихое дело».",
+      ""
+     ],
+     [
+      "encounter",
+      "city",
+      "",
+      "1",
+      "Встреча",
+      "[[Головорез]] требует уступить дорогу: эта улица принадлежит его хозяину.",
+      "Запугивание, СЛ 13"
+     ],
+     [
+      "discovery",
+      "city",
+      "",
+      "0",
+      "Находка",
+      "Дверь в переулке сама открывается, когда герои проходят мимо.",
+      ""
+     ],
+     [
+      "obstacle",
+      "city",
+      "",
+      "0",
+      "Препятствие",
+      "Парад заполняет главную улицу; перейти её — час ожидания.",
+      ""
+     ],
+     [
+      "encounter",
+      "city",
+      "",
+      "2",
+      "Встреча",
+      "[[Убийца]] в толпе идёт за одним из героев — или за кем-то сразу за ним.",
+      "Внимательность, СЛ 15"
+     ],
+     [
+      "traveler",
+      "city",
+      "",
+      "0",
+      "Путник",
+      "Ученик [[Маг|мага]] потерял фамильяра и обещает награду.",
+      ""
+     ],
+     [
+      "omen",
+      "city",
+      "",
+      "0",
+      "Знамение",
+      "Статуя на площади плачет — настоящими слезами.",
+      ""
+     ],
+     [
+      "obstacle",
+      "city",
+      "",
+      "1",
+      "Препятствие",
+      "Через две улицы вспыхивает пожар; стража зовёт всех к вёдрам.",
+      ""
+     ],
+     [
+      "discovery",
+      "city",
+      "",
+      "0",
+      "Находка",
+      "Уличный художник рисует героев — такими, какими они будут завтра.",
+      ""
+     ],
+     [
+      "encounter",
+      "city",
+      "",
+      "1",
+      "Встреча",
+      "[[Доппельгангер]] носит лицо нанимателя героев.",
+      "Проницательность, СЛ 15"
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Встреча",
+      "В трещине на уровне головы поджидает [[Грик|грик]].",
+      "Внимательность, СЛ 13"
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Встреча",
+      "Под дверь позади героев просачивается [[Охровый студень|охровый студень]].",
+      ""
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "1",
+      "Встреча",
+      "[[Кобольд|Кобольды]] наставили в коридоре ловушек и спорят, кому идти первым.",
+      "Анализ, СЛ 12"
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Встреча",
+      "[[Веревник]] похож на сталагмит, пока не улыбнётся.",
+      ""
+     ],
+     [
+      "encounter",
+      "underground",
+      "",
+      "2",
+      "Встреча",
+      "В мусорной яме живёт [[Отиуг|отиуг]] и ревниво её стережёт.",
+      ""
+     ],
+     [
+      "obstacle",
+      "underground",
+      "",
+      "1",
+      "Препятствие",
+      "Дурной воздух: факелы еле горят, начинает болеть голова.",
+      "Спасбросок ТЕЛ, СЛ 12"
+     ],
+     [
+      "obstacle",
+      "underground",
+      "",
+      "1",
+      "Препятствие",
+      "Ход обрушился; раскопать — часы, или в обход через узкий лаз.",
+      "Атлетика, СЛ 13"
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Находка",
+      "Брошенная кузница древних дварфов; наковальня ещё тёплая.",
+      ""
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "0",
+      "Находка",
+      "Зал со статуями искателей приключений — у всех на лицах ужас.",
+      "Внимательность, СЛ 12"
+     ],
+     [
+      "discovery",
+      "underground",
+      "",
+      "1",
+      "Находка",
+      "Озерцо ртути; на дне что-то блестит.",
+      ""
+     ],
+     [
+      "traveler",
+      "underground",
+      "",
+      "0",
+      "Путник",
+      "Дезертиры-[[Хобгоблин|хобгоблины]] предлагают обменять карту на свободный проход.",
+      ""
+     ],
+     [
+      "omen",
+      "underground",
+      "",
+      "0",
+      "Знамение",
+      "Каждое эхо возвращается с одним лишним словом.",
+      ""
+     ],
+     [
+      "omen",
+      "underground",
+      "",
+      "1",
+      "Знамение",
+      "Стены тёплые и медленно пульсируют.",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Встречный путник делится слухом: «Мельник разбавляет муку мелом — уже двое слегли.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "У костра кто-то рассказывает: «В старом колодце по ночам кто-то поёт.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Купец, понизив голос: «На северной дороге пропал целый обоз — ни людей, ни лошадей.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Пьяный солдат божится, что это правда: «Жрец храма по ночам ходит на кладбище.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Ребёнок повторяет то, что говорят взрослые: «Кто-то скупает все серебряные ложки в округе.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Нацарапано на верстовом столбе: «В лесу видели оленя с горящими глазами.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Встречный путник делится слухом: «Ведьма с болот снова берёт заказы.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "У костра кто-то рассказывает: «Из шахт вернулись не все — и вернувшиеся молчат.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Купец, понизив голос: «Купец из столицы ищет охрану и платит вдвое.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Пьяный солдат божится, что это правда: «Говорят, графиня давно умерла, а правит её двойник.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Ребёнок повторяет то, что говорят взрослые: «Гоблины с холмов предлагают торговать, а не грабить.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Нацарапано на верстовом столбе: «Старый маяк зажёгся сам по себе.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Встречный путник делится слухом: «На ярмарке появился торговец, который продаёт сны.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "У костра кто-то рассказывает: «Кузнец выковал меч, и с тех пор не спит.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Купец, понизив голос: «За поимку одноглазого вора назначили сто золотых.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Пьяный солдат божится, что это правда: «Пошлину за мост за ночь подняли вдвое, и никто не знает, чей это приказ.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Ребёнок повторяет то, что говорят взрослые: «Над горами видели дракона — или очень большого орла.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Нацарапано на верстовом столбе: «Склеп старого барона нашли открытым — и пустым.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Встречный путник делится слухом: «У восточных хуторов волки начали ходить на двух ногах.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "У костра кто-то рассказывает: «На рассвете река на час стала красной.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Купец, понизив голос: «Говорят, пропавшая принцесса работает в какой-то таверне этого города.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Пьяный солдат божится, что это правда: «Новый советник бургомистра никогда не ест и не спит.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Ребёнок повторяет то, что говорят взрослые: «Кладоискатели что-то откопали в холмах — и все пропали.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Нацарапано на верстовом столбе: «Колокола затонувшей деревни звонят перед бурей.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Встречный путник делится слухом: «У нового подмастерья пекаря нет тени.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "У костра кто-то рассказывает: «Кто-то скупает в городе все верёвки.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Купец, понизив голос: «Корону старой королевы так и не нашли — говорят, она на болоте.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Пьяный солдат божится, что это правда: «Вчера в гавань вошёл корабль, на котором никого нет.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Ребёнок повторяет то, что говорят взрослые: «Храмовый колокол в полночь ударил тринадцать раз.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Нацарапано на верстовом столбе: «Отшельник с холма начал расплачиваться древними монетами.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Встречный путник делится слухом: «Волки боятся чего-то в северном лесу.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "У костра кто-то рассказывает: «Дочь лорда сбежала со странствующим бардом.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Купец, понизив голос: «В порту новая банда, и все в белых масках.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Пьяный солдат божится, что это правда: «Волшебник платит золотом за живых крыс — и много.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Ребёнок повторяет то, что говорят взрослые: «Каждый рассвет река на несколько минут течёт вспять.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Нацарапано на верстовом столбе: «Кто-то выкопал старое дерево-виселицу.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Встречный путник делится слухом: «Чужак расплатился за комнату рубином и так и не спустился.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "У костра кто-то рассказывает: «Мельник клянётся, что его жёрнов разговаривает.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Купец, понизив голос: «На восточных фермах коров не крадут, а стригут — кому-то нужна их шерсть.»",
+      ""
+     ],
+     [
+      "rumor",
+      "forest,plains,city,coast,mountains,swamp,jungle,desert,arctic",
+      "",
+      "0",
+      "Слух",
+      "Пьяный солдат божится, что это правда: «Говорят, основатель города похоронен со своим кладом под фонтаном.»",
+      ""
+     ]
+    ]
+   },
+   "kinds": {
+    "head": [
+     "kind",
+     "calm",
+     "tense",
+     "dangerous"
+    ],
+    "rows": [
+     [
+      "encounter",
+      "1",
+      "3",
+      "5"
+     ],
+     [
+      "discovery",
+      "3",
+      "2",
+      "1"
+     ],
+     [
+      "obstacle",
+      "2",
+      "2",
+      "3"
+     ],
+     [
+      "traveler",
+      "3",
+      "2",
+      "1"
+     ],
+     [
+      "omen",
+      "1",
+      "1",
+      "1"
+     ],
+     [
+      "rumor",
+      "2",
+      "1",
+      "1"
+     ]
+    ]
+   },
+   "complications": {
+    "head": [
+     "text"
+    ],
+    "rows": [
+     [
+      "В самый неподходящий момент начинается ливень."
+     ],
+     [
+      "Темнеет: светлого времени остаётся час."
+     ],
+     [
+      "Одна из лошадей начинает хромать."
+     ],
+     [
+      "Кто-то наблюдает за всем этим издалека."
+     ],
+     [
+      "На шум подходит ещё одна группа."
+     ],
+     [
+      "Дорога позади перекрыта."
+     ],
+     [
+      "Кого-то из героев узнают — и не по-доброму."
+     ],
+     [
+      "В самый неудачный момент трескается колесо или рвётся ремень."
+     ],
+     [
+      "Герои уже устали: позади долгий день."
+     ],
+     [
+      "Посреди всего оказывается кто-то невиновный."
+     ],
+     [
+      "Наползает туман и скрывает всё дальше десяти шагов."
+     ],
+     [
+      "Обещана награда — но только если никто не пострадает."
+     ]
+    ]
+   }
+  }
+ },
+ "generators": [
+  {
+   "id": "events",
+   "title": {
+    "en": "Random events",
+    "ru": "Случайные события"
+   },
+   "options": [
+    {
+     "key": "terrain",
+     "title": {
+      "en": "Terrain",
+      "ru": "Местность"
+     },
+     "type": "select",
+     "default": "forest",
+     "choices": [
+      {
+       "value": "forest",
+       "title": {
+        "en": "Forest",
+        "ru": "Лес"
+       }
+      },
+      {
+       "value": "plains",
+       "title": {
+        "en": "Plains",
+        "ru": "Равнины"
+       }
+      },
+      {
+       "value": "city",
+       "title": {
+        "en": "City",
+        "ru": "Город"
+       }
+      },
+      {
+       "value": "coast",
+       "title": {
+        "en": "Coast",
+        "ru": "Побережье"
+       }
+      },
+      {
+       "value": "mountains",
+       "title": {
+        "en": "Mountains",
+        "ru": "Горы"
+       }
+      },
+      {
+       "value": "swamp",
+       "title": {
+        "en": "Swamp",
+        "ru": "Болото"
+       }
+      },
+      {
+       "value": "jungle",
+       "title": {
+        "en": "Jungle",
+        "ru": "Джунгли"
+       }
+      },
+      {
+       "value": "desert",
+       "title": {
+        "en": "Desert",
+        "ru": "Пустыня"
+       }
+      },
+      {
+       "value": "arctic",
+       "title": {
+        "en": "Arctic",
+        "ru": "Арктика"
+       }
+      },
+      {
+       "value": "underground",
+       "title": {
+        "en": "Underground",
+        "ru": "Подземье"
+       }
+      }
+     ]
+    },
+    {
+     "key": "time",
+     "title": {
+      "en": "Time",
+      "ru": "Время"
+     },
+     "type": "select",
+     "default": "day",
+     "choices": [
+      {
+       "value": "day",
+       "title": {
+        "en": "Day",
+        "ru": "День"
+       }
+      },
+      {
+       "value": "night",
+       "title": {
+        "en": "Night",
+        "ru": "Ночь"
+       }
+      }
+     ]
+    },
+    {
+     "key": "danger",
+     "title": {
+      "en": "Danger",
+      "ru": "Опасность"
+     },
+     "type": "select",
+     "default": "1",
+     "choices": [
+      {
+       "value": "0",
+       "title": {
+        "en": "Calm",
+        "ru": "Спокойно"
+       }
+      },
+      {
+       "value": "1",
+       "title": {
+        "en": "Tense",
+        "ru": "Напряжённо"
+       }
+      },
+      {
+       "value": "2",
+       "title": {
+        "en": "Dangerous",
+        "ru": "Опасно"
+       }
+      }
+     ]
+    },
+    {
+     "key": "count",
+     "title": {
+      "en": "Events",
+      "ru": "Событий"
+     },
+     "type": "number",
+     "default": 3,
+     "min": 1,
+     "max": 12
+    }
+   ],
+   "steps": [
+    {
+     "repeat": "count",
+     "steps": [
+      {
+       "line": {
+        "en": "Random events",
+        "ru": "Случайные события"
+       },
+       "table": "events",
+       "col": "5",
+       "pick": {
+        "where": [
+         {
+          "col": 1,
+          "has": "terrain"
+         },
+         {
+          "col": 2,
+          "has": "time"
+         },
+         {
+          "col": 3,
+          "max": "danger"
+         }
+        ],
+        "weights": {
+         "col": 0,
+         "table": "kinds",
+         "by": "danger"
+        },
+        "prefer": {
+         "col": 3,
+         "is": "2",
+         "when": "eq(danger, 2)",
+         "chance": 70
+        },
+        "unique": true,
+        "fight": "encounter",
+        "label": 4,
+        "note": 6
+       },
+       "sub": [
+        {
+         "if": "eq(danger, 2) * le(d(100), 35)",
+         "then": [
+          {
+           "line": {
+            "en": "Complication",
+            "ru": "Осложнение"
+           },
+           "table": "complications",
+           "any": true
+          }
+         ]
+        }
+       ],
+       "group": "pick"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

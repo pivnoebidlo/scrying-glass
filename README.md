@@ -341,7 +341,7 @@ adventures — magic items of the right rarity from the compendium (of the shown
 click opens the entry, in the journal they are [[links]]) and prices with the total in gold; in other systems —
 curiosities and no prices. Copy, to the journal or to Telegram.
 
-**Random events** (Tools → Random events): terrain (as for the weather, the city and the underground included), day or
+**Random events** (Tools → Generators, D&D only, comes with the SRD package): terrain (as for the weather, the city and the underground included), day or
 night, danger (calm, tense, dangerous) and 1, 3 or 6 events → encounters, discoveries, obstacles, travellers, omens and
 rumors (from the tavern generator), each event rerollable. Creatures in the text are links: a click opens the SRD card
 on the side (in the journal they stay [[links]]). In D&D adventures an obstacle shows its check (skill and DC); on a

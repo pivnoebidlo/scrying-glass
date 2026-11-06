@@ -95,8 +95,24 @@ export interface GenCardSpec {
   notes?: string;
 }
 
+// A row picked among those that fit: a column holds a list of tags or nothing (`has`, an option's value; empty fits all),
+// a number no higher than an option (`max`). `weights` — first a kind of row by its weight (a table: the kind, then a
+// column of weights chosen by a number), `prefer` — then, with this chance, rows of that value. `unique` — a row once
+// in a result. `fight` — rows of this first column are a fight: [[names]] make an encounter.
+export interface GenPick {
+  where?: { col: number; has?: string; max?: string }[];
+  weights?: { col: number; table: string; by: string };
+  prefer?: { col: number; is: string; when: string; chance: number };
+  unique?: boolean;
+  fight?: string;
+  // Columns: the line's label, its note.
+  label?: number;
+  note?: number;
+}
+
 export interface GenLineStep extends Partial<GenCellRef> {
   line: GenText;
+  pick?: GenPick;
   dice?: string;
   parts?: GenCellRef[];
   // Everything put and pushed there, joined by commas.
@@ -259,6 +275,11 @@ export interface GenLine {
   sub?: GenLine[];
   items?: GenSlot[];
   card?: GenCard;
+  // A picked line: rolled again on its own; its label and note follow its row; it can become a fight.
+  picked?: { table: string; pick: GenPick };
+  labelCell?: GenCell;
+  noteCell?: GenCell;
+  fight?: boolean;
 }
 export interface GenSlot {
   cell?: GenCell;
@@ -309,7 +330,9 @@ function stepOk(s: unknown, depth: number): boolean {
   if (s['line'] !== undefined) {
     if (!text(s['line'])) return false;
     if (s['parts'] !== undefined && !(Array.isArray(s['parts']) && s['parts'].length <= CAP.cols && s['parts'].every(refOk))) return false;
-    if (s['table'] !== undefined && !refOk(s)) return false;
+    if (s['pick'] !== undefined) {
+      if (!isObj(s['pick']) || !str(s['table'])) return false;
+    } else if (s['table'] !== undefined && !refOk(s)) return false;
     if (s['notes'] !== undefined && !notesOk(s['notes'])) return false;
     if (s['sub'] !== undefined && !list(s['sub'])) return false;
     return true;
@@ -410,6 +433,61 @@ export function rangeOf(cell: string): [number, number] | null {
 // The language the numbers of the tables are read in: any has them, the first is enough.
 const baseOf = (f: GeneratorFile) => f.tables['en'] ?? Object.values(f.tables)[0] ?? {};
 
+// The row a pick lands on (-1 — none fits).
+function pickRow(rows: string[][], p: GenPick, sheet: (t: string) => GenTable, value: (k: string) => string, n: (f: string) => number, roll: Roll, avoid: Set<number>): number {
+  const fits = (r: string[]) => (p.where ?? []).every((w) => {
+    const cell = r[w.col] ?? '';
+    if (w.has !== undefined) return !cell || cell.split(',').map((x) => x.trim()).includes(value(w.has));
+    return w.max === undefined || Number(cell || 0) <= n(w.max);
+  });
+  const all = rows.map((r, i) => ({ r, i })).filter(({ r }) => fits(r));
+  const fresh = all.filter(({ i }) => !avoid.has(i));
+  let pool = fresh.length ? fresh : all;
+  if (!pool.length) return -1;
+  if (p.weights) {
+    const w = p.weights;
+    const kinds = [...new Set(pool.map(({ r }) => r[w.col] ?? ''))];
+    const table = sheet(w.table).rows;
+    const weigh = (k: string) => Number(table.find((x) => x[0] === k)?.[1 + n(w.by)] ?? 1) || 0;
+    let x = roll(Math.max(1, kinds.reduce((a, k) => a + weigh(k), 0)));
+    const kind = kinds.find((k) => (x -= weigh(k)) <= 0) ?? kinds[0];
+    pool = pool.filter(({ r }) => (r[w.col] ?? '') === kind);
+  }
+  if (p.prefer && n(p.prefer.when) && roll(100) <= p.prefer.chance) {
+    const best = pool.filter(({ r }) => r[p.prefer!.col] === p.prefer!.is);
+    if (best.length) pool = best;
+  }
+  return pool[roll(pool.length) - 1]!.i;
+}
+function pickedOf(rows: string[][], table: string, pick: GenPick, row: number): Pick<GenLine, 'picked' | 'labelCell' | 'noteCell' | 'fight'> {
+  const r = rows[row] ?? [];
+  return {
+    picked: { table, pick },
+    ...(pick.label !== undefined ? { labelCell: { table, row, col: pick.label } } : {}),
+    ...(pick.note !== undefined && r[pick.note] ? { noteCell: { table, row, col: pick.note } } : {}),
+    ...(pick.fight !== undefined && r[0] === pick.fight ? { fight: true } : {}),
+  };
+}
+// One line of a result rolled again: another row, the same options; the rest of the result stays.
+export function rerollLine(file: GeneratorFile, result: GenResult, at: number, options: GenOptions, roll: Roll): GenResult {
+  const line = result.lines[at];
+  if (!line?.picked) return result;
+  const { table, pick } = line.picked;
+  const base = baseOf(file);
+  const sheet = (t: string) => base[t] ?? { head: [], rows: [] };
+  const value = (k: string) => String(options[k] ?? '');
+  const num = (name: string) => Number(options[name] ?? 0) || 0;
+  const taken = new Set(result.lines.filter((l) => l.picked?.table === table).map((l) => l.cells[0]?.row ?? -1));
+  const row = pickRow(sheet(table).rows, pick, sheet, value, (f) => calc(f, num, roll), roll, taken);
+  const { labelCell: _a, noteCell: _b, fight: _c, ...rest } = line;
+  const next = { ...rest, cells: line.cells.map((c) => ({ ...c, row })), ...pickedOf(sheet(table).rows, table, pick, row) };
+  return { ...result, lines: result.lines.map((l, i) => (i === at ? next : l)) };
+}
+// The names a line's fight is made of: its [[links]].
+export const lineNames = (text: string) => [...new Set([...text.matchAll(/\[\[([^\]|]+)/g)].map((m) => m[1]!.trim()))];
+export const lineLabel = (file: GeneratorFile, l: GenLine, lang: Lang) => (l.labelCell ? genCell(file, l.labelCell, lang) : genText(l.label, lang, l.params));
+export const lineNote = (file: GeneratorFile, l: GenLine, lang: Lang) => (l.noteCell ? genCell(file, l.noteCell, lang) : '');
+
 export function runGenerator(file: GeneratorFile, id: string, options: GenOptions, roll: Roll): GenResult {
   const gen = file.generators.find((g) => g.id === id);
   if (!gen) return { generator: id, lines: [] };
@@ -423,7 +501,7 @@ export function runGenerator(file: GeneratorFile, id: string, options: GenOption
   const name = (n: string) => n.replace(/\{(\w+)\}/g, (_, k: string) => String(vars.get(k) ?? ''));
   const num = (n: string) => {
     const v = vars.get(n);
-    return typeof v === 'number' ? v : 0;
+    return typeof v === 'number' ? v : typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v)) ? Number(v) : 0;
   };
   const n = (text: string) => calc(text, num, roll);
   const sheet = (t: string) => base[name(t)] ?? { head: [], rows: [] };
@@ -463,6 +541,7 @@ export function runGenerator(file: GeneratorFile, id: string, options: GenOption
   }
 
   let pending: string[] = [];
+  const usedRows = new Map<string, number[]>();
   const params = () => Object.fromEntries(vars);
   const slots = new Map<string, { size: number; places: (GenSlot | null)[]; past: GenSlot[] }>();
   const lists = new Map<string, { cells: Record<string, GenCell>; lower?: string[] }[]>();
@@ -533,10 +612,13 @@ export function runGenerator(file: GeneratorFile, id: string, options: GenOption
           pending.push(`${r.label}: ${r.total}`);
         }
         const refs = s.parts ?? (s.table ? [{ ...(s as GenCellRef), ...(s.dice ? { lookup: 'rolled_' } : {}) }] : []);
-        const cells = refs.map(cellOf);
+        const taken = s.pick?.unique ? new Set(usedRows.get(s.table ?? '') ?? []) : new Set<number>();
+        const row = s.pick && s.table ? pickRow(sheet(s.table).rows, s.pick, sheet, (k) => String(vars.get(k) ?? ''), n, roll, taken) : -1;
+        const cells = s.pick && s.table ? [{ table: name(s.table), row, ...(s.col !== undefined ? { col: Math.round(n(s.col)) } : {}) }] : refs.map(cellOf);
+        if (s.pick && s.table) usedRows.set(s.table, [...(usedRows.get(s.table) ?? []), row]);
         if (s.as) named.set(s.as, cells);
         if (s.into && cells[0]) place({ put: s.into.field, size: s.into.size, pack: s.into.pack }, { cell: cells[0] });
-        const line: GenLine = { label: s.line, cells, params: params() };
+        const line: GenLine = { label: s.line, cells, params: params(), ...(s.pick && s.table ? pickedOf(sheet(s.table).rows, s.table, s.pick, row) : {}) };
         if (s.items) line.items = itemsOf(s.items);
         if (s.join) line.join = s.join;
         if (s.text) line.text = s.text;
@@ -903,7 +985,7 @@ export function fillTemplate(x: unknown, lang: Lang, roll: Roll): unknown {
   return Object.fromEntries(Object.entries(x).map(([k, v]) => [k, fillTemplate(v, lang, roll)]));
 }
 
-export const plainText = (s: string) => s.replace(/\*\*/g, '');
+export const plainText = (s: string) => s.replace(/\*\*/g, '').replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2').replace(/\[\[([^\]]+)\]\]/g, '$1');
 // «d6: 4» → «к6: 4» in Russian.
 export const rollWords = (s: string | undefined, lang: Lang) => (s && lang === 'ru' ? s.replace(/(^|[^a-z])(\d*)d(\d)/g, '$1$2к$3') : (s ?? ''));
 
@@ -912,7 +994,8 @@ export function resultMarkdown(file: GeneratorFile, r: GenResult, lang: Lang): s
   const out: string[] = [`## ${genText(gen?.title, lang)}`, ''];
   const add = (l: GenLine, indent: string) => {
     const x = (l.notes ?? []).map((n) => genText(n.text, lang, l.params)).join(', ');
-    out.push(`${indent}- **${genText(l.label, lang, l.params)}:** ${lineWords(file, l, lang)}${x ? ` (${x})` : ''}`);
+    const note = [lineNote(file, l, lang), x].filter(Boolean).join(', ');
+    out.push(`${indent}- **${lineLabel(file, l, lang)}:** ${lineWords(file, l, lang)}${note ? ` (${note})` : ''}`);
     for (const s of l.sub ?? []) add(s, indent + '  ');
   };
   for (const l of r.lines) add(l, '');
