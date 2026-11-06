@@ -10,7 +10,7 @@
   import { keyFrom } from '../../../shared/compendium';
   import { die } from '../../../shared/dice';
   import { getLang } from '../../../shared/i18n';
-  import { diceOfRows, genCardOf, genText, linkCard, lineWords, numberOf, numberStep, packFile, plainText, rollWords, runGenerator, simpleStep, stepOf, type GenCardSpec, type Generator, type GenLine, type GenOption, type GenResult, type GenTable, type GenText, type NumberStep, type PackKit, type SimpleStep, type WhenOp } from '../../../shared/generators';
+  import { diceOfRows, genCardOf, genText, linkCard, lineWords, numberOf, numberStep, packFile, plainText, rollWords, runGenerator, simpleStep, stepNames, stepOf, type GenCardSpec, type Generator, type GenLine, type GenOption, type GenResult, type GenTable, type GenText, type NumberStep, type PackKit, type SimpleStep, type WhenOp } from '../../../shared/generators';
   import { loc, sectionsFor, type SystemPack } from '../../../shared/syspack';
   import FormulaInput from './FormulaInput.svelte';
   import LocInput from './LocInput.svelte';
@@ -136,8 +136,10 @@
     g.steps[i] = numberStep({ ...numbers[i]!, ...changes });
     changed();
   }
+  const inUse = (key: string) => g.steps.some((s) => stepNames(s, key)) || Object.values(g.card?.stats ?? {}).includes(key);
   function removeNumber(i: number) {
     const key = numbers[i]!.key;
+    if (inUse(key)) return void alert(t('sb.gen.inUse', { name: titleOfNumber(key) }));
     g.steps.splice(i, 1);
     const { [key]: _gone, ...rest } = g.names ?? {};
     g.names = rest;
@@ -158,6 +160,7 @@
     changed();
   }
   function removeAsk(i: number) {
+    if (inUse(asks[i]!.key)) return void alert(t('sb.gen.inUse', { name: genText(asks[i]!.title, lang) }));
     g.options = asks.filter((_, j) => j !== i);
     if (!g.options.length) delete g.options;
     changed();

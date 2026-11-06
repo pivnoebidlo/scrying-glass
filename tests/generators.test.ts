@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { validatePack, type SystemPack } from '../src/shared/syspack';
-import { calcValue, diceOfRows, genCardOf, genText, lineWords, packFile, priceItems, priceOfItem, rangeOf, runCalculator, resultMarkdown, rollWords, runGenerator, validateGenerators, kindsOfText, priceRowsOfText, rowsOfText, simpleStep, textOfKinds, textOfPriceRows, unitOf, unitText, stepOf, textOfRows, linkCard, numberOf, numberStep, whenFormula, whenOf, type Generator, type NumberStep, type SimpleStep, type GeneratorFile, type GenLine, type GenOptions } from '../src/shared/generators';
+import { calcValue, diceOfRows, genCardOf, genText, lineWords, packFile, priceItems, priceOfItem, rangeOf, runCalculator, resultMarkdown, rollWords, runGenerator, validateGenerators, kindsOfText, priceRowsOfText, rowsOfText, simpleStep, textOfKinds, textOfPriceRows, unitOf, unitText, stepOf, textOfRows, linkCard, stepNames, numberOf, numberStep, whenFormula, whenOf, type Generator, type NumberStep, type SimpleStep, type GeneratorFile, type GenLine, type GenOptions } from '../src/shared/generators';
 
 const file = validateGenerators(JSON.parse(readFileSync('content/mausritter/generators/mausritter.json', 'utf8'))) as GeneratorFile;
 // Rolls in a fixed order (then 1 forever).
@@ -255,6 +255,16 @@ describe('a system of one file brings its own generators', () => {
 });
 
 describe('a generator made of sentences', () => {
+  it('knows what reads a number, so it is not removed from under a line', () => {
+    const line = stepOf({ label: 'Inn', table: 'inns', dice: '', times: 1, when: { what: 'size', op: 'ge', value: 3 } });
+    expect(stepNames(line, 'size')).toBe(true);
+    expect(stepNames(line, 'siz')).toBe(false);
+    expect(stepNames(stepOf({ label: 'A', table: 't', dice: '', by: 'n', byRow: true, times: 1 }), 'n')).toBe(true);
+    expect(stepNames(stepOf({ label: 'A', table: 't', dice: '', times: 1, timesBy: 'n' }), 'n')).toBe(true);
+    expect(stepNames(numberStep({ key: 'best', formula: 'max(a, b)' }), 'a')).toBe(true);
+    expect(stepNames(numberStep({ key: 'a', dice: 'd6' }), 'a')).toBe(false);
+  });
+
   const tablesEn = { en: { sizes: { head: ['Size'], rows: [['Farm'], ['Hamlet'], ['Town']] }, inns: { head: ['Inn'], rows: [['The Fox'], ['The Hen']] }, gear: { head: ['Gear'], rows: [['Rope'], ['Lamp']] } } };
   const f = (generators: unknown[]) => packFile('x', { tables: tablesEn, generators: generators as Generator[] });
 

@@ -653,7 +653,17 @@ export function numberOf(s: GenStep): NumberStep | null {
   return s.formula !== undefined ? { key: s.let, formula: s.formula } : null;
 }
 export const numberStep = (n: NumberStep): GenStep =>
-  n.dice ? { let: n.key, dice: n.dice, ...(n.keep ? { keep: n.keep, count: n.count ?? 1 } : {}) } : { let: n.key, formula: n.formula ?? '0' };
+  n.dice ? { let: n.key, dice: n.dice, ...(n.keep ? { keep: n.keep, count: n.count ?? 1 } : {}), quiet: true } : { let: n.key, formula: n.formula ?? '0' };
+
+// Whether a step reads a number or an answer by its key.
+export function stepNames(s: GenStep, key: string): boolean {
+  const said = (f: string | undefined) => !!f && [...f.matchAll(/[A-Za-z_]\w*/g)].some((m) => m[0] === key);
+  if ('let' in s) return s.let !== key && said(s.formula);
+  if ('if' in s) return said(s.if) || [...s.then, ...(s.else ?? [])].some((x) => stepNames(x, key));
+  if ('repeat' in s) return said(s.repeat) || s.steps.some((x) => stepNames(x, key));
+  if ('line' in s) return said(s.lookup) || said(s.row) || (s.sub ?? []).some((x) => stepNames(x, key));
+  return false;
+}
 
 // A card of the whole result, found by names: a number goes to the number field of the same title, a line to the text
 // field of its label; a line with `into` fills its slots field. What found nothing is left out, the builder says so.
@@ -693,7 +703,9 @@ export function linkCard(gen: Generator, fields: CardField[], kind: CardKind, la
   });
   const named = steps.flatMap((s) => (simpleStep(s) ? [simpleStep(s)!] : []));
   const nameAs = nameLine || named.find((x) => same(genText(x.label, lang), 'имя') || same(genText(x.label, lang), 'name'))?.as || named[0]?.as || '';
-  return { steps, links, card: { kind, name: { line: nameAs }, stats, ...(Object.keys(text).length ? { text } : {}), ...(slotted.size ? { slots: [...slotted] } : {}) } };
+  // The line that names the card has found its place.
+  const nameTitle = genText(named.find((x) => x.as === nameAs)?.label, lang);
+  return { steps, links: links.filter((l) => l.to || l.from !== nameTitle), card: { kind, name: { line: nameAs }, stats, ...(Object.keys(text).length ? { text } : {}), ...(slotted.size ? { slots: [...slotted] } : {}) } };
 }
 
 // ---- In words ----
