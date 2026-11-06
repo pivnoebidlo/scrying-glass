@@ -355,13 +355,7 @@ encounter distance and the foraging, navigation and search DCs; in 2014 — diff
 Also: what the pace gives (Perception, Stealth), the mounted gallop, and a long day past 8 hours — the Constitution
 save DC for each extra hour. Ships keep their speed and can sail up to 24 hours a day.
 
-**Wild magic** (Tools → Wild magic, D&D only): a d100 on a table of surges — our own (50 effects, written for the app),
-the Wand of Wonder of the adventure's edition (taken from the SRD compendium, your edit of the entry counts) or a table
-of your own: paste lines like "01–02 Effect", a Markdown table or one effect per line (then the die is the number of
-lines); your tables are kept in the library. "Check for a surge" rolls a d20 by the rules of the adventure's edition (a
-surge on a 1 in 2014, on a 20 in 2024) and on a surge rolls the table at once. Space — roll, − and + move the result by one, spells in the text open the
-compendium; copy, to Telegram, the whole table with the rolled row and the rolls of this window. Tables from the
-Player's Handbook and other books are not open, so they are not built in — paste them as your own.
+**Wild magic** (D&D): the tables “Wild Magic Surge” and “Wand of Wonder Effects” are in the compendium of each edition and roll in Tools → Roll tables; spells in them are links. Tables made in the old Wild magic tool move to the compendium's library by themselves.
 
 **Dungeon generator** (Tools → Dungeon generator): kind (tomb, caves, mine, temple, fortress, wizard's tower, sewers,
 ruins), the heroes' level and any number of rooms from 3 to 30 → a "five-room dungeon": a guarded entrance, a puzzle, a

@@ -294,7 +294,9 @@ for (const ed of EDITIONS) {
   const unmatched = books.ru.filter((e) => e.en && !books.en.some((x) => x.type === e.type && x.title.toLowerCase() === e.en!.toLowerCase()));
   if (unmatched.length) console.log(`  ru without an English pair: ${unmatched.map((e) => e.en).join(', ')}`);
   for (const lang of ['ru', 'en'] as const) {
-    const book = { system: ed.system, lang, source: SOURCE[lang](ed.title), entries: books[lang] };
+    // Tables of our own and the wand's as a table to roll on (scripts/dnd5e-tables.json).
+    const own = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'dnd5e-tables.json'), 'utf8'))[ed.system][lang];
+    const book = { system: ed.system, lang, source: SOURCE[lang](ed.title), entries: [...books[lang], ...own] };
     fs.writeFileSync(path.join(OUT, `${ed.system}.${lang}.json`), JSON.stringify(book) + '\n');
   }
 }

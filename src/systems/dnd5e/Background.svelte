@@ -7,6 +7,7 @@
   import { lssAliases, lssImporter } from './importer';
   import type { LssSpellTable } from './lss';
   import { setNameIndex } from '../../shared/nameindex';
+  import { moveOwnTables } from './tools/wildmagic/migrate';
 
   let aliases = $state.raw<Record<string, string>>({});
   async function loadAliases() {
@@ -15,6 +16,7 @@
   }
   onMount(() => {
     void loadAliases();
+    void moveOwnTables();
     window.api.onImporterTableChanged((id) => id === lssImporter.id && void loadAliases());
   });
 

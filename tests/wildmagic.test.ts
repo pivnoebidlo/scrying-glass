@@ -3,7 +3,8 @@ import en2014 from '../content/dnd5e-srd/compendium/dnd5e-2014.en.json';
 import ru2014 from '../content/dnd5e-srd/compendium/dnd5e-2014.ru.json';
 import en2024 from '../content/dnd5e-srd/compendium/dnd5e-2024.en.json';
 import ru2024 from '../content/dnd5e-srd/compendium/dnd5e-2024.ru.json';
-import { dieOf, isSurge, parseOwnTables, parseTable, rangeText, rowFor, surgeRows } from '../src/systems/dnd5e/tools/wildmagic/tables';
+import { dieOf, parseOwnTables, parseTable, rangeText, tableBody } from '../src/systems/dnd5e/tools/wildmagic/tables';
+import { parseRollTable } from '../src/shared/rolltable';
 
 type Book = { entries: { title: string; type: string; body: string; en?: string }[] };
 const covers = (rows: { from: number; to: number }[], die: number) => {
@@ -11,32 +12,17 @@ const covers = (rows: { from: number; to: number }[], die: number) => {
 };
 
 describe('дикая магия', () => {
-  it('наша таблица: 50 строк по два числа, к100 без дыр; заклинания — из справочника обеих редакций', () => {
-    for (const lang of ['en', 'ru']) {
-      const rows = surgeRows(lang);
-      expect(rows.length).toBe(50);
-      expect(dieOf(rows)).toBe(100);
-      covers(rows, 100);
-    }
-    for (const [lang, books] of [['en', [en2014, en2024]], ['ru', [ru2014, ru2024]]] as [string, Book[]][]) {
-      for (const b of books) {
-        const spells = new Set(b.entries.filter((e) => e.type === 'spell').map((e) => e.title.toLowerCase()));
-        for (const r of surgeRows(lang))
-          for (const m of r.text.matchAll(/\*([^*]+)\*/g)) {
-            // Exactly the title: only then the italics become a link.
-            expect(spells.has(m[1]!.toLowerCase()), `${lang}: ${m[1]}`).toBe(true);
-          }
+  it('таблицы в справочнике обеих редакций: к100 без дыр, ссылки ведут на заклинания, а не бросают дальше', () => {
+    for (const b of [en2014, ru2014, en2024, ru2024] as unknown as Book[]) {
+      const spells = new Set(b.entries.filter((e) => e.type === 'spell').map((e) => e.title));
+      const tables = b.entries.filter((e) => e.type === 'table');
+      expect(tables.length).toBe(2);
+      for (const e of tables) {
+        const t = parseRollTable(e.body, 'd100')!;
+        expect(t, e.title).toBeTruthy();
+        for (let n = 1; n <= 100; n++) expect(t.rows.filter((r) => n >= r.range.from && n <= r.range.to).length, `${e.title} ${n}`).toBe(1);
+        for (const m of e.body.matchAll(/\[\[([^\]|]+)/g)) expect(spells.has(m[1]!), m[1]).toBe(true);
       }
-    }
-  });
-
-  it('палочка чудес из справочника: обе редакции, оба языка — к100 без дыр (слитые строки 2014 разделяются)', () => {
-    for (const b of [en2014, ru2014, en2024, ru2024] as Book[]) {
-      const e = b.entries.find((x) => (x.en ?? x.title) === 'Wand of Wonder')!;
-      const rows = parseTable(e.body.split('\n').filter((l) => l.trim().startsWith('|')).join('\n'));
-      expect(dieOf(rows)).toBe(100);
-      covers(rows, 100);
-      expect(rows.every((r) => !/\d{2}[-–]\d{2}\s+(You|Вы)/.test(r.text))).toBe(true);
     }
   });
 
@@ -56,16 +42,10 @@ describe('дикая магия', () => {
     expect(parseTable('1. Sparks fly\n   and land far away\n2) Smoke')[0]!.text).toBe('Sparks fly and land far away');
     // A number inside the text is not a new row.
     expect(parseTable('01-50 On a 01-25, a rat appears.').length).toBe(1);
-    const t = { id: 'x', title: 'x', die: 100, rows: parseTable('01–50 A\n51–100 B') };
-    expect(rowFor(t, 51)?.text).toBe('B');
-    expect(rangeText(t.rows[0]!, 100)).toBe('01–50');
+    expect(rangeText(parseTable('01–50 A\n51–100 B')[0]!, 100)).toBe('01–50');
+    const moved = tableBody({ id: 'a', title: 'Мои', text: '01–50 A | a\n51–00 B' })!;
+    expect(moved.die).toBe(100);
+    expect(parseRollTable(moved.body, 'd100')!.rows.length).toBe(2);
     expect(parseOwnTables({ tables: [{ id: 'a', title: 'A', text: '1 x' }, { id: 1 }] })).toEqual([{ id: 'a', title: 'A', text: '1 x' }]);
-  });
-
-  it('проверка всплеска: 2014 — на 1, 2024 — на 20', () => {
-    expect(isSurge(1, '2014')).toBe(true);
-    expect(isSurge(20, '2014')).toBe(false);
-    expect(isSurge(20, '2024')).toBe(true);
-    expect(isSurge(1, '2024')).toBe(false);
   });
 });
