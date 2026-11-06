@@ -233,7 +233,16 @@ export interface PackEntryType {
   fields?: { key: string; title: Loc; kind: 'text' | 'number' | 'bool' | 'list' }[];
   // The line under an entry's title: «Spell {rank} · {actions}»; {key} — its fields, empty parts drop out.
   subtitle?: Loc;
+  // Fields to filter the list by, and a field that heads its groups («Rank {n}», `zero` for 0).
+  filters?: EntryFilter[];
+  groupBy?: { key: string; title: Loc; zero?: Loc };
 }
+// chips — the values the entries have, any of those picked; tri — yes / no.
+export interface EntryFilter {
+  key: string;
+  kind: 'chips' | 'tri';
+}
+export type FilterPick = string[] | 'yes' | 'no';
 
 export interface PackEntry {
   title: Loc;
@@ -561,7 +570,13 @@ function entryTypesOf(x: unknown): PackEntryType[] | null {
         : [];
     });
     const subtitle = locOf(t['subtitle']);
-    return [{ id: t['id'], title, plural, ...(fields.length ? { fields } : {}), ...(subtitle ? { subtitle } : {}) }];
+    const known = new Set(fields.map((f) => f.key));
+    const filters = (Array.isArray(t['filters']) ? t['filters'] : []).flatMap((f): EntryFilter[] => (isObj(f) && known.has(f['key'] as string) ? [{ key: f['key'] as string, kind: f['kind'] === 'tri' ? 'tri' : 'chips' }] : [])).slice(0, 8);
+    const g = isObj(t['groupBy']) ? t['groupBy'] : null;
+    const gt = g ? locOf(g['title']) : null;
+    const gz = g ? locOf(g['zero']) : null;
+    const groupBy = g && gt && known.has(g['key'] as string) ? { key: g['key'] as string, title: gt, ...(gz ? { zero: gz } : {}) } : null;
+    return [{ id: t['id'], title, plural, ...(fields.length ? { fields } : {}), ...(subtitle ? { subtitle } : {}), ...(filters.length ? { filters } : {}), ...(groupBy ? { groupBy } : {}) }];
   });
 }
 
@@ -925,6 +940,29 @@ export function entryLine(template: string, get: (key: string) => unknown): stri
     if (keys.length && keys.every((k) => !text(get(k)).trim())) return '';
     return part.replace(/\{([a-z_][a-z0-9_]*)\}/gi, (_, k: string) => text(get(k))).trim();
   }).filter(Boolean).join(' · ');
+}
+
+// The values of a field among entries, numbers in order.
+const valuesOf = (v: unknown) => (Array.isArray(v) ? v.map(String) : v === undefined || v === null || v === '' ? [] : typeof v === 'string' ? v.split(',').map((x) => x.trim()).filter(Boolean) : [String(v)]);
+export function filterValues(entries: Record<string, unknown>[], key: string): string[] {
+  const all = [...new Set(entries.flatMap((e) => valuesOf(e[key])))];
+  return all.every((x) => x.trim() !== '' && !Number.isNaN(Number(x))) ? all.sort((a, b) => Number(a) - Number(b)) : all.sort((a, b) => a.localeCompare(b));
+}
+// Within a field — any of those picked, between fields — all at once.
+export function filterMatches(entry: Record<string, unknown>, filters: EntryFilter[], picks: Record<string, FilterPick>): boolean {
+  return filters.every((f) => {
+    const p = picks[f.key];
+    if (p === undefined) return true;
+    if (typeof p === 'string') return !!entry[f.key] === (p === 'yes');
+    if (!p.length) return true;
+    const own = valuesOf(entry[f.key]);
+    return p.some((x) => own.includes(x));
+  });
+}
+export function groupOfEntry(entry: Record<string, unknown>, g: NonNullable<PackEntryType['groupBy']>, lang: string) {
+  const n = Number(entry[g.key] ?? NaN);
+  if (Number.isNaN(n)) return { order: 9999, title: '—' };
+  return { order: n, title: n === 0 && g.zero ? loc(g.zero, lang) : loc(g.title, lang).replace('{n}', String(n)) };
 }
 
 // A section of lines: the fields on one line (a field that joins goes on the previous one's). A long field — alone.

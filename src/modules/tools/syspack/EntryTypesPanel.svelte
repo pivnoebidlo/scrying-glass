@@ -5,7 +5,8 @@
   import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { keyFrom } from '../../../shared/compendium';
-  import type { PackEntryType, SystemPack } from '../../../shared/syspack';
+  import { getLang } from '../../../shared/i18n';
+  import { loc, type Loc, type PackEntryType, type SystemPack } from '../../../shared/syspack';
   import LocInput from './LocInput.svelte';
 
   let { pack, disabled = false }: { pack: SystemPack; disabled?: boolean } = $props();
@@ -34,6 +35,13 @@
     const key = free(keyFrom(`field ${fields.length + 1}`).slice(0, 28) || 'field', fields.map((f) => f.key));
     x.fields = [...fields, { key, title: t('sb.typeNewField'), kind: 'text' }];
   }
+  const L = (x: Loc) => loc(x, getLang());
+  function setFilter(x: PackEntryType, f: NonNullable<PackEntryType['fields']>[number], on: boolean) {
+    const rest = (x.filters ?? []).filter((y) => y.key !== f.key);
+    const next = on ? [...rest, { key: f.key, kind: f.kind === 'bool' ? ('tri' as const) : ('chips' as const) }] : rest;
+    if (next.length) x.filters = next;
+    else delete x.filters;
+  }
 </script>
 
 <p class="faint small"><Lead text={t('sb.typesAbout')} /></p>
@@ -52,9 +60,22 @@
           <option value="text">{t('sb.typeText')}</option>
           <option value="number">{t('sb.typeNumber')}</option>
         </select>
+        <label class="check" title={t('sb.typeFilterHint')}><input type="checkbox" {disabled} checked={!!x.filters?.some((y) => y.key === f.key)} onchange={(e) => setFilter(x, f, e.currentTarget.checked)} /> {t('sb.typeFilter')}</label>
         <button class="icon-btn" title={t('sb.remove')} {disabled} onclick={() => (x.fields = x.fields!.filter((_, j) => j !== i))}><X size={13} /></button>
       </div>
     {/each}
+    {#if x.fields?.some((f) => f.kind === 'number')}
+      <label class="row"><span>{t('sb.typeGroup')}</span>
+        <select {disabled} value={x.groupBy?.key ?? ''} onchange={(e) => (e.currentTarget.value ? (x.groupBy = { key: e.currentTarget.value, title: x.groupBy?.title ?? '{n}', ...(x.groupBy?.zero ? { zero: x.groupBy.zero } : {}) }) : delete x.groupBy)}>
+          <option value="">{t('sb.typeGroupNone')}</option>
+          {#each x.fields.filter((f) => f.kind === 'number') as f (f.key)}<option value={f.key}>{L(f.title)}</option>{/each}
+        </select>
+      </label>
+      {#if x.groupBy}
+        {@const g = x.groupBy}
+        <label class="row" title={t('sb.typeGroupHint')}><span>{t('sb.typeGroupTitle')}</span><LocInput value={g.title} set={(v) => (g.title = v ?? '{n}')} {disabled} /></label>
+      {/if}
+    {/if}
     <button class="btn small" {disabled} onclick={() => addField(x)}><Plus size={13} /> {t('sb.typeAddField')}</button>
   </div>
 {/each}

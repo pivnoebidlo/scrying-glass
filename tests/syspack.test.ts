@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { threatByHeroes, threatOfRaw } from '../src/shared/threat';
 import { describe, expect, it } from 'vitest';
-import { cellDice, cellText, entryLine, lineGroups, signedNum, type FieldDef, blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
+import { cellDice, cellText, entryLine, filterMatches, filterValues, groupOfEntry, lineGroups, signedNum, type FieldDef, blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
 
 const words: RollWords = { success: 'Success', failure: 'Failure', successes: (n) => `${n} successes`, critical: 'Critical' };
 // Dice that fall as told, in order.
@@ -519,6 +519,24 @@ describe('a pool with special dice', () => {
     expect(evalFormula(p, { ...stats, dex_save: 0 }, 'dex_save')).toBe(0);
     const loop = validatePack({ ...raw, sections: [{ id: 'm', title: 'M', fields: [{ key: 'a', title: 'A', type: 'number', auto: 'b' }, { key: 'b', title: 'B', type: 'number', auto: 'a' }] }] }) as SystemPack;
     expect(evalFormula(loop, {}, 'a')).toBe(0);
+  });
+
+  it('filters and groups of a list of entries', () => {
+    const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', tracker: {}, sections: [{ id: 'm', title: 'M', fields: [] }],
+      entryTypes: [{ id: 'x-spell', title: 'S', plural: 'Ss', fields: [{ key: 'rank', title: 'R', kind: 'number' }, { key: 'lists', title: 'L', kind: 'list' }, { key: 'ritual', title: 'T', kind: 'bool' }],
+        filters: [{ key: 'rank' }, { key: 'lists' }, { key: 'ritual', kind: 'tri' }, { key: 'nope' }], groupBy: { key: 'rank', title: 'Rank {n}', zero: 'Cantrips' } }] };
+    const t = (validatePack(raw) as SystemPack).entryTypes![0]!;
+    expect(t.filters).toEqual([{ key: 'rank', kind: 'chips' }, { key: 'lists', kind: 'chips' }, { key: 'ritual', kind: 'tri' }]);
+    const a = { rank: 10, lists: ['arcane', 'occult'], ritual: true };
+    const b = { rank: 2, lists: 'divine, occult' };
+    expect(filterValues([a, b], 'rank')).toEqual(['2', '10']);
+    expect(filterValues([a, b], 'lists')).toEqual(['arcane', 'divine', 'occult']);
+    expect(filterMatches(a, t.filters!, { lists: ['occult', 'x'] })).toBe(true);
+    expect(filterMatches(b, t.filters!, { lists: ['arcane'] })).toBe(false);
+    expect(filterMatches(b, t.filters!, { lists: ['occult'], ritual: 'yes' })).toBe(false);
+    expect(filterMatches(b, t.filters!, { ritual: 'no' })).toBe(true);
+    expect(groupOfEntry({ rank: 0 }, t.groupBy!, 'en')).toEqual({ order: 0, title: 'Cantrips' });
+    expect(groupOfEntry({ rank: 3 }, t.groupBy!, 'en')).toEqual({ order: 3, title: 'Rank 3' });
   });
 
   it('its fields and kit are valid: a whole game without code', () => {

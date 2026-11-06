@@ -1,7 +1,7 @@
 {
  "scryingGlass": "system",
  "version": 1,
- "format": 6,
+ "format": 7,
  "id": "pf2e",
  "family": "pf2e",
  "title": "Pathfinder 2e",
@@ -116,6 +116,27 @@
    "subtitle": {
     "en": "Spell {rank} · {traditions} · {act}",
     "ru": "Заклинание {rank} · {traditions} · {act}"
+   },
+   "filters": [
+    {
+     "key": "rank",
+     "kind": "chips"
+    },
+    {
+     "key": "traditions",
+     "kind": "chips"
+    }
+   ],
+   "groupBy": {
+    "key": "rank",
+    "title": {
+     "en": "Rank {n}",
+     "ru": "Ранг {n}"
+    },
+    "zero": {
+     "en": "Cantrips",
+     "ru": "Чары"
+    }
    }
   },
   {
@@ -268,7 +289,13 @@
    "subtitle": {
     "en": "Feat {level} · {act} · {traits}",
     "ru": "Черта {level} · {act} · {traits}"
-   }
+   },
+   "filters": [
+    {
+     "key": "level",
+     "kind": "chips"
+    }
+   ]
   },
   {
    "id": "pf2e-item",

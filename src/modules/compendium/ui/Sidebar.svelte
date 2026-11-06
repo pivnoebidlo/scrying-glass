@@ -1,5 +1,8 @@
 <!-- Боковая панель справочника: поиск, тип записей, список; «+» — новая запись (какого типа и где). -->
 <script lang="ts">
+  import { packOf } from '../../../systems/packs';
+  import PackFilters from './PackFilters.svelte';
+  import { packList } from './packlist.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Plus, Search, Shapes } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
@@ -40,7 +43,8 @@
     return ids.map((id) => ({ id, title: typeDef(id).plural, n: counts.get(id) ?? 0 }));
   });
   // A type the system lists its own way (D&D spells: a filter, by level); when searching — by the match, as usual.
-  const own = $derived(ui.type === 'all' ? undefined : systemUi(currentSystem(app.adventures))?.entryList?.[ui.type]);
+  const packType = $derived(ui.type === 'all' ? undefined : packOf(currentSystem(app.adventures))?.entryTypes?.find((x) => x.id === ui.type && (x.filters?.length || x.groupBy)));
+  const own = $derived(packType ? packList(packType) : ui.type === 'all' ? undefined : systemUi(currentSystem(app.adventures))?.entryList?.[ui.type]);
   const ofType = $derived(ui.type === 'all' ? all : all.filter((e) => e.entry.type === ui.type));
   const groupOf = (e: (typeof all)[number]) => own?.group?.(e.entry.fields) ?? null;
   // Headed groups (a heading before the first entry of each group).
@@ -115,11 +119,13 @@
     {/each}
   </div>
 
-  {#if own}<own.filter entries={ofType.map((e) => e.entry.fields)} />{/if}
+  {#if packType?.filters?.length}
+    <PackFilters entries={ofType.map((e) => e.entry.fields)} type={packType.id} filters={packType.filters} titles={Object.fromEntries((packType.fields ?? []).map((f) => [f.key, f.title]))} />
+  {:else if own && 'filter' in own}<own.filter entries={ofType.map((e) => e.entry.fields)} />{/if}
 
   <div class="count faint">{t('cmpui.countOf', { n: shown.length, total: own ? ofType.length : all.length })}</div>
   <ul class="list">
-    {#each shown.slice(0, 500) as e, i (e.path)}
+    {#each shown.slice(0, 500) as e, i (`${e.path}#${i}`)}
       {#if headed && (i === 0 || groupOf(shown[i - 1]!)?.order !== groupOf(e)?.order)}
         <li class="level">{groupOf(e)?.title}</li>
       {/if}

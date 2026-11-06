@@ -119,6 +119,16 @@ describe('Pathfinder 2e: the data (content/pf2e-core)', () => {
   });
 });
 
+describe('books: an entry is found by its type and title', () => {
+  for (const dir of fs.readdirSync('content').filter((d) => fs.existsSync(`content/${d}/compendium`)))
+    for (const f of fs.readdirSync(`content/${dir}/compendium`))
+      it(`${dir}/${f} has no two entries of one title`, () => {
+        const b = JSON.parse(fs.readFileSync(`content/${dir}/compendium/${f}`, 'utf8')) as BuiltinBook;
+        const keys = b.entries.map((e) => `${e.type}/${e.title}`);
+        expect(keys.filter((k, i) => keys.indexOf(k) !== i)).toEqual([]);
+      });
+});
+
 describe('Pathbuilder 2e import', () => {
   // As Pathbuilder exports: attribute scores, proficiency bonuses without the level.
   const exp = {
