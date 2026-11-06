@@ -11,6 +11,8 @@
   import { getLang } from '../../../shared/i18n';
   import { diceOfRows, genText, lineWords, packFile, plainText, rollWords, rowsOfText, runGenerator, simpleStep, stepOf, textOfRows, type GenLine, type Generator, type GenResult, type GenTable, type GenText, type PackKit, type SimpleStep } from '../../../shared/generators';
   import type { SystemPack } from '../../../shared/syspack';
+  import CalcPanel from './CalcPanel.svelte';
+  import ListPanel from './ListPanel.svelte';
   import LocInput from './LocInput.svelte';
 
   let { pack, disabled = false }: { pack: SystemPack; disabled?: boolean } = $props();
@@ -23,9 +25,15 @@
   }
   const gens = $derived(pack.kit?.generators ?? []);
   // The tables of the interface language; a table made here has only them.
-  const tables = $derived(Object.entries(pack.kit?.tables[lang] ?? Object.values(pack.kit?.tables ?? {})[0] ?? {}));
-  type Sel = { kind: 'generator' | 'table'; id: string } | null;
+  // Sections of price lists are tables too, but their own.
+  const priced = $derived(new Set((pack.kit?.lists ?? []).flatMap((l) => l.sections.map((s) => s.table))));
+  const tables = $derived(Object.entries(pack.kit?.tables[lang] ?? Object.values(pack.kit?.tables ?? {})[0] ?? {}).filter(([id]) => !priced.has(id)));
+  const lists = $derived(pack.kit?.lists ?? []);
+  const calcs = $derived(pack.kit?.calculators ?? []);
+  type Sel = { kind: 'generator' | 'table' | 'list' | 'calc'; id: string } | null;
   let sel = $state<Sel>(null);
+  const list = $derived(sel?.kind === 'list' ? lists.find((x) => x.id === sel!.id) : undefined);
+  const calc = $derived(sel?.kind === 'calc' ? calcs.find((x) => x.id === sel!.id) : undefined);
   const gen = $derived(sel?.kind === 'generator' ? gens.find((g) => g.id === sel!.id) : undefined);
   const table = $derived(sel?.kind === 'table' ? tables.find(([id]) => id === sel!.id)?.[1] : undefined);
   let trial = $state<GenResult | null>(null);
@@ -55,6 +63,31 @@
     k.generators.push({ id, title, steps: [] });
     sel = { kind: 'generator', id };
     trial = null;
+  }
+  function addList() {
+    const k = kit();
+    const id = freeId(`list ${lists.length + 1}`, lists.map((x) => x.id));
+    k.lists = [...lists, { id, title: t('sb.list.new'), unit: '{n}', sections: [] }];
+    sel = { kind: 'list', id };
+  }
+  function addCalc() {
+    const k = kit();
+    const id = freeId(`calc ${calcs.length + 1}`, calcs.map((x) => x.id));
+    const labels = { name: t('sb.calc.lName'), kind: t('sb.calc.lKind'), count: t('sb.calc.lCount'), flag: '', flagHint: '', value: t('sb.calc.lValue'), add: t('sb.calc.lAdd'), remove: t('sb.gen.remove') };
+    k.calculators = [...calcs, { id, title: t('sb.calc.new'), unit: '{n}', labels, kinds: [], row: { value: 'count * value' }, totals: [{ key: 'total', title: t('sb.calc.lTotal'), formula: 'value', strong: true }] }];
+    sel = { kind: 'calc', id };
+  }
+  function removeList(id: string) {
+    const x = lists.find((l) => l.id === id);
+    for (const s of x?.sections ?? []) for (const tb of Object.values(kit().tables)) delete tb[s.table];
+    kit().lists = lists.filter((l) => l.id !== id);
+    sel = null;
+    tidy();
+  }
+  function removeCalc(id: string) {
+    kit().calculators = calcs.filter((c) => c.id !== id);
+    sel = null;
+    tidy();
   }
   function tidy() {
     // An empty kit isn't written at all.
@@ -114,10 +147,24 @@
       <button class="item" class:on={sel?.kind === 'generator' && sel.id === g.id} onclick={() => ((sel = { kind: 'generator', id: g.id }), (trial = null))}>{genText(g.title, lang)}</button>
     {/each}
     <button class="btn small" {disabled} onclick={addGenerator}><Plus size={13} /> {t('sb.gen.newGenerator')}</button>
+    <h4>{t('sb.list.title')}</h4>
+    {#each lists as x (x.id)}
+      <button class="item" class:on={sel?.kind === 'list' && sel.id === x.id} onclick={() => (sel = { kind: 'list', id: x.id })}>{genText(x.title, lang)}</button>
+    {/each}
+    <button class="btn small" {disabled} onclick={addList}><Plus size={13} /> {t('sb.list.new')}</button>
+    <h4>{t('sb.calc.title')}</h4>
+    {#each calcs as x (x.id)}
+      <button class="item" class:on={sel?.kind === 'calc' && sel.id === x.id} onclick={() => (sel = { kind: 'calc', id: x.id })}>{genText(x.title, lang)}</button>
+    {/each}
+    <button class="btn small" {disabled} onclick={addCalc}><Plus size={13} /> {t('sb.calc.new')}</button>
   </div>
 
   <div class="main">
-    {#if table && sel}
+    {#if list}
+      {#key list.id}<ListPanel {pack} {list} {disabled} onremove={() => removeList(list!.id)} />{/key}
+    {:else if calc}
+      {#key calc.id}<CalcPanel {pack} {calc} {disabled} onremove={() => removeCalc(calc!.id)} />{/key}
+    {:else if table && sel}
       {@const id = sel.id}
       <label class="row"><span>{t('sb.gen.name')}</span><input type="text" {disabled} value={table.head[0] ?? ''} oninput={(e) => (table.head = [e.currentTarget.value])} /></label>
       <label class="row">

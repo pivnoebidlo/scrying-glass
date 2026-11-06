@@ -540,6 +540,34 @@ export function diceOfRows(rows: string[][]): string {
   return `d${Math.max(...tops.map((t) => (t![1] === Infinity ? t![0] : t![1])))}`;
 }
 
+// A price list as the author writes it: «a name | 40» a line; a price that is no number stays text (no basket).
+export function priceRowsOfText(text: string, unit: string): string[][] {
+  return text.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+    const m = /^(.*?)\s*\|\s*(.*)$/.exec(l);
+    const [name, price] = m ? [m[1]!, m[2]!] : [l, ''];
+    const n = /^\d[\d\s]*$/.test(price) ? price.replace(/\s/g, '') : '';
+    return [name, n ? `${n}${unit ? ` ${unit}` : ''}` : price, n];
+  });
+}
+export const textOfPriceRows = (rows: string[][]) => rows.map((r) => `${r[0] ?? ''} | ${r[2] || r[1] || ''}`).join('\n');
+
+// A unit as the author writes it («p») and as a text with the number.
+export const unitText = (u: string) => (u.trim() ? `{n} ${u.trim()}` : '{n}');
+export const unitOf = (t: GenText, lang: Lang) => {
+  const x = typeof t === 'string' ? t : (t[lang] ?? Object.values(t)[0] ?? '');
+  return typeof x === 'string' ? x.replace('{n}', '').trim() : '';
+};
+
+// Kinds of a calculator's rows: «a name | 100» a line.
+export function kindsOfText(text: string): GenCalculator['kinds'] {
+  return text.split('\n').map((l) => l.trim()).filter(Boolean).map((l, i) => {
+    const m = /^(.*?)\s*\|\s*(.*)$/.exec(l);
+    const value = Number((m?.[2] ?? '').replace(/\s/g, ''));
+    return { id: `k${i + 1}`, title: m ? m[1]! : l, value: Number.isFinite(value) ? value : 0 };
+  });
+}
+export const textOfKinds = (kinds: GenCalculator['kinds'], lang: Lang) => kinds.map((k) => `${genText(k.title, lang)} | ${k.value}`).join('\n');
+
 // A step the builder shows as a row: a label, a table, the dice (none — any row), how many times.
 export interface SimpleStep {
   label: GenText;

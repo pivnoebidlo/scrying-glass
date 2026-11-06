@@ -35,6 +35,8 @@
   const lang = $derived(locale.lang);
   const w = (x: GenText | undefined, params?: Record<string, string | number>) => genText(x, lang, params);
   const r = $derived(runCalculator(calc, b.rows, b.inputs));
+  // A calculator without the checkbox doesn't draw its column.
+  const flagged = $derived(!!w(calc.labels.flag));
   const money = (n: number) => w(calc.unit, { n: n.toLocaleString(lang) });
   const kindTitle = (id: string) => w(calc.kinds.find((k) => k.id === id)?.title);
   const shownTotals = $derived(calc.totals.filter((x) => !x.strong));
@@ -75,7 +77,7 @@
         <th>{w(calc.labels.name)}</th>
         <th>{w(calc.labels.kind)}</th>
         <th class="num">{w(calc.labels.count)}</th>
-        <th>{w(calc.labels.flag)}</th>
+        {#if flagged}<th>{w(calc.labels.flag)}</th>{/if}
         <th class="num">{w(calc.labels.value)}</th>
         <th></th>
       </tr>
@@ -90,7 +92,7 @@
             </select>
           </td>
           <td class="num"><input type="number" min="0" step="1" bind:value={p.count} oninput={save} /></td>
-          <td><input type="checkbox" bind:checked={p.flag} onchange={save} title={w(calc.labels.flagHint)} /></td>
+          {#if flagged}<td><input type="checkbox" bind:checked={p.flag} onchange={save} title={w(calc.labels.flagHint)} /></td>{/if}
           <td class="num">{money(calcValue(calc, p))}</td>
           <td><button class="icon-btn" title={w(calc.labels.remove)} onclick={() => remove(i)}><X size={14} /></button></td>
         </tr>

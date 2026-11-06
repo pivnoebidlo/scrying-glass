@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { validatePack, type SystemPack } from '../src/shared/syspack';
-import { calcValue, diceOfRows, genCardOf, genText, lineWords, packFile, priceItems, priceOfItem, rangeOf, runCalculator, resultMarkdown, rollWords, runGenerator, validateGenerators, rowsOfText, simpleStep, stepOf, textOfRows, type GeneratorFile, type GenLine, type GenOptions } from '../src/shared/generators';
+import { calcValue, diceOfRows, genCardOf, genText, lineWords, packFile, priceItems, priceOfItem, rangeOf, runCalculator, resultMarkdown, rollWords, runGenerator, validateGenerators, kindsOfText, priceRowsOfText, rowsOfText, simpleStep, textOfKinds, textOfPriceRows, unitOf, unitText, stepOf, textOfRows, type GeneratorFile, type GenLine, type GenOptions } from '../src/shared/generators';
 
 const file = validateGenerators(JSON.parse(readFileSync('content/mausritter/generators/mausritter.json', 'utf8'))) as GeneratorFile;
 // Rolls in a fixed order (then 1 forever).
@@ -233,6 +233,20 @@ describe('a system of one file brings its own generators', () => {
     const kept = validatePack(pack({ tables: file.tables, generators: [complex] })) as SystemPack;
     expect(kept.kit!.generators[0]).toEqual(complex);
     expect(validatePack(pack({ tables: {}, generators: [{ id: 'a', title: 'A', steps: [{ eval: 'x' }] }] }))).toBe('kit:steps:a');
+  });
+
+  it('a price list and a calculator as the author writes them', () => {
+    const rows = priceRowsOfText('Rope | 40\nGold cup | 1 000\nRepair | 10%\nA gift', 'p');
+    expect(rows).toEqual([['Rope', '40 p', '40'], ['Gold cup', '1000 p', '1000'], ['Repair', '10%', ''], ['A gift', '', '']]);
+    expect(textOfPriceRows(rows)).toBe('Rope | 40\nGold cup | 1000\nRepair | 10%\nA gift | ');
+    expect(unitOf(unitText(' p '), 'ru')).toBe('p');
+    expect(unitOf(unitText(''), 'ru')).toBe('');
+    const kinds = kindsOfText('Small | 100\nHuge | 1 000\nNothing');
+    expect(kinds.map((k) => k.value)).toEqual([100, 1000, 0]);
+    expect(textOfKinds(kinds, 'en')).toBe('Small | 100\nHuge | 1000\nNothing | 0');
+    const calc = { id: 'c', title: 'C', unit: '{n}', labels: { name: '', kind: '', count: '', flag: '', flagHint: '', value: '', add: '', remove: '' }, kinds, row: { value: 'count * value' }, inputs: [{ key: 'men', title: 'Men', default: 2 }], totals: [{ key: 'pay', title: 'Pay', formula: 'value * men' }, { key: 'total', title: 'T', formula: 'pay + 1', strong: true }] };
+    const p = validatePack(pack({ tables: {}, generators: [], calculators: [calc] })) as SystemPack;
+    expect(runCalculator(p.kit!.calculators![0]!, [{ kind: 'k1', count: 3 }], { men: 2 })).toMatchObject({ value: 300, pay: 600, total: 601 });
   });
 
   it('no kit — no field', () => {
