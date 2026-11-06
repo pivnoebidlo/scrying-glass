@@ -20,7 +20,7 @@ describe('features of the core', () => {
 
   it('the packages say the same as the old table, so nothing moved', () => {
     for (const [id, family] of [['fate-core', 'fate'], ['fitd', 'fitd'], ['mausritter', 'mausritter']] as const) {
-      expect(packOf(id).format).toBe(PACK_FORMAT);
+      expect(packOf(id).format).toBeLessThanOrEqual(PACK_FORMAT);
       expect(packOf(id).uses).toEqual(expect.arrayContaining(oldUses(family)));
       expect(packOf(id).entryTypes!.map((t) => t.id)).toEqual((oldEntryTypes(family) as { id: string }[]).map((t) => t.id));
     }

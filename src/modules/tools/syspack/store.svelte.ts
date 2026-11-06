@@ -11,7 +11,7 @@ import { ui as tools } from '../ui/ui.svelte';
 import { fromTemplate, type TemplateId } from './templates';
 
 // The steps of the builder (its tabs) and, on the sheet step, the chosen section or field.
-export type Step = 'about' | 'sheet' | 'tracker' | 'features' | 'compendium' | 'trial';
+export type Step = 'about' | 'sheet' | 'tracker' | 'features' | 'compendium' | 'generators' | 'trial';
 export type Selection = { kind: 'none' } | { kind: 'section'; s: number } | { kind: 'field'; s: number; f: number };
 
 export const builder = $state({

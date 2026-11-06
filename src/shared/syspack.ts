@@ -9,6 +9,7 @@
 import type { SheetResources } from './players';
 import type { CardKind, CombatStats } from './cards';
 import { oldEntryTypes, oldOverflow, oldUses } from './features';
+import { kitOf, type PackKit } from './generators';
 
 // Text in several languages ({ en, ru }) or one string for all.
 export type Loc = string | Record<string, string>;
@@ -139,7 +140,7 @@ export interface TrackerSpec {
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 3;
+export const PACK_FORMAT = 4;
 
 export interface SystemPack {
   scryingGlass: 'system';
@@ -171,6 +172,8 @@ export interface SystemPack {
   resets?: PackReset[];
   // Types of compendium entries of its family: skills, spells… Entries of a package's books use them.
   entryTypes?: PackEntryType[];
+  // Its own tables and generators (shared/generators.ts): a system of one file brings them as a package does.
+  kit?: PackKit;
   // Its own compendium: rules, conditions, gear… (Markdown), shown in adventures of this system as built-in entries.
   compendium?: PackEntry[];
   // Set by the core, never read from a file: the GM's own pack (in the library), not a built-in one.
@@ -517,6 +520,8 @@ export function validatePack(x: unknown): SystemPack | string {
   const known = (k: unknown): k is string => typeof k === 'string' && keys.has(k);
   const cond = isObj(t['conditions']) ? t['conditions'] : null;
   const familyOfRaw = typeof x['family'] === 'string' ? x['family'] : x['id'];
+  const kit = x['kit'] === undefined ? undefined : kitOf(x['kit'], x['id']);
+  if (typeof kit === 'string') return `kit:${kit}`;
   const tracker: TrackerSpec = {
     init,
     ...(known(t['hp']) ? { hp: t['hp'] } : {}),
@@ -558,6 +563,7 @@ export function validatePack(x: unknown): SystemPack | string {
     scryingGlass: 'system',
     version: 1,
     ...(Number.isInteger(x['format']) && (x['format'] as number) > 0 ? { format: x['format'] as number } : {}),
+    ...(kit ? { kit } : {}),
     entryTypes: entryTypesOf(x['entryTypes']) ?? oldEntryTypes(familyOfRaw).flatMap((t) => entryTypesOf([t]) ?? []),
     uses: Array.isArray(x['uses']) ? [...new Set(x['uses'].filter((u): u is string => typeof u === 'string' && USE_RE.test(u)))].slice(0, LIMIT.uses) : oldUses(familyOfRaw),
     id: x['id'],

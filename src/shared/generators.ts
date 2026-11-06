@@ -180,6 +180,18 @@ export interface GeneratorFile {
   warband?: { description: GenText; stats: Record<string, unknown> };
 }
 
+// What a system of one file brings itself (SystemPack.kit): the same as a package's file.
+export type PackKit = Omit<GeneratorFile, 'scryingGlass' | 'version' | 'system'>;
+
+export const packFile = (system: string, kit: PackKit): GeneratorFile => ({ scryingGlass: 'generators', version: 1, system, ...kit });
+
+export function kitOf(x: unknown, system: string): PackKit | string {
+  const f = validateGenerators(isObj(x) ? { ...x, scryingGlass: 'generators', version: 1, system } : null);
+  if (typeof f === 'string') return f;
+  const { scryingGlass: _a, version: _b, system: _c, ...kit } = f;
+  return kit;
+}
+
 export type GenOptions = Record<string, number | string | boolean>;
 
 export interface GenCell {
@@ -502,6 +514,58 @@ export function runCalculator(c: GenCalculator, rows: CalcRow[], inputs: Record<
   for (const i of c.inputs ?? []) out[i.key] = whole(inputs[i.key] ?? i.default ?? 0);
   for (const t of c.totals) out[t.key] = calc(t.formula, (v) => out[v] ?? 0, noDice);
   return out;
+}
+
+// ---- The builder ----
+// A table as the author writes it: one row a line, «1-3 | text» with numbers, or just text (any row, all alike).
+export function rowsOfText(text: string): string[][] {
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+  const cut = (l: string) => /^([^|]+?)\s*\|\s*(.*)$/.exec(l);
+  const numbered = lines.length > 0 && lines.every((l) => {
+    const m = cut(l);
+    return !!m && !!rangeOf(m[1]!);
+  });
+  return lines.map((l) => {
+    if (!numbered) return [l];
+    const m = cut(l)!;
+    return [m[1]!, m[2]!];
+  });
+}
+export const textOfRows = (rows: string[][]) => rows.map((r) => r.join(' | ')).join('\n');
+
+// The die a numbered table asks for: as big as its last number; none — any row, all alike.
+export function diceOfRows(rows: string[][]): string {
+  const tops = rows.map((r) => (r.length > 1 ? rangeOf(r[0] ?? '') : null));
+  if (!tops.length || tops.some((t) => !t)) return '';
+  return `d${Math.max(...tops.map((t) => (t![1] === Infinity ? t![0] : t![1])))}`;
+}
+
+// A step the builder shows as a row: a label, a table, the dice (none — any row), how many times.
+export interface SimpleStep {
+  label: GenText;
+  table: string;
+  dice: string;
+  times: number;
+}
+
+function simpleLine(s: GenStep): SimpleStep | null {
+  if (!('line' in s) || !s.table || s.parts || s.sub || s.card || s.notes || s.text || s.join || s.items) return null;
+  if (s.row !== undefined || s.lookup !== undefined || s.group || s.col !== undefined) return null;
+  return { label: s.line, table: s.table, dice: s.dice ?? '', times: 1 };
+}
+
+// Anything else stays as it is, the builder only says it is there.
+export function simpleStep(s: GenStep): SimpleStep | null {
+  if ('repeat' in s && s.steps.length === 1 && /^\d+$/.test(s.repeat) && !s.as) {
+    const one = simpleLine(s.steps[0]!);
+    return one && { ...one, times: Number(s.repeat) };
+  }
+  return simpleLine(s);
+}
+
+export function stepOf(x: SimpleStep): GenStep {
+  const line: GenStep = { line: x.label, table: x.table, ...(x.dice ? { dice: x.dice } : { any: true }) };
+  return x.times > 1 ? { repeat: String(Math.min(40, Math.round(x.times))), steps: [line] } : line;
 }
 
 // ---- In words ----

@@ -4,9 +4,15 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { contentDirs } from './content';
-import { validateGenerators, type GeneratorFile } from '../shared/generators';
+import { packFile, validateGenerators, type GeneratorFile } from '../shared/generators';
+import { systemPacks } from './syspacks';
 
 export function generatorFiles(): GeneratorFile[] {
+  const own = systemPacks().flatMap((p) => (p.kit ? [packFile(p.id, p.kit)] : []));
+  return [...own, ...packageFiles()];
+}
+
+function packageFiles(): GeneratorFile[] {
   return contentDirs('generators').flatMap((dir) => {
     let names: string[] = [];
     try {

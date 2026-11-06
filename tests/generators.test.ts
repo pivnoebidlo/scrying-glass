@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { calcValue, genCardOf, genText, lineWords, priceItems, priceOfItem, rangeOf, runCalculator, resultMarkdown, rollWords, runGenerator, validateGenerators, type GeneratorFile, type GenLine, type GenOptions } from '../src/shared/generators';
+import { validatePack, type SystemPack } from '../src/shared/syspack';
+import { calcValue, diceOfRows, genCardOf, genText, lineWords, packFile, priceItems, priceOfItem, rangeOf, runCalculator, resultMarkdown, rollWords, runGenerator, validateGenerators, rowsOfText, simpleStep, stepOf, textOfRows, type GeneratorFile, type GenLine, type GenOptions } from '../src/shared/generators';
 
 const file = validateGenerators(JSON.parse(readFileSync('content/mausritter/generators/mausritter.json', 'utf8'))) as GeneratorFile;
 // Rolls in a fixed order (then 1 forever).
@@ -199,5 +200,42 @@ describe('a calculator as data', () => {
     expect(go([{ kind: 'poor', count: 5 }], 6)).toMatchObject({ days: 3, wages: 90 });
     expect(go([{ kind: 'poor', count: 1 }], 1)).toMatchObject({ days: 3, wages: 15 });
     expect(go([{ kind: 'poor', count: 2 }], 0)).toMatchObject({ days: 0, wages: 0, total: 200 });
+  });
+});
+
+describe('a system of one file brings its own generators', () => {
+  const pack = (kit: unknown) => ({ scryingGlass: 'system', version: 1, id: 'super-rp', title: 'SuperRoleplay', tracker: {}, sections: [{ id: 'main', title: 'Main', fields: [{ key: 'hp', title: 'HP', type: 'number' }] }], kit });
+
+  it('a table as the author writes it', () => {
+    expect(rowsOfText('1-3 | A rat\n4–5 | A chest\n\n6+ | A secret')).toEqual([['1-3', 'A rat'], ['4–5', 'A chest'], ['6+', 'A secret']]);
+    expect(rowsOfText('A rat\nA | chest')).toEqual([['A rat'], ['A | chest']]);
+    expect(textOfRows(rowsOfText('1-3 | A rat\n4 | Two'))).toBe('1-3 | A rat\n4 | Two');
+    expect(diceOfRows([['1-3', 'a'], ['4-6', 'b']])).toBe('d6');
+    expect(diceOfRows([['1', 'a'], ['2+', 'b']])).toBe('d2');
+    expect(diceOfRows([['a'], ['b']])).toBe('');
+    expect(diceOfRows([])).toBe('');
+  });
+
+  it('what the builder makes runs, is kept by the pack, and reads back', () => {
+    const steps = [stepOf({ label: 'Find', table: 'loot', dice: 'd6', times: 2 }), stepOf({ label: 'Who', table: 'who', dice: '', times: 1 })];
+    const kit = { tables: { en: { loot: { head: ['Loot'], rows: [['1-3', 'A rat'], ['4-6', 'A chest']] }, who: { head: ['Who'], rows: [['Ann'], ['Bob']] } } }, generators: [{ id: 'g', title: 'Room', steps }] };
+    const p = validatePack(pack(kit)) as SystemPack;
+    expect(p.kit!.generators).toHaveLength(1);
+    expect(p.kit!.generators[0]!.steps.map(simpleStep)).toEqual([{ label: 'Find', table: 'loot', dice: 'd6', times: 2 }, { label: 'Who', table: 'who', dice: '', times: 1 }]);
+    const f = packFile(p.id, p.kit!);
+    const r = runGenerator(f, 'g', {}, seq(5, 1, 2));
+    expect(r.lines.map((l) => lineWords(f, l, 'ru'))).toEqual(['A chest', 'A rat', 'Bob']);
+  });
+
+  it('a recipe of a package stays as it is; a broken one is refused', () => {
+    const complex = file.generators.find((g) => g.id === 'settlement')!;
+    expect(complex.steps.filter((s) => !simpleStep(s)).length).toBeGreaterThan(0);
+    const kept = validatePack(pack({ tables: file.tables, generators: [complex] })) as SystemPack;
+    expect(kept.kit!.generators[0]).toEqual(complex);
+    expect(validatePack(pack({ tables: {}, generators: [{ id: 'a', title: 'A', steps: [{ eval: 'x' }] }] }))).toBe('kit:steps:a');
+  });
+
+  it('no kit — no field', () => {
+    expect(validatePack(pack(undefined))).not.toHaveProperty('kit');
   });
 });

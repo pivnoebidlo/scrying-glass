@@ -23,8 +23,9 @@
 
   const KINDS: CardKind[] = ['monster', 'npc', 'character'];
   import FeaturesPanel from './FeaturesPanel.svelte';
+  import GeneratorsPanel from './GeneratorsPanel.svelte';
   import { freshFeatures } from '../../../shared/features';
-  const STEPS: Step[] = ['about', 'sheet', 'tracker', 'features', 'compendium', 'trial'];
+  const STEPS: Step[] = ['about', 'sheet', 'tracker', 'features', 'compendium', 'generators', 'trial'];
   // «New system» asks what to start from.
   let choosing = $state(false);
 
@@ -176,7 +177,7 @@
     <div class="steps" role="tablist">
       {#each STEPS as st (st)}
         <button role="tab" aria-selected={builder.step === st} onclick={() => (builder.step = st)}>
-          {t(`sb.step.${st}`)}{#if st === 'sheet'}<span class="count">{fieldCount}</span>{:else if st === 'compendium'}<span class="count">{d.compendium?.length ?? 0}</span>{:else if st === 'features' && !ro && freshFeatures(d.format, d.uses ?? []).length}<span class="count fresh">{t('sb.feat.new')}</span>{/if}
+          {t(`sb.step.${st}`)}{#if st === 'sheet'}<span class="count">{fieldCount}</span>{:else if st === 'compendium'}<span class="count">{d.compendium?.length ?? 0}</span>{:else if st === 'generators'}<span class="count">{d.kit?.generators.length ?? 0}</span>{:else if st === 'features' && !ro && freshFeatures(d.format, d.uses ?? []).length}<span class="count fresh">{t('sb.feat.new')}</span>{/if}
         </button>
       {/each}
     </div>
@@ -267,6 +268,10 @@
     {:else if builder.step === 'tracker'}
       <section class="pane narrow">
         <TrackerPanel bind:pack={builder.draft!} disabled={ro} />
+      </section>
+    {:else if builder.step === 'generators'}
+      <section class="pane">
+        <GeneratorsPanel pack={d} disabled={ro} />
       </section>
     {:else if builder.step === 'compendium'}
       <section class="pane">
