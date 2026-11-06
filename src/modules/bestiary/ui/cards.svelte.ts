@@ -193,7 +193,8 @@ class Bestiary {
   named(names: string | string[]): CardSummary | undefined {
     const keys = (Array.isArray(names) ? names : [names]).map((n) => n.trim().toLowerCase());
     const hits = this.all.filter((c) => keys.includes(c.name.toLowerCase()));
-    return hits.find((c) => inCurrentFamily(store.state.adventures, c.system)) ?? hits[0];
+    // Editions of a family share names: the adventure's own edition first.
+    return hits.find((c) => c.system === currentSystem(store.state.adventures)) ?? hits.find((c) => inCurrentFamily(store.state.adventures, c.system)) ?? hits[0];
   }
 
   // Показать карточку в выдвижной панели — из «Персонажей», «Файлов», трекера инициативы. Повторное нажатие на ту же
