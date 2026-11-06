@@ -2,7 +2,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { lineGroups, signedNum, type FieldDef, blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
+import { cellDice, cellText, entryLine, lineGroups, signedNum, type FieldDef, blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
 
 const words: RollWords = { success: 'Success', failure: 'Failure', successes: (n) => `${n} successes`, critical: 'Critical' };
 // Dice that fall as told, in order.
@@ -441,7 +441,7 @@ describe('a pool with special dice', () => {
       { key: 'a', title: 'A', type: 'number', join: ';', signed: true, bare: true },
       { key: 'b', title: 'B', type: 'number', join: 'x', chips: true },
       { key: 'c', title: 'C', type: 'tags', chips: true },
-      { key: 'd', title: 'D', type: 'list', columns: [{ key: 'n', type: 'number', title: 'N', signed: true }, { key: 't', type: 'long', title: 'T' }, { key: 'o', type: 'text', title: 'O', note: true }] },
+      { key: 'd', title: 'D', type: 'list', columns: [{ key: 'n', type: 'number', title: 'N', signed: true }, { key: 't', type: 'long', title: 'T' }, { key: 'o', type: 'text', title: 'O', show: 'note' }] },
     ] }, { id: 'z', title: 'Z', view: 'cards', fields: [] }] };
     const p = validatePack(raw) as SystemPack;
     expect(p.sections[0]).toMatchObject({ view: 'lines', noTitle: true });
@@ -451,7 +451,41 @@ describe('a pool with special dice', () => {
     expect(m.get('b')).not.toHaveProperty('join');
     expect(m.get('b')).not.toHaveProperty('chips');
     expect(m.get('c')?.chips).toBe(true);
-    expect(m.get('d')?.columns).toEqual([{ key: 'n', type: 'number', title: 'N', signed: true }, { key: 't', type: 'long', title: 'T' }, { key: 'o', type: 'text', title: 'O', note: true }]);
+    expect(m.get('d')?.columns).toEqual([{ key: 'n', type: 'number', title: 'N', signed: true }, { key: 't', type: 'long', title: 'T' }, { key: 'o', type: 'text', title: 'O', show: 'note' }]);
+  });
+
+  it('attacks of a turn and a damage cell: steps add up, nonsense is dropped, dice come out of the text', () => {
+    const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', tracker: {}, sections: [{ id: 'm', title: 'M', fields: [
+      { key: 'hits', title: 'H', type: 'list', rowLines: true, columns: [{ key: 'bonus', type: 'number', title: 'B' }, { key: 'map', type: 'number', title: 'M', show: 'hidden' }, { key: 'dmg', type: 'dice', title: 'D', crit: 'total', show: 'wrong' }],
+        roll: { type: 'd20', bonus: 'row.bonus', degrees: 'four', steps: ['0 - row.map', '0 - row.map * 2', '((', 7] } },
+    ] }] };
+    const p = validatePack(raw) as SystemPack;
+    const f = fieldMap(p).get('hits')!;
+    expect(f.rowLines).toBe(true);
+    expect((f.roll as { steps: string[] }).steps).toEqual(['0 - row.map', '0 - row.map * 2']);
+    expect(f.columns![1]!.show).toBe('hidden');
+    expect(f.columns![2]).toEqual({ key: 'dmg', type: 'dice', title: 'D', crit: 'total' });
+    expect(formulaProblems(p)).toEqual([]);
+    const row = { bonus: 17, map: 4 };
+    const steps = (f.roll as { steps: string[] }).steps.map((x) => evalFormula(p, {}, `(row.bonus) + (${x})`, row));
+    expect(steps).toEqual([13, 9]);
+    expect(cellDice('{1d10+1} piercing plus {1d6} fire')).toBe('1d10+1+1d6');
+    expect(cellText('{1d10+1} piercing')).toBe('1d10+1 piercing');
+    expect(cellDice('2d6+3')).toBe('2d6+3');
+    expect(cellDice('see text')).toBe('');
+  });
+
+  it('defence in the tracker, a line under an entry, a threat budget: from data', () => {
+    const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', rank: 'lvl', tracker: { defence: 'ac' }, sections: [{ id: 'm', title: 'M', fields: [{ key: 'ac', title: 'AC', type: 'number' }, { key: 'lvl', title: 'L', type: 'number' }] }],
+      entryTypes: [{ id: 'x-spell', title: 'Spell', plural: 'Spells', subtitle: 'Spell {rank} · {actions} · {traits}' }],
+      threat: { party: 4, xp: { '0': 40, '1': 60, x: 1 }, levels: [{ title: 'Low', base: 60, extra: 20 }, { title: 'No' }], beyond: 'Too much' } };
+    const p = validatePack(raw) as SystemPack;
+    expect(packCombat(p, { ac: 24 }).ac).toBe(24);
+    expect(p.threat).toEqual({ party: 4, xp: { '0': 40, '1': 60 }, levels: [{ title: 'Low', base: 60, extra: 20 }], beyond: 'Too much' });
+    expect((validatePack({ ...raw, threat: { party: 4, xp: {}, levels: [] } }) as SystemPack).threat).toBeUndefined();
+    const line = (v: Record<string, unknown>) => entryLine(p.entryTypes![0]!.subtitle as string, (k) => v[k]);
+    expect(line({ rank: 3, actions: '◆◆', traits: ['fire', 'mental'] })).toBe('Spell 3 · ◆◆ · fire, mental');
+    expect(line({ rank: 3 })).toBe('Spell 3');
   });
 
   it('its fields and kit are valid: a whole game without code', () => {

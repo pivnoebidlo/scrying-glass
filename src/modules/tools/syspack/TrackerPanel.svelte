@@ -7,6 +7,7 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
   import { fieldMap, loc, type SystemPack } from '../../../shared/syspack';
+  import { xpOfText, xpText } from '../../../shared/threat';
   import FormulaInput from './FormulaInput.svelte';
   import LocInput from './LocInput.svelte';
 
@@ -32,6 +33,23 @@
   function toggleReset(i: number, k: string, on: boolean) {
     const r = pack.resets![i]!;
     r.fields = on ? [...r.fields.filter((x) => x !== k), k] : r.fields.filter((x) => x !== k);
+  }
+
+  // A threat budget in two boxes of lines: «-4 | 10» and «Low | 60 | 20». Empty — no plaque.
+  const levelsText = $derived((pack.threat?.levels ?? []).map((l) => `${loc(l.title, getLang())} | ${l.base} | ${l.extra}`).join('\n'));
+  function setXp(text: string) {
+    const xp = xpOfText(text);
+    if (Object.keys(xp).length) pack.threat = { party: 4, levels: [], ...pack.threat, xp };
+    else delete pack.threat;
+  }
+  function setLevels(text: string) {
+    const levels = text.split('\n').flatMap((line, i) => {
+      const [title, base, extra] = line.split('|').map((v) => v.trim());
+      const old = pack.threat?.levels[i];
+      return title && Number.isFinite(Number(base)) ? [{ title: old && typeof old.title !== 'string' ? { ...old.title, [getLang()]: title } : title, base: Number(base), extra: Number(extra) || 0 }] : [];
+    });
+    if (levels.length) pack.threat = { party: 4, xp: {}, ...pack.threat, levels };
+    else delete pack.threat;
   }
 
   function setInit(type: string) {
@@ -66,6 +84,13 @@
     <div class="row"><span>{t('sb.initValueF')}</span><FormulaInput value={init.value} set={(v) => (init.value = v)} {keys} {names} {disabled} /></div>
   {/if}
 
+  <label class="row">
+    <span>{t('sb.defence')}</span>
+    <select {disabled} value={tr.defence ?? ''} onchange={(e) => (e.currentTarget.value ? (tr.defence = e.currentTarget.value) : delete tr.defence)}>
+      <option value="">{t('sb.defenceNone')}</option>
+      {#each shown as x (x.key)}<option value={x.key}>{title(x.key)}</option>{/each}
+    </select>
+  </label>
   <label class="row">
     <span>{t('sb.hp')}</span>
     <select {disabled} value={tr.hp ?? ''} onchange={(e) => (tr.hp = e.currentTarget.value || undefined)}>
@@ -117,6 +142,12 @@
       <p class="faint small">{t('sb.noLive')}</p>
     {/if}
   </div>
+  <details>
+    <summary>{t('sb.threat')}</summary>
+    <p class="faint"><Lead text={t('sb.threatHint')} /></p>
+    <label class="row"><span>{t('sb.threatXp')}</span><textarea rows="5" class="mono" {disabled} placeholder="-1 | 30" value={xpText(pack.threat)} onchange={(e) => setXp(e.currentTarget.value)}></textarea></label>
+    <label class="row"><span>{t('sb.threatLevels')}</span><textarea rows="5" class="mono" {disabled} placeholder="Low | 60 | 20" value={levelsText} onchange={(e) => setLevels(e.currentTarget.value)}></textarea></label>
+  </details>
 </div>
 
 <style>

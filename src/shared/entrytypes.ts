@@ -20,6 +20,8 @@ export interface TypeDef {
   // Во множественном числе — для фильтра: «Заклинания».
   plural: string;
   fields: FieldDef[];
+  // The line under an entry's title, when the type words it itself.
+  line?: (fields: Record<string, FieldValue>) => string;
   // Семейство систем, к которому относится тип (dnd5e — заклинания и т. п.); нет — тип для любой системы.
   family?: string;
 }

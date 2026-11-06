@@ -17,6 +17,7 @@
   const pack = $derived(packOf(currentSystem(store.state.adventures)));
   const fields = $derived(pack ? fieldMap(pack) : new Map());
   const hp = $derived(!!pack?.tracker.hp);
+  const defence = $derived(pack?.tracker.defence ? loc(fields.get(pack.tracker.defence)?.title, getLang()) : '');
   const cells = $derived(
     (pack?.tracker.cells ?? [])
       .filter((k) => k !== pack?.tracker.hp)
@@ -65,6 +66,7 @@
     <th class="c-hp">{loc(fields.get(pack!.tracker.hp!)?.title, getLang())}</th>
     <th class="c-dmg" title={t('sys.tr.dmgHint')}>±</th>
   {/if}
+  {#if defence}<th class="c-cell">{defence}</th>{/if}
   {#each cells as cell (cell.key)}<th class="c-cell">{cell.title}</th>{/each}
   <th class="c-out"></th>
 {:else if c}
@@ -86,6 +88,9 @@
     <td class="c-dmg">
       <input type="text" placeholder="±" disabled={c.maxHp === null} onkeydown={(e) => e.key === 'Enter' && applyHp(it, e.currentTarget)} onblur={(e) => applyHp(it, e.currentTarget)} />
     </td>
+  {/if}
+  {#if defence}
+    <td class="c-cell"><input class="n" type="text" inputmode="numeric" value={c.ac ?? ''} placeholder="—" onchange={(e) => update(it, { ac: num(e.currentTarget.value) })} /></td>
   {/if}
   {#each cells as cell (cell.key)}
     <td class="c-cell">

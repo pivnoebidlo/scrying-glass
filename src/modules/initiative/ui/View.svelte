@@ -15,7 +15,7 @@
   import { newEncounterName, ui } from './ui.svelte';
   import { currentSystem } from '../../../shared/adventures';
   import { systemOf } from '../../../systems';
-  import { systemUi, trackerCells } from '../../../systems/ui';
+  import { aboutFight, trackerCells } from '../../../systems/ui';
   import { conditionValue } from '../../../systems/tracker';
 
   let { ms, app }: ModuleProps<'initiative'> = $props();
@@ -34,7 +34,7 @@
   const system = $derived(currentSystem(app.adventures));
   const tracker = $derived(systemOf(system).tracker);
   // What the system says about the fight (D&D: how hard it is).
-  const AboutFight = $derived(systemUi(system)?.encounter);
+  const AboutFight = $derived(aboutFight(system));
   const Cells = $derived(trackerCells(system));
 
   const list = $derived(ordered(ms.combatants));

@@ -221,6 +221,7 @@ export function entrySubtitle(e: Entry, def: TypeDef = e.def ?? typeOf(e.type)):
   const f = e.fields;
   const own = PLUGINS.find((p) => p.entrySubtitle?.[e.type])?.entrySubtitle?.[e.type];
   if (own) return own(f);
+  if (def.line) return def.line(f);
   const low = (v: FieldValue | undefined) => (typeof v === 'string' ? v.toLowerCase() : '');
   switch (e.type) {
     default: {

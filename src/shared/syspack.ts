@@ -6,6 +6,7 @@
 //
 // A pack may come from a stranger (the Community): `validatePack` takes only what it knows, with sizes capped, and
 // formulas are a tiny language of their own (numbers, fields, + − × ÷, a few functions) — never code.
+import { threatOfRaw, type ThreatSpec } from './threat';
 import type { SheetResources } from './players';
 import type { CardKind, CombatStats } from './cards';
 import { oldEntryTypes, oldOverflow, oldUses } from './features';
@@ -29,7 +30,8 @@ export type RollLabels = { min: number; title: Loc }[];
 export type RollSpec =
   // d20 + bonus (advantage and disadvantage with Shift / Alt); degrees — against a DC typed in the roll log: success or
   // failure ('two'), or four degrees by 10 with a natural 20 / 1 one better / worse ('four', Pathfinder).
-  | { type: 'd20'; bonus: string; labels?: RollLabels; degrees?: Degrees }
+  // steps: the next attacks of a turn, added to the bonus — a button each (+17 / +12 / +7).
+  | { type: 'd20'; bonus: string; labels?: RollLabels; degrees?: Degrees; steps?: string[] }
   // A die (d100, d20) under the target; levels — harder successes at a fraction of it («hard» — half). Advantage —
   // the lower of two dice, disadvantage — the higher (a Mausritter save).
   | { type: 'under'; sides: number; target: string; levels?: { title: Loc; divide: number }[]; onSuccess?: RollChange; onFail?: RollChange }
@@ -90,10 +92,16 @@ export interface ColumnDef {
   type: ColumnType;
   title: Loc;
   max?: number;
-  // In a section of lines: a number with its sign (+3); a text in brackets, quieter.
+  // In a section of lines: a number with its sign (+3); how the cell looks.
   signed?: boolean;
-  note?: boolean;
+  show?: ColumnShow;
+  // dice: the cell rolls ({1d8+11} piercing, or just dice) and has a ×2 button: doubling the dice or the total.
+  crit?: CritBy;
 }
+export type ColumnShow = 'strong' | 'note' | 'label' | 'hidden';
+export const COLUMN_SHOWS: ColumnShow[] = ['strong', 'note', 'label', 'hidden'];
+export type CritBy = 'dice' | 'total';
+export const CRIT_BYS: CritBy[] = ['dice', 'total'];
 
 export interface FieldDef {
   key: string;
@@ -116,7 +124,8 @@ export interface FieldDef {
   // number, dots: not shown on the card while 0 (eighteen skills of Fate, most of them none).
   hideZero?: boolean;
   // In a section of lines: goes on the previous field's line after this mark; a number with its sign; no title;
-  // tags as chips.
+  // tags as chips; a list — each row on its own line.
+  rowLines?: boolean;
   join?: FieldJoin;
   signed?: boolean;
   bare?: boolean;
@@ -161,6 +170,8 @@ export interface TrackerSpec {
   cells?: string[];
   // A number cell that takes the damage past health, and at 0 the combatant is down.
   overflow?: string;
+  // The field that is defence (Armour Class): a column of the tracker.
+  defence?: string;
   // Conditions: a list to choose from and/or free text; valued — the ones with a number («Frightened 2»).
   conditions?: { list?: Loc[]; free?: boolean; valued?: Loc[] };
 }
@@ -194,6 +205,8 @@ export interface SystemPack {
   about?: Loc;
   // A number to sort cards by (a formula).
   rank?: string;
+  // The threat of a fight by an XP budget (needs `rank`).
+  threat?: ThreatSpec;
   sections: SectionDef[];
   tracker: TrackerSpec;
   // None — a game with nothing to return: fields stay as marked.
@@ -213,6 +226,8 @@ export interface PackEntryType {
   title: Loc;
   plural: Loc;
   fields?: { key: string; title: Loc; kind: 'text' | 'number' | 'bool' | 'list' }[];
+  // The line under an entry's title: «Spell {rank} · {actions}»; {key} — its fields, empty parts drop out.
+  subtitle?: Loc;
 }
 
 export interface PackEntry {
@@ -293,6 +308,7 @@ export function formulaProblems(pack: SystemPack): { where: string; text: string
     if (typeof f.boxes === 'string') check(f.key, f.boxes);
     const r = f.roll as Record<string, unknown> | undefined;
     for (const k of ['bonus', 'target', 'count', 'sides']) if (typeof r?.[k] === 'string') check(f.key, r[k] as string, f.columns?.map((c) => c.key));
+    if (Array.isArray(r?.['steps'])) for (const x of r['steps'] as string[]) check(f.key, x, f.columns?.map((c) => c.key));
   }
   if (pack.tracker.init.type === 'roll' && pack.tracker.init.bonus) check('tracker', pack.tracker.init.bonus);
   if (pack.tracker.init.type === 'value') check('tracker', pack.tracker.init.value);
@@ -376,7 +392,7 @@ function rollOf(x: unknown): RollSpec | null {
   switch (x['type']) {
     case 'd20':
       return f('bonus') !== null
-        ? { type: 'd20', bonus: x['bonus'] as string, ...withLabels, ...(x['degrees'] === 'two' || x['degrees'] === 'four' ? { degrees: x['degrees'] } : {}) }
+        ? { type: 'd20', bonus: x['bonus'] as string, ...withLabels, ...(x['degrees'] === 'two' || x['degrees'] === 'four' ? { degrees: x['degrees'] } : {}), ...(stepsOf(x['steps']).length ? { steps: stepsOf(x['steps']) } : {}) }
         : null;
     case 'under': {
       const sides = num(x['sides']);
@@ -478,7 +494,7 @@ function fieldOf(x: unknown): FieldDef | null {
       ? x['columns'].flatMap((c) => {
           if (!isObj(c) || typeof c['key'] !== 'string' || !KEY_RE.test(c['key']) || !COLUMN_TYPES.includes(c['type'] as ColumnType)) return [];
           const t = locOf(c['title']);
-          return t ? [{ key: c['key'], type: c['type'] as ColumnType, title: t, ...(num(c['max']) ? { max: num(c['max']) } : {}), ...(c['signed'] === true ? { signed: true } : {}), ...(c['note'] === true ? { note: true } : {}) }] : [];
+          return t ? [{ key: c['key'], type: c['type'] as ColumnType, title: t, ...(num(c['max']) ? { max: num(c['max']) } : {}), ...(c['signed'] === true ? { signed: true } : {}), ...(COLUMN_SHOWS.includes(c['show'] as ColumnShow) ? { show: c['show'] as ColumnShow } : {}), ...(CRIT_BYS.includes(c['crit'] as CritBy) ? { crit: c['crit'] as CritBy } : {}) }] : [];
         })
       : [];
     if (!columns.length) return null;
@@ -501,12 +517,15 @@ function fieldOf(x: unknown): FieldDef | null {
   if (x['signed'] === true) f.signed = true;
   if (x['bare'] === true) f.bare = true;
   if (x['chips'] === true && type === 'tags') f.chips = true;
+  if (x['rowLines'] === true && type === 'list') f.rowLines = true;
   if (x['roll'] !== undefined) {
     const roll = rollOf(x['roll']);
     if (roll) f.roll = roll;
   }
   return f;
 }
+
+const stepsOf = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string' && !!formulaOf(v)).slice(0, 4) : []);
 
 function changeOf(x: unknown): RollChange | null {
   if (!isObj(x) || typeof x['field'] !== 'string' || !KEY_RE.test(x['field']) || typeof x['by'] !== 'string' || !CHANGE_RE.test(x['by'])) return null;
@@ -526,7 +545,8 @@ function entryTypesOf(x: unknown): PackEntryType[] | null {
         ? [{ key: f['key'], title: ft, kind: f['kind'] as 'text' }]
         : [];
     });
-    return [{ id: t['id'], title, plural, ...(fields.length ? { fields } : {}) }];
+    const subtitle = locOf(t['subtitle']);
+    return [{ id: t['id'], title, plural, ...(fields.length ? { fields } : {}), ...(subtitle ? { subtitle } : {}) }];
   });
 }
 
@@ -577,6 +597,7 @@ export function validatePack(x: unknown): SystemPack | string {
   const tracker: TrackerSpec = {
     init,
     ...(known(t['hp']) ? { hp: t['hp'] } : {}),
+    ...(known(t['defence']) ? { defence: t['defence'] } : {}),
     ...(Array.isArray(t['cells']) ? { cells: t['cells'].filter(known).slice(0, 6) } : {}),
     ...(known(t['overflow']) ? { overflow: t['overflow'] } : x['format'] === undefined && oldOverflow(familyOfRaw) ? { overflow: oldOverflow(familyOfRaw) } : {}),
     ...(cond
@@ -636,6 +657,7 @@ export function validatePack(x: unknown): SystemPack | string {
     ...(locOf(x['subtitle']) ? { subtitle: locOf(x['subtitle'])! } : {}),
     ...(locOf(x['about']) ? { about: locOf(x['about'])! } : {}),
     ...(formulaOf(x['rank']) ? { rank: x['rank'] as string } : {}),
+    ...(threatOfRaw(x['threat'], locOf) ? { threat: threatOfRaw(x['threat'], locOf)! } : {}),
     sections,
     tracker,
     ...(resets.length ? { resets } : {}),
@@ -877,6 +899,16 @@ function fieldNumber(f: FieldDef, v: unknown): number {
 // The fields by key. Not cached: the builder edits a pack in place, and a pack has only dozens of fields.
 export const fieldMap = (pack: SystemPack): Map<string, FieldDef> => new Map(pack.sections.flatMap((s) => s.fields.map((f) => [f.key, f] as const)));
 
+// The line under an entry's title from a template: «Spell {rank} · {actions}», an empty part goes with its dots.
+export function entryLine(template: string, get: (key: string) => unknown): string {
+  const text = (v: unknown) => (Array.isArray(v) ? v.join(', ') : v === undefined || v === null ? '' : String(v));
+  return template.split('·').map((part) => {
+    const keys = [...part.matchAll(/\{([a-z_][a-z0-9_]*)\}/gi)].map((m) => m[1]!);
+    if (keys.length && keys.every((k) => !text(get(k)).trim())) return '';
+    return part.replace(/\{([a-z_][a-z0-9_]*)\}/gi, (_, k: string) => text(get(k))).trim();
+  }).filter(Boolean).join(' · ');
+}
+
 // A section of lines: the fields on one line (a field that joins goes on the previous one's). A long field — alone.
 export function lineGroups(fields: FieldDef[]): FieldDef[][] {
   const out: FieldDef[][] = [];
@@ -887,7 +919,10 @@ export function lineGroups(fields: FieldDef[]): FieldDef[][] {
   return out;
 }
 export const longColumn = (f: FieldDef) => f.columns?.find((c) => c.type === 'long');
-export const aloneOnLine = (f: FieldDef) => f.type === 'textarea' || f.type === 'slots' || !!f.chips || (f.type === 'list' && !!longColumn(f));
+export const aloneOnLine = (f: FieldDef) => f.type === 'textarea' || f.type === 'slots' || !!f.chips || (f.type === 'list' && (!!f.rowLines || !!longColumn(f)));
+// The dice of a cell: {1d10+1} piercing plus {1d6} fire — their sum; a cell of plain dice as it is.
+export const cellDice = (text: string) => [...text.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]!).join('+') || (diceOf(text.trim()) ? text.trim() : '');
+export const cellText = (text: string) => text.replace(/\{([^}]+)\}/g, '$1');
 export const signedNum = (n: number) => (n < 0 ? `−${-n}` : `+${n}`);
 
 // The sections a kind of card has.
@@ -937,7 +972,7 @@ export function packCombat(pack: SystemPack, stats: PackStats): CombatStats {
   const cells = (t.cells ?? []).map((k) => fields.get(k)).filter((f): f is FieldDef => !!f && f.key !== t.hp);
   return {
     hp: hp && hp > 0 ? Math.round(hp) : null,
-    ac: null,
+    ac: t.defence && fields.has(t.defence) ? evalFormula(pack, stats, t.defence) : null,
     initiative: Math.round(initiative),
     stress: cells.filter((f) => f.type === 'track').map((f) => ({ id: f.key, boxes: boxesOf(pack, stats, f) })),
     attrs: cells.filter((f) => f.type === 'number' || f.type === 'dots' || f.type === 'formula').map((f) => ({ id: f.key, value: Math.round(evalFormula(pack, stats, f.key)) })),

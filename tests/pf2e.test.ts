@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { degreeOf, parseDice, rollDamage } from '../src/shared/dice';
 import { conditionValue } from '../src/systems/tracker';
-import { budgetOf, creatureXp, threatOf } from '../src/systems/pf2e/budget';
+import { budgetOf, creatureXp, threatOf } from '../src/shared/threat';
+import { PF_THREAT as PF } from '../src/systems/pf2e/budget';
 import { mapOf, type Pf2eStats } from '../src/systems/pf2e/stats';
 import { systemOf, familyOf } from '../src/systems';
 import { CONDITIONS, VALUED } from '../src/systems/pf2e/tracker';
@@ -35,15 +36,15 @@ describe('Pathfinder 2e: rules', () => {
   });
 
   it('the XP budget: creatures by level against the party, budgets by its size', () => {
-    expect(creatureXp(3, 3)).toBe(40);
-    expect(creatureXp(-2, 3)).toBe(0);
-    expect(creatureXp(8, 3)).toBeNull();
-    expect(budgetOf('moderate', 4)).toBe(80);
-    expect(budgetOf('severe', 5)).toBe(150);
-    expect(threatOf([3, 3], { size: 4, level: 3 })).toMatchObject({ xp: 80, threat: 'moderate', next: 120 });
-    expect(threatOf([1, 1], { size: 4, level: 3 }).threat).toBe('trivial');
-    expect(threatOf([9], { size: 4, level: 3 }).threat).toBe('beyond');
-    expect(threatOf([null, 3], { size: 4, level: 3 })).toMatchObject({ xp: 40, unknown: 1 });
+    expect(creatureXp(PF, 3, 3)).toBe(40);
+    expect(creatureXp(PF, -2, 3)).toBe(0);
+    expect(creatureXp(PF, 8, 3)).toBeNull();
+    expect(budgetOf(PF, PF.levels[2]!, 4)).toBe(80);
+    expect(budgetOf(PF, PF.levels[3]!, 5)).toBe(150);
+    expect(threatOf(PF, [3, 3], { size: 4, level: 3 })).toMatchObject({ xp: 80, level: 2, next: 120 });
+    expect(threatOf(PF, [1, 1], { size: 4, level: 3 }).level).toBe(0);
+    expect(threatOf(PF, [9], { size: 4, level: 3 }).level).toBe('beyond');
+    expect(threatOf(PF, [null, 3], { size: 4, level: 3 })).toMatchObject({ xp: 40, unknown: 1 });
   });
 
   it('a valued condition: the name and its number', () => {

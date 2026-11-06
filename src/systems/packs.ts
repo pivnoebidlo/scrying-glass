@@ -6,7 +6,7 @@ import type { Combatant } from '../modules/initiative/types';
 import { getLang, t } from '../shared/i18n';
 import { die } from '../shared/dice';
 import type { SheetResources } from '../shared/players';
-import { blankStats, evalFormula, fieldMap, loc, packCombat, packResources, packSubtitle, type PackEntryType, type PackStats, type SystemPack } from '../shared/syspack';
+import { blankStats, entryLine, evalFormula, fieldMap, loc, packCombat, packResources, packSubtitle, type PackEntryType, type PackStats, type SystemPack } from '../shared/syspack';
 import { COMMON_FIELDS, setPackTypes } from '../shared/compendium';
 import type { TypeDef } from '../shared/entrytypes';
 import type { CombatField, TrackerDef } from './tracker';
@@ -60,6 +60,7 @@ function entryTypeOf(t: PackEntryType, family: string): TypeDef {
     get plural() {
       return loc(t.plural, getLang());
     },
+    ...(t.subtitle ? { line: (f: Record<string, unknown>) => entryLine(loc(t.subtitle, getLang()), (k) => f[k]) } : {}),
     fields: [
       ...(t.fields ?? []).map((f) => ({
         key: f.key,
@@ -112,6 +113,21 @@ export function packTracker(p: SystemPack): TrackerDef {
           },
           get: (c) => c.maxHp,
           set: (v) => ({ hp: v, maxHp: v }),
+        },
+      ]
+    : [];
+  const defence: CombatField[] = p.tracker.defence
+    ? [
+        {
+          key: 'ac',
+          get label() {
+            return title(p.tracker.defence!);
+          },
+          get title() {
+            return title(p.tracker.defence!);
+          },
+          get: (c) => c.ac,
+          set: (v) => ({ ac: v }),
         },
       ]
     : [];
@@ -191,13 +207,13 @@ export function packTracker(p: SystemPack): TrackerDef {
         ? { entry: (c: string) => (p.compendium!.some((e) => loc(e.title, getLang()).toLowerCase() === c.toLowerCase()) ? [c] : []) }
         : {}),
     },
-    fields: [...hp, ...cells],
+    fields: [...hp, ...defence, ...cells],
     fromCard(s: CombatStats) {
       return {
         bonus: s.initiative,
         hp: s.hp,
         maxHp: s.hp,
-        ac: null,
+        ac: s.ac,
         stress: (s.stress ?? []).map((x) => ({ id: x.id, boxes: boxes(x.boxes) })),
         attrs: (s.attrs ?? []).map((a) => ({ id: a.id, value: a.value, max: a.value })),
         ...(p.tracker.overflow ? { overflow: p.tracker.overflow } : {}),

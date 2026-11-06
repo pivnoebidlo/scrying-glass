@@ -18,6 +18,7 @@ import type { ToolDef } from '../modules/tools/ui/registry.svelte';
 import type { ImportRequest } from '../modules/bestiary/ui/cards.svelte';
 import { dnd5eUi } from './dnd5e/ui';
 import { pf2eUi } from './pf2e/ui';
+import ThreatBadge from './ThreatBadge.svelte';
 
 export type StatsView = Component<{ card: Card<any> }>;
 // lang — язык карточки (подписи, которые попадут в статблок, например название колдовства).
@@ -86,5 +87,7 @@ export const statsView = (system: string, stats?: unknown): StatsView =>
   packOf(system) ? (PackSheet as StatsView) : (systemUi(system)?.view?.(system, stats) ?? GenericStats);
 export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
   packOf(system) ? (PackEditor as StatsEditor) : (systemUi(system)?.editor?.(system, stats) ?? GenericEditor);
+// Above a fight: a pack with a threat budget gets the common plaque, otherwise the system's own.
+export const aboutFight = (system: string) => (packOf(system)?.threat ? ThreatBadge : systemUi(system)?.encounter);
 export const trackerCells = (system: string): TrackerCells =>
   isPackFamily(familyOf(system)) ? PackTrackerCells : (systemUi(system)?.trackerCells ?? HpCells);

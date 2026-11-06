@@ -11,7 +11,7 @@
   import { ui } from './ui.svelte';
   import { shownAdventures, systemFor } from '../../../shared/adventures';
   import { systemOf } from '../../../systems';
-  import { systemUi } from '../../../systems/ui';
+  import { aboutFight } from '../../../systems/ui';
   import { fromFields } from '../../../systems/tracker';
 
   let { e }: { e: Encounter } = $props();
@@ -24,7 +24,7 @@
   const system = $derived(systemFor(store.state.adventures, e.adventure));
   const tracker = $derived(systemOf(system).tracker);
   // What the system says about the fight (D&D: how hard it is).
-  const AboutFight = $derived(systemUi(system)?.encounter);
+  const AboutFight = $derived(aboutFight(system));
 
   async function start() {
     await dispatch('initiative', 'startEncounter', { id: e.id });

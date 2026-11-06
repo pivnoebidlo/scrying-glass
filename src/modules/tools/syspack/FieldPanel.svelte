@@ -9,7 +9,7 @@
   import { Dices, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import ChangeInput from './ChangeInput.svelte';
-  import { COLUMN_TYPES, evalFormula, FIELD_JOINS, type FieldJoin, FIELD_TYPES, fieldMap, LIVE_TYPES, loc, newField, newRoll, type FieldDef, type FieldType, type LiveBy, type Loc, type RollSpec, POOL_KINDS, type PoolKind, type SystemPack } from '../../../shared/syspack';
+  import { COLUMN_SHOWS, COLUMN_TYPES, CRIT_BYS, evalFormula, type ColumnShow, type CritBy, FIELD_JOINS, type FieldJoin, FIELD_TYPES, fieldMap, LIVE_TYPES, loc, newField, newRoll, type FieldDef, type FieldType, type LiveBy, type Loc, type RollSpec, POOL_KINDS, type PoolKind, type SystemPack } from '../../../shared/syspack';
   import { keyFrom } from '../../../shared/compendium';
   import { getLang } from '../../../shared/i18n';
   import { rolls } from '../../../renderer/lib/rolls.svelte';
@@ -198,8 +198,18 @@
           </select>
           {#if lines && c.type === 'number'}
             <label class="check"><input type="checkbox" {disabled} checked={!!c.signed} onchange={(e) => (e.currentTarget.checked ? (c.signed = true) : delete c.signed)} /> {t('sb.signed')}</label>
-          {:else if lines && c.type === 'text'}
-            <label class="check"><input type="checkbox" {disabled} checked={!!c.note} onchange={(e) => (e.currentTarget.checked ? (c.note = true) : delete c.note)} /> {t('sb.note')}</label>
+          {/if}
+          {#if lines && c.type !== 'long'}
+            <select {disabled} aria-label={t('sb.colShow')} value={c.show ?? ''} onchange={(e) => (e.currentTarget.value ? (c.show = e.currentTarget.value as ColumnShow) : delete c.show)}>
+              <option value="">{t('sb.colShowPlain')}</option>
+              {#each COLUMN_SHOWS as sh (sh)}<option value={sh}>{t(`sb.colShow.${sh}`)}</option>{/each}
+            </select>
+          {/if}
+          {#if lines && c.type === 'dice'}
+            <select {disabled} aria-label={t('sb.crit')} value={c.crit ?? ''} onchange={(e) => (e.currentTarget.value ? (c.crit = e.currentTarget.value as CritBy) : delete c.crit)}>
+              <option value="">{t('sb.critNone')}</option>
+              {#each CRIT_BYS as cb (cb)}<option value={cb}>{t(`sb.crit.${cb}`)}</option>{/each}
+            </select>
           {/if}
           <button type="button" class="icon-btn" title={t('sb.remove')} {disabled} onclick={() => (f.columns = f.columns!.filter((_, j) => j !== i))}><X size={13} /></button>
         </div>
@@ -316,6 +326,11 @@
           <details>
             <summary>{t('sb.expert')}</summary>
             <div class="expert">
+              {#if r.type === 'd20'}
+                <label class="row" title={t('sb.stepsHint')}><span>{t('sb.steps')}</span>
+                  <textarea rows="2" class="mono" {disabled} value={(r.steps ?? []).join('\n')} onchange={(e) => { const v = e.currentTarget.value.split('\n').map((x) => x.trim()).filter(Boolean); if (v.length) r.steps = v; else delete r.steps; }}></textarea>
+                </label>
+              {/if}
               {#if r.type === 'pool'}
                 <label class="check"><input type="checkbox" {disabled} checked={!!r.push} onchange={(e) => (e.currentTarget.checked ? (r.push = true) : delete r.push)} /> {t('sb.push')}</label>
                 <label class="row" title={t('sb.kindHint')}>
@@ -409,6 +424,7 @@
         </label>
         <label class="check"><input type="checkbox" {disabled} checked={!!f.bare} onchange={(e) => (e.currentTarget.checked ? (f.bare = true) : delete f.bare)} /> {t('sb.bare')}</label>
         {#if f.type === 'number' || f.type === 'formula'}<label class="check"><input type="checkbox" {disabled} checked={!!f.signed} onchange={(e) => (e.currentTarget.checked ? (f.signed = true) : delete f.signed)} /> {t('sb.signed')}</label>{/if}
+        {#if f.type === 'list'}<label class="check"><input type="checkbox" {disabled} checked={!!f.rowLines} onchange={(e) => (e.currentTarget.checked ? (f.rowLines = true) : delete f.rowLines)} /> {t('sb.rowLines')}</label>{/if}
         {#if f.type === 'tags'}<label class="check"><input type="checkbox" {disabled} checked={!!f.chips} onchange={(e) => (e.currentTarget.checked ? (f.chips = true) : delete f.chips)} /> {t('sb.chips')}</label>{/if}
       {/if}
       <label class="row"><span>{t('sb.hint')}</span><LocInput value={f.hint} set={(v) => (f.hint = v)} {disabled} /></label>

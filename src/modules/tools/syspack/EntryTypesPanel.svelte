@@ -42,6 +42,7 @@
     <div class="names">
       <label class="row"><span>{t('sb.typeName')}</span><LocInput value={x.title} set={(v) => (x.title = v ?? '')} {disabled} /></label>
       <label class="row"><span>{t('sb.typePlural')}</span><LocInput value={x.plural} set={(v) => (x.plural = v ?? '')} {disabled} /></label>
+      <label class="row" title={t('sb.typeLineHint')}><span>{t('sb.typeLine')}</span><LocInput value={x.subtitle} set={(v) => (v ? (x.subtitle = v) : delete x.subtitle)} {disabled} /></label>
       <button class="icon-btn" title={t('sb.remove')} {disabled} onclick={() => remove(x)}><Trash2 size={14} /></button>
     </div>
     {#each x.fields ?? [] as f, i (f.key)}

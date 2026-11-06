@@ -6,7 +6,7 @@
   import type { Card } from '../../shared/cards';
   import { modeOf, rolls } from '../../renderer/lib/rolls.svelte';
   import { usedAfter } from '../../shared/players';
-  import { aloneOnLine, boxesOf, evalFormula, lineGroups, loc, longColumn, packResources, sectionsFor, signedNum, slotGroups, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { aloneOnLine, boxesOf, cellDice, cellText, evalFormula, lineGroups, loc, longColumn, packResources, sectionsFor, signedNum, slotGroups, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
   import { entryHtml } from '../../renderer/lib/entry/markup';
   import { peekEntry } from '../../renderer/lib/entry/peek.svelte';
   import { sheetUsage } from '../../renderer/lib/sheetusage.svelte';
@@ -54,15 +54,25 @@
   const wide = (f: FieldDef) => f.type === 'textarea' || f.type === 'list' || f.type === 'tags' || f.type === 'slots';
   const sections = $derived(sectionsFor(pack, card.kind).map((sec) => ({ ...sec, fields: sec.fields.filter(filled) })).filter((sec) => sec.fields.length));
 
-  function roll(f: FieldDef, e: MouseEvent, row?: Record<string, unknown>, extra = 0) {
+  function roll(f: FieldDef, e: MouseEvent, row?: Record<string, unknown>, extra = 0, step = 0) {
     if (!f.roll) return;
     // A pool that asks: dice added or taken first (help, darkness) — the chips under the field.
     if (f.roll.type === 'pool' && f.roll.ask && asking === null) return void (asking = { key: f.key, row, mode: modeOf(e) });
-    const label = row ? String(Object.values(row).find((v) => typeof v === 'string' && v.trim()) ?? L(f.title)) : L(f.title);
-    const spec = extra && f.roll.type === 'pool' ? { ...f.roll, count: `(${f.roll.count}) + ${extra}` } : f.roll;
+    const named = row ? rowName(f, row) : L(f.title);
+    const label = step ? `${named} (${t('pack.step', { n: step + 1 })})` : named;
+    const spec = extra && f.roll.type === 'pool' ? { ...f.roll, count: `(${f.roll.count}) + ${extra}` } : step && f.roll.type === 'd20' ? { ...f.roll, bonus: stepped(f.roll.bonus, f.roll.steps?.[step - 1]) } : f.roll;
     const done = rolls.packRoll(card.name, extra ? `${label} (${extra > 0 ? '+' : '−'}${Math.abs(extra)})` : label, spec, (formula) => evalFormula(pack, s, formula, row), asking?.mode ?? modeOf(e), row);
     if (done.change) apply(done.id, done.change);
     asking = null;
+  }
+  // A row by name: its first plain text with letters (not «melee» in bold, not ◆, not a note).
+  const rowName = (f: FieldDef, row: Record<string, unknown>) => String((f.columns ?? []).filter((c) => c.type === 'text' && !c.show).map((c) => row[c.key]).find((v) => typeof v === 'string' && /\p{L}/u.test(v)) ?? Object.values(row).find((v) => typeof v === 'string' && v.trim()) ?? L(f.title));
+  const stepped = (bonus: string, step = '0') => `(${bonus}) + (${step})`;
+  // The bonuses of a d20 with steps: the first attack, the second, the third.
+  const stepsOf = (f: FieldDef, row?: Record<string, unknown>) =>
+    f.roll?.type === 'd20' ? ['0', ...(f.roll.steps ?? [])].map((x) => evalFormula(pack, s, stepped((f.roll as { bonus: string }).bonus, x), row)) : [];
+  function hit(f: FieldDef, row: Record<string, unknown>, c: ColumnDef, crit: boolean) {
+    rolls.damage(card.name, `${rowName(f, row)}${crit ? ' ×2' : ''}`, cellDice(String(row[c.key] ?? '')), crit, c.crit ?? 'dice');
   }
   // An outcome changes the sheet: a field marked at the table, here and now; the log can take it back.
   function apply(id: number, c: { field: string; by: number }) {
@@ -96,7 +106,9 @@
   }
   // A cell on a line of text: a number with its sign if the column says so.
   const inlineCell = (c: ColumnDef, v: unknown) => (c.signed && typeof v === 'number' ? signedNum(v) : v === undefined || v === null ? '' : String(v));
-  const shownCols = (f: FieldDef) => (f.columns ?? []).filter((c) => c.type !== 'long');
+  const shownCols = (f: FieldDef) => (f.columns ?? []).filter((c) => c.type !== 'long' && c.show !== 'hidden');
+  const visibleCols = (f: FieldDef) => (f.columns ?? []).filter((c) => c.show !== 'hidden');
+  const hasCell = (v: unknown) => String(v ?? '').trim() !== '';
   // The cell a click on a row of a line rolls: its first number, else its last cell.
   const rollCell = (f: FieldDef) => {
     const cols = shownCols(f);
@@ -106,10 +118,14 @@
   const cell = (v: unknown) => (v === undefined || v === null || v === '' ? t('pack.empty') : String(v));
 </script>
 
+{#snippet rowCells(f: FieldDef, row: Record<string, unknown>)}
+  {@const main = f.roll ? rollCell(f) : undefined}
+  {#each shownCols(f).filter((c) => hasCell(row[c.key])) as c, n (c.key)}{c.show === 'label' ? (n ? ', ' : '') : n ? ' ' : ''}{#if c.show === 'label'}<strong>{L(c.title)}</strong>{' '}{/if}{#if c.key === main?.key}{#each stepsOf(f, row).length ? stepsOf(f, row) : [row[c.key]] as v, i (i)}{i ? ' / ' : ''}<button class="inroll" title={t('pack.rollHint')} onclick={(e) => roll(f, e, row, 0, i)}>{inlineCell(c, v)}</button>{/each}{:else if c.type === 'dice' && cellDice(String(row[c.key]))}<button class="inroll" title={t('pack.rollHint')} onclick={() => hit(f, row, c, false)}>{cellText(String(row[c.key]))}</button>{#if c.crit}{' '}<button class="inroll" title={t('pack.crit')} onclick={() => hit(f, row, c, true)}>×2</button>{/if}{:else if c.show === 'note'}<span class="note">({row[c.key]})</span>{:else if c.show === 'strong'}<strong>{row[c.key]}</strong>{:else}{inlineCell(c, row[c.key])}{/if}{/each}
+{/snippet}
+
 {#snippet lineValue(f: FieldDef)}
   {#if f.type === 'list'}
-    {@const main = rollCell(f)}
-    {#each rows(f) as row, r (r)}{r ? ', ' : ''}{#each shownCols(f) as c, n (c.key)}{n ? ' ' : ''}{#if f.roll && c.key === main?.key}<button class="inroll" title={t('pack.rollHint')} onclick={(e) => roll(f, e, row)}>{inlineCell(c, row[c.key])}</button>{:else if c.note}<span class="note">({row[c.key]})</span>{:else}{inlineCell(c, row[c.key])}{/if}{/each}{/each}
+    {#each rows(f) as row, r (r)}{r ? ', ' : ''}{@render rowCells(f, row)}{/each}
   {:else if f.type === 'tags'}
     {tags(f).join(', ')}
   {:else if f.type === 'text'}
@@ -161,7 +177,7 @@
     {:else}
       <table>
         <thead>
-          <tr>{#each f.columns ?? [] as c (c.key)}<th>{L(c.title)}</th>{/each}</tr>
+          <tr>{#each visibleCols(f) as c (c.key)}<th>{L(c.title)}</th>{/each}</tr>
         </thead>
         <tbody>
           {#each rows(f) as row, i (i)}
@@ -213,11 +229,13 @@
                 <div class="feature" onclick={(e) => onText(e, name)}>
                   <strong>{name}</strong>
                   {#each shownCols(first).slice(1) as c (c.key)}
-                    {#if String(row[c.key] ?? '').trim()}{' '}{#if c.note}<span class="note">({row[c.key]})</span>{:else}<span>{inlineCell(c, row[c.key])}</span>{/if}{/if}
+                    {#if hasCell(row[c.key])}{' '}{#if c.show === 'note'}<span class="note">({row[c.key]})</span>{:else}<span>{inlineCell(c, row[c.key])}</span>{/if}{/if}
                   {/each}
                   {#if String(row[longColumn(first)!.key] ?? '').trim()}<div class="md">{@html md(String(row[longColumn(first)!.key]))}</div>{/if}
                 </div>
               {/each}
+            {:else if first.type === 'list' && first.rowLines}
+              {#each rows(first) as row, r (r)}<p class="line">{@render rowCells(first, row)}</p>{/each}
             {:else if aloneOnLine(first)}
               {@render wideField(first)}
             {:else}
