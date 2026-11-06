@@ -7,7 +7,6 @@ import type { PaperView, SystemUi, StatsEditor, StatsView } from '../ui';
 import { reshapeFor, reshapeFrom, reshapeNew } from './tools/reshape/store.svelte';
 import PaperSheet from './PaperSheet.svelte';
 import Difficulty from './encounter/Difficulty.svelte';
-import Trial from './Trial.svelte';
 import { spellList } from './spells.svelte';
 import Background from './Background.svelte';
 import ImportUpdate from './ImportUpdate.svelte';
@@ -77,7 +76,6 @@ export const dnd5eUi: SystemUi = {
     },
   ],
   encounter: Difficulty,
-  trial: Trial,
   entryList: { spell: spellList },
   background: Background,
   importUpdate: ImportUpdate,
