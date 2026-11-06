@@ -1,6 +1,6 @@
 // Built-in Mausritter content from scripts/mausritter-srd.<lang>.md (Mausritter SRD 2.3.1, CC BY 4.0; the Russian
-// file is a translation made for Scrying Glass): resources/srd/mausritter.json — creature cards (English and their
-// Russian translations), resources/compendium/mausritter.<lang>.json — rules, spells, tables.
+// file is a translation made for Scrying Glass): content/mausritter/bestiary/mausritter.json — creature cards (English and their
+// Russian translations), content/mausritter/compendium/mausritter.<lang>.json — rules, spells, tables.
 // Run: npm run build-mausritter. Do not edit the JSON by hand.
 //
 // Chapters («# …») become categories, sections («## …») — entries (their «###» are headings inside); a chapter's
@@ -14,7 +14,7 @@ import * as path from 'node:path';
 import type { Card, CardSource } from '../src/shared/cards';
 
 // The SRD stat block as this script reads it; a card gets it as the fields of the Mausritter system pack
-// (samples/systems/mausritter.json): hp, str, dex, wil, armour, warband (0 — warband scale), attacks (rows: name,
+// (content/mausritter/system/mausritter.json): hp, str, dex, wil, armour, warband (0 — warband scale), attacks (rows: name,
 // dice), critical, abilities (lines), wants.
 interface MausAttack {
   dice: string;
@@ -45,7 +45,7 @@ const toPack = (s: MausStats): Record<string, unknown> => ({
   wants: s.wants,
 });
 
-const RES = path.resolve(import.meta.dirname, '../resources');
+const RES = path.resolve(import.meta.dirname, '../content/mausritter');
 const source = (lang: string) => path.resolve(import.meta.dirname, `mausritter-srd.${lang}.md`);
 
 const SOURCES: Record<string, CardSource & { translator?: string }> = {
@@ -308,7 +308,7 @@ for (const [lang, book] of [['en', en], ['ru', ru]] as const) {
   fs.writeFileSync(out, JSON.stringify({ system: 'mausritter', lang, source: SOURCES[lang], entries: book.entries }) + '\n');
   console.log(`${out}: ${book.entries.length} entries`);
 }
-const bestiary = path.join(RES, 'srd', 'mausritter.json');
+const bestiary = path.join(RES, 'bestiary', 'mausritter.json');
 fs.writeFileSync(bestiary, JSON.stringify(cards) + '\n');
 console.log(`${bestiary}: ${cards.length} cards`);
 

@@ -1,5 +1,5 @@
 <!--
-Встроенный справочник Forged in the Dark: источник для resources/compendium/fitd.ru.json (npm run build-fitd).
+Встроенный справочник Forged in the Dark: источник для content/fitd/compendium/fitd.ru.json (npm run build-fitd).
 Запись начинается строкой «@@ Русское название (English)», дальше поля «ключ: значение» до пустой строки, потом
 текст (Markdown справочника, [[ссылки]] — по русским названиям). Текст — пересказ и перевод Blades in the Dark SRD
 (One Seven Design, CC BY 3.0), сделанный для приложения; мир оригинальной игры не используется. Термины — свои

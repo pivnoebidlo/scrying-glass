@@ -1,4 +1,4 @@
-// Built-in compendium books written by hand (Fate Core, Forged in the Dark): resources/compendium/<system>.<lang>.json
+// Compendium books written by hand (Fate Core, Forged in the Dark): content/<system>/compendium/<system>.<lang>.json
 // from scripts/<name>.<lang>.md. Do not edit the JSON by hand.
 //
 // Source format: an entry starts with «@@ Title (English)» (an English file — just «@@ Title»), then «key: value»
@@ -6,7 +6,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-const OUT = path.resolve(import.meta.dirname, '../resources/compendium');
+const CONTENT = path.resolve(import.meta.dirname, '../content');
 
 type Value = string | string[];
 interface Entry {
@@ -62,7 +62,7 @@ export function buildBook(name: string, system: string, source: Record<string, R
   const en = new Set((books['en'] ?? []).map((e) => e.title.toLowerCase()));
   for (const e of books['ru'] ?? []) if (!e.en || !en.has(e.en.toLowerCase())) console.log(`  ru «${e.title}» has no English pair`);
   for (const [lang, entries] of Object.entries(books)) {
-    const out = path.join(OUT, `${system}.${lang}.json`);
+    const out = path.join(CONTENT, system, 'compendium', `${system}.${lang}.json`);
     fs.writeFileSync(out, JSON.stringify({ system, lang, source: source[lang], entries }) + '\n');
     console.log(`${out}: ${entries.length} entries`);
   }

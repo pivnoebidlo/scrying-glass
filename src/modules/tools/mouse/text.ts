@@ -4,7 +4,7 @@
 import { labels, t } from '../../../shared/i18n';
 import type { PackSlot } from '../../../shared/syspack';
 
-// The Mausritter pack (samples/systems/mausritter.json): its inventory field — paws 2, body 2, pack 6.
+// The Mausritter pack (content/mausritter/system/mausritter.json): its inventory field — paws 2, body 2, pack 6.
 export const SLOTS = { paw: 2, body: 2, pack: 6 };
 export const SLOT_COUNT = SLOTS.paw + SLOTS.body + SLOTS.pack;
 // STR, DEX, WIL and their names in the interface language.

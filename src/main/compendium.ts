@@ -1,6 +1,6 @@
 // Записи справочника (shared/compendium.ts): Markdown в папках справочника хранилища и в <библиотека>/compendium
 // (общие для всех кампаний, пути «library:compendium/…»). Изменения в библиотеке (и снаружи) — событие окнам.
-import { builtinDirs } from './content';
+import { contentDirs } from './content';
 import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -10,14 +10,12 @@ import { textKind } from './textstore';
 
 export const entries = textKind('compendium', 'compendium', () => t('core.name.entry'));
 
-// Built-in compendium — resources/compendium/<system>.<lang>.json (Fate, Forged in the Dark, Mausritter —
-// scripts/build-*.ts) and the books of the content installed in the library (<library>/content/<id>/compendium/:
-// D&D's SRD — scripts/import-compendium.ts). Read-only; read once until the content changes, all languages (a window
-// picks one).
+// Built-in compendium: the books of the packages installed in the library (<library>/content/<id>/compendium/).
+// Read-only; read once until the content changes, all languages (a window picks one).
 let builtin: BuiltinBook[] | null = null;
 export function builtinEntries(): BuiltinBook[] {
   if (builtin) return builtin;
-  builtin = builtinDirs('compendium').flatMap((dir) => {
+  builtin = contentDirs('compendium').flatMap((dir) => {
     try {
       return fs
         .readdirSync(dir)

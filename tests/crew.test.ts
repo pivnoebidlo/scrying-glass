@@ -72,7 +72,7 @@ describe('Forged in the Dark: entanglements are entries of the compendium', () =
   it('every entanglement name is an alias of «Entanglements»', () => {
     for (const lang of ['en', 'ru'] as const) {
       setLang(lang);
-      const book = JSON.parse(readFileSync(new URL(`../resources/compendium/fitd.${lang}.json`, import.meta.url), 'utf8')) as BuiltinBook;
+      const book = JSON.parse(readFileSync(new URL(`../content/fitd/compendium/fitd.${lang}.json`, import.meta.url), 'utf8')) as BuiltinBook;
       const entry = book.entries.find((e) => e.title === t('crew.repEntry'));
       expect(entry, lang).toBeDefined();
       const aliases = book.entries.find((e) => (e.en ?? e.title) === 'Entanglements')!.fields['aliases'] as string[];

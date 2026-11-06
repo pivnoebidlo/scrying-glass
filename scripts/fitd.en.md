@@ -1,5 +1,5 @@
 <!--
-Built-in Forged in the Dark compendium (English): the source of resources/compendium/fitd.en.json (npm run build-fitd).
+Built-in Forged in the Dark compendium (English): the source of content/fitd/compendium/fitd.en.json (npm run build-fitd).
 An entry starts with «@@ Title», then «key: value» fields up to an empty line, then the text (compendium Markdown,
 [[links]] by English titles). The titles match the English names in fitd.ru.md, which pairs the two books.
 The text is a retelling of the Blades in the Dark SRD (One Seven Design, CC BY 3.0) written for the app; the setting

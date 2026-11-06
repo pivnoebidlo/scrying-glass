@@ -1,5 +1,5 @@
 // The «About» facts: the project's addresses, its license, and the credits of the material the app includes (the CC BY
-// licenses require the attribution; README and resources/*/README.md say the same in full). Only these addresses
+// licenses require the attribution; README and content/*/README.md say the same in full). Only these addresses
 // are opened from the app (isAboutLink).
 export const REPO_URL = 'https://github.com/pivnoebidlo/scrying-glass';
 export const ISSUES_URL = `${REPO_URL}/issues`;

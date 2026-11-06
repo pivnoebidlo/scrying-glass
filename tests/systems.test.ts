@@ -9,7 +9,7 @@ import { validatePack, type SystemPack } from '../src/shared/syspack';
 import { registerPacks } from '../src/systems/packs';
 
 // Fate Core is a system pack: registered as the app does with an installed one.
-registerPacks([validatePack(JSON.parse(readFileSync(new URL('../samples/systems/fate-core.json', import.meta.url), 'utf8'))) as SystemPack]);
+registerPacks([validatePack(JSON.parse(readFileSync(new URL('../content/fate-core/system/fate-core.json', import.meta.url), 'utf8'))) as SystemPack]);
 
 const adv = (systems: Record<string, string> | undefined, current: string | null): AdventuresState => ({
   list: ['Страд', 'Дрезден'],

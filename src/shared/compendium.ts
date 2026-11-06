@@ -124,7 +124,7 @@ export interface Entry {
   def?: TypeDef;
 }
 
-// Встроенный справочник одной редакции (resources/compendium/<система>.json): записи с английским названием `en`.
+// Встроенный справочник одной редакции (content/<пакет>/compendium/<система>.<язык>.json): записи с английским названием `en`.
 export interface BuiltinBook {
   system: string;
   // Language of the texts: a window shows the book in the interface language, or else the English one.

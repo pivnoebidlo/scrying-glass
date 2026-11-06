@@ -1,5 +1,5 @@
 <!--
-Built-in Fate Core compendium (English): the source of resources/compendium/fate-core.en.json (npm run build-fate).
+Built-in Fate Core compendium (English): the source of content/fate-core/compendium/fate-core.en.json (npm run build-fate).
 An entry starts with «@@ Title», then «key: value» fields up to an empty line, then the text (compendium Markdown,
 [[links]] by English titles). The titles match the English names in fate-core.ru.md, which pairs the two books.
 The text is a retelling of the Fate Core SRD (Evil Hat Productions, CC BY 3.0) written for the app.

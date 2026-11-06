@@ -1,4 +1,4 @@
-// Built-in Fate Core compendium: resources/compendium/fate-core.<lang>.json from scripts/fate-core.<lang>.md.
+// The Fate Core compendium: content/fate-core/compendium/fate-core.<lang>.json from scripts/fate-core.<lang>.md.
 // Run: npm run build-fate. Texts are edited in the .md files (format — scripts/book-md.ts).
 import { buildBook } from './book-md.ts';
 

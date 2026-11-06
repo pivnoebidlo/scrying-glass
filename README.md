@@ -213,15 +213,15 @@ In **Fate Core** adventures the Fate rules are built in instead of the D&D SRD (
 actions, aspects, invokes and compels, fate points, conflict, stress, consequences, contests, stunts, milestones, NPCs)
 together with all 18 skills and sample stunts — a retelling of the Fate Core SRD in English and Russian written for
 the app (Evil Hat Productions, CC BY 3.0). The texts are in `scripts/fate-core.<lang>.md`; `npm run build-fate`
-builds `resources/compendium/fate-core.<lang>.json` from them.
+builds `content/fate-core/compendium/fate-core.<lang>.json` from them.
 
 In **Mausritter** adventures the Mausritter SRD 2.3.1 is built in, in English and Russian (the Russian text is a
 translation made for the app): the rules by chapter (making
 a mouse, inventory, saves, combat, magic, hirelings and warbands, gear and prices, running the game, hexcrawl and
 adventure site toolboxes, useful tables), the 15 spells with their recharge, and the 11 creatures as cards (cat,
 centipede, crow, faerie, frog, ghost, mouse, owl, rat, snake, spider — with their variant tables). The texts are in
-`scripts/mausritter-srd.<lang>.md`; `npm run build-mausritter` builds `resources/srd/mausritter.json` and
-`resources/compendium/mausritter.<lang>.json`. This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
+`scripts/mausritter-srd.<lang>.md`; `npm run build-mausritter` builds `content/mausritter/bestiary/mausritter.json` and
+`content/mausritter/compendium/mausritter.<lang>.json`. This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
 
 In **Forged in the Dark** adventures the FitD rules are built in (dice pools, the twelve actions and three attributes,
 the action roll with position and effect, the Devil's bargain, consequences, harm, resistance and armor, stress,
@@ -229,7 +229,7 @@ trauma and vice, load, coin and stash, advancement, plans, the engagement roll, 
 payoff, heat, wanted level, entanglements and its activities, rituals, crafting, the crew: tier, hold, rep and turf,
 faction status, claims, upgrades, cohorts) together with 58 sample special abilities of scoundrels and crews — a
 retelling of the Blades in the Dark SRD in English and Russian written for the app, without the original setting.
-The texts are in `scripts/fitd.<lang>.md`; `npm run build-fitd` builds `resources/compendium/fitd.<lang>.json` from
+The texts are in `scripts/fitd.<lang>.md`; `npm run build-fitd` builds `content/fitd/compendium/fitd.<lang>.json` from
 them. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
 
 **Pathfinder 2e** (the remaster) is a system of the app, off until you turn it on in Settings → Game systems; its data
@@ -963,8 +963,8 @@ side panel, tabs, the player screen preview on the right. Settings: ⌘, (Ctrl+,
 - src/systems/<system>/: role-playing systems in code, as plugins (D&D 5e): stats, stat block, editor, tracker, its tools,
   compendium types, importers (Long Story Short), its messages; the core asks them what they add (systems/plugin.ts,
   systems/ui.ts) and knows no system by name; a new one is a folder and a line in systems/plugins.ts and systems/ui.ts.
-  src/systems/pack/ — systems described by a file (Fate Core, Mausritter, Forged in the Dark: samples/systems/)
-- resources/srd/, resources/compendium/: the bestiary and compendium that come with the app (Mausritter, Fate, Forged in the Dark)
+  src/systems/pack/ — systems described by a file (Fate Core, Mausritter, Forged in the Dark: content/<id>/system/)
+- content/<id>/: packages (.sgcontent) of the games: a system, its creatures and compendium books, downloaded from the Community (`npm run build-content`)
 - content/<id>/: downloadable content of systems (D&D's SRD: content/dnd5e-srd/, built by scripts/import-srd.ts and
   import-compendium.ts), packed by scripts/build-content.ts and published to the Community
 - src/modules/index.ts: the list of core modules, a new module is added here; the windows pick up control.ts and

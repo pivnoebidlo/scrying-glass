@@ -52,7 +52,7 @@ describe('system packs', () => {
   it('keeps what the system gives (about) — the sample packs have it', () => {
     expect((validatePack({ ...raw, about: { en: 'Dice', ru: 'Кубы' } }) as SystemPack).about).toEqual({ en: 'Dice', ru: 'Кубы' });
     for (const id of ['fate-core', 'mausritter', 'fitd']) {
-      const pack = validatePack(JSON.parse(fs.readFileSync(path.join('samples/systems', `${id}.json`), 'utf8'))) as SystemPack;
+      const pack = validatePack(JSON.parse(fs.readFileSync(path.join('content', id, 'system', `${id}.json`), 'utf8'))) as SystemPack;
       expect(pack.about).toHaveProperty('ru');
     }
   });
@@ -233,16 +233,21 @@ describe('format extensions for Fate and Mausritter', () => {
 });
 
 describe('sample system packs', () => {
-  const dir = path.join(__dirname, '../samples/systems');
-  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
+  const root = path.join(__dirname, '..');
+  const samples = fs.readdirSync(path.join(root, 'samples/systems')).filter((f) => f.endsWith('.json')).map((f) => path.join('samples/systems', f));
+  const packaged = fs.readdirSync(path.join(root, 'content')).flatMap((d) => {
+    const dir = path.join(root, 'content', d, 'system');
+    return fs.existsSync(dir) ? fs.readdirSync(dir).map((f) => path.join('content', d, 'system', f)) : [];
+  });
+  const files = [...samples, ...packaged];
 
   it.each(files)('%s is a valid pack whose formulas name its own fields', (file) => {
-    const raw = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+    const raw = JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
     const p = validatePack(raw);
     expect(typeof p === 'string' ? p : 'ok').toBe('ok');
     const pack = p as SystemPack;
     const keys = fieldMap(pack);
-    expect(pack.id).toBe(file.replace(/\.json$/, ''));
+    expect(pack.id).toBe(path.basename(file, '.json'));
     // Nothing the file has was dropped by the check (same number of fields).
     expect(keys.size).toBe(raw.sections.reduce((n: number, s: { fields: unknown[] }) => n + s.fields.length, 0));
     expect(formulaProblems(pack)).toEqual([]);

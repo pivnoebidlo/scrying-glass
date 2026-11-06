@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { zipSync } from 'fflate';
-import { CONTENT_EXT, CONTENT_MANIFEST, contentFile, validContent } from '../src/shared/content.ts';
+import { CONTENT_EXT, CONTENT_KINDS, CONTENT_MANIFEST, contentFile, validContent } from '../src/shared/content.ts';
 
 const SRC = path.resolve(import.meta.dirname, '../content');
 const OUT = path.resolve(import.meta.dirname, '../dist/content');
@@ -16,7 +16,7 @@ for (const id of ids) {
   if (!m || m.id !== id) throw new Error(`${id}: a bad ${CONTENT_MANIFEST}`);
   // The manifest first: the app reads it without unpacking the rest.
   const files: Record<string, Uint8Array> = { [CONTENT_MANIFEST]: fs.readFileSync(path.join(dir, CONTENT_MANIFEST)) };
-  for (const kind of ['bestiary', 'compendium']) {
+  for (const kind of CONTENT_KINDS) {
     const sub = path.join(dir, kind);
     if (!fs.existsSync(sub)) continue;
     for (const f of fs.readdirSync(sub).sort()) {

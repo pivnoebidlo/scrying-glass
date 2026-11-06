@@ -3,8 +3,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
-// Встроенный бестиарий: resources/srd проекта и содержимое D&D (content/dnd5e-srd — как будто установлено в
-// библиотеку теста); окон нет.
+// Built-in bestiary: D&D's package (content/dnd5e-srd, as if installed in the test's library); no windows.
 vi.mock('electron', () => ({ app: { getAppPath: () => process.cwd() }, BrowserWindow: { getAllWindows: () => [] } }));
 
 const { getCard, importCards, initCards, isEditedSrd, listCards, revertSrd, saveCard, setLibrary, updateFromExport } = await import('../src/main/cards');

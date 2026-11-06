@@ -20,8 +20,8 @@ import { run } from './helpers';
 import fate from '../src/modules/fate/main';
 import type { FateState } from '../src/modules/fate/types';
 
-// Fate Core is a system pack now (samples/systems/fate-core.json, published in the Community).
-const pack = validatePack(JSON.parse(readFileSync(new URL('../samples/systems/fate-core.json', import.meta.url), 'utf8'))) as SystemPack;
+// Fate Core is a system pack now (content/fate-core/system/fate-core.json, published in the Community).
+const pack = validatePack(JSON.parse(readFileSync(new URL('../content/fate-core/system/fate-core.json', import.meta.url), 'utf8'))) as SystemPack;
 registerPacks([pack]);
 const fateSys = () => systemOf('fate-core');
 const skillTitles = (lang: string) => pack.sections.find((x) => x.id === 'skills')!.fields.map((f) => loc(f.title, lang));
@@ -202,7 +202,7 @@ describe('углы аспектов и жетонов', () => {
 });
 
 describe('встроенный справочник Fate', () => {
-  const book = JSON.parse(readFileSync(new URL('../resources/compendium/fate-core.ru.json', import.meta.url), 'utf8')) as BuiltinBook;
+  const book = JSON.parse(readFileSync(new URL('../content/fate-core/compendium/fate-core.ru.json', import.meta.url), 'utf8')) as BuiltinBook;
 
   it('навыки — те же, что в пакете Fate; типы записей известны и привязаны к Fate или общие', () => {
     expect(book.system).toBe('fate-core');
@@ -216,7 +216,7 @@ describe('встроенный справочник Fate', () => {
   });
 
   it('английская книга: навыки из карточки, у каждой записи — русская пара', () => {
-    const en = JSON.parse(readFileSync(new URL('../resources/compendium/fate-core.en.json', import.meta.url), 'utf8')) as BuiltinBook;
+    const en = JSON.parse(readFileSync(new URL('../content/fate-core/compendium/fate-core.en.json', import.meta.url), 'utf8')) as BuiltinBook;
     expect(en.lang).toBe('en');
     expect(en.entries.filter((e) => e.type === 'skill').map((e) => e.title).sort()).toEqual(skillTitles('en').sort());
     expect(en.entries.length).toBe(book.entries.length);

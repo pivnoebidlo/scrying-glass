@@ -1,0 +1,11 @@
+{
+ "scryingGlass": "content",
+ "version": 1,
+ "id": "mausritter",
+ "title": "Mausritter",
+ "family": "mausritter",
+ "release": 1,
+ "cards": 22,
+ "books": 2,
+ "license": "This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence."
+}

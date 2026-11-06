@@ -26,7 +26,7 @@ import type { AccountCharacter, CardImporter, ImportedCard } from '../systems/im
 import { clipboardText, freeName, writeJsonAtomic } from './files';
 import { accountFetch, accountToken } from './accounts';
 import { discard } from './trash';
-import { builtinDirs, setContentLibrary } from './content';
+import { contentDirs, setContentLibrary } from './content';
 
 const cards = new Map<string, Card>();
 // Файл каждой своей карточки (ключ — refKey).
@@ -51,12 +51,11 @@ function inside(root: string | null, rel: string): string | null {
 
 const toRel = (root: string, abs: string) => path.relative(root, abs).split(path.sep).join('/');
 
-// Встроенный бестиарий: рядом с приложением (resources/srd/<система>.json) и в установленном содержимом систем
-// (<библиотека>/content/<id>/bestiary/, main/content.ts).
+// Built-in bestiary: the packages installed (<library>/content/<id>/bestiary/, main/content.ts).
 function loadBuiltin() {
   builtin.clear();
   for (const key of [...cards.keys()]) if (key.startsWith('srd:')) cards.delete(key);
-  for (const dir of builtinDirs('srd')) {
+  for (const dir of contentDirs('bestiary')) {
     let list: string[] = [];
     try {
       list = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));

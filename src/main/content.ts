@@ -1,25 +1,25 @@
-// Content of systems installed to the library (shared/content.ts): read, install from an .sgcontent file, remove.
-// The built-in cards (main/cards.ts) and books (main/compendium.ts) read the folders of what is installed besides
-// the app's own resources/.
-import { app } from 'electron';
+// Packages installed to the library (shared/content.ts): read, install from an .sgcontent file, remove. The system
+// packs (main/syspacks.ts), built-in cards (main/cards.ts) and books (main/compendium.ts) read their folders.
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { CONTENT_MANIFEST, contentFile, validContent, type ContentManifest } from '../shared/content';
+import { CONTENT_KINDS, CONTENT_MANIFEST, contentFile, validContent, type ContentKind, type ContentManifest } from '../shared/content';
 import { readZip } from './zip';
 import { t } from '../shared/i18n';
 
 let library: string | null = null;
 // The library changed (main/cards.ts setLibrary): its content is read from there.
 export const setContentLibrary = (root: string | null) => (library = root);
-const root = () => (library ? path.join(library, 'content') : null);
+const rootOf = (lib: string | null) => (lib ? path.join(lib, 'content') : null);
+const root = () => rootOf(library);
 
 export interface InstalledContent extends ContentManifest {
   dir: string;
 }
 
-export function installedContent(): InstalledContent[] {
-  const r = root();
+// `lib`: system packs are read before the library is set, the cards' lines need them.
+export function installedContent(lib = library): InstalledContent[] {
+  const r = rootOf(lib);
   if (!r) return [];
   let names: string[] = [];
   try {
@@ -37,11 +37,18 @@ export function installedContent(): InstalledContent[] {
   });
 }
 
-// Folders of built-in creatures or books: the app's own, then each installed content's.
-export function builtinDirs(kind: 'srd' | 'compendium'): string[] {
-  const own = path.join(app.getAppPath(), 'resources', kind);
-  return [own, ...installedContent().map((c) => path.join(c.dir, kind === 'srd' ? 'bestiary' : 'compendium'))];
-}
+// The folders of one kind of data, one per package installed.
+export const contentDirs = (kind: ContentKind, lib = library): string[] => installedContent(lib).map((c) => path.join(c.dir, kind));
+
+// The ids of the systems a package brings.
+export const contentSystems = (id: string): string[] => {
+  const c = installedContent().find((x) => x.id === id);
+  try {
+    return c ? fs.readdirSync(path.join(c.dir, 'system')).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5)) : [];
+  } catch {
+    return [];
+  }
+};
 
 // Install an .sgcontent file: unpack to a temporary folder, check, then replace the content of that id.
 export async function installContent(file: string): Promise<ContentManifest> {
@@ -57,7 +64,7 @@ export async function installContent(file: string): Promise<ContentManifest> {
     // Only the known files stay.
     const dest = path.join(r, `.ready-${m.id}`);
     fs.rmSync(dest, { recursive: true, force: true });
-    for (const kind of ['bestiary', 'compendium']) {
+    for (const kind of CONTENT_KINDS) {
       const dir = path.join(tmp, kind);
       if (!fs.existsSync(dir)) continue;
       for (const f of fs.readdirSync(dir)) {

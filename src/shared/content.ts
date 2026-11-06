@@ -1,11 +1,14 @@
-// Content of a system (.sgcontent): its built-in creatures and compendium books, downloaded from the repository and
-// kept in <library>/content/<id>/ — D&D's SRD and later Pathfinder's are not in the installer. Inside the ZIP:
-// content.json (the manifest below), bestiary/<system>.json (cards, as resources/srd/) and
-// compendium/<system>.<lang>.json (BuiltinBook, as resources/compendium/). Pure: the core and the scripts use it.
+// A package (.sgcontent): what one game brings, downloaded from the repository or a file and kept in
+// <library>/content/<id>/. Nothing of a game ships with the installer. Inside the ZIP: content.json (the manifest
+// below), system/<id>.json (SystemPack, none for a plugin's family), bestiary/<system>.json (Card[]) and
+// compendium/<system>.<lang>.json (BuiltinBook). An app that doesn't know a folder of the ZIP leaves it out, so a
+// package can grow without a new manifest version. Pure: the core and the scripts use it.
 // No imports: the build scripts run it as it is.
 
 export const CONTENT_MANIFEST = 'content.json';
 export const CONTENT_EXT = '.sgcontent';
+export const CONTENT_KINDS = ['system', 'bestiary', 'compendium'] as const;
+export type ContentKind = (typeof CONTENT_KINDS)[number];
 
 export interface ContentManifest {
   scryingGlass: 'content';
@@ -48,5 +51,5 @@ export function validContent(x: unknown): ContentManifest | null {
   };
 }
 
-// The files of the ZIP the app takes: bestiary/<name>.json and compendium/<name>.json, nothing deeper.
-export const contentFile = (name: string) => /^(bestiary|compendium)\/[A-Za-z0-9][A-Za-z0-9._-]{0,80}\.json$/.test(name);
+// The files of the ZIP the app takes: <kind>/<name>.json, nothing deeper.
+export const contentFile = (name: string) => /^(system|bestiary|compendium)\/[A-Za-z0-9][A-Za-z0-9._-]{0,80}\.json$/.test(name);

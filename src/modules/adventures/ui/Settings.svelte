@@ -147,9 +147,13 @@
     margin: 0 0 12px;
     font-size: 13px;
   }
+  .builder > .faint {
+    min-width: 0;
+  }
   .buttons {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    flex: none;
     gap: 6px;
   }
   .del {

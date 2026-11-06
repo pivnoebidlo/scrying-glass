@@ -1,4 +1,4 @@
-// Built-in Forged in the Dark compendium: resources/compendium/fitd.<lang>.json from scripts/fitd.<lang>.md.
+// The Forged in the Dark compendium: content/fitd/compendium/fitd.<lang>.json from scripts/fitd.<lang>.md.
 // Run: npm run build-fitd. Texts are edited in the .md files (format — scripts/book-md.ts).
 import { buildBook } from './book-md.ts';
 

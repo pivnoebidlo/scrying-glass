@@ -7,8 +7,8 @@ import { evalFormula, fieldMap, loc, packCombat, packSubtitle, rollPack, validat
 import { upgradeCard } from '../src/shared/oldcards';
 import type { Card } from '../src/shared/cards';
 
-// Forged in the Dark is a pack since 0.64 (samples/systems/fitd.json, published in the official repository).
-const pack = validatePack(JSON.parse(readFileSync(new URL('../samples/systems/fitd.json', import.meta.url), 'utf8'))) as SystemPack;
+// Forged in the Dark is a pack since 0.64 (content/fitd/system/fitd.json, published in the official repository).
+const pack = validatePack(JSON.parse(readFileSync(new URL('../content/fitd/system/fitd.json', import.meta.url), 'utf8'))) as SystemPack;
 const fields = fieldMap(pack);
 const ACTIONS = ['hunt', 'study', 'survey', 'tinker', 'finesse', 'prowl', 'skirmish', 'wreck', 'attune', 'command', 'consort', 'sway'];
 const ATTRIBUTES = ['insight', 'prowess', 'resolve'];
@@ -79,7 +79,7 @@ describe('Forged in the Dark: the pack', () => {
 });
 
 describe('Forged in the Dark: the built-in compendium', () => {
-  const read = (lang: string) => JSON.parse(readFileSync(new URL(`../resources/compendium/fitd.${lang}.json`, import.meta.url), 'utf8')) as BuiltinBook;
+  const read = (lang: string) => JSON.parse(readFileSync(new URL(`../content/fitd/compendium/fitd.${lang}.json`, import.meta.url), 'utf8')) as BuiltinBook;
   const ru = read('ru');
   const en = read('en');
   afterAll(() => setLang('en'));

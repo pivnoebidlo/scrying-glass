@@ -1,5 +1,5 @@
 // Covers of the sample system packs: SVG made here, drawn by Chromium inside Electron, saved as <id>.jpg next to the
-// packs (1200×900; the app makes a cover 640 px wide when publishing). Run: npx electron samples/systems/covers.cjs
+// samples, cover.jpg in content/<id>/ for the packages (1200×900; the app makes a cover 640 px wide when publishing). Run: npx electron samples/systems/covers.cjs
 const { app, BrowserWindow } = require('electron');
 const fs = require('fs');
 const path = require('path');
@@ -227,7 +227,8 @@ app.whenReady().then(async () => {
     await w.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`<html><body style='margin:0;background:#000'>${svg}</body></html>`));
     await new Promise((r) => setTimeout(r, 700));
     const img = await w.webContents.capturePage({ x: 0, y: 0, width: W, height: H });
-    fs.writeFileSync(path.join(__dirname, `${id}.jpg`), img.resize({ width: W, height: H }).toJPEG(88));
+    const pkg = path.join(__dirname, '../../content', id);
+    fs.writeFileSync(fs.existsSync(pkg) ? path.join(pkg, 'cover.jpg') : path.join(__dirname, `${id}.jpg`), img.resize({ width: W, height: H }).toJPEG(88));
     w.destroy();
   }
   app.quit();

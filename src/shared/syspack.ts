@@ -1,8 +1,8 @@
 // System packs: a role-playing system described by a file, not by code — the sections and fields of its cards, the
 // rolls on them, what the initiative tracker shows. The app draws the card, the editor, the rolls and the tracker
-// from it. Packs come from the Community or the builder into <library>/systems/ (resources/systems/ — built-in ones,
-// none yet; samples/systems/ — the samples published in the official repository). Only pure functions here:
-// the core, the windows and the tests use them.
+// from it. Packs come in a package (shared/content.ts, <library>/content/<id>/system/), or from the Community and the
+// builder into <library>/systems/; samples/systems/ — samples published in the official repository. Only pure
+// functions here: the core, the windows and the tests use them.
 //
 // A pack may come from a stranger (the Community): `validatePack` takes only what it knows, with sizes capped, and
 // formulas are a tiny language of their own (numbers, fields, + − × ÷, a few functions) — never code.
@@ -132,9 +132,15 @@ export interface TrackerSpec {
   conditions?: { list?: Loc[]; free?: boolean; valued?: Loc[] };
 }
 
+// The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
+// offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
+// older apps refuse any other, and they read a newer pack well enough.
+export const PACK_FORMAT = 1;
+
 export interface SystemPack {
   scryingGlass: 'system';
   version: 1;
+  format?: number;
   id: string;
   title: Loc;
   // Editions of one game share a family (none — the pack's own).
@@ -436,6 +442,11 @@ function fieldOf(x: unknown): FieldDef | null {
   return f;
 }
 
+// A pack ready to be written: stamped with the format of this app, or 'newer' when it was made by a newer one.
+export function forSaving(p: SystemPack): SystemPack | 'newer' {
+  return (p.format ?? 1) > PACK_FORMAT ? 'newer' : { ...p, format: PACK_FORMAT };
+}
+
 // The pack as the app will use it, or what is wrong with it.
 export function validatePack(x: unknown): SystemPack | string {
   if (!isObj(x) || x['scryingGlass'] !== 'system') return 'not-a-pack';
@@ -511,6 +522,7 @@ export function validatePack(x: unknown): SystemPack | string {
   return {
     scryingGlass: 'system',
     version: 1,
+    ...(Number.isInteger(x['format']) && (x['format'] as number) > 0 ? { format: x['format'] as number } : {}),
     id: x['id'],
     title,
     ...(typeof x['family'] === 'string' && ID_RE.test(x['family']) ? { family: x['family'] } : {}),

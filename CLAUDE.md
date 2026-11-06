@@ -84,7 +84,7 @@ Electron-приложение для мастера D&D: окно управле
   (setting) and `vault.lang` (resolved); section «General / Общие» in the settings window (`Settings.svelte`).
 - Migration plan: 1) foundation + shell (done); 2) modules, systems, main process (done); 3) built-in content in English (done: compendium
   SRD, random tables, Fate; the bestiary was bilingual already); 4) README in English + README.ru.md (done).
-- Built-in content by language: compendium books `resources/compendium/<system>.<lang>.json` and of installed content
+- Built-in content by language: compendium books of installed packages
   (`content/<id>/compendium/`; a window shows the
   interface language, else English; `en` / `ru` — the title in the other language, found by search and [[links]]),
   built-in sounds — the file name is the id, the title is `builtinSoundTitle` (`shared/sounds.ts`, keys `sounds.builtin.*`).
@@ -99,8 +99,8 @@ Electron-приложение для мастера D&D: окно управле
     npm run import-compendium # пересобрать справочник SRD D&D content/dnd5e-srd/compendium/ (нужен интернет)
     npm run import-pf2e # данные Pathfinder 2e: content/pf2e-core/ из данных pf2e для Foundry (только ORC; нужны git и интернет)
     npm run build-content # упаковать content/<id>/ → dist/content/<id>.sgcontent (скачиваемое содержимое систем)
-    npm run build-fate # встроенный справочник Fate: resources/compendium/fate-core.<lang>.json из scripts/fate-core.<lang>.md
-    npm run build-fitd # встроенный справочник FitD: resources/compendium/fitd.<lang>.json из scripts/fitd.<lang>.md
+    npm run build-fate # справочник Fate: content/fate-core/compendium/fate-core.<lang>.json из scripts/fate-core.<lang>.md
+    npm run build-fitd # справочник FitD: content/fitd/compendium/fitd.<lang>.json из scripts/fitd.<lang>.md
     npm run dist       # установщик для своей системы в dist/ (настройки — electron-builder.yml)
     npm run icon       # build/icon.png из build/icon.svg (рисует Electron: ImageMagick не умеет градиенты SVG)
 
@@ -171,19 +171,20 @@ Electron-приложение для мастера D&D: окно управле
   `origin` — перевод/вариант, портреты, заметки) + блок `stats`, который описывает система (`src/systems/<система>/`:
   типы, подписи на разных языках, статблок; реестры `systems/index.ts` и `systems/ui.ts`). Неизвестная система
   показывается как «поле — значение». Одна карточка — один язык, перевод — отдельная карточка с `origin`.
-- Данные систем — «содержимое» в коде (с 0.66; `shared/content.ts`, ядро — `main/content.ts`): `.sgcontent` — ZIP с `content.json`
-  (`ContentManifest`: id, family, release, cards, books, license), `bestiary/<система>.json`, `compendium/<система>.<lang>.json`;
-  ставится в `<библиотека>/content/<id>/` (`installContent`: во временную папку, проверка, только известные файлы),
-  встроенные карточки и книги читаются из `resources/` и отсюда (`builtinDirs`; при установке, удалении, смене библиотеки —
-  `contentChanged` в main/index.ts: `reloadBuiltin`, `resetBuiltinEntries`), список — `vault.content`. В «Сообществе» —
+- Пакет игры — «содержимое» в коде (с 0.66; `shared/content.ts`, ядро — `main/content.ts`): `.sgcontent` — ZIP с `content.json`
+  (`ContentManifest`: id, family, release, cards, books, license), `system/<id>.json` (`SystemPack`; у семейства плагина нет), `bestiary/<система>.json`, `compendium/<система>.<lang>.json`;
+  незнакомую папку ZIP старое приложение просто не берёт. Ставится в `<библиотека>/content/<id>/` (`installContent`: во временную папку, проверка, только известные файлы),
+  в установщике ничего игрового нет: системы, карточки и книги читаются только отсюда (`contentDirs`; при установке, удалении, смене библиотеки —
+  `contentChanged` в main/index.ts: `loadSystemPacks`, `reloadBuiltin`, `resetBuiltinEntries`), список — `vault.content`. Система из пакета — только чтение, своя копия мастера с тем же id
+  (`<библиотека>/systems/`) её заменяет; скачанная отдельно от официального автора уступает пакету (`supersedePacks`, файл — в корзину). Исходники пакетов — `content/<id>/` (`cover.jpg` — обложка для публикации, в пакет не идёт). В «Сообществе» —
   вид `content` (`system` — семейство; сервис 0.8.0, `features: ['content']`), IPC `repo:installContent` /
   `repo:publishContent`, `content:installFile` / `content:remove`, пометки — `settings.repo.content`. Окно: раздел
   каталога «Системы» (рядом с системами, «Данные системы»; не путать с бестиариями — свои карточки мастеров), строки в «Ролевых системах», подсказка `repo/ui/ContentHint.svelte` в «Карточках» и
   справочнике (`SystemPlugin.content` — официальное содержимое семейства, D&D — `dnd5e-srd`), `autoContent` — один раз
-  скачать недостающее официальное содержимое включённых плагинов (обновление с 0.65, первый запуск; localStorage
+  скачать недостающее официальное содержимое включённых систем (обновление с 0.65 и с 0.82, первый запуск; localStorage
   `sg.content.auto`). SRD D&D — `content/dnd5e-srd/` в репозитории (не в установщике), упаковка — `npm run build-content`,
   публикует официальный автор.
-- Где карточки: встроенные — `resources/srd/*.json` (Mausritter) и содержимое систем (SRD D&D: собирает
+- Где карточки: встроенные — в пакетах (Mausritter; SRD D&D: собирает
   `scripts/import-srd.ts` из 5e-bits/5e-database + русского перевода OmnisGM, оба под CC BY 4.0, авторство —
   `content/dnd5e-srd/README.md`; только чтение),
   библиотека `<userData>/library/cards/`, в хранилище — *.json в папках бестиария (роль `bestiary`: monsters / монстры /
@@ -334,8 +335,7 @@ Electron-приложение для мастера D&D: окно управле
   (и свои заклинания игроков — копии PHB с `playerId`; общие — только своей редакции, спрашиваем обе),
   `/spells/?edition=` — весь «Гримуар», `/auth/user/`. Русские названия LSS — официальный перевод, у SRD — OmnisGM («Огненные ладони» / «Огненные руки»):
   лист хранит названия LSS, ссылки ведут на запись по английскому — псевдонимы `setSpellIndex(names, aliases)` из
-  таблицы LSS (`systems/dnd5e/Background.svelte`, IPC `importers:table`, событие `importers:tableChanged`). LSS — `systems/dnd5e/importer.ts` поверх `lss.ts`. Встроенное
-  содержимое — `resources/` (потом — скачиваемым). Строки плагина — его словарь (`systems/dnd5e/i18n.ts`). Описание
+  таблицы LSS (`systems/dnd5e/Background.svelte`, IPC `importers:table`, событие `importers:tableChanged`). LSS — `systems/dnd5e/importer.ts` поверх `lss.ts`. Строки плагина — его словарь (`systems/dnd5e/i18n.ts`). Описание
   системы — `SystemDef.about`, у пакета — поле `about` (`Loc`; конструктор — «О системе»). С выключенным D&D его не видно нигде,
   кроме «Ролевых систем» (включить) и «О программе» (атрибуция): разделы настроек и инструменты других систем — только
   включённых.
@@ -370,10 +370,10 @@ Electron-приложение для мастера D&D: окно управле
   любые; встроенные книги — своего семейства, выбор редакции — `editionsHere`, когда у семейства несколько систем с
   книгами; типы — `typesHere`). Инструменты системы и `encounter` — только в её приключениях. Система уходит в .sgpack (`manifest.system`) и в корзину с
   приключением.
-  Встроенный справочник Fate — `resources/compendium/fate-core.<lang>.json` (`npm run build-fate` из
+  Справочник Fate — `content/fate-core/compendium/fate-core.<lang>.json` (`npm run build-fate` из
   `scripts/fate-core.<lang>.md`, тексты свои по Fate Core SRD, CC BY 3.0; тип `skill` — семейство fate); встроенные записи показываются по семейству
   системы приключения (`editionShown` в store справочника), выбор редакции — у семейства из нескольких систем с книгами.
-  Fate Core — пакет системы (`samples/systems/fate-core.json`, id `fate-core`, семейство `fate`; кода системы больше
+  Fate Core — пакет системы (`content/fate-core/system/fate-core.json`, id `fate-core`, семейство `fate`; кода системы больше
   нет): аспекты, 18 навыков числами (`hideZero`, бросок `fate` с `labels` — лестница), трюки, восстановление, дорожки
   стресса по формулам от Телосложения и Воли, последствия текстом (ячейки трекера — `Combatant.texts`); «Партия»
   модуля fate берёт `refresh` из полей карточки.
@@ -388,11 +388,10 @@ Electron-приложение для мастера D&D: окно управле
   щелчком, провальные и единицы заново, «5 = успех»), `rolls.tweak`), fate, sum, explode; у d20 — `degrees` ('two' / 'four':
   в журнале бросков поле «КС» и исход — `RollEntry.degrees` / `pack.dc`, `rolls.setDc`, `degreeOf`; Pathfinder — 'four');
   `tracker` — `init` roll / value / none, `hp`, `cells`, `conditions` (`valued` — состояния с числом; в конструкторе — « #» в
-  конце строки); `validatePack` берёт только известное — пакет может быть чужим;
+  конце строки); `validatePack` берёт только известное — пакет может быть чужим; `format` — версия формата (`PACK_FORMAT`, нет — 1): пакет помнит, под какую версию сохранён, `forSaving` ставит текущую и отказывается переписывать более новый (`version` остаётся 1 — иначе старые приложения его не прочтут);
   формулы — свой маленький язык `parseFormula` / `evalFormula`: числа, поля, `row.<колонка>`, + − × ÷, floor/ceil/round/
-  abs/min/max). Статы карточки — плоский объект по ключам полей. Встроенных пакетов сейчас нет (`resources/systems/` читается,
-  если появится); пробные — `samples/systems/` (в приложение не входят, публикуются в официальном репозитории; тест
-  сверяет формулы с полями), свои и скачанные — `<библиотека>/systems/` (удалить — «Настройки» → «Ролевые системы»); читает ядро `main/syspacks.ts` (`loadSystemPacks`,
+  abs/min/max). Статы карточки — плоский объект по ключам полей. Системы приходят пакетами (см. «Пакет игры»); пробные — `samples/systems/` (в приложение не входят, публикуются в официальном репозитории; тест
+  сверяет формулы с полями у них и у `content/*/system/`), свои и скачанные отдельным файлом — `<библиотека>/systems/` (удалить — «Настройки» → «Ролевые системы»); читает ядро `main/syspacks.ts` (`loadSystemPacks`,
   при смене библиотеки — `useLibrary`), отдаёт в `vault.systems`; регистрирует `systems/packs.ts` (`registerPacks`:
   `SystemDef` и семейство в `systems` / `FAMILIES`, `packOf`, `isPackFamily`, `packTracker`) — ядро и окна
   (`store.svelte.ts`, до `setSystemsOff`). Вид — `systems/pack/Sheet.svelte`, редактор — `pack/Editor.svelte` (`kind` из
@@ -435,16 +434,16 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   (id и семейство `nineties`, только по-русски): пулы к6 до 15 кубов, дебафы — поля `track` на 1 клетку, вычитаются в формуле
   пула вместе со штрафом за два дебафа группы, справочник — правила, 84 карточки умений, субкультуры, предметы, 30 локаций;
   тексты переписаны со страниц PDF (текст в нём кривыми), сборщика в репозитории нет — правка в конструкторе или в JSON.
-- Mausritter — пакет системы (`samples/systems/mausritter.json`, id и семейство `mausritter`; кода системы больше нет;
+- Mausritter — пакет системы (`content/mausritter/system/mausritter.json`, id и семейство `mausritter`; кода системы больше нет;
   SRD 2.3.1, CC BY 4.0 — атрибуция дословно в `about.credit.mausritter`): hp, str/dex/wil (бросок `under` к20 с
   преимуществом и помехой), armour, warband, attacks (строки name/dice, бросок `sum` с `dice: 'row.dice'`), critical,
   abilities, wants; у мыши (`kinds: character`) — level, xp, pips, прошлое и прочее, inventory (поле `slots`: лапы 2,
   тело 2, рюкзак 6), grit. Трекер — без инициативы, hp и ячейки str/dex/wil (`attrs`): урон сверх защиты уходит в
   `str` (`changeHp`), выбыл при СИЛ 0 (`down`).
   Встроенное: `npm run build-mausritter` (`scripts/build-mausritter.ts` из `scripts/mausritter-srd.<lang>.md` — SRD
-  2.3.1 целиком, CC BY 4.0, и наш перевод) → `resources/srd/mausritter.json` (поля пакета — `toPack` в скрипте; 11 существ × 2 языка, русские —
+  2.3.1 целиком, CC BY 4.0, и наш перевод) → `content/mausritter/bestiary/mausritter.json` (поля пакета — `toPack` в скрипте; 11 существ × 2 языка, русские —
   `<id>.ru` с `origin`, числа и кубы — из английского статблока; таблицы вариантов — в `description` жирными
-  строками: заголовков разметка карточек не знает) и `resources/compendium/mausritter.<lang>.json` (главы →
+  строками: заголовков разметка карточек не знает) и `content/mausritter/compendium/mausritter.<lang>.json` (главы →
   `category`, разделы `##` → записи, у главы — запись-оглавление; заклинания — тип `mspell` с `recharge`; «Terms of
   use» не копируется). Русский файл повторяет заголовки оригинала один в один: пары записей — по порядку (`en` / `ru`),
   скрипт сверяет число записей и существ. Глоссарий перевода: защита (ЗЩ), СИЛ/ЛОВ/ВОЛ, пипсы (п), ход / раунд /
@@ -457,7 +456,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   `add` / `update` / `tick` / `remove` / `reorder`. Блок правой панели `ui/OnScreen.svelte` (щелчок — вперёд, правый —
   назад), слой игроков `ui/Layer.svelte` (order 33), круг — `ui/ClockFace.svelte` + `draw.ts`. В .sgpack —
   `PackSlices.clocks`, в корзину — `AdventureData.clocks`.
-- Forged in the Dark — пакет системы с 0.64 (`samples/systems/fitd.json`, id и семейство `fitd`; SRD Blades in the Dark,
+- Forged in the Dark — пакет системы с 0.64 (`content/fitd/system/fitd.json`, id и семейство `fitd`; SRD Blades in the Dark,
   CC BY 3.0 — атрибуция дословно в `about.credit.fitd`; нельзя: «Blades in the Dark» в названии, их логотип, мир Даскволла
   и всё вне SRD; кода системы больше нет — собирает пакет скрипт в истории, правка — в конструкторе или JSON): роль,
   происхождение, прошлое, порок, `tier`; 12 действий `dots` (max 4, бросок `pool` с `best`), атрибуты — `formula`
@@ -469,7 +468,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   `rollPool` / `poolOutcome` в `shared/dice.ts` остался для банды (неприятности). Свои русские термины (официальный
   перевод закрыт): Проницательность / Удаль / Решимость; Выслеживать, Изучать, Осматривать, Мастерить; Ловкость,
   Красться, Драться, Крушить; Чуять, Командовать, Знаться, Убеждать.
-  Справочник — `resources/compendium/fitd.<lang>.json` (`npm run build-fitd` из `scripts/fitd.<lang>.md`, общий разбор
+  Справочник — `content/fitd/compendium/fitd.<lang>.json` (`npm run build-fitd` из `scripts/fitd.<lang>.md`, общий разбор
   с Fate — `scripts/book-md.ts`; пересказ SRD без мира Blades; тип `fability` — особые способности, `category`
   персонаж / банда; названия действий, атрибутов и травм — как в карточке, тест сверяет). Свои русские термины: дело,
   банда, жар, розыск, хватка, ноша, передышка, неприятности (entanglements), подручные, владения, бросок завязки.
@@ -779,7 +778,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   Вид записи — `renderer/lib/entry/EntryCard.svelte` (у игроков — `players`, шрифт уменьшается до помещения),
   разметка — `entry/markup.ts`. Игрокам — через раздатку: `handouts/toggleEntry` кладёт запись целиком в
   `handouts.entry` (запись может лежать в библиотеке), `updateEntry` — после правки, `move` — после переименования.
-  Встроенные записи — `resources/compendium/<система>.<lang>.json` и книги содержимого систем (SRD 5.1 / 5.2.1 —
+  Встроенные записи — книги пакетов (SRD 5.1 / 5.2.1 —
   `content/dnd5e-srd/compendium/`: английский оригинал и перевод OmnisGM, собирает `scripts/import-compendium.ts` из Markdown OmnisGM-Rules; статблоки существ внутри предметов остаются в тексте
   предмета). Ядро отдаёт их целиком (`compendium:builtin`), окно держит только книги включённых систем (`loadBuiltin`, ключ — с `systemsOff`), пути «srd:<система>/<тип>/<название>». Сами файлы
   не меняются: «Править» сохраняет правку — запись библиотеки с полем `overrides: <система>/<тип>/<название>`

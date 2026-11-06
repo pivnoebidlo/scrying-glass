@@ -210,15 +210,15 @@ SRD D&D (его существа и справочник, около 1 МБ) н�
 призывы и принуждения, жетоны судьбы, конфликт, стресс, последствия, состязания, трюки, вехи, NPC) и все 18 навыков
 с примерами трюков — пересказ Fate Core SRD на русском и английском, сделанный для приложения (Evil Hat Productions,
 CC BY 3.0). Тексты лежат в `scripts/fate-core.<язык>.md`, `npm run build-fate` собирает из них
-`resources/compendium/fate-core.<язык>.json`.
+`content/fate-core/compendium/fate-core.<язык>.json`.
 
 В приключениях **Mausritter** встроен Mausritter SRD 2.3.1 на английском и русском (русский текст — перевод,
 сделанный для приложения): правила по главам (создание мыши,
 инвентарь, спасброски, бой, магия, наёмники и отряды, снаряжение и цены, советы мастеру, наборы для гексов и мест
 приключений, полезные таблицы), 15 заклинаний с перезарядкой и 11 существ карточками (кошка, сороконожка, ворона, фея,
 лягушка, призрак, мышь, сова, крыса, змея, паук — с таблицами вариантов). Тексты — в
-`scripts/mausritter-srd.<язык>.md`, `npm run build-mausritter` собирает из них `resources/srd/mausritter.json` и
-`resources/compendium/mausritter.<язык>.json`. This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
+`scripts/mausritter-srd.<язык>.md`, `npm run build-mausritter` собирает из них `content/mausritter/bestiary/mausritter.json` и
+`content/mausritter/compendium/mausritter.<язык>.json`. This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.
 
 В приключениях **Forged in the Dark** встроены правила FitD (пул кубов, двенадцать действий и три атрибута, бросок
 действия с позицией и эффектом, сделка с дьяволом, последствия, вред, сопротивление и броня, стресс, травмы и порок,
@@ -226,7 +226,7 @@ CC BY 3.0). Тексты лежат в `scripts/fate-core.<язык>.md`, `npm r
 неприятности и занятия, ритуалы, ремесло, банда — уровень, хватка, репутация и территория, отношения фракций,
 владения, улучшения, подручные) и 58 примеров особых способностей негодяев и банд — пересказ SRD Blades in the Dark на
 русском и английском, сделанный для приложения, без мира оригинальной игры. Тексты — в `scripts/fitd.<язык>.md`,
-`npm run build-fitd` собирает из них `resources/compendium/fitd.<язык>.json`. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
+`npm run build-fitd` собирает из них `content/fitd/compendium/fitd.<язык>.json`. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
 
 **Pathfinder 2e** (ремастер) — система приложения, выключена, пока вы не включите её в «Настройки» → «Ролевые
 системы»; тогда скачиваются её данные (около 0,5 МБ, только на английском — открытого русского перевода нет): 492
@@ -905,8 +905,8 @@ TypeScript + Svelte 5 + Electron, сборка через electron-vite. Инт�
 - src/systems/<система>/: ролевые системы в коде, подключаемые (D&D 5e): характеристики, статблок, редактор, трекер, свои
   инструменты, типы записей справочника, импорт (Long Story Short), свои тексты; ядро спрашивает у них, что они добавляют
   (systems/plugin.ts, systems/ui.ts), и ни одной системы по имени не знает; новая — папка и строка в systems/plugins.ts
-  и systems/ui.ts. src/systems/pack/ — системы, описанные файлом (Fate Core, Mausritter, Forged in the Dark: samples/systems/)
-- resources/srd/, resources/compendium/: бестиарий и справочник, которые входят в приложение (Mausritter, Fate, Forged in the Dark)
+  и systems/ui.ts. src/systems/pack/ — системы, описанные файлом (Fate Core, Mausritter, Forged in the Dark: content/<id>/system/)
+- content/<id>/: пакеты игр (.sgcontent): система, существа и книги справочника, скачиваются из «Сообщества» (`npm run build-content`)
 - content/<id>/: скачиваемое содержимое систем (SRD D&D — content/dnd5e-srd/, собирают scripts/import-srd.ts и
   import-compendium.ts), упаковывает scripts/build-content.ts, публикуется в «Сообществе»
 - src/modules/index.ts: список модулей ядра, новый модуль вписывается сюда;

@@ -5,7 +5,6 @@ import { t } from '../../../renderer/lib/i18n.svelte';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import { isEnabled, systems } from '../../../systems';
 import type { CardRef } from '../../../shared/cards';
-import { PLUGINS } from '../../../systems/plugins';
 import { OFFICIAL_AUTHOR, OFFICIAL_SOURCE, sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type BlockedEntry, type Report, type ReportedEntry, type ReportReason, type SourceInfo } from '../../../shared/repo';
 
 // An entry of a catalog with the source it is in.
@@ -273,8 +272,9 @@ export async function checkUpdates() {
   repo.updates = updatesHere().filter((u) => !told.has(stamp(u)));
 }
 
-// Families of the system plugins turned on that have no content installed: their official content is downloaded
-// once (until 0.65 D&D's SRD came with the installer — an update must not lose it; a first launch gets it too).
+// Families of the systems turned on that have no content installed: their official content is downloaded once
+// (D&D's SRD until 0.65, the books of Fate, FitD and Mausritter until 0.83 came with the installer — an update must
+// not lose them; a first launch gets them too). A family with nothing official is simply left.
 // Removed by the GM later — not downloaded again. Offline — tried on the next launch.
 const AUTO_CONTENT = 'sg.content.auto';
 export async function autoContent() {
@@ -284,7 +284,7 @@ export async function autoContent() {
   } catch {
     // A convenience only.
   }
-  const families = [...new Set(PLUGINS.flatMap((p) => p.systems).filter((s) => isEnabled(s.id)).map((s) => s.family))].filter(
+  const families = [...new Set(systems.filter((s) => isEnabled(s.id)).map((s) => s.family))].filter(
     (f) => !done.includes(f) && !store.state.vault.content.some((c) => c.family === f),
   );
   if (!families.length) return;

@@ -31,7 +31,7 @@ import { createNote, readNote, renameNote, writeNote } from './notes';
 import { createSketch, readSketch, renameSketch, writeSketch } from './sketches';
 import type { Sketch } from '../shared/sketch';
 import { builtinEntries, entries, resetBuiltinEntries, watchLibraryCompendium } from './compendium';
-import { installContent, installedContent, removeContent } from './content';
+import { contentSystems, installContent, installedContent, removeContent } from './content';
 import { CONTENT_EXT, CONTENT_MANIFEST, validContent } from '../shared/content';
 import { pages } from './journal';
 import { resolver } from './textstore';
@@ -52,7 +52,7 @@ import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
 import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, coverFromBytes, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, loadKeyWords, recoveryWords, wordsAuthor, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setContentMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
-import { ID_RE, type BestiaryMark, type RepoEntry, type RepoProgress } from '../shared/repo';
+import { ID_RE, OFFICIAL_AUTHOR, type BestiaryMark, type RepoEntry, type RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, recreateControlWindow, TITLE_HEIGHT, watchDisplays,
@@ -433,6 +433,8 @@ function useLibrary(dir: string) {
 
 // Content of systems installed, removed or read from another library: the built-in cards and books again.
 function contentChanged() {
+  // Systems first: the cards' lines are made by them.
+  loadSystemPacks(libraryPath());
   reloadBuiltin();
   resetBuiltinEntries();
   for (const w of BrowserWindow.getAllWindows()) w.webContents.send('compendium:changed');
@@ -1480,12 +1482,25 @@ ipcMain.handle('repo:installBestiary', async (_event, { source, entry }: { sourc
   }
 });
 // Content of systems (shared/content.ts): from a file, from the Community, removed; published by its author.
+// A system downloaded by itself from the official author gives way to the package that brings it now: as the GM's
+// own copy it would hide every later version of the package. It goes to the trash, in case it was edited.
+function supersedePacks(content: string) {
+  const lib = libraryPath();
+  if (!lib) return;
+  for (const id of contentSystems(content)) {
+    const rel = ownPackFile(lib, id);
+    if (!rel || repoInfo().systems.installed[id]?.author !== OFFICIAL_AUTHOR) continue;
+    discard(lib, [rel], { title: id, kind: 'file' });
+    setSystemMark('installed', id, null);
+  }
+}
 ipcMain.handle('content:installFile', async () => {
   const win = getControlWindow();
   const opts = { properties: ['openFile' as const], filters: [{ name: t('core.contentFilter'), extensions: [CONTENT_EXT.slice(1)] }] };
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
   if (res.canceled || !res.filePaths[0]) return null;
   const m = await installContent(res.filePaths[0]);
+  supersedePacks(m.id);
   contentChanged();
   return m;
 });
@@ -1500,6 +1515,7 @@ ipcMain.handle('repo:installContent', async (_event, { source, entry }: { source
   try {
     const m = await installContent(file);
     setContentMark('installed', m.id, { source, author: entry.author, id: entry.id, version: entry.version });
+    supersedePacks(m.id);
     contentChanged();
     return m;
   } finally {

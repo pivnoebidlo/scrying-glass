@@ -12,8 +12,8 @@ import { registerPacks } from '../src/systems/packs';
 import { die } from '../src/shared/dice';
 import { run } from './helpers';
 
-// Mausritter is a system pack now (samples/systems/mausritter.json, published in the Community).
-const pack = validatePack(JSON.parse(readFileSync('samples/systems/mausritter.json', 'utf8'))) as SystemPack;
+// Mausritter is a system pack now (content/mausritter/system/mausritter.json, published in the Community).
+const pack = validatePack(JSON.parse(readFileSync('content/mausritter/system/mausritter.json', 'utf8'))) as SystemPack;
 registerPacks([pack]);
 const sys = () => systemOf('mausritter');
 
@@ -22,7 +22,7 @@ const act = (s: InitiativeState, a: string, p?: unknown) => run(initiative, s, a
 const only = (s: InitiativeState) => s.combatants[0]!;
 
 type Stats = Record<string, unknown> & { attacks: { name: string; dice: string }[] };
-const all = JSON.parse(readFileSync('resources/srd/mausritter.json', 'utf8')) as { id: string; name: string; lang: string; system: string; stats: Stats; origin?: { id: string } }[];
+const all = JSON.parse(readFileSync('content/mausritter/bestiary/mausritter.json', 'utf8')) as { id: string; name: string; lang: string; system: string; stats: Stats; origin?: { id: string } }[];
 const CROW = all.find((c) => c.id === 'maus-crow')!.stats;
 
 describe('Mausritter: card', () => {
@@ -119,8 +119,8 @@ describe('Mausritter: tracker', () => {
 
 describe('Mausritter: built-in content', () => {
   const cards = all.filter((c) => c.lang === 'en');
-  const book = JSON.parse(readFileSync('resources/compendium/mausritter.en.json', 'utf8')) as BuiltinBook;
-  const ruBook = JSON.parse(readFileSync('resources/compendium/mausritter.ru.json', 'utf8')) as BuiltinBook;
+  const book = JSON.parse(readFileSync('content/mausritter/compendium/mausritter.en.json', 'utf8')) as BuiltinBook;
+  const ruBook = JSON.parse(readFileSync('content/mausritter/compendium/mausritter.ru.json', 'utf8')) as BuiltinBook;
 
   it('the Russian translation: a card for each creature with the same numbers, a paired entry for each entry', () => {
     const ru = all.filter((c) => c.lang === 'ru');

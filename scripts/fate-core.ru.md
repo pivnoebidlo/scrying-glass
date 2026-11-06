@@ -1,5 +1,5 @@
 <!--
-Встроенный справочник Fate Core: источник для resources/compendium/fate-core.ru.json (npm run build-fate).
+Встроенный справочник Fate Core: источник для content/fate-core/compendium/fate-core.ru.json (npm run build-fate).
 Запись начинается строкой «@@ Русское название (English)», дальше поля «ключ: значение» до пустой строки, потом
 текст (Markdown справочника, [[ссылки]] — по русским названиям). Текст — пересказ и перевод Fate Core SRD
 (Evil Hat Productions, CC BY 3.0), написан для приложения; подписи лестницы и навыков — как в карточке Fate.
