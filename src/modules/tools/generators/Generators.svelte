@@ -22,8 +22,9 @@
   const all = $derived(filesOf(family).flatMap((file) => file.generators.map((g) => ({ file, g }))));
   const lists = $derived(filesOf(family).flatMap((file) => (file.lists ?? []).map((l) => ({ file, l }))));
   const calcs = $derived(filesOf(family).flatMap((file) => (file.calculators ?? []).map((c) => ({ file, c }))));
-  const list = $derived(lists.find((x) => x.l.id === gen.open[family]));
-  const calculator = $derived(calcs.find((x) => x.c.id === gen.open[family]));
+  // Nothing chosen yet: the first there is, a generator, a price list or a calculator.
+  const list = $derived(lists.find((x) => x.l.id === gen.open[family]) ?? (all.length ? undefined : lists[0]));
+  const calculator = $derived(calcs.find((x) => x.c.id === gen.open[family]) ?? (all.length || lists.length ? undefined : calcs[0]));
   const now = $derived(list || calculator ? undefined : (all.find((x) => x.g.id === gen.open[family]) ?? all[0]));
   const file = $derived(now?.file ?? list?.file ?? calculator?.file ?? filesOf(family)[0]);
   const opts = $derived(now ? optionsOf(now.file, now.g) : ({} as GenOptions));
