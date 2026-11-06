@@ -189,6 +189,10 @@ export interface PackEntryType {
 
 export interface PackEntry {
   title: Loc;
+  // A kind of `entryTypes`; none — a rule.
+  type?: string;
+  // Its values, by the field's key.
+  fields?: Record<string, Loc>;
   // A heading to group entries by («Conditions», «Gear»).
   category?: Loc;
   text: Loc;
@@ -546,7 +550,14 @@ export function validatePack(x: unknown): SystemPack | string {
         const title = locOf(e['title']);
         const text = locOf(e['text'], LIMIT.entry) ?? '';
         const category = locOf(e['category']);
-        return title ? [{ title, text, ...(category ? { category } : {}) }] : [];
+        const type = typeof e['type'] === 'string' && USE_RE.test(e['type']) ? e['type'] : undefined;
+        const fields = isObj(e['fields'])
+          ? Object.fromEntries(Object.entries(e['fields']).flatMap(([k, v]) => {
+              const value = KEY_RE.test(k) ? locOf(v) : null;
+              return value === null ? [] : [[k, value] as const];
+            }))
+          : {};
+        return title ? [{ title, text, ...(type ? { type } : {}), ...(Object.keys(fields).length ? { fields } : {}), ...(category ? { category } : {}) }] : [];
       })
     : [];
   const live = new Set(sections.flatMap((s) => s.fields).filter((f) => f.live).map((f) => f.key));

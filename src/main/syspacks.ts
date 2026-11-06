@@ -76,8 +76,11 @@ export function packBooks(): BuiltinBook[] {
         source: { title: loc(p.title, lang), attribution: p.license ?? '', url: p.url ?? '', license: '' },
         entries: p.compendium!.map((e) => ({
           title: loc(e.title, lang),
-          type: 'rule',
-          fields: (e.category ? { category: loc(e.category, lang) } : {}) as Record<string, string>,
+          type: e.type ?? 'rule',
+          fields: {
+            ...Object.fromEntries(Object.entries(e.fields ?? {}).map(([k, v]) => [k, loc(v, lang)])),
+            ...(e.category ? { category: loc(e.category, lang) } : {}),
+          } as Record<string, string>,
           body: loc(e.text, lang),
         })),
       })),

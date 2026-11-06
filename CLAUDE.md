@@ -411,7 +411,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
 Справочник пакета — `compendium` (`PackEntry`: title, category, text): ядро отдаёт его встроенными книгами
 (`packBooks`, тип `rule` с `category`, по языкам `packLangs`), `reloadSystems` шлёт `compendium:changed`; состояние в
 трекере с записью того же названия открывает её (`conditions.entry`); в конструкторе — `CompendiumPanel` (на всю ширину, без дерева: группы по `category`, поиск, `MarkdownToolbar`, «Как увидит
-мастер» — `entryHtml`; импорт .md — `entriesFromMarkdown` в `shared/syspack.ts`: «#» — группа, «##» — запись). В «Сообществе»:
+мастер» — `entryHtml`; «Виды записей» — `EntryTypesPanel.svelte` (`SystemPack.entryTypes`, id с приставкой id пакета), у записи — `PackEntry.type` и `fields`, `packBooks` кладёт их в книгу; импорт .md — `entriesFromMarkdown` в `shared/syspack.ts`: «#» — группа, «##» — запись). В «Сообществе»:
 запись `kind: 'system'` (`system` — id пакета), сервис отдаёт системы только по `?kinds=all` (`features: ['systems']`;
 старые приложения их не видят); публикация — IPC `repo:publishSystem` (окно `SystemPublishDialog.svelte` — только
 репозитории с `features` 'systems'), установка — `repo:installSystem` (`savePack`, чужая поверх своей — с вопросом);

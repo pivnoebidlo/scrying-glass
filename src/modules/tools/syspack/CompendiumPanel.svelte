@@ -5,13 +5,14 @@
      the buttons of the journal, or as the GM will see it. -->
 <script lang="ts">
   import Lead from '../../../renderer/lib/Lead.svelte';
-  import { ChevronDown, ChevronRight, Eye, FileUp, Pencil, Plus, Trash2 } from '@lucide/svelte';
+  import { ChevronDown, ChevronRight, Eye, FileUp, Pencil, Plus, Shapes, Trash2 } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { getLang } from '../../../shared/i18n';
   import { entriesFromMarkdown, loc, type Loc, type PackEntry, type SystemPack } from '../../../shared/syspack';
   import { entryHtml } from '../../../renderer/lib/entry/markup';
   import { markdownKeys } from '../../../renderer/lib/markdownKeys';
   import MarkdownToolbar from '../../../renderer/lib/MarkdownToolbar.svelte';
+  import EntryTypesPanel from './EntryTypesPanel.svelte';
   import LocInput from './LocInput.svelte';
 
   let { pack = $bindable(), disabled = false }: { pack: SystemPack; disabled?: boolean } = $props();
@@ -24,6 +25,22 @@
   let query = $state('');
   let closed = $state(new Set<string>());
   let reading = $state(false);
+  // The kinds of entries in place of an entry.
+  let kinds = $state(false);
+  const kindOf = $derived(pack.entryTypes?.find((x) => x.id === cur?.type));
+  function setKind(id: string) {
+    if (!cur) return;
+    if (id) cur.type = id;
+    else delete cur.type;
+    delete cur.fields;
+  }
+  function setField(key: string, v: string) {
+    if (!cur) return;
+    cur.fields ??= {};
+    if (v) cur.fields[key] = v;
+    else delete cur.fields[key];
+    if (!Object.keys(cur.fields).length) delete cur.fields;
+  }
   let area = $state<HTMLTextAreaElement>();
 
   // The entries by group, in the order the groups first come; a search keeps the matching ones (title or text).
@@ -95,6 +112,7 @@
         <input bind:this={input} type="file" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden onchange={(e) => read(e.currentTarget.files?.[0])} />
       </div>
     {/if}
+    <button class="btn small" class:on={kinds} onclick={() => (kinds = !kinds)}><Shapes size={13} /> {t('sb.types')} <span class="n">{pack.entryTypes?.length ?? 0}</span></button>
     <div class="groups">
       {#each groups as g (g.name)}
         {@const open = !!query.trim() || !closed.has(g.name)}
@@ -104,7 +122,7 @@
         </button>
         {#if open}
           {#each g.items as { e, i } (i)}
-            <button class="item" class:on={i === sel} onclick={() => (sel = i)}>{L(e.title) || '—'}</button>
+            <button class="item" class:on={i === sel && !kinds} onclick={() => ((sel = i), (kinds = false))}>{L(e.title) || '—'}</button>
           {/each}
         {/if}
       {:else}
@@ -114,7 +132,9 @@
   </div>
 
   <div class="edit">
-    {#if incoming}
+    {#if kinds}
+      <EntryTypesPanel {pack} {disabled} />
+    {:else if incoming}
       <div class="import">
         <b>{t('sb.importTitle', { file: incoming.file })}</b>
         {#if incoming.entries.length}
@@ -149,6 +169,23 @@
         </label>
         {#if !disabled}<button class="icon-btn del" title={t('sb.remove')} onclick={() => remove(sel)}><Trash2 size={14} /></button>{/if}
       </div>
+      {#if pack.entryTypes?.length}
+        <div class="titles">
+          <label class="row grow">
+            <span>{t('sb.typeName')}</span>
+            <select {disabled} value={cur.type ?? ''} onchange={(e) => setKind(e.currentTarget.value)}>
+              <option value="">{t('cmp.type.rule')}</option>
+              {#each pack.entryTypes as x (x.id)}<option value={x.id}>{L(x.title)}</option>{/each}
+            </select>
+          </label>
+          {#each kindOf?.fields ?? [] as f (f.key)}
+            <label class="row grow">
+              <span>{L(f.title)}</span>
+              <input type={f.kind === 'number' ? 'number' : 'text'} {disabled} value={L(cur.fields?.[f.key])} oninput={(e) => setField(f.key, e.currentTarget.value)} />
+            </label>
+          {/each}
+        </div>
+      {/if}
       <div class="bar">
         {#if !reading && !disabled}<MarkdownToolbar {area} />{/if}
         <button class="btn small mode" onclick={() => (reading = !reading)}>

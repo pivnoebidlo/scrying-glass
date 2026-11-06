@@ -9,7 +9,7 @@ import { forSaving, PACK_FORMAT, validatePack, type SystemPack } from '../src/sh
 vi.mock('electron', () => ({ app: { getAppPath: () => process.cwd(), getPath: () => os.tmpdir() }, BrowserWindow: { getAllWindows: () => [] } }));
 
 const { contentDirs, contentSystems, installContent, installedContent, removeContent, setContentLibrary } = await import('../src/main/content');
-const { loadSystemPacks, savePack, systemPacks } = await import('../src/main/syspacks');
+const { loadSystemPacks, packBooks, savePack, systemPacks } = await import('../src/main/syspacks');
 
 const lib = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-content-'));
 afterAll(() => fs.rmSync(lib, { recursive: true, force: true }));
@@ -64,6 +64,26 @@ describe('a package brings a system', () => {
     expect(contentFile('system/a.json')).toBe(true);
     expect(contentFile('system/deep/a.json')).toBe(false);
     expect(contentFile('other/a.json')).toBe(false);
+  });
+});
+
+describe('kinds of entries of a pack', () => {
+  it('reach the book with their fields, a rule stays a rule', () => {
+    const p = {
+      ...pack('Kinds'),
+      entryTypes: [{ id: 'super-rp-move', title: { en: 'Move', ru: 'Ход' }, plural: 'Moves', fields: [{ key: 'trigger', title: 'Trigger', kind: 'text' }] }],
+      compendium: [
+        { title: 'Aid', text: 'Help.', type: 'super-rp-move', fields: { trigger: 'When you help', 'BAD KEY': 'x' }, category: 'Basic' },
+        { title: 'Rest', text: 'Sleep.' },
+      ],
+    };
+    savePack(lib, p);
+    loadSystemPacks(lib);
+    const [e, rule] = packBooks()[0]!.entries;
+    expect(e).toMatchObject({ title: 'Aid', type: 'super-rp-move', fields: { trigger: 'When you help', category: 'Basic' } });
+    expect(e!.fields).not.toHaveProperty('BAD KEY');
+    expect(rule).toMatchObject({ title: 'Rest', type: 'rule', fields: {} });
+    fs.rmSync(path.join(lib, 'systems/super-rp.json'));
   });
 });
 
