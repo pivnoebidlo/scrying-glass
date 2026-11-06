@@ -67,6 +67,8 @@ export interface SystemUi {
   cardActions?(summary: CardSummary, card: Card | null): CardAction[];
   newCard?: NewCard[];
   paper?(card: Card): PaperView | undefined;
+  // Another look at a card, to compare: a button above it.
+  trial?: Component<{ card: Card }>;
   // Above a fight and an encounter: what the system says about it (D&D: how hard it is).
   encounter?: Component<{ list: Combatant[] }>;
   // The compendium's list by type of entries (D&D: spells).

@@ -74,6 +74,8 @@
   const summary = $derived(bestiary.all.find((c) => sameRef(c.ref, ref)));
   const versions = $derived(ref ? bestiary.versionsOf(ref) : []);
   const Stats = $derived(card ? statsView(card.system, card.stats) : null);
+  const Trial = $derived(card ? systemUi(card.system)?.trial : undefined);
+  let trying = $state(false);
   // The buttons the card's system adds, and its paper sheet for Telegram.
   const actions = $derived(summary ? (systemUi(summary.system)?.cardActions?.(summary, card) ?? []) : []);
   const paper = $derived(summary && card ? systemUi(summary.system)?.paper?.(card) : undefined);
@@ -150,6 +152,7 @@
         <h1>{card.name}</h1>
         <div class="info faint">{info}</div>
         <div class="manage">
+          {#if Trial}<button class="btn" title={t('best.trialHint')} onclick={() => (trying = !trying)}>{t(trying ? 'best.trialOff' : 'best.trial')}</button>{/if}
           {#if cref.scope === 'srd'}
             <button class="btn" title={t('best.editSrdHint')} onclick={() => bestiary.edit(cref)}
               ><Pencil size={13} /> {t('best.edit')}</button
@@ -278,7 +281,7 @@
       <div class="description">{@html markdown(card.description)}</div>
     {/if}
 
-    <Stats {card} />
+    {#if trying && Trial}<Trial {card} />{:else}<Stats {card} />{/if}
 
     {#if card.notes}
       <h3>{t('best.notes')}</h3>

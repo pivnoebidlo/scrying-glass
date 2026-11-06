@@ -134,6 +134,8 @@ export interface FieldDef {
   chips?: boolean;
   // textarea: names of the compendium in it become links: 'em' — in italics, 'text' — anywhere.
   links?: LinkKind;
+  // Not on the card, only in its editor.
+  hidden?: boolean;
   // number: left empty, it counts by this formula (a typed value wins).
   auto?: string;
   // A roll by a click on the field (on a row of a list).
@@ -541,6 +543,7 @@ function fieldOf(x: unknown): FieldDef | null {
   if (x['bare'] === true) f.bare = true;
   if (x['chips'] === true && type === 'tags') f.chips = true;
   if (x['rowLines'] === true && type === 'list') f.rowLines = true;
+  if (x['hidden'] === true) f.hidden = true;
   if (type === 'number' && formulaOf(x['auto'])) f.auto = x['auto'] as string;
   if (type === 'textarea' && LINK_KINDS.includes(x['links'] as LinkKind)) f.links = x['links'] as LinkKind;
   if (x['roll'] !== undefined) {

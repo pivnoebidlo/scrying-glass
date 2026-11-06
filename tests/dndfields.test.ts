@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { dndFields, dndSync } from '../src/systems/dnd5e/fields';
-import { blankCharacter, type Dnd5eCharacter } from '../src/systems/dnd5e/character';
-import type { Dnd5eStats } from '../src/systems/dnd5e/stats';
+import { blankCharacter, characterPb, saveBonus, skillBonus, type Dnd5eCharacter } from '../src/systems/dnd5e/character';
+import { ABILITIES, initiativeOf, mod, SKILL_ABILITY, type Dnd5eStats } from '../src/systems/dnd5e/stats';
+import { evalFormula, formulaProblems, packCombat, packResources, validatePack, type SystemPack } from '../src/shared/syspack';
 
 const cards = ['2014', '2024'].flatMap((y) => JSON.parse(fs.readFileSync(`content/dnd5e-srd/bestiary/dnd5e-${y}.json`, 'utf8')) as { name: string; lang: string; system: string; stats: Dnd5eStats }[]);
 // The old shape only: what a card had before the fields.
@@ -58,5 +59,44 @@ describe('карточки D&D и поля пакета', () => {
     expect(f['level']).toBe(4);
     expect(pick(dndSync(f, 'ru'), Object.keys(c))).toEqual(c);
     expect(pick(dndSync(dndFields(blankCharacter(), 'ru', 'dnd5e-2024'), 'ru'), Object.keys(blankCharacter()))).toEqual(blankCharacter());
+  });
+});
+
+describe('пакеты D&D считают как плагин', () => {
+  const packs = Object.fromEntries(['dnd5e-2014', 'dnd5e-2024'].map((id) => [id, validatePack(JSON.parse(fs.readFileSync(`resources/systems/${id}.json`, 'utf8'))) as SystemPack]));
+
+  it('файлы проходят проверку, формулы читают свои поля', () => {
+    for (const p of Object.values(packs)) {
+      expect(typeof p).toBe('object');
+      expect(formulaProblems(p)).toEqual([]);
+      expect(p.threat?.perHero?.length).toBe(20);
+    }
+  });
+
+  it('существа: КД, хиты, инициатива, спасброски, ранг, опыт — как раньше', () => {
+    for (const c of cards) {
+      const p = packs[c.system]!;
+      const f = dndFields(c.stats, c.lang, c.system);
+      expect(packCombat(p, f), c.name).toMatchObject({ hp: c.stats.hp, ac: c.stats.ac, initiative: initiativeOf(c.stats), xp: c.stats.xp });
+      for (const a of ABILITIES) {
+        expect(evalFormula(p, f, `${a}_mod`), c.name).toBe(mod(c.stats.abilities[a]));
+        expect(evalFormula(p, f, `save_${a}`), `${c.name} ${a}`).toBe(c.stats.saves[a] ?? mod(c.stats.abilities[a]));
+      }
+      expect(evalFormula(p, f, 'cr + level')).toBe(c.stats.cr);
+    }
+  });
+
+  it('персонаж: бонусы навыков, спасброски и БМ — по формулам листа', () => {
+    const c: Dnd5eCharacter = { ...blankCharacter(), classes: [{ name: 'Плут', level: 5 }], abilities: { str: 8, dex: 18, con: 12, int: 10, wis: 14, cha: 16 }, saves: ['dex'], skills: { stealth: 2, perception: 1 } };
+    const p = packs['dnd5e-2024']!;
+    const f = dndFields(c, 'ru', 'dnd5e-2024');
+    expect(evalFormula(p, f, 'pb')).toBe(characterPb(c));
+    for (const [k, a] of Object.entries(SKILL_ABILITY)) expect(evalFormula(p, f, `skb_${k.replace(/-/g, '_')}`), k).toBe(skillBonus(c, k, a));
+    for (const a of ABILITIES) expect(evalFormula(p, f, `save_${a}`), a).toBe(saveBonus(c, a));
+    const caster = { ...c, spellcasting: { ability: 'cha' as const, slots: { 1: 3 }, spells: { 1: 'Огненный шар' } } };
+    const g = dndFields(caster, 'ru', 'dnd5e-2024');
+    expect(evalFormula(p, g, 'spell_dc')).toBe(8 + characterPb(c) + 3);
+    expect(evalFormula(p, g, 'spell_attack')).toBe(characterPb(c) + 3);
+    expect(packResources(p, g, 'character').limits['slot_1']).toBe(3);
   });
 });

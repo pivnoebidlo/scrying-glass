@@ -43,7 +43,7 @@
   // A field shows if it has something (an empty text or list isn't drawn; numbers always are).
   const slots = (f: FieldDef) => (Array.isArray(s[f.key]) ? (s[f.key] as PackSlot[]) : []);
   const filled = (f: FieldDef) =>
-    f.type === 'text' || f.type === 'textarea'
+    f.hidden ? false : f.type === 'track' ? boxesOf(pack, s, f) > 0 : f.type === 'text' || f.type === 'textarea'
       ? !!text(f).trim()
       : f.type === 'list' || f.type === 'tags'
         ? (f.type === 'list' ? rows(f) : tags(f)).length > 0
@@ -225,12 +225,12 @@
         {#each resets as r (r.id)}<button class="btn" onclick={() => reset(r.id, L(r.title))}>{L(r.title)}</button>{/each}
       </div>
     {/if}
-    {#if split.tabs.length}
-      <div class="tabs" role="tablist">
-        {#each split.tabs as x (x)}<button role="tab" aria-selected={x === tabNow} class:active={x === tabNow} onclick={() => (tab = x)}>{x}</button>{/each}
-      </div>
-    {/if}
-    {#each shownSections as sec (sec.id)}
+    {#each shownSections as sec, i (sec.id)}
+      {#if split.tabs.length && i === split.top.length}
+        <div class="tabs" role="tablist">
+          {#each split.tabs as x (x)}<button role="tab" aria-selected={x === tabNow} class:active={x === tabNow} onclick={() => (tab = x)}>{x}</button>{/each}
+        </div>
+      {/if}
       <section class:lines={sec.view === 'lines' || sec.view === 'grid'}>
         {#if !sec.noTitle}<h3>{L(sec.title)}</h3>{/if}
         {#if sec.view === 'grid' && sec.grid}
