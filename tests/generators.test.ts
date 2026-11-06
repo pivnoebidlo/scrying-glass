@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { genText, lineWords, rangeOf, resultMarkdown, rollWords, runGenerator, validateGenerators, type GeneratorFile, type GenLine, type GenOptions } from '../src/shared/generators';
+import { calcValue, genCardOf, genText, lineWords, priceItems, priceOfItem, rangeOf, runCalculator, resultMarkdown, rollWords, runGenerator, validateGenerators, type GeneratorFile, type GenLine, type GenOptions } from '../src/shared/generators';
 
 const file = validateGenerators(JSON.parse(readFileSync('content/mausritter/generators/mausritter.json', 'utf8'))) as GeneratorFile;
 // Rolls in a fixed order (then 1 forever).
@@ -117,5 +117,87 @@ describe('Mausritter tables as data', () => {
     expect(h.card?.kind).toBe('npc');
     expect(h.card?.stats).toMatchObject({ armour: 0, hp: expect.any(Number), wil: expect.any(Number) });
     expect(lineWords(file, h, 'ru')).toContain('ВОЛ');
+  });
+});
+
+describe('a new mouse as data', () => {
+  // STR, DEX, WIL (3d6), then name first: name, three times 3d6, HP, pips, the weapon, then a sign, coat, detail.
+  const name = 1;
+  const mouse = (hp: number, pips: number, weapon: number, attrs: number[][], rest: number[] = []) => run('mouse', seq(name, ...attrs.flat(), hp, pips, weapon, ...rest));
+  const strong = [[6, 5, 1], [6, 6, 1], [5, 5, 1]];
+  const card = (r: ReturnType<typeof run>, lang: 'en' | 'ru') => genCardOf(file, r.card!, lang);
+
+  it('attributes: 3d6, the two highest; HP and pips pick the background', () => {
+    const r = mouse(3, 4, 1, [[6, 5, 1], [2, 2, 2], [6, 6, 6]]);
+    expect(r.card!.stats).toMatchObject({ str: 11, dex: 4, wil: 12, hp: 3, pips: 4 });
+    expect(r.lines.find((l) => label(l) === 'STR')!.roll).toBe('3d6↑: 6, 5, 1 → 11');
+    expect(r.card!.text!['background']!.cells[0]!.row).toBe(15);
+  });
+
+  it('the card: heavy armour on the body, the background spell in the pack, a sheet the app reads', () => {
+    // Test subject: Spell: Magic missile, Lead coat (Heavy armour); a sword (the fourth) in the main paw.
+    const c = card(mouse(1, 1, 4, strong), 'en');
+    expect(c.stats).toMatchObject({ armour: 1, level: 1, background: 'Test subject' });
+    const slots = c.stats['inventory'] as { name: string; usage?: number }[];
+    expect(slots).toHaveLength(10);
+    expect(slots.slice(0, 4).map((x) => x.name)).toEqual(['Sword (d6/d8)', '', 'Lead coat (Heavy armour)', 'Lead coat (Heavy armour)']);
+    expect(slots.slice(4).map((x) => x.name).filter(Boolean)).toEqual(['Torches', 'Rations', 'Spell: Magic missile']);
+    expect(slots[4]!.usage).toBe(0);
+    expect(c.stats['attacks']).toEqual([{ dice: 'd6/d8', name: 'sword' }]);
+  });
+
+  it('a weak mouse: 9 or less — one item of another background, 7 or less — both', () => {
+    const weak = [[1, 1, 1], [1, 1, 1], [4, 4, 1]];
+    // Best 8: another background (8th, Beetleherd), the coin 1 — item A.
+    const one = card(mouse(1, 6, 7, weak, [8, 1]), 'en');
+    expect(one.notes).toBe('Hireling: Loyal beetle');
+    const both = card(mouse(1, 6, 7, [[1, 1, 1], [1, 1, 1], [3, 3, 1]], [8, 2]), 'en');
+    expect(both.notes).toBe('Hireling: Loyal beetle');
+    expect((both.stats['inventory'] as { name: string }[]).filter((x) => x.name).length).toBeGreaterThan((card(mouse(1, 6, 7, strong), 'en').stats['inventory'] as { name: string }[]).filter((x) => x.name).length);
+  });
+
+  it('a two-paw weapon fills both paws; a background weapon is an attack; words follow the language', () => {
+    // Street tough (hp 1, pips 6): Dagger (Light, d6); a spear (the seventh).
+    const r = mouse(1, 6, 7, strong);
+    const ru = card(r, 'ru').stats['inventory'] as { name: string }[];
+    expect([ru[0]!.name, ru[1]!.name]).toEqual(['Копьё (к10)', 'Копьё (к10)']);
+    expect((card(r, 'en').stats['attacks'] as { dice: string }[]).map((a) => a.dice)).toEqual(['d10', 'd6']);
+  });
+});
+
+describe('a price list as data', () => {
+  const list = file.lists!.find((l) => l.id === 'shop')!;
+  it('the same items in both languages, each with a price or its text', () => {
+    const [en, ru] = [priceItems(file, list, 'en'), priceItems(file, list, 'ru')];
+    expect(ru.map((i) => [i.section, i.price])).toEqual(en.map((i) => [i.section, i.price]));
+    expect(en.filter((i) => i.price === null).map((i) => i.text)).toEqual(['x10p', '10%']);
+  });
+
+  it('a warband pays 20 times as much for equipment, not for food or help', () => {
+    const en = priceItems(file, list, 'en');
+    const sword = en.find((i) => i.name.startsWith('**Medium**'))!;
+    const meal = en.find((i) => i.name === '**Meal**')!;
+    expect([priceOfItem(list, sword, {}), priceOfItem(list, sword, { warband: true })]).toEqual([20, 400]);
+    expect(priceOfItem(list, meal, { warband: true })).toBe(2);
+  });
+});
+
+describe('a calculator as data', () => {
+  const c = file.calculators!.find((x) => x.id === 'build')!;
+  const go = (rows: Parameters<typeof runCalculator>[1], diggers: number) => runCalculator(c, rows, { diggers });
+
+  it('materials per cube, upkeep 1% a month', () => {
+    const r = go([{ kind: 'tunnel', count: 4 }, { kind: 'standard', count: 2 }, { kind: 'grand', count: 1 }], 3);
+    expect(r['materials']).toBe(40 + 1000 + 2000);
+    expect(r['upkeep']).toBe(31);
+    expect(calcValue(c, { kind: 'grand', count: 2.5 })).toBe(4000);
+  });
+
+  it('three diggers dig a cube of soil a day, other materials take twice as long; 5p a day each', () => {
+    expect(go([{ kind: 'poor', count: 5 }], 3)).toMatchObject({ days: 5, wages: 75 });
+    expect(go([{ kind: 'poor', count: 5, flag: true }], 3)).toMatchObject({ days: 10, wages: 150 });
+    expect(go([{ kind: 'poor', count: 5 }], 6)).toMatchObject({ days: 3, wages: 90 });
+    expect(go([{ kind: 'poor', count: 1 }], 1)).toMatchObject({ days: 3, wages: 15 });
+    expect(go([{ kind: 'poor', count: 2 }], 0)).toMatchObject({ days: 0, wages: 0, total: 200 });
   });
 });

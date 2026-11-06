@@ -19,7 +19,7 @@
   const adventure = $derived(store.state.adventures.current);
   const data = $derived(store.state.mausritter.byAdventure[adventure ?? ''] ?? blankAdventure());
   const day = $derived(data.clock.day);
-  const pips = (n: number) => t('build.pips', { n: n.toLocaleString(locale.lang) });
+  const pips = (n: number) => t('mfac.pips', { n: n.toLocaleString(locale.lang) });
 
   let name = $state('');
   let busy = $state(false);

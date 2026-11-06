@@ -9,8 +9,6 @@ export interface FeatureDef {
   id: string;
   // The pack format it appeared in.
   since: number;
-  // Written for one game: a pack keeps it, the builder doesn't offer it. These become data (tables) later.
-  bound?: boolean;
 }
 
 export const FEATURES: FeatureDef[] = [
@@ -20,13 +18,10 @@ export const FEATURES: FeatureDef[] = [
   { id: 'crew', since: 2 },
   { id: 'exploration', since: 2 },
   { id: 'factions', since: 2 },
-  { id: 'mouse', since: 2, bound: true },
-  { id: 'mausShop', since: 2, bound: true },
-  { id: 'build', since: 2, bound: true },
 ];
 
 // What the builder offers.
-export const offeredFeatures = () => FEATURES.filter((f) => !f.bound);
+export const offeredFeatures = () => FEATURES;
 
 // Features that appeared after this format: new for a pack saved in it.
 export const newFeatures = (format = 1) => offeredFeatures().filter((f) => f.since > format);
@@ -39,7 +34,7 @@ export const freshFeatures = (format: number | undefined, uses: string[]) => new
 const OLD_USES: Record<string, string[]> = {
   fate: ['worldtime', 'aspects'],
   fitd: ['worldtime', 'clocks', 'crew'],
-  mausritter: ['exploration', 'factions', 'mouse', 'mausShop', 'build'],
+  mausritter: ['exploration', 'factions'],
 };
 export const oldUses = (family: string) => OLD_USES[family] ?? ['worldtime'];
 // The same for the rule of damage past health (TrackerSpec.overflow).

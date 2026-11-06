@@ -4,10 +4,7 @@
  "format": 2,
  "uses": [
   "exploration",
-  "factions",
-  "mouse",
-  "mausShop",
-  "build"
+  "factions"
  ],
  "id": "mausritter",
  "family": "mausritter",

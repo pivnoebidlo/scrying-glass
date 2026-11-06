@@ -841,8 +841,8 @@ A mouse also gets a sheet: level, XP, pips, background, birthsign, coat, physica
 d20 at or under the attribute (Shift — advantage, the lower of 2d20; ⌥ — disadvantage). The tracker in a Mausritter
 adventure: HP, STR / DEX / WIL now and maximum; damage past HP goes to STR, STR 0 takes the combatant out; no
 initiative roll (mice act before or after the opponents by a DEX save — the list's order); the Mausritter
-Conditions. **Tools → Mouse** (Mausritter adventures only) makes a
-new mouse by the SRD procedure: attributes (3d6, the two highest — the dice are shown, two attributes can be swapped),
+Conditions. **Tools → Generators → New mouse** (Mausritter adventures) makes a
+new mouse by the SRD procedure: attributes (3d6, the two highest — the dice are shown; to swap two, as the SRD allows, edit the card),
 HP and pips, the background with its two items (a weak mouse gets items of another background), torches, rations, a
 weapon, birthsign, coat, physical detail and a name; "Create card" opens a mouse sheet with the inventory laid out
 (weapon in the paws, armour on the body, the rest in the pack), "To journal" and "Copy" — as text. **Tools →
@@ -861,10 +861,10 @@ casualty rules in its text) in the adventure's bestiary folder, one click adds i
 week) is counted by the days of the exploration clock, and an owed week shows in the Exploration block too. The **Exploration** block in the right panel
 counts turns in an adventure site (every third — an encounter roll: 1 — an encounter, 2 — an omen; every sixth —
 torches mark usage) and watches of travel (four a day; morning and evening start with an encounter roll and its hour).
-Factions and the clock belong to the adventure: they go into the .sgpack and to the trash with it. **Tools →
+Factions and the clock belong to the adventure: they go into the .sgpack and to the trash with it. **Tools → Generators →
 Constructions** prices a burrow by the SRD: rooms (poor, standard, grand) and tunnels in 6" cubes give the materials,
 the upkeep (1% a month), the days of digging for so many tunnel diggers (three dig a cube of soil a day, other
-materials take twice as long) and their wages; "To journal" writes the plan as a table. **Tools → Shop** is the SRD
+materials take twice as long) and their wages; "To journal" writes the plan as a table. **Tools → Generators → Shop** is the SRD
 price list by its sections with a search: human-made tools only "Near humans", "For a warband" — equipment ×20; a
 click puts an item into the basket with the total.
 

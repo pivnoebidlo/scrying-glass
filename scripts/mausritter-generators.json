@@ -1,13 +1,595 @@
 {
- "title": {
-  "en": "Mausritter tables",
-  "ru": "Таблицы Mausritter"
- },
  "about": {
-  "en": "The GM tables of the Mausritter SRD: pick a table and roll. Settlements, hexes, adventure sites with rooms, treasure, mice of the GM, adventure seeds, the weather and a reaction.",
-  "ru": "Таблицы мастера из Mausritter SRD: выберите таблицу и бросьте. Поселения, гексы, места приключений с комнатами, сокровища, мыши мастера, завязки приключений, погода и реакция."
+  "en": "The tools of the Mausritter SRD: a new mouse, the GM tables (settlements, hexes, adventure sites, treasure, hirelings, seeds, weather, reactions), the shop and constructions.",
+  "ru": "Инструменты Mausritter SRD: новая мышь, таблицы мастера (поселения, гексы, места приключений, сокровища, наёмники, завязки, погода, реакции), лавка и постройки."
  },
  "generators": [
+  {
+   "id": "mouse",
+   "title": {
+    "en": "New mouse",
+    "ru": "Новая мышь"
+   },
+   "card": {
+    "kind": "character",
+    "name": {
+     "table": "mouseNames",
+     "row": "name",
+     "col": "0"
+    },
+    "stats": {
+     "hp": "hp",
+     "str": "str",
+     "dex": "dex",
+     "wil": "wil",
+     "armour": "armour",
+     "pips": "pips"
+    },
+    "fixed": {
+     "critical": "",
+     "abilities": "",
+     "wants": "",
+     "level": 1,
+     "xp": 0,
+     "grit": []
+    },
+    "text": {
+     "background": {
+      "parts": [
+       {
+        "table": "mouseBackgrounds",
+        "row": "bg",
+        "col": "0"
+       }
+      ]
+     },
+     "birthsign": {
+      "parts": [
+       {
+        "table": "mouseSigns",
+        "row": "sign",
+        "col": "0"
+       },
+       {
+        "table": "mouseSigns",
+        "row": "sign",
+        "col": "1"
+       }
+      ],
+      "text": "{0} ({low1})"
+     },
+     "coat": {
+      "parts": [
+       {
+        "table": "mouseColors",
+        "row": "color",
+        "col": "0"
+       },
+       {
+        "table": "mousePatterns",
+        "row": "pattern",
+        "col": "0"
+       }
+      ],
+      "text": "{0}, {low1}"
+     },
+     "look": {
+      "parts": [
+       {
+        "table": "mouseDetails",
+        "row": "detail",
+        "col": "0"
+       }
+      ]
+     }
+    },
+    "slots": [
+     "inventory"
+    ],
+    "lists": [
+     "attacks"
+    ],
+    "notes": "hired"
+   },
+   "steps": [
+    {
+     "let": "name",
+     "table": "mouseNames",
+     "any": true
+    },
+    {
+     "line": {
+      "en": "Name",
+      "ru": "Имя"
+     },
+     "table": "mouseNames",
+     "row": "name",
+     "col": "0"
+    },
+    {
+     "let": "str",
+     "dice": "3d6",
+     "keep": "high",
+     "count": 2
+    },
+    {
+     "line": {
+      "en": "STR",
+      "ru": "СИЛ"
+     },
+     "text": "{str}"
+    },
+    {
+     "let": "dex",
+     "dice": "3d6",
+     "keep": "high",
+     "count": 2
+    },
+    {
+     "line": {
+      "en": "DEX",
+      "ru": "ЛОВ"
+     },
+     "text": "{dex}"
+    },
+    {
+     "let": "wil",
+     "dice": "3d6",
+     "keep": "high",
+     "count": 2
+    },
+    {
+     "line": {
+      "en": "WIL",
+      "ru": "ВОЛ"
+     },
+     "text": "{wil}"
+    },
+    {
+     "let": "hp",
+     "dice": "d6"
+    },
+    {
+     "line": {
+      "en": "HP",
+      "ru": "ПЗ"
+     },
+     "text": "{hp}"
+    },
+    {
+     "let": "pips",
+     "dice": "d6"
+    },
+    {
+     "line": {
+      "en": "Pips",
+      "ru": "Пипсы"
+     },
+     "text": "{pips}"
+    },
+    {
+     "let": "bg",
+     "formula": "(hp - 1) * 6 + pips - 1"
+    },
+    {
+     "line": {
+      "en": "Background",
+      "ru": "Прошлое"
+     },
+     "table": "mouseBackgrounds",
+     "row": "bg",
+     "col": "0"
+    },
+    {
+     "let": "armour",
+     "formula": "0"
+    },
+    {
+     "let": "weapon",
+     "table": "mouseWeapons",
+     "any": true
+    },
+    {
+     "let": "two",
+     "table": "mouseWeapons",
+     "row": "weapon",
+     "col": "2",
+     "is": "x"
+    },
+    {
+     "if": "two",
+     "then": [
+      {
+       "put": "inventory",
+       "size": 10,
+       "cell": {
+        "table": "mouseWeapons",
+        "row": "weapon",
+        "col": "3"
+       },
+       "at": [
+        [
+         0,
+         1
+        ]
+       ],
+       "pack": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+       ]
+      }
+     ],
+     "else": [
+      {
+       "put": "inventory",
+       "size": 10,
+       "cell": {
+        "table": "mouseWeapons",
+        "row": "weapon",
+        "col": "3"
+       },
+       "at": [
+        [
+         0
+        ]
+       ],
+       "pack": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+       ]
+      }
+     ]
+    },
+    {
+     "push": "attacks",
+     "lower": [
+      "name"
+     ],
+     "item": {
+      "name": {
+       "table": "mouseWeapons",
+       "row": "weapon",
+       "col": "0"
+      },
+      "dice": {
+       "table": "mouseWeapons",
+       "row": "weapon",
+       "col": "1"
+      }
+     }
+    },
+    {
+     "put": "inventory",
+     "size": 10,
+     "text": {
+      "en": "Torches",
+      "ru": "Факелы"
+     },
+     "pack": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ],
+     "usage": 0
+    },
+    {
+     "put": "inventory",
+     "size": 10,
+     "text": {
+      "en": "Rations",
+      "ru": "Пайки"
+     },
+     "pack": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+     ],
+     "usage": 0
+    },
+    {
+     "let": "best",
+     "formula": "max(str, dex, wil)"
+    },
+    {
+     "let": "other",
+     "formula": "0"
+    },
+    {
+     "let": "coin",
+     "formula": "0"
+    },
+    {
+     "if": "le(best, 9)",
+     "then": [
+      {
+       "let": "other",
+       "table": "mouseBackgrounds",
+       "any": true
+      },
+      {
+       "let": "coin",
+       "formula": "d(2)"
+      }
+     ]
+    },
+    {
+     "let": "takeA",
+     "formula": "le(best, 9) * gt(le(best, 7) + eq(coin, 1), 0)"
+    },
+    {
+     "let": "takeB",
+     "formula": "le(best, 9) * gt(le(best, 7) + eq(coin, 2), 0)"
+    },
+    {
+     "repeat": "4",
+     "as": "i",
+     "steps": [
+      {
+       "let": "it",
+       "formula": "eq(i, 1) * bg * 2 + eq(i, 2) * (bg * 2 + 1) + eq(i, 3) * (other * 2 + 0) + eq(i, 4) * (other * 2 + 1)"
+      },
+      {
+       "if": "eq(i, 3) * not(takeA) + eq(i, 4) * not(takeB)",
+       "then": [
+        {
+         "let": "it",
+         "formula": "0 - 1"
+        }
+       ]
+      },
+      {
+       "if": "ge(it, 0)",
+       "then": [
+        {
+         "let": "hired",
+         "table": "mouseItems",
+         "row": "it",
+         "col": "3",
+         "is": "x"
+        },
+        {
+         "let": "heavy",
+         "table": "mouseItems",
+         "row": "it",
+         "col": "1",
+         "is": "heavy"
+        },
+        {
+         "let": "light",
+         "table": "mouseItems",
+         "row": "it",
+         "col": "1",
+         "is": "light"
+        },
+        {
+         "let": "armed",
+         "table": "mouseItems",
+         "row": "it",
+         "col": "2",
+         "is": "d"
+        },
+        {
+         "if": "hired",
+         "then": [
+          {
+           "push": "hired",
+           "item": {
+            "name": {
+             "table": "mouseItems",
+             "row": "it",
+             "col": "0"
+            }
+           }
+          }
+         ],
+         "else": [
+          {
+           "let": "armour",
+           "formula": "max(armour, heavy + light)"
+          },
+          {
+           "if": "heavy",
+           "then": [
+            {
+             "put": "inventory",
+             "size": 10,
+             "cell": {
+              "table": "mouseItems",
+              "row": "it",
+              "col": "0"
+             },
+             "at": [
+              [
+               2,
+               3
+              ]
+             ],
+             "pack": [
+              4,
+              5,
+              6,
+              7,
+              8,
+              9
+             ]
+            }
+           ],
+           "else": [
+            {
+             "if": "light",
+             "then": [
+              {
+               "put": "inventory",
+               "size": 10,
+               "cell": {
+                "table": "mouseItems",
+                "row": "it",
+                "col": "0"
+               },
+               "at": [
+                [
+                 1,
+                 2
+                ],
+                [
+                 2,
+                 3
+                ]
+               ],
+               "pack": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9
+               ]
+              }
+             ],
+             "else": [
+              {
+               "put": "inventory",
+               "size": 10,
+               "cell": {
+                "table": "mouseItems",
+                "row": "it",
+                "col": "0"
+               },
+               "pack": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9
+               ]
+              }
+             ]
+            }
+           ]
+          },
+          {
+           "if": "armed",
+           "then": [
+            {
+             "push": "attacks",
+             "lower": [
+              "name"
+             ],
+             "item": {
+              "name": {
+               "table": "mouseItems",
+               "row": "it",
+               "col": "4"
+              },
+              "dice": {
+               "table": "mouseItems",
+               "row": "it",
+               "col": "2"
+              }
+             }
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "line": {
+      "en": "Items",
+      "ru": "Вещи"
+     },
+     "items": [
+      "inventory",
+      "hired"
+     ]
+    },
+    {
+     "let": "sign",
+     "table": "mouseSigns",
+     "any": true
+    },
+    {
+     "line": {
+      "en": "Birthsign",
+      "ru": "Знак рождения"
+     },
+     "text": "{0} ({low1})",
+     "parts": [
+      {
+       "table": "mouseSigns",
+       "row": "sign",
+       "col": "0"
+      },
+      {
+       "table": "mouseSigns",
+       "row": "sign",
+       "col": "1"
+      }
+     ]
+    },
+    {
+     "let": "color",
+     "table": "mouseColors",
+     "any": true
+    },
+    {
+     "let": "pattern",
+     "table": "mousePatterns",
+     "any": true
+    },
+    {
+     "line": {
+      "en": "Coat",
+      "ru": "Шёрстка"
+     },
+     "text": "{0}, {low1}",
+     "parts": [
+      {
+       "table": "mouseColors",
+       "row": "color",
+       "col": "0"
+      },
+      {
+       "table": "mousePatterns",
+       "row": "pattern",
+       "col": "0"
+      }
+     ]
+    },
+    {
+     "let": "detail",
+     "table": "mouseDetails",
+     "any": true
+    },
+    {
+     "line": {
+      "en": "Physical detail",
+      "ru": "Примета"
+     },
+     "table": "mouseDetails",
+     "row": "detail",
+     "col": "0"
+    }
+   ]
+  },
   {
    "id": "settlement",
    "title": {
@@ -1548,6 +2130,312 @@
      },
      "table": "reaction",
      "dice": "2d6"
+    }
+   ]
+  }
+ ],
+ "lists": [
+  {
+   "id": "shop",
+   "title": {
+    "en": "Shop",
+    "ru": "Лавка"
+   },
+   "about": {
+    "en": "The prices of the SRD, all in pips. A click puts an item into the basket; the total is on the right. A warband pays 20 times as much for its equipment.",
+    "ru": "Цены SRD, всё в пипсах. Щелчок кладёт вещь в корзину, сумма — справа. Отряд платит за снаряжение в 20 раз больше."
+   },
+   "unit": {
+    "en": "{n}p",
+    "ru": "{n} п"
+   },
+   "options": [
+    {
+     "key": "humans",
+     "title": {
+      "en": "Near humans",
+      "ru": "Рядом с людьми"
+     },
+     "default": true
+    },
+    {
+     "key": "warband",
+     "title": {
+      "en": "For a warband (×20)",
+      "ru": "Для отряда (×20)"
+     },
+     "hint": {
+      "en": "Equipment improves a warband like a mouse, at 20 times the price: tools, weapons, armour, light, clothing",
+      "ru": "Снаряжение улучшает отряд так же, как мышь, но стоит в 20 раз дороже: инструменты, оружие, броня, свет, одежда"
+     },
+     "default": false
+    }
+   ],
+   "factor": {
+    "option": "warband",
+    "times": 20,
+    "sections": [
+     "gearMouse",
+     "gearHuman",
+     "gearWeapons",
+     "gearLight",
+     "gearClothing"
+    ]
+   },
+   "sections": [
+    {
+     "id": "gearMouse",
+     "table": "gearMouse",
+     "title": {
+      "en": "Tools, mouse made",
+      "ru": "Инструменты мышиной работы"
+     },
+     "note": {
+      "en": "Sold in most mouse settlements; mouse-sized.",
+      "ru": "Есть в большинстве мышиных поселений; мышиного размера."
+     }
+    },
+    {
+     "id": "gearHuman",
+     "table": "gearHuman",
+     "title": {
+      "en": "Tools, human made",
+      "ru": "Инструменты человеческой работы"
+     },
+     "note": {
+      "en": "Only in mouse settlements near humans.",
+      "ru": "Только в мышиных поселениях рядом с людьми."
+     },
+     "when": "humans"
+    },
+    {
+     "id": "gearWeapons",
+     "table": "gearWeapons",
+     "title": {
+      "en": "Weapons and armour",
+      "ru": "Оружие и броня"
+     },
+     "note": {
+      "en": "Silvered weapons cost ten times as much; repairs — 10% of the price per usage dot.",
+      "ru": "Посеребрённое оружие — вдесятеро дороже; починка — 10% цены за отметку износа."
+     }
+    },
+    {
+     "id": "gearLight",
+     "table": "gearLight",
+     "title": {
+      "en": "Light sources",
+      "ru": "Источники света"
+     }
+    },
+    {
+     "id": "gearClothing",
+     "table": "gearClothing",
+     "title": {
+      "en": "Clothing",
+      "ru": "Одежда"
+     }
+    },
+    {
+     "id": "gearLodging",
+     "table": "gearLodging",
+     "title": {
+      "en": "Lodging and food",
+      "ru": "Ночлег и еда"
+     }
+    },
+    {
+     "id": "gearTransport",
+     "table": "gearTransport",
+     "title": {
+      "en": "Transport hire",
+      "ru": "Наём транспорта"
+     },
+     "note": {
+      "en": "Per mouse, per hex.",
+      "ru": "За мышь, за гекс."
+     }
+    },
+    {
+     "id": "gearHired",
+     "table": "gearHired",
+     "title": {
+      "en": "Hired help",
+      "ru": "Наёмная помощь"
+     },
+     "note": {
+      "en": "Per day, without food, supplies or shelter.",
+      "ru": "В день, без еды, припасов и крова."
+     }
+    }
+   ]
+  }
+ ],
+ "calculators": [
+  {
+   "id": "build",
+   "title": {
+    "en": "Constructions",
+    "ru": "Постройки"
+   },
+   "about": {
+    "en": "A burrow, a hall or a whole warren by the SRD: rooms and tunnels in 6\" cubes give the cost of materials and fittings, the upkeep and how long the digging takes. The right to build can't be bought — only given, or taken and defended.",
+    "ru": "Нора, зал или целый городок по SRD: комнаты и туннели в кубах по 6\" дают цену материалов и обстановки, содержание и срок работ. Право строить не купить — его дают или берут и защищают."
+   },
+   "rules": {
+    "en": "A team of three tunnel diggers digs one 6\" cube of soil a day; other materials take twice as long. A tunnel is counted per 6\" of its length. Diggers are hirelings (d4 looking for work, 5p a day); the upkeep is 1% of the materials a month.",
+    "ru": "Три землекопа за день выкапывают куб земли со стороной 6\"; другие материалы — вдвое дольше. Туннель считается по 6\" длины. Землекопы — наёмники (ищут работу к4, 5 п в день); содержание — 1% цены материалов в месяц."
+   },
+   "unit": {
+    "en": "{n}p",
+    "ru": "{n} п"
+   },
+   "labels": {
+    "name": {
+     "en": "Name",
+     "ru": "Название"
+    },
+    "kind": {
+     "en": "Kind",
+     "ru": "Вид"
+    },
+    "count": {
+     "en": "6\" cubes",
+     "ru": "Кубов по 6\""
+    },
+    "flag": {
+     "en": "Not soil",
+     "ru": "Не земля"
+    },
+    "flagHint": {
+     "en": "Rock, wood, roots: digging takes twice as long",
+     "ru": "Камень, дерево, корни: копать вдвое дольше"
+    },
+    "value": {
+     "en": "Cost",
+     "ru": "Цена"
+    },
+    "add": {
+     "en": "Room or tunnel",
+     "ru": "Комната или туннель"
+    },
+    "remove": {
+     "en": "Remove",
+     "ru": "Убрать"
+    }
+   },
+   "kinds": [
+    {
+     "id": "tunnel",
+     "title": {
+      "en": "Tunnel",
+      "ru": "Туннель"
+     },
+     "value": 10
+    },
+    {
+     "id": "poor",
+     "title": {
+      "en": "Poor room",
+      "ru": "Бедная комната"
+     },
+     "value": 100
+    },
+    {
+     "id": "standard",
+     "title": {
+      "en": "Standard room",
+      "ru": "Обычная комната"
+     },
+     "value": 500
+    },
+    {
+     "id": "grand",
+     "title": {
+      "en": "Grand room",
+      "ru": "Роскошная комната"
+     },
+     "value": 2000
+    }
+   ],
+   "start": [
+    {
+     "kind": "tunnel",
+     "count": 4
+    },
+    {
+     "kind": "standard",
+     "count": 2
+    }
+   ],
+   "row": {
+    "value": "count * value",
+    "work": "count * (1 + flag)"
+   },
+   "inputs": [
+    {
+     "key": "diggers",
+     "title": {
+      "en": "Tunnel diggers",
+      "ru": "Землекопов"
+     },
+     "default": 3,
+     "min": 0
+    }
+   ],
+   "totals": [
+    {
+     "key": "materials",
+     "title": {
+      "en": "Materials and fittings",
+      "ru": "Материалы и обстановка"
+     },
+     "formula": "value"
+    },
+    {
+     "key": "upkeep",
+     "title": {
+      "en": "Upkeep (1%), a month",
+      "ru": "Содержание (1%), в месяц"
+     },
+     "formula": "ceil(materials * 0.01)"
+    },
+    {
+     "key": "days",
+     "title": {
+      "en": "Digging",
+      "ru": "Работы"
+     },
+     "formula": "ceil(work * 3 / diggers)",
+     "text": {
+      "en": {
+       "one": "{count} day",
+       "other": "{count} days"
+      },
+      "ru": {
+       "one": "{count} день",
+       "few": "{count} дня",
+       "many": "{count} дней",
+       "other": "{count} дня"
+      }
+     }
+    },
+    {
+     "key": "wages",
+     "title": {
+      "en": "Diggers' wages (5p a day each)",
+      "ru": "Плата землекопам (5 п в день каждому)"
+     },
+     "formula": "days * diggers * 5"
+    },
+    {
+     "key": "total",
+     "title": {
+      "en": "Total",
+      "ru": "Итого"
+     },
+     "formula": "materials + wages",
+     "strong": true
     }
    ]
   }

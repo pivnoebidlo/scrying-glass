@@ -15,7 +15,7 @@
   const last = $derived(clock.last);
   const torches = $derived(clock.turn > 0 && clock.turn % 6 === 0);
   const owing = $derived(((ms.byAdventure[adventure ?? ''] ?? blankAdventure()).warbands ?? []).filter((w) => weeksOwed(w, clock.day) > 0));
-  const pips = (n: number) => t('build.pips', { n: n.toLocaleString(locale.lang) });
+  const pips = (n: number) => t('mfac.pips', { n: n.toLocaleString(locale.lang) });
 </script>
 
 <div class="clock">

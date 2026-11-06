@@ -1,24 +1,25 @@
-<!-- Tools → Shop (Mausritter only): the price list of the SRD by its sections, a search, "Near humans" (human-made
-     tools are sold only there) and "For a warband" (equipment ×20). A click on an item puts it into the basket: how many
-     and the total. What is on the page is remembered by the window. -->
+<!-- A price list of a package (shared/generators.ts): its sections, a search and the options. A click on an item puts it
+     into the basket: how many and the total. What is on the page is remembered by the window. Knows no game. -->
 <script lang="ts">
-  import Lead from '../../../renderer/lib/Lead.svelte';
+  import { untrack } from 'svelte';
   import { Minus, Plus, Search, Trash2 } from '@lucide/svelte';
+  import Lead from '../../../renderer/lib/Lead.svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
-  import { GEAR, gearItems, NEAR_HUMANS, priceFor, type GearItem } from './shop';
-  import { plain, tablesLang } from './shop';
+  import { genText, plainText, priceItems, priceOfItem, type GeneratorFile, type GenList, type PriceItem } from '../../../shared/generators';
 
-  const KEY = 'mausShop.state';
-  type Saved = { query: string; humans: boolean; warband: boolean; basket: Record<string, number> };
-  const DEFAULTS: Saved = { query: '', humans: true, warband: false, basket: {} };
-  function load(): Saved {
+  let { file, list }: { file: GeneratorFile; list: GenList } = $props();
+
+  const KEY = $derived(`generators.list.${file.system}/${list.id}`);
+  type Saved = { query: string; options: Record<string, boolean>; basket: Record<string, number> };
+  function load(key: string): Saved {
+    const fresh: Saved = { query: '', options: Object.fromEntries((list.options ?? []).map((o) => [o.key, !!o.default])), basket: {} };
     try {
-      return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
+      return { ...fresh, ...JSON.parse(localStorage.getItem(key) ?? '{}') };
     } catch {
-      return structuredClone(DEFAULTS);
+      return fresh;
     }
   }
-  const s = $state(load());
+  const s = $state(untrack(() => load(KEY)));
   const save = () => {
     try {
       localStorage.setItem(KEY, JSON.stringify($state.snapshot(s)));
@@ -27,29 +28,31 @@
     }
   };
 
-  const lang = $derived(tablesLang(locale.lang));
-  const items = $derived(gearItems(lang));
-  const keyOf = (i: GearItem) => `${i.section}:${i.row}`;
+  const lang = $derived(locale.lang);
+  const items = $derived(priceItems(file, list, lang));
+  const keyOf = (i: PriceItem) => `${i.section}:${i.row}`;
   const q = $derived(s.query.trim().toLowerCase());
-  const shown = (i: GearItem) => (s.humans || i.section !== NEAR_HUMANS) && (!q || plain(i.name).toLowerCase().includes(q));
-  const sections = $derived(GEAR.map((id) => ({ id, items: items.filter((i) => i.section === id && shown(i)) })).filter((x) => x.items.length));
-
-  const pips = (n: number) => t('build.pips', { n: n.toLocaleString(locale.lang) });
-  const priceText = (i: GearItem) => {
-    const p = priceFor(i, s.warband);
-    return p === null ? i.text : pips(p);
+  const shown = (i: PriceItem) => !q || plainText(i.name).toLowerCase().includes(q);
+  const sections = $derived(
+    list.sections.filter((x) => !x.when || s.options[x.when]).map((sec) => ({ sec, items: items.filter((i) => i.section === sec.id && shown(i)) })).filter((x) => x.items.length),
+  );
+  const price = (i: PriceItem) => priceOfItem(list, i, s.options);
+  const money = (n: number) => genText(list.unit, lang, { n: n.toLocaleString(lang) });
+  const priceText = (i: PriceItem) => {
+    const p = price(i);
+    return p === null ? i.text : money(p);
   };
-  // **Bold** of the SRD; the names are ours (the SRD files), escaped anyway.
+  // **Bold** of a table; the text may be someone else's, so it is escaped.
   const html = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
 
   const basket = $derived(
     Object.entries(s.basket).flatMap(([k, n]) => {
       const i = items.find((x) => keyOf(x) === k);
       return i && n > 0 ? [{ item: i, n }] : [];
-    })
+    }),
   );
-  const total = $derived(basket.reduce((sum, b) => sum + (priceFor(b.item, s.warband) ?? 0) * b.n, 0));
-  function put(i: GearItem, by: number) {
+  const total = $derived(basket.reduce((sum, b) => sum + (price(b.item) ?? 0) * b.n, 0));
+  function put(i: PriceItem, by: number) {
     const n = (s.basket[keyOf(i)] ?? 0) + by;
     if (n > 0) s.basket[keyOf(i)] = n;
     else delete s.basket[keyOf(i)];
@@ -62,27 +65,25 @@
 </script>
 
 <div class="view">
-  <header class="head">
-    <h2>{t('mshop.title')}</h2>
-  </header>
-  <p class="faint about"><Lead text={t('mshop.about')} /></p>
+  {#if list.about}<p class="faint about"><Lead text={genText(list.about, lang)} /></p>{/if}
 
   <div class="options">
-    <label class="search"><Search size={14} /><input type="search" bind:value={s.query} oninput={save} placeholder={t('mshop.search')} /></label>
-    <label class="check"><input type="checkbox" bind:checked={s.humans} onchange={save} /> {t('mshop.humans')}</label>
-    <label class="check" title={t('mshop.warbandHint')}><input type="checkbox" bind:checked={s.warband} onchange={save} /> {t('mshop.warband')}</label>
+    <label class="search"><Search size={14} /><input type="search" bind:value={s.query} oninput={save} placeholder={t('gen.search')} /></label>
+    {#each list.options ?? [] as o (o.key)}
+      <label class="check" title={genText(o.hint, lang)}><input type="checkbox" bind:checked={s.options[o.key]} onchange={save} /> {genText(o.title, lang)}</label>
+    {/each}
   </div>
 
   <div class="columns">
     <div class="list">
-      {#each sections as sec (sec.id)}
+      {#each sections as x (x.sec.id)}
         <section>
-          <h3>{t(`mshop.${sec.id}` as never)}</h3>
-          <p class="faint note">{t(`mshop.${sec.id}.note` as never)}</p>
+          <h3>{genText(x.sec.title, lang)}</h3>
+          {#if x.sec.note}<p class="faint note">{genText(x.sec.note, lang)}</p>{/if}
           <ul>
-            {#each sec.items as i (keyOf(i))}
+            {#each x.items as i (keyOf(i))}
               <li>
-                <button class="item" onclick={() => put(i, 1)} title={t('mshop.add')} disabled={priceFor(i, s.warband) === null}>
+                <button class="item" onclick={() => put(i, 1)} title={t('gen.add')} disabled={price(i) === null}>
                   <span class="name">{@html html(i.name)}</span>
                   <span class="price">{priceText(i)}</span>
                 </button>
@@ -91,30 +92,30 @@
           </ul>
         </section>
       {:else}
-        <p class="faint">{t('mshop.nothing')}</p>
+        <p class="faint">{t('gen.nothing')}</p>
       {/each}
     </div>
 
     <aside class="basket">
-      <h3>{t('mshop.basket')}</h3>
+      <h3>{t('gen.basket')}</h3>
       {#if basket.length}
         <ul>
           {#each basket as b (keyOf(b.item))}
             <li>
-              <span class="name">{plain(b.item.name)}</span>
+              <span class="name">{plainText(b.item.name)}</span>
               <span class="qty">
-                <button class="icon-btn" title={t('mshop.less')} onclick={() => put(b.item, -1)}><Minus size={12} /></button>
+                <button class="icon-btn" title={t('gen.less')} onclick={() => put(b.item, -1)}><Minus size={12} /></button>
                 {b.n}
-                <button class="icon-btn" title={t('mshop.more')} onclick={() => put(b.item, 1)}><Plus size={12} /></button>
+                <button class="icon-btn" title={t('gen.more')} onclick={() => put(b.item, 1)}><Plus size={12} /></button>
               </span>
-              <span class="price">{pips((priceFor(b.item, s.warband) ?? 0) * b.n)}</span>
+              <span class="price">{money((price(b.item) ?? 0) * b.n)}</span>
             </li>
           {/each}
         </ul>
-        <div class="total"><span>{t('mshop.total')}</span><b>{pips(total)}</b></div>
-        <button class="btn" onclick={clear}><Trash2 size={14} /> {t('mshop.clear')}</button>
+        <div class="total"><span>{t('gen.total')}</span><b>{money(total)}</b></div>
+        <button class="btn" onclick={clear}><Trash2 size={14} /> {t('gen.clear')}</button>
       {:else}
-        <p class="faint">{t('mshop.empty')}</p>
+        <p class="faint">{t('gen.basketEmpty')}</p>
       {/if}
     </aside>
   </div>
@@ -124,10 +125,6 @@
   .view {
     max-width: 980px;
     padding: 16px 20px 32px;
-  }
-  .head h2 {
-    margin: 0;
-    font-size: 18px;
   }
   .about {
     margin: 6px 0 12px;

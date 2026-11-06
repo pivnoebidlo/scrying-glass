@@ -18,9 +18,6 @@
   import NameGenerator from '../names/NameGenerator.svelte';
   import TavernGenerator from '../tavern/TavernGenerator.svelte';
   import NpcGenerator from '../npc/NpcGenerator.svelte';
-  import MouseGenerator from '../mouse/MouseGenerator.svelte';
-  import BuildCalculator from '../build/BuildCalculator.svelte';
-  import MausShop from '../maus/MausShop.svelte';
   import Generators from '../generators/Generators.svelte';
   import Factions from '../../mausritter/ui/Factions.svelte';
   import CrewSheet from '../../crew/ui/CrewSheet.svelte';
@@ -43,7 +40,7 @@
   const PAGES: Partial<Record<string, Component>> = {
     schedule: SchedulePage, names: NameGenerator, 
     settlement: SettlementGenerator, hooks: HookGenerator, riddles: RiddleGenerator, mapgen: MapGenerator,
-    mouse: MouseGenerator, generators: Generators, factions: Factions, build: BuildCalculator, mausShop: MausShop, npc: NpcGenerator,
+    generators: Generators, factions: Factions, npc: NpcGenerator,
     tavern: TavernGenerator, telegram: TelegramCompose, timer: TimerTool, crew: CrewSheet, systems: SystemBuilder, rollTables: RollTables,
   };
   const Page = $derived(app.vault.systems && ui.tool !== 'notes' && ui.tool !== 'sketches' && shown(ui.tool, family) ? (PAGES[ui.tool] ?? TOOLS.find((d) => d.id === ui.tool)?.page) : undefined);

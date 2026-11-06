@@ -12,6 +12,10 @@
 //   { "line": …, "parts": [{ "table": "names", "row": "d(12) - 1", "col": "d(2)" }, …], "join": "name" }
 //   { "repeat": "rooms", "as": "n", "steps": […] }, { "if": "ge(size, 3)", "then": […], "else": […] }
 //
+//   { "put": "inventory", "cell": {…}, "size": 10, "at": [[2, 3], [1, 2]], "pack": [4, 5, 6] }   an item: into the first
+//     free place of `at`, else the first free of `pack`, else past the end
+//   { "push": "attacks", "item": { "name": {…}, "dice": {…} } }      a row of a list for the card
+//
 // A line may have `text` («{0} {1} · {2}», cells by number, {low0} — in small letters, numbers by name), `notes` (shown beside it, each with its
 // `if`), `sub` (nested lines), `sep` (a rule above) and `card` (a button that makes a card of it).
 import { format, type Lang, type Msg } from './i18n/core';
@@ -43,13 +47,38 @@ export interface GenCellRef {
 export type GenStep =
   | { let: string; dice?: string; keep?: 'low' | 'high'; count?: number; formula?: string; of?: GenCellRef; table?: string; lookup?: string; row?: string; col?: string; is?: string; quiet?: boolean }
   | GenLineStep
+  | GenPutStep
+  | GenPushStep
   | { repeat: string; as?: string; steps: GenStep[] }
   | { if: string; then: GenStep[]; else?: GenStep[] };
+
+export interface GenPutStep {
+  put: string;
+  cell?: GenCellRef;
+  text?: GenText;
+  size: number;
+  at?: number[][];
+  pack?: number[];
+  usage?: number;
+}
+
+export interface GenPushStep {
+  push: string;
+  item: Record<string, GenCellRef>;
+  // Keys written in small letters.
+  lower?: string[];
+}
 
 export interface GenNote {
   if?: string;
   text: GenText;
   warn?: boolean;
+}
+
+// A text of a card: cells, joined by `text` if there is one.
+export interface GenCardText {
+  parts: GenCellRef[];
+  text?: GenText;
 }
 
 export interface GenCardSpec {
@@ -59,12 +88,20 @@ export interface GenCardSpec {
   stats: Record<string, string>;
   // Values as they are.
   fixed?: Record<string, unknown>;
+  text?: Record<string, GenCardText>;
+  // Fields filled by `put` and `push`.
+  slots?: string[];
+  lists?: string[];
+  // A list whose rows, by their `name`, are the card's notes.
+  notes?: string;
 }
 
 export interface GenLineStep extends Partial<GenCellRef> {
   line: GenText;
   dice?: string;
   parts?: GenCellRef[];
+  // Everything put and pushed there, joined by commas.
+  items?: string[];
   join?: 'name';
   text?: GenText;
   notes?: GenNote[];
@@ -95,6 +132,36 @@ export interface Generator {
   steps: GenStep[];
   // A line under the result: { if, text } over the numbers left at the end.
   footer?: GenNote;
+  // The whole result is a card: made at the end, when all is rolled.
+  card?: GenCardSpec;
+}
+
+// A price list: sections of tables whose rows are [name, price as text, price as a number or empty]. A click puts a row
+// into a basket. Options may hide a section (`when`) or multiply some of them (`factor`).
+export interface GenList {
+  id: string;
+  title: GenText;
+  about?: GenText;
+  unit: GenText;
+  options?: { key: string; title: GenText; hint?: GenText; default?: boolean }[];
+  factor?: { option: string; times: number; sections: string[] };
+  sections: { id: string; table: string; title: GenText; note?: GenText; when?: string }[];
+}
+
+// A calculator: rows of a kind (its `value`) and a count, with a checkbox `flag`; the `row` formulas are summed under
+// their names, then the `totals` go in order, each may read the ones before it and the `inputs`.
+export interface GenCalculator {
+  id: string;
+  title: GenText;
+  about?: GenText;
+  rules?: GenText;
+  unit: GenText;
+  labels: Record<'name' | 'kind' | 'count' | 'flag' | 'flagHint' | 'value' | 'add' | 'remove', GenText>;
+  kinds: { id: string; title: GenText; value: number }[];
+  start?: { kind: string; count: number }[];
+  row: Record<string, string>;
+  inputs?: { key: string; title: GenText; default?: number; min?: number }[];
+  totals: { key: string; title: GenText; formula: string; text?: GenText; strong?: boolean }[];
 }
 
 export interface GeneratorFile {
@@ -105,6 +172,8 @@ export interface GeneratorFile {
   about?: GenText;
   tables: Record<string, Record<string, GenTable>>;
   generators: Generator[];
+  lists?: GenList[];
+  calculators?: GenCalculator[];
 }
 
 export type GenOptions = Record<string, number | string | boolean>;
@@ -124,11 +193,28 @@ export interface GenLine {
   notes?: { text: GenText; warn?: boolean }[];
   sep?: boolean;
   sub?: GenLine[];
-  card?: { kind: CardKind; name: GenCell; stats: Record<string, unknown> };
+  items?: GenSlot[];
+  card?: GenCard;
+}
+export interface GenSlot {
+  cell?: GenCell;
+  text?: GenText;
+  usage?: number;
+}
+// A card as data: its words are found in the language it is made in.
+export interface GenCard {
+  kind: CardKind;
+  name: GenCell;
+  stats: Record<string, unknown>;
+  text?: Record<string, { cells: GenCell[]; text?: GenText }>;
+  slots?: Record<string, (GenSlot | null)[]>;
+  lists?: Record<string, { cells: Record<string, GenCell>; lower?: string[] }[]>;
+  notes?: GenCell[];
 }
 export interface GenResult {
   generator: string;
   lines: GenLine[];
+  card?: GenCard;
   footer?: GenText;
   params?: Record<string, number | string>;
 }
@@ -164,6 +250,8 @@ function stepOk(s: unknown, depth: number): boolean {
     if (s['sub'] !== undefined && !list(s['sub'])) return false;
     return true;
   }
+  if (typeof s['put'] === 'string') return ID_RE.test(s['put']) && typeof s['size'] === 'number' && s['size'] > 0 && s['size'] <= 100 && (s['cell'] === undefined || refOk(s['cell'])) && (s['text'] === undefined || text(s['text']));
+  if (typeof s['push'] === 'string') return ID_RE.test(s['push']) && isObj(s['item']) && Object.values(s['item']).every(refOk);
   if (typeof s['repeat'] === 'string') return form(s['repeat']) && list(s['steps']);
   if (typeof s['if'] === 'string') return form(s['if']) && list(s['then']) && (s['else'] === undefined || list(s['else']));
   return false;
@@ -186,6 +274,8 @@ export function validateGenerators(x: unknown): GeneratorFile | string {
     if (!g['steps'].every((s) => stepOk(s, 0))) return `steps:${g['id']}`;
     if (g['options'] !== undefined && !(Array.isArray(g['options']) && g['options'].length <= CAP.options && g['options'].every((o) => isObj(o) && str(o['key']) && ID_RE.test(o['key']) && text(o['title'])))) return `options:${g['id']}`;
   }
+  if (x['lists'] !== undefined && !(Array.isArray(x['lists']) && x['lists'].length <= CAP.generators && x['lists'].every((l) => isObj(l) && str(l['id']) && text(l['title']) && text(l['unit']) && Array.isArray(l['sections']) && l['sections'].every((s) => isObj(s) && str(s['id']) && str(s['table']) && text(s['title']))))) return 'lists';
+  if (x['calculators'] !== undefined && !(Array.isArray(x['calculators']) && x['calculators'].length <= CAP.generators && x['calculators'].every((c) => isObj(c) && str(c['id']) && text(c['title']) && text(c['unit']) && isObj(c['labels']) && Array.isArray(c['kinds']) && c['kinds'].every((k) => isObj(k) && str(k['id']) && typeof k['value'] === 'number') && isObj(c['row']) && Object.values(c['row']).every(form) && Array.isArray(c['totals']) && c['totals'].every((t) => isObj(t) && str(t['key']) && form(t['formula']))))) return 'calculators';
   return x as unknown as GeneratorFile;
 }
 
@@ -255,6 +345,42 @@ export function runGenerator(file: GeneratorFile, id: string, options: GenOption
 
   let pending: string[] = [];
   const params = () => Object.fromEntries(vars);
+  const slots = new Map<string, { size: number; places: (GenSlot | null)[]; past: GenSlot[] }>();
+  const lists = new Map<string, { cells: Record<string, GenCell>; lower?: string[] }[]>();
+  function put(s: GenPutStep) {
+    const box = slots.get(s.put) ?? { size: s.size, places: Array.from({ length: s.size }, () => null), past: [] };
+    slots.set(s.put, box);
+    const item: GenSlot = { ...(s.cell ? { cell: cellOf(s.cell) } : {}), ...(s.text ? { text: s.text } : {}), ...(s.usage !== undefined ? { usage: s.usage } : {}) };
+    const free = (i: number) => i >= 0 && i < box.size && !box.places[i];
+    const at = (s.at ?? []).find((a) => a.length && a.every(free));
+    if (at) at.forEach((i) => (box.places[i] = item));
+    else {
+      const one = (s.pack ?? []).find(free);
+      if (one !== undefined) box.places[one] = item;
+      else box.past.push(item);
+    }
+  }
+  function cardOf(c: GenCardSpec): GenCard {
+    const stats: Record<string, unknown> = { ...c.fixed };
+    for (const [k, f] of Object.entries(c.stats)) stats[k] = n(f);
+    const texts = Object.entries(c.text ?? {}).map(([k, t]) => [k, { cells: t.parts.map(cellOf), ...(t.text ? { text: t.text } : {}) }] as const);
+    const noted = c.notes ? (lists.get(c.notes) ?? []).flatMap((r) => (r.cells['name'] ? [r.cells['name']] : [])) : [];
+    return {
+      kind: c.kind,
+      name: cellOf(c.name),
+      stats,
+      ...(texts.length ? { text: Object.fromEntries(texts) } : {}),
+      ...(c.slots ? { slots: Object.fromEntries(c.slots.map((k) => [k, [...(slots.get(k)?.places ?? []), ...(slots.get(k)?.past ?? [])]])) } : {}),
+      ...(c.lists ? { lists: Object.fromEntries(c.lists.map((k) => [k, lists.get(k) ?? []])) } : {}),
+      ...(noted.length ? { notes: noted } : {}),
+    };
+  }
+  // What was put and pushed, each once (an item may hold two places).
+  const itemsOf = (names: string[]): GenSlot[] =>
+    names.flatMap((k) => [
+      ...[...new Set([...(slots.get(k)?.places ?? []), ...(slots.get(k)?.past ?? [])])].filter((x): x is GenSlot => !!x),
+      ...(lists.get(k) ?? []).flatMap((r) => (r.cells['name'] ? [{ cell: r.cells['name'] }] : [])),
+    ]);
   function walk(steps: GenStep[], out: GenLine[]) {
     for (const s of steps) {
       if (--budget < 0) return;
@@ -288,16 +414,13 @@ export function runGenerator(file: GeneratorFile, id: string, options: GenOption
         const refs = s.parts ?? (s.table ? [{ ...(s as GenCellRef), ...(s.dice ? { lookup: 'rolled_' } : {}) }] : []);
         const cells = refs.map(cellOf);
         const line: GenLine = { label: s.line, cells, params: params() };
+        if (s.items) line.items = itemsOf(s.items);
         if (s.join) line.join = s.join;
         if (s.text) line.text = s.text;
         if (s.sep) line.sep = true;
         if (pending.length) line.roll = pending.join(', ');
         pending = [];
-        if (s.card) {
-          const stats: Record<string, unknown> = { ...s.card.fixed };
-          for (const [k, f] of Object.entries(s.card.stats)) stats[k] = n(f);
-          line.card = { kind: s.card.kind, name: cellOf(s.card.name), stats };
-        }
+        if (s.card) line.card = cardOf(s.card);
         out.push(line);
         if (s.sub) {
           const inner: GenLine[] = [];
@@ -308,6 +431,11 @@ export function runGenerator(file: GeneratorFile, id: string, options: GenOption
         // After the nested steps: a note may speak of them.
         const notes = (s.notes ?? []).filter((x) => !x.if || n(x.if)).map((x) => ({ text: x.text, ...(x.warn ? { warn: true } : {}) }));
         if (notes.length) line.notes = notes;
+      } else if ('put' in s) put(s);
+      else if ('push' in s) {
+        const list = lists.get(s.push) ?? [];
+        lists.set(s.push, list);
+        list.push({ cells: Object.fromEntries(Object.entries(s.item).map(([k, r]) => [k, cellOf(r)])), ...(s.lower ? { lower: s.lower } : {}) });
       } else if ('repeat' in s) {
         const times = Math.max(0, Math.min(40, Math.round(n(s.repeat))));
         for (let i = 1; i <= times; i++) {
@@ -320,7 +448,56 @@ export function runGenerator(file: GeneratorFile, id: string, options: GenOption
   const lines: GenLine[] = [];
   walk(gen.steps, lines);
   const footer = gen.footer && (!gen.footer.if || n(gen.footer.if)) ? gen.footer.text : undefined;
-  return { generator: id, lines, ...(footer ? { footer, params: params() } : {}) };
+  return { generator: id, lines, ...(gen.card ? { card: cardOf(gen.card) } : {}), ...(footer ? { footer, params: params() } : {}) };
+}
+
+// ---- A price list ----
+export interface PriceItem {
+  section: string;
+  // The row in its section: the same item in every language.
+  row: number;
+  name: string;
+  // None — not a price of its own («×10», «10%»): the text as it is.
+  price: number | null;
+  text: string;
+}
+
+export function priceItems(file: GeneratorFile, list: GenList, lang: Lang): PriceItem[] {
+  const tables = file.tables[lang] ?? baseOf(file);
+  return list.sections.flatMap((s) =>
+    (tables[s.table]?.rows ?? []).map((r, row) => ({ section: s.id, row, name: r[0] ?? '', price: r[2] ? Number(r[2]) : null, text: r[1] ?? '' })),
+  );
+}
+
+export function priceOfItem(list: GenList, item: PriceItem, options: Record<string, boolean>): number | null {
+  if (item.price === null) return null;
+  const f = list.factor;
+  return item.price * (f && options[f.option] && f.sections.includes(item.section) ? f.times : 1);
+}
+
+// ---- A calculator ----
+export interface CalcRow {
+  kind: string;
+  count: number;
+  flag?: boolean;
+  name?: string;
+}
+
+const whole = (n: number) => (Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0);
+const noDice = () => 0;
+
+export const calcValue = (c: GenCalculator, r: CalcRow) => whole(r.count) * (c.kinds.find((k) => k.id === r.kind)?.value ?? 0);
+
+export function runCalculator(c: GenCalculator, rows: CalcRow[], inputs: Record<string, number>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const k of Object.keys(c.row)) out[k] = 0;
+  for (const r of rows) {
+    const own: Record<string, number> = { count: whole(r.count), flag: r.flag ? 1 : 0, value: c.kinds.find((k) => k.id === r.kind)?.value ?? 0 };
+    for (const [k, f] of Object.entries(c.row)) out[k]! += calc(f, (v) => own[v] ?? 0, noDice);
+  }
+  for (const i of c.inputs ?? []) out[i.key] = whole(inputs[i.key] ?? i.default ?? 0);
+  for (const t of c.totals) out[t.key] = calc(t.formula, (v) => out[v] ?? 0, noDice);
+  return out;
 }
 
 // ---- In words ----
@@ -338,11 +515,32 @@ export function genCell(file: GeneratorFile, c: GenCell, lang: Lang): string {
 }
 
 export function lineWords(file: GeneratorFile, l: GenLine, lang: Lang): string {
+  if (l.items) return l.items.map((i) => slotWords(file, i, lang)).join(', ');
   const parts = l.cells.map((c) => genCell(file, c, lang));
   // {0} — a cell, {low0} — the same in small letters.
   if (l.text) return genText(l.text, lang, { ...l.params, ...Object.fromEntries(parts.flatMap((p, i) => [[String(i), p], [`low${i}`, p.toLowerCase()]])) });
   if (l.join === 'name') return parts.map((p, i) => (i ? p.replace(/^-/, '').toLowerCase() : p)).join('');
   return parts.join(' — ');
+}
+
+const slotWords = (file: GeneratorFile, s: GenSlot, lang: Lang) => (s.cell ? genCell(file, s.cell, lang) : genText(s.text, lang));
+
+// The card as the app keeps it, in a language.
+export function genCardOf(file: GeneratorFile, c: GenCard, lang: Lang): { name: string; kind: CardKind; stats: Record<string, unknown>; notes?: string } {
+  const stats: Record<string, unknown> = { ...c.stats };
+  for (const [k, t] of Object.entries(c.text ?? {})) {
+    const parts = t.cells.map((x) => genCell(file, x, lang));
+    stats[k] = t.text ? genText(t.text, lang, Object.fromEntries(parts.flatMap((p, i) => [[String(i), p], [`low${i}`, p.toLowerCase()]]))) : parts.join(' ');
+  }
+  for (const [k, list] of Object.entries(c.slots ?? {}))
+    stats[k] = list.map((s) => (s ? { name: slotWords(file, s, lang), ...(s.usage !== undefined ? { usage: s.usage } : {}) } : { name: '' }));
+  for (const [k, list] of Object.entries(c.lists ?? {}))
+    stats[k] = list.map((r) => Object.fromEntries(Object.entries(r.cells).map(([f, x]) => {
+      const w = genCell(file, x, lang);
+      return [f, r.lower?.includes(f) ? w.toLowerCase() : w];
+    })));
+  const notes = c.notes?.map((x) => genCell(file, x, lang)).join('\n');
+  return { name: genCell(file, c.name, lang), kind: c.kind, stats, ...(notes ? { notes } : {}) };
 }
 
 export const plainText = (s: string) => s.replace(/\*\*/g, '');

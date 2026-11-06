@@ -7,7 +7,9 @@
   import { openTab } from '../../../renderer/lib/nav';
   import { store } from '../../../renderer/lib/store.svelte';
   import { currentSystem } from '../../../shared/adventures';
-  import { genCell, genText, lineWords, plainText, resultMarkdown, rollWords, type GeneratorFile, type GenLine, type GenOption } from '../../../shared/generators';
+  import { genCardOf, genText, lineWords, plainText, resultMarkdown, rollWords, type GeneratorFile, type GenLine, type GenOption, type GenOptions, type GenResult } from '../../../shared/generators';
+  import Calculator from './Calculator.svelte';
+  import PriceList from './PriceList.svelte';
   import { calc } from '../../../shared/syspack';
   import { familyOf } from '../../../systems';
   import { bestiary } from '../../bestiary/ui/cards.svelte';
@@ -18,9 +20,13 @@
   const lang = $derived(locale.lang);
   const family = $derived(familyOf(currentSystem(store.state.adventures)));
   const all = $derived(filesOf(family).flatMap((file) => file.generators.map((g) => ({ file, g }))));
-  const now = $derived(all.find((x) => x.g.id === gen.open[family]) ?? all[0]);
-  const file = $derived(now?.file);
-  const opts = $derived(now ? optionsOf(now.file, now.g) : {});
+  const lists = $derived(filesOf(family).flatMap((file) => (file.lists ?? []).map((l) => ({ file, l }))));
+  const calcs = $derived(filesOf(family).flatMap((file) => (file.calculators ?? []).map((c) => ({ file, c }))));
+  const list = $derived(lists.find((x) => x.l.id === gen.open[family]));
+  const calculator = $derived(calcs.find((x) => x.c.id === gen.open[family]));
+  const now = $derived(list || calculator ? undefined : (all.find((x) => x.g.id === gen.open[family]) ?? all[0]));
+  const file = $derived(now?.file ?? list?.file ?? calculator?.file ?? filesOf(family)[0]);
+  const opts = $derived(now ? optionsOf(now.file, now.g) : ({} as GenOptions));
   const result = $derived(now ? resultOf(now.file, now.g) : undefined);
 
   function pick(id: string) {
@@ -32,15 +38,9 @@
   const rowsOf = (f: GeneratorFile, o: GenOption) => f.tables[lang]?.[o.rows!.table]?.rows ?? f.tables['en']?.[o.rows!.table]?.rows ?? [];
 
   function card(f: GeneratorFile, l: GenLine) {
-    void bestiary.create(undefined, {
-      name: genCell(f, l.card!.name, lang),
-      kind: l.card!.kind,
-      lang,
-      system: f.system,
-      description: plainText(lineWords(f, l, lang)),
-      stats: l.card!.stats,
-    });
+    void bestiary.create(undefined, { ...genCardOf(f, l.card!, lang), lang, system: f.system, description: plainText(lineWords(f, l, lang)) });
   }
+  const wholeCard = (f: GeneratorFile, r: GenResult) => bestiary.create(undefined, { ...genCardOf(f, r.card!, lang), lang, system: f.system });
 
   let copied = $state(false);
   function copy() {
@@ -76,20 +76,33 @@
   <header class="head">
     <h2>{file?.title ? genText(file.title, lang) : t('tools.side.generators')}</h2>
     <div class="spacer"></div>
+    {#if result?.card && file}
+      <button class="btn" title={t('gen.card')} onclick={() => wholeCard(file, result)}><IdCard size={14} /> {t('gen.toCard')}</button>
+    {/if}
     {#if result}
       <button class="btn" title={t('tavern.toJournalHint')} onclick={toJournal}><NotebookPen size={14} /> {t('tavern.toJournal')}</button>
       <button class="btn" onclick={copy}>{#if copied}<Check size={14} /> {t('tavern.copied')}{:else}<Copy size={14} /> {t('tavern.copy')}{/if}</button>
     {/if}
   </header>
-  {#if file?.about}<p class="faint about"><Lead text={genText(file.about, lang)} /></p>{/if}
+  {#if file?.about && now}<p class="faint about"><Lead text={genText(file.about, lang)} /></p>{/if}
 
   <div class="kinds">
     {#each all as x (`${x.file.system}/${x.g.id}`)}
       <button class="chip" class:on={now?.g.id === x.g.id} onclick={() => pick(x.g.id)}>{genText(x.g.title, lang)}</button>
     {/each}
+    {#each lists as x (`${x.file.system}/${x.l.id}`)}
+      <button class="chip" class:on={list?.l.id === x.l.id} onclick={() => pick(x.l.id)}>{genText(x.l.title, lang)}</button>
+    {/each}
+    {#each calcs as x (`${x.file.system}/${x.c.id}`)}
+      <button class="chip" class:on={calculator?.c.id === x.c.id} onclick={() => pick(x.c.id)}>{genText(x.c.title, lang)}</button>
+    {/each}
   </div>
 
-  {#if now && file}
+  {#if list}
+    {#key `${list.file.system}/${list.l.id}`}<PriceList file={list.file} list={list.l} />{/key}
+  {:else if calculator}
+    {#key `${calculator.file.system}/${calculator.c.id}`}<Calculator file={calculator.file} calc={calculator.c} />{/key}
+  {:else if now && file}
     <div class="options">
       {#each (now.g.options ?? []).filter(shown) as o (o.key)}
         {#if o.type === 'check'}

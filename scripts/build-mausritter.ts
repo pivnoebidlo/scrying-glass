@@ -12,7 +12,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { Card, CardSource } from '../src/shared/cards';
-import { NAMES } from '../src/modules/tools/mouse/content.ts';
+import { NAMES, WEAPONS } from './mausritter-mouse-content.ts';
+import { TABLES as MOUSE } from './mausritter-mouse-tables.ts';
 
 // The SRD stat block as this script reads it; a card gets it as the fields of the Mausritter system pack
 // (content/mausritter/system/mausritter.json): hp, str, dex, wil, armour, warband (0 — warband scale), attacks (rows: name,
@@ -420,6 +421,12 @@ for (const [id, where, nth = 0] of WANT) {
   picked.en[id] = e;
   picked.ru[id] = r;
 }
+const priceOf = (cell: string) => {
+  const m = /^\s*(\d[\d\s,]*)\s*(?:p|п)\s*$/i.exec(cell);
+  return m ? Number(m[1]!.replace(/[\s,]/g, '')) : null;
+};
+const englishRows: Record<string, string[][]> = Object.fromEntries(Object.entries(picked.en).map(([id, t]) => [id, t.rows]));
+const generatorsEn = (table: string, row: number) => englishRows[table]![row]![1]!;
 const generators = { scryingGlass: 'generators', version: 1, system: 'mausritter', ...recipes, tables: { en: {} as Record<string, Table>, ru: {} as Record<string, Table> } };
 for (const lang of ['en', 'ru'] as const) {
   for (const id of Object.keys(picked[lang])) {
@@ -427,41 +434,36 @@ for (const lang of ['en', 'ru'] as const) {
     generators.tables[lang][id] = picked[lang][id]!;
     delete picked[lang][id];
   }
-  generators.tables[lang]['mouseNames'] = { head: ['Name'], rows: NAMES[lang].map((n) => [n]) };
+  // The price of a row as a number, by the English text: [name, text, number] (shared/generators.ts, a price list).
+  for (const s of recipes.lists.flatMap((l: { sections: { table: string }[] }) => l.sections)) {
+    generators.tables[lang][s.table]!.rows = generators.tables[lang][s.table]!.rows.map((r: string[], i: number) => [r[0]!, r[1]!, String(priceOf(generatorsEn(s.table, i)) ?? '')]);
+  }
+  // The mouse generator: an item's rules are read from its English row, so they don't depend on the translation.
+  const mt = MOUSE[lang];
+  const one = (rows: string[]) => ({ head: [''], rows: rows.map((x) => [x]) });
+  const die = (d: string) => (lang === 'ru' ? d.replace(/d/g, 'к') : d);
+  const items = mt.backgrounds.flatMap((b, i) =>
+    (['a', 'b'] as const).map((w) => {
+      const en = MOUSE.en.backgrounds[i]![w];
+      const weapon = /\((?:Light|Medium|Heavy), (d\d+(?:\/d\d+)?)\)/.exec(en);
+      return [b[w], /Heavy armour/.test(en) ? 'heavy' : /Light armour/.test(en) ? 'light' : '', weapon?.[1] ?? '', /^Hireling:/.test(en) ? 'x' : '', b[w].replace(/\s*\(.*\)$/, '')];
+    }),
+  );
+  Object.assign(generators.tables[lang], {
+    mouseNames: one(NAMES[lang]),
+    mouseBackgrounds: one(mt.backgrounds.map((b) => b.name)),
+    mouseItems: { head: ['Item', 'Armour', 'Dice', 'Hireling', 'Name'], rows: items },
+    mouseSigns: { head: ['Sign', 'Disposition'], rows: mt.birthsigns.map((s) => [s.sign, s.disposition]) },
+    mouseColors: one(mt.colors),
+    mousePatterns: one(mt.patterns),
+    mouseDetails: one(mt.details),
+    mouseWeapons: { head: ['Name', 'Dice', 'Both paws', 'Shown'], rows: WEAPONS[lang].map((w) => [w.name, w.dice, w.both ? 'x' : '', `${w.name} (${die(w.dice)})`]) },
+  });
 }
 const generatorsOut = path.join(RES, 'generators', 'mausritter.json');
 fs.mkdirSync(path.dirname(generatorsOut), { recursive: true });
 fs.writeFileSync(generatorsOut, JSON.stringify(generators) + '\n');
 console.log(`${generatorsOut}: ${recipes.generators.length} generators, ${Object.keys(generators.tables.en).length} tables`);
-
-// One row of a table per line of the file: readable and easy to compare.
-const tablesTs = (all: typeof picked) =>
-  Object.entries(all)
-    .map(([lang, list]) => {
-      const tables = Object.entries(list).map(
-        ([id, tb]) => `    ${id}: {\n      head: ${JSON.stringify(tb.head)},\n      rows: [\n${tb.rows.map((r) => `        ${JSON.stringify(r)},`).join('\n')}\n      ],\n    },`
-      );
-      return `  ${lang}: {\n${tables.join('\n')}\n  },\n`;
-    })
-    .join('');
-const tablesOut = path.resolve(import.meta.dirname, '../src/modules/tools/maus/srd.ts');
-fs.mkdirSync(path.dirname(tablesOut), { recursive: true });
-fs.writeFileSync(
-  tablesOut,
-  `// Built by scripts/build-mausritter.ts from scripts/mausritter-srd.<lang>.md — do not edit by hand.
-// The price list of the Mausritter SRD 2.3.1 (CC BY 4.0, Losing Games and Isaac Williams; Russian — our translation)
-// for Tools → Shop: the header and the rows as in the SRD, cells with their Markdown (**bold**).
-
-export interface SrdTable {
-  head: string[];
-  rows: string[][];
-}
-
-export const SRD_TABLES: Record<'en' | 'ru', Record<string, SrdTable>> = {
-${tablesTs(picked)}};
-`
-);
-console.log(`${tablesOut}: ${Object.keys(picked.en).length} tables`);
 
 // ---------- Example factions (Tools → Factions) ----------
 // «### 1. Cat lord / #### Resources (list) / #### Goals (list with ○ marks)» → { name, resources, goals: [text, marks] }.
@@ -499,7 +501,8 @@ factions.en.forEach((f, i) => {
     throw new Error(`faction «${f.name}» / «${r.name}»: goals or resources differ`);
   }
 });
-fs.appendFileSync(
+const tablesOut = path.resolve(import.meta.dirname, '../src/modules/tools/maus/srd.ts');
+fs.writeFileSync(
   tablesOut,
   `
 export interface ExampleFaction {
