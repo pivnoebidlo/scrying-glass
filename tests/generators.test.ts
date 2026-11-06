@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { validatePack, type SystemPack } from '../src/shared/syspack';
-import { calcValue, diceOfRows, genCardOf, genText, lineWords, packFile, priceItems, priceOfItem, rangeOf, runCalculator, resultMarkdown, rollWords, runGenerator, validateGenerators, kindsOfText, priceRowsOfText, rowsOfText, simpleStep, textOfKinds, textOfPriceRows, unitOf, unitText, stepOf, textOfRows, type GeneratorFile, type GenLine, type GenOptions } from '../src/shared/generators';
+import { calcValue, diceOfRows, genCardOf, genText, lineWords, packFile, priceItems, priceOfItem, rangeOf, runCalculator, resultMarkdown, rollWords, runGenerator, validateGenerators, kindsOfText, priceRowsOfText, rowsOfText, simpleStep, textOfKinds, textOfPriceRows, unitOf, unitText, stepOf, textOfRows, linkCard, numberOf, numberStep, whenFormula, whenOf, type Generator, type NumberStep, type SimpleStep, type GeneratorFile, type GenLine, type GenOptions } from '../src/shared/generators';
 
 const file = validateGenerators(JSON.parse(readFileSync('content/mausritter/generators/mausritter.json', 'utf8'))) as GeneratorFile;
 // Rolls in a fixed order (then 1 forever).
@@ -251,5 +251,50 @@ describe('a system of one file brings its own generators', () => {
 
   it('no kit — no field', () => {
     expect(validatePack(pack(undefined))).not.toHaveProperty('kit');
+  });
+});
+
+describe('a generator made of sentences', () => {
+  const tablesEn = { en: { sizes: { head: ['Size'], rows: [['Farm'], ['Hamlet'], ['Town']] }, inns: { head: ['Inn'], rows: [['The Fox'], ['The Hen']] }, gear: { head: ['Gear'], rows: [['Rope'], ['Lamp']] } } };
+  const f = (generators: unknown[]) => packFile('x', { tables: tablesEn, generators: generators as Generator[] });
+
+  it('a condition, a count and a number read back as they were written', () => {
+    const x: SimpleStep = { label: 'Inn', table: 'inns', dice: '', times: 1, when: { what: 'size', op: 'ge', value: 3 } };
+    expect(simpleStep(stepOf(x))).toEqual(x);
+    const y: SimpleStep = { label: 'Gear', table: 'gear', dice: 'd6', times: 2, when: { what: 'city', op: 'off' } };
+    expect(simpleStep(stepOf(y))).toEqual(y);
+    const z: SimpleStep = { label: 'Size', table: 'sizes', dice: '', by: 'size', byRow: true, times: 1, timesBy: 'many' };
+    expect(simpleStep(stepOf(z))).toEqual(z);
+    expect(whenOf('ge(size, 3)')).toEqual({ what: 'size', op: 'ge', value: 3 });
+    expect(whenOf('size + 1 > 2')).toBeNull();
+    expect(whenFormula({ what: 'city', op: 'on' })).toBe('city');
+    const n: NumberStep = { key: 'size', dice: '2d6', keep: 'low', count: 1 };
+    expect(numberOf(numberStep(n))).toEqual(n);
+    expect(numberOf(numberStep({ key: 'best', formula: 'max(a, b)' }))).toEqual({ key: 'best', formula: 'max(a, b)' });
+  });
+
+  it('runs: a table without numbers is counted by the number, a line goes by its condition', () => {
+    const g = { id: 'town', title: 'Town', steps: [numberStep({ key: 'size', dice: '2d6', keep: 'low', count: 1 }), stepOf({ label: 'Size', table: 'sizes', dice: '', by: 'size', byRow: true, times: 1 }), stepOf({ label: 'Inn', table: 'inns', dice: '', times: 1, when: { what: 'size', op: 'ge', value: 3 } })] };
+    const town = runGenerator(f([g]), 'town', {}, seq(3, 5, 2));
+    expect(town.lines.map((l) => lineWords(f([g]), l, 'en'))).toEqual(['Town', 'The Hen']);
+    const farm = runGenerator(f([g]), 'town', {}, seq(1, 5));
+    expect(farm.lines.map((l) => lineWords(f([g]), l, 'en'))).toEqual(['Farm']);
+  });
+
+  it('a card is found by titles: numbers, a text field, things in a slots group', () => {
+    const fields = [{ key: 'str', title: 'STR', type: 'number' }, { key: 'look', title: 'Gear', type: 'text' }, { key: 'bag', title: 'Bag', type: 'slots' }];
+    const g: Generator = { id: 'm', title: 'Mouse', names: { s: 'STR', w: 'Luck' }, steps: [numberStep({ key: 's', dice: '2d6' }), numberStep({ key: 'w', dice: 'd6' }), stepOf({ label: 'Name', table: 'inns', dice: '', times: 1 }), stepOf({ label: 'Gear', table: 'gear', dice: '', times: 1 }), stepOf({ label: 'Packed', table: 'gear', dice: '', times: 1, into: { field: 'bag', size: 4, pack: [2, 3] } })] };
+    const r = linkCard(g, fields, 'character', 'en');
+    expect(r.card.stats).toEqual({ str: 's' });
+    expect(r.links).toContainEqual({ from: 'STR', to: 'STR' });
+    expect(r.links).toContainEqual({ from: 'Luck', to: null });
+    // No name chosen yet: the line called so, an empty choice is none.
+    expect(linkCard(g, fields, 'character', 'en', '').card.name).toEqual({ line: 'l3' });
+    const done = { ...g, steps: r.steps, card: r.card };
+    const file = f([done]);
+    const res = runGenerator(file, 'm', {}, seq(2, 3, 4, 1, 2, 1));
+    const card = genCardOf(file, res.card!, 'en');
+    expect(card).toMatchObject({ name: 'The Fox', stats: { str: 5, look: 'Lamp' } });
+    expect((card.stats['bag'] as { name: string }[]).map((x) => x.name)).toEqual(['', '', 'Rope', '']);
   });
 });

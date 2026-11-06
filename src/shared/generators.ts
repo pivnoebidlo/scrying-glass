@@ -16,6 +16,8 @@
 //     free place of `at`, else the first free of `pack`, else past the end
 //   { "push": "attacks", "item": { "name": {…}, "dice": {…} } }      a row of a list for the card
 //
+// `as` names a line, so a card can take its words; `into` puts what it got into a slots field too.
+//
 // A line may have `text` («{0} {1} · {2}», cells by number, {low0} — in small letters, numbers by name), `notes` (shown beside it, each with its
 // `if`), `sub` (nested lines), `sep` (a rule above) and `card` (a button that makes a card of it).
 import { format, type Lang, type Msg } from './i18n/core';
@@ -76,14 +78,11 @@ export interface GenNote {
 }
 
 // A text of a card: cells, joined by `text` if there is one.
-export interface GenCardText {
-  parts: GenCellRef[];
-  text?: GenText;
-}
+export type GenCardText = { parts: GenCellRef[]; text?: GenText } | { line: string };
 
 export interface GenCardSpec {
   kind: CardKind;
-  name: GenCellRef;
+  name: GenCellRef | { line: string };
   // Stats: a field → a formula.
   stats: Record<string, string>;
   // Values as they are.
@@ -108,6 +107,8 @@ export interface GenLineStep extends Partial<GenCellRef> {
   sep?: boolean;
   sub?: GenStep[];
   card?: GenCardSpec;
+  as?: string;
+  into?: { field: string; size: number; pack: number[] };
 }
 
 export interface GenOption {
@@ -134,6 +135,8 @@ export interface Generator {
   footer?: GenNote;
   // The whole result is a card: made at the end, when all is rolled.
   card?: GenCardSpec;
+  // The titles of the numbers of its steps, for the builder: a key → a title.
+  names?: Record<string, GenText>;
 }
 
 // A price list: sections of tables whose rows are [name, price as text, price as a number or empty]. A click puts a row
@@ -220,7 +223,7 @@ export interface GenSlot {
 // A card as data: its words are found in the language it is made in.
 export interface GenCard {
   kind: CardKind;
-  name: GenCell;
+  name?: GenCell;
   stats: Record<string, unknown>;
   text?: Record<string, { cells: GenCell[]; text?: GenText }>;
   slots?: Record<string, (GenSlot | null)[]>;
@@ -363,10 +366,11 @@ export function runGenerator(file: GeneratorFile, id: string, options: GenOption
   const params = () => Object.fromEntries(vars);
   const slots = new Map<string, { size: number; places: (GenSlot | null)[]; past: GenSlot[] }>();
   const lists = new Map<string, { cells: Record<string, GenCell>; lower?: string[] }[]>();
-  function put(s: GenPutStep) {
+  const named = new Map<string, GenCell[]>();
+  const put = (s: GenPutStep) => place(s, { ...(s.cell ? { cell: cellOf(s.cell) } : {}), ...(s.text ? { text: s.text } : {}), ...(s.usage !== undefined ? { usage: s.usage } : {}) });
+  function place(s: Pick<GenPutStep, 'put' | 'size' | 'at' | 'pack'>, item: GenSlot) {
     const box = slots.get(s.put) ?? { size: s.size, places: Array.from({ length: s.size }, () => null), past: [] };
     slots.set(s.put, box);
-    const item: GenSlot = { ...(s.cell ? { cell: cellOf(s.cell) } : {}), ...(s.text ? { text: s.text } : {}), ...(s.usage !== undefined ? { usage: s.usage } : {}) };
     const free = (i: number) => i >= 0 && i < box.size && !box.places[i];
     const at = (s.at ?? []).find((a) => a.length && a.every(free));
     if (at) at.forEach((i) => (box.places[i] = item));
@@ -379,11 +383,12 @@ export function runGenerator(file: GeneratorFile, id: string, options: GenOption
   function cardOf(c: GenCardSpec): GenCard {
     const stats: Record<string, unknown> = { ...c.fixed };
     for (const [k, f] of Object.entries(c.stats)) stats[k] = n(f);
-    const texts = Object.entries(c.text ?? {}).map(([k, t]) => [k, { cells: t.parts.map(cellOf), ...(t.text ? { text: t.text } : {}) }] as const);
+    const texts = Object.entries(c.text ?? {}).map(([k, t]) => [k, 'line' in t ? { cells: named.get(t.line) ?? [] } : { cells: t.parts.map(cellOf), ...(t.text ? { text: t.text } : {}) }] as const);
+    const name = 'line' in c.name ? named.get(c.name.line)?.[0] : cellOf(c.name);
     const noted = c.notes ? (lists.get(c.notes) ?? []).flatMap((r) => (r.cells['name'] ? [r.cells['name']] : [])) : [];
     return {
       kind: c.kind,
-      name: cellOf(c.name),
+      ...(name ? { name } : {}),
       stats,
       ...(texts.length ? { text: Object.fromEntries(texts) } : {}),
       ...(c.slots ? { slots: Object.fromEntries(c.slots.map((k) => [k, [...(slots.get(k)?.places ?? []), ...(slots.get(k)?.past ?? [])]])) } : {}),
@@ -429,6 +434,8 @@ export function runGenerator(file: GeneratorFile, id: string, options: GenOption
         }
         const refs = s.parts ?? (s.table ? [{ ...(s as GenCellRef), ...(s.dice ? { lookup: 'rolled_' } : {}) }] : []);
         const cells = refs.map(cellOf);
+        if (s.as) named.set(s.as, cells);
+        if (s.into && cells[0]) place({ put: s.into.field, size: s.into.size, pack: s.into.pack }, { cell: cells[0] });
         const line: GenLine = { label: s.line, cells, params: params() };
         if (s.items) line.items = itemsOf(s.items);
         if (s.join) line.join = s.join;
@@ -568,32 +575,125 @@ export function kindsOfText(text: string): GenCalculator['kinds'] {
 }
 export const textOfKinds = (kinds: GenCalculator['kinds'], lang: Lang) => kinds.map((k) => `${genText(k.title, lang)} | ${k.value}`).join('\n');
 
-// A step the builder shows as a row: a label, a table, the dice (none — any row), how many times.
+// A step the builder shows as a row: a label, a table, the dice (none — any row) or a number that picks the row, how
+// many times, the condition, where it goes.
+export type WhenOp = 'ge' | 'le' | 'gt' | 'lt' | 'eq' | 'on' | 'off';
+export interface StepWhen {
+  what: string;
+  op: WhenOp;
+  value?: number;
+}
 export interface SimpleStep {
   label: GenText;
   table: string;
   dice: string;
+  // A number instead of dice; `byRow` — the table has no numbers, it counts rows.
+  by?: string;
+  byRow?: boolean;
   times: number;
+  timesBy?: string;
+  when?: StepWhen;
+  as?: string;
+  into?: NonNullable<GenLineStep['into']>;
+}
+
+export const whenFormula = (w: StepWhen) => (w.op === 'on' ? w.what : w.op === 'off' ? `not(${w.what})` : `${w.op}(${w.what}, ${w.value ?? 0})`);
+export function whenOf(f: string): StepWhen | null {
+  const cmp = /^(ge|le|gt|lt|eq)\((\w+), (-?\d+(?:\.\d+)?)\)$/.exec(f);
+  if (cmp) return { op: cmp[1] as WhenOp, what: cmp[2]!, value: Number(cmp[3]) };
+  const not = /^not\((\w+)\)$/.exec(f);
+  if (not) return { op: 'off', what: not[1]! };
+  return /^\w+$/.test(f) ? { op: 'on', what: f } : null;
 }
 
 function simpleLine(s: GenStep): SimpleStep | null {
-  if (!('line' in s) || !s.table || s.parts || s.sub || s.card || s.notes || s.text || s.join || s.items) return null;
-  if (s.row !== undefined || s.lookup !== undefined || s.group || s.col !== undefined) return null;
-  return { label: s.line, table: s.table, dice: s.dice ?? '', times: 1 };
+  if (!('line' in s) || !s.table || s.parts || s.sub || s.card || s.notes || s.text || s.join || s.items || s.col !== undefined || s.group) return null;
+  const row = s.row === undefined ? null : /^(\w+) - 1$/.exec(s.row);
+  if (s.row !== undefined && !row) return null;
+  if (s.lookup !== undefined && !/^\w+$/.test(s.lookup)) return null;
+  const by = row?.[1] ?? s.lookup;
+  return { label: s.line, table: s.table, dice: s.dice ?? '', times: 1, ...(by ? { by } : {}), ...(row ? { byRow: true } : {}), ...(s.as ? { as: s.as } : {}), ...(s.into ? { into: s.into } : {}) };
 }
 
 // Anything else stays as it is, the builder only says it is there.
 export function simpleStep(s: GenStep): SimpleStep | null {
-  if ('repeat' in s && s.steps.length === 1 && /^\d+$/.test(s.repeat) && !s.as) {
+  if ('if' in s) {
+    if (s.else?.length || s.then.length !== 1) return null;
+    const when = whenOf(s.if);
+    const inner = when && !('if' in s.then[0]!) ? simpleStep(s.then[0]!) : null;
+    return inner && { ...inner, when: when! };
+  }
+  if ('repeat' in s) {
+    if (s.steps.length !== 1 || s.as || !/^\w+$/.test(s.repeat)) return null;
     const one = simpleLine(s.steps[0]!);
-    return one && { ...one, times: Number(s.repeat) };
+    return one && (/^\d+$/.test(s.repeat) ? { ...one, times: Number(s.repeat) } : { ...one, timesBy: s.repeat });
   }
   return simpleLine(s);
 }
 
 export function stepOf(x: SimpleStep): GenStep {
-  const line: GenStep = { line: x.label, table: x.table, ...(x.dice ? { dice: x.dice } : { any: true }) };
-  return x.times > 1 ? { repeat: String(Math.min(40, Math.round(x.times))), steps: [line] } : line;
+  const how = x.by ? (x.byRow ? { row: `${x.by} - 1` } : { lookup: x.by }) : x.dice ? { dice: x.dice } : { any: true };
+  const line: GenStep = { line: x.label, table: x.table, ...how, ...(x.as ? { as: x.as } : {}), ...(x.into ? { into: x.into } : {}) };
+  const times = x.timesBy ?? (x.times > 1 ? String(Math.min(40, Math.round(x.times))) : '');
+  const many: GenStep = times ? { repeat: times, steps: [line] } : line;
+  return x.when ? { if: whenFormula(x.when), then: [many] } : many;
+}
+
+// A number of a generator, rolled or worked out first: «the lower of 2d6», «the best of the three».
+export interface NumberStep {
+  key: string;
+  dice?: string;
+  keep?: 'low' | 'high';
+  count?: number;
+  formula?: string;
+}
+export function numberOf(s: GenStep): NumberStep | null {
+  if (!('let' in s) || s.table || s.of || s.is !== undefined) return null;
+  if (s.dice) return { key: s.let, dice: s.dice, ...(s.keep ? { keep: s.keep, count: s.count ?? 1 } : {}) };
+  return s.formula !== undefined ? { key: s.let, formula: s.formula } : null;
+}
+export const numberStep = (n: NumberStep): GenStep =>
+  n.dice ? { let: n.key, dice: n.dice, ...(n.keep ? { keep: n.keep, count: n.count ?? 1 } : {}) } : { let: n.key, formula: n.formula ?? '0' };
+
+// A card of the whole result, found by names: a number goes to the number field of the same title, a line to the text
+// field of its label; a line with `into` fills its slots field. What found nothing is left out, the builder says so.
+export interface CardField {
+  key: string;
+  title: string;
+  type: string;
+}
+export interface CardLink {
+  from: string;
+  to: string | null;
+}
+export function linkCard(gen: Generator, fields: CardField[], kind: CardKind, lang: Lang, nameLine?: string): { steps: GenStep[]; card: GenCardSpec; links: CardLink[] } {
+  const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  const links: CardLink[] = [];
+  const stats: Record<string, string> = {};
+  const text: Record<string, GenCardText> = {};
+  const slotted = new Set<string>();
+  const steps = gen.steps.map((s, i) => {
+    const n = numberOf(s);
+    if (n) {
+      const title = genText(gen.names?.[n.key], lang) || n.key;
+      const f = fields.find((x) => (x.type === 'number' || x.type === 'dots') && same(x.title, title));
+      if (f) stats[f.key] = n.key;
+      links.push({ from: title, to: f?.title ?? null });
+      return s;
+    }
+    const x = simpleStep(s);
+    if (!x) return s;
+    const as = x.as ?? `l${i + 1}`;
+    if (x.into) slotted.add(x.into.field);
+    const title = genText(x.label, lang);
+    const f = fields.find((y) => (y.type === 'text' || y.type === 'textarea') && same(y.title, title));
+    if (f && !x.when && x.times === 1 && !x.timesBy) text[f.key] = { line: as };
+    if (!x.into) links.push({ from: title, to: f?.title ?? null });
+    return stepOf({ ...x, as });
+  });
+  const named = steps.flatMap((s) => (simpleStep(s) ? [simpleStep(s)!] : []));
+  const nameAs = nameLine || named.find((x) => same(genText(x.label, lang), 'имя') || same(genText(x.label, lang), 'name'))?.as || named[0]?.as || '';
+  return { steps, links, card: { kind, name: { line: nameAs }, stats, ...(Object.keys(text).length ? { text } : {}), ...(slotted.size ? { slots: [...slotted] } : {}) } };
 }
 
 // ---- In words ----
@@ -636,7 +736,7 @@ export function genCardOf(file: GeneratorFile, c: GenCard, lang: Lang): { name: 
       return [f, r.lower?.includes(f) ? w.toLowerCase() : w];
     })));
   const notes = c.notes?.map((x) => genCell(file, x, lang)).join('\n');
-  return { name: genCell(file, c.name, lang), kind: c.kind, stats, ...(notes ? { notes } : {}) };
+  return { name: c.name ? genCell(file, c.name, lang) : '', kind: c.kind, stats, ...(notes ? { notes } : {}) };
 }
 
 // A card's template filled in: its words in a language, its dice rolled.
