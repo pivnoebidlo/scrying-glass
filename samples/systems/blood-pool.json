@@ -602,6 +602,10 @@
         "title": {
          "en": "Hunger +1",
          "ru": "Голод +1"
+        },
+        "change": {
+         "field": "hunger",
+         "by": "1"
         }
        }
       ]

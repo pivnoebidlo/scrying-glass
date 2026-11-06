@@ -364,7 +364,11 @@
         },
         "divide": 5
        }
-      ]
+      ],
+      "onFail": {
+       "field": "san",
+       "by": "-1"
+      }
      },
      "live": "both"
     },

@@ -107,6 +107,13 @@
               <span class="note">{p.note}{#if !p.tally}: <span class="faces">{p.dice.map((g) => g.join(' ')).join(' | ')}</span>{/if}</span>
               {#if p.outcome}<span class="tag" class:crit={p.tone === 'good'} class:fumble={p.tone === 'bad'}>{p.outcome}</span>{/if}
             </div>
+            {#if e.changed}
+              {@const c = e.changed}
+              <div class="line">
+                <span class="tag">{c.title} {c.by > 0 ? `+${c.by}` : c.by}{#if c.to !== undefined}: {c.from} → {c.to}{/if}</span>
+                {#if c.undo}<button class="btn small" onclick={() => rolls.undoChange(e.id)}>{t('pack.undo')}</button>{/if}
+              </div>
+            {/if}
             {#if p.onFail && (e.dc !== undefined ? p.total < e.dc : p.total === 0)}
               <div class="line"><span class="tag fumble">{p.onFail}</span></div>
             {/if}

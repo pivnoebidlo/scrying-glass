@@ -27,6 +27,8 @@ export interface RollEntry {
   // `need` — the successes needed).
   degrees?: Degrees;
   dc?: number;
+  // What the roll changed on the sheet: `undo` — none when nothing was changed (a sheet without a table).
+  changed?: { title: string; by: number; from?: number; to?: number; undo?: () => void };
   damage: DamageRoll[];
 }
 
@@ -60,6 +62,15 @@ class Rolls {
   }
 
   // The DC a check (or a pack's d20 roll) is judged against; null — none.
+  // Says what a roll changed on the sheet (the sheet does it: only it knows the table).
+  changed(id: number, changed: RollEntry['changed']) {
+    this.list = this.list.map((x) => (x.id === id ? { ...x, changed } : x));
+  }
+  undoChange(id: number) {
+    this.list.find((x) => x.id === id)?.changed?.undo?.();
+    this.list = this.list.map((x) => (x.id === id ? (({ changed: _c, ...rest }) => rest)(x) : x));
+  }
+
   setDc(id: number, dc: number | null) {
     this.list = this.list.map((x) => (x.id === id ? (dc === null ? (({ dc: _d, ...rest }) => rest)(x) : { ...x, dc }) : x));
   }
@@ -79,7 +90,9 @@ class Rolls {
 
   // A roll of a system pack: the spec of the field, its numbers from the card.
   packRoll(who: string, what: string, spec: RollSpec, value: (formula: string) => number, mode: D20Mode = 'normal', row?: Record<string, unknown>) {
-    this.push({ who, what, pack: rollPack(spec, value, getLang(), packWords(), die, mode, row), damage: [] });
+    const pack = rollPack(spec, value, getLang(), packWords(), die, mode, row);
+    this.push({ who, what, pack, damage: [] });
+    return { id: this.list.at(-1)!.id, change: pack.change };
   }
 
   // Change a pool after the roll (its line, in place).

@@ -58,8 +58,20 @@
     if (f.roll.type === 'pool' && f.roll.ask && asking === null) return void (asking = { key: f.key, row, mode: modeOf(e) });
     const label = row ? String(Object.values(row).find((v) => typeof v === 'string' && v.trim()) ?? L(f.title)) : L(f.title);
     const spec = extra && f.roll.type === 'pool' ? { ...f.roll, count: `(${f.roll.count}) + ${extra}` } : f.roll;
-    rolls.packRoll(card.name, extra ? `${label} (${extra > 0 ? '+' : '−'}${Math.abs(extra)})` : label, spec, (formula) => evalFormula(pack, s, formula, row), asking?.mode ?? modeOf(e), row);
+    const done = rolls.packRoll(card.name, extra ? `${label} (${extra > 0 ? '+' : '−'}${Math.abs(extra)})` : label, spec, (formula) => evalFormula(pack, s, formula, row), asking?.mode ?? modeOf(e), row);
+    if (done.change) apply(done.id, done.change);
     asking = null;
+  }
+  // An outcome changes the sheet: a field marked at the table, here and now; the log can take it back.
+  function apply(id: number, c: { field: string; by: number }) {
+    const f = sections.flatMap((x) => x.fields).find((x) => x.key === c.field);
+    if (!f) return;
+    const title = L(f.title);
+    if (!marks(f)) return rolls.changed(id, { title, by: c.by });
+    const from = num(f);
+    const to = Math.max(0, Math.min(res?.limits[f.key] ?? 0, from + c.by));
+    host?.set(card, f.key, to);
+    rolls.changed(id, { title, by: c.by, from, to, undo: () => host?.set(card, f.key, from) });
   }
   // The field whose pool asks for added or taken dice now.
   let asking = $state<{ key: string; row?: Record<string, unknown>; mode: ReturnType<typeof modeOf> } | null>(null);

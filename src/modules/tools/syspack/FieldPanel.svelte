@@ -8,6 +8,7 @@
   import Lead from '../../../renderer/lib/Lead.svelte';
   import { Dices, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
+  import ChangeInput from './ChangeInput.svelte';
   import { COLUMN_TYPES, evalFormula, FIELD_TYPES, fieldMap, LIVE_TYPES, loc, newField, newRoll, type FieldDef, type FieldType, type LiveBy, type Loc, type RollSpec, POOL_KINDS, type PoolKind, type SystemPack } from '../../../shared/syspack';
   import { keyFrom } from '../../../shared/compendium';
   import { getLang } from '../../../shared/i18n';
@@ -41,6 +42,8 @@
   const example = (formula: string) => (pack && formula.trim() ? valueOf(formula) : null);
 
   // A new field has a key from «New field»: it follows the title until the GM changes it.
+  // What an outcome can change: the fields marked at the table.
+  const liveFields = $derived(pack ? [...fieldMap(pack)].filter(([, x]) => x.live).map(([k, x]): [string, string] => [k, L(x.title) || k]) : []);
   const fresh = $derived(new RegExp(`^${keyFrom(t('sb.newField'))}(_\\d+)?$`).test(f.key));
   function retitle() {
     const title = L(f.title).trim();
@@ -263,6 +266,7 @@
                   <span class="faint">{t('sb.bandMin')}</span>
                   <input type="number" class="n" {disabled} value={b.min} onchange={(e) => (b.min = num(e.currentTarget.value) ?? 0)} />
                   <LocInput value={b.title} set={(v) => (b.title = v)} {disabled} />
+                  <ChangeInput value={b.change} set={(v) => (v ? (b.change = v) : delete b.change)} fields={liveFields} {disabled} />
                   <button type="button" class="icon-btn" title={t('sb.remove')} {disabled} onclick={() => (r.bands = r.bands.filter((_, j) => j !== i))}><X size={13} /></button>
                 </div>
               {/each}
@@ -360,6 +364,10 @@
                   <label class="check"><input type="checkbox" {disabled} checked={!!r.pushStress} onchange={(e) => (e.currentTarget.checked ? (r.pushStress = true) : delete r.pushStress)} /> {t('sb.pushStress')}</label>
                 {/if}
               {:else if r.type === 'under'}
+                {#if liveFields.length}
+                  <div class="row"><span>{t('sb.onSuccess')}</span><ChangeInput value={r.onSuccess} set={(v) => (v ? (r.onSuccess = v) : delete r.onSuccess)} fields={liveFields} {disabled} /></div>
+                  <div class="row"><span>{t('sb.onFail')}</span><ChangeInput value={r.onFail} set={(v) => (v ? (r.onFail = v) : delete r.onFail)} fields={liveFields} {disabled} /></div>
+                {/if}
                 <div class="row">
                   <span>{t('sb.levels')}</span>
                   {#each r.levels ?? [] as l, i (i)}

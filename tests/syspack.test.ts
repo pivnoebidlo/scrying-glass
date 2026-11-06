@@ -411,6 +411,20 @@ describe('a pool with special dice', () => {
     expect(again.onFail).toBe('The beast breaks loose');
   });
 
+  it('an outcome changes the sheet: a band says what, dice are rolled, nonsense is dropped', () => {
+    const rouse = fieldMap(pack).get('rouse')!.roll!;
+    expect(rollPack(rouse, () => 0, 'en', words, seq(3)).change).toEqual({ field: 'hunger', by: 1 });
+    expect(rollPack(rouse, () => 0, 'en', words, seq(7)).change).toBeUndefined();
+    const horror = validatePack(JSON.parse(fs.readFileSync('samples/systems/d100-horror.json', 'utf8'))) as SystemPack;
+    const san = fieldMap(horror).get('san')!.roll!;
+    expect(rollPack(san, () => 40, 'en', words, seq(90)).change).toEqual({ field: 'san', by: -1 });
+    expect(rollPack(san, () => 40, 'en', words, seq(10)).change).toBeUndefined();
+    const dice = { type: 'under', sides: 20, target: '10', onFail: { field: 'san', by: '-2d6' } } as const;
+    expect(rollPack(dice, () => 10, 'en', words, seq(20, 3, 4)).change).toEqual({ field: 'san', by: -7 });
+    const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', tracker: {}, sections: [{ id: 'm', title: 'M', fields: [{ key: 'a', title: 'A', type: 'number', roll: { type: 'under', sides: 20, target: 'a', onFail: { field: 'a', by: 'eval()' } } }] }] };
+    expect(fieldMap(validatePack(raw) as SystemPack).get('a')!.roll).not.toHaveProperty('onFail');
+  });
+
   it('its fields and kit are valid: a whole game without code', () => {
     expect(fieldMap(pack).get('hunger')!.live).toBe('both');
     expect(pack.kit!.generators).toHaveLength(1);

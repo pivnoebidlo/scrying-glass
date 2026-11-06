@@ -31,9 +31,9 @@ export type RollSpec =
   | { type: 'd20'; bonus: string; labels?: RollLabels; degrees?: Degrees }
   // A die (d100, d20) under the target; levels — harder successes at a fraction of it («hard» — half). Advantage —
   // the lower of two dice, disadvantage — the higher (a Mausritter save).
-  | { type: 'under'; sides: number; target: string; levels?: { title: Loc; divide: number }[] }
+  | { type: 'under'; sides: number; target: string; levels?: { title: Loc; divide: number }[]; onSuccess?: RollChange; onFail?: RollChange }
   // Dice + bonus against bands of outcome (PbtA: 10+, 7–9, 6−), the highest band that fits.
-  | { type: 'bands'; dice: string; bonus: string; bands: { min: number; title: Loc }[] }
+  | { type: 'bands'; dice: string; bonus: string; bands: { min: number; title: Loc; change?: RollChange }[] }
   // A pool of dice: successes are faces ≥ `success` (Year Zero: sixes) or the best die (Forged in the Dark: the top
   // face — full success, two below it — partial, less — bad, two tops — critical; no dice — two, the lower counts);
   // push — the roll can be pushed once (the dice that aren't successes are rolled again); resist — the best die is a
@@ -62,6 +62,11 @@ export type RollSpec =
   | { type: 'explode'; sides: string; bonus?: string; wild?: number };
 export const ROLL_TYPES = ['d20', 'under', 'bands', 'pool', 'fate', 'sum', 'explode'] as const;
 export type Degrees = 'two' | 'four';
+// What an outcome does to the sheet: a field marked at the table goes up or down by this (a number or dice, «-1d6»).
+export interface RollChange {
+  field: string;
+  by: string;
+}
 export interface PoolMarked {
   count: string;
   top?: Loc;
@@ -326,6 +331,7 @@ export const blankPack = (id: string, title: Loc): SystemPack => ({
 const KEY_RE = /^[a-z][a-z0-9_]{0,31}$/;
 const ID_RE = /^[a-z][a-z0-9-]{1,31}$/;
 const KINDS: CardKind[] = ['monster', 'npc', 'character'];
+const CHANGE_RE = /^[+-]?(\d+|\d*d\d+)$/;
 const USE_RE = /^[a-z][A-Za-z0-9-]{0,40}$/;
 const LIMIT = { uses: 40, resets: 8, sections: 40, fields: 80, options: 60, columns: 8, text: 200, long: 4000, formula: 200, entries: 500, entry: 30000 };
 
@@ -363,11 +369,16 @@ function rollOf(x: unknown): RollSpec | null {
       const levels = Array.isArray(x['levels'])
         ? x['levels'].flatMap((l) => (isObj(l) && locOf(l['title']) && num(l['divide']) && (l['divide'] as number) >= 1 ? [{ title: locOf(l['title'])!, divide: l['divide'] as number }] : [])).slice(0, 4)
         : [];
-      return { type: 'under', sides, target: x['target'] as string, ...(levels.length ? { levels } : {}) };
+      const [good, bad] = [changeOf(x['onSuccess']), changeOf(x['onFail'])];
+      return { type: 'under', sides, target: x['target'] as string, ...(levels.length ? { levels } : {}), ...(good ? { onSuccess: good } : {}), ...(bad ? { onFail: bad } : {}) };
     }
     case 'bands': {
       const bands = Array.isArray(x['bands'])
-        ? x['bands'].flatMap((b) => (isObj(b) && num(b['min']) !== undefined && locOf(b['title']) ? [{ min: b['min'] as number, title: locOf(b['title'])! }] : [])).slice(0, 8)
+        ? x['bands'].flatMap((b) => {
+            if (!isObj(b) || num(b['min']) === undefined || !locOf(b['title'])) return [];
+            const change = changeOf(b['change']);
+            return [{ min: b['min'] as number, title: locOf(b['title'])!, ...(change ? { change } : {}) }];
+          }).slice(0, 8)
         : [];
       if (typeof x['dice'] !== 'string' || !diceOf(x['dice']) || f('bonus') === null || !bands.length) return null;
       return { type: 'bands', dice: x['dice'], bonus: x['bonus'] as string, bands: bands.sort((a, b) => b.min - a.min) };
@@ -476,6 +487,11 @@ function fieldOf(x: unknown): FieldDef | null {
     if (roll) f.roll = roll;
   }
   return f;
+}
+
+function changeOf(x: unknown): RollChange | null {
+  if (!isObj(x) || typeof x['field'] !== 'string' || !KEY_RE.test(x['field']) || typeof x['by'] !== 'string' || !CHANGE_RE.test(x['by'])) return null;
+  return { field: x['field'], by: x['by'] };
 }
 
 const ENTRY_KINDS = ['text', 'number', 'bool', 'list'];
@@ -910,6 +926,8 @@ export interface PackRollResult {
   note: string;
   // A pool that can still be pushed: what to roll again (groups — the dice by kind, Year Zero).
   push?: { sides: number; success?: number; best?: boolean; dice: number[]; groups?: { kind: PoolKind; sides: number; dice: number[] }[]; pushStress?: boolean; special?: SpecialPool };
+  // What the outcome does to the sheet, rolled.
+  change?: { field: string; by: number };
   // Said when the roll fails: against the successes typed in the log, or with none at all.
   onFail?: string;
   // A d20 roll judged against a DC typed in the log (the natural die, two or four degrees).
@@ -977,7 +995,23 @@ export function rollPack(
   // A name of the total (the Fate ladder), unless the roll has one already.
   const labels = 'labels' in spec ? spec.labels : undefined;
   const label = !r.outcome && labels ? labels.find((l) => r.total >= l.min) : undefined;
-  return label ? { ...r, outcome: loc(label.title, lang) } : r;
+  const done = label ? { ...r, outcome: loc(label.title, lang) } : r;
+  const c = changeFor(spec, done);
+  return c ? { ...done, change: { field: c.field, by: changeBy(c.by, die) } } : done;
+}
+
+function changeFor(spec: RollSpec, r: PackRollResult): RollChange | undefined {
+  if (spec.type === 'bands') return spec.bands.find((b) => r.total >= b.min)?.change;
+  if (spec.type === 'under') return r.tone === 'bad' ? spec.onFail : spec.onSuccess;
+  return undefined;
+}
+
+// «-1d6» rolled, «2» as it is.
+function changeBy(by: string, die: Die): number {
+  const m = /^([+-]?)(\d*)d(\d+)$/.exec(by);
+  if (!m) return Number(by) || 0;
+  const sum = Array.from({ length: Number(m[2] || 1) }, () => die(Number(m[3]))).reduce((a, b) => a + b, 0);
+  return m[1] === '-' ? -sum : sum;
 }
 
 function rollRaw(

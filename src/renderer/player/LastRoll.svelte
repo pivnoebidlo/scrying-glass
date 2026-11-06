@@ -16,6 +16,7 @@
     <span class="what">{shown.what}</span>
     <b>{main(shown)}</b>
     {#if extra(shown)}<span>{extra(shown)}</span>{/if}
+    {#if shown.changed?.to !== undefined}<span>{shown.changed.title}: {shown.changed.from} → {shown.changed.to}</span>{/if}
     <small>{t('pl.page.local')}</small>
   </button>
 {/if}
