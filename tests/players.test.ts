@@ -169,7 +169,9 @@ describe('a pack says what is marked at the table', () => {
     expect(sheet.gmOnly).toEqual(['sanity']);
     expect(sheet.resets).toEqual({ night: ['hunger', 'power'], mad: ['sanity'] });
     expect(packResources(pack(), { size: 0 }, 'character').limits).not.toHaveProperty('wounds');
-    expect(packResources(pack(), {}, 'monster').limits).toHaveProperty('rage');
+    expect(sheet.limits).not.toHaveProperty('rage');
+    // One card, many creatures: a stat block has no table.
+    expect(packResources(pack(), {}, 'monster').limits).toEqual({});
   });
 
   it('the phone follows it; the old value of a key stays until it is reset', () => {

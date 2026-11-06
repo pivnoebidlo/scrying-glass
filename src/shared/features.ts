@@ -43,3 +43,5 @@ const OLD_USES: Record<string, string[]> = {
   mausritter: ['exploration', 'factions', 'mouse', 'mausTables', 'mausShop', 'build'],
 };
 export const oldUses = (family: string) => OLD_USES[family] ?? ['worldtime'];
+// The same for the rule of damage past health (TrackerSpec.overflow).
+export const oldOverflow = (family: string) => (family === 'mausritter' ? 'str' : undefined);

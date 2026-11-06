@@ -1,6 +1,10 @@
 {
  "scryingGlass": "system",
  "version": 1,
+ "format": 2,
+ "uses": [
+  "worldtime"
+ ],
  "id": "yz-pool",
  "release": 2,
  "title": {
@@ -616,7 +620,8 @@
      "hint": {
       "en": "Marked boxes — damage taken",
       "ru": "Отмеченные клетки — полученный урон"
-     }
+     },
+     "live": "both"
     },
     {
      "key": "mind_max",
@@ -634,7 +639,8 @@
       "en": "Mind damage",
       "ru": "Урон рассудку"
      },
-     "boxes": "mind_max"
+     "boxes": "mind_max",
+     "live": "both"
     },
     {
      "key": "stress",
@@ -650,7 +656,8 @@
       "sides": 6,
       "count": "stress",
       "success": 1
-     }
+     },
+     "live": "both"
     },
     {
      "key": "conditions",

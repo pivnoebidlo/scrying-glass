@@ -504,7 +504,7 @@ function reactTo(id: string, before: Record<string, unknown>) {
   const after = { ...stateById };
   for (const mod of Object.values(modules)) {
     const hook = mod.afterAction;
-    if (!hook || mod.id === id) continue;
+    if (!hook || (mod.id === id && !mod.ownActions)) continue;
     void enqueue(mod.id, async () => {
       const next = hook(stateById[mod.id], before, after, ctx);
       if (next === stateById[mod.id]) return;

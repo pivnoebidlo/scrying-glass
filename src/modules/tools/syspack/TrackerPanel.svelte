@@ -81,6 +81,16 @@
     {/each}
   </div>
 
+  {#if tr.hp}
+    <label class="row">
+      <span>{t('sb.overflow')} <HelpTip text={t('sb.overflowHint')} /></span>
+      <select {disabled} value={tr.overflow ?? ''} onchange={(e) => (tr.overflow = e.currentTarget.value || undefined)}>
+        <option value="">{t('sb.hpNone')}</option>
+        {#each (tr.cells ?? []).filter((k) => fields.find((f) => f.key === k)?.type !== 'track') as k (k)}<option value={k}>{title(k)}</option>{/each}
+      </select>
+    </label>
+  {/if}
+
   <label class="row"><span>{t('sb.conditions')}</span><textarea rows="5" {disabled} value={condText} onchange={(e) => setConditions(e.currentTarget.value)}></textarea></label>
   <p class="faint small"><Lead text={t('sb.conditionsValued')} /></p>
   <label class="check">

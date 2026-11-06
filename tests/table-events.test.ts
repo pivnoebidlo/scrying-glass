@@ -20,8 +20,8 @@ describe('events roll tables are offered on', () => {
   });
 
   it('a participant goes down in a fight: no hit points, out, Mausritter STR 0', () => {
-    const before = [fighter('Goblin', 5), fighter('Mouse', 3, { attrs: [{ id: 'str', value: 2, max: 8 }] } as Partial<Combatant>), fighter('Hero', 4)];
-    const after = [fighter('Goblin', 0), fighter('Mouse', 3, { attrs: [{ id: 'str', value: 0, max: 8 }] } as Partial<Combatant>), fighter('Hero', 4, { out: true })];
+    const before = [fighter('Goblin', 5), fighter('Mouse', 3, { overflow: 'str', attrs: [{ id: 'str', value: 2, max: 8 }] } as Partial<Combatant>), fighter('Hero', 4)];
+    const after = [fighter('Goblin', 0), fighter('Mouse', 3, { overflow: 'str', attrs: [{ id: 'str', value: 0, max: 8 }] } as Partial<Combatant>), fighter('Hero', 4, { out: true })];
     expect(gameEvents(state(2, before), state(2, after)).map((e) => e.who)).toEqual(['Goblin', 'Mouse', 'Hero']);
     // Already down, or no fight going: nothing.
     expect(gameEvents(state(2, after), state(2, after))).toEqual([]);

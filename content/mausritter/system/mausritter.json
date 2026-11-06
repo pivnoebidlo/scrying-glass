@@ -2,12 +2,22 @@
  "scryingGlass": "system",
  "version": 1,
  "format": 2,
- "uses": ["exploration", "factions", "mouse", "mausTables", "mausShop", "build"],
+ "uses": [
+  "exploration",
+  "factions",
+  "mouse",
+  "mausTables",
+  "mausShop",
+  "build"
+ ],
  "id": "mausritter",
  "family": "mausritter",
  "release": 2,
  "title": "Mausritter",
- "about": {"en": "Mice with inventory slots, roll-under saves, damage to HP and then to STR", "ru": "Мыши с инвентарём по клеткам, спасброски на понижение, урон в защиту, потом в СИЛ"},
+ "about": {
+  "en": "Mice with inventory slots, roll-under saves, damage to HP and then to STR",
+  "ru": "Мыши с инвентарём по клеткам, спасброски на понижение, урон в защиту, потом в СИЛ"
+ },
  "author": "Scrying Glass",
  "license": "This work is based on Mausritter (https://mausritter.com), a product of Losing Games and Isaac Williams, and is licensed for use under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence.",
  "url": "https://mausritter.com",
@@ -36,7 +46,8 @@
      "hint": {
       "en": "Hit Protection: damage is taken here first, then from STR",
       "ru": "Защита (Hit Protection): урон сначала снимается с неё, потом с СИЛ"
-     }
+     },
+     "live": "both"
     },
     {
      "key": "str",
@@ -56,7 +67,8 @@
       "type": "under",
       "sides": 20,
       "target": "str"
-     }
+     },
+     "live": "both"
     },
     {
      "key": "dex",
@@ -76,7 +88,8 @@
       "type": "under",
       "sides": 20,
       "target": "dex"
-     }
+     },
+     "live": "both"
     },
     {
      "key": "wil",
@@ -96,7 +109,8 @@
       "type": "under",
       "sides": 20,
       "target": "wil"
-     }
+     },
+     "live": "both"
     },
     {
      "key": "armour",
@@ -365,6 +379,32 @@
     }
    ],
    "free": true
+  },
+  "overflow": "str"
+ },
+ "resets": [
+  {
+   "id": "long",
+   "title": {
+    "en": "Long rest",
+    "ru": "Долгий отдых"
+   },
+   "fields": [
+    "hp"
+   ]
+  },
+  {
+   "id": "full",
+   "title": {
+    "en": "Full rest",
+    "ru": "Полный отдых"
+   },
+   "fields": [
+    "hp",
+    "str",
+    "dex",
+    "wil"
+   ]
   }
- }
+ ]
 }

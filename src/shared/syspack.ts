@@ -8,7 +8,7 @@
 // formulas are a tiny language of their own (numbers, fields, + − × ÷, a few functions) — never code.
 import type { SheetResources } from './players';
 import type { CardKind, CombatStats } from './cards';
-import { oldUses } from './features';
+import { oldOverflow, oldUses } from './features';
 
 // Text in several languages ({ en, ru }) or one string for all.
 export type Loc = string | Record<string, string>;
@@ -99,13 +99,14 @@ export interface FieldDef {
   hideZero?: boolean;
   // A roll by a click on the field (on a row of a list).
   roll?: RollSpec;
-  // A track, dots or a number (with `max`) marked at the table, apart from the card: 'both' — by the player too, 'gm' —
+  // A track, dots, a number (with `max`) or a formula (its value is the most there can be: hit points) marked at the
+  // table, apart from the card: 'both' — by the player too, 'gm' —
   // by the GM only (shared/players.ts).
   live?: LiveBy;
 }
 
 export type LiveBy = 'both' | 'gm';
-export const LIVE_TYPES: FieldType[] = ['track', 'dots', 'number'];
+export const LIVE_TYPES: FieldType[] = ['track', 'dots', 'number', 'formula'];
 
 // A named event of the game that returns fields marked at the table to the card's values (a rest, a new day).
 export interface PackReset {
@@ -129,6 +130,8 @@ export interface TrackerSpec {
   hp?: string;
   // Fields shown in a combatant's row: tracks (boxes to mark) and numbers (current / max).
   cells?: string[];
+  // A number cell that takes the damage past health, and at 0 the combatant is down.
+  overflow?: string;
   // Conditions: a list to choose from and/or free text; valued — the ones with a number («Frightened 2»).
   conditions?: { list?: Loc[]; free?: boolean; valued?: Loc[] };
 }
@@ -487,10 +490,12 @@ export function validatePack(x: unknown): SystemPack | string {
         : { type: 'none' };
   const known = (k: unknown): k is string => typeof k === 'string' && keys.has(k);
   const cond = isObj(t['conditions']) ? t['conditions'] : null;
+  const familyOfRaw = typeof x['family'] === 'string' ? x['family'] : x['id'];
   const tracker: TrackerSpec = {
     init,
     ...(known(t['hp']) ? { hp: t['hp'] } : {}),
     ...(Array.isArray(t['cells']) ? { cells: t['cells'].filter(known).slice(0, 6) } : {}),
+    ...(known(t['overflow']) ? { overflow: t['overflow'] } : x['format'] === undefined && oldOverflow(familyOfRaw) ? { overflow: oldOverflow(familyOfRaw) } : {}),
     ...(cond
       ? {
           conditions: {
@@ -527,7 +532,7 @@ export function validatePack(x: unknown): SystemPack | string {
     scryingGlass: 'system',
     version: 1,
     ...(Number.isInteger(x['format']) && (x['format'] as number) > 0 ? { format: x['format'] as number } : {}),
-    uses: Array.isArray(x['uses']) ? [...new Set(x['uses'].filter((u): u is string => typeof u === 'string' && USE_RE.test(u)))].slice(0, LIMIT.uses) : oldUses(typeof x['family'] === 'string' ? x['family'] : x['id']),
+    uses: Array.isArray(x['uses']) ? [...new Set(x['uses'].filter((u): u is string => typeof u === 'string' && USE_RE.test(u)))].slice(0, LIMIT.uses) : oldUses(familyOfRaw),
     id: x['id'],
     title,
     ...(typeof x['family'] === 'string' && ID_RE.test(x['family']) ? { family: x['family'] } : {}),
@@ -547,10 +552,13 @@ export function validatePack(x: unknown): SystemPack | string {
 }
 
 // How far a field marked at the table goes.
-export const liveLimit = (pack: SystemPack, stats: PackStats, f: FieldDef) => (f.type === 'track' ? boxesOf(pack, stats, f) : (f.max ?? (f.type === 'dots' ? 5 : 0)));
+export const liveLimit = (pack: SystemPack, stats: PackStats, f: FieldDef) =>
+  f.type === 'track' ? boxesOf(pack, stats, f) : f.type === 'formula' ? Math.max(0, Math.round(evalFormula(pack, stats, f.key))) : (f.max ?? (f.type === 'dots' ? 5 : 0));
 
 // What a card of the system tracks at the table.
 export function packResources(pack: SystemPack, stats: PackStats, kind: CardKind): SheetResources {
+  // One card, many creatures: a stat block has no table.
+  if (kind !== 'character') return { limits: {}, resets: {} };
   const live = sectionsFor(pack, kind).flatMap((s) => s.fields).filter((f) => f.live && liveLimit(pack, stats, f) > 0);
   const limits = Object.fromEntries(live.map((f) => [f.key, liveLimit(pack, stats, f)]));
   const resets = (pack.resets ?? []).flatMap((r) => {
@@ -742,7 +750,8 @@ export function evalFormula(pack: SystemPack, stats: PackStats, text: string, ro
     if (name.startsWith('row.')) return toNum(row?.[name.slice(4)]);
     const f = fields.get(name);
     if (!f) return 0;
-    if (f.type === 'formula') return evalFormula(pack, stats, f.formula!, row, depth + 1);
+    // A value marked at the table comes in the stats (pack/Sheet.svelte); a card keeps no value of a formula.
+    if (f.type === 'formula') return typeof stats[f.key] === 'number' ? (stats[f.key] as number) : evalFormula(pack, stats, f.formula!, row, depth + 1);
     return fieldNumber(f, stats[f.key]);
   });
   return Number.isFinite(value) ? value : 0;

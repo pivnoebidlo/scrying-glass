@@ -173,6 +173,7 @@ export function packTracker(p: SystemPack): TrackerDef {
         ac: null,
         stress: (s.stress ?? []).map((x) => ({ id: x.id, boxes: boxes(x.boxes) })),
         attrs: (s.attrs ?? []).map((a) => ({ id: a.id, value: a.value, max: a.value })),
+        ...(p.tracker.overflow ? { overflow: p.tracker.overflow } : {}),
       };
     },
   };

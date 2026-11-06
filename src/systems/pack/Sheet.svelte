@@ -117,7 +117,7 @@
                 {:else if marks(f)}
                   <span class="stepper">
                     <button class="btn" aria-label="−1" onclick={() => step(f, -1)}>−</button>
-                    <span class="value big">{num(f)}</span>
+                    <span class="value big">{num(f)}{#if f.type === 'formula'}<span class="of"> / {res?.limits[f.key]}</span>{/if}</span>
                     <button class="btn" aria-label="+1" onclick={() => step(f, 1)}>+</button>
                   </span>
                 {:else}
@@ -309,6 +309,11 @@
     border-color: var(--danger);
     color: var(--danger);
   }
+  .of {
+    font-size: 0.7em;
+    font-weight: 400;
+    color: var(--text-faint);
+  }
   .usage {
     margin-left: 4px;
     font-size: 9px;
@@ -358,10 +363,22 @@
     color: var(--accent);
     cursor: pointer;
   }
+  /* The number above its buttons: a field of the grid is narrow, on a phone most of all. */
   .stepper {
-    display: inline-flex;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+  }
+  .stepper .value {
+    order: -1;
+    flex-basis: 100%;
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+  .stepper .btn {
+    flex: 1;
+    min-width: 0;
   }
   .mark {
     width: 12px;
@@ -391,7 +408,6 @@
       border-radius: 4px;
     }
     .stepper .btn {
-      min-width: 40px;
       min-height: 36px;
     }
   }

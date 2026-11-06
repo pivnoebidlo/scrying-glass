@@ -6,6 +6,12 @@ import { sameRef } from '../../shared/cards';
 import { defeated, ordered, refreshed } from './order';
 import { defaultSystem, systemOf } from '../../systems';
 import type { Combatant, Encounter, InitiativeState, StripSettings } from './types';
+import { currentSystem, type AdventuresState } from '../../shared/adventures';
+import { packOf } from '../../systems/packs';
+import type { PlayersState } from '../players/main';
+import { syncTable } from './table';
+
+const oldOverflow = (c: Combatant): Combatant => (c.overflow === undefined && c.attrs?.some((a) => a.id === 'str') ? { ...c, overflow: 'str' } : c);
 
 const initialState: InitiativeState = {
   combatants: [],
@@ -62,7 +68,14 @@ export default defineModule({
   initialState,
 
   // В сохранённом состоянии прошлых версий нет новых настроек полосы (положение) — дополняем по умолчанию.
-  init: (s) => ({ ...s, display: { ...initialState.display, ...s.display } }),
+  // Before 0.83 a cell named str took the damage past health.
+  init: (s) => ({ ...s, display: { ...initialState.display, ...s.display }, combatants: s.combatants.map(oldOverflow), encounters: s.encounters.map((e) => ({ ...e, combatants: e.combatants.map(oldOverflow) })) }),
+  // After every change here and at the table: the heroes' values follow the table.
+  ownActions: true,
+  afterAction(s, _before, after) {
+    const pack = packOf(currentSystem(after['adventures'] as AdventuresState));
+    return syncTable(s, pack, (after['players'] as PlayersState | undefined)?.used);
+  },
 
   actions: {
     // encounter — добавить в заготовку, а не в текущий бой.
@@ -83,6 +96,7 @@ export default defineModule({
         ...(c.stress ? { stress: c.stress } : {}),
         ...(c.consequences ? { consequences: c.consequences } : {}),
         ...(c.attrs ? { attrs: c.attrs } : {}),
+        ...(c.overflow ? { overflow: c.overflow } : {}),
         card: c.card ?? null,
       };
       return withList(s, encounter, (list) => [...list, full]);
@@ -93,15 +107,15 @@ export default defineModule({
     },
 
     // Урон (amount < 0) или лечение (amount > 0). Хиты не выходят за 0 и максимум.
-    // Mausritter: damage past HP goes to STR (healing restores only HP).
+    // Damage past health goes to the cell of the system, if it has one (healing restores only health).
     changeHp(s, { id, amount }: { id: string; amount: number }) {
       return patch(s, id, (c) => {
         if (c.hp === null && c.maxHp === null) return c;
         const max = c.maxHp ?? Infinity;
         const now = c.hp ?? c.maxHp ?? 0;
         const overflow = amount < 0 ? Math.max(0, -amount - now) : 0;
-        const attrs = overflow && c.attrs?.some((a) => a.id === 'str')
-          ? c.attrs.map((a) => (a.id === 'str' ? { ...a, value: Math.max(0, a.value - overflow) } : a))
+        const attrs = overflow && c.attrs?.some((a) => a.id === c.overflow)
+          ? c.attrs.map((a) => (a.id === c.overflow ? { ...a, value: Math.max(0, a.value - overflow) } : a))
           : c.attrs;
         return { ...c, hp: Math.min(max, Math.max(0, now + amount)), ...(attrs ? { attrs } : {}) };
       });

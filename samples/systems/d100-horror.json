@@ -1,6 +1,10 @@
 {
  "scryingGlass": "system",
  "version": 1,
+ "format": 2,
+ "uses": [
+  "worldtime"
+ ],
  "id": "d100-horror",
  "release": 1,
  "title": {
@@ -315,10 +319,11 @@
      "key": "hp_max",
      "type": "formula",
      "title": {
-      "en": "Hit points (max)",
-      "ru": "Пункты здоровья (макс.)"
+      "en": "Hit points",
+      "ru": "Пункты здоровья"
      },
-     "formula": "floor((con + siz) / 10)"
+     "formula": "floor((con + siz) / 10)",
+     "live": "both"
     },
     {
      "key": "mp",
@@ -327,7 +332,8 @@
       "en": "Magic points",
       "ru": "Пункты магии"
      },
-     "formula": "floor(pow / 5)"
+     "formula": "floor(pow / 5)",
+     "live": "both"
     },
     {
      "key": "san",
@@ -359,7 +365,8 @@
         "divide": 5
        }
       ]
-     }
+     },
+     "live": "both"
     },
     {
      "key": "luck",
@@ -391,7 +398,8 @@
         "divide": 5
        }
       ]
-     }
+     },
+     "live": "both"
     },
     {
      "key": "damage_bonus",
@@ -400,6 +408,15 @@
       "en": "Damage bonus",
       "ru": "Бонус к урону"
      }
+    },
+    {
+     "key": "build",
+     "type": "formula",
+     "title": {
+      "en": "Build",
+      "ru": "Комплекция"
+     },
+     "formula": "max(-2, min(0, floor((str + siz - 85) / 20)) + max(0, floor((str + siz - 85) / 40)))"
     },
     {
      "key": "move",
@@ -615,5 +632,17 @@
    ],
    "free": true
   }
- }
+ },
+ "resets": [
+  {
+   "id": "day",
+   "title": {
+    "en": "A new day",
+    "ru": "Новый день"
+   },
+   "fields": [
+    "mp"
+   ]
+  }
+ ]
 }

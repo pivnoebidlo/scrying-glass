@@ -10,6 +10,7 @@
   import { fieldMap, loc } from '../../shared/syspack';
   import { getLang } from '../../shared/i18n';
   import { packOf } from '../packs';
+  import { atTable, tableKeys } from '../../modules/initiative/table';
 
   let { c, head = false }: { c?: Combatant; head?: boolean } = $props();
 
@@ -25,22 +26,36 @@
 
   const num = (v: string) => (v.trim() === '' || isNaN(Number(v)) ? null : Number(v));
   const update = (c: Combatant, changes: Partial<Omit<Combatant, 'id'>>) => dispatch('initiative', 'update', { id: c.id, changes });
+  // A hero's value marked at the table goes there; the combatant follows (initiative/table.ts).
+  const table = $derived(pack ? tableKeys(pack) : null);
+  const atHeroTable = (c: Combatant) => atTable(c, store.state.initiative.combatants);
+  const onTable = (c: Combatant, key: string) => !!table && atHeroTable(c) && (table.hp === key || table.cells.some((x) => x.key === key));
+  const toTable = (c: Combatant, key: string, used: number) => dispatch('players', 'setUsed', { card: c.card!.id, key, used });
   function applyHp(c: Combatant, input: HTMLInputElement) {
     const v = input.value.trim();
     const n = Number(v);
     if (!v || isNaN(n)) return;
-    dispatch('initiative', 'changeHp', { id: c.id, amount: v.startsWith('+') ? Math.abs(n) : -Math.abs(n) });
+    const amount = v.startsWith('+') ? Math.abs(n) : -Math.abs(n);
     input.value = '';
+    const key = pack?.tracker.hp;
+    if (!key || !onTable(c, key)) return void dispatch('initiative', 'changeHp', { id: c.id, amount });
+    const now = c.hp ?? c.maxHp ?? 0;
+    const past = amount < 0 ? Math.max(0, -amount - now) : 0;
+    void toTable(c, key, Math.min(c.maxHp ?? Infinity, Math.max(0, now + amount)));
+    const last = c.attrs?.find((a) => a.id === c.overflow);
+    if (past && last) setAttr(c, last.id, Math.max(0, last.value - past));
   }
   const marked = (c: Combatant, key: string) => c.stress?.find((s) => s.id === key)?.boxes.filter(Boolean).length ?? 0;
   function setBoxes(c: Combatant, key: string, n: number) {
     const line = c.stress?.find((s) => s.id === key);
     if (!line) return;
     const to = marked(c, key) === n ? n - 1 : n;
+    if (onTable(c, key)) return void toTable(c, key, to);
     update(c, { stress: (c.stress ?? []).map((s) => (s.id === key ? { ...s, boxes: s.boxes.map((_, i) => i < to) } : s)) });
   }
   function setAttr(c: Combatant, key: string, value: number | null) {
     const old = c.attrs?.find((a) => a.id === key);
+    if (onTable(c, key)) return void toTable(c, key, Math.max(0, value ?? 0));
     update(c, { attrs: [...(c.attrs ?? []).filter((a) => a.id !== key), { id: key, value: value ?? 0, max: old?.max ?? value ?? 0 }] });
   }
 </script>
@@ -107,10 +122,13 @@
     width: 48px;
   }
   .c-cell {
+    min-width: 84px;
     white-space: nowrap;
   }
-  .n {
-    width: 44px;
+  .c-cell input.n {
+    width: 40px;
+    min-width: 0;
+    display: inline-block;
   }
   .txt {
     width: 110px;

@@ -2,12 +2,18 @@
  "scryingGlass": "system",
  "version": 1,
  "format": 2,
- "uses": ["worldtime", "aspects"],
+ "uses": [
+  "worldtime",
+  "aspects"
+ ],
  "id": "fate-core",
  "family": "fate",
  "release": 2,
  "title": "Fate Core",
- "about": {"en": "Aspects, stress and consequences in combat, Fate dice", "ru": "Аспекты, стресс и последствия в бою, кубы Fate"},
+ "about": {
+  "en": "Aspects, stress and consequences in combat, Fate dice",
+  "ru": "Аспекты, стресс и последствия в бою, кубы Fate"
+ },
  "author": "Scrying Glass",
  "license": "Fate Core System and Fate Accelerated Edition — Evil Hat Productions, LLC (Leonard Balsera, Brian Engard, Jeremy Keller, Ryan Macklin, Mike Olson, Clark Valentine, Amanda Valentine, Fred Hicks, Rob Donoghue), CC BY 3.0 (http://www.faterpg.com/). The card's structure and the Russian names are our own.",
  "url": "http://www.faterpg.com/",
@@ -1829,7 +1835,8 @@
       "en": "Physical stress",
       "ru": "Физический стресс"
      },
-     "boxes": "physical_boxes"
+     "boxes": "physical_boxes",
+     "live": "both"
     },
     {
      "key": "mental_boxes",
@@ -1847,7 +1854,8 @@
       "en": "Mental stress",
       "ru": "Ментальный стресс"
      },
-     "boxes": "mental_boxes"
+     "boxes": "mental_boxes",
+     "live": "both"
     },
     {
      "key": "mild",
@@ -1913,5 +1921,18 @@
    "list": [],
    "free": true
   }
- }
+ },
+ "resets": [
+  {
+   "id": "conflict",
+   "title": {
+    "en": "End of the conflict",
+    "ru": "Конец конфликта"
+   },
+   "fields": [
+    "physical",
+    "mental"
+   ]
+  }
+ ]
 }

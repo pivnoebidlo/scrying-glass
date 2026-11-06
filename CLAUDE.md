@@ -440,7 +440,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   преимуществом и помехой), armour, warband, attacks (строки name/dice, бросок `sum` с `dice: 'row.dice'`), critical,
   abilities, wants; у мыши (`kinds: character`) — level, xp, pips, прошлое и прочее, inventory (поле `slots`: лапы 2,
   тело 2, рюкзак 6), grit. Трекер — без инициативы, hp и ячейки str/dex/wil (`attrs`): урон сверх защиты уходит в
-  `str` (`changeHp`), выбыл при СИЛ 0 (`down`).
+  ячейку `tracker.overflow` = `str` (`TrackerSpec.overflow`, `Combatant.overflow`, `changeHp`), выбыл при её 0 (`down`).
   Встроенное: `npm run build-mausritter` (`scripts/build-mausritter.ts` из `scripts/mausritter-srd.<lang>.md` — SRD
   2.3.1 целиком, CC BY 4.0, и наш перевод) → `content/mausritter/bestiary/mausritter.json` (поля пакета — `toPack` в скрипте; 11 существ × 2 языка, русские —
   `<id>.ru` с `origin`, числа и кубы — из английского статблока; таблицы вариантов — в `description` жирными
@@ -842,9 +842,9 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   (shared/players.ts) пропускает только то, что есть в листе (`SheetResources` из `SystemPlugin.sheetResources`: ресурс — счётчик от 0 до предела, сброс — именованное событие; игрового смысла ядро не знает), дальше — действие модуля, как у окна мастера;
   новое действие игрока — случай в `checkAction` и `actOn` (main/players.ts). Общее состояние наружу не идёт никогда.
   Потраченное за столом — состояние модуля `players.used[id карточки]` (`state.json`, не в карточке: импорт из сервиса сравнивает листы), ключи `slot:<уровень>`,
-  нет ключа — значение листа, сброс возвращает к нему; лишнее сверх предела считается потраченным до отдыха. У пакетов — `FieldDef.live` ('both' / 'gm': track, dots, number с `max`) и
+  нет ключа — значение листа, сброс возвращает к нему; лишнее сверх предела считается потраченным до отдыха. У пакетов — `FieldDef.live` ('both' / 'gm': track, dots, number с `max`, formula) и
   `SystemPack.resets` (`packResources`; может не быть вовсе); `sheetResources(card)` в `systems/packs.ts` выбирает пакет или плагин; `pack/Sheet.svelte` подставляет значения стола и в формулы; в конструкторе — `FieldPanel`, `TrackerPanel`.
-  Ячейки трекера боя (`tracker.cells`) со значениями стола пока не связаны. Лист спрашивает хозяина окна — `sheetUsage.host` (`renderer/lib/sheetusage.svelte.ts`):
+  Значения стола и трекер — одно значение: истина — `players.used`, участник хранит копию для `down` / `woundOf` / полосы игроков, `syncTable` (`initiative/table.ts`) подтягивает её после любого действия (`afterAction` с `ownActions`), поэтому новый бой их не лечит. Запись из `TrackerCells` для героя идёт в `players/setUsed` (`atTable`: сторона партии и одна карточка на участника; два гоблина одной карточки стола не делят). Стол — только у `kind: 'character'` (`packResources`). `FieldDef.live` — ещё и у `formula`: предел — значение формулы (хиты, ПМ), значение стола подставляется в `evalFormula` через stats. Лист спрашивает хозяина окна — `sheetUsage.host` (`renderer/lib/sheetusage.svelte.ts`):
   у мастера ставит фон модуля, у игрока — `Player.svelte` (сразу показывает нажатие, отказ возвращает правду). Сейчас только ячейки D&D.
   `main/players.ts`: токены — `<userData>/players.json` (на персонажа и хранилище, переживают перезапуск, «Новая ссылка» — `renewPlayer`),
   порт `PLAYER_PORT` (занят — следующий), партия — `character` в хранилище, `visibleIn`; `playersChanged` зовут `broadcastState` и `onCardsChanged`.
