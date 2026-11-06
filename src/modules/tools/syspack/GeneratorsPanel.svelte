@@ -9,6 +9,7 @@
   import { diceOfRows, genText, rollWords, rowsOfText, textOfRows, type GenTable, type PackKit } from '../../../shared/generators';
   import type { SystemPack } from '../../../shared/syspack';
   import CalcPanel from './CalcPanel.svelte';
+  import FormPanel from './FormPanel.svelte';
   import ListPanel from './ListPanel.svelte';
   import GeneratorEditor from './GeneratorEditor.svelte';
 
@@ -27,10 +28,12 @@
   const tables = $derived(Object.entries(pack.kit?.tables[lang] ?? Object.values(pack.kit?.tables ?? {})[0] ?? {}).filter(([id]) => !priced.has(id)));
   const lists = $derived(pack.kit?.lists ?? []);
   const calcs = $derived(pack.kit?.calculators ?? []);
-  type Sel = { kind: 'generator' | 'table' | 'list' | 'calc'; id: string } | null;
+  const forms = $derived(pack.kit?.forms ?? []);
+  type Sel = { kind: 'generator' | 'table' | 'list' | 'calc' | 'form'; id: string } | null;
   let sel = $state<Sel>(null);
   const list = $derived(sel?.kind === 'list' ? lists.find((x) => x.id === sel!.id) : undefined);
   const calc = $derived(sel?.kind === 'calc' ? calcs.find((x) => x.id === sel!.id) : undefined);
+  const form = $derived(sel?.kind === 'form' ? forms.find((x) => x.id === sel!.id) : undefined);
   const gen = $derived(sel?.kind === 'generator' ? gens.find((g) => g.id === sel!.id) : undefined);
   const table = $derived(sel?.kind === 'table' ? tables.find(([id]) => id === sel!.id)?.[1] : undefined);
 
@@ -70,6 +73,17 @@
     k.calculators = [...calcs, { id, title: t('sb.calc.new'), unit: '{n}', labels, kinds: [], row: { value: 'count * value' }, totals: [{ key: 'total', title: t('sb.calc.lTotal'), formula: 'value', strong: true }] }];
     sel = { kind: 'calc', id };
   }
+  function addForm() {
+    const k = kit();
+    const id = freeId(`form ${forms.length + 1}`, forms.map((x) => x.id));
+    k.forms = [...forms, { id, title: t('sb.form.new'), inputs: [], lets: [], results: [{ kind: 'big', text: t('sb.form.newResult') }] }];
+    sel = { kind: 'form', id };
+  }
+  function removeForm(id: string) {
+    kit().forms = forms.filter((x) => x.id !== id);
+    sel = null;
+    tidy();
+  }
   function removeList(id: string) {
     const x = lists.find((l) => l.id === id);
     for (const s of x?.sections ?? []) for (const tb of Object.values(kit().tables)) delete tb[s.table];
@@ -85,7 +99,7 @@
   function tidy() {
     // An empty kit isn't written at all.
     const k = pack.kit;
-    if (k && !k.generators.length && !Object.values(k.tables).some((x) => Object.keys(x).length) && !k.lists?.length && !k.calculators?.length) delete pack.kit;
+    if (k && !k.generators.length && !Object.values(k.tables).some((x) => Object.keys(x).length) && !k.lists?.length && !k.calculators?.length && !k.forms?.length) delete pack.kit;
   }
   const usedBy = (id: string) => JSON.stringify(gens).includes(`"table":"${id}"`);
   function removeTable(id: string) {
@@ -126,11 +140,18 @@
       <button class="item" class:on={sel?.kind === 'calc' && sel.id === x.id} onclick={() => (sel = { kind: 'calc', id: x.id })}>{genText(x.title, lang)}</button>
     {/each}
     <button class="btn small" {disabled} onclick={addCalc}><Plus size={13} /> {t('sb.calc.new')}</button>
+    <h4>{t('sb.form.title')}</h4>
+    {#each forms as x (x.id)}
+      <button class="item" class:on={sel?.kind === 'form' && sel.id === x.id} onclick={() => (sel = { kind: 'form', id: x.id })}>{genText(x.title, lang)}</button>
+    {/each}
+    <button class="btn small" {disabled} onclick={addForm}><Plus size={13} /> {t('sb.form.new')}</button>
   </div>
 
   <div class="main">
     {#if list}
       {#key list.id}<ListPanel {pack} {list} {disabled} onremove={() => removeList(list!.id)} />{/key}
+    {:else if form}
+      {#key form.id}<FormPanel {pack} {form} {disabled} onremove={() => removeForm(form!.id)} />{/key}
     {:else if calc}
       {#key calc.id}<CalcPanel {pack} {calc} {disabled} onremove={() => removeCalc(calc!.id)} />{/key}
     {:else if table && sel}

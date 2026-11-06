@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { runForm, validateGenerators, type GeneratorFile } from '../src/shared/generators';
+import { formKeys, formWords, optionsOfText, renameFormKey, runForm, textOfOptions, validateGenerators, type FormOption, type GeneratorFile } from '../src/shared/generators';
 
 const file = validateGenerators(JSON.parse(fs.readFileSync('content/dnd5e-srd/generators/travel.json', 'utf8'))) as GeneratorFile;
 const form = file.forms![0]!;
@@ -47,6 +47,27 @@ describe('путь', () => {
 
   it('последний день не длиннее дня: медленный темп, 17 миль — 8 часов', () => {
     expect(big({ pace: PACE.slow, distance: 17 })[0]).toBe('8 hours');
+  });
+
+  it('варианты выбора текстом: числа и слова, другой язык остаётся, текст читается обратно', () => {
+    const was: FormOption[] = [{ id: 'a', title: { en: 'Foot', ru: 'Пешком' }, texts: { note: { en: 'slow', ru: 'медленно' } } }];
+    const got = optionsOfText('Шагом | speed=3, note=тихо\nКорабль', was, 'ru');
+    expect(got).toEqual([
+      { id: 'a', title: { en: 'Foot', ru: 'Шагом' }, values: { speed: 3 }, texts: { note: { en: 'slow', ru: 'тихо' } } },
+      { id: 'o2', title: 'Корабль' },
+    ]);
+    expect(textOfOptions(got, 'ru')).toBe('Шагом | speed=3, note=тихо\nКорабль');
+    expect(optionsOfText(textOfOptions(got, 'ru'), got, 'ru')).toEqual(got);
+    expect(formKeys(form)).toEqual(expect.arrayContaining(['distance', 'by_mph', 'terrain_foraging', 'days']));
+    expect(formWords(form)).toEqual(expect.arrayContaining(['terrain_encounter', 'by_title', 'kept_title']));
+  });
+
+  it('новое название поля переименовывает ключ везде, где его читают', () => {
+    const f = { id: 'a', title: 'A', inputs: [{ key: 'value_1', title: 'Скорость', type: 'select' as const }, { key: 'value_11', title: 'Б', type: 'number' as const }], lets: [{ key: 'x', formula: 'value_1 + value_1_mph + value_11' }], results: [{ text: '{value_1_title} {value_1}', when: 'value_1' }] };
+    const g = renameFormKey(f, 'value_1', 'skorost');
+    expect(g.inputs.map((i) => i.key)).toEqual(['skorost', 'value_11']);
+    expect(g.lets![0]!.formula).toBe('skorost + skorost_mph + value_11');
+    expect(g.results[0]).toEqual({ text: '{skorost_title} {skorost}', when: 'skorost' });
   });
 
   it('форма: мусор не проходит, слова идут за языком', () => {

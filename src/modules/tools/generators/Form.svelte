@@ -7,7 +7,7 @@
   import { currentSystem } from '../../../shared/adventures';
   import { genText, runForm, type GenForm } from '../../../shared/generators';
 
-  let { id, form }: { id: string; form: GenForm } = $props();
+  let { id, form, system }: { id: string; form: GenForm; system?: string } = $props();
 
   const KEY = $derived(`generators.form.${id}`);
   function load(key: string): Record<string, number> {
@@ -27,7 +27,7 @@
     }
   }
   const lang = $derived(locale.lang);
-  const r = $derived(runForm(form, values, currentSystem(store.state.adventures), lang));
+  const r = $derived(runForm(form, values, system ?? currentSystem(store.state.adventures), lang));
   const big = $derived(r.results.filter((x) => x.kind === 'big'));
   const warn = $derived(r.results.filter((x) => x.kind === 'warn'));
   const cards = $derived(r.results.filter((x) => x.kind === 'card'));

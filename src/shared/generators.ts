@@ -675,6 +675,49 @@ export function kindsOfText(text: string): GenCalculator['kinds'] {
 }
 export const textOfKinds = (kinds: GenCalculator['kinds'], lang: Lang) => kinds.map((k) => `${genText(k.title, lang)} | ${k.value}`).join('\n');
 
+// A form's choices as the author writes them: «A name | speed=3, note=fast». A number is a number of formulas, anything
+// else a word of the text; the other language of a word stays.
+const wordOf = (old: GenText | undefined, lang: Lang, word: string): GenText => (old !== undefined && typeof old !== 'string' ? { ...old, [lang]: word } : word);
+export function optionsOfText(text: string, old: FormOption[], lang: Lang): FormOption[] {
+  return text.split('\n').map((l) => l.trim()).filter(Boolean).map((line, i) => {
+    const m = /^(.*?)\s*\|\s*(.*)$/.exec(line);
+    const was = old[i];
+    const values: Record<string, number> = {};
+    const texts: Record<string, GenText> = {};
+    for (const part of (m?.[2] ?? '').split(',')) {
+      const p = /^\s*([a-z][a-z0-9_]*)\s*=\s*(.*?)\s*$/i.exec(part);
+      if (!p) continue;
+      if (p[2] !== '' && Number.isFinite(Number(p[2]))) values[p[1]!] = Number(p[2]);
+      else texts[p[1]!] = wordOf(was?.texts?.[p[1]!], lang, p[2]!);
+    }
+    return { id: was?.id ?? `o${i + 1}`, title: wordOf(was?.title, lang, m ? m[1]! : line), ...(Object.keys(values).length ? { values } : {}), ...(Object.keys(texts).length ? { texts } : {}) };
+  });
+}
+export function textOfOptions(list: FormOption[], lang: Lang): string {
+  return list.map((o) => {
+    const parts = [...Object.entries(o.values ?? {}).map(([k, v]) => `${k}=${v}`), ...Object.entries(o.texts ?? {}).map(([k, v]) => `${k}=${genText(v, lang)}`)];
+    return parts.length ? `${genText(o.title, lang)} | ${parts.join(', ')}` : genText(o.title, lang);
+  }).join('\n');
+}
+// A key of a form renamed where it stands and where it is read: `speed`, `speed_mph`, {speed_title}.
+export function renameFormKey(f: GenForm, from: string, to: string): GenForm {
+  const word = new RegExp(`(?<![A-Za-z0-9_])${from}(?![A-Za-z0-9])`, 'g');
+  return JSON.parse(JSON.stringify(f).replace(word, to)) as GenForm;
+}
+// What a form's formulas may read, and its text besides.
+export function formKeys(f: GenForm): string[] {
+  const out: string[] = [];
+  for (const i of f.inputs) {
+    out.push(i.key);
+    for (const o of i.options ?? []) out.push(...Object.keys(o.values ?? {}).map((k) => `${i.key}_${k}`));
+  }
+  return [...new Set([...out, ...(f.lets ?? []).map((l) => l.key)])];
+}
+export function formWords(f: GenForm): string[] {
+  const texts = f.inputs.flatMap((i) => (i.options?.length ? [`${i.key}_title`, ...i.options.flatMap((o) => Object.keys(o.texts ?? {}).map((k) => `${i.key}_${k}`))] : []));
+  return [...new Set([...formKeys(f), ...texts, ...(f.picks ?? []).map((p) => p.key), ...Object.keys(f.words ?? {})])];
+}
+
 // A step the builder shows as a row: a label, a table, the dice (none — any row) or a number that picks the row, how
 // many times, the condition, where it goes.
 export type WhenOp = 'ge' | 'le' | 'gt' | 'lt' | 'eq' | 'on' | 'off';

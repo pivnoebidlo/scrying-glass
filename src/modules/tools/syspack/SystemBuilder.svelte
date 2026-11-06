@@ -193,7 +193,7 @@
     <div class="steps" role="tablist">
       {#each STEPS as st (st)}
         <button role="tab" aria-selected={builder.step === st} onclick={() => (builder.step = st)}>
-          {t(`sb.step.${st}`)}{#if st === 'sheet'}<span class="count">{fieldCount}</span>{:else if st === 'compendium'}<span class="count">{d.compendium?.length ?? 0}</span>{:else if st === 'generators'}<span class="count">{(d.kit?.generators.length ?? 0) + (d.kit?.lists?.length ?? 0) + (d.kit?.calculators?.length ?? 0)}</span>{:else if st === 'features' && !ro && freshFeatures(d.format, d.uses ?? []).length}<span class="count fresh">{t('sb.feat.new')}</span>{/if}
+          {t(`sb.step.${st}`)}{#if st === 'sheet'}<span class="count">{fieldCount}</span>{:else if st === 'compendium'}<span class="count">{d.compendium?.length ?? 0}</span>{:else if st === 'generators'}<span class="count">{((d.kit?.generators.length ?? 0) + (d.kit?.forms?.length ?? 0)) + (d.kit?.lists?.length ?? 0) + (d.kit?.calculators?.length ?? 0)}</span>{:else if st === 'features' && !ro && freshFeatures(d.format, d.uses ?? []).length}<span class="count fresh">{t('sb.feat.new')}</span>{/if}
         </button>
       {/each}
     </div>
