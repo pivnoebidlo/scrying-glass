@@ -1,0 +1,1355 @@
+{
+ "scryingGlass": "system",
+ "version": 1,
+ "format": 6,
+ "id": "pf2e",
+ "family": "pf2e",
+ "title": "Pathfinder 2e",
+ "about": {
+  "en": "Monster Core creatures, Player Core conditions, spells and actions (English and Russian), degrees of success, the encounter budget",
+  "ru": "Существа Monster Core, состояния, заклинания и действия Player Core (на английском и русском), степени успеха, бюджет боя"
+ },
+ "author": "Scrying Glass",
+ "uses": [
+  "worldtime"
+ ],
+ "rank": "level",
+ "subtitle": "{class} {level} · {ancestry} · {badges}",
+ "entryTypes": [
+  {
+   "id": "pf2e-spell",
+   "title": {
+    "en": "Spell (PF2e)",
+    "ru": "Заклинание (PF2e)"
+   },
+   "plural": {
+    "en": "Spells",
+    "ru": "Заклинания"
+   },
+   "fields": [
+    {
+     "key": "rank",
+     "title": {
+      "en": "Rank",
+      "ru": "Ранг"
+     },
+     "kind": "number"
+    },
+    {
+     "key": "traditions",
+     "title": {
+      "en": "Traditions",
+      "ru": "Традиции"
+     },
+     "kind": "list"
+    },
+    {
+     "key": "traits",
+     "title": {
+      "en": "Traits",
+      "ru": "Черты"
+     },
+     "kind": "list"
+    },
+    {
+     "key": "cast",
+     "title": {
+      "en": "Cast",
+      "ru": "Сотворение"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "range",
+     "title": {
+      "en": "Range",
+      "ru": "Дистанция"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "area",
+     "title": {
+      "en": "Area",
+      "ru": "Область"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "targets",
+     "title": {
+      "en": "Targets",
+      "ru": "Цели"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "defense",
+     "title": {
+      "en": "Defense",
+      "ru": "Защита"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "duration",
+     "title": {
+      "en": "Duration",
+      "ru": "Длительность"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "rarity",
+     "title": {
+      "en": "Rarity",
+      "ru": "Редкость"
+     },
+     "kind": "text"
+    }
+   ],
+   "subtitle": {
+    "en": "Spell {rank} · {traditions} · {act}",
+    "ru": "Заклинание {rank} · {traditions} · {act}"
+   }
+  },
+  {
+   "id": "pf2e-condition",
+   "title": {
+    "en": "Condition (PF2e)",
+    "ru": "Состояние (PF2e)"
+   },
+   "plural": {
+    "en": "Conditions",
+    "ru": "Состояния"
+   },
+   "fields": [
+    {
+     "key": "valued",
+     "title": {
+      "en": "Has a value",
+      "ru": "Со значением"
+     },
+     "kind": "bool"
+    }
+   ]
+  },
+  {
+   "id": "pf2e-action",
+   "title": {
+    "en": "Action (PF2e)",
+    "ru": "Действие (PF2e)"
+   },
+   "plural": {
+    "en": "Actions",
+    "ru": "Действия"
+   },
+   "fields": [
+    {
+     "key": "actions",
+     "title": {
+      "en": "Actions",
+      "ru": "Действий"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "traits",
+     "title": {
+      "en": "Traits",
+      "ru": "Черты"
+     },
+     "kind": "list"
+    }
+   ],
+   "subtitle": {
+    "en": "Action · {act} · {traits}",
+    "ru": "Действие · {act} · {traits}"
+   }
+  },
+  {
+   "id": "pf2e-ability",
+   "title": {
+    "en": "Monster ability",
+    "ru": "Способность существа"
+   },
+   "plural": {
+    "en": "Monster abilities",
+    "ru": "Способности существ"
+   },
+   "fields": [
+    {
+     "key": "actions",
+     "title": {
+      "en": "Actions",
+      "ru": "Действий"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "traits",
+     "title": {
+      "en": "Traits",
+      "ru": "Черты"
+     },
+     "kind": "list"
+    }
+   ],
+   "subtitle": {
+    "en": "Ability · {act} · {traits}",
+    "ru": "Способность · {act} · {traits}"
+   }
+  },
+  {
+   "id": "pf2e-feat",
+   "title": {
+    "en": "Feat (PF2e)",
+    "ru": "Черта (PF2e)"
+   },
+   "plural": {
+    "en": "Feats",
+    "ru": "Черты"
+   },
+   "fields": [
+    {
+     "key": "level",
+     "title": {
+      "en": "Level",
+      "ru": "Уровень"
+     },
+     "kind": "number"
+    },
+    {
+     "key": "category",
+     "title": {
+      "en": "Category",
+      "ru": "Категория"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "actions",
+     "title": {
+      "en": "Actions",
+      "ru": "Действий"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "traits",
+     "title": {
+      "en": "Traits",
+      "ru": "Черты"
+     },
+     "kind": "list"
+    },
+    {
+     "key": "prerequisites",
+     "title": {
+      "en": "Prerequisites",
+      "ru": "Предпосылки"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "rarity",
+     "title": {
+      "en": "Rarity",
+      "ru": "Редкость"
+     },
+     "kind": "text"
+    }
+   ],
+   "subtitle": {
+    "en": "Feat {level} · {act} · {traits}",
+    "ru": "Черта {level} · {act} · {traits}"
+   }
+  },
+  {
+   "id": "pf2e-item",
+   "title": {
+    "en": "Item (PF2e)",
+    "ru": "Предмет (PF2e)"
+   },
+   "plural": {
+    "en": "Items",
+    "ru": "Предметы"
+   },
+   "fields": [
+    {
+     "key": "level",
+     "title": {
+      "en": "Level",
+      "ru": "Уровень"
+     },
+     "kind": "number"
+    },
+    {
+     "key": "kind",
+     "title": {
+      "en": "Kind",
+      "ru": "Вид"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "category",
+     "title": {
+      "en": "Category",
+      "ru": "Категория"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "price",
+     "title": {
+      "en": "Price",
+      "ru": "Цена"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "bulk",
+     "title": {
+      "en": "Bulk",
+      "ru": "Вес"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "traits",
+     "title": {
+      "en": "Traits",
+      "ru": "Черты"
+     },
+     "kind": "list"
+    },
+    {
+     "key": "damage",
+     "title": {
+      "en": "Damage",
+      "ru": "Урон"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "range",
+     "title": {
+      "en": "Range",
+      "ru": "Дистанция"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "ac",
+     "title": {
+      "en": "AC bonus",
+      "ru": "Бонус КБ"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "rarity",
+     "title": {
+      "en": "Rarity",
+      "ru": "Редкость"
+     },
+     "kind": "text"
+    }
+   ],
+   "subtitle": {
+    "en": "Item {level} · {category} · {traits}",
+    "ru": "Предмет {level} · {category} · {traits}"
+   }
+  },
+  {
+   "id": "pf2e-class",
+   "title": {
+    "en": "Class",
+    "ru": "Класс"
+   },
+   "plural": {
+    "en": "Classes",
+    "ru": "Классы"
+   },
+   "fields": [
+    {
+     "key": "hp",
+     "title": {
+      "en": "HP per level",
+      "ru": "ОЗ за уровень"
+     },
+     "kind": "number"
+    },
+    {
+     "key": "key",
+     "title": {
+      "en": "Key attribute",
+      "ru": "Ключевая характеристика"
+     },
+     "kind": "text"
+    }
+   ]
+  },
+  {
+   "id": "pf2e-ancestry",
+   "title": {
+    "en": "Ancestry",
+    "ru": "Родословная"
+   },
+   "plural": {
+    "en": "Ancestries",
+    "ru": "Родословные"
+   },
+   "fields": [
+    {
+     "key": "hp",
+     "title": {
+      "en": "HP",
+      "ru": "ОЗ"
+     },
+     "kind": "number"
+    },
+    {
+     "key": "size",
+     "title": {
+      "en": "Size",
+      "ru": "Размер"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "speed",
+     "title": {
+      "en": "Speed",
+      "ru": "Скорость"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "boosts",
+     "title": {
+      "en": "Boosts",
+      "ru": "Повышения"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "traits",
+     "title": {
+      "en": "Traits",
+      "ru": "Черты"
+     },
+     "kind": "list"
+    }
+   ]
+  },
+  {
+   "id": "pf2e-heritage",
+   "title": {
+    "en": "Heritage",
+    "ru": "Наследие"
+   },
+   "plural": {
+    "en": "Heritages",
+    "ru": "Наследия"
+   },
+   "fields": [
+    {
+     "key": "ancestry",
+     "title": {
+      "en": "Ancestry",
+      "ru": "Родословная"
+     },
+     "kind": "text"
+    }
+   ]
+  },
+  {
+   "id": "pf2e-background",
+   "title": {
+    "en": "Background (PF2e)",
+    "ru": "Предыстория (PF2e)"
+   },
+   "plural": {
+    "en": "Backgrounds",
+    "ru": "Предыстории"
+   },
+   "fields": [
+    {
+     "key": "boosts",
+     "title": {
+      "en": "Boosts",
+      "ru": "Повышения"
+     },
+     "kind": "text"
+    },
+    {
+     "key": "skills",
+     "title": {
+      "en": "Trained skills",
+      "ru": "Обученные навыки"
+     },
+     "kind": "list"
+    }
+   ]
+  }
+ ],
+ "tracker": {
+  "init": {
+   "type": "roll",
+   "dice": "1d20",
+   "bonus": "perception"
+  },
+  "hp": "hp",
+  "defence": "ac",
+  "cells": [],
+  "conditions": {
+   "list": [
+    "Blinded",
+    "Broken",
+    "Clumsy",
+    "Concealed",
+    "Confused",
+    "Controlled",
+    "Dazzled",
+    "Deafened",
+    "Doomed",
+    "Drained",
+    "Dying",
+    "Encumbered",
+    "Enfeebled",
+    "Fascinated",
+    "Fatigued",
+    "Fleeing",
+    "Frightened",
+    "Grabbed",
+    "Hidden",
+    "Immobilized",
+    "Invisible",
+    "Off-Guard",
+    "Paralyzed",
+    "Persistent Damage",
+    "Petrified",
+    "Prone",
+    "Quickened",
+    "Restrained",
+    "Sickened",
+    "Slowed",
+    "Stunned",
+    "Stupefied",
+    "Unconscious",
+    "Undetected",
+    "Wounded"
+   ],
+   "free": false,
+   "valued": [
+    "Clumsy",
+    "Doomed",
+    "Drained",
+    "Dying",
+    "Enfeebled",
+    "Frightened",
+    "Sickened",
+    "Slowed",
+    "Stunned",
+    "Stupefied",
+    "Wounded"
+   ],
+   "entries": true
+  }
+ },
+ "threat": {
+  "party": 4,
+  "xp": {
+   "0": 40,
+   "1": 60,
+   "2": 80,
+   "3": 120,
+   "4": 160,
+   "-4": 10,
+   "-3": 15,
+   "-2": 20,
+   "-1": 30
+  },
+  "levels": [
+   {
+    "title": {
+     "en": "Trivial",
+     "ru": "Пустяковая"
+    },
+    "base": 40,
+    "extra": 10
+   },
+   {
+    "title": {
+     "en": "Low",
+     "ru": "Низкая"
+    },
+    "base": 60,
+    "extra": 20
+   },
+   {
+    "title": {
+     "en": "Moderate",
+     "ru": "Умеренная"
+    },
+    "base": 80,
+    "extra": 20
+   },
+   {
+    "title": {
+     "en": "Severe",
+     "ru": "Серьёзная"
+    },
+    "base": 120,
+    "extra": 30
+   },
+   {
+    "title": {
+     "en": "Extreme",
+     "ru": "Чрезвычайная"
+    },
+    "base": 160,
+    "extra": 40
+   }
+  ],
+  "beyond": {
+   "en": "Beyond extreme",
+   "ru": "Сверх чрезвычайной"
+  }
+ },
+ "sections": [
+  {
+   "id": "who",
+   "title": {
+    "en": "Character",
+    "ru": "Персонаж"
+   },
+   "view": "lines",
+   "noTitle": true,
+   "kinds": [
+    "character"
+   ],
+   "fields": [
+    {
+     "key": "class",
+     "title": {
+      "en": "Class",
+      "ru": "Класс"
+     },
+     "type": "text",
+     "bare": true
+    },
+    {
+     "key": "ancestry",
+     "title": {
+      "en": "Ancestry",
+      "ru": "Родословная"
+     },
+     "type": "text",
+     "bare": true,
+     "join": ","
+    },
+    {
+     "key": "heritage",
+     "title": {
+      "en": "Heritage",
+      "ru": "Наследие"
+     },
+     "type": "text",
+     "bare": true,
+     "join": ","
+    },
+    {
+     "key": "background",
+     "title": {
+      "en": "Background",
+      "ru": "Предыстория"
+     },
+     "type": "text",
+     "bare": true,
+     "join": ","
+    }
+   ]
+  },
+  {
+   "id": "overview",
+   "title": {
+    "en": "Overview",
+    "ru": "Обзор"
+   },
+   "view": "lines",
+   "noTitle": true,
+   "fields": [
+    {
+     "key": "badges",
+     "title": {
+      "en": "Traits",
+      "ru": "Черты"
+     },
+     "type": "tags",
+     "chips": true
+    },
+    {
+     "key": "level",
+     "title": {
+      "en": "Level",
+      "ru": "Уровень"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999
+    },
+    {
+     "key": "perception",
+     "title": {
+      "en": "Perception",
+      "ru": "Восприятие"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "signed": true,
+     "roll": {
+      "type": "d20",
+      "bonus": "perception",
+      "degrees": "four"
+     }
+    },
+    {
+     "key": "senses",
+     "title": {
+      "en": "Senses",
+      "ru": "Чувства"
+     },
+     "type": "tags",
+     "join": ";",
+     "bare": true
+    },
+    {
+     "key": "languages",
+     "title": {
+      "en": "Languages",
+      "ru": "Языки"
+     },
+     "type": "tags"
+    },
+    {
+     "key": "skills",
+     "title": {
+      "en": "Skills",
+      "ru": "Навыки"
+     },
+     "type": "list",
+     "columns": [
+      {
+       "key": "name",
+       "type": "text",
+       "title": {
+        "en": "Skill",
+        "ru": "Навык"
+       }
+      },
+      {
+       "key": "mod",
+       "type": "number",
+       "title": {
+        "en": "Bonus",
+        "ru": "Бонус"
+       },
+       "signed": true
+      },
+      {
+       "key": "prof",
+       "type": "text",
+       "title": {
+        "en": "Proficiency",
+        "ru": "Владение"
+       },
+       "show": "note"
+      }
+     ],
+     "roll": {
+      "type": "d20",
+      "bonus": "row.mod",
+      "degrees": "four"
+     }
+    },
+    {
+     "key": "str",
+     "title": {
+      "en": "Str",
+      "ru": "Сил"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "signed": true,
+     "roll": {
+      "type": "d20",
+      "bonus": "str",
+      "degrees": "four"
+     }
+    },
+    {
+     "key": "dex",
+     "title": {
+      "en": "Dex",
+      "ru": "Лов"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "signed": true,
+     "roll": {
+      "type": "d20",
+      "bonus": "dex",
+      "degrees": "four"
+     },
+     "join": ","
+    },
+    {
+     "key": "con",
+     "title": {
+      "en": "Con",
+      "ru": "Тел"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "signed": true,
+     "roll": {
+      "type": "d20",
+      "bonus": "con",
+      "degrees": "four"
+     },
+     "join": ","
+    },
+    {
+     "key": "int",
+     "title": {
+      "en": "Int",
+      "ru": "Инт"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "signed": true,
+     "roll": {
+      "type": "d20",
+      "bonus": "int",
+      "degrees": "four"
+     },
+     "join": ","
+    },
+    {
+     "key": "wis",
+     "title": {
+      "en": "Wis",
+      "ru": "Мдр"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "signed": true,
+     "roll": {
+      "type": "d20",
+      "bonus": "wis",
+      "degrees": "four"
+     },
+     "join": ","
+    },
+    {
+     "key": "cha",
+     "title": {
+      "en": "Cha",
+      "ru": "Хар"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "signed": true,
+     "roll": {
+      "type": "d20",
+      "bonus": "cha",
+      "degrees": "four"
+     },
+     "join": ","
+    },
+    {
+     "key": "items",
+     "title": {
+      "en": "Items",
+      "ru": "Предметы"
+     },
+     "type": "tags"
+    },
+    {
+     "key": "interaction",
+     "title": {
+      "en": "Abilities",
+      "ru": "Способности"
+     },
+     "type": "list",
+     "columns": [
+      {
+       "key": "name",
+       "type": "text",
+       "title": {
+        "en": "Name",
+        "ru": "Название"
+       }
+      },
+      {
+       "key": "act",
+       "type": "text",
+       "title": {
+        "en": "Action",
+        "ru": "Действие"
+       }
+      },
+      {
+       "key": "traits",
+       "type": "text",
+       "title": {
+        "en": "Traits",
+        "ru": "Черты"
+       },
+       "show": "note"
+      },
+      {
+       "key": "text",
+       "type": "long",
+       "title": {
+        "en": "Text",
+        "ru": "Текст"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "defence",
+   "title": {
+    "en": "Defence",
+    "ru": "Защита"
+   },
+   "view": "lines",
+   "noTitle": true,
+   "fields": [
+    {
+     "key": "ac",
+     "title": {
+      "en": "AC",
+      "ru": "КБ"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999
+    },
+    {
+     "key": "fort",
+     "title": {
+      "en": "Fort",
+      "ru": "Стойк."
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "signed": true,
+     "roll": {
+      "type": "d20",
+      "bonus": "fort",
+      "degrees": "four"
+     },
+     "join": ";"
+    },
+    {
+     "key": "ref",
+     "title": {
+      "en": "Ref",
+      "ru": "Реакц."
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "signed": true,
+     "roll": {
+      "type": "d20",
+      "bonus": "ref",
+      "degrees": "four"
+     },
+     "join": ","
+    },
+    {
+     "key": "will",
+     "title": {
+      "en": "Will",
+      "ru": "Воля"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "signed": true,
+     "roll": {
+      "type": "d20",
+      "bonus": "will",
+      "degrees": "four"
+     },
+     "join": ","
+    },
+    {
+     "key": "save_note",
+     "title": {
+      "en": "Note",
+      "ru": "Примечание"
+     },
+     "type": "text",
+     "bare": true,
+     "join": ";"
+    },
+    {
+     "key": "hp",
+     "title": {
+      "en": "HP",
+      "ru": "ОЗ"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999
+    },
+    {
+     "key": "hp_note",
+     "title": {
+      "en": "Note",
+      "ru": "Примечание"
+     },
+     "type": "text",
+     "bare": true,
+     "join": ";"
+    },
+    {
+     "key": "immunities",
+     "title": {
+      "en": "Immunities",
+      "ru": "Иммунитеты"
+     },
+     "type": "tags",
+     "join": ";"
+    },
+    {
+     "key": "weaknesses",
+     "title": {
+      "en": "Weaknesses",
+      "ru": "Слабости"
+     },
+     "type": "tags",
+     "join": ";"
+    },
+    {
+     "key": "resistances",
+     "title": {
+      "en": "Resistances",
+      "ru": "Сопротивления"
+     },
+     "type": "tags",
+     "join": ";"
+    },
+    {
+     "key": "defensive",
+     "title": {
+      "en": "Defensive abilities",
+      "ru": "Защитные способности"
+     },
+     "type": "list",
+     "columns": [
+      {
+       "key": "name",
+       "type": "text",
+       "title": {
+        "en": "Name",
+        "ru": "Название"
+       }
+      },
+      {
+       "key": "act",
+       "type": "text",
+       "title": {
+        "en": "Action",
+        "ru": "Действие"
+       }
+      },
+      {
+       "key": "traits",
+       "type": "text",
+       "title": {
+        "en": "Traits",
+        "ru": "Черты"
+       },
+       "show": "note"
+      },
+      {
+       "key": "text",
+       "type": "long",
+       "title": {
+        "en": "Text",
+        "ru": "Текст"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "offence",
+   "title": {
+    "en": "Offence",
+    "ru": "Нападение"
+   },
+   "view": "lines",
+   "noTitle": true,
+   "fields": [
+    {
+     "key": "speeds",
+     "title": {
+      "en": "Speed",
+      "ru": "Скорость"
+     },
+     "type": "tags"
+    },
+    {
+     "key": "speed",
+     "title": {
+      "en": "Speed",
+      "ru": "Скорость"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "hideZero": true
+    },
+    {
+     "key": "class_dc",
+     "title": {
+      "en": "Class DC",
+      "ru": "КС класса"
+     },
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "hideZero": true,
+     "join": ";"
+    },
+    {
+     "key": "strikes",
+     "title": {
+      "en": "Strikes",
+      "ru": "Удары"
+     },
+     "type": "list",
+     "rowLines": true,
+     "columns": [
+      {
+       "key": "kind",
+       "type": "text",
+       "title": {
+        "en": "Type",
+        "ru": "Вид"
+       },
+       "show": "strong"
+      },
+      {
+       "key": "act",
+       "type": "text",
+       "title": {
+        "en": "Action",
+        "ru": "Действие"
+       }
+      },
+      {
+       "key": "name",
+       "type": "text",
+       "title": {
+        "en": "Name",
+        "ru": "Название"
+       }
+      },
+      {
+       "key": "bonus",
+       "type": "number",
+       "title": {
+        "en": "Bonus",
+        "ru": "Бонус"
+       },
+       "signed": true
+      },
+      {
+       "key": "map",
+       "type": "number",
+       "title": {
+        "en": "Penalty step",
+        "ru": "Шаг штрафа"
+       },
+       "show": "hidden"
+      },
+      {
+       "key": "traits",
+       "type": "text",
+       "title": {
+        "en": "Traits",
+        "ru": "Черты"
+       },
+       "show": "note"
+      },
+      {
+       "key": "damage",
+       "type": "dice",
+       "title": {
+        "en": "Damage",
+        "ru": "Урон"
+       },
+       "show": "label",
+       "crit": "total"
+      },
+      {
+       "key": "plus",
+       "type": "text",
+       "title": {
+        "en": "And",
+        "ru": "Ещё"
+       }
+      }
+     ],
+     "roll": {
+      "type": "d20",
+      "bonus": "row.bonus",
+      "degrees": "four",
+      "steps": [
+       "0 - row.map",
+       "0 - row.map * 2"
+      ]
+     }
+    },
+    {
+     "key": "spell_text",
+     "title": {
+      "en": "Spells",
+      "ru": "Заклинания"
+     },
+     "type": "textarea",
+     "bare": true
+    },
+    {
+     "key": "offensive",
+     "title": {
+      "en": "Offensive abilities",
+      "ru": "Способности нападения"
+     },
+     "type": "list",
+     "columns": [
+      {
+       "key": "name",
+       "type": "text",
+       "title": {
+        "en": "Name",
+        "ru": "Название"
+       }
+      },
+      {
+       "key": "act",
+       "type": "text",
+       "title": {
+        "en": "Action",
+        "ru": "Действие"
+       }
+      },
+      {
+       "key": "traits",
+       "type": "text",
+       "title": {
+        "en": "Traits",
+        "ru": "Черты"
+       },
+       "show": "note"
+      },
+      {
+       "key": "text",
+       "type": "long",
+       "title": {
+        "en": "Text",
+        "ru": "Текст"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "gear",
+   "title": {
+    "en": "Equipment",
+    "ru": "Снаряжение"
+   },
+   "view": "lines",
+   "noTitle": true,
+   "kinds": [
+    "character"
+   ],
+   "fields": [
+    {
+     "key": "feat_text",
+     "title": {
+      "en": "Feats",
+      "ru": "Черты"
+     },
+     "type": "textarea"
+    },
+    {
+     "key": "equipment",
+     "title": {
+      "en": "Equipment",
+      "ru": "Снаряжение"
+     },
+     "type": "tags"
+    },
+    {
+     "key": "pp",
+     "title": "pp",
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "hideZero": true
+    },
+    {
+     "key": "gp",
+     "title": "gp",
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "hideZero": true,
+     "join": ","
+    },
+    {
+     "key": "sp",
+     "title": "sp",
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "hideZero": true,
+     "join": ","
+    },
+    {
+     "key": "cp",
+     "title": "cp",
+     "type": "number",
+     "min": -50,
+     "max": 9999,
+     "hideZero": true,
+     "join": ","
+    }
+   ]
+  }
+ ]
+}

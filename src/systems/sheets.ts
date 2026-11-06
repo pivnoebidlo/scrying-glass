@@ -4,14 +4,12 @@ import type { Component } from 'svelte';
 import type { Card } from '../shared/cards';
 import { familyOf } from '.';
 import { isCharacter as isDnd } from './dnd5e/character';
-import { isCharacter as isPf2e } from './pf2e/character';
 
 type Sheet = Component<{ card: Card<any> }>;
 type Load = () => Promise<{ default: Sheet }>;
 
 const SHEETS: Record<string, (stats: unknown) => Load | undefined> = {
   dnd5e: (s) => (isDnd(s) ? () => import('./dnd5e/CharacterSheet.svelte') as Promise<{ default: Sheet }> : undefined),
-  pf2e: (s) => (isPf2e(s) ? () => import('./pf2e/CharacterSheet.svelte') as Promise<{ default: Sheet }> : undefined),
 };
 
 export async function sheetOf(card: Card, pack: boolean): Promise<Sheet> {

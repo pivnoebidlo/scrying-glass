@@ -57,7 +57,59 @@ function fitdStats(s: OldFitd, lang: string): Record<string, unknown> {
   return out;
 }
 
+// Pathfinder 2e (code until 0.89): the pack's fields are added beside the old ones, nothing is taken away, so an older
+// app still reads the same card with its own code.
+const PF_WORDS = {
+  en: { creature: 'Creature', melee: 'Melee', ranged: 'Ranged', plus: 'plus', dc: 'DC', attack: 'attack', constant: 'Constant', cantrips: 'Cantrips', rank: (n: number) => `Rank ${n}`, slots: (n: number) => `${n} slots`, size: { tiny: 'Tiny', sm: 'Small', med: 'Medium', lg: 'Large', huge: 'Huge', grg: 'Gargantuan' } as Record<string, string> },
+  ru: { creature: 'Существо', melee: 'Ближний бой', ranged: 'Дальний бой', plus: 'плюс', dc: 'КС', attack: 'атака', constant: 'Постоянные', cantrips: 'Чары', rank: (n: number) => `Ранг ${n}`, slots: (n: number) => `ячеек: ${n}`, size: { tiny: 'Крошечный', sm: 'Маленький', med: 'Средний', lg: 'Большой', huge: 'Огромный', grg: 'Гигантский' } as Record<string, string> },
+};
+const PF_ACT: Record<string, string> = { '1': '◆', '2': '◆◆', '3': '◆◆◆', reaction: '⟲', free: '◇' };
+const PF_RANKS = ['U', 'T', 'E', 'M', 'L'];
+type PfRow = Record<string, unknown>;
+const list = <T = PfRow>(v: unknown) => (Array.isArray(v) ? (v as T[]) : []);
+const isOldPf = (s: unknown): s is Record<string, any> => !!s && typeof s === 'object' && !('fort' in s) && typeof (s as { saves?: unknown }).saves === 'object';
+
+export function pf2eFields(s: Record<string, any>, lang: string): Record<string, unknown> {
+  const w = PF_WORDS[lang === 'ru' ? 'ru' : 'en'];
+  const hero = s['sheet'] === 'pf2e-character';
+  const features = (rows: unknown) => list(rows).map((f) => ({ ...f, act: PF_ACT[String(f['actions'])] ?? '', text: String(f['text'] ?? '').replace(/ --- /g, '\n\n---\n\n') }));
+  const spells = list<any>(s['spellcasting']).map((sc) => {
+    const head = `**${sc.name}** ${w.dc} ${sc.dc}${sc.attack !== null && sc.attack !== undefined ? `, ${w.attack} {1d20${sc.attack < 0 ? '' : '+'}${sc.attack}}` : ''}`;
+    const ranks = list<any>(sc.ranks).map((r) => `**${r.constant ? `${w.constant} (${w.rank(r.rank)})` : r.rank === 0 ? w.cantrips : w.rank(r.rank)}**${r.slots ? ` (${w.slots(r.slots)})` : ''} ${list<string>(r.spells).map((x) => `[[${x}]]`).join(', ')}`);
+    return `${head}; ${ranks.join('; ')}`;
+  });
+  const levels = [...new Set(list<any>(s['feats']).map((f) => f.level))].sort((a, b) => a - b);
+  return {
+    ...s,
+    ...(hero ? {} : { class: w.creature }),
+    ...(s['hpNote'] ? { hp_note: s['hpNote'] } : {}),
+    class_dc: s['classDC'] ?? 0,
+    badges: hero ? [] : [...(s['rarity'] && s['rarity'] !== 'common' ? [s['rarity']] : []), w.size[s['size']] ?? s['size'], ...list<string>(s['traits'])],
+    ...Object.fromEntries(['str', 'dex', 'con', 'int', 'wis', 'cha'].map((k) => [k, s['abilities']?.[k] ?? 0])),
+    fort: s['saves']?.fort ?? 0,
+    ref: s['saves']?.ref ?? 0,
+    will: s['saves']?.will ?? 0,
+    ...(s['saves']?.note ? { save_note: s['saves'].note } : {}),
+    skills: list(s['skills']).map((x) => (typeof x['rank'] === 'number' ? { ...x, prof: PF_RANKS[x['rank']] ?? '' } : x)),
+    strikes: list<any>(s['strikes']).map((x) => ({ ...x, kind: x.ranged ? w.ranged : w.melee, act: '◆', map: list<string>(x.traits).includes('agile') ? 4 : 5, plus: list(x.effects).length ? `${w.plus} ${list(x.effects).join(', ')}` : '' })),
+    interaction: features(s['interaction']),
+    defensive: features(s['defensive']),
+    offensive: features(s['offensive']),
+    spell_text: spells.join('\n\n'),
+    ...(hero
+      ? {
+          feat_text: levels.map((l) => `**${l}** ${list<any>(s['feats']).filter((f) => f.level === l).map((f) => `[[${f.name}]]`).join(', ')}`).join('\n\n'),
+          pp: s['money']?.pp ?? 0,
+          gp: s['money']?.gp ?? 0,
+          sp: s['money']?.sp ?? 0,
+          cp: s['money']?.cp ?? 0,
+        }
+      : {}),
+  };
+}
+
 export function upgradeCard<C extends Card>(c: C): C {
   if (c.system === 'fitd' && isOldFitd(c.stats)) return { ...c, stats: fitdStats(c.stats, c.lang) };
+  if (c.system === 'pf2e' && isOldPf(c.stats)) return { ...c, stats: pf2eFields(c.stats, c.lang) };
   return c;
 }

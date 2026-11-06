@@ -228,8 +228,8 @@ CC BY 3.0). Тексты лежат в `scripts/fate-core.<язык>.md`, `npm r
 русском и английском, сделанный для приложения, без мира оригинальной игры. Тексты — в `scripts/fitd.<язык>.md`,
 `npm run build-fitd` собирает из них `content/fitd/compendium/fitd.<язык>.json`. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
 
-**Pathfinder 2e** (ремастер) — система приложения, выключена, пока вы не включите её в «Настройки» → «Ролевые
-системы»; тогда скачиваются её данные (около 0,5 МБ, только на английском — открытого русского перевода нет): 492
+**Pathfinder 2e** (ремастер) — официальный пакет системы: его включают или скачивают в «Настройки» → «Ролевые
+системы» (на английском и русском): 492
 существа Monster Core (статблоки), состояния, заклинания, действия, снаряжение, черты, родословные, наследия, предыстории и классы Player Core, Player Core 2 и
 GM Core, способности существ.
 Статблок бросает Восприятие, навыки и спасброски, каждый удар — тремя кнопками (со штрафом за несколько атак, у

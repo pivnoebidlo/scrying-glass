@@ -4,6 +4,7 @@
 // the attribute modifier. Pure: the core reads it through the plugin.
 import type { CardImporter } from '../importer';
 import { t } from '../../shared/i18n';
+import { pf2eFields } from '../../shared/oldcards';
 import { ABILITIES, SIZES, type Ability, type Spellcasting, type Strike } from './stats';
 import type { Pf2eCharacter } from './character';
 
@@ -129,7 +130,7 @@ export const pathbuilderImporter: CardImporter = {
   },
   detect: (j) => buildOf(j) !== null,
   read(j) {
-    const stats = fromPathbuilder(j);
+    const stats = pf2eFields(fromPathbuilder(j) as unknown as Record<string, unknown>, 'en');
     const id = (j as { pathbuilderId?: unknown }).pathbuilderId;
     return { name: buildOf(j)!.name || t('pf2e.pb.unnamed'), system: 'pf2e', lang: 'en', stats, linkId: typeof id === 'string' || typeof id === 'number' ? String(id) : null, avatarUrl: null, warnings: [] };
   },

@@ -34,7 +34,8 @@ export interface SystemDef {
 export const systems: SystemDef[] = PLUGINS.flatMap((p) => p.systems);
 
 // Семейства систем по порядку (для выбора системы приключения — группами).
-export const FAMILIES: { id: string; title: string }[] = PLUGINS.map((p) => ({
+// A plugin without systems of its own (an importer for a pack's family) has no family here: the pack brings it.
+export const FAMILIES: { id: string; title: string }[] = PLUGINS.filter((p) => p.systems.length).map((p) => ({
   id: p.family,
   get title() {
     return p.title;

@@ -232,8 +232,8 @@ retelling of the Blades in the Dark SRD in English and Russian written for the a
 The texts are in `scripts/fitd.<lang>.md`; `npm run build-fitd` builds `content/fitd/compendium/fitd.<lang>.json` from
 them. This work is based on Blades in the Dark (found at http://www.bladesinthedark.com/), product of One Seven Design, developed and authored by John Harper, and licensed for our use under the Creative Commons Attribution 3.0 Unported license (http://creativecommons.org/licenses/by/3.0/).
 
-**Pathfinder 2e** (the remaster) is a system of the app, off until you turn it on in Settings → Game systems; its data
-is downloaded then (about 0.5 MB, English only — there is no open Russian translation): the 492 creatures of Monster
+**Pathfinder 2e** (the remaster) is an official system package: turn it on or download it in Settings → Game systems
+(English and Russian): the 492 creatures of Monster
 Core (stat blocks), the conditions, spells, actions, equipment, feats, ancestries, heritages, backgrounds and classes of
 Player Core, Player Core 2 and GM Core, the monster abilities. A stat
 block rolls Perception, skills and saves, each strike three times (with the multiple attack penalty, agile weapons

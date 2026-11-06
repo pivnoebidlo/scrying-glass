@@ -105,10 +105,11 @@
     if (dice?.dataset['dice']) rolls.damage(card.name, what, dice.dataset['dice']);
   }
   // A cell on a line of text: a number with its sign if the column says so.
-  const inlineCell = (c: ColumnDef, v: unknown) => (c.signed && typeof v === 'number' ? signedNum(v) : v === undefined || v === null ? '' : String(v));
+  const inlineCell = (c: ColumnDef, v: unknown) => (c.signed && typeof v === 'number' ? signedNum(v) : cell_(v));
+  const cell_ = (v: unknown) => (Array.isArray(v) ? v.join(', ') : v === undefined || v === null ? '' : String(v));
   const shownCols = (f: FieldDef) => (f.columns ?? []).filter((c) => c.type !== 'long' && c.show !== 'hidden');
   const visibleCols = (f: FieldDef) => (f.columns ?? []).filter((c) => c.show !== 'hidden');
-  const hasCell = (v: unknown) => String(v ?? '').trim() !== '';
+  const hasCell = (v: unknown) => cell_(v).trim() !== '';
   // The cell a click on a row of a line rolls: its first number, else its last cell.
   const rollCell = (f: FieldDef) => {
     const cols = shownCols(f);
@@ -120,7 +121,7 @@
 
 {#snippet rowCells(f: FieldDef, row: Record<string, unknown>)}
   {@const main = f.roll ? rollCell(f) : undefined}
-  {#each shownCols(f).filter((c) => hasCell(row[c.key])) as c, n (c.key)}{c.show === 'label' ? (n ? ', ' : '') : n ? ' ' : ''}{#if c.show === 'label'}<strong>{L(c.title)}</strong>{' '}{/if}{#if c.key === main?.key}{#each stepsOf(f, row).length ? stepsOf(f, row) : [row[c.key]] as v, i (i)}{i ? ' / ' : ''}<button class="inroll" title={t('pack.rollHint')} onclick={(e) => roll(f, e, row, 0, i)}>{inlineCell(c, v)}</button>{/each}{:else if c.type === 'dice' && cellDice(String(row[c.key]))}<button class="inroll" title={t('pack.rollHint')} onclick={() => hit(f, row, c, false)}>{cellText(String(row[c.key]))}</button>{#if c.crit}{' '}<button class="inroll" title={t('pack.crit')} onclick={() => hit(f, row, c, true)}>×2</button>{/if}{:else if c.show === 'note'}<span class="note">({row[c.key]})</span>{:else if c.show === 'strong'}<strong>{row[c.key]}</strong>{:else}{inlineCell(c, row[c.key])}{/if}{/each}
+  {#each shownCols(f).filter((c) => hasCell(row[c.key])) as c, n (c.key)}{c.show === 'label' ? (n ? ', ' : '') : n ? ' ' : ''}{#if c.show === 'label'}<strong>{L(c.title)}</strong>{' '}{/if}{#if c.key === main?.key}{#each stepsOf(f, row).length ? stepsOf(f, row) : [row[c.key]] as v, i (i)}{i ? ' / ' : ''}<button class="inroll" title={t('pack.rollHint')} onclick={(e) => roll(f, e, row, 0, i)}>{inlineCell(c, v)}</button>{/each}{:else if c.type === 'dice' && cellDice(String(row[c.key]))}<button class="inroll" title={t('pack.rollHint')} onclick={() => hit(f, row, c, false)}>{cellText(String(row[c.key]))}</button>{#if c.crit}{' '}<button class="inroll" title={t('pack.crit')} onclick={() => hit(f, row, c, true)}>×2</button>{/if}{:else if c.show === 'note'}<span class="note">({cell_(row[c.key])})</span>{:else if c.show === 'strong'}<strong>{row[c.key]}</strong>{:else}{inlineCell(c, row[c.key])}{/if}{/each}
 {/snippet}
 
 {#snippet lineValue(f: FieldDef)}
@@ -229,7 +230,7 @@
                 <div class="feature" onclick={(e) => onText(e, name)}>
                   <strong>{name}</strong>
                   {#each shownCols(first).slice(1) as c (c.key)}
-                    {#if hasCell(row[c.key])}{' '}{#if c.show === 'note'}<span class="note">({row[c.key]})</span>{:else}<span>{inlineCell(c, row[c.key])}</span>{/if}{/if}
+                    {#if hasCell(row[c.key])}{' '}{#if c.show === 'note'}<span class="note">({cell_(row[c.key])})</span>{:else}<span>{inlineCell(c, row[c.key])}</span>{/if}{/if}
                   {/each}
                   {#if String(row[longColumn(first)!.key] ?? '').trim()}<div class="md">{@html md(String(row[longColumn(first)!.key]))}</div>{/if}
                 </div>

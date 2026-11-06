@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import type { Feature, Pf2eStats, Spellcasting, Strike } from '../src/systems/pf2e/stats.ts';
+import { pf2eFields } from '../src/shared/oldcards.ts';
 
 const REPO = 'https://github.com/foundryvtt/pf2e.git';
 const BRANCH = 'v14-dev';
@@ -342,6 +343,8 @@ const boosts = (b: Record<string, { value: string[] }> | undefined) =>
   Object.values(b ?? {}).map((x) => (x.value.length >= 6 ? 'free' : x.value.map((v) => ABILITY[v] ?? v).join(' or '))).join(', ');
 
 function entry(d: Doc, type: string, fields: Record<string, unknown>) {
+  const icon = ({ 1: '◆', 2: '◆◆', 3: '◆◆◆', reaction: '⟲', free: '◇' } as Record<string, string>)[String(fields['actions'] ?? fields['cast'])];
+  if (icon) fields = { ...fields, act: icon };
   const clean = Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, field(v)]).filter(([, v]) => v !== '' && v !== undefined && v !== null && !(Array.isArray(v) && !v.length)));
   return { title: d.name, type, fields: clean, body: html(d.system.description?.value ?? '') };
 }
@@ -438,7 +441,8 @@ const ruCards = monsters.flatMap((d, i) => {
 });
 fs.mkdirSync(path.join(OUT, 'bestiary'), { recursive: true });
 fs.mkdirSync(path.join(OUT, 'compendium'), { recursive: true });
-fs.writeFileSync(path.join(OUT, 'bestiary/pf2e.json'), JSON.stringify([...cards, ...ruCards]));
+// The pack's fields beside the old ones (shared/oldcards.ts); the system itself — system/pf2e.json, by hand.
+fs.writeFileSync(path.join(OUT, 'bestiary/pf2e.json'), JSON.stringify([...cards, ...ruCards].map((c) => ({ ...c, stats: pf2eFields(c.stats as unknown as Record<string, unknown>, c.lang) }))));
 fs.writeFileSync(
   path.join(OUT, 'compendium/pf2e.ru.json'),
   JSON.stringify({

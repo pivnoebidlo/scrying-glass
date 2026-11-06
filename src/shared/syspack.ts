@@ -173,13 +173,14 @@ export interface TrackerSpec {
   // The field that is defence (Armour Class): a column of the tracker.
   defence?: string;
   // Conditions: a list to choose from and/or free text; valued — the ones with a number («Frightened 2»).
-  conditions?: { list?: Loc[]; free?: boolean; valued?: Loc[] };
+  // entries — a condition opens the compendium entry of its name, wherever the entry comes from.
+  conditions?: { list?: Loc[]; free?: boolean; valued?: Loc[]; entries?: boolean };
 }
 
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 5;
+export const PACK_FORMAT = 6;
 
 export interface SystemPack {
   scryingGlass: 'system';
@@ -605,6 +606,7 @@ export function validatePack(x: unknown): SystemPack | string {
           conditions: {
             list: Array.isArray(cond['list']) ? cond['list'].map((c) => locOf(c)).filter((c): c is Loc => c !== null).slice(0, LIMIT.options) : [],
             free: cond['free'] === true,
+            ...(cond['entries'] === true ? { entries: true } : {}),
             ...(Array.isArray(cond['valued']) && cond['valued'].length
               ? { valued: cond['valued'].map((c) => locOf(c)).filter((c): c is Loc => c !== null).slice(0, LIMIT.options) }
               : {}),
@@ -956,7 +958,7 @@ export function packSubtitle(pack: SystemPack, stats: PackStats, lang: string): 
       const v = stats[k];
       if (f.type === 'select') return typeof v === 'number' ? loc(f.options?.[v], lang) : '';
       if (f.type === 'formula') return String(evalFormula(pack, stats, f.formula!));
-      return v === undefined || v === null ? '' : String(v);
+      return v === undefined || v === null ? '' : Array.isArray(v) ? v.join(' ') : String(v);
     })
     .replace(/^[\s·,—-]+|[\s·,—-]+$/g, '')
     .replace(/(\s*·\s*)+/g, ' · ');

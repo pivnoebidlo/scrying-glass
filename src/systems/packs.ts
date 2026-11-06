@@ -9,7 +9,7 @@ import type { SheetResources } from '../shared/players';
 import { blankStats, entryLine, evalFormula, fieldMap, loc, packCombat, packResources, packSubtitle, type PackEntryType, type PackStats, type SystemPack } from '../shared/syspack';
 import { COMMON_FIELDS, setPackTypes } from '../shared/compendium';
 import type { TypeDef } from '../shared/entrytypes';
-import type { CombatField, TrackerDef } from './tracker';
+import { conditionValue, type CombatField, type TrackerDef } from './tracker';
 import { FAMILIES, pluginResources, systems, type SystemDef } from '.';
 
 const packs = new Map<string, SystemPack>();
@@ -39,8 +39,8 @@ export function registerPacks(list: SystemPack[] | undefined) {
     for (const t of p.entryTypes ?? []) types[t.id] ??= entryTypeOf(t, p.family ?? p.id);
     systems.push(systemOfPack(p));
     const family = p.family ?? p.id;
+    families.add(family);
     if (!FAMILIES.some((f) => f.id === family)) {
-      families.add(family);
       FAMILIES.push({
         id: family,
         get title() {
@@ -203,7 +203,8 @@ export function packTracker(p: SystemPack): TrackerDef {
         return t('pack.tr.addCondition');
       },
       // A condition with an entry of the same name in the pack's compendium opens it.
-      ...(p.compendium?.length
+      ...(p.tracker.conditions?.entries ? { entry: (c: string) => [conditionValue(c).name] } : {}),
+      ...(p.compendium?.length && !p.tracker.conditions?.entries
         ? { entry: (c: string) => (p.compendium!.some((e) => loc(e.title, getLang()).toLowerCase() === c.toLowerCase()) ? [c] : []) }
         : {}),
     },

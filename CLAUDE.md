@@ -339,28 +339,10 @@ Electron-приложение для мастера D&D: окно управле
   системы — `SystemDef.about`, у пакета — поле `about` (`Loc`; конструктор — «О системе»). С выключенным D&D его не видно нигде,
   кроме «Ролевых систем» (включить) и «О программе» (атрибуция): разделы настроек и инструменты других систем — только
   включённых.
-- Pathfinder 2e (с 0.67) — второй плагин (`systems/pf2e/`): одна система `pf2e` (ремастер), семейство `pf2e`; название —
-  по Community Use Policy Paizo, правила — ORC (атрибуция дословно — `about.credit.pf2e`, `content/pf2e-core/README.md`).
-  Статблок `Pf2eStats` (`stats.ts`: уровень, черты, Восприятие, навыки, КБ/спасброски, удары `Strike` — `mapOf`, способности
-  `Feature` по разделам interaction / defensive / offensive, колдовство), вид — `StatBlock.svelte` (броски, ×2 —
-  `rolls.damage(…, 'total')`; удары и колдовство — общие `Strikes.svelte` / `SpellLists.svelte`), редактор — `Editor.svelte`
-  (списки через запятую, кубы урона в {} сами). Персонаж — `character.ts` (`Pf2eCharacter`, `sheet: 'pf2e-character'`,
-  `isCharacter`; `SystemDef.shape`), лист — `CharacterSheet.svelte`, редактор листа — `CharacterEditor.svelte` («Пересчитать по рангам»: владение + уровень +
-  модификатор); удары и колдовство в редакторах — общие `StrikesEditor.svelte` / `SpellsEditor.svelte`, стили — `editor.css` под `.pf2e-ed`; импорт — `pathbuilder.ts`
-  (`pathbuilderImporter`, `fromPathbuilder`: значения характеристик → модификаторы, владение + уровень + модификатор;
-  `ImportedCard.lang` — язык новой карточки, без него русский). Угроза боя берёт партию из персонажей боя, иначе из настроек. Типы записей с префиксом (`pf2e-spell`, `pf2e-condition`,
-  `pf2e-action`, `pf2e-ability`; `spell` занят D&D — ключи типов общие на всё приложение). Трекер — `tracker.ts`
-  (`CONDITIONS`, `VALUED` — `TrackerDef.conditions.valued`, общий механизм: «Frightened 2» строкой, − / + — действие
-  `initiative/setCondition`, `conditionValue`), угроза боя — `budget.ts` + `Budget.svelte` (`SystemUi.encounter`; партия —
-  `initiative.party`). Степени успеха — `degreeOf` в `shared/dice.ts`. Данные — `content/pf2e-core/` (`scripts/import-pf2e.ts`:
-  частичный клон foundryvtt/pf2e в `node_modules/.cache/pf2e`, только `publication.license === 'ORC'` из Player Core,
-  Player Core 2, Monster Core, GM Core; HTML и обогащения Foundry → наша разметка; лор существ не берём — Reserved Material).
-  Новая встроенная система приходит выключенной (`settings.systemsKnown`, `meetNewSystems` в main/index.ts; первый запуск
-  отмечает только D&D). Данные: + снаряжение (`pf2e-item`), черты (`pf2e-feat`), родословные, наследия, предыстории, классы (GM Core тоже). Русский текст —
-  перевод модуля Foundry «Русский перевод Pathfinder 2e и Starfinder 2e» (Доктор#0353, gitlab.com/gnuraco/pf2r; OGL 1.0a, с
-  разрешения автора): `import-pf2e.ts` берёт его файлы Babele по английскому названию (у существ — способности по id предмета)
-  → `compendium/pf2e.ru.json` (`en`) и карточки `<id>.ru` в `bestiary/pf2e.json`; атрибуция — `about.credit.pf2eru`. Черты,
-  навыки, скорость и другие поля в русских записях пока английские. Дальше: другие книги.
+- Pathfinder 2e — пакет с 0.89 (`content/pf2e-core/system/pf2e.json`, id и семейство `pf2e`; в 0.67–0.88 — плагин с кодом). Правка системы — в конструкторе или JSON. Название — по Community Use Policy Paizo, правила — ORC (атрибуция дословно — `about.credit.pf2e`, `content/pf2e-core/README.md`). От плагина осталось то, что данными не описать: `systems/pf2e/plugin.ts` без систем (`systems: []`, семейство приносит пакет: `FAMILIES` берёт только плагины с системами) — импортёр `pathbuilder.ts` (`ImportedCard.lang`), `sheetEntries`, `content`; `ui.ts` — только `claims` общих генераторов.
+  Карточки: новые поля лежат рядом со старыми, ничего не убрано (`pf2eFields` в `shared/oldcards.ts`, зовут `upgradeCard`, импорт Pathbuilder и `scripts/import-pf2e.ts`) — поэтому 0.88 и раньше читают тот же пакет своим кодом, а пакет `pf2e` пропускают (id занят плагином). Признак старой карточки — нет ключа `fort`. Ключи полей только строчные (`save_note`, `hp_note`, `class_dc`, `spell_text`, `feat_text`). Колдовство и черты на листе — Markdown со [[ссылками]], бросок атаки заклинанием — `{1d20+N}`.
+  Типы записей с префиксом (`pf2e-spell`, `pf2e-condition`, `pf2e-action`, `pf2e-ability`…) — `SystemPack.entryTypes`; `act` в полях записи — значок действий для строки под названием. Трекер — `tracker` пакета (`conditions.entries`: состояние открывает запись справочника, значение отбрасывает `conditionValue`), угроза боя — `threat`. Степени успеха — `degreeOf` в `shared/dice.ts`. Данные — `scripts/import-pf2e.ts`: частичный клон foundryvtt/pf2e в `node_modules/.cache/pf2e`, только `publication.license === 'ORC'` из Player Core, Player Core 2, Monster Core, GM Core; HTML и обогащения Foundry → наша разметка; лор существ не берём — Reserved Material. Сама система скриптом не пересобирается.
+  Новая встроенная система приходит выключенной (`settings.systemsKnown`, `meetNewSystems` в main/index.ts; первый запуск отмечает только D&D). Русский текст — перевод модуля Foundry «Русский перевод Pathfinder 2e и Starfinder 2e» (Доктор#0353, gitlab.com/gnuraco/pf2r; OGL 1.0a, с разрешения автора): `import-pf2e.ts` берёт его файлы Babele по английскому названию (у существ — способности по id предмета) → `compendium/pf2e.ru.json` (`en`) и карточки `<id>.ru` в `bestiary/pf2e.json`; атрибуция — `about.credit.pf2eru`. Черты, навыки, скорость и другие поля в русских записях пока английские. Дальше: другие книги.
 - Ролевая система: у приключения своя (`adventures.systems`, ключ — папка, '' — всё хранилище и общее; нет —
   `LEGACY_SYSTEM`), выбор — `SystemSelect` в меню приключения и при создании. Системы и семейства (`family`: редакции
   D&D 2014/2024 — одно семейство) — `systems/index.ts` (`FAMILIES`, `familyOf`; из плагинов и пакетов); правила —

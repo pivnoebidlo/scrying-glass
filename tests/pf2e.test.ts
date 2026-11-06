@@ -3,13 +3,20 @@ import { describe, expect, it } from 'vitest';
 import { degreeOf, parseDice, rollDamage } from '../src/shared/dice';
 import { conditionValue } from '../src/systems/tracker';
 import { budgetOf, creatureXp, threatOf } from '../src/shared/threat';
-import { PF_THREAT as PF } from '../src/systems/pf2e/budget';
-import { mapOf, type Pf2eStats } from '../src/systems/pf2e/stats';
+import type { Pf2eStats } from '../src/systems/pf2e/stats';
 import { systemOf, familyOf } from '../src/systems';
-import { CONDITIONS, VALUED } from '../src/systems/pf2e/tracker';
-import type { BuiltinBook } from '../src/shared/compendium';
+import { registerPacks } from '../src/systems/packs';
+import { validatePack, type SystemPack } from '../src/shared/syspack';
+import { upgradeCard } from '../src/shared/oldcards';
+import type { Card } from '../src/shared/cards';
+import { entrySubtitle, type BuiltinBook, type Entry } from '../src/shared/compendium';
 import { fromPathbuilder, pathbuilderImporter } from '../src/systems/pf2e/pathbuilder';
-import { isCharacter } from '../src/systems/pf2e/character';
+
+const pack = validatePack(JSON.parse(fs.readFileSync('content/pf2e-core/system/pf2e.json', 'utf8'))) as SystemPack;
+const PF = pack.threat!;
+const CONDITIONS = (pack.tracker.conditions?.list ?? []) as string[];
+const VALUED = (pack.tracker.conditions?.valued ?? []) as string[];
+registerPacks([pack]);
 
 describe('Pathfinder 2e: rules', () => {
   it('degrees of success: by 10, and a natural 20 / 1 shift one degree', () => {
@@ -29,10 +36,12 @@ describe('Pathfinder 2e: rules', () => {
     expect(rollDamage(parseDice('1d6+3')!, true).rolls[0]).toHaveLength(2);
   });
 
-  it('the multiple attack penalty, agile weapons less', () => {
-    const s = { name: 'Jaws', ranged: false, bonus: 10, traits: [], damage: '', effects: [] };
-    expect([1, 2, 3].map((n) => mapOf(s, n as 1))).toEqual([0, -5, -10]);
-    expect([1, 2, 3].map((n) => mapOf({ ...s, traits: ['agile'] }, n as 1))).toEqual([0, -4, -8]);
+  it('the multiple attack penalty, agile weapons less: a step in the row, two more buttons', () => {
+    const steps = (pack.sections.flatMap((x) => x.fields).find((f) => f.key === 'strikes')!.roll as { steps: string[] }).steps;
+    expect(steps).toEqual(['0 - row.map', '0 - row.map * 2']);
+    const card = (traits: string[]) => upgradeCard({ system: 'pf2e', lang: 'en', stats: { saves: {}, strikes: [{ name: 'Jaws', ranged: false, bonus: 10, traits, damage: '', effects: ['Grab'] }] } } as unknown as Card);
+    expect((card([]).stats as { strikes: { map: number; plus: string; kind: string }[] }).strikes[0]).toMatchObject({ map: 5, plus: 'plus Grab', kind: 'Melee' });
+    expect((card(['agile']).stats as { strikes: { map: number }[] }).strikes[0]!.map).toBe(4);
   });
 
   it('the XP budget: creatures by level against the party, budgets by its size', () => {
@@ -53,9 +62,28 @@ describe('Pathfinder 2e: rules', () => {
     expect(VALUED.every((v) => CONDITIONS.includes(v))).toBe(true);
   });
 
-  it('the system: a plugin of its own family', () => {
+  it('the system: a pack of its own family, the tracker reads a card', () => {
     expect(familyOf('pf2e')).toBe('pf2e');
-    expect(systemOf('pf2e').combat({ hp: 20, ac: 18, perception: 7 } as Pf2eStats)).toEqual({ hp: 20, ac: 18, initiative: 7 });
+    expect(systemOf('pf2e').combat({ hp: 20, ac: 18, perception: 7 })).toMatchObject({ hp: 20, ac: 18, initiative: 7 });
+    expect(systemOf('pf2e').rank({ level: 6 })).toBe(6);
+    expect(systemOf('pf2e').tracker.conditions.entry?.('Frightened 2')).toEqual(['Frightened']);
+  });
+
+  it('the types of entries come from the pack, with the line under the title', () => {
+    expect(entrySubtitle({ type: 'pf2e-spell', fields: { rank: 3, traditions: ['arcane', 'occult'], act: '◆◆' } } as unknown as Entry)).toBe('Spell 3 · arcane, occult · ◆◆');
+    expect(entrySubtitle({ type: 'pf2e-action', fields: { act: '⟲' } } as unknown as Entry)).toBe('Action · ⟲');
+  });
+
+  it('an old card gets the fields and keeps everything: an older app reads the same file', () => {
+    const old = { level: 1, rarity: 'rare', size: 'med', traits: ['goblin'], abilities: { str: 2 }, saves: { fort: 5, ref: 4, will: 3, note: 'vs. fear' }, hp: 20, hpNote: 'regen', ac: 15, skills: [], interaction: [{ name: 'A', actions: 'reaction', traits: [], text: 'a --- b' }], defensive: [], offensive: [], strikes: [], spellcasting: [{ name: 'Innate', dc: 20, attack: 10, ranks: [{ rank: 1, spells: ['Heal'] }] }] };
+    const c = upgradeCard({ system: 'pf2e', lang: 'ru', stats: old } as unknown as Card);
+    const s = c.stats as Record<string, any>;
+    expect(s).toMatchObject({ str: 2, dex: 0, fort: 5, will: 3, save_note: 'vs. fear', hp_note: 'regen', class: 'Существо', badges: ['rare', 'Средний', 'goblin'] });
+    expect(s['interaction'][0]).toMatchObject({ act: '⟲', text: 'a\n\n---\n\nb' });
+    expect(s['spell_text']).toBe('**Innate** КС 20, атака {1d20+10}; **Ранг 1** [[Heal]]');
+    expect(s['saves']).toEqual(old.saves);
+    expect(s['abilities']).toEqual(old.abilities);
+    expect(upgradeCard(c)).toBe(c);
   });
 });
 
@@ -72,6 +100,9 @@ describe('Pathfinder 2e: the data (content/pf2e-core)', () => {
       expect(c.stats.level, c.name).toBeGreaterThanOrEqual(-1);
       expect(c.stats.hp, c.name).toBeGreaterThan(0);
       expect(c.stats.ac, c.name).toBeGreaterThan(5);
+      expect(c.stats.saves, c.name).toBeTruthy();
+      expect(c.stats.abilities, c.name).toBeTruthy();
+      expect((c.stats as unknown as Record<string, unknown>)['fort'], c.name).toBe(c.stats.saves.fort);
     }
   });
 
@@ -117,7 +148,7 @@ describe('Pathbuilder 2e import', () => {
 
   it('counts the totals by the rules: proficiency + level when trained + the modifier', () => {
     const c = fromPathbuilder(exp);
-    expect(isCharacter(c)).toBe(true);
+    expect(c.sheet).toBe('pf2e-character');
     expect(c.abilities).toMatchObject({ con: 2, dex: 1, wis: 2, cha: 3 });
     expect(c.hp).toBe(8 + (10 + 2) * 2);
     expect(c.perception).toBe(2 + 2 + 2);
