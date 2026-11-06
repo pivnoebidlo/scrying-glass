@@ -371,3 +371,49 @@ describe('a formula with the titles of the fields', () => {
     expect(formulaFromText('strength + [Ловкость] − 1', labels)).toBe('strength + [Ловкость] - 1');
   });
 });
+
+describe('a pool with special dice', () => {
+  const pack = validatePack(JSON.parse(fs.readFileSync('samples/systems/blood-pool.json', 'utf8'))) as SystemPack;
+  const spec = fieldMap(pack).get('fight')!.roll!;
+  const words = { success: 'yes', failure: 'no', successes: (n: number) => `${n} hits`, critical: 'crit' } as RollWords;
+  const seq = (...v: number[]) => {
+    let i = 0;
+    return () => v[i++] ?? 1;
+  };
+  const go = (dice: number[], hunger: number, fight = dice.length) => rollPack(spec, (k) => (k === 'hunger' ? hunger : k === 'fight' ? fight : 0), 'en', words, seq(...dice));
+
+  it('hunger takes the place of dice, the pool stays the same size', () => {
+    const r = go([6, 2, 3, 7], 2);
+    expect(r.dice).toEqual([[6, 2], [3, 7]]);
+    expect(r.total).toBe(2);
+    expect(go([6, 2], 9).dice).toEqual([[], [6, 2]]);
+  });
+
+  it('a pair of tens adds two, a third ten is alone; with a marked ten it is said', () => {
+    expect(go([10, 10, 10, 1], 0).total).toBe(5);
+    const r = go([10, 2, 10], 1);
+    expect(r.total).toBe(4);
+    expect(r.outcome).toContain('crit');
+    expect(r.outcome).toContain('Bloody triumph');
+    expect(go([10, 10, 2], 1).outcome).not.toContain('Bloody triumph');
+  });
+
+  it('a 1 on a marked die is kept for the failure; a plain 1 says nothing', () => {
+    expect(go([2, 1], 1).onFail).toBe('The beast breaks loose');
+    expect(go([1, 2], 1).onFail).toBeUndefined();
+  });
+
+  it('a push rolls at most three failed plain dice and leaves the marked ones', () => {
+    const r = go([2, 3, 4, 5, 7, 1], 1);
+    const again = pushPool(r.push!, words, seq(6, 6, 6));
+    expect(again.dice).toEqual([[6, 6, 6, 5, 7], [1]]);
+    expect(again.total).toBe(4);
+    expect(again.onFail).toBe('The beast breaks loose');
+  });
+
+  it('its fields and kit are valid: a whole game without code', () => {
+    expect(fieldMap(pack).get('hunger')!.live).toBe('both');
+    expect(pack.kit!.generators).toHaveLength(1);
+    expect(pack.resets![0]!.fields).toEqual(['hurt', 'strain']);
+  });
+});

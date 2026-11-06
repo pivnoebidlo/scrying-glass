@@ -334,6 +334,28 @@
                   {/each}
                   <button type="button" class="btn small" {disabled} onclick={() => ((r.kind ??= 'base'), delete r.need, delete r.tweak, (r.groups = [...(r.groups ?? []), { kind: 'skill', count: '0' }]))}>{t('sb.addGroup')}</button>
                 </div>
+                {#if !r.kind && !r.groups?.length}
+                  <label class="row" title={t('sb.pairsHint')}><span>{t('sb.pairs')}</span>
+                    <input type="number" min="0" max="10" class="n" {disabled} value={r.pairs ?? ''} onchange={(e) => { const n = num(e.currentTarget.value); if (n) r.pairs = n; else delete r.pairs; }} />
+                  </label>
+                  {#if r.push}
+                    <label class="row" title={t('sb.pushMaxHint')}><span>{t('sb.pushMax')}</span>
+                      <input type="number" min="0" max="30" class="n" {disabled} value={r.pushMax ?? ''} onchange={(e) => { const n = num(e.currentTarget.value); if (n) r.pushMax = n; else delete r.pushMax; }} />
+                    </label>
+                  {/if}
+                  <div class="row">
+                    <span>{t('sb.marked')}</span>
+                    {#if r.marked}
+                      {@const m = r.marked}
+                      <FormulaInput value={m.count} set={(v) => (m.count = v)} {keys} row={cols} {names} {disabled} />
+                      <label class="row"><span>{t('sb.markedTop')}</span><LocInput value={m.top} set={(v) => { if (v) m.top = v; else delete m.top; }} {disabled} /></label>
+                      <label class="row"><span>{t('sb.markedOne')}</span><LocInput value={m.one} set={(v) => { if (v) m.one = v; else delete m.one; }} {disabled} /></label>
+                      <button type="button" class="btn small" {disabled} onclick={() => delete r.marked}><X size={13} /> {t('sb.remove')}</button>
+                    {:else}
+                      <button type="button" class="btn small" {disabled} onclick={() => (r.marked = { count: '1' })}>{t('sb.markedAdd')}</button>
+                    {/if}
+                  </div>
+                {/if}
                 {#if r.push}
                   <label class="check"><input type="checkbox" {disabled} checked={!!r.pushStress} onchange={(e) => (e.currentTarget.checked ? (r.pushStress = true) : delete r.pushStress)} /> {t('sb.pushStress')}</label>
                 {/if}

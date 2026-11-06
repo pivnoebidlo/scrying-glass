@@ -1,0 +1,776 @@
+{
+ "scryingGlass": "system",
+ "version": 1,
+ "format": 4,
+ "uses": [
+  "worldtime",
+  "clocks"
+ ],
+ "id": "blood-pool",
+ "family": "blood-pool",
+ "title": {
+  "en": "Blood and Hunger",
+  "ru": "Кровь и голод"
+ },
+ "release": 1,
+ "about": {
+  "en": "A pool of d10 where hunger takes the place of dice: pairs of tens, a beast on the ones, tracks of health and will.",
+  "ru": "Пул к10, где голод занимает место кубов: пары десяток, зверь на единицах, дорожки здоровья и воли."
+ },
+ "license": "Demonstration system of Scrying Glass: structure and dice only.",
+ "tracker": {
+  "init": {
+   "type": "roll",
+   "dice": "1d10",
+   "bonus": "agility + instinct"
+  },
+  "cells": [
+   "hunger",
+   "hurt",
+   "wound",
+   "strain"
+  ],
+  "conditions": {
+   "list": [
+    {
+     "en": "Wounded",
+     "ru": "Ранен"
+    },
+    {
+     "en": "Torpor",
+     "ru": "Оцепенение"
+    },
+    {
+     "en": "Frenzy",
+     "ru": "Ярость"
+    }
+   ],
+   "free": true
+  }
+ },
+ "resets": [
+  {
+   "id": "sleep",
+   "title": {
+    "en": "A day of sleep",
+    "ru": "Дневной сон"
+   },
+   "fields": [
+    "hurt",
+    "strain"
+   ]
+  }
+ ],
+ "sections": [
+  {
+   "id": "body",
+   "title": {
+    "en": "Body",
+    "ru": "Тело"
+   },
+   "fields": [
+    {
+     "key": "strength",
+     "type": "dots",
+     "title": {
+      "en": "Strength",
+      "ru": "Сила"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "strength",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    },
+    {
+     "key": "agility",
+     "type": "dots",
+     "title": {
+      "en": "Agility",
+      "ru": "Ловкость"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "agility",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    },
+    {
+     "key": "stamina",
+     "type": "dots",
+     "title": {
+      "en": "Stamina",
+      "ru": "Стойкость"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "stamina",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "charm",
+   "title": {
+    "en": "Charm",
+    "ru": "Обаяние"
+   },
+   "fields": [
+    {
+     "key": "presence",
+     "type": "dots",
+     "title": {
+      "en": "Presence",
+      "ru": "Присутствие"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "presence",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    },
+    {
+     "key": "cunning",
+     "type": "dots",
+     "title": {
+      "en": "Cunning",
+      "ru": "Хитрость"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "cunning",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    },
+    {
+     "key": "poise",
+     "type": "dots",
+     "title": {
+      "en": "Poise",
+      "ru": "Выдержка"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "poise",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "mind",
+   "title": {
+    "en": "Mind",
+    "ru": "Разум"
+   },
+   "fields": [
+    {
+     "key": "reason",
+     "type": "dots",
+     "title": {
+      "en": "Reason",
+      "ru": "Рассудок"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "reason",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    },
+    {
+     "key": "instinct",
+     "type": "dots",
+     "title": {
+      "en": "Instinct",
+      "ru": "Чутьё"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "instinct",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    },
+    {
+     "key": "will",
+     "type": "dots",
+     "title": {
+      "en": "Will",
+      "ru": "Воля"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "will",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "skills",
+   "title": {
+    "en": "Skills",
+    "ru": "Умения"
+   },
+   "fields": [
+    {
+     "key": "fight",
+     "type": "dots",
+     "title": {
+      "en": "Fight",
+      "ru": "Драка"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "fight",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    },
+    {
+     "key": "stealth",
+     "type": "dots",
+     "title": {
+      "en": "Stealth",
+      "ru": "Скрытность"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "stealth",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    },
+    {
+     "key": "talk",
+     "type": "dots",
+     "title": {
+      "en": "Talk",
+      "ru": "Разговор"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "talk",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    },
+    {
+     "key": "lore",
+     "type": "dots",
+     "title": {
+      "en": "Lore",
+      "ru": "Знания"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "lore",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    },
+    {
+     "key": "craft",
+     "type": "dots",
+     "title": {
+      "en": "Craft",
+      "ru": "Ремесло"
+     },
+     "max": 5,
+     "default": 1,
+     "roll": {
+      "type": "pool",
+      "sides": 10,
+      "count": "craft",
+      "success": 6,
+      "ask": true,
+      "askRange": 10,
+      "push": true,
+      "pushMax": 3,
+      "need": true,
+      "pairs": 2,
+      "marked": {
+       "count": "hunger",
+       "top": {
+        "en": "Bloody triumph",
+        "ru": "Кровавый успех"
+       },
+       "one": {
+        "en": "The beast breaks loose",
+        "ru": "Зверь вырвался"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "blood",
+   "title": {
+    "en": "Blood",
+    "ru": "Кровь"
+   },
+   "fields": [
+    {
+     "key": "hunger",
+     "type": "track",
+     "title": {
+      "en": "Hunger",
+      "ru": "Голод"
+     },
+     "boxes": 5,
+     "live": "both"
+    },
+    {
+     "key": "rouse",
+     "type": "formula",
+     "title": {
+      "en": "Rouse the blood",
+      "ru": "Разбудить кровь"
+     },
+     "formula": "hunger",
+     "roll": {
+      "type": "bands",
+      "dice": "1d10",
+      "bonus": "0",
+      "bands": [
+       {
+        "min": 6,
+        "title": {
+         "en": "Nothing happens",
+         "ru": "Ничего не случилось"
+        }
+       },
+       {
+        "min": 1,
+        "title": {
+         "en": "Hunger +1",
+         "ru": "Голод +1"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "key": "humanity",
+     "type": "dots",
+     "title": {
+      "en": "Humanity",
+      "ru": "Человечность"
+     },
+     "max": 10,
+     "default": 7,
+     "live": "gm"
+    }
+   ]
+  },
+  {
+   "id": "harm",
+   "title": {
+    "en": "Harm",
+    "ru": "Урон"
+   },
+   "fields": [
+    {
+     "key": "health",
+     "type": "formula",
+     "title": {
+      "en": "Health",
+      "ru": "Здоровье"
+     },
+     "formula": "stamina + 3"
+    },
+    {
+     "key": "hurt",
+     "type": "track",
+     "title": {
+      "en": "Light damage",
+      "ru": "Лёгкий урон"
+     },
+     "boxes": "health",
+     "live": "both"
+    },
+    {
+     "key": "wound",
+     "type": "track",
+     "title": {
+      "en": "Heavy damage",
+      "ru": "Тяжёлый урон"
+     },
+     "boxes": "health",
+     "live": "both"
+    },
+    {
+     "key": "resolve",
+     "type": "formula",
+     "title": {
+      "en": "Resolve",
+      "ru": "Стойкость духа"
+     },
+     "formula": "poise + will"
+    },
+    {
+     "key": "strain",
+     "type": "track",
+     "title": {
+      "en": "Strain",
+      "ru": "Напряжение"
+     },
+     "boxes": "resolve",
+     "live": "both"
+    }
+   ]
+  }
+ ],
+ "kit": {
+  "tables": {
+   "ru": {
+    "place": {
+     "head": [
+      "Где"
+     ],
+     "rows": [
+      [
+       "Ночной рынок"
+      ],
+      [
+       "Заброшенная станция"
+      ],
+      [
+       "Крыша высотки"
+      ],
+      [
+       "Подвал клуба"
+      ]
+     ]
+    },
+    "who": {
+     "head": [
+      "Кто"
+     ],
+     "rows": [
+      [
+       "Охотник"
+      ],
+      [
+       "Старый знакомый"
+      ],
+      [
+       "Голодный новичок"
+      ],
+      [
+       "Свидетель"
+      ]
+     ]
+    },
+    "twist": {
+     "head": [
+      "Что не так"
+     ],
+     "rows": [
+      [
+       "1-3 | Кто-то следит"
+      ],
+      [
+       "4-5 | Рядом люди"
+      ],
+      [
+       "6 | Это ловушка"
+      ]
+     ]
+    }
+   }
+  },
+  "generators": [
+   {
+    "id": "night",
+    "title": {
+     "en": "A meeting in the night",
+     "ru": "Ночная встреча"
+    },
+    "steps": [
+     {
+      "line": {
+       "en": "Where",
+       "ru": "Где"
+      },
+      "table": "place",
+      "any": true
+     },
+     {
+      "line": {
+       "en": "Who",
+       "ru": "Кто"
+      },
+      "table": "who",
+      "any": true
+     },
+     {
+      "line": {
+       "en": "What is wrong",
+       "ru": "Что не так"
+      },
+      "table": "twist",
+      "dice": "d6"
+     }
+    ]
+   }
+  ]
+ }
+}

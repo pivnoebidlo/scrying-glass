@@ -7,6 +7,7 @@ official repository of the Community, where any GM can install them (Find advent
 - `yz-pool.json` — Pool of Sixes, in the style of the Year Zero Engine: attributes and skills roll a pool of d6, sixes
   count, a roll can be pushed; health and mind as tracks; a small compendium of conditions.
 - `d100-horror.json` — Percentile Horror: d100 under characteristics and skills, with hard and extreme successes.
+- `blood-pool.json` — Blood and Hunger: a pool of d10 where hunger takes the place of dice, pairs of tens, a beast on the ones; own names, structure and dice only.
 - `nineties.json` — «Девяностые» (Time to RP!), in Russian.
 
 Fate Core, Forged in the Dark and Mausritter are whole packages now: `content/<id>/`, with their books and creatures.

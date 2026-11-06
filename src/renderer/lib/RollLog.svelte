@@ -107,6 +107,9 @@
               <span class="note">{p.note}{#if !p.tally}: <span class="faces">{p.dice.map((g) => g.join(' ')).join(' | ')}</span>{/if}</span>
               {#if p.outcome}<span class="tag" class:crit={p.tone === 'good'} class:fumble={p.tone === 'bad'}>{p.outcome}</span>{/if}
             </div>
+            {#if p.onFail && (e.dc !== undefined ? p.total < e.dc : p.total === 0)}
+              <div class="line"><span class="tag fumble">{p.onFail}</span></div>
+            {/if}
             {#if p.tally}
               {@const tl = p.tally}
               <div class="dice">

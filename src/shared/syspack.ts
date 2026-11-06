@@ -45,10 +45,13 @@ export type RollSpec =
   // max — no more dice than this, whatever is added. A plain pool counting successes: need — the log asks how many
   // successes are needed and says the outcome and the extra ones; tweak — the log changes the roll after it: a success
   // added or taken, a die rolled again by a click, all failed dice or all 1s again, fives counting as successes.
+  // marked — that many dice of the pool are special: they count as the others, a push leaves them, and they can say
+  // something (top — a pair of top faces with one of them, one — a failure with a 1 on one of them); pairs — extra
+  // successes for each pair of top faces; pushMax — a push rolls no more dice than this.
   | {
       type: 'pool'; sides: number; count: string; success?: number; best?: boolean; push?: boolean; resist?: boolean;
       kind?: PoolKind; groups?: PoolGroup[]; pushStress?: boolean; ask?: boolean; askRange?: number; max?: number;
-      need?: boolean; tweak?: boolean;
+      need?: boolean; tweak?: boolean; marked?: PoolMarked; pairs?: number; pushMax?: number;
     }
   // 4dF + bonus.
   | { type: 'fate'; bonus: string; labels?: RollLabels }
@@ -59,6 +62,11 @@ export type RollSpec =
   | { type: 'explode'; sides: string; bonus?: string; wild?: number };
 export const ROLL_TYPES = ['d20', 'under', 'bands', 'pool', 'fate', 'sum', 'explode'] as const;
 export type Degrees = 'two' | 'four';
+export interface PoolMarked {
+  count: string;
+  top?: Loc;
+  one?: Loc;
+}
 export type PoolKind = 'base' | 'skill' | 'gear' | 'stress' | 'artifact';
 export const POOL_KINDS: PoolKind[] = ['base', 'skill', 'gear', 'stress', 'artifact'];
 // A group of dice of a kind in a pool (the main dice are the first group); sides — of artifact dice (8, 10, 12).
@@ -382,6 +390,8 @@ function rollOf(x: unknown): RollSpec | null {
       const yz = !best && !!success;
       // Needed successes and changes after the roll — a pool without kinds.
       const plain = yz && !kindOf(x['kind']) && !groups.length;
+      const mk = isObj(x['marked']) && formulaOf(x['marked']['count']) !== null ? x['marked'] : null;
+      const marked: PoolMarked | null = mk ? { count: mk['count'] as string, ...(locOf(mk['top']) ? { top: locOf(mk['top'])! } : {}), ...(locOf(mk['one']) ? { one: locOf(mk['one'])! } : {}) } : null;
       return {
         type: 'pool', sides, count: x['count'] as string, ...(success ? { success } : {}), ...(best ? { best: true } : {}), ...(x['push'] === true ? { push: true } : {}),
         ...(best && x['resist'] === true ? { resist: true } : {}),
@@ -393,6 +403,9 @@ function rollOf(x: unknown): RollSpec | null {
         ...(num(x['max']) && (x['max'] as number) >= 1 ? { max: Math.min(30, Math.round(x['max'] as number)) } : {}),
         ...(plain && x['need'] === true ? { need: true } : {}),
         ...(plain && x['tweak'] === true ? { tweak: true } : {}),
+        ...(plain && marked ? { marked } : {}),
+        ...(plain && num(x['pairs']) && (x['pairs'] as number) >= 1 ? { pairs: Math.min(10, Math.round(x['pairs'] as number)) } : {}),
+        ...(plain && num(x['pushMax']) && (x['pushMax'] as number) >= 1 ? { pushMax: Math.min(30, Math.round(x['pushMax'] as number)) } : {}),
       };
     }
     case 'fate':
@@ -896,7 +909,9 @@ export interface PackRollResult {
   // What the roll was against: the target, the bonus.
   note: string;
   // A pool that can still be pushed: what to roll again (groups — the dice by kind, Year Zero).
-  push?: { sides: number; success?: number; best?: boolean; dice: number[]; groups?: { kind: PoolKind; sides: number; dice: number[] }[]; pushStress?: boolean };
+  push?: { sides: number; success?: number; best?: boolean; dice: number[]; groups?: { kind: PoolKind; sides: number; dice: number[] }[]; pushStress?: boolean; special?: SpecialPool };
+  // Said when the roll fails: against the successes typed in the log, or with none at all.
+  onFail?: string;
   // A d20 roll judged against a DC typed in the log (the natural die, two or four degrees).
   dc?: { natural: number; degrees: Degrees };
   // A pool whose needed successes are typed in the log.
@@ -1018,6 +1033,12 @@ function rollRaw(
         };
       }
       const n = Math.max(0, Math.min(spec.max ?? 30, Math.round(value(spec.count))));
+      if (spec.success && (spec.marked || spec.pairs || spec.pushMax)) {
+        const m = spec.marked ? Math.max(0, Math.min(n, Math.round(value(spec.marked.count)))) : 0;
+        const rolled = { plain: Array.from({ length: n - m }, () => die(spec.sides)), marked: Array.from({ length: m }, () => die(spec.sides)) };
+        const special: SpecialPool = { sides: spec.sides, success: spec.success, ...rolled, ...(spec.pairs ? { pairs: spec.pairs } : {}), ...(spec.pushMax ? { pushMax: spec.pushMax } : {}), ...(spec.marked?.top ? { top: loc(spec.marked.top, lang) } : {}), ...(spec.marked?.one ? { one: loc(spec.marked.one, lang) } : {}) };
+        return { ...specialResult(special, words), note: `${n}d${spec.sides}`, ...(spec.need ? { need: true } : {}), ...(spec.push && n ? { push: { sides: spec.sides, success: spec.success, dice: rolled.plain, special } } : {}) };
+      }
       if (spec.tweak && spec.success) {
         const tally: Tally = { sides: spec.sides, success: spec.success, dice: Array.from({ length: n }, () => die(spec.sides)), plus: 0, fives: false, rerolled: 0 };
         return { ...tallyResult(tally, words), ...(spec.need ? { need: true } : {}), ...(spec.push && n ? { push: { sides: spec.sides, success: spec.success, dice: tally.dice } } : {}) };
@@ -1092,6 +1113,34 @@ function kindsResult(groups: { kind: PoolKind; sides: number; dice: number[] }[]
   return { dice: groups.map((g) => g.dice), total: n, outcome: said.join(' · '), tone: panic ? ('bad' as const) : n ? ('good' as const) : ('bad' as const) };
 }
 
+// A pool with special dice or a bonus for pairs of top faces.
+export interface SpecialPool {
+  sides: number;
+  success: number;
+  plain: number[];
+  marked: number[];
+  pairs?: number;
+  pushMax?: number;
+  top?: string;
+  one?: string;
+}
+
+export function specialResult(p: SpecialPool, words: RollWords): Pick<PackRollResult, 'dice' | 'total' | 'outcome' | 'tone' | 'onFail'> {
+  const all = [...p.plain, ...p.marked];
+  const tops = all.filter((d) => d === p.sides).length;
+  const pairs = p.pairs ? Math.floor(tops / 2) : 0;
+  const total = all.filter((d) => d >= p.success).length + pairs * (p.pairs ?? 0);
+  const topSaid = pairs && p.top && p.marked.includes(p.sides) ? p.top : '';
+  const said = [total ? words.successes(total) : words.failure, ...(pairs ? [words.critical] : []), ...(topSaid ? [topSaid] : [])];
+  return {
+    dice: [p.plain, p.marked],
+    total,
+    outcome: said.join(' · '),
+    tone: total ? 'good' : 'bad',
+    ...(p.one && p.marked.includes(1) ? { onFail: p.one } : {}),
+  };
+}
+
 // A pool changed after the roll: its successes (fives too, if they count), the added ones, the words.
 export function tallyResult(tally: Tally, words: RollWords): PackRollResult {
   const at = tally.fives ? Math.min(5, tally.success) : tally.success;
@@ -1130,6 +1179,12 @@ export function tweakPool(tally: Tally, op: TallyOp, words: RollWords, die: Die)
 // Push a pool roll (Year Zero): the dice that aren't successes are rolled again, once; banes (a 1 on an attribute, gear
 // or stress die) stay; pushStress — one stress die more.
 export function pushPool(push: NonNullable<PackRollResult['push']>, words: RollWords, die: Die): PackRollResult {
+  if (push.special) {
+    const p = push.special;
+    let left = p.pushMax ?? p.plain.length;
+    const plain = p.plain.map((d) => (d < p.success && left > 0 ? (left--, die(p.sides)) : d));
+    return { ...specialResult({ ...p, plain }, words), note: `${p.plain.length + p.marked.length}d${p.sides}` };
+  }
   if (push.groups) {
     const groups = push.groups.map((g) => ({
       ...g,
