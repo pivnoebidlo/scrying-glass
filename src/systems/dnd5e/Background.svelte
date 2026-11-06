@@ -6,7 +6,7 @@
   import { entryNames } from '../../modules/compendium/ui/store.svelte';
   import { lssAliases, lssImporter } from './importer';
   import type { LssSpellTable } from './lss';
-  import { setSpellIndex } from './spellindex';
+  import { setNameIndex } from '../../shared/nameindex';
 
   let aliases = $state.raw<Record<string, string>>({});
   async function loadAliases() {
@@ -18,5 +18,5 @@
     window.api.onImporterTableChanged((id) => id === lssImporter.id && void loadAliases());
   });
 
-  $effect(() => setSpellIndex(entryNames('spell'), aliases));
+  $effect(() => setNameIndex(entryNames('spell'), aliases));
 </script>

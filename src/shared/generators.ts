@@ -174,6 +174,10 @@ export interface GeneratorFile {
   generators: Generator[];
   lists?: GenList[];
   calculators?: GenCalculator[];
+  // Ready factions for the Factions tool, by language.
+  factions?: Record<string, { name: string; resources: string[]; goals: { text: string; marks: number }[] }[]>;
+  // The card of a warband: stats as they are, { "$text": … } in the card's language, { "$roll": "d(6)" } rolled.
+  warband?: { description: GenText; stats: Record<string, unknown> };
 }
 
 export type GenOptions = Record<string, number | string | boolean>;
@@ -541,6 +545,15 @@ export function genCardOf(file: GeneratorFile, c: GenCard, lang: Lang): { name: 
     })));
   const notes = c.notes?.map((x) => genCell(file, x, lang)).join('\n');
   return { name: genCell(file, c.name, lang), kind: c.kind, stats, ...(notes ? { notes } : {}) };
+}
+
+// A card's template filled in: its words in a language, its dice rolled.
+export function fillTemplate(x: unknown, lang: Lang, roll: Roll): unknown {
+  if (Array.isArray(x)) return x.map((v) => fillTemplate(v, lang, roll));
+  if (!isObj(x)) return x;
+  if (x['$text'] !== undefined) return genText(x['$text'] as GenText, lang);
+  if (typeof x['$roll'] === 'string') return calc(x['$roll'], () => 0, roll);
+  return Object.fromEntries(Object.entries(x).map(([k, v]) => [k, fillTemplate(v, lang, roll)]));
 }
 
 export const plainText = (s: string) => s.replace(/\*\*/g, '');

@@ -34,13 +34,8 @@ export const COMMON_FIELDS: FieldDef[] = [
 // Типы записей: систем и общие («Заметка»). Тип, которого здесь нет (из другой системы или придуманный в
 // Obsidian), всё равно показывается — поля как «поле — значение».
 export const TYPES: Record<string, TypeDef> = {
-  // A system plugin's types first (D&D: spell, item, feat, condition), then the packs' and the common ones.
+  // A system plugin's types first, then the common ones; the packs' come with them (setPackTypes).
   ...Object.assign({}, ...PLUGINS.map((p) => p.entryTypes ?? {})),
-  skill: type('skill', [], 'fate'),
-  // Mausritter spells: the effect is the text ([SUM], [DICE]), the recharge requirement — a field.
-  mspell: type('mspell', [field('mspell', 'recharge', 'text')], 'mausritter'),
-  // Forged in the Dark special abilities: a scoundrel's or the crew's (category).
-  fability: type('fability', [field('fability', 'category', 'text')], 'fitd'),
   rule: type('rule', [field('rule', 'category', 'text', { hint: true })]),
   note: type('note', []),
   // A roll table (shared/rolltable.ts): the table is the text; any system.
@@ -49,6 +44,14 @@ export const TYPES: Record<string, TypeDef> = {
     ...TABLE_EVENTS.map((on) => field('table', on, 'bool')),
   ]),
 };
+
+// The types the packs bring, in place of the ones they brought before.
+let packTypes: string[] = [];
+export function setPackTypes(list: Record<string, TypeDef>) {
+  for (const id of packTypes) delete TYPES[id];
+  packTypes = Object.keys(list).filter((id) => !TYPES[id]);
+  for (const id of packTypes) TYPES[id] = list[id]!;
+}
 
 // Поле шапки с системой записи.
 export const SYSTEM_FIELD = 'system';

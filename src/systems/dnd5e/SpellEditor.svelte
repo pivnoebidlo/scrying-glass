@@ -5,7 +5,7 @@
   import { t } from '../../renderer/lib/i18n.svelte';
   import { labels } from '../../shared/i18n';
   import { Plus, Wand2, X } from '@lucide/svelte';
-  import { knownSpells } from './spellindex';
+  import { knownNames } from '../../shared/nameindex';
   import { ABILITIES, type Ability, type Dnd5eStats } from './stats';
   import {
     GROUP_KINDS, defaultSpellName, groupLabel, looksLikeSpellcasting, newSpellcasting, parseSpellcasting, spellAttack, spellDc,
@@ -16,7 +16,7 @@
 
   const ABILITY_NAMES = labels<Ability>(ABILITIES, 'dnd.ability');
   const KIND_NAMES = labels<SpellGroup['kind']>(['cantrips', 'will', 'day', 'level'], 'dnd.sg');
-  const suggestions = knownSpells();
+  const suggestions = knownNames();
 
   const num = (v: string) => {
     const n = Number(v.replace('−', '-').replace('+', ''));

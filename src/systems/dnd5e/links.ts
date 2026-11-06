@@ -5,7 +5,7 @@
 // Текст перерисовывается Svelte ({@html}) — MutationObserver применяет ссылки заново.
 import { t } from '../../renderer/lib/i18n.svelte';
 import { peekEntry } from '../../renderer/lib/entry/peek.svelte';
-import { onSpellIndex, spellName, spellPattern } from './spellindex';
+import { onNameIndex, linkedName, namePattern } from '../../shared/nameindex';
 
 const link = (name: string, text: string) => {
   const a = document.createElement('a');
@@ -20,7 +20,7 @@ function linkEm(root: HTMLElement) {
   for (const em of root.querySelectorAll('em')) {
     // Курсив в названии действия («Туманный шаг.») — не ссылка, и уже сделанные ссылки не трогаем.
     if (em.closest('strong') || em.querySelector('a')) continue;
-    const name = spellName(em.textContent ?? '');
+    const name = linkedName(em.textContent ?? '');
     if (!name) continue;
     const text = em.textContent ?? '';
     em.textContent = '';
@@ -29,7 +29,7 @@ function linkEm(root: HTMLElement) {
 }
 
 function linkText(root: HTMLElement) {
-  const re = spellPattern();
+  const re = namePattern();
   if (!re) return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes: Text[] = [];
@@ -42,7 +42,7 @@ function linkText(root: HTMLElement) {
     const frag = document.createDocumentFragment();
     let last = 0;
     for (const m of text.matchAll(re)) {
-      const name = spellName(m[0]);
+      const name = linkedName(m[0]);
       if (!name) continue;
       frag.append(text.slice(last, m.index), link(name, m[0]));
       last = m.index! + m[0].length;
@@ -70,7 +70,7 @@ export function spellLinks(node: HTMLElement, mode: 'em' | 'text' = 'em') {
     peekEntry(a.dataset['link'] ?? '');
   }
   node.addEventListener('click', click);
-  const off = onSpellIndex(apply);
+  const off = onNameIndex(apply);
   apply();
   return {
     update(m: 'em' | 'text') {

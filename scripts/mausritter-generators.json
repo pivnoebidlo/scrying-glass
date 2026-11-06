@@ -2439,5 +2439,45 @@
     }
    ]
   }
- ]
+ ],
+ "warband": {
+  "description": {
+   "en": "A warband: 20 or more fighting mice and a follower (porter, cook, armourer) for each.",
+   "ru": "Отряд: 20 или больше бойцов и по помощнику (носильщик, повар, оружейник) на каждого."
+  },
+  "stats": {
+   "hp": {
+    "$roll": "d(6)"
+   },
+   "str": 10,
+   "dex": 10,
+   "wil": 10,
+   "armour": 0,
+   "warband": 0,
+   "attacks": [
+    {
+     "name": {
+      "$text": {
+       "en": "clubs and axes",
+       "ru": "дубины и топоры"
+      }
+     },
+     "dice": "d6"
+    }
+   ],
+   "critical": {
+    "$text": {
+     "en": "Broken: can't act until rallied",
+     "ru": "рассеян: не действует, пока его не соберут снова"
+    }
+   },
+   "abilities": {
+    "$text": {
+     "en": "Warband scale: attacks against creatures of smaller scale are enhanced, their damage is ignored unless particularly destructive. At half STR — a WIL save or routed; at STR 0 — wiped out. Equipment costs 20 times as much.",
+     "ru": "Масштаб отряда: атаки по существам меньшего масштаба усилены, их урон отряд не замечает, если он не особенно разрушителен. Когда СИЛ падает вдвое — спасбросок ВОЛ или бегство; при СИЛ 0 — уничтожен. Снаряжение — в 20 раз дороже."
+    }
+   },
+   "wants": ""
+  }
+ }
 }

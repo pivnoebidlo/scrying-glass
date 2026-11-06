@@ -5,7 +5,7 @@
   import { onMount } from 'svelte';
   import type { Card } from '../../shared/cards';
   import { afterReset, hpShare, type PlayerAction, type PlayerUsage, type PlayerView } from '../../shared/players';
-  import { setSpellIndex } from '../../systems/dnd5e/spellindex';
+  import { setNameIndex } from '../../shared/nameindex';
   import { registerPacks, sheetResources } from '../../systems/packs';
   import { sheetOf } from '../../systems/sheets';
   import { peekEntry } from '../lib/entry/peek.svelte';
@@ -46,7 +46,7 @@
   async function apply(next: PlayerView) {
     registerPacks(next.pack ? [next.pack] : []);
     applyLang(next.lang);
-    setSpellIndex(next.entries);
+    setNameIndex(next.entries);
     const key = `${next.card.system}|${next.card.kind}|${!!next.pack}`;
     if (key !== sheetFor) {
       sheetFor = key;

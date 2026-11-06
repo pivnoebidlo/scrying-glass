@@ -1,10 +1,23 @@
 {
  "scryingGlass": "system",
  "version": 1,
- "format": 2,
+ "format": 3,
  "uses": [
   "worldtime",
   "aspects"
+ ],
+ "entryTypes": [
+  {
+   "id": "skill",
+   "title": {
+    "en": "Skill",
+    "ru": "Навык"
+   },
+   "plural": {
+    "en": "Skills",
+    "ru": "Навыки"
+   }
+  }
  ],
  "id": "fate-core",
  "family": "fate",

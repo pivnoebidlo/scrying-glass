@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { FEATURES, freshFeatures, newFeatures, offeredFeatures, oldUses } from '../src/shared/features';
+import { FEATURES, freshFeatures, newFeatures, offeredFeatures, oldEntryTypes, oldUses } from '../src/shared/features';
 import { forSaving, PACK_FORMAT, validatePack, type SystemPack } from '../src/shared/syspack';
 import { usesHere } from '../src/shared/adventures';
 import { usesOf } from '../src/systems';
@@ -21,8 +21,14 @@ describe('features of the core', () => {
   it('the packages say the same as the old table, so nothing moved', () => {
     for (const [id, family] of [['fate-core', 'fate'], ['fitd', 'fitd'], ['mausritter', 'mausritter']] as const) {
       expect(packOf(id).format).toBe(PACK_FORMAT);
-      expect(packOf(id).uses).toEqual(oldUses(family));
+      expect(packOf(id).uses).toEqual(expect.arrayContaining(oldUses(family)));
+      expect(packOf(id).entryTypes!.map((t) => t.id)).toEqual((oldEntryTypes(family) as { id: string }[]).map((t) => t.id));
     }
+  });
+
+  it('the ids of tools that left for data stay in the package: 0.83 still shows its own', () => {
+    expect(packOf('mausritter').uses).toEqual(expect.arrayContaining(['mouse', 'mausTables', 'mausShop', 'build']));
+    expect((validatePack(raw({ family: 'fate' })) as SystemPack).entryTypes![0]!.id).toBe('skill');
   });
 
   it('a list is taken as it is: nothing added, unknown ids kept for a newer app', () => {

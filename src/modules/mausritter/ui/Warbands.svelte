@@ -12,6 +12,10 @@
   import type { Card } from '../../../shared/cards';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { addToInitiative } from '../../bestiary/ui/combat';
+  import { fillTemplate, genText, type GeneratorFile } from '../../../shared/generators';
+  import { currentSystem } from '../../../shared/adventures';
+  import { familyOf } from '../../../systems';
+  import { filesOf } from '../../tools/generators/store.svelte';
   import { blankAdventure, WARBAND_UPKEEP, weeksDue, weeksOwed, type Warband } from '../types';
 
   onMount(() => void connectCards());
@@ -19,20 +23,22 @@
   const adventure = $derived(store.state.adventures.current);
   const data = $derived(store.state.mausritter.byAdventure[adventure ?? ''] ?? blankAdventure());
   const day = $derived(data.clock.day);
+  // A game with no warbands in its package has no such block.
+  const file = $derived(filesOf(familyOf(currentSystem(store.state.adventures))).find((f) => f.warband));
   const pips = (n: number) => t('mfac.pips', { n: n.toLocaleString(locale.lang) });
 
   let name = $state('');
   let busy = $state(false);
 
-  async function form() {
+  async function form(tpl: NonNullable<GeneratorFile['warband']>, file: GeneratorFile) {
     const title = name.trim() || t('mwar.defaultName', { n: (data.warbands?.length ?? 0) + 1 });
     busy = true;
     try {
       const lang = locale.lang === 'ru' ? 'ru' : 'en';
       const card: Card = {
-        format: 1, id: '', kind: 'npc', system: 'mausritter', lang, name: title, side: 'party', portraits: [], tags: [], notes: '',
-        description: t('mwar.cardText'),
-        stats: { hp: die(6), str: 10, dex: 10, wil: 10, armour: 0, warband: 0, attacks: [{ name: t('mwar.attack'), dice: 'd6' }], critical: t('mwar.critical'), abilities: t('mwar.abilities'), wants: '' },
+        format: 1, id: '', kind: 'npc', system: file.system, lang, name: title, side: 'party', portraits: [], tags: [], notes: '',
+        description: genText(tpl.description, lang),
+        stats: fillTemplate(tpl.stats, lang, die) as Record<string, unknown>,
       };
       const tree = store.state.vault.tree;
       const folder = tree ? roleFolderHere(tree, store.state.adventures, 'bestiary') : null;
@@ -54,7 +60,7 @@
   }
 </script>
 
-<section class="warbands">
+{#if file?.warband}<section class="warbands">
   <h3><Users size={13} /> {t('mwar.title')}</h3>
   <p class="faint small"><Lead text={t('mwar.about')} /></p>
   {#each data.warbands ?? [] as w (w.id)}
@@ -79,11 +85,11 @@
       {#if owed > 0}<p class="warn small">{t('mwar.owed', { count: owed, pips: pips(owed * WARBAND_UPKEEP) })}</p>{/if}
     </div>
   {/each}
-  <form class="row" onsubmit={(e) => (e.preventDefault(), form())}>
+  <form class="row" onsubmit={(e) => (e.preventDefault(), form(file.warband!, file))}>
     <input class="name" type="text" bind:value={name} placeholder={t('mwar.namePh')} />
     <button class="btn" type="submit" disabled={busy} title={t('mwar.formHint')}>{t('mwar.form')}</button>
   </form>
-</section>
+</section>{/if}
 
 <style>
   .warbands {

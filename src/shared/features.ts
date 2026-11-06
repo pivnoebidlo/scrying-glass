@@ -37,5 +37,12 @@ const OLD_USES: Record<string, string[]> = {
   mausritter: ['exploration', 'factions'],
 };
 export const oldUses = (family: string) => OLD_USES[family] ?? ['worldtime'];
+// And the types of compendium entries: they were in the core.
+const OLD_TYPES: Record<string, unknown[]> = {
+  fate: [{ id: 'skill', title: { en: 'Skill', ru: 'Навык' }, plural: { en: 'Skills', ru: 'Навыки' } }],
+  fitd: [{ id: 'fability', title: { en: 'Special ability', ru: 'Особая способность' }, plural: { en: 'Special abilities', ru: 'Особые способности' }, fields: [{ key: 'category', title: { en: 'Whose', ru: 'Чья' }, kind: 'text' }] }],
+  mausritter: [{ id: 'mspell', title: { en: 'Spell', ru: 'Заклинание' }, plural: { en: 'Spells', ru: 'Заклинания' }, fields: [{ key: 'recharge', title: { en: 'Recharge', ru: 'Перезарядка' }, kind: 'text' }] }],
+};
+export const oldEntryTypes = (family: string): unknown[] => OLD_TYPES[family] ?? [];
 // The same for the rule of damage past health (TrackerSpec.overflow).
 export const oldOverflow = (family: string) => (family === 'mausritter' ? 'str' : undefined);

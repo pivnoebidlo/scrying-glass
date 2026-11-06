@@ -9,7 +9,7 @@
   import EntryCard from '../../../renderer/lib/entry/EntryCard.svelte';
   import { forPlayers, typeDef } from '../../../renderer/lib/entry/types.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { dispatch } from '../../../renderer/lib/store.svelte';
+  import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { OVERRIDES, serializeEntry, type Entry } from '../../../shared/compendium';
   import { allFiles } from '../../../shared/vault';
@@ -22,6 +22,8 @@
   import { openEntry, ui } from './ui.svelte';
 
   let { app }: ModuleProps<'compendium'> = $props();
+  // What the package of this system says about its books, whichever the game is.
+  const builtinNote = $derived([t('cmpui.aboutBuiltin'), store.state.vault.content.find((c) => c.family === hereFamily())?.license].filter(Boolean).join(' '));
 
   // Записи загружаются и без боковой панели (вкладка могла открыться по ссылке из другого раздела).
   const tree = $derived(app.vault.tree);
@@ -126,15 +128,9 @@
     <p class="faint">
       <Lead text={t('cmpui.about3')} />
     </p>
-    {#if hereFamily() === 'fate'}
-      <p class="faint">
-        <Lead text={t('cmpui.aboutFate')} />
-      </p>
-    {:else}
-      <p class="faint">
-        <Lead text={t('cmpui.aboutDnd')} />
-      </p>
-    {/if}
+    <p class="faint">
+      <Lead text={builtinNote} />
+    </p>
   </div>
 {/if}
 

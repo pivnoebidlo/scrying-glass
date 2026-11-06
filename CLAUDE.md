@@ -210,7 +210,7 @@ Electron-приложение для мастера D&D: окно управле
 - Колдовство в статблоке D&D: `Dnd5eStats.spellcasting` (`systems/dnd5e/spells.ts`: характеристика, СЛ и атака —
   пусто = от характеристики и БМ, группы «заговоры» / «по желанию» / «N/день» / «уровень и ячейки»). Статблок
   показывает его последним блоком особенностей или действий (`spellBlock`, курсивные названия → ссылки `spellLinks`,
-  кнопка атаки), редактор — `SpellEditor.svelte` (подсказки названий — `knownSpells` из `entry/peek.svelte.ts`;
+  кнопка атаки), редактор — `SpellEditor.svelte` (подсказки названий — `knownNames` из `shared/nameindex.ts`;
   колдовство, записанное текстом, как в SRD, переносит `parseSpellcasting`). Встроенные карточки SRD не переделаны:
   у них колдовство — текстом (в английском SRD 2024 списки дописывает `import-srd.ts` из структуры `spellcasting`
   базы 5e-database — `spellLines`; в `desc` там только вступление).
@@ -307,7 +307,7 @@ Electron-приложение для мастера D&D: окно управле
   плашка сложности), `entryList` (тип справочника со своим фильтром и группами — заклинания по кругам), `background`
   (невидимый компонент, рисует `App.svelte`). Неизвестная система — `genericTracker` (`systems/tracker.ts`). D&D:
   `systems/dnd5e/plugin.ts` + `ui.ts`, инструменты — `systems/dnd5e/tools/`, бой — `encounter/`, справочник —
-  `entries.ts`, `spellfilter.ts`, `spells.svelte.ts`, указатель заклинаний — `spellindex.ts` + `links.ts`; `isDnd` —
+  `entries.ts`, `spellfilter.ts`, `spells.svelte.ts`, ссылки на заклинания — `links.ts` поверх `shared/nameindex.ts`; `isDnd` —
   только внутри плагина (`here.ts`). Новое про D&D — в плагин, не проверками в модулях. Импорт персонажей из других
   сервисов — `SystemPlugin.importers` (`CardImporter`, `systems/importer.ts`: `id` — ключ в `card.links`, `detect`,
   `read(json, table)`, `url`, `table` — данные мастера в библиотеке, у LSS — `lss-spells.json`); ядро — `main/cards.ts`
@@ -334,7 +334,7 @@ Electron-приложение для мастера D&D: окно управле
   открытый по ссылке или выданный мастеру (без входа — 401, без доступа — 403/404 → `core.noAccess`); id листа — `_id`. LSS: JWT — cookie `lss-jwt` (в кавычках, ~30 дней), `/spells/list/?ids=…&edition=`
   (и свои заклинания игроков — копии PHB с `playerId`; общие — только своей редакции, спрашиваем обе),
   `/spells/?edition=` — весь «Гримуар», `/auth/user/`. Русские названия LSS — официальный перевод, у SRD — OmnisGM («Огненные ладони» / «Огненные руки»):
-  лист хранит названия LSS, ссылки ведут на запись по английскому — псевдонимы `setSpellIndex(names, aliases)` из
+  лист хранит названия LSS, ссылки ведут на запись по английскому — псевдонимы `setNameIndex(names, aliases)` из
   таблицы LSS (`systems/dnd5e/Background.svelte`, IPC `importers:table`, событие `importers:tableChanged`). LSS — `systems/dnd5e/importer.ts` поверх `lss.ts`. Строки плагина — его словарь (`systems/dnd5e/i18n.ts`). Описание
   системы — `SystemDef.about`, у пакета — поле `about` (`Loc`; конструктор — «О системе»). С выключенным D&D его не видно нигде,
   кроме «Ролевых систем» (включить) и «О программе» (атрибуция): разделы настроек и инструменты других систем — только
@@ -371,13 +371,13 @@ Electron-приложение для мастера D&D: окно управле
   книгами; типы — `typesHere`). Инструменты системы и `encounter` — только в её приключениях. Система уходит в .sgpack (`manifest.system`) и в корзину с
   приключением.
   Справочник Fate — `content/fate-core/compendium/fate-core.<lang>.json` (`npm run build-fate` из
-  `scripts/fate-core.<lang>.md`, тексты свои по Fate Core SRD, CC BY 3.0; тип `skill` — семейство fate); встроенные записи показываются по семейству
+  `scripts/fate-core.<lang>.md`, тексты свои по Fate Core SRD, CC BY 3.0; тип `skill` — в пакете, `SystemPack.entryTypes`); встроенные записи показываются по семейству
   системы приключения (`editionShown` в store справочника), выбор редакции — у семейства из нескольких систем с книгами.
   Fate Core — пакет системы (`content/fate-core/system/fate-core.json`, id `fate-core`, семейство `fate`; кода системы больше
   нет): аспекты, 18 навыков числами (`hideZero`, бросок `fate` с `labels` — лестница), трюки, восстановление, дорожки
   стресса по формулам от Телосложения и Воли, последствия текстом (ячейки трекера — `Combatant.texts`); «Партия»
   модуля fate берёт `refresh` из полей карточки.
-- Возможности ядра (`shared/features.ts`, с 0.83): ядро не спрашивает, какая это игра. `FEATURES` — реестр: `id` (инструмент с тем же id принадлежит возможности), `since` — формат пакета, Система перечисляет свои в `uses`: пакет — `SystemPack.uses`, плагин — `SystemPlugin.uses`, спросить — `usesHere(adventures, id)` / `usesOf(system)`; инструмент возможности — `USED` в `tools/ui/registry.svelte.ts`. Новая возможность — строка в `FEATURES`, поднять `PACK_FORMAT` и `since`, подписи `sb.feat.<id>` + `.desc`: конструктор (вкладка «Возможности», `FeaturesPanel.svelte`) покажет её с пометкой «новое» у пакетов старого формата (`freshFeatures`); мастер включает, сохраняет (формат обновится сам) и публикует новую версию, систему переделывать не нужно. Проверки по названию семейства в модулях не писать. Пакеты формата 1 без `uses` получают список по семейству (`oldUses`). Незнакомые id в `uses` сохраняются.
+- Возможности ядра (`shared/features.ts`, с 0.83): ядро не спрашивает, какая это игра. `FEATURES` — реестр: `id` (инструмент с тем же id принадлежит возможности), `since` — формат пакета. Система перечисляет свои в `uses`: пакет — `SystemPack.uses`, плагин — `SystemPlugin.uses`, спросить — `usesHere(adventures, id)` / `usesOf(system)`; инструмент возможности — `USED` в `tools/ui/registry.svelte.ts`. Новая возможность — строка в `FEATURES`, поднять `PACK_FORMAT` и `since`, подписи `sb.feat.<id>` + `.desc`: конструктор (вкладка «Возможности», `FeaturesPanel.svelte`) покажет её с пометкой «новое» у пакетов старого формата (`freshFeatures`); мастер включает, сохраняет (формат обновится сам) и публикует новую версию, систему переделывать не нужно. Проверки по названию семейства в модулях не писать. Пакеты формата 1 без `uses` получают список по семейству (`oldUses`). Незнакомые id в `uses` сохраняются: поэтому в пакете Mausritter остались id `mouse`, `mausTables`, `mausShop`, `build` — по ним 0.83 показывает свои инструменты-код, новые версии их не знают и берут генераторы.
 - Пакеты систем (система — JSON-файл, не код; первая версия): формат, проверка, формулы и броски — `shared/syspack.ts`
   (`SystemPack`: `sections` → поля `FieldDef` типов number / text / textarea / select / dots / track (`boxes` — число или
   ключ поля) / tags / list (`columns`) / formula; `roll` у поля — `RollSpec`: d20, under (к100 со ступенями `levels`),
@@ -388,7 +388,7 @@ Electron-приложение для мастера D&D: окно управле
   успехов `need` — поле «Нужно» в журнале (`RollEntry.dc`), `tweak` — правка после броска: `tally` / `tweakPool` (+/− успех, куб
   щелчком, провальные и единицы заново, «5 = успех»), `rolls.tweak`), fate, sum, explode; у d20 — `degrees` ('two' / 'four':
   в журнале бросков поле «КС» и исход — `RollEntry.degrees` / `pack.dc`, `rolls.setDc`, `degreeOf`; Pathfinder — 'four');
-  `tracker` — `init` roll / value / none, `hp`, `cells`, `conditions` (`valued` — состояния с числом; в конструкторе — « #» в
+  `entryTypes` — типы записей справочника семейства (`setPackTypes`, у формата ниже 3 — `oldEntryTypes`); `tracker` — `init` roll / value / none, `hp`, `cells`, `conditions` (`valued` — состояния с числом; в конструкторе — « #» в
   конце строки); `validatePack` берёт только известное — пакет может быть чужим; `format` — версия формата (`PACK_FORMAT`, нет — 1): пакет помнит, под какую версию сохранён, `forSaving` ставит текущую и отказывается переписывать более новый (`version` остаётся 1 — иначе старые приложения его не прочтут);
   формулы — свой маленький язык `parseFormula` / `evalFormula`: числа, поля, `row.<колонка>`, + − × ÷, floor/ceil/round/
   abs/min/max). Статы карточки — плоский объект по ключам полей. Системы приходят пакетами (см. «Пакет игры»); пробные — `samples/systems/` (в приложение не входят, публикуются в официальном репозитории; тест
@@ -445,7 +445,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   2.3.1 целиком, CC BY 4.0, и наш перевод) → `content/mausritter/bestiary/mausritter.json` (поля пакета — `toPack` в скрипте; 11 существ × 2 языка, русские —
   `<id>.ru` с `origin`, числа и кубы — из английского статблока; таблицы вариантов — в `description` жирными
   строками: заголовков разметка карточек не знает) и `content/mausritter/compendium/mausritter.<lang>.json` (главы →
-  `category`, разделы `##` → записи, у главы — запись-оглавление; заклинания — тип `mspell` с `recharge`; «Terms of
+  `category`, разделы `##` → записи, у главы — запись-оглавление; заклинания — тип `mspell` пакета с `recharge`; «Terms of
   use» не копируется). Русский файл повторяет заголовки оригинала один в один: пары записей — по порядку (`en` / `ru`),
   скрипт сверяет число записей и существ. Глоссарий перевода: защита (ЗЩ), СИЛ/ЛОВ/ВОЛ, пипсы (п), ход / раунд /
   стража, состояния «Измотан / Напуган / Голоден / Ранен / Опустошён», к6, [СУММА] / [КУБЫ]. У русской карточки кубы
@@ -470,7 +470,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   перевод закрыт): Проницательность / Удаль / Решимость; Выслеживать, Изучать, Осматривать, Мастерить; Ловкость,
   Красться, Драться, Крушить; Чуять, Командовать, Знаться, Убеждать.
   Справочник — `content/fitd/compendium/fitd.<lang>.json` (`npm run build-fitd` из `scripts/fitd.<lang>.md`, общий разбор
-  с Fate — `scripts/book-md.ts`; пересказ SRD без мира Blades; тип `fability` — особые способности, `category`
+  с Fate — `scripts/book-md.ts`; пересказ SRD без мира Blades; тип `fability` (в пакете) — особые способности, `category`
   персонаж / банда; названия действий, атрибутов и травм — как в карточке, тест сверяет). Свои русские термины: дело,
   банда, жар, розыск, хватка, ноша, передышка, неприятности (entanglements), подручные, владения, бросок завязки.
   Банда — модуль `modules/crew` (`byAdventure[приключение | '']` — `Crew`; правила — чистые функции `types.ts`:
@@ -634,16 +634,15 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   и в редакции карточки; `changesOf` — список изменений), страница `systems/dnd5e/tools/reshape/Reshape.svelte`, состояние и
   `empower` — сила по ПО (`BY_CR` — медианы существ SRD, сглаженные; хиты и первый урон блока — сдвиг на разницу
   типичных, кубы — `scaleDice`), `Reshape.cr`; `reshapeFrom(ref)` — `store.svelte.ts` (кнопка «Переделать…» в `CardView`), `reshapeNew()` — пункт меню «+» в «Карточках» (`bestiary/ui/Sidebar.svelte`), `reshapeFor(portrait, name)` — для портрета без карточки (`portraits/ui/CardBar.svelte`: «Создать карточку» в D&D — меню «С нуля» / «По образцу статблока…», `rs.target` → `bestiary.createFor(…, prefill)`); карточка — `bestiary.create(…, { stats })`.
-  Генераторы из пакетов (`ui.tool = 'generators'`, показываются там, где пакет их привёз): данные — `generators/<имя>.json` пакета (`GeneratorFile`: таблицы по языкам + рецепты), движок — `shared/generators.ts` (шаги `let` / `line` / `repeat` / `if` / `put` (вещь в ячейки: `at`, потом `pack`, потом за край) / `push` (строка списка для карточки), `sub`, `notes`, `card` у строки и `Generator.card` — всего результата, `genCardOf` собирает её на нужном языке; числа — язык формул с `d(n)` и сравнениями `eq lt le gt ge not`; `validateGenerators`, лимиты вложенности и шагов — файл может быть чужим, никакого кода), ядро — `main/generators.ts` (IPC `generators:list`, вне состояния), страница — `tools/generators/Generators.svelte` (игр не знает; в том же файле пакета — прайс-листы `lists`: `PriceList.svelte`, `priceItems`, строки таблицы [название, цена текстом, числом], и калькуляторы `calculators`: `Calculator.svelte`, `runCalculator`), `store.svelte.ts` (localStorage окна). Результат — ячейки `{ table, row, col }`: текст идёт за языком интерфейса. Mausritter: рецепты, лавка и постройки — `scripts/mausritter-generators.json`, таблицы — из `WANT` и `scripts/mausritter-mouse-*.ts` (`build-mausritter`: правила вещей мыши читаются из английской строки при сборке — таблица `mouseItems`; `tools/maus/srd.ts` — только примеры фракций). Официальные пакеты обновляются сами (`autoContent`).
+  Генераторы из пакетов (`ui.tool = 'generators'`, показываются там, где пакет их привёз): данные — `generators/<имя>.json` пакета (`GeneratorFile`: таблицы по языкам + рецепты), движок — `shared/generators.ts` (шаги `let` / `line` / `repeat` / `if` / `put` (вещь в ячейки: `at`, потом `pack`, потом за край) / `push` (строка списка для карточки), `sub`, `notes`, `card` у строки и `Generator.card` — всего результата, `genCardOf` собирает её на нужном языке; числа — язык формул с `d(n)` и сравнениями `eq lt le gt ge not`; `validateGenerators`, лимиты вложенности и шагов — файл может быть чужим, никакого кода), ядро — `main/generators.ts` (IPC `generators:list`, вне состояния), страница — `tools/generators/Generators.svelte` (игр не знает; в том же файле пакета — прайс-листы `lists`: `PriceList.svelte`, `priceItems`, строки таблицы [название, цена текстом, числом], и калькуляторы `calculators`: `Calculator.svelte`, `runCalculator`), `store.svelte.ts` (localStorage окна). Результат — ячейки `{ table, row, col }`: текст идёт за языком интерфейса. Mausritter: рецепты, лавка и постройки — `scripts/mausritter-generators.json`, таблицы — из `WANT` и `scripts/mausritter-mouse-*.ts` (`build-mausritter`: правила вещей мыши читаются из английской строки при сборке — таблица `mouseItems`; примеры фракций и шаблон отряда — там же, `tools/maus/srd.ts` больше нет). Официальные пакеты обновляются сами (`autoContent`).
   Фракции и счётчик исследования Mausritter — модуль `modules/mausritter` (`byAdventure[приключение | '']`: `factions`
   с целями `FactionGoal` (`marks`, `progress`, `relevant`, `rival`), `session` — итог «между сессиями» (`betweenSessions`:
   к6 + relevant − rival, 4–5 +1, 6+ +2), `clock` — ход / стража / день, `last` — бросок встречи; у бросающих действий
-  четвёртый аргумент — куб, для тестов). Страница «Фракции» в «Инструментах» (`ui/Factions.svelte`, примеры SRD —
-  `EXAMPLE_FACTIONS` в `tools/maus/srd.ts`), блок «Исследование» в правой панели (`ui/Clock.svelte`, возможность `exploration`, страница — `factions`). Данные
+  четвёртый аргумент — куб, для тестов). Страница «Фракции» в «Инструментах» (`ui/Factions.svelte`, примеры — `GeneratorFile.factions` пакета), блок «Исследование» в правой панели (`ui/Clock.svelte`, возможность `exploration`, страница — `factions`). Данные
   приключения уходят в `.sgpack` (`PackSlices.mausritter`) и в корзину (`AdventureData.mausritter`). Наёмники — генератор `hirelings` пакета.
   Отряды (`Warband` в `byAdventure[…].warbands`: `formed` — день счётчика, `paid` — оплаченные недели, `card` — ссылка;
   `weeksDue` / `weeksOwed`, `WARBAND_UPKEEP`; действия `formWarband` / `updateWarband` / `payWarband` / `disbandWarband`):
-  блок `ui/Warbands.svelte` под фракциями (карточку по SRD пишет окно — `saveCard` в папку бестиария приключения, иначе
+  блок `ui/Warbands.svelte` под фракциями — только если пакет привёз шаблон `GeneratorFile.warband` (`fillTemplate`; карточку пишет окно — `saveCard` в папку бестиария приключения, иначе
   в библиотеку; «В бой» — `addToInitiative`), долг — строкой в `ui/Clock.svelte`.
   Генератор NPC: `tools/npc/` — как таверны (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — занятия и черты берёт у
   таверн, `text.ts` — Markdown и карточка, `store.svelte.ts` — с историей); «Создать карточку» — `bestiary.create(place,
@@ -771,7 +770,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   удалить её — «Вернуть как в SRD». «Копия в…» убирает `overrides` (отдельная запись), у записи есть `en` (английское название — для поиска и ссылок). Редакция — фильтр
   `srd.edition` в store (localStorage окна, по умолчанию 2024); ссылка находит встроенную и в скрытой редакции.
   Связи: общее состояние — `renderer/lib/entry/peek.svelte.ts` (`peekEntry(названия)` / `peekEntryAt(путь)` —
-  выдвижная панель записи откуда угодно). Указатель названий заклинаний — `systems/dnd5e/spellindex.ts` (`setSpellIndex`,
+  выдвижная панель записи откуда угодно). Указатель названий для ссылок — `shared/nameindex.ts` (`setNameIndex`,
   заполняет фон плагина `systems/dnd5e/Background.svelte` из `entryNames('spell')`). Действие `use:spellLinks`
   (`systems/dnd5e/links.ts`): 'em' — курсив с названием заклинания в `StatBlock`, 'text' — названия в `.spells` листа;
   MutationObserver пересобирает ссылки после перерисовки. Фоновый компонент справочника `EntryDrawer.svelte` грузит

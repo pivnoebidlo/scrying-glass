@@ -1,11 +1,34 @@
 {
  "scryingGlass": "system",
  "version": 1,
- "format": 2,
+ "format": 3,
  "uses": [
   "worldtime",
   "clocks",
   "crew"
+ ],
+ "entryTypes": [
+  {
+   "id": "fability",
+   "title": {
+    "en": "Special ability",
+    "ru": "Особая способность"
+   },
+   "plural": {
+    "en": "Special abilities",
+    "ru": "Особые способности"
+   },
+   "fields": [
+    {
+     "key": "category",
+     "title": {
+      "en": "Whose",
+      "ru": "Чья"
+     },
+     "kind": "text"
+    }
+   ]
+  }
  ],
  "id": "fitd",
  "family": "fitd",

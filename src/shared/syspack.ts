@@ -8,7 +8,7 @@
 // formulas are a tiny language of their own (numbers, fields, + − × ÷, a few functions) — never code.
 import type { SheetResources } from './players';
 import type { CardKind, CombatStats } from './cards';
-import { oldOverflow, oldUses } from './features';
+import { oldEntryTypes, oldOverflow, oldUses } from './features';
 
 // Text in several languages ({ en, ru }) or one string for all.
 export type Loc = string | Record<string, string>;
@@ -139,7 +139,7 @@ export interface TrackerSpec {
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 2;
+export const PACK_FORMAT = 3;
 
 export interface SystemPack {
   scryingGlass: 'system';
@@ -169,10 +169,19 @@ export interface SystemPack {
   tracker: TrackerSpec;
   // None — a game with nothing to return: fields stay as marked.
   resets?: PackReset[];
+  // Types of compendium entries of its family: skills, spells… Entries of a package's books use them.
+  entryTypes?: PackEntryType[];
   // Its own compendium: rules, conditions, gear… (Markdown), shown in adventures of this system as built-in entries.
   compendium?: PackEntry[];
   // Set by the core, never read from a file: the GM's own pack (in the library), not a built-in one.
   own?: boolean;
+}
+
+export interface PackEntryType {
+  id: string;
+  title: Loc;
+  plural: Loc;
+  fields?: { key: string; title: Loc; kind: 'text' | 'number' | 'bool' | 'list' }[];
 }
 
 export interface PackEntry {
@@ -449,6 +458,23 @@ function fieldOf(x: unknown): FieldDef | null {
   return f;
 }
 
+const ENTRY_KINDS = ['text', 'number', 'bool', 'list'];
+function entryTypesOf(x: unknown): PackEntryType[] | null {
+  if (!Array.isArray(x)) return null;
+  return x.slice(0, LIMIT.sections).flatMap((t) => {
+    if (!isObj(t) || typeof t['id'] !== 'string' || !USE_RE.test(t['id'])) return [];
+    const [title, plural] = [locOf(t['title']), locOf(t['plural'])];
+    if (!title || !plural) return [];
+    const fields = (Array.isArray(t['fields']) ? t['fields'] : []).flatMap((f) => {
+      const ft = isObj(f) ? locOf(f['title']) : null;
+      return isObj(f) && typeof f['key'] === 'string' && KEY_RE.test(f['key']) && ft && ENTRY_KINDS.includes(f['kind'] as string)
+        ? [{ key: f['key'], title: ft, kind: f['kind'] as 'text' }]
+        : [];
+    });
+    return [{ id: t['id'], title, plural, ...(fields.length ? { fields } : {}) }];
+  });
+}
+
 // A pack ready to be written: stamped with the format of this app, or 'newer' when it was made by a newer one.
 export function forSaving(p: SystemPack): SystemPack | 'newer' {
   return (p.format ?? 1) > PACK_FORMAT ? 'newer' : { ...p, format: PACK_FORMAT };
@@ -532,6 +558,7 @@ export function validatePack(x: unknown): SystemPack | string {
     scryingGlass: 'system',
     version: 1,
     ...(Number.isInteger(x['format']) && (x['format'] as number) > 0 ? { format: x['format'] as number } : {}),
+    entryTypes: entryTypesOf(x['entryTypes']) ?? oldEntryTypes(familyOfRaw).flatMap((t) => entryTypesOf([t]) ?? []),
     uses: Array.isArray(x['uses']) ? [...new Set(x['uses'].filter((u): u is string => typeof u === 'string' && USE_RE.test(u)))].slice(0, LIMIT.uses) : oldUses(familyOfRaw),
     id: x['id'],
     title,

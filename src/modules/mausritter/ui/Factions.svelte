@@ -6,13 +6,16 @@
   import { Dices, Plus, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
-  import { EXAMPLE_FACTIONS } from '../../tools/maus/srd';
+  import { currentSystem } from '../../../shared/adventures';
+  import { familyOf } from '../../../systems';
+  import { filesOf } from '../../tools/generators/store.svelte';
   import Warbands from './Warbands.svelte';
   import { blankAdventure, currentGoal, type Faction, type FactionGoal } from '../types';
 
   const adventure = $derived(store.state.adventures.current);
   const data = $derived(store.state.mausritter.byAdventure[adventure ?? ''] ?? blankAdventure());
-  const examples = $derived(EXAMPLE_FACTIONS[locale.lang === 'ru' ? 'ru' : 'en']);
+  // Ready factions come with the system's package.
+  const examples = $derived(filesOf(familyOf(currentSystem(store.state.adventures))).find((f) => f.factions)?.factions?.[locale.lang] ?? []);
 
   const add = (name = t('mfac.newName'), resources: string[] = [], goals: { text: string; marks: number }[] = []) =>
     dispatch('mausritter', 'addFaction', { adventure, name, resources, goals });

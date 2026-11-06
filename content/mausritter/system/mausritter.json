@@ -1,10 +1,37 @@
 {
  "scryingGlass": "system",
  "version": 1,
- "format": 2,
+ "format": 3,
  "uses": [
   "exploration",
-  "factions"
+  "factions",
+  "mouse",
+  "mausTables",
+  "mausShop",
+  "build"
+ ],
+ "entryTypes": [
+  {
+   "id": "mspell",
+   "title": {
+    "en": "Spell",
+    "ru": "Заклинание"
+   },
+   "plural": {
+    "en": "Spells",
+    "ru": "Заклинания"
+   },
+   "fields": [
+    {
+     "key": "recharge",
+     "title": {
+      "en": "Recharge",
+      "ru": "Перезарядка"
+     },
+     "kind": "text"
+    }
+   ]
+  }
  ],
  "id": "mausritter",
  "family": "mausritter",

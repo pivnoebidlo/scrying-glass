@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import mausritter from '../src/modules/mausritter/main';
 import type { MausState } from '../src/modules/mausritter/types';
 import { currentGoal } from '../src/modules/mausritter/types';
-import { EXAMPLE_FACTIONS } from '../src/modules/tools/maus/srd';
+import { readFileSync } from 'node:fs';
 import { ctx, run } from './helpers';
 
+const EXAMPLE_FACTIONS = JSON.parse(readFileSync('content/mausritter/generators/mausritter.json', 'utf8')).factions as Record<'en' | 'ru', { name: string; resources: string[]; goals: { text: string; marks: number }[] }[]>;
 const S0 = mausritter.initialState;
 const A = 'Forest';
 const act = (s: MausState, a: string, p?: unknown) => run(mausritter, s, a, { adventure: A, ...(p as object) });

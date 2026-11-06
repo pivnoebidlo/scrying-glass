@@ -3,12 +3,14 @@ import { readFileSync } from 'node:fs';
 import { poolOutcome, rollPool } from '../src/shared/dice';
 import { entryFamily, TYPES, type BuiltinBook } from '../src/shared/compendium';
 import { setLang } from '../src/shared/i18n';
+import { registerPacks } from '../src/systems/packs';
 import { evalFormula, fieldMap, loc, packCombat, packSubtitle, rollPack, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
 import { upgradeCard } from '../src/shared/oldcards';
 import type { Card } from '../src/shared/cards';
 
 // Forged in the Dark is a pack since 0.64 (content/fitd/system/fitd.json, published in the official repository).
 const pack = validatePack(JSON.parse(readFileSync(new URL('../content/fitd/system/fitd.json', import.meta.url), 'utf8'))) as SystemPack;
+registerPacks([pack]);
 const fields = fieldMap(pack);
 const ACTIONS = ['hunt', 'study', 'survey', 'tinker', 'finesse', 'prowl', 'skirmish', 'wreck', 'attune', 'command', 'consort', 'sway'];
 const ATTRIBUTES = ['insight', 'prowess', 'resolve'];

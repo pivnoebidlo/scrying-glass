@@ -6,7 +6,9 @@ import type { Combatant } from '../modules/initiative/types';
 import { getLang, t } from '../shared/i18n';
 import { die } from '../shared/dice';
 import type { SheetResources } from '../shared/players';
-import { blankStats, evalFormula, fieldMap, loc, packCombat, packResources, packSubtitle, type PackStats, type SystemPack } from '../shared/syspack';
+import { blankStats, evalFormula, fieldMap, loc, packCombat, packResources, packSubtitle, type PackEntryType, type PackStats, type SystemPack } from '../shared/syspack';
+import { COMMON_FIELDS, setPackTypes } from '../shared/compendium';
+import type { TypeDef } from '../shared/entrytypes';
 import type { CombatField, TrackerDef } from './tracker';
 import { FAMILIES, pluginResources, systems, type SystemDef } from '.';
 
@@ -30,9 +32,11 @@ export function registerPacks(list: SystemPack[] | undefined) {
   }
   packs.clear();
   families.clear();
+  const types: Record<string, TypeDef> = {};
   for (const p of list) {
     if (systems.some((s) => s.id === p.id)) continue;
     packs.set(p.id, p);
+    for (const t of p.entryTypes ?? []) types[t.id] ??= entryTypeOf(t, p.family ?? p.id);
     systems.push(systemOfPack(p));
     const family = p.family ?? p.id;
     if (!FAMILIES.some((f) => f.id === family)) {
@@ -45,6 +49,29 @@ export function registerPacks(list: SystemPack[] | undefined) {
       });
     }
   }
+  setPackTypes(types);
+}
+
+function entryTypeOf(t: PackEntryType, family: string): TypeDef {
+  return {
+    get title() {
+      return loc(t.title, getLang());
+    },
+    get plural() {
+      return loc(t.plural, getLang());
+    },
+    fields: [
+      ...(t.fields ?? []).map((f) => ({
+        key: f.key,
+        kind: f.kind,
+        get title() {
+          return loc(f.title, getLang());
+        },
+      })),
+      ...COMMON_FIELDS,
+    ],
+    family,
+  };
 }
 
 function systemOfPack(p: SystemPack): SystemDef {

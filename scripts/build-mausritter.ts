@@ -460,10 +460,6 @@ for (const lang of ['en', 'ru'] as const) {
     mouseWeapons: { head: ['Name', 'Dice', 'Both paws', 'Shown'], rows: WEAPONS[lang].map((w) => [w.name, w.dice, w.both ? 'x' : '', `${w.name} (${die(w.dice)})`]) },
   });
 }
-const generatorsOut = path.join(RES, 'generators', 'mausritter.json');
-fs.mkdirSync(path.dirname(generatorsOut), { recursive: true });
-fs.writeFileSync(generatorsOut, JSON.stringify(generators) + '\n');
-console.log(`${generatorsOut}: ${recipes.generators.length} generators, ${Object.keys(generators.tables.en).length} tables`);
 
 // ---------- Example factions (Tools → Factions) ----------
 // «### 1. Cat lord / #### Resources (list) / #### Goals (list with ○ marks)» → { name, resources, goals: [text, marks] }.
@@ -501,19 +497,8 @@ factions.en.forEach((f, i) => {
     throw new Error(`faction «${f.name}» / «${r.name}»: goals or resources differ`);
   }
 });
-const tablesOut = path.resolve(import.meta.dirname, '../src/modules/tools/maus/srd.ts');
-fs.writeFileSync(
-  tablesOut,
-  `
-export interface ExampleFaction {
-  name: string;
-  resources: string[];
-  goals: { text: string; marks: number }[];
-}
-
-// The example factions of the SRD (Hexcrawl toolbox → Example factions).
-export const EXAMPLE_FACTIONS: Record<'en' | 'ru', ExampleFaction[]> = {
-${(['en', 'ru'] as const).map((l) => `  ${l}: [\n${factions[l].map((f) => `    ${JSON.stringify(f)},`).join('\n')}\n  ],\n`).join('')}};
-`
-);
-console.log(`${tablesOut}: 10 example factions`);
+(generators as Record<string, unknown>)['factions'] = factions;
+const generatorsOut = path.join(RES, 'generators', 'mausritter.json');
+fs.mkdirSync(path.dirname(generatorsOut), { recursive: true });
+fs.writeFileSync(generatorsOut, JSON.stringify(generators) + '\n');
+console.log(`${generatorsOut}: ${recipes.generators.length} generators, ${Object.keys(generators.tables.en).length} tables, ${factions.en.length} factions`);
