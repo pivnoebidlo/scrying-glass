@@ -615,7 +615,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   четвёртый аргумент — куб, для тестов). Страница «Фракции» в «Инструментах» (`ui/Factions.svelte`, примеры — `GeneratorFile.factions` пакета), блок «Исследование» в правой панели (`ui/Clock.svelte`, возможность `exploration`, страница — `factions`). Данные
   приключения уходят в `.sgpack` (`PackSlices.factions`) и в корзину (`AdventureData.factions`). Наёмники — генератор `hirelings` пакета.
   Отряды (`Warband` в `byAdventure[…].warbands`: `formed` — день счётчика, `paid` — оплаченные недели, `card` — ссылка;
-  `weeksDue` / `weeksOwed`, `WARBAND_UPKEEP`; действия `formWarband` / `updateWarband` / `payWarband` / `disbandWarband`):
+  `weeksDue` / `weeksOwed`, цена недели — `GeneratorFile.warband.upkeep` пакета, `warbandUpkeep`, нет — без содержания; действия `formWarband` / `updateWarband` / `payWarband` / `disbandWarband`):
   блок `ui/Warbands.svelte` под фракциями — только если пакет привёз шаблон `GeneratorFile.warband` (`fillTemplate`; карточку пишет окно — `saveCard` в папку бестиария приключения, иначе
   в библиотеку; «В бой» — `addToInitiative`), долг — строкой в `ui/Clock.svelte`.
   Генератор NPC: `tools/npc/` — как таверны (`types.ts`, `generate.ts`, `content/{en,ru}.ts` — занятия и черты берёт у

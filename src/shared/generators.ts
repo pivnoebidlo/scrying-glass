@@ -241,7 +241,8 @@ export interface GeneratorFile {
   // Ready factions for the Factions tool, by language.
   factions?: Record<string, { name: string; resources: string[]; goals: { text: string; marks: number }[] }[]>;
   // The card of a warband: stats as they are, { "$text": … } in the card's language, { "$roll": "d(6)" } rolled.
-  warband?: { description: GenText; stats: Record<string, unknown> };
+  // `about` and `hint` are the game's rules in words; `upkeep` — what a week of it costs, `money` shows {n}.
+  warband?: { description: GenText; stats: Record<string, unknown>; about?: GenText; hint?: GenText; upkeep?: { amount: number; money: GenText } };
 }
 
 // What a system of one file brings itself (SystemPack.kit): the same as a package's file.
@@ -938,6 +939,13 @@ export function genText(t: GenText | undefined, lang: Lang, params?: Record<stri
   if (t === undefined) return '';
   const m = typeof t === 'string' ? t : (t[lang] ?? t['en'] ?? Object.values(t)[0] ?? '');
   return format(lang, m, params);
+}
+
+// The weekly upkeep of a package's warband: none — the game has no upkeep. The file can be someone else's.
+export function warbandUpkeep(w: GeneratorFile['warband'], lang: Lang) {
+  const u = w?.upkeep;
+  if (!u || typeof u.amount !== 'number' || !(u.amount > 0)) return null;
+  return { money: (weeks: number) => genText(u.money, lang, { n: (u.amount * weeks).toLocaleString(lang) }) };
 }
 
 // A cell as text; «**Hostile.** How…» keeps its Markdown.

@@ -49,9 +49,8 @@ export interface Clock {
   last: EncounterRoll | null;
 }
 
-// A warband of the party (Recruiting help → Warbands): 20+ fighting mice and their followers, formed in a town or a
-// city for a WIL save or 1000p. Its numbers live on its card (a Mausritter creature of warband scale, `card`); here —
-// the upkeep: 1000p a week from the day it was formed, `paid` — weeks paid.
+// A warband of the party. Its numbers live on its card (`card`, made from the package's template); here — the upkeep
+// counted from the day it was formed, `paid` — weeks paid. What a week costs is the package's (`warbandUpkeep`).
 export interface Warband {
   id: string;
   name: string;
@@ -75,7 +74,6 @@ export interface FactionsState {
 
 export const WATCHES = 4;
 
-export const WARBAND_UPKEEP = 1000;
 // The upkeep of a warband is due for each week begun since it was formed: day 1–7 — the first week, and so on.
 export const weeksDue = (w: Warband, day: number) => Math.max(0, Math.floor((day - w.formed) / 7) + 1);
 export const weeksOwed = (w: Warband, day: number) => Math.max(0, weeksDue(w, day) - w.paid);

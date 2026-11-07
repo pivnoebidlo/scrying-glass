@@ -1,6 +1,6 @@
-<!-- Tools → Factions, below the factions (Mausritter): the party's warbands. "Form a warband" makes its card by the SRD
-     (d6 HP, STR/DEX/WIL 10, d6 clubs and axes, warband scale; the casualty rules in its text) in the adventure's
-     bestiary folder (none — the library) and starts its upkeep: 1000p for each week begun on the exploration clock. -->
+<!-- Tools → Factions, below the factions: the party's warbands, for a game whose package has a warband template.
+     "Form a warband" makes its card from the template in the adventure's bestiary folder (none — the library) and
+     starts its upkeep, if the package sets one, for each week begun on the exploration clock. -->
 <script lang="ts">
   import Lead from '../../../renderer/lib/Lead.svelte';
   import { IdCard, Swords, Users, X } from '@lucide/svelte';
@@ -12,11 +12,11 @@
   import type { Card } from '../../../shared/cards';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import { addToInitiative } from '../../bestiary/ui/combat';
-  import { fillTemplate, genText, type GeneratorFile } from '../../../shared/generators';
+  import { fillTemplate, genText, warbandUpkeep, type GeneratorFile } from '../../../shared/generators';
   import { currentSystem } from '../../../shared/adventures';
   import { familyOf } from '../../../systems';
   import { filesOf } from '../../tools/generators/store.svelte';
-  import { blankAdventure, WARBAND_UPKEEP, weeksDue, weeksOwed, type Warband } from '../types';
+  import { blankAdventure, weeksDue, weeksOwed, type Warband } from '../types';
 
   onMount(() => void connectCards());
 
@@ -25,7 +25,7 @@
   const day = $derived(data.clock.day);
   // A game with no warbands in its package has no such block.
   const file = $derived(filesOf(familyOf(currentSystem(store.state.adventures))).find((f) => f.warband));
-  const pips = (n: number) => t('mfac.pips', { n: n.toLocaleString(locale.lang) });
+  const upkeep = $derived(warbandUpkeep(file?.warband, locale.lang));
 
   let name = $state('');
   let busy = $state(false);
@@ -62,7 +62,7 @@
 
 {#if file?.warband}<section class="warbands">
   <h3><Users size={13} /> {t('mwar.title')}</h3>
-  <p class="faint small"><Lead text={t('mwar.about')} /></p>
+  {#if file.warband.about}<p class="faint small"><Lead text={genText(file.warband.about, locale.lang)} /></p>{/if}
   {#each data.warbands ?? [] as w (w.id)}
     {@const owed = weeksOwed(w, day)}
     <div class="warband">
@@ -76,18 +76,20 @@
         {/if}
         <button class="icon-btn" title={t('mwar.disband')} onclick={() => disband(w)}><X size={14} /></button>
       </div>
-      <div class="row">
-        <span>{t('mwar.upkeep', { paid: w.paid, due: weeksDue(w, day), pips: pips(WARBAND_UPKEEP) })}</span>
-        <span class="spacer"></span>
-        {#if w.paid}<button class="btn" title={t('mwar.unpayHint')} onclick={() => pay(w, -1)}>−</button>{/if}
-        <button class="btn" class:primary={owed > 0} onclick={() => pay(w)}>{t('mwar.pay', { pips: pips(WARBAND_UPKEEP) })}</button>
-      </div>
-      {#if owed > 0}<p class="warn small">{t('mwar.owed', { count: owed, pips: pips(owed * WARBAND_UPKEEP) })}</p>{/if}
+      {#if upkeep}
+        <div class="row">
+          <span>{t('mwar.upkeep', { paid: w.paid, due: weeksDue(w, day), money: upkeep.money(1) })}</span>
+          <span class="spacer"></span>
+          {#if w.paid}<button class="btn" title={t('mwar.unpayHint')} onclick={() => pay(w, -1)}>−</button>{/if}
+          <button class="btn" class:primary={owed > 0} onclick={() => pay(w)}>{t('mwar.pay', { money: upkeep.money(1) })}</button>
+        </div>
+        {#if owed > 0}<p class="warn small">{t('mwar.owed', { count: owed, money: upkeep.money(owed) })}</p>{/if}
+      {/if}
     </div>
   {/each}
   <form class="row" onsubmit={(e) => (e.preventDefault(), form(file.warband!, file))}>
     <input class="name" type="text" bind:value={name} placeholder={t('mwar.namePh')} />
-    <button class="btn" type="submit" disabled={busy} title={t('mwar.formHint')}>{t('mwar.form')}</button>
+    <button class="btn" type="submit" disabled={busy} title={genText(file.warband.hint, locale.lang)}>{t('mwar.form')}</button>
   </form>
 </section>{/if}
 

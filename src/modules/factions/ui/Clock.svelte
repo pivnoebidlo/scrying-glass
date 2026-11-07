@@ -3,10 +3,17 @@
      warband whose upkeep is owed by the days of the clock — with a button to pay a week. -->
 <script lang="ts">
   import { Dices, Minus, Plus, RotateCcw, Footprints } from '@lucide/svelte';
+  import { onMount } from 'svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import { blankAdventure, WARBAND_UPKEEP, weeksOwed } from '../types';
+  import { currentSystem } from '../../../shared/adventures';
+  import { warbandUpkeep } from '../../../shared/generators';
+  import { familyOf } from '../../../systems';
+  import { filesOf, loadGenerators } from '../../tools/generators/store.svelte';
+  import { blankAdventure, weeksOwed } from '../types';
+
+  onMount(() => void loadGenerators());
 
   let { ms, app }: ModuleProps<'factions'> = $props();
   const adventure = $derived(app.adventures.current);
@@ -14,8 +21,8 @@
   const act = (name: 'turn' | 'watch' | 'rollEncounter' | 'resetTurns' | 'resetClock') => dispatch('factions', name, { adventure });
   const last = $derived(clock.last);
   const torches = $derived(clock.turn > 0 && clock.turn % 6 === 0);
-  const owing = $derived(((ms.byAdventure[adventure ?? ''] ?? blankAdventure()).warbands ?? []).filter((w) => weeksOwed(w, clock.day) > 0));
-  const pips = (n: number) => t('mfac.pips', { n: n.toLocaleString(locale.lang) });
+  const upkeep = $derived(warbandUpkeep(filesOf(familyOf(currentSystem(app.adventures))).find((f) => f.warband)?.warband, locale.lang));
+  const owing = $derived((upkeep ? (ms.byAdventure[adventure ?? ''] ?? blankAdventure()).warbands ?? [] : []).filter((w) => weeksOwed(w, clock.day) > 0));
 </script>
 
 <div class="clock">
@@ -46,7 +53,7 @@
 
   {#each owing as w (w.id)}
     <div class="row">
-      <span class="note warn">{w.name}: {t('mwar.owedShort', { count: weeksOwed(w, clock.day), pips: pips(weeksOwed(w, clock.day) * WARBAND_UPKEEP) })}</span>
+      <span class="note warn">{w.name}: {t('mwar.owedShort', { count: weeksOwed(w, clock.day), money: upkeep!.money(weeksOwed(w, clock.day)) })}</span>
       <div class="spacer"></div>
       <button class="btn" onclick={() => dispatch('factions', 'payWarband', { adventure, id: w.id })}>{t('mwar.payShort')}</button>
     </div>

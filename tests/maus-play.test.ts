@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import factions from '../src/modules/factions/main';
 import type { FactionsState } from '../src/modules/factions/types';
 import { currentGoal } from '../src/modules/factions/types';
+import { warbandUpkeep } from '../src/shared/generators';
 import { readFileSync } from 'node:fs';
 import { ctx, run } from './helpers';
 
@@ -93,5 +94,18 @@ describe('Mausritter warbands', () => {
     for (let i = 0; i < 8; i++) s = rolled(s, 'watch', [6]);
     expect(of(s).clock.day).toBe(3);
     expect(of(act(s, 'formWarband', { name: 'B' })).warbands![0]!.formed).toBe(3);
+  });
+});
+
+describe('the upkeep of a warband is the package\'s', () => {
+  it('reads the price and shows it in the package\'s money', () => {
+    const { warband } = JSON.parse(readFileSync('content/mausritter/generators/mausritter.json', 'utf8'));
+    expect(warbandUpkeep(warband, 'en')!.money(2)).toBe((2000).toLocaleString('en') + 'p');
+  });
+  it('a game without one, or a bad number, has no upkeep', () => {
+    const base = { description: '', stats: {} };
+    expect(warbandUpkeep(base, 'en')).toBeNull();
+    expect(warbandUpkeep({ ...base, upkeep: { amount: 'a' as unknown as number, money: '{n}' } }, 'en')).toBeNull();
+    expect(warbandUpkeep(undefined, 'en')).toBeNull();
   });
 });

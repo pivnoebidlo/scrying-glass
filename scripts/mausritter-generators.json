@@ -2478,6 +2478,21 @@
     }
    },
    "wants": ""
+  },
+  "about": {
+   "en": "20 or more fighting mice and a follower for each. Forming one takes a week of recruiting in a town or a city and a WIL save or 1000p; the upkeep is 1000p a week, counted by the days of the exploration clock.",
+   "ru": "20 или больше бойцов и по помощнику на каждого. Собрать — неделя набора в городе и спасбросок ВОЛ или 1000 п; содержание — 1000 п в неделю, по дням счётчика исследования."
+  },
+  "hint": {
+   "en": "Makes its card by the SRD (d6 HP, STR, DEX and WIL 10, d6 clubs and axes, warband scale) in the adventure's bestiary folder",
+   "ru": "Создаёт его карточку по SRD (к6 ЗЩ, СИЛ, ЛОВ и ВОЛ 10, к6 дубины и топоры, масштаб отряда) в папке бестиария приключения"
+  },
+  "upkeep": {
+   "amount": 1000,
+   "money": {
+    "en": "{n}p",
+    "ru": "{n} п"
+   }
   }
  }
 }
