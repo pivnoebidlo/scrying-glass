@@ -990,6 +990,37 @@ export function warbandUpkeep(w: GeneratorFile['warband'], lang: Lang) {
   return { money: (weeks: number) => genText(u.money, lang, { n: (u.amount * weeks).toLocaleString(lang) }) };
 }
 
+// The builder shows a value of a warband's card as a line. null — one it cannot show so (a list): it stays as it is.
+export function templateText(v: unknown, lang: Lang): string | null {
+  if (typeof v === 'number' || typeof v === 'string') return String(v);
+  if (!isObj(v)) return null;
+  if (v['$text'] !== undefined) return genText(v['$text'] as GenText, lang);
+  const die = typeof v['$roll'] === 'string' ? /^d\((\d+)\)$/.exec(v['$roll']) : null;
+  return die ? `d${die[1]}` : null;
+}
+
+// A line back: a number, «d6» or «к6» — a die rolled for the card, else a text; a text of several languages keeps the others.
+export function templateValue(text: string, old: unknown, lang: Lang): unknown {
+  const line = text.trim();
+  if (/^-?\d+$/.test(line)) return Number(line);
+  const die = /^[dкД]\s*(\d+)$/i.exec(line);
+  if (die) return { $roll: `d(${die[1]})` };
+  const was = isObj(old) ? old['$text'] : undefined;
+  return isObj(was) ? { $text: { ...was, [lang]: text } } : text;
+}
+
+// The names of the watches from a text, one a line; a name of several languages keeps the others.
+export function namesOfText(text: string, old: GenText[], lang: Lang): GenText[] {
+  return text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l, i) => {
+      const was = old[i];
+      return isObj(was) ? { ...(was as Record<string, Msg>), [lang]: l } : l;
+    });
+}
+
 // A cell as text; «**Hostile.** How…» keeps its Markdown.
 export function genCell(file: GeneratorFile, c: GenCell, lang: Lang): string {
   const list = file.tables[lang] ?? baseOf(file);

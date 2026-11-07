@@ -5,6 +5,8 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { freshFeatures, offeredFeatures, oldUses } from '../../../shared/features';
   import type { SystemPack } from '../../../shared/syspack';
+  import ExplorationPanel from './ExplorationPanel.svelte';
+  import FactionRulesPanel from './FactionRulesPanel.svelte';
 
   let { pack, disabled = false }: { pack: SystemPack; disabled?: boolean } = $props();
 
@@ -24,6 +26,8 @@
         <span class="faint small">{t(`sb.feat.${f.id}.desc` as never)}</span>
       </span>
     </label>
+    {#if uses.includes(f.id) && f.id === 'exploration'}<ExplorationPanel {pack} {disabled} />{/if}
+    {#if uses.includes(f.id) && f.id === 'factions'}<FactionRulesPanel {pack} {disabled} />{/if}
   {/each}
 
 <style>

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import factions from '../src/modules/factions/main';
 import type { FactionsState } from '../src/modules/factions/types';
 import { currentGoal } from '../src/modules/factions/types';
-import { validateGenerators, warbandUpkeep } from '../src/shared/generators';
+import { namesOfText, templateText, templateValue, validateGenerators, warbandUpkeep } from '../src/shared/generators';
 import { readFileSync } from 'node:fs';
 import { ctx, run } from './helpers';
 
@@ -140,5 +140,23 @@ describe('the upkeep of a warband is the package\'s', () => {
     expect(warbandUpkeep(base, 'en')).toBeNull();
     expect(warbandUpkeep({ ...base, upkeep: { amount: 'a' as unknown as number, money: '{n}' } }, 'en')).toBeNull();
     expect(warbandUpkeep(undefined, 'en')).toBeNull();
+  });
+});
+
+describe('the builder of these rules', () => {
+  it('shows a value of a card as a line and takes it back', () => {
+    expect(['10', 'text', 'd6']).toEqual([templateText(10, 'en'), templateText('text', 'en'), templateText({ $roll: 'd(6)' }, 'en')]);
+    expect(templateText({ $text: { en: 'a', ru: 'б' } }, 'ru')).toBe('б');
+    expect(templateText([{ name: 'x' }], 'en')).toBeNull();
+    expect(templateText({ $roll: 'd(6)+1' }, 'en')).toBeNull();
+    expect(templateValue(' 12 ', '', 'en')).toBe(12);
+    expect(templateValue('к8', '', 'ru')).toEqual({ $roll: 'd(8)' });
+    expect(templateValue('d6', '', 'en')).toEqual({ $roll: 'd(6)' });
+    expect(templateValue('новое', { $text: { en: 'a', ru: 'б' } }, 'ru')).toEqual({ $text: { en: 'a', ru: 'новое' } });
+    expect(templateValue('plain', '', 'en')).toBe('plain');
+  });
+  it('names of watches keep the other languages', () => {
+    expect(namesOfText('утро\n\n день ', [{ en: 'morning', ru: 'старое' }], 'ru')).toEqual([{ en: 'morning', ru: 'утро' }, 'день']);
+    expect(namesOfText(' \n', [], 'en')).toEqual([]);
   });
 });

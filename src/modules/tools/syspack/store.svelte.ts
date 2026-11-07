@@ -111,7 +111,8 @@ export async function saveSystem() {
     builder.was = id;
     // The core wrote it in the current format: nothing is new for it any more.
     d.format = PACK_FORMAT;
-    builder.saved = snapshot({ ...plain, format: PACK_FORMAT });
+    // From the draft itself: dirtiness compares strings, the order of keys counts.
+    builder.saved = snapshot($state.snapshot(d) as SystemPack);
     builder.status = t('sb.saved');
     setTimeout(() => builder.status === t('sb.saved') && (builder.status = ''), 3000);
   } catch (e) {
