@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 import factions from '../src/modules/factions/main';
 import type { FactionsState } from '../src/modules/factions/types';
 import { currentGoal } from '../src/modules/factions/types';
-import { warbandUpkeep } from '../src/shared/generators';
+import { validateGenerators, warbandUpkeep } from '../src/shared/generators';
 import { readFileSync } from 'node:fs';
 import { ctx, run } from './helpers';
 
 const EXAMPLE_FACTIONS = JSON.parse(readFileSync('content/mausritter/generators/mausritter.json', 'utf8')).factions as Record<'en' | 'ru', { name: string; resources: string[]; goals: { text: string; marks: number }[] }[]>;
+const PACK = JSON.parse(readFileSync('content/mausritter/generators/mausritter.json', 'utf8'));
 const S0 = factions.initialState;
 const A = 'Forest';
 const act = (s: FactionsState, a: string, p?: unknown) => run(factions, s, a, { adventure: A, ...(p as object) });
@@ -14,7 +15,7 @@ const act = (s: FactionsState, a: string, p?: unknown) => run(factions, s, a, { 
 const rolled = (s: FactionsState, a: string, rolls: number[], p?: unknown) => {
   let i = 0;
   const fn = factions.actions[a as 'turn'] as unknown as (s: FactionsState, p: unknown, c: unknown, r: () => number) => FactionsState;
-  return fn(s, { adventure: A, ...(p as object) }, ctx(), () => rolls[i++] ?? 6);
+  return fn(s, { adventure: A, rules: a === 'betweenSessions' ? PACK.goalRoll : PACK.exploration, ...(p as object) }, ctx(), () => rolls[i++] ?? 6);
 };
 const of = (s: FactionsState) => s.byAdventure[A]!;
 
@@ -69,6 +70,38 @@ describe('Mausritter clock', () => {
     s = rolled(s, 'watch', []);
     s = rolled(s, 'watch', [5]);
     expect(of(s).clock).toMatchObject({ watch: 1, day: 2, last: { roll: 5 } });
+  });
+});
+
+describe('the rules of the clock are the package\'s', () => {
+  it('without rules it only counts', () => {
+    let s = rolled(S0, 'turn', [1], { rules: undefined });
+    s = rolled(s, 'turn', [1], { rules: undefined });
+    s = rolled(s, 'turn', [1], { rules: undefined });
+    expect(of(s).clock).toMatchObject({ turn: 3, last: null });
+    for (let i = 0; i < 4; i++) s = rolled(s, 'watch', [1], { rules: undefined });
+    expect(of(s).clock).toMatchObject({ watch: 1, day: 2, last: null });
+    expect(rolled(s, 'rollEncounter', [1], { rules: undefined })).toEqual(s);
+    expect(rolled(s, 'betweenSessions', [6], { rules: undefined })).toBe(s);
+  });
+  it('another game has its own numbers', () => {
+    const rules = { turn: { every: 2 }, watch: { names: ['a', 'b'], rolls: [2] }, encounter: { die: 8, results: [], none: '{n}' } };
+    let seen = 0;
+    const fn = factions.actions.turn as unknown as (s: FactionsState, p: unknown, c: unknown, r: (n: number) => number) => FactionsState;
+    const die = (n: number) => ((seen = n), 5);
+    const one = fn(S0, { adventure: A, rules }, ctx(), die);
+    expect(of(fn(one, { adventure: A, rules }, ctx(), die)).clock.last).toEqual({ at: 'turn', roll: 5, turn: 2 });
+    expect(seen).toBe(8);
+    let s = rolled(S0, 'watch', [3], { rules });
+    expect(of(s).clock).toMatchObject({ watch: 2, last: { roll: 3 } });
+    s = rolled(s, 'watch', [], { rules });
+    expect(of(s).clock).toMatchObject({ watch: 1, day: 2, last: null });
+  });
+  it('a bad file is refused', () => {
+    const file = { scryingGlass: 'generators', version: 1, system: 'x', tables: {}, generators: [] };
+    expect(typeof validateGenerators({ ...file, exploration: { encounter: { die: 'a', results: [], none: '' } } })).toBe('string');
+    expect(typeof validateGenerators({ ...file, goalRoll: { die: 6, steps: [{ from: 'x', gained: 1 }] } })).toBe('string');
+    expect(typeof validateGenerators({ ...file, exploration: PACK.exploration, goalRoll: PACK.goalRoll })).toBe('object');
   });
 });
 

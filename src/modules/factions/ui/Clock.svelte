@@ -1,6 +1,5 @@
-<!-- Right panel, Mausritter: the exploration clock — turns in an adventure site (every third — an encounter roll,
-     every sixth — torches mark usage) and watches of travel (morning and evening start with an encounter roll); a
-     warband whose upkeep is owed by the days of the clock — with a button to pay a week. -->
+<!-- Right panel: the exploration clock — turns in a place and watches of travel, by the rules of the system's package
+     (without them it only counts); a warband whose upkeep is owed by the days of the clock — with a button to pay. -->
 <script lang="ts">
   import { Dices, Minus, Plus, RotateCcw, Footprints } from '@lucide/svelte';
   import { onMount } from 'svelte';
@@ -8,7 +7,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { currentSystem } from '../../../shared/adventures';
-  import { warbandUpkeep } from '../../../shared/generators';
+  import { genText, warbandUpkeep } from '../../../shared/generators';
   import { familyOf } from '../../../systems';
   import { filesOf, loadGenerators } from '../../tools/generators/store.svelte';
   import { blankAdventure, weeksOwed } from '../types';
@@ -18,36 +17,41 @@
   let { ms, app }: ModuleProps<'factions'> = $props();
   const adventure = $derived(app.adventures.current);
   const clock = $derived((ms.byAdventure[adventure ?? ''] ?? blankAdventure()).clock);
-  const act = (name: 'turn' | 'watch' | 'rollEncounter' | 'resetTurns' | 'resetClock') => dispatch('factions', name, { adventure });
+  const files = $derived(filesOf(familyOf(currentSystem(app.adventures))));
+  const rules = $derived(files.find((f) => f.exploration)?.exploration);
+  const text = (x: Parameters<typeof genText>[0], params?: Record<string, number>) => genText(x, locale.lang, params);
+  const act = (name: 'turn' | 'watch' | 'rollEncounter' | 'resetTurns' | 'resetClock') => dispatch('factions', name, { adventure, rules: $state.snapshot(rules) });
   const last = $derived(clock.last);
-  const torches = $derived(clock.turn > 0 && clock.turn % 6 === 0);
-  const upkeep = $derived(warbandUpkeep(filesOf(familyOf(currentSystem(app.adventures))).find((f) => f.warband)?.warband, locale.lang));
+  const usage = $derived(rules?.turn?.usage);
+  const outcome = $derived(last ? rules?.encounter?.results.find((r) => r.roll === last.roll) : undefined);
+  const watchName = $derived(rules?.watch?.names?.[clock.watch - 1]);
+  const upkeep = $derived(warbandUpkeep(files.find((f) => f.warband)?.warband, locale.lang));
   const owing = $derived((upkeep ? (ms.byAdventure[adventure ?? ''] ?? blankAdventure()).warbands ?? [] : []).filter((w) => weeksOwed(w, clock.day) > 0));
 </script>
 
 <div class="clock">
-  <div class="row" title={t('mclock.turnHint')}>
+  <div class="row" title={text(rules?.turn?.hint)}>
     <span class="k">{t('mclock.turn')}</span>
     <span class="n">{clock.turn}</span>
     <div class="spacer"></div>
-    <button class="icon-btn" title={t('mclock.back')} disabled={!clock.turn} onclick={() => dispatch('factions', 'turn', { adventure, step: -1 })}><Minus size={14} /></button>
-    <button class="btn primary" title={t('mclock.turnHint')} onclick={() => act('turn')}><Plus size={14} /> {t('mclock.turn')}</button>
+    <button class="icon-btn" title={t('mclock.back')} disabled={!clock.turn} onclick={() => dispatch('factions', 'turn', { adventure, step: -1, rules: $state.snapshot(rules) })}><Minus size={14} /></button>
+    <button class="btn primary" title={text(rules?.turn?.hint)} onclick={() => act('turn')}><Plus size={14} /> {t('mclock.turn')}</button>
   </div>
-  <p class="faint small">{t('mclock.everyThird')}</p>
-  {#if torches}<p class="note warn">{t('mclock.torches')}</p>{/if}
+  {#if rules?.turn?.note}<p class="faint small">{text(rules.turn.note)}</p>{/if}
+  {#if usage && clock.turn > 0 && clock.turn % usage.every === 0}<p class="note warn">{text(usage.text)}</p>{/if}
 
-  <div class="row" title={t('mclock.watchHint')}>
+  <div class="row" title={text(rules?.watch?.hint)}>
     <span class="k">{t('mclock.day', { n: clock.day })}</span>
-    <span class="faint">· {t(`mclock.watchName.${clock.watch}` as 'mclock.watchName.1')}</span>
+    <span class="faint">· {watchName ? text(watchName) : t('mclock.watchN', { n: clock.watch })}</span>
     <div class="spacer"></div>
-    <button class="btn" title={t('mclock.watchHint')} onclick={() => act('watch')}><Footprints size={14} /> {t('mclock.watch')}</button>
+    <button class="btn" title={text(rules?.watch?.hint)} onclick={() => act('watch')}><Footprints size={14} /> {t('mclock.watch')}</button>
   </div>
 
-  {#if last}
-    <p class="note" class:hit={last.roll === 1} class:omen={last.roll === 2}>
+  {#if last && rules?.encounter}
+    <p class="note" class:hit={outcome?.tone === 'hit'} class:omen={outcome?.tone === 'omen'}>
       {#if last.turn}<span class="when">{t('mclock.turn')} {last.turn}:</span>{/if}
-      {last.roll === 1 ? t('mclock.enc.1') : last.roll === 2 ? t('mclock.enc.2') : t('mclock.enc.none', { n: last.roll })}
-      {#if last.hour}<span class="faint">{t('mclock.hour', { n: last.hour })}</span>{/if}
+      {text(outcome?.text ?? rules.encounter.none, { n: last.roll })}
+      {#if last.hour}<span class="faint">{text(rules.encounter.hour?.text, { n: last.hour })}</span>{/if}
     </p>
   {/if}
 
@@ -60,12 +64,12 @@
   {/each}
 
   <div class="row tools">
-    <button class="btn" title={t('mclock.rollHint')} onclick={() => act('rollEncounter')}><Dices size={13} /> {t('mclock.roll')}</button>
+    {#if rules?.encounter}<button class="btn" title={text(rules.encounter.hint)} onclick={() => act('rollEncounter')}><Dices size={13} /> {t('mclock.roll')}</button>{/if}
     <button class="btn" title={t('mclock.newSiteHint')} onclick={() => act('resetTurns')}>{t('mclock.newSite')}</button>
     <div class="spacer"></div>
     <button class="icon-btn" title={t('mclock.reset')} onclick={() => act('resetClock')}><RotateCcw size={13} /></button>
   </div>
-  <p class="faint small">{t('mclock.rest')}</p>
+  {#if rules?.watch?.note}<p class="faint small">{text(rules.watch.note)}</p>{/if}
 </div>
 
 <style>

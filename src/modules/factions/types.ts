@@ -1,7 +1,7 @@
 import type { CardRef } from '../../shared/cards';
 
-// Mausritter play aids kept with the adventure: factions with their goals (Hexcrawl toolbox → Factions) and the
-// exploration clock (turns, watches, days — encounter rolls by the SRD). Shared by the core and the windows.
+// Play aids kept with the adventure: factions with their goals and the exploration clock (turns, watches, days).
+// The rules are the package's (GeneratorFile.exploration, goalRoll). Shared by the core and the windows.
 
 // A goal of a faction: progress marks (2–5, ○○○), how many are marked, and the numbers for the between-sessions roll:
 // how many of the faction's resources help and how many a rival's resources stand against it.
@@ -31,7 +31,7 @@ export interface SessionRoll {
   completed: boolean;
 }
 
-// An encounter roll: d6 — 1 an encounter, 2 an omen; in the wilderness the hour comes with it (d12).
+// An encounter roll; what its face means is in the package's rules.
 export interface EncounterRoll {
   at: 'turn' | 'watch' | 'manual';
   roll: number;
@@ -41,9 +41,9 @@ export interface EncounterRoll {
 }
 
 export interface Clock {
-  // Turns of exploration (10 minutes each): every third — an encounter roll, every sixth — torches mark usage.
+  // Turns of exploration.
   turn: number;
-  // The watch of the day (1 — morning … 4 — night) and the day.
+  // The watch of the day, from 1, and the day.
   watch: number;
   day: number;
   last: EncounterRoll | null;
@@ -60,7 +60,7 @@ export interface Warband {
   card?: CardRef;
 }
 
-export interface MausAdventure {
+export interface FactionsAdventure {
   factions: Faction[];
   session: SessionRoll[];
   clock: Clock;
@@ -69,9 +69,10 @@ export interface MausAdventure {
 
 export interface FactionsState {
   // By adventure; '' — the whole vault.
-  byAdventure: Record<string, MausAdventure>;
+  byAdventure: Record<string, FactionsAdventure>;
 }
 
+// Watches in a day when the package names none.
 export const WATCHES = 4;
 
 // The upkeep of a warband is due for each week begun since it was formed: day 1–7 — the first week, and so on.
@@ -81,4 +82,4 @@ export const weeksOwed = (w: Warband, day: number) => Math.max(0, weeksDue(w, da
 // The goal a faction works on: the first one not completed.
 export const currentGoal = (f: Faction) => f.goals.find((g) => g.progress < g.marks);
 export const blankClock = (): Clock => ({ turn: 0, watch: 1, day: 1, last: null });
-export const blankAdventure = (): MausAdventure => ({ factions: [], session: [], clock: blankClock() });
+export const blankAdventure = (): FactionsAdventure => ({ factions: [], session: [], clock: blankClock() });

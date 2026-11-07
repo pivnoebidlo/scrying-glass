@@ -2494,5 +2494,111 @@
     "ru": "{n} п"
    }
   }
+ },
+ "exploration": {
+  "turn": {
+   "hint": {
+    "en": "A major action in an adventure site (a room, a trap, a fight): one turn, about 10 minutes",
+    "ru": "Крупное действие в месте приключения (комната, ловушка, схватка): один ход, около 10 минут"
+   },
+   "every": 3,
+   "note": {
+    "en": "every 3rd turn — an encounter roll",
+    "ru": "каждый 3-й ход — бросок встречи"
+   },
+   "usage": {
+    "every": 6,
+    "text": {
+     "en": "Torches and lanterns mark usage (6 turns)",
+     "ru": "Факелы и фонари отмечают износ (6 ходов)"
+    }
+   }
+  },
+  "watch": {
+   "hint": {
+    "en": "Travel: a hex (a mile) per watch, difficult terrain — two",
+    "ru": "Путь: гекс (миля) за стражу, по трудной местности — две"
+   },
+   "names": [
+    {
+     "en": "morning",
+     "ru": "утро"
+    },
+    {
+     "en": "day",
+     "ru": "день"
+    },
+    {
+     "en": "evening",
+     "ru": "вечер"
+    },
+    {
+     "en": "night",
+     "ru": "ночь"
+    }
+   ],
+   "rolls": [
+    1,
+    3
+   ],
+   "note": {
+    "en": "Without at least one watch of rest a day — Exhausted",
+    "ru": "Без отдыха хотя бы одну стражу в сутки — «Измотан»"
+   }
+  },
+  "encounter": {
+   "die": 6,
+   "hint": {
+    "en": "d6: 1 — an encounter, 2 — an omen",
+    "ru": "к6: 1 — встреча, 2 — знак"
+   },
+   "results": [
+    {
+     "roll": 1,
+     "text": {
+      "en": "Encounter!",
+      "ru": "Встреча!"
+     },
+     "tone": "hit"
+    },
+    {
+     "roll": 2,
+     "text": {
+      "en": "An omen — signs of an encounter",
+      "ru": "Знак — следы встречи"
+     },
+     "tone": "omen"
+    }
+   ],
+   "none": {
+    "en": "Quiet (d6: {n})",
+    "ru": "Тихо (к6: {n})"
+   },
+   "hour": {
+    "die": 12,
+    "upTo": 2,
+    "text": {
+     "en": "at hour {n}",
+     "ru": "в {n}-й час"
+    }
+   }
+  }
+ },
+ "goalRoll": {
+  "about": {
+   "en": "The major powers of your map (Hexcrawl toolbox → Factions). A goal needs 2–5 progress marks. Between sessions each faction works on its current goal: d6 + its relevant resources − a rival's relevant resources; 4–5 — one mark, 6+ — two. A completed goal — add the faction a new resource.",
+   "ru": "Главные силы вашей карты (набор для гексов → фракции). Цели нужно 2–5 отметок продвижения. Между сессиями каждая фракция трудится над текущей целью: к6 + её подходящие ресурсы − подходящие ресурсы соперника; 4–5 — одна отметка, 6+ — две. Цель достигнута — дайте фракции новый ресурс."
+  },
+  "die": 6,
+  "steps": [
+   {
+    "from": 6,
+    "gained": 2
+   },
+   {
+    "from": 4,
+    "gained": 1
+   }
+  ]
  }
 }

@@ -243,6 +243,32 @@ export interface GeneratorFile {
   // The card of a warband: stats as they are, { "$text": … } in the card's language, { "$roll": "d(6)" } rolled.
   // `about` and `hint` are the game's rules in words; `upkeep` — what a week of it costs, `money` shows {n}.
   warband?: { description: GenText; stats: Record<string, unknown>; about?: GenText; hint?: GenText; upkeep?: { amount: number; money: GenText } };
+  // The rules of the exploration clock; none — the clock only counts.
+  exploration?: ExplorationRules;
+  // The between-sessions roll of factions; none — goals are marked by hand.
+  goalRoll?: GoalRoll;
+}
+
+export interface ExplorationRules {
+  // `every` — each such turn rolls an encounter; `usage` — each such turn the text is shown.
+  turn?: { hint?: GenText; every?: number; note?: GenText; usage?: { every: number; text: GenText } };
+  // `names` — the watches of a day, `rolls` — the numbers of those that start with an encounter roll.
+  watch?: { hint?: GenText; names?: GenText[]; rolls?: number[]; note?: GenText };
+  // `results` — the faces that mean something, `none` — the others ({n} — the face); `hour` comes with a watch's roll up to `upTo`.
+  encounter?: {
+    die: number;
+    hint?: GenText;
+    results: { roll: number; text: GenText; tone?: 'hit' | 'omen' }[];
+    none: GenText;
+    hour?: { die: number; upTo: number; text: GenText };
+  };
+}
+
+// A die + the resources − the rival's; `steps` — the first with `from` not above the total gives the marks.
+export interface GoalRoll {
+  about?: GenText;
+  die: number;
+  steps: { from: number; gained: number }[];
 }
 
 // What a system of one file brings itself (SystemPack.kit): the same as a package's file.
@@ -345,6 +371,20 @@ function stepOk(s: unknown, depth: number): boolean {
   return false;
 }
 
+const count = (v: unknown) => Number.isInteger(v) && (v as number) > 0;
+const opt = (v: unknown) => v === undefined || count(v);
+function validExploration(x: unknown) {
+  if (!isObj(x)) return false;
+  const { turn, watch, encounter: e } = x as Record<string, unknown>;
+  if (turn !== undefined && !(isObj(turn) && opt(turn['every']) && (turn['usage'] === undefined || (isObj(turn['usage']) && count(turn['usage']['every']))))) return false;
+  if (watch !== undefined && !(isObj(watch) && (watch['names'] === undefined || (Array.isArray(watch['names']) && watch['names'].length > 0)) && (watch['rolls'] === undefined || (Array.isArray(watch['rolls']) && watch['rolls'].every(count))))) return false;
+  if (e === undefined) return true;
+  if (!isObj(e) || !count(e['die']) || !Array.isArray(e['results']) || !e['results'].every((r) => isObj(r) && count(r['roll']))) return false;
+  return e['hour'] === undefined || (isObj(e['hour']) && count(e['hour']['die']) && count(e['hour']['upTo']));
+}
+const validGoalRoll = (x: unknown) =>
+  isObj(x) && count(x['die']) && Array.isArray(x['steps']) && x['steps'].every((s) => isObj(s) && Number.isFinite(s['from']) && count(s['gained']));
+
 export function validateGenerators(x: unknown): GeneratorFile | string {
   if (!isObj(x) || x['scryingGlass'] !== 'generators') return 'not-generators';
   if (x['version'] !== 1) return 'version';
@@ -365,6 +405,8 @@ export function validateGenerators(x: unknown): GeneratorFile | string {
   if (x['lists'] !== undefined && !(Array.isArray(x['lists']) && x['lists'].length <= CAP.generators && x['lists'].every((l) => isObj(l) && str(l['id']) && text(l['title']) && text(l['unit']) && Array.isArray(l['sections']) && l['sections'].every((s) => isObj(s) && str(s['id']) && str(s['table']) && text(s['title']))))) return 'lists';
   if (x['calculators'] !== undefined && !(Array.isArray(x['calculators']) && x['calculators'].length <= CAP.generators && x['calculators'].every((c) => isObj(c) && str(c['id']) && text(c['title']) && text(c['unit']) && isObj(c['labels']) && Array.isArray(c['kinds']) && c['kinds'].every((k) => isObj(k) && str(k['id']) && typeof k['value'] === 'number') && isObj(c['row']) && Object.values(c['row']).every(form) && Array.isArray(c['totals']) && c['totals'].every((t) => isObj(t) && str(t['key']) && form(t['formula']))))) return 'calculators';
   if (x['forms'] !== undefined && !(Array.isArray(x['forms']) && x['forms'].length <= CAP.generators && x['forms'].every(formOk))) return 'forms';
+  if (x['exploration'] !== undefined && !validExploration(x['exploration'])) return 'exploration';
+  if (x['goalRoll'] !== undefined && !validGoalRoll(x['goalRoll'])) return 'goalRoll';
   return x as unknown as GeneratorFile;
 }
 

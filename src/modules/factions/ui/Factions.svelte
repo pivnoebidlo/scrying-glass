@@ -1,12 +1,12 @@
-<!-- Tools → Factions (Mausritter adventures only): the factions of the adventure — resources, goals with progress
-     marks — and the between-sessions roll by the SRD. Example factions of the SRD can be added in the interface
-     language. -->
+<!-- Tools → Factions: the factions of the adventure — resources, goals with progress marks. The between-sessions roll
+     and the ready factions come with the system's package. -->
 <script lang="ts">
   import Lead from '../../../renderer/lib/Lead.svelte';
   import { Dices, Plus, X } from '@lucide/svelte';
   import { locale, t } from '../../../renderer/lib/i18n.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import { currentSystem } from '../../../shared/adventures';
+  import { genText } from '../../../shared/generators';
   import { familyOf } from '../../../systems';
   import { filesOf } from '../../tools/generators/store.svelte';
   import Warbands from './Warbands.svelte';
@@ -14,8 +14,10 @@
 
   const adventure = $derived(store.state.adventures.current);
   const data = $derived(store.state.factions.byAdventure[adventure ?? ''] ?? blankAdventure());
-  // Ready factions come with the system's package.
-  const examples = $derived(filesOf(familyOf(currentSystem(store.state.adventures))).find((f) => f.factions)?.factions?.[locale.lang] ?? []);
+  // Ready factions and the roll come with the system's package.
+  const files = $derived(filesOf(familyOf(currentSystem(store.state.adventures))));
+  const examples = $derived(files.find((f) => f.factions)?.factions?.[locale.lang] ?? []);
+  const goalRoll = $derived(files.find((f) => f.goalRoll)?.goalRoll);
 
   const add = (name = t('mfac.newName'), resources: string[] = [], goals: { text: string; marks: number }[] = []) =>
     dispatch('factions', 'addFaction', { adventure, name, resources, goals });
@@ -52,11 +54,13 @@
       {#each examples as ex, i (i)}<option value={i}>{ex.name}</option>{/each}
     </select>
     <button class="btn" onclick={() => add()}><Plus size={14} /> {t('mfac.new')}</button>
-    <button class="btn primary" title={t('mfac.betweenHint')} disabled={!data.factions.length} onclick={() => dispatch('factions', 'betweenSessions', { adventure })}>
-      <Dices size={14} /> {t('mfac.between')}
-    </button>
+    {#if goalRoll}
+      <button class="btn primary" title={t('mfac.betweenHint')} disabled={!data.factions.length} onclick={() => dispatch('factions', 'betweenSessions', { adventure, rules: $state.snapshot(goalRoll) })}>
+        <Dices size={14} /> {t('mfac.between')}
+      </button>
+    {/if}
   </header>
-  <p class="faint about"><Lead text={t('mfac.about')} /></p>
+  <p class="faint about"><Lead text={goalRoll?.about ? genText(goalRoll.about, locale.lang) : t('mfac.about')} /></p>
 
   {#if data.session.length}
     <section class="session">
@@ -65,7 +69,7 @@
         {#each data.session as r (r.faction)}
           <li>
             <b>{nameOf(r.faction)}</b> — {goalOf(r.faction, r.goal)}:
-            {t('mfac.sessionLine', { roll: r.roll, total: r.total, gained: t(`mfac.gained.${r.gained}` as 'mfac.gained.0') })}
+            {t('mfac.sessionLine', { roll: r.roll, total: r.total, gained: r.gained ? t('mfac.gained', { count: r.gained }) : t('mfac.noGain') })}
             {#if r.completed}<span class="tag">{t('mfac.completed')}</span>{/if}
           </li>
         {/each}

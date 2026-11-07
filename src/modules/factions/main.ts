@@ -1,15 +1,16 @@
-// Mausritter: factions and the exploration clock of each adventure (see types.ts). Shown in Mausritter adventures.
+// Factions and the exploration clock of each adventure (see types.ts). The window passes the rules of the package.
 import { randomUUID } from 'node:crypto';
 import { die } from '../../shared/dice';
+import type { ExplorationRules, GoalRoll } from '../../shared/generators';
 import { defineModule } from '../../shared/module';
-import { blankAdventure, blankClock, currentGoal, WATCHES, type Clock, type EncounterRoll, type Faction, type FactionGoal, type MausAdventure, type FactionsState, type Warband } from './types';
+import { blankAdventure, blankClock, currentGoal, WATCHES, type Clock, type EncounterRoll, type Faction, type FactionGoal, type FactionsAdventure, type FactionsState, type Warband } from './types';
 
 const initialState: FactionsState = { byAdventure: {} };
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(n)));
 const key = (adventure: string | null) => adventure ?? '';
 
-const withAdventure = (s: FactionsState, adventure: string | null, fn: (a: MausAdventure) => MausAdventure): FactionsState => ({
+const withAdventure = (s: FactionsState, adventure: string | null, fn: (a: FactionsAdventure) => FactionsAdventure): FactionsState => ({
   ...s,
   byAdventure: { ...s.byAdventure, [key(adventure)]: fn(s.byAdventure[key(adventure)] ?? blankAdventure()) },
 });
@@ -24,10 +25,12 @@ const goal = (g: Partial<FactionGoal>): FactionGoal => ({
   rival: clamp(g.rival ?? 0, 0, 10),
 });
 
-// An encounter roll; in the wilderness — with the hour.
-const encounter = (at: EncounterRoll['at'], roll: (n: number) => number, turn?: number): EncounterRoll => {
-  const r = roll(6);
-  return { at, roll: r, ...(turn ? { turn } : {}), ...(at === 'watch' && r <= 2 ? { hour: roll(12) } : {}) };
+// An encounter roll, if the game has one; on a watch — with the hour, if the rules give it.
+const encounter = (rules: ExplorationRules | undefined, at: EncounterRoll['at'], roll: (n: number) => number, turn?: number): EncounterRoll | null => {
+  const e = rules?.encounter;
+  if (!e) return null;
+  const r = roll(e.die);
+  return { at, roll: r, ...(turn ? { turn } : {}), ...(at === 'watch' && e.hour && r <= e.hour.upTo ? { hour: roll(e.hour.die) } : {}) };
 };
 
 export default defineModule({
@@ -81,17 +84,18 @@ export default defineModule({
       return withFaction(s, adventure, id, (f) => ({ ...f, goals: f.goals.filter((g) => g.id !== gid) }));
     },
 
-    // Between sessions every faction works on its current goal: d6 + its relevant resources − the rival's;
-    // 4–5 — one mark, 6+ — two. A completed goal is the GM's cue to add a resource (the result says so).
-    betweenSessions(s, { adventure }: { adventure: string | null }, _ctx, roll: (n: number) => number = die) {
+    // Between sessions every faction works on its current goal: a die + its relevant resources − the rival's; the
+    // rules say what the total gives. A completed goal is the GM's cue to add a resource (the result says so).
+    betweenSessions(s, { adventure, rules }: { adventure: string | null; rules?: GoalRoll }, _ctx, roll: (n: number) => number = die) {
+      if (!rules) return s;
       return withAdventure(s, adventure, (a) => {
-        const session: MausAdventure['session'] = [];
+        const session: FactionsAdventure['session'] = [];
         const factions = a.factions.map((f) => {
           const g = currentGoal(f);
           if (!g) return f;
-          const r = roll(6);
+          const r = roll(rules.die);
           const total = r + g.relevant - g.rival;
-          const gained = total >= 6 ? 2 : total >= 4 ? 1 : 0;
+          const gained = [...rules.steps].sort((x, y) => y.from - x.from).find((x) => total >= x.from)?.gained ?? 0;
           const progress = Math.min(g.marks, g.progress + gained);
           session.push({ faction: f.id, goal: g.id, roll: r, total, gained, completed: progress >= g.marks });
           return { ...f, goals: f.goals.map((x) => (x.id === g.id ? { ...x, progress } : x)) };
@@ -128,27 +132,28 @@ export default defineModule({
 
     // ---- Exploration clock ----
 
-    // A major action in an adventure site: a turn. Every third turn — an encounter roll.
-    turn(s, { adventure, step = 1 }: { adventure: string | null; step?: 1 | -1 }, _ctx, roll: (n: number) => number = die) {
+    // A major action in an adventure site: a turn. The rules say which turns roll an encounter.
+    turn(s, { adventure, step = 1, rules }: { adventure: string | null; step?: 1 | -1; rules?: ExplorationRules }, _ctx, roll: (n: number) => number = die) {
       return withAdventure(s, adventure, (a) => {
         const t = Math.max(0, a.clock.turn + step);
-        const last = step > 0 && t % 3 === 0 ? encounter('turn', roll, t) : step > 0 ? a.clock.last : null;
+        const every = rules?.turn?.every;
+        const last = step > 0 && every && t % every === 0 ? encounter(rules, 'turn', roll, t) : step > 0 ? a.clock.last : null;
         return { ...a, clock: { ...a.clock, turn: t, last } };
       });
     },
 
-    // A watch of travel: four make a day; the morning and the evening watch start with an encounter roll.
-    watch(s, { adventure }: { adventure: string | null }, _ctx, roll: (n: number) => number = die) {
+    // A watch of travel; the last one ends the day. The rules say which watches start with an encounter roll.
+    watch(s, { adventure, rules }: { adventure: string | null; rules?: ExplorationRules }, _ctx, roll: (n: number) => number = die) {
       return withAdventure(s, adventure, (a) => {
-        const next = a.clock.watch >= WATCHES ? 1 : a.clock.watch + 1;
-        const day = a.clock.watch >= WATCHES ? a.clock.day + 1 : a.clock.day;
-        const clock: Clock = { ...a.clock, watch: next, day, last: next === 1 || next === 3 ? encounter('watch', roll) : null };
+        const over = a.clock.watch >= (rules?.watch?.names?.length ?? WATCHES);
+        const next = over ? 1 : a.clock.watch + 1;
+        const clock: Clock = { ...a.clock, watch: next, day: a.clock.day + (over ? 1 : 0), last: rules?.watch?.rolls?.includes(next) ? encounter(rules, 'watch', roll) : null };
         return { ...a, clock };
       });
     },
 
-    rollEncounter(s, { adventure }: { adventure: string | null }, _ctx, roll: (n: number) => number = die) {
-      return withAdventure(s, adventure, (a) => ({ ...a, clock: { ...a.clock, last: encounter('manual', roll, a.clock.turn || undefined) } }));
+    rollEncounter(s, { adventure, rules }: { adventure: string | null; rules?: ExplorationRules }, _ctx, roll: (n: number) => number = die) {
+      return withAdventure(s, adventure, (a) => ({ ...a, clock: { ...a.clock, last: encounter(rules, 'manual', roll, a.clock.turn || undefined) ?? a.clock.last } }));
     },
 
     // A new adventure site: the turns start over (the day and the watch stay).
