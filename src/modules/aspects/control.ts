@@ -6,13 +6,13 @@ import OnScreen from './ui/OnScreen.svelte';
 import { usesHere } from '../../shared/adventures';
 
 export default defineControl({
-  id: 'fate',
+  id: 'aspects',
   get title() {
-    return t('module.fate');
+    return t('module.aspects');
   },
   icon: Sparkles,
   order: 27,
   screen: OnScreen,
   screenWhen: (app) => usesHere(app.adventures, 'aspects'),
-  screenEmpty: (app) => (app.fate.aspects.length || app.fate.holders.length ? null : t('empty.none')),
+  screenEmpty: (app) => (app.aspects.aspects.length || app.aspects.holders.length ? null : t('empty.none')),
 });

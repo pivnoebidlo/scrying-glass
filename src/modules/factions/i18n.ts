@@ -2,7 +2,7 @@
 import type { Messages } from '../../shared/i18n/core';
 
 export const en = {
-  'module.mausClock': "Exploration",
+  'module.exploration': "Exploration",
   'mclock.turn': "Turn",
   'mclock.turnHint': "A major action in an adventure site (a room, a trap, a fight): one turn, about 10 minutes",
   'mclock.back': "One turn back",
@@ -79,7 +79,7 @@ export const en = {
 };
 
 export const ru: Messages<typeof en> = {
-  'module.mausClock': "Исследование",
+  'module.exploration': "Исследование",
   'mclock.turn': "Ход",
   'mclock.turnHint': "Крупное действие в месте приключения (комната, ловушка, схватка): один ход, около 10 минут",
   'mclock.back': "На ход назад",

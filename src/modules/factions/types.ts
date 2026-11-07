@@ -68,7 +68,7 @@ export interface MausAdventure {
   warbands?: Warband[];
 }
 
-export interface MausState {
+export interface FactionsState {
   // By adventure; '' — the whole vault.
   byAdventure: Record<string, MausAdventure>;
 }

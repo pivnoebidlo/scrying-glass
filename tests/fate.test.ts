@@ -17,8 +17,9 @@ import { dndTracker } from '../src/systems/dnd5e/tracker';
 import { genericTracker } from '../src/systems/tracker';
 import { fromFields } from '../src/systems/tracker';
 import { run } from './helpers';
-import fate from '../src/modules/fate/main';
-import type { FateState } from '../src/modules/fate/types';
+import aspects from '../src/modules/aspects/main';
+import type { AspectsState } from '../src/modules/aspects/types';
+import { factionsOf, factionsSlice, renamedModules } from '../src/shared/oldstate';
 
 // Fate Core is a system pack now (content/fate-core/system/fate-core.json, published in the Community).
 const pack = validatePack(JSON.parse(readFileSync(new URL('../content/fate-core/system/fate-core.json', import.meta.url), 'utf8'))) as SystemPack;
@@ -158,8 +159,8 @@ describe('карточка Fate (пакет)', () => {
 });
 
 describe('аспекты сцены и жетоны судьбы', () => {
-  const F0 = fate.initialState;
-  const fa = (s: FateState, a: string, p?: unknown) => run(fate, s, a, p);
+  const F0 = aspects.initialState;
+  const fa = (s: AspectsState, a: string, p?: unknown) => run(aspects, s, a, p);
 
   it('аспект: пустой не добавляется, призывы от 0 до 9, скрытый — по флагу', () => {
     let s = fa(F0, 'addAspect', { text: '  ' });
@@ -192,12 +193,12 @@ describe('аспекты сцены и жетоны судьбы', () => {
 
 describe('углы аспектов и жетонов', () => {
   it('по умолчанию — слева и справа внизу; неизвестный угол не принимается; старое сохранение дополняется', () => {
-    let s = fate.initialState;
+    let s = aspects.initialState;
     expect(s.place).toEqual({ aspects: 'bottom-left', points: 'bottom-right' });
-    s = run(fate, s, 'setPlace', { aspects: 'top-right', points: 'середина' });
+    s = run(aspects, s, 'setPlace', { aspects: 'top-right', points: 'середина' });
     expect(s.place).toEqual({ aspects: 'top-right', points: 'bottom-right' });
-    const old = { ...fate.initialState, place: undefined } as unknown as FateState;
-    expect(fate.init!(old, {} as never).place).toEqual(fate.initialState.place);
+    const old = { ...aspects.initialState, place: undefined } as unknown as AspectsState;
+    expect(aspects.init!(old, {} as never).place).toEqual(aspects.initialState.place);
   });
 });
 
@@ -221,5 +222,17 @@ describe('встроенный справочник Fate', () => {
     expect(en.entries.filter((e) => e.type === 'skill').map((e) => e.title).sort()).toEqual(skillTitles('en').sort());
     expect(en.entries.length).toBe(book.entries.length);
     for (const e of en.entries) expect(e.ru, e.title).toBeTruthy();
+  });
+});
+
+describe('modules renamed in 0.95', () => {
+  it('reads a state saved under the old names', () => {
+    expect(renamedModules({ fate: { gm: 2 }, mausritter: { byAdventure: {} }, music: 1 })).toEqual({ aspects: { gm: 2 }, factions: { byAdventure: {} }, music: 1 });
+    expect(renamedModules({ fate: { gm: 1 }, aspects: { gm: 2 } })).toEqual({ aspects: { gm: 2 } });
+  });
+  it('reads a pack of any version and keeps packs readable by older ones', () => {
+    expect(factionsOf({ mausritter: 1 })).toBe(1);
+    expect(factionsOf({ factions: 2, mausritter: 1 })).toBe(2);
+    expect(factionsSlice(3)).toEqual({ factions: 3, mausritter: 3 });
   });
 });

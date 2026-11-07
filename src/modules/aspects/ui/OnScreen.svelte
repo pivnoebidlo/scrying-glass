@@ -10,7 +10,7 @@
   import { addParty } from './party';
   import CornerPick from './CornerPick.svelte';
 
-  let { ms }: ModuleProps<'fate'> = $props();
+  let { ms }: ModuleProps<'aspects'> = $props();
 
   let hiddenNew = $state(false);
   let status = $state('');
@@ -18,32 +18,32 @@
 
   function add(input: HTMLInputElement) {
     if (!input.value.trim()) return;
-    dispatch('fate', 'addAspect', { text: input.value, hidden: hiddenNew });
+    dispatch('aspects', 'addAspect', { text: input.value, hidden: hiddenNew });
     input.value = '';
   }
 
   async function party() {
     const n = await addParty();
-    flash(n ? t('fate.charactersN', { count: n }) : t('fate.noFateCards'));
+    flash(n ? t('asp.charactersN', { count: n }) : t('asp.noFateCards'));
   }
 
   function clearAspects() {
-    if (confirm(t('fate.clearConfirm'))) dispatch('fate', 'clearAspects');
+    if (confirm(t('asp.clearConfirm'))) dispatch('aspects', 'clearAspects');
   }
 </script>
 
 <div class="head">
-  <span class="label">{t('fate.sceneAspects')}</span>
-  <CornerPick value={ms.place.aspects} what={t('fate.aspects')} onpick={(c) => dispatch('fate', 'setPlace', { aspects: c })} />
+  <span class="label">{t('asp.sceneAspects')}</span>
+  <CornerPick value={ms.place.aspects} what={t('asp.aspects')} onpick={(c) => dispatch('aspects', 'setPlace', { aspects: c })} />
   <button
     class="icon-btn"
     class:off={!ms.show.aspects}
-    title={ms.show.aspects ? t('fate.aspectsShown') : t('fate.aspectsHidden')}
-    onclick={() => dispatch('fate', 'setShow', { aspects: !ms.show.aspects })}
+    title={ms.show.aspects ? t('asp.aspectsShown') : t('asp.aspectsHidden')}
+    onclick={() => dispatch('aspects', 'setShow', { aspects: !ms.show.aspects })}
   >
     {#if ms.show.aspects}<Eye size={14} />{:else}<EyeOff size={14} />{/if}
   </button>
-  {#if ms.aspects.length}<button class="icon-btn" title={t('fate.newSceneAspects')} onclick={clearAspects}><RefreshCw size={13} /></button>{/if}
+  {#if ms.aspects.length}<button class="icon-btn" title={t('asp.newSceneAspects')} onclick={clearAspects}><RefreshCw size={13} /></button>{/if}
 </div>
 
 {#each ms.aspects as a (a.id)}
@@ -52,39 +52,39 @@
       class="text"
       type="text"
       value={a.text}
-      title={t('fate.editAspect')}
-      onchange={(e) => dispatch('fate', 'updateAspect', { id: a.id, changes: { text: e.currentTarget.value } })}
+      title={t('asp.editAspect')}
+      onchange={(e) => dispatch('aspects', 'updateAspect', { id: a.id, changes: { text: e.currentTarget.value } })}
     />
-    <span class="invokes" title={t('fate.invokesHint')}>
+    <span class="invokes" title={t('asp.invokesHint')}>
       {#each { length: a.invokes } as _, i (i)}
-        <button class="dot" aria-label={t('fate.spendInvoke')} onclick={() => dispatch('fate', 'updateAspect', { id: a.id, changes: { invokes: a.invokes - 1 } })}></button>
+        <button class="dot" aria-label={t('asp.spendInvoke')} onclick={() => dispatch('aspects', 'updateAspect', { id: a.id, changes: { invokes: a.invokes - 1 } })}></button>
       {/each}
       {#if a.invokes < MAX_INVOKES}
-        <button class="more" title={t('fate.addInvoke')} onclick={() => dispatch('fate', 'updateAspect', { id: a.id, changes: { invokes: a.invokes + 1 } })}>+</button>
+        <button class="more" title={t('asp.addInvoke')} onclick={() => dispatch('aspects', 'updateAspect', { id: a.id, changes: { invokes: a.invokes + 1 } })}>+</button>
       {/if}
     </span>
     <button
       class="icon-btn"
-      title={a.hidden ? t('fate.aspectHidden') : t('fate.hideFromPlayers')}
-      onclick={() => dispatch('fate', 'updateAspect', { id: a.id, changes: { hidden: !a.hidden } })}
+      title={a.hidden ? t('asp.aspectHidden') : t('asp.hideFromPlayers')}
+      onclick={() => dispatch('aspects', 'updateAspect', { id: a.id, changes: { hidden: !a.hidden } })}
     >
       {#if a.hidden}<EyeOff size={13} />{:else}<Eye size={13} />{/if}
     </button>
-    <button class="icon-btn" title={t('fate.remove')} onclick={() => dispatch('fate', 'removeAspect', { id: a.id })}><X size={13} /></button>
+    <button class="icon-btn" title={t('asp.remove')} onclick={() => dispatch('aspects', 'removeAspect', { id: a.id })}><X size={13} /></button>
   </div>
 {/each}
 
 <div class="add">
   <input
     type="text"
-    placeholder={t('fate.newAspect')}
-    title={t('fate.newAspectHint')}
+    placeholder={t('asp.newAspect')}
+    title={t('asp.newAspectHint')}
     onkeydown={(e) => e.key === 'Enter' && add(e.currentTarget)}
   />
   <button
     class="icon-btn"
     class:off={hiddenNew}
-    title={hiddenNew ? t('fate.newHidden') : t('fate.newShown')}
+    title={hiddenNew ? t('asp.newHidden') : t('asp.newShown')}
     onclick={() => (hiddenNew = !hiddenNew)}
   >
     {#if hiddenNew}<EyeOff size={13} />{:else}<Eye size={13} />{/if}
@@ -92,13 +92,13 @@
 </div>
 
 <div class="head points-head">
-  <span class="label">{t('fate.fatePoints')}</span>
-  <CornerPick value={ms.place.points} what={t('fate.points')} onpick={(c) => dispatch('fate', 'setPlace', { points: c })} />
+  <span class="label">{t('asp.fatePoints')}</span>
+  <CornerPick value={ms.place.points} what={t('asp.points')} onpick={(c) => dispatch('aspects', 'setPlace', { points: c })} />
   <button
     class="icon-btn"
     class:off={!ms.show.points}
-    title={ms.show.points ? t('fate.pointsShown') : t('fate.pointsHidden')}
-    onclick={() => dispatch('fate', 'setShow', { points: !ms.show.points })}
+    title={ms.show.points ? t('asp.pointsShown') : t('asp.pointsHidden')}
+    onclick={() => dispatch('aspects', 'setShow', { points: !ms.show.points })}
   >
     {#if ms.show.points}<Eye size={14} />{:else}<EyeOff size={14} />{/if}
   </button>
@@ -107,31 +107,31 @@
 {#each ms.holders as h (h.id)}
   <div class="holder">
     <span class="avatar">{#if h.portrait}<img src={thumb(assetUrl(h.portrait), 48)} alt="" />{:else}{h.name.slice(0, 1).toUpperCase()}{/if}</span>
-    <span class="name" title={t('fate.refresh', { n: h.refresh })}>{h.name}</span>
-    <button class="icon-btn" title={t('fate.spendPoint')} disabled={!h.points} onclick={() => dispatch('fate', 'points', { id: h.id, delta: -1 })}><Minus size={13} /></button>
+    <span class="name" title={t('asp.refresh', { n: h.refresh })}>{h.name}</span>
+    <button class="icon-btn" title={t('asp.spendPoint')} disabled={!h.points} onclick={() => dispatch('aspects', 'points', { id: h.id, delta: -1 })}><Minus size={13} /></button>
     <span class="n">{h.points}</span>
-    <button class="icon-btn" title={t('fate.givePoint')} onclick={() => dispatch('fate', 'points', { id: h.id, delta: 1 })}><Plus size={13} /></button>
-    <button class="icon-btn rm" title={t('fate.removeFromList')} onclick={() => dispatch('fate', 'removeHolder', { id: h.id })}><X size={13} /></button>
+    <button class="icon-btn" title={t('asp.givePoint')} onclick={() => dispatch('aspects', 'points', { id: h.id, delta: 1 })}><Plus size={13} /></button>
+    <button class="icon-btn rm" title={t('asp.removeFromList')} onclick={() => dispatch('aspects', 'removeHolder', { id: h.id })}><X size={13} /></button>
   </div>
 {/each}
 
 <div class="holder gm">
-  <span class="name">{t('fate.gm')}</span>
-  <button class="icon-btn" title={t('fate.spendPoint')} disabled={!ms.gm} onclick={() => dispatch('fate', 'gm', { delta: -1 })}><Minus size={13} /></button>
+  <span class="name">{t('asp.gm')}</span>
+  <button class="icon-btn" title={t('asp.spendPoint')} disabled={!ms.gm} onclick={() => dispatch('aspects', 'gm', { delta: -1 })}><Minus size={13} /></button>
   <span class="n">{ms.gm}</span>
-  <button class="icon-btn" title={t('fate.addPoint')} onclick={() => dispatch('fate', 'gm', { delta: 1 })}><Plus size={13} /></button>
-  <button class="icon-btn rm" title={t('fate.gmNewScene')} onclick={() => dispatch('fate', 'newScene')}><RefreshCw size={13} /></button>
+  <button class="icon-btn" title={t('asp.addPoint')} onclick={() => dispatch('aspects', 'gm', { delta: 1 })}><Plus size={13} /></button>
+  <button class="icon-btn rm" title={t('asp.gmNewScene')} onclick={() => dispatch('aspects', 'newScene')}><RefreshCw size={13} /></button>
 </div>
 
 <div class="row">
-  <button class="btn" title={t('fate.partyHint')} onclick={party}><UsersRound size={13} /> {t('fate.party')}</button>
+  <button class="btn" title={t('asp.partyHint')} onclick={party}><UsersRound size={13} /> {t('asp.party')}</button>
   <button
     class="btn"
     disabled={!ms.holders.length}
-    title={t('fate.newSessionHint')}
-    onclick={() => dispatch('fate', 'newSession')}
+    title={t('asp.newSessionHint')}
+    onclick={() => dispatch('aspects', 'newSession')}
   >
-    {t('fate.newSession')}
+    {t('asp.newSession')}
   </button>
 </div>
 {#if status}<p class="faint status">{status}</p>{/if}

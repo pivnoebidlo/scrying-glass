@@ -19,6 +19,6 @@ export async function addParty(): Promise<number> {
     const refresh = typeof r === 'number' ? r : 3;
     list.push({ name: c.name, portrait: c.images[0] ?? null, card: c.ref, refresh });
   }
-  if (list.length) await dispatch('fate', 'addHolders', { list });
+  if (list.length) await dispatch('aspects', 'addHolders', { list });
   return list.length;
 }

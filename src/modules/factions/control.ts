@@ -7,9 +7,9 @@ import Clock from './ui/Clock.svelte';
 import { usesHere } from '../../shared/adventures';
 
 export default defineControl({
-  id: 'mausritter',
+  id: 'factions',
   get title() {
-    return t('module.mausClock');
+    return t('module.exploration');
   },
   icon: Compass,
   order: 28,

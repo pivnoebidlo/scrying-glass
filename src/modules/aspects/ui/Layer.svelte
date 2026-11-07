@@ -8,7 +8,7 @@
   import { usesHere } from '../../../shared/adventures';
   import { CORNERS } from '../types';
 
-  let { ms, app }: ModuleProps<'fate'> = $props();
+  let { ms, app }: ModuleProps<'aspects'> = $props();
 
   const here = $derived(usesHere(app.adventures, 'aspects'));
   const aspects = $derived(here && ms.show.aspects ? ms.aspects.filter((a) => !a.hidden) : []);

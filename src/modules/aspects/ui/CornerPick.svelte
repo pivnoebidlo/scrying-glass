@@ -6,13 +6,13 @@
   let { value, what, onpick }: { value: Corner; what: string; onpick: (c: Corner) => void } = $props();
 </script>
 
-<span class="pick" role="radiogroup" aria-label={t('fate.where', { what })}>
+<span class="pick" role="radiogroup" aria-label={t('asp.where', { what })}>
   {#each CORNERS as c (c)}
     <button
       role="radio"
       aria-checked={c === value}
       class:on={c === value}
-      title={t('fate.cornerHint', { what, corner: t(`fate.corner.${c}`) })}
+      title={t('asp.cornerHint', { what, corner: t(`asp.corner.${c}`) })}
       onclick={() => onpick(c)}
     ></button>
   {/each}

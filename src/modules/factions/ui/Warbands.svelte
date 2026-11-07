@@ -21,7 +21,7 @@
   onMount(() => void connectCards());
 
   const adventure = $derived(store.state.adventures.current);
-  const data = $derived(store.state.mausritter.byAdventure[adventure ?? ''] ?? blankAdventure());
+  const data = $derived(store.state.factions.byAdventure[adventure ?? ''] ?? blankAdventure());
   const day = $derived(data.clock.day);
   // A game with no warbands in its package has no such block.
   const file = $derived(filesOf(familyOf(currentSystem(store.state.adventures))).find((f) => f.warband));
@@ -43,7 +43,7 @@
       const tree = store.state.vault.tree;
       const folder = tree ? roleFolderHere(tree, store.state.adventures, 'bestiary') : null;
       const ref = await window.api.saveCard(folder ? 'vault' : 'library', card, folder?.path);
-      await dispatch('mausritter', 'formWarband', { adventure, name: title, card: { scope: ref.scope, id: ref.id } });
+      await dispatch('factions', 'formWarband', { adventure, name: title, card: { scope: ref.scope, id: ref.id } });
       name = '';
     } finally {
       busy = false;
@@ -51,9 +51,9 @@
   }
 
   const summary = (w: Warband) => (w.card ? bestiary.all.find((c) => c.ref.scope === w.card!.scope && c.ref.id === w.card!.id) : undefined);
-  const pay = (w: Warband, step: 1 | -1 = 1) => dispatch('mausritter', 'payWarband', { adventure, id: w.id, step });
-  const rename = (w: Warband, v: string) => dispatch('mausritter', 'updateWarband', { adventure, id: w.id, changes: { name: v } });
-  const disband = (w: Warband) => confirm(t('mwar.disbandConfirm', { name: w.name })) && dispatch('mausritter', 'disbandWarband', { adventure, id: w.id });
+  const pay = (w: Warband, step: 1 | -1 = 1) => dispatch('factions', 'payWarband', { adventure, id: w.id, step });
+  const rename = (w: Warband, v: string) => dispatch('factions', 'updateWarband', { adventure, id: w.id, changes: { name: v } });
+  const disband = (w: Warband) => confirm(t('mwar.disbandConfirm', { name: w.name })) && dispatch('factions', 'disbandWarband', { adventure, id: w.id });
   async function toFight(w: Warband) {
     const c = summary(w);
     if (c) await addToInitiative(c);

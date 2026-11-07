@@ -15,7 +15,7 @@ import * as adventures from '../../modules/adventures/i18n';
 import * as backup from '../../modules/backup/i18n';
 import * as integrations from '../../modules/integrations/i18n';
 import * as timer from '../../modules/timer/i18n';
-import * as fate from '../../modules/fate/i18n';
+import * as aspects from '../../modules/aspects/i18n';
 import * as clocks from '../../modules/clocks/i18n';
 import * as worldtime from '../../modules/worldtime/i18n';
 import * as journal from '../../modules/journal/i18n';
@@ -29,7 +29,7 @@ import * as core from '../../main/i18n';
 import * as telegram from '../../modules/telegram/i18n';
 import * as repo from '../../modules/repo/i18n';
 import * as schedule from '../../modules/schedule/i18n';
-import * as mausritter from '../../modules/mausritter/i18n';
+import * as factions from '../../modules/factions/i18n';
 import * as crew from '../../modules/crew/i18n';
 import * as players from '../../modules/players/i18n';
 import * as dnd5e from '../../systems/dnd5e/i18n';
@@ -37,8 +37,8 @@ import * as pf2e from '../../systems/pf2e/i18n';
 
 export * from './core';
 
-export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en, ...maps.en, ...music.en, ...adventures.en, ...backup.en, ...integrations.en, ...timer.en, ...fate.en, ...journal.en, ...initiative.en, ...tools.en, ...compendium.en, ...bestiary.en, ...systems.en, ...core.en, ...telegram.en, ...schedule.en, ...mausritter.en, ...clocks.en, ...worldtime.en, ...crew.en, ...repo.en, ...sysbuilder.en, ...players.en, ...dnd5e.en, ...pf2e.en };
-const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru, ...maps.ru, ...music.ru, ...adventures.ru, ...backup.ru, ...integrations.ru, ...timer.ru, ...fate.ru, ...journal.ru, ...initiative.ru, ...tools.ru, ...compendium.ru, ...bestiary.ru, ...systems.ru, ...core.ru, ...telegram.ru, ...schedule.ru, ...mausritter.ru, ...clocks.ru, ...worldtime.ru, ...crew.ru, ...repo.ru, ...sysbuilder.ru, ...players.ru, ...dnd5e.ru, ...pf2e.ru } };
+export const en = { ...app.en, ...vault.en, ...scenes.en, ...scene.en, ...handouts.en, ...portraits.en, ...sounds.en, ...maps.en, ...music.en, ...adventures.en, ...backup.en, ...integrations.en, ...timer.en, ...aspects.en, ...journal.en, ...initiative.en, ...tools.en, ...compendium.en, ...bestiary.en, ...systems.en, ...core.en, ...telegram.en, ...schedule.en, ...factions.en, ...clocks.en, ...worldtime.en, ...crew.en, ...repo.en, ...sysbuilder.en, ...players.en, ...dnd5e.en, ...pf2e.en };
+const dicts: Record<Lang, Partial<Record<Key, unknown>>> = { en, ru: { ...app.ru, ...vault.ru, ...scenes.ru, ...scene.ru, ...handouts.ru, ...portraits.ru, ...sounds.ru, ...maps.ru, ...music.ru, ...adventures.ru, ...backup.ru, ...integrations.ru, ...timer.ru, ...aspects.ru, ...journal.ru, ...initiative.ru, ...tools.ru, ...compendium.ru, ...bestiary.ru, ...systems.ru, ...core.ru, ...telegram.ru, ...schedule.ru, ...factions.ru, ...clocks.ru, ...worldtime.ru, ...crew.ru, ...repo.ru, ...sysbuilder.ru, ...players.ru, ...dnd5e.ru, ...pf2e.ru } };
 
 export type Key = keyof typeof en;
 

@@ -15,7 +15,7 @@ export interface GameEvent {
   day?: number;
 }
 
-type Slice = Pick<AppState, 'initiative' | 'mausritter' | 'adventures'>;
+type Slice = Pick<AppState, 'initiative' | 'factions' | 'adventures'>;
 
 export function gameEvents(before: Slice, after: Slice): GameEvent[] {
   const out: GameEvent[] = [];
@@ -30,8 +30,8 @@ export function gameEvents(before: Slice, after: Slice): GameEvent[] {
   // The clock of the same adventure only: switching adventures is not a watch passing.
   const adv = after.adventures.current ?? '';
   if ((before.adventures.current ?? '') === adv) {
-    const x = before.mausritter.byAdventure[adv]?.clock;
-    const y = after.mausritter.byAdventure[adv]?.clock;
+    const x = before.factions.byAdventure[adv]?.clock;
+    const y = after.factions.byAdventure[adv]?.clock;
     if (x && y && y.day * 10 + y.watch > x.day * 10 + x.watch) out.push({ on: 'watch', who: '', n: y.watch, day: y.day });
   }
   return out;

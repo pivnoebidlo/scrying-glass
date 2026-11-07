@@ -21,7 +21,7 @@ export interface FateHolder {
   refresh: number;
 }
 
-export interface FateState {
+export interface AspectsState {
   aspects: SceneAspect[];
   holders: FateHolder[];
   // Запас мастера на сцену.

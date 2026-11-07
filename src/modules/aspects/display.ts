@@ -3,7 +3,7 @@ import { defineDisplay } from '../../renderer/lib/contrib';
 import Layer from './ui/Layer.svelte';
 
 export default defineDisplay({
-  id: 'fate',
+  id: 'aspects',
   order: 32,
   layer: Layer,
 });

@@ -7,7 +7,7 @@ const fighter = (id: string, hp: number | null, extra: Partial<Combatant> = {}) 
 const state = (round: number, combatants: Combatant[], clock = { turn: 0, watch: 1, day: 1, last: null }, current: string | null = 'A') =>
   ({
     initiative: { round, combatants },
-    mausritter: { byAdventure: { [current ?? '']: { factions: [], session: [], clock } } },
+    factions: { byAdventure: { [current ?? '']: { factions: [], session: [], clock } } },
     adventures: { list: ['A', 'B'], current, initialized: true },
   }) as unknown as AppState;
 

@@ -1,6 +1,6 @@
 // Time in the game world: minutes since the start of day 1, for each adventure ('' — the whole vault). The GM moves
 // it on (ten minutes of searching, a long rest, until morning); the players may see the day and the part of the day.
-import type { Corner } from '../fate/types';
+import type { Corner } from '../aspects/types';
 
 export interface WorldTime {
   minutes: number;

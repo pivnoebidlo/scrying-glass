@@ -8,6 +8,7 @@
 //
 // Пишется и читается потоком (zip.ts, fflate): большие картинки и музыка не держатся в памяти целиком.
 import { t } from '../shared/i18n';
+import { factionsOf, type FactionSlices } from '../shared/oldstate';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { AUDIO_EXT } from '../shared/vault';
@@ -16,7 +17,8 @@ import { folderDirs, folderFiles as walkFolder, readEntry, readZip, safeEntry, w
 
 export const PACK_EXT = 'sgpack';
 
-export interface PackSlices {
+// Factions and the exploration clock: none before 0.41.
+export interface PackSlices extends FactionSlices<unknown> {
   scenes: unknown[];
   maps: Record<string, unknown>;
   encounters: unknown[];
@@ -26,8 +28,6 @@ export interface PackSlices {
   tray?: unknown;
   // The adventure's pinned journal notes and PDFs (paths; before 0.56 — one path).
   pinned?: string | string[];
-  // Mausritter: the adventure's factions and exploration clock (none before 0.41).
-  mausritter?: unknown;
   // The adventure's progress clocks (none before 0.54).
   clocks?: unknown;
   // The Forged in the Dark crew (none before 0.54).
@@ -184,7 +184,7 @@ export async function readPack(file: string, tmp: string): Promise<ReadPack> {
     .map((n) => ({ id: path.basename(n, '.json'), json: json(n) }));
   return {
     manifest,
-    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' || Array.isArray(slices.pinned) ? slices.pinned : undefined, mausritter: slices.mausritter, clocks: Array.isArray(slices.clocks) ? slices.clocks : undefined, crew: slices.crew, repo: validMark(slices.repo) },
+    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' || Array.isArray(slices.pinned) ? slices.pinned : undefined, factions: factionsOf(slices), clocks: Array.isArray(slices.clocks) ? slices.clocks : undefined, crew: slices.crew, repo: validMark(slices.repo) },
     dir: tmp,
     cards,
   };

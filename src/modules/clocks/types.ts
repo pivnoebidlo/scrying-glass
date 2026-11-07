@@ -1,6 +1,6 @@
 // Progress clocks (as in Blades in the Dark): a circle in segments that fill as a danger nears or work goes on.
 // Each adventure has its own ('' — the whole vault); the player screen shows the ones marked `shown`.
-import type { Corner } from '../fate/types';
+import type { Corner } from '../aspects/types';
 
 // danger — a threat ticking up (red), progress — the party's work (the accent), neutral — anything else.
 export type ClockTone = 'danger' | 'progress' | 'neutral';

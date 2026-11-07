@@ -1,6 +1,6 @@
 // Time in the game world of each adventure (see types.ts).
 import { defineModule } from '../../shared/module';
-import { CORNERS, type Corner } from '../fate/types';
+import { CORNERS, type Corner } from '../aspects/types';
 import { nextMorning, START, type WorldTime, type WorldTimeState } from './types';
 
 const initialState: WorldTimeState = { byAdventure: {}, place: 'top-left' };

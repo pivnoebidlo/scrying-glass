@@ -8,10 +8,10 @@
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import { blankAdventure, WARBAND_UPKEEP, weeksOwed } from '../types';
 
-  let { ms, app }: ModuleProps<'mausritter'> = $props();
+  let { ms, app }: ModuleProps<'factions'> = $props();
   const adventure = $derived(app.adventures.current);
   const clock = $derived((ms.byAdventure[adventure ?? ''] ?? blankAdventure()).clock);
-  const act = (name: 'turn' | 'watch' | 'rollEncounter' | 'resetTurns' | 'resetClock') => dispatch('mausritter', name, { adventure });
+  const act = (name: 'turn' | 'watch' | 'rollEncounter' | 'resetTurns' | 'resetClock') => dispatch('factions', name, { adventure });
   const last = $derived(clock.last);
   const torches = $derived(clock.turn > 0 && clock.turn % 6 === 0);
   const owing = $derived(((ms.byAdventure[adventure ?? ''] ?? blankAdventure()).warbands ?? []).filter((w) => weeksOwed(w, clock.day) > 0));
@@ -23,7 +23,7 @@
     <span class="k">{t('mclock.turn')}</span>
     <span class="n">{clock.turn}</span>
     <div class="spacer"></div>
-    <button class="icon-btn" title={t('mclock.back')} disabled={!clock.turn} onclick={() => dispatch('mausritter', 'turn', { adventure, step: -1 })}><Minus size={14} /></button>
+    <button class="icon-btn" title={t('mclock.back')} disabled={!clock.turn} onclick={() => dispatch('factions', 'turn', { adventure, step: -1 })}><Minus size={14} /></button>
     <button class="btn primary" title={t('mclock.turnHint')} onclick={() => act('turn')}><Plus size={14} /> {t('mclock.turn')}</button>
   </div>
   <p class="faint small">{t('mclock.everyThird')}</p>
@@ -48,7 +48,7 @@
     <div class="row">
       <span class="note warn">{w.name}: {t('mwar.owedShort', { count: weeksOwed(w, clock.day), pips: pips(weeksOwed(w, clock.day) * WARBAND_UPKEEP) })}</span>
       <div class="spacer"></div>
-      <button class="btn" onclick={() => dispatch('mausritter', 'payWarband', { adventure, id: w.id })}>{t('mwar.payShort')}</button>
+      <button class="btn" onclick={() => dispatch('factions', 'payWarband', { adventure, id: w.id })}>{t('mwar.payShort')}</button>
     </div>
   {/each}
 

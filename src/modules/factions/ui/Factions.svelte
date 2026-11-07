@@ -13,16 +13,16 @@
   import { blankAdventure, currentGoal, type Faction, type FactionGoal } from '../types';
 
   const adventure = $derived(store.state.adventures.current);
-  const data = $derived(store.state.mausritter.byAdventure[adventure ?? ''] ?? blankAdventure());
+  const data = $derived(store.state.factions.byAdventure[adventure ?? ''] ?? blankAdventure());
   // Ready factions come with the system's package.
   const examples = $derived(filesOf(familyOf(currentSystem(store.state.adventures))).find((f) => f.factions)?.factions?.[locale.lang] ?? []);
 
   const add = (name = t('mfac.newName'), resources: string[] = [], goals: { text: string; marks: number }[] = []) =>
-    dispatch('mausritter', 'addFaction', { adventure, name, resources, goals });
-  const update = (f: Faction, changes: Partial<Pick<Faction, 'name' | 'resources'>>) => dispatch('mausritter', 'updateFaction', { adventure, id: f.id, changes });
+    dispatch('factions', 'addFaction', { adventure, name, resources, goals });
+  const update = (f: Faction, changes: Partial<Pick<Faction, 'name' | 'resources'>>) => dispatch('factions', 'updateFaction', { adventure, id: f.id, changes });
   const updateGoal = (f: Faction, g: FactionGoal, changes: Partial<Omit<FactionGoal, 'id'>>) =>
-    dispatch('mausritter', 'updateGoal', { adventure, id: f.id, goal: g.id, changes });
-  const remove = (f: Faction) => confirm(t('mfac.removeConfirm', { name: f.name })) && dispatch('mausritter', 'removeFaction', { adventure, id: f.id });
+    dispatch('factions', 'updateGoal', { adventure, id: f.id, goal: g.id, changes });
+  const remove = (f: Faction) => confirm(t('mfac.removeConfirm', { name: f.name })) && dispatch('factions', 'removeFaction', { adventure, id: f.id });
 
   function onEnter(e: KeyboardEvent, fn: (v: string) => void) {
     const input = e.currentTarget as HTMLInputElement;
@@ -52,7 +52,7 @@
       {#each examples as ex, i (i)}<option value={i}>{ex.name}</option>{/each}
     </select>
     <button class="btn" onclick={() => add()}><Plus size={14} /> {t('mfac.new')}</button>
-    <button class="btn primary" title={t('mfac.betweenHint')} disabled={!data.factions.length} onclick={() => dispatch('mausritter', 'betweenSessions', { adventure })}>
+    <button class="btn primary" title={t('mfac.betweenHint')} disabled={!data.factions.length} onclick={() => dispatch('factions', 'betweenSessions', { adventure })}>
       <Dices size={14} /> {t('mfac.between')}
     </button>
   </header>
@@ -99,7 +99,7 @@
           </span>
           <input class="text" type="text" value={g.text} onchange={(e) => updateGoal(f, g, { text: e.currentTarget.value })} />
           {#if g.progress >= g.marks}<span class="tag">{t('mfac.done')}</span>{:else if cur?.id === g.id}<span class="tag cur">{t('mfac.current')}</span>{/if}
-          <button class="icon-btn" title={t('mfac.remove')} onclick={() => dispatch('mausritter', 'removeGoal', { adventure, id: f.id, goal: g.id })}><X size={13} /></button>
+          <button class="icon-btn" title={t('mfac.remove')} onclick={() => dispatch('factions', 'removeGoal', { adventure, id: f.id, goal: g.id })}><X size={13} /></button>
           <div class="numbers">
             <label title={t('mfac.relevantHint')}>{t('mfac.relevant')} <input type="number" min="0" max="10" value={g.relevant} onchange={(e) => updateGoal(f, g, { relevant: num(e.currentTarget.value) })} /></label>
             <label title={t('mfac.rivalHint')}>{t('mfac.rival')} <input type="number" min="0" max="10" value={g.rival} onchange={(e) => updateGoal(f, g, { rival: num(e.currentTarget.value) })} /></label>
@@ -107,7 +107,7 @@
           </div>
         </div>
       {/each}
-      <input class="add goal-add" type="text" placeholder={t('mfac.goalPh')} onkeydown={(e) => onEnter(e, (text) => dispatch('mausritter', 'addGoal', { adventure, id: f.id, text, marks: 3 }))} />
+      <input class="add goal-add" type="text" placeholder={t('mfac.goalPh')} onkeydown={(e) => onEnter(e, (text) => dispatch('factions', 'addGoal', { adventure, id: f.id, text, marks: 3 }))} />
     </section>
   {:else}
     <p class="faint placeholder">{t('mfac.none')}</p>

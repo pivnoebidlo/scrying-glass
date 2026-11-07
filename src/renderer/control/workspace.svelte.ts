@@ -1,6 +1,7 @@
 // Раскладка окна управления: открытые вкладки, боковая панель, настройки. Живёт только в окне,
 // в ядро не попадает. Вкладки и боковая панель запоминаются между запусками.
 import type { ModuleId } from '../../shared/types';
+import { moduleId } from '../../shared/oldstate';
 import { controlContributions } from '../lib/registry';
 import { store } from '../lib/store.svelte';
 import { provideNav } from '../lib/nav';
@@ -49,7 +50,7 @@ class Workspace {
     this.sidebarOpen = s.sidebarOpen ?? true;
     this.panelOpen = s.panelOpen ?? true;
     this.displayId = s.displayId ?? null;
-    this.screenClosed = s.screenClosed ?? [];
+    this.screenClosed = (s.screenClosed ?? []).map(moduleId);
 
     // При первом запуске открываем первый модуль.
     const first = controlContributions[0];

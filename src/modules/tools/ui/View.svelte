@@ -19,7 +19,7 @@
   import TavernGenerator from '../tavern/TavernGenerator.svelte';
   import NpcGenerator from '../npc/NpcGenerator.svelte';
   import Generators from '../generators/Generators.svelte';
-  import Factions from '../../mausritter/ui/Factions.svelte';
+  import Factions from '../../factions/ui/Factions.svelte';
   import CrewSheet from '../../crew/ui/CrewSheet.svelte';
   import SettlementGenerator from '../settlement/SettlementGenerator.svelte';
   import HookGenerator from '../hooks/HookGenerator.svelte';

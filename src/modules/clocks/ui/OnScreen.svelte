@@ -5,7 +5,7 @@
   import { Eye, EyeOff, Plus, X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import CornerPick from '../../fate/ui/CornerPick.svelte';
+  import CornerPick from '../../aspects/ui/CornerPick.svelte';
   import ClockFace from './ClockFace.svelte';
   import { CLOCK_SIZES, CLOCK_TONES, type ClocksState, type ClockTone } from '../types';
 

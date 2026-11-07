@@ -2,18 +2,18 @@
 import { randomUUID } from 'node:crypto';
 import { die } from '../../shared/dice';
 import { defineModule } from '../../shared/module';
-import { blankAdventure, blankClock, currentGoal, WATCHES, type Clock, type EncounterRoll, type Faction, type FactionGoal, type MausAdventure, type MausState, type Warband } from './types';
+import { blankAdventure, blankClock, currentGoal, WATCHES, type Clock, type EncounterRoll, type Faction, type FactionGoal, type MausAdventure, type FactionsState, type Warband } from './types';
 
-const initialState: MausState = { byAdventure: {} };
+const initialState: FactionsState = { byAdventure: {} };
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(n)));
 const key = (adventure: string | null) => adventure ?? '';
 
-const withAdventure = (s: MausState, adventure: string | null, fn: (a: MausAdventure) => MausAdventure): MausState => ({
+const withAdventure = (s: FactionsState, adventure: string | null, fn: (a: MausAdventure) => MausAdventure): FactionsState => ({
   ...s,
   byAdventure: { ...s.byAdventure, [key(adventure)]: fn(s.byAdventure[key(adventure)] ?? blankAdventure()) },
 });
-const withFaction = (s: MausState, adventure: string | null, id: string, fn: (f: Faction) => Faction) =>
+const withFaction = (s: FactionsState, adventure: string | null, id: string, fn: (f: Faction) => Faction) =>
   withAdventure(s, adventure, (a) => ({ ...a, factions: a.factions.map((f) => (f.id === id ? fn(f) : f)) }));
 const goal = (g: Partial<FactionGoal>): FactionGoal => ({
   id: randomUUID(),
@@ -31,7 +31,7 @@ const encounter = (at: EncounterRoll['at'], roll: (n: number) => number, turn?: 
 };
 
 export default defineModule({
-  id: 'mausritter',
+  id: 'factions',
   persist: true,
   initialState,
 

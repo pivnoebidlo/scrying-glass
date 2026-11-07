@@ -1,9 +1,9 @@
 // Fate: аспекты сцены и жетоны судьбы персонажей и мастера (см. types.ts). Показываются в приключениях Fate.
 import { randomUUID } from 'node:crypto';
 import { defineModule } from '../../shared/module';
-import { CORNERS, MAX_INVOKES, MAX_POINTS, type Corner, type FateHolder, type FateState, type SceneAspect } from './types';
+import { CORNERS, MAX_INVOKES, MAX_POINTS, type Corner, type FateHolder, type AspectsState, type SceneAspect } from './types';
 
-const initialState: FateState = {
+const initialState: AspectsState = {
   aspects: [],
   holders: [],
   gm: 0,
@@ -13,17 +13,17 @@ const initialState: FateState = {
 
 const clamp = (n: number, max: number) => Math.min(max, Math.max(0, Math.round(n)));
 
-const patchAspect = (s: FateState, id: string, fn: (a: SceneAspect) => SceneAspect): FateState => ({
+const patchAspect = (s: AspectsState, id: string, fn: (a: SceneAspect) => SceneAspect): AspectsState => ({
   ...s,
   aspects: s.aspects.map((a) => (a.id === id ? fn(a) : a)),
 });
-const patchHolder = (s: FateState, id: string, fn: (h: FateHolder) => FateHolder): FateState => ({
+const patchHolder = (s: AspectsState, id: string, fn: (h: FateHolder) => FateHolder): AspectsState => ({
   ...s,
   holders: s.holders.map((h) => (h.id === id ? fn(h) : h)),
 });
 
 export default defineModule({
-  id: 'fate',
+  id: 'aspects',
   persist: true,
   initialState,
 
@@ -102,11 +102,11 @@ export default defineModule({
       return { ...s, gm: clamp(s.holders.length, MAX_POINTS) };
     },
 
-    setShow(s, changes: Partial<FateState['show']>) {
+    setShow(s, changes: Partial<AspectsState['show']>) {
       return { ...s, show: { ...s.show, ...changes } };
     },
 
-    setPlace(s, changes: Partial<Record<keyof FateState['place'], Corner>>) {
+    setPlace(s, changes: Partial<Record<keyof AspectsState['place'], Corner>>) {
       const ok = Object.fromEntries(Object.entries(changes).filter(([, v]) => CORNERS.includes(v as Corner)));
       return { ...s, place: { ...s.place, ...ok } };
     },

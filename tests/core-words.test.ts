@@ -4,22 +4,14 @@ import { describe, expect, it } from 'vitest';
 
 // The core knows no game: outside src/systems no code names one. A new line here needs a reason.
 const WORDS = /\b(dnd5e[-\w]*|pf2e[-\w]*|mausritter|fitd|fate-core)\b|['"`]fate['"`]/gi;
-// Migrations of old data, the module ids in saved state (renaming them needs a migration of state.json and .sgpack) and
-// the attribution the licenses ask for.
+// Migrations of old data and the attribution the licenses ask for.
 const ALLOWED = [
   /\/i18n\.ts$/,
   /shared\/i18n\//,
   /shared\/about\.ts$/,
   /shared\/oldcards\.ts$/,
   /shared\/features\.ts$/,
-  /modules\/index\.ts$/,
-  /modules\/(fate|mausritter)\//,
-  /modules\/worldtime\//,
-  /modules\/compendium\/events\.ts$/,
-  /modules\/tools\/ui\/View\.svelte$/,
-  /main\/index\.ts$/,
-  /main\/packs\.ts$/,
-  /shared\/trash\.ts$/,
+  /shared\/oldstate\.ts$/,
 ];
 // Roll kinds of the pack format and styles of the builder's templates: words of the format, not a game.
 const FORMAT = /syspack|modules\/tools\/syspack|systems\/pack|renderer\/lib\/rolls/;

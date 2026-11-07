@@ -2,7 +2,7 @@
 import { randomUUID } from 'node:crypto';
 import { defineModule } from '../../shared/module';
 import { CLOCK_TONES, MAX_SEGMENTS, type Clock, type ClocksState, type ClockTone } from './types';
-import { CORNERS, type Corner } from '../fate/types';
+import { CORNERS, type Corner } from '../aspects/types';
 
 const initialState: ClocksState = { byAdventure: {}, place: 'top-right', size: 'medium' };
 

@@ -1,21 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import mausritter from '../src/modules/mausritter/main';
-import type { MausState } from '../src/modules/mausritter/types';
-import { currentGoal } from '../src/modules/mausritter/types';
+import factions from '../src/modules/factions/main';
+import type { FactionsState } from '../src/modules/factions/types';
+import { currentGoal } from '../src/modules/factions/types';
 import { readFileSync } from 'node:fs';
 import { ctx, run } from './helpers';
 
 const EXAMPLE_FACTIONS = JSON.parse(readFileSync('content/mausritter/generators/mausritter.json', 'utf8')).factions as Record<'en' | 'ru', { name: string; resources: string[]; goals: { text: string; marks: number }[] }[]>;
-const S0 = mausritter.initialState;
+const S0 = factions.initialState;
 const A = 'Forest';
-const act = (s: MausState, a: string, p?: unknown) => run(mausritter, s, a, { adventure: A, ...(p as object) });
+const act = (s: FactionsState, a: string, p?: unknown) => run(factions, s, a, { adventure: A, ...(p as object) });
 // An action with fixed rolls (the fourth argument of the rolling actions).
-const rolled = (s: MausState, a: string, rolls: number[], p?: unknown) => {
+const rolled = (s: FactionsState, a: string, rolls: number[], p?: unknown) => {
   let i = 0;
-  const fn = mausritter.actions[a as 'turn'] as unknown as (s: MausState, p: unknown, c: unknown, r: () => number) => MausState;
+  const fn = factions.actions[a as 'turn'] as unknown as (s: FactionsState, p: unknown, c: unknown, r: () => number) => FactionsState;
   return fn(s, { adventure: A, ...(p as object) }, ctx(), () => rolls[i++] ?? 6);
 };
-const of = (s: MausState) => s.byAdventure[A]!;
+const of = (s: FactionsState) => s.byAdventure[A]!;
 
 describe('Mausritter factions', () => {
   it('ten example factions in both languages with the same goals', () => {
@@ -73,7 +73,7 @@ describe('Mausritter clock', () => {
 
 describe('Mausritter warbands', () => {
   it('upkeep for each week begun since it was formed, by the days of the clock', async () => {
-    const { weeksDue, weeksOwed } = await import('../src/modules/mausritter/types');
+    const { weeksDue, weeksOwed } = await import('../src/modules/factions/types');
     let s = act(S0, 'formWarband', { name: ' Red Guard ', card: { scope: 'vault', id: 'w1' } });
     const w = of(s).warbands![0]!;
     expect(w).toMatchObject({ name: 'Red Guard', formed: 1, paid: 0, card: { scope: 'vault', id: 'w1' } });

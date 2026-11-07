@@ -5,7 +5,7 @@
   import { Eye, EyeOff, Moon, RotateCcw, Sun, Sunrise, Sunset } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
-  import CornerPick from '../../fate/ui/CornerPick.svelte';
+  import CornerPick from '../../aspects/ui/CornerPick.svelte';
   import { clockOf, hhmm, minutesOf, partOf, START, type DayPart } from '../types';
 
   let { ms, app }: ModuleProps<'worldtime'> = $props();
