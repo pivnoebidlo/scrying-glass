@@ -1,7 +1,10 @@
-<!-- The last roll made from the sheet: the rolls stay on the phone, the GM's log does not get them. Tap to hide. -->
+<!-- The last roll made from the sheet; each one also goes to the GM's log. Tap to hide. -->
 <script lang="ts">
   import { rolls, type RollEntry } from '../lib/rolls.svelte';
   import { t } from '../lib/i18n.svelte';
+  import { rollAction, type PlayerRoll } from '../../shared/players';
+
+  let { send }: { send: (roll: PlayerRoll) => void } = $props();
 
   let hidden = $state(0);
   const last = $derived(rolls.list.at(-1));
@@ -9,6 +12,19 @@
 
   const main = (e: RollEntry) => e.d20?.total ?? e.save?.natural ?? e.pack?.total ?? e.damage[0]?.total;
   const extra = (e: RollEntry) => [e.pack?.outcome, ...(e.d20 || e.damage.length > 1 ? e.damage.slice(e.d20 ? 0 : 1).map((d) => String(d.total)) : [])].filter(Boolean).join(' · ');
+  const tone = (e: RollEntry) =>
+    e.save ? (e.save.success ? 'good' : 'bad') : e.d20?.natural === 20 ? 'good' : e.d20?.natural === 1 ? 'bad' : e.pack?.tone === 'good' || e.pack?.tone === 'bad' ? e.pack.tone : undefined;
+
+  // Each new roll once. A roll with nothing to show (no total) stays here.
+  let sent = 0;
+  $effect(() => {
+    if (!last || last.id === sent) return;
+    sent = last.id;
+    const total = main(last);
+    if (total === undefined) return;
+    const dice = last.d20 ? `${t('lib.d20')}: ${last.d20.rolls.join(' | ')}` : last.pack?.note;
+    send(rollAction(last.what, total, [dice, extra(last)].filter(Boolean).join(' · ') || undefined, tone(last)));
+  });
 </script>
 
 {#if shown}
@@ -17,7 +33,7 @@
     <b>{main(shown)}</b>
     {#if extra(shown)}<span>{extra(shown)}</span>{/if}
     {#if shown.changed?.to !== undefined}<span>{shown.changed.title}: {shown.changed.from} → {shown.changed.to}</span>{/if}
-    <small>{t('pl.page.local')}</small>
+    <small>{t('pl.page.toGm')}</small>
   </button>
 {/if}
 

@@ -27,7 +27,7 @@ export const en = {
   'pl.page.turn': 'Your turn!',
   'pl.page.round': 'Round {round}',
   'pl.page.down': 'Out of the fight',
-  'pl.page.local': 'Only you see this roll',
+  'pl.page.toGm': 'The GM sees this roll in the log',
   'pl.page.noEntry': 'No description in the compendium.',
   'pl.page.loading': 'Loading…',
 };
@@ -57,7 +57,7 @@ export const ru: Messages<typeof en> = {
   'pl.page.turn': 'Ваш ход!',
   'pl.page.round': 'Раунд {round}',
   'pl.page.down': 'Выбыл из боя',
-  'pl.page.local': 'Этот бросок видите только вы',
+  'pl.page.toGm': 'Мастер видит этот бросок в журнале',
   'pl.page.noEntry': 'В справочнике нет описания.',
   'pl.page.loading': 'Загрузка…',
 };

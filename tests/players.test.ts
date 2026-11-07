@@ -8,7 +8,7 @@ import type { Card } from '../src/shared/cards';
 import { bookIndex, entryNamesOf, namesInText, publicEntry, sheetText, type BookEntry } from '../src/shared/playerbook';
 import type { Entry } from '../src/shared/compendium';
 import { fieldMap, packResources, validatePack } from '../src/shared/syspack';
-import { afterReset, checkAction, usedAfter, hpShare, lanAddresses, playerCard, playerLive, playerUrl, type PlayerView } from '../src/shared/players';
+import { afterReset, checkAction, usedAfter, hpShare, lanAddresses, playerCard, playerLive, playerUrl, type PlayerRoll, type PlayerView } from '../src/shared/players';
 import type { Combatant } from '../src/modules/initiative/types';
 
 const card: Card = {
@@ -181,6 +181,19 @@ describe('a pack says what is marked at the table', () => {
     expect(checkAction({ type: 'use', key: 'sanity', used: 40 }, sheet)).toBeNull();
     expect(checkAction({ type: 'reset', id: 'mad' }, sheet)).toBeNull();
     expect(afterReset({ hunger: 2, luck: 9 }, sheet.resets['night']!)).toEqual({ luck: 9 });
+  });
+});
+
+describe('a roll from a phone', () => {
+  const none = { limits: {}, resets: {} };
+  it('passes as words to show, cleaned and cut', () => {
+    expect(checkAction({ type: 'roll', what: 'Stealth', total: '17', detail: 'd20: 15', tone: 'good', extra: 'x' }, none)).toEqual({ type: 'roll', what: 'Stealth', total: '17', detail: 'd20: 15', tone: 'good' });
+    const r = checkAction({ type: 'roll', what: 'a\n<b>'.repeat(50), total: '1'.repeat(40), detail: 'x'.repeat(500), tone: 'evil' }, none) as PlayerRoll;
+    expect([r.what.length, r.total.length, r.detail!.length, r.tone]).toEqual([80, 16, 200, undefined]);
+    expect(r.what).not.toContain('\n');
+  });
+  it('without a name or a total it is refused', () => {
+    for (const a of [{ type: 'roll', total: '5' }, { type: 'roll', what: 'x' }, { type: 'roll', what: ' ', total: '5' }, { type: 'roll', what: 'x', total: {} }, { type: 'roll', what: 5, total: '5' }]) expect(checkAction(a, none)).toBeNull();
   });
 });
 

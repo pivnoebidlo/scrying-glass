@@ -2089,6 +2089,7 @@ app.whenReady().then(async () => {
     resolveInVault,
     thumbnail,
     dispatch: (name, payload) => runAction('players', name, payload),
+    roll: (who, roll) => getControlWindow()?.webContents.send('players:roll', who, roll),
     notify: (status) => {
       for (const win of BrowserWindow.getAllWindows()) win.webContents.send('players:status', status);
     },

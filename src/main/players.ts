@@ -7,7 +7,7 @@ import { visibleIn } from '../shared/adventures';
 import { refKey, type CardRef, type CardScope } from '../shared/cards';
 import { entryTitle, parseEntry, searchKey, type BuiltinBook, type Entry } from '../shared/compendium';
 import { bookIndex, entryNamesOf, namesInText, publicEntry, sheetText, type BookEntry, type BookIndex } from '../shared/playerbook';
-import { checkAction, lanAddresses, playerCard, playerLive, type PlayerStatus, type PlayerView } from '../shared/players';
+import { checkAction, lanAddresses, playerCard, playerLive, type PlayerStatus, type PlayerView, type PlayerRoll } from '../shared/players';
 import type { AppState } from '../shared/types';
 import { allFiles, dirname } from '../shared/vault';
 import { familyOf, importersOf, sheetEntryTypes, systemOf } from '../systems';
@@ -39,6 +39,8 @@ interface Deps {
   thumbnail(file: string, width: number): Promise<string | null>;
   // An action of the module, as the GM's window does it.
   dispatch(name: string, payload: unknown): Promise<unknown>;
+  // A roll from a phone, for the GM's log; `who` — the character of the link, never what the phone says.
+  roll(who: string, roll: PlayerRoll): void;
   // The status changed: to the windows.
   notify(status: PlayerStatus): void;
 }
@@ -183,7 +185,8 @@ async function actOn(token: string, raw: unknown): Promise<boolean> {
   const sheet = sheetResources(card);
   const action = checkAction(raw, sheet);
   if (!action) return false;
-  if (action.type === 'reset') await deps.dispatch('reset', { card: card.id, keys: sheet.resets[action.id] });
+  if (action.type === 'roll') deps.roll(card.name, action);
+  else if (action.type === 'reset') await deps.dispatch('reset', { card: card.id, keys: sheet.resets[action.id] });
   else await deps.dispatch('setUsed', { card: card.id, key: action.key, used: action.used });
   return true;
 }

@@ -21,6 +21,8 @@ export interface RollEntry {
   table?: { steps: TableStep[]; start: TableSource };
   // Something happened in the game (a fight began, someone went down…): a line only to offer the tables marked so.
   event?: TableEvent;
+  // Rolled on a player's phone: only what it reported.
+  phone?: { total: string; detail?: string; tone?: 'good' | 'bad' };
   // Попадание проверяется по натуральной 20/1 только у атак.
   attack?: boolean;
   // A d20 check judged against a DC typed here: two degrees or four (Pathfinder); dc — the one typed (a pool with
@@ -59,6 +61,11 @@ class Rolls {
   // degrees — the log offers a DC to judge it against (Pathfinder: four degrees).
   check(who: string, what: string, bonus: number, mode: D20Mode = 'normal', degrees?: Degrees) {
     this.push({ who, what, d20: rollD20(bonus, mode), ...(degrees ? { degrees } : {}), damage: [] });
+  }
+
+  // A roll from a player's phone.
+  fromPhone(who: string, what: string, phone: RollEntry['phone']) {
+    this.push({ who, what, phone, damage: [] });
   }
 
   // The DC a check (or a pack's d20 roll) is judged against; null — none.

@@ -4,7 +4,7 @@
   import type { Component } from 'svelte';
   import { onMount } from 'svelte';
   import type { Card } from '../../shared/cards';
-  import { afterReset, hpShare, type PlayerAction, type PlayerUsage, type PlayerView } from '../../shared/players';
+  import { afterReset, hpShare, type PlayerAction, type PlayerRoll, type PlayerUsage, type PlayerView } from '../../shared/players';
   import { setNameIndex } from '../../shared/nameindex';
   import { registerPacks, sheetResources } from '../../systems/packs';
   import { sheetOf } from '../../systems/sheets';
@@ -35,6 +35,10 @@
     } catch {
       later();
     }
+  }
+  // A roll for the GM's log: lost with the connection, nothing here depends on it.
+  async function tell(roll: PlayerRoll) {
+    await fetch(api('action'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(roll) }).catch(() => undefined);
   }
   sheetUsage.host = {
     player: true,
@@ -135,7 +139,7 @@
       </section>
     {/if}
     {#if Sheet}<div class="sheet"><Sheet card={view.card} /></div>{/if}
-    <LastRoll />
+    <LastRoll send={(roll) => void tell(roll)} />
     <EntrySheet {api} />
   {/if}
 </main>

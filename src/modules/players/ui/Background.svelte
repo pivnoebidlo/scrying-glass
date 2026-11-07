@@ -2,6 +2,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
+  import { rolls } from '../../../renderer/lib/rolls.svelte';
   import { sheetUsage } from '../../../renderer/lib/sheetusage.svelte';
   import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import { sheetResources } from '../../../systems/packs';
@@ -12,6 +13,7 @@
 
   onMount(() => {
     void connectPlayers();
+    window.api.onPlayerRoll((who, r) => rolls.fromPhone(who, r.what, { total: r.total, ...(r.detail ? { detail: r.detail } : {}), ...(r.tone ? { tone: r.tone } : {}) }));
     sheetUsage.host = {
       used: (card) => store.state.players.used[card.id] ?? {},
       set: (card, key, used) => void dispatch('players', 'setUsed', { card: card.id, key, used }),

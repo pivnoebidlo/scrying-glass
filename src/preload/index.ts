@@ -13,6 +13,7 @@ const api: Api = {
   setPlayersOn: (on) => ipcRenderer.invoke('players:setOn', on),
   renewPlayer: (ref) => ipcRenderer.invoke('players:renew', ref),
   onPlayerStatus: (cb) => { ipcRenderer.on('players:status', (_e, s) => cb(s)); },
+  onPlayerRoll: (cb) => { ipcRenderer.on('players:roll', (_e, who, roll) => cb(who, roll)); },
 
   listCards: () => ipcRenderer.invoke('cards:list'),
   getCard: (ref) => ipcRenderer.invoke('cards:get', ref),

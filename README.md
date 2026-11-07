@@ -653,7 +653,7 @@ go to the next character). The link works from game to game; "New link" (also in
 The phone shows the sheet of that character and, during a fight, hit points, conditions, the round and "Your turn!",
 updated the moment you change them in the tracker. Nothing else leaves your computer: not your notes, other
 characters, or hidden enemies. A tap on a spell or a condition shows its description from the compendium, your own
-spells included: only what this sheet names, so players cannot browse your entries. Rolls from the sheet stay on the phone. In D&D a player marks spent spell slots right on the sheet
+spells included: only what this sheet names, so players cannot browse your entries. Rolls from the sheet also land in your roll log, with a phone mark. In D&D a player marks spent spell slots right on the sheet
 and restores them with "Long rest"; you see the same boxes on the card and can change them too. Spent slots are kept
 in the vault, apart from the sheet, so importing the character again does not touch them. A system pack can do the same: in the system builder, a track, dots or a number can be "Marked at the table" by the
 player and the GM or by the GM only, and the Tracker step adds resets such as a rest or a new day. Everything else is read only. The first time, the system may ask whether the app can accept connections: allow it. The sheets work while

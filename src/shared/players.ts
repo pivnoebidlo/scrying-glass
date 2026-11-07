@@ -23,12 +23,36 @@ export const NO_RESOURCES: SheetResources = { limits: {}, resets: {} };
 // A key → the value now; none — the sheet's own.
 export type PlayerUsage = Record<string, number>;
 
-export type PlayerAction = { type: 'use'; key: string; used: number } | { type: 'reset'; id: string };
+export type PlayerAction = { type: 'use'; key: string; used: number } | { type: 'reset'; id: string } | PlayerRoll;
+
+// A roll made on a phone, for the GM's log: words and numbers to show, nothing the app acts on.
+export interface PlayerRoll {
+  type: 'roll';
+  what: string;
+  total: string;
+  detail?: string;
+  tone?: 'good' | 'bad';
+}
+const ROLL_WHAT = 80;
+const ROLL_TOTAL = 16;
+const ROLL_DETAIL = 200;
+const line = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/\p{Cc}/gu, ' ').trim() : '').slice(0, max);
+
+// The page and the core cut the same way: a long name must not cost the roll, the body of a request is limited.
+export function rollAction(what: string, total: string | number, detail?: string, tone?: PlayerRoll['tone']): PlayerRoll {
+  const text = detail ? line(detail, ROLL_DETAIL) : '';
+  return { type: 'roll', what: line(what, ROLL_WHAT), total: line(String(total), ROLL_TOTAL), ...(text ? { detail: text } : {}), ...(tone ? { tone } : {}) };
+}
 
 // What came from a phone, checked: only what this sheet has, only whole numbers within the limit. Anything else — null.
 export function checkAction(raw: unknown, sheet: SheetResources): PlayerAction | null {
   if (!raw || typeof raw !== 'object') return null;
   const a = raw as Record<string, unknown>;
+  if (a['type'] === 'roll') {
+    if (typeof a['what'] !== 'string' || !line(a['what'], ROLL_WHAT) || !line(a['total'], ROLL_TOTAL)) return null;
+    const tone = a['tone'] === 'good' || a['tone'] === 'bad' ? a['tone'] : undefined;
+    return rollAction(a['what'], a['total'] as string, typeof a['detail'] === 'string' ? a['detail'] : undefined, tone);
+  }
   const gm = sheet.gmOnly ?? [];
   if (a['type'] === 'reset') {
     if (typeof a['id'] !== 'string' || !Object.hasOwn(sheet.resets, a['id']) || sheet.resets[a['id']]!.some((k) => gm.includes(k))) return null;

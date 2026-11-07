@@ -2,7 +2,7 @@
 <script lang="ts">
   import { degreeOf, type Degree } from '../../shared/dice';
   import { t } from './i18n.svelte';
-  import { Dices, Trash2, X } from '@lucide/svelte';
+  import { Dices, Smartphone, Trash2, X } from '@lucide/svelte';
   import { diceText } from '../../shared/dice';
   import { rolls, type RollEntry } from './rolls.svelte';
   import { entryHtml } from './entry/markup';
@@ -74,7 +74,13 @@
     <ol bind:this={list}>
       {#each rolls.list as e (e.id)}
         <li class:last={e === rolls.list.at(-1)}>
-          <div class="what"><span class="who">{e.who}</span> · {e.what}</div>
+          <div class="what">{#if e.phone}<span class="phone" title={t('lib.fromPhone')}><Smartphone size={11} /></span>{/if}<span class="who">{e.who}</span> · {e.what}</div>
+          {#if e.phone}
+            <div class="line">
+              <span class="total" class:crit={e.phone.tone === 'good'} class:fumble={e.phone.tone === 'bad'}>{e.phone.total}</span>
+              {#if e.phone.detail}<span class="note">{e.phone.detail}</span>{/if}
+            </div>
+          {/if}
           {#if e.d20}
             <div class="line">
               <span class="total" class:crit={crit(e) || (!e.attack && e.d20.natural === 20)} class:fumble={fumble(e) || (!e.attack && e.d20.natural === 1)}
@@ -187,6 +193,11 @@
 {/if}
 
 <style>
+  .phone {
+    margin-right: 4px;
+    color: var(--text-faint);
+    vertical-align: -1px;
+  }
   .empty {
     margin: 0;
     padding: 10px 12px;

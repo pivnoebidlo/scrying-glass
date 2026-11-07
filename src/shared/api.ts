@@ -13,7 +13,7 @@ import type { ActionArgs, ActionName, AppState, ModuleId } from './types';
 import type { UpdateInfo, UpdateSettings } from './updates';
 import type { TgChat, TgMessage, TgStatus, TgTable } from './telegram';
 import type { Game, ScheduleData } from './schedule';
-import type { PlayerStatus } from './players';
+import type { PlayerRoll, PlayerStatus } from './players';
 
 // The control window's title bar (main/windows.ts): the system one, or the tab bar as the title bar — with the
 // traffic lights inside (macOS) or the system buttons over the corner (Windows, Linux).
@@ -58,6 +58,7 @@ export interface Api {
   setPlayersOn(on: boolean): Promise<PlayerStatus>;
   renewPlayer(ref: CardRef): Promise<PlayerStatus>;
   onPlayerStatus(cb: (status: PlayerStatus) => void): void;
+  onPlayerRoll(cb: (who: string, roll: PlayerRoll) => void): void;
 
   listCards(): Promise<CardSummary[]>;
   getCard(ref: CardRef): Promise<Card | null>;
