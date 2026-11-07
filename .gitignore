@@ -8,3 +8,4 @@ out/
 
 # Local test kit (test vault, user data, CDP scripts) — see CLAUDE.md «Как проверять изменения»
 /.dev/
+/.claude/settings.local.json
