@@ -16,6 +16,8 @@ export interface ControlContribution<K extends ModuleId> {
   id: K;
   title: string;
   icon: Component;
+  // The GM can hide it (shared/parts.ts).
+  optional?: boolean;
   // Порядок в полосе модулей и в настройках.
   order?: number;
   // Вкладка в рабочей области.

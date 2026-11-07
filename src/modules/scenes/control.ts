@@ -10,6 +10,7 @@ import Hotkeys from './ui/Hotkeys.svelte';
 
 export default defineControl({
   id: 'scenes',
+  optional: true,
   get title() {
     return t('module.scenes');
   },

@@ -14,7 +14,7 @@ import { deleteWords, discard, trashSettings } from '../../main/trash';
 const openDialog = (ctx: ModuleContext, opts: OpenDialogOptions) =>
   ctx.controlWindow ? ctx.dialog.showOpenDialog(ctx.controlWindow, opts) : ctx.dialog.showOpenDialog(opts);
 
-const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [], systems: [], content: [], language: 'auto', lang: 'en', theme: 'auto', hotkeys: {}, themesFound: [], themeBefore: 'auto' };
+const initialState: VaultState = { root: null, name: '', tree: null, recent: [], roles: DEFAULT_ROLES, systemsOff: [], partsOff: [], systems: [], content: [], language: 'auto', lang: 'en', theme: 'auto', hotkeys: {}, themesFound: [], themeBefore: 'auto' };
 
 export default defineModule({
   id: 'vault',
@@ -53,6 +53,11 @@ export default defineModule({
     // Отключённые ролевые системы (настройки приложения).
     setSystemsOff(_s, { list }: { list: string[] }, ctx) {
       return ctx.vault.setSystemsOff(list);
+    },
+
+    // Parts of the interface the GM hid (app settings).
+    setPartsOff(_s, { list }: { list: string[] }, ctx) {
+      return ctx.vault.setPartsOff(list);
     },
 
     // The first launch: the systems are picked (Welcome).

@@ -90,6 +90,8 @@ interface AppSettings {
   trash?: TrashSettings;
   // Отключённые ролевые системы (systems/index.ts).
   systemsOff?: string[];
+  // Parts of the interface the GM hid (shared/parts.ts).
+  partsOff?: string[];
   // false — the very first launch, the systems are not picked yet (Welcome asks); no field — picked or an older install.
   systemsChosen?: boolean;
   // The built-in systems (of the plugins) this install has met: a new one comes turned off (no field — the legacy
@@ -167,6 +169,7 @@ function vaultState(): VaultState {
     recent: settings.recent,
     roles: setRoleNames(settings.roles),
     systemsOff: setSystemsOff(settings.systemsOff),
+    partsOff: settings.partsOff ?? [],
     systems: systemPacks(),
     content: installedContent().map(({ dir: _d, ...m }) => m),
     language: settings.language ?? 'auto',
@@ -418,6 +421,12 @@ function setSystemsOffSetting(list: string[]): VaultState {
   return vaultState();
 }
 
+function setPartsOffSetting(list: string[]): VaultState {
+  settings = { ...settings, partsOff: list };
+  writeJsonAtomic(settingsFile(), settings);
+  return vaultState();
+}
+
 function systemsChosenSetting(): VaultState {
   const { systemsChosen: _, ...rest } = settings;
   settings = rest;
@@ -462,6 +471,7 @@ const vault: VaultAccess = {
   forget: forgetVault,
   setRoles,
   setSystemsOff: setSystemsOffSetting,
+  setPartsOff: setPartsOffSetting,
   setLanguage: setLanguageSetting,
   setTheme: setThemeSetting,
   setHotkeys: setHotkeysSetting,

@@ -909,6 +909,12 @@ Cards → «+» → «Publish a bestiary…» (or Community → Bestiaries): tic
 cover. «Add to the library» puts another GM's bestiary into your library (Cards, every campaign); a new version
 replaces its cards, «Remove from the library» sends them to the library's trash.
 
+## Parts of the app
+
+Settings → Parts of the app hides what you don't use: tabs, blocks of the right panel, Telegram and single tools. Nothing
+is deleted, and what other parts do with a hidden one still works; turn it back on and everything is in its place. The
+first launch offers the same list after the choice of systems.
+
 ## Files and trash
 
 Pictures, maps and tracks can be deleted from the app («⋯» or a right click → Move to trash).

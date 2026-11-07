@@ -8,6 +8,7 @@ import { players } from './ui/players.svelte';
 
 export default defineControl({
   id: 'players',
+  optional: true,
   get title() {
     return t('pl.title');
   },

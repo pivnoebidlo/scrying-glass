@@ -6,7 +6,7 @@
   import { assetUrl, prettyName } from '../../shared/vault';
   import { badgeOf } from './contrib';
   import { closeLightbox, lightbox } from './view-image.svelte';
-  import { imageActions } from './registry';
+  import { imageActionsOn } from './registry';
   import { store } from './store.svelte';
   import { t } from './i18n.svelte';
 
@@ -60,7 +60,7 @@
       <button class="btn" title={hint(t('view.copyHint'), 'imageCopy')} onclick={copy}>
         {#if copied === 'ok'}<Check size={14} /> {t('view.copied')}{:else}<Copy size={14} /> {copied === 'fail' ? t('view.copyFailed') : t('view.copy')}{/if}
       </button>
-      {#each imageActions.filter((a) => a.visible?.(app, path) ?? true) as a (a.id)}
+      {#each imageActionsOn(app.vault.partsOff).filter((a) => a.visible?.(app, path) ?? true) as a (a.id)}
         {@const on = a.active(app, path)}
         <button class="btn" class:primary={on} onclick={() => a.toggle(app, path)}>
           <a.icon size={14} />

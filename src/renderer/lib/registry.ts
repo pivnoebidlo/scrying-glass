@@ -11,5 +11,7 @@ export const displayContributions = Object.values(
 ).sort((a, b) => a.order - b.order);
 
 // Действия с файлами от всех модулей, в порядке модулей.
-export const imageActions: FileAction[] = controlContributions.flatMap((c) => c.imageActions ?? []);
-export const audioActions: FileAction[] = controlContributions.flatMap((c) => c.audioActions ?? []);
+// A hidden part takes its actions with it.
+const on = (off: string[]) => controlContributions.filter((c) => !off.includes(c.id));
+export const imageActionsOn = (off: string[]): FileAction[] => on(off).flatMap((c) => c.imageActions ?? []);
+export const audioActionsOn = (off: string[]): FileAction[] => on(off).flatMap((c) => c.audioActions ?? []);

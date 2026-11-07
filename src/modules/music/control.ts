@@ -13,6 +13,7 @@ import Settings from './ui/Settings.svelte';
 
 export default defineControl({
   id: 'music',
+  optional: true,
   get title() {
     return t('module.music');
   },

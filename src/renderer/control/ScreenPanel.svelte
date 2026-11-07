@@ -5,6 +5,7 @@
   import ScreenStatus from './ScreenStatus.svelte';
   import Stage from '../lib/Stage.svelte';
   import { controlContributions } from '../lib/registry';
+  import { isOff } from '../../shared/parts';
   import { dispatch, store } from '../lib/store.svelte';
   import { workspace } from './workspace.svelte';
   import { t } from '../lib/i18n.svelte';
@@ -82,7 +83,7 @@
   </div>
 
   {#each widgets as c (c.id)}
-    {#if c.screen && (c.screenWhen?.(store.state) ?? true)}
+    {#if c.screen && !isOff(store.state.vault.partsOff, c.id) && (c.screenWhen?.(store.state) ?? true)}
       {@const empty = c.screenEmpty?.(store.state) ?? null}
       {@const open = empty === null ? !workspace.screenClosed.includes(c.id) : peek.includes(c.id)}
       <button

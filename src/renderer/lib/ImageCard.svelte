@@ -6,7 +6,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import { vaultUrl, thumb } from '../../shared/vault';
-  import { imageActions } from './registry';
+  import { imageActionsOn } from './registry';
   import { dispatch, store } from './store.svelte';
   import { Maximize2, Trash2 } from '@lucide/svelte';
   import { badgeOf, type FileAction } from './contrib';
@@ -24,7 +24,7 @@
   }: { path: string; primary: string; aspect?: string; trash?: boolean; children?: Snippet } = $props();
 
   const app = $derived(store.state);
-  const actions = $derived([...imageActions].filter((a) => a.visible?.(app, path) ?? true));
+  const actions = $derived(imageActionsOn(app.vault.partsOff).filter((a) => a.visible?.(app, path) ?? true));
   const main = $derived(actions.find((a) => a.id === primary) ?? actions[0]);
   // Other actions that are on (a portrait in the Backgrounds tab, in combat): a badge.
   const badges = $derived(actions.filter((a) => a !== main && a.active(app, path)));

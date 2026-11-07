@@ -10,6 +10,7 @@ import { sfx } from './ui/playing.svelte';
 
 export default defineControl({
   id: 'sounds',
+  optional: true,
   get title() {
     return t('module.sounds');
   },

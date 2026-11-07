@@ -7,6 +7,8 @@ import { Beer, Blocks, Map as MapIcon, Dices, CalendarClock, Castle, Flag, Hourg
 import { systemUis } from '../../../systems/ui';
 import { enabledSystems, systems, usesOf } from '../../../systems';
 import { t } from '../../../renderer/lib/i18n.svelte';
+import { store } from '../../../renderer/lib/store.svelte';
+import { isOff, toolPart } from '../../../shared/parts';
 import type { ToolId } from './ui.svelte';
 import { generatorFamilies } from '../generators/store.svelte';
 
@@ -94,6 +96,9 @@ export function setExtra(family: string, id: string, on: boolean) {
 export type Place = 'common' | 'own' | 'extra';
 // Where a tool stands in a family's adventure: common, the system's own, turned on by hand — or hidden (null).
 export function placeOf(def: ToolDef, family: string): Place | null {
+  // Hidden by the GM, or its module is (Telegram, the timer).
+  const off = store.state.vault.partsOff;
+  if (isOff(off, toolPart(def.id)) || isOff(off, def.id)) return null;
   if (!def.families) return 'common';
   if (def.families.includes(family)) return 'own';
   // Turned on by hand — while one of its systems is on.

@@ -19,6 +19,7 @@ export interface VaultAccess {
   setRoles(roles: Partial<RoleNames> | null): VaultState;
   // Отключённые ролевые системы. Сохраняются в настройках приложения.
   setSystemsOff(list: string[]): VaultState;
+  setPartsOff(list: string[]): VaultState;
   // Interface language (app settings).
   setLanguage(language: LangSetting): VaultState;
   // The control window's colour theme (app settings).

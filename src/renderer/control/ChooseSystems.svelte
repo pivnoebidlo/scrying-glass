@@ -11,6 +11,7 @@
   import { PLUGINS } from '../../systems/plugins';
   import { familyOf, LEGACY_SYSTEM } from '../../systems';
   import { autoContent } from '../../modules/repo/ui/repo.svelte';
+  import PartsList from './PartsList.svelte';
 
   const BUILT_IN = PLUGINS.flatMap((p) => p.systems);
   // Ticked at first: the legacy family (D&D) — the others are a choice of their own.
@@ -54,12 +55,21 @@
     await dispatch('vault', 'setSystemsOff', { list: BUILT_IN.filter((d) => !builtIn[d.id]).map((d) => d.id) });
     // The built-in systems ticked get their content (D&D: its SRD) — in the background, with a notice.
     void autoContent().catch(() => undefined);
-    if (!failed.length) await dispatch('vault', 'systemsChosen');
+    if (!failed.length) step = 'parts';
   }
-  const skip = () => dispatch('vault', 'systemsChosen');
+  const skip = () => (step = 'parts');
+  // Then what the GM wants to see: after the systems, so that the list has the tools of those systems.
+  let step = $state<'systems' | 'parts'>('systems');
+  const finish = () => dispatch('vault', 'systemsChosen');
 </script>
 
-<div class="choose">
+{#if step === 'parts'}<div class="choose">
+  <h2>{t('parts.firstTitle')}</h2>
+  <p class="muted">{t('parts.firstText')}</p>
+  <div class="parts"><PartsList /></div>
+  <div class="row"><button class="btn primary" onclick={finish}><Check size={14} /> {t('welcome.systemsDone')}</button></div>
+  <p class="faint small">{t('parts.firstLater')}</p>
+</div>{:else}<div class="choose">
   <h2>{t('welcome.systemsTitle')}</h2>
   <p class="muted">{t('welcome.systemsText')}</p>
 
@@ -87,11 +97,16 @@
     </button>
   </div>
   <p class="faint small">{t('welcome.systemsLater')}</p>
-</div>
+</div>{/if}
 
 <style>
   .choose {
     text-align: left;
+  }
+  .parts {
+    max-height: 50vh;
+    margin-bottom: 12px;
+    overflow-y: auto;
   }
   h2 {
     margin: 0 0 6px;

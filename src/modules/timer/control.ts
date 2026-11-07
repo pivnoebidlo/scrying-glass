@@ -7,6 +7,7 @@ import Background from './ui/Background.svelte';
 
 export default defineControl({
   id: 'timer',
+  optional: true,
   get title() {
     return t('module.timer');
   },

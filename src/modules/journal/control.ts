@@ -21,6 +21,7 @@ export function pinnedPages(app: AppState): string[] {
 
 export default defineControl({
   id: 'journal',
+  optional: true,
   get title() {
     return t('module.journal');
   },

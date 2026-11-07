@@ -12,6 +12,7 @@ import Settings from './ui/Settings.svelte';
 
 export default defineControl({
   id: 'scene',
+  optional: true,
   get title() {
     return t('module.scene');
   },

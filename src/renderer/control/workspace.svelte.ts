@@ -93,6 +93,12 @@ class Workspace {
     if (this.active === id) this.active = this.tabs[Math.min(i, this.tabs.length - 1)] ?? null;
   }
 
+  // A part was hidden: its tab and side panel go (a link from another part can still open its tab).
+  hide(id: ModuleId) {
+    this.closeTab(id);
+    if (this.sidebar === id) this.sidebar = null;
+  }
+
   openSettings(section = '') {
     this.settingsSection = section;
     this.settingsOpen = true;

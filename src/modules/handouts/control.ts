@@ -11,6 +11,7 @@ import OnScreen from './ui/OnScreen.svelte';
 
 export default defineControl({
   id: 'handouts',
+  optional: true,
   get title() {
     return t('module.handouts');
   },

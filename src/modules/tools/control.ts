@@ -13,6 +13,7 @@ import { store } from '../../renderer/lib/store.svelte';
 
 export default defineControl({
   id: 'tools',
+  optional: true,
   get title() {
     return t('module.tools');
   },

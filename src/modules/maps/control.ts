@@ -12,6 +12,7 @@ import { ui } from './ui/ui.svelte';
 
 export default defineControl({
   id: 'maps',
+  optional: true,
   get title() {
     return t('module.maps');
   },

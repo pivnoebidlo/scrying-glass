@@ -3,11 +3,13 @@
   import { hint } from '../../shared/hotkeys';
   import { Settings } from '@lucide/svelte';
   import { controlContributions } from '../lib/registry';
+  import { isOff } from '../../shared/parts';
+  import { store } from '../lib/store.svelte';
   import { workspace } from './workspace.svelte';
   import { t } from '../lib/i18n.svelte';
 
   // В полосе только модули, у которых есть вкладка или боковая панель.
-  const items = controlContributions.filter((c) => c.view || c.sidebar);
+  const items = $derived(controlContributions.filter((c) => (c.view || c.sidebar) && !isOff(store.state.vault.partsOff, c.id)));
 </script>
 
 <nav class="ribbon">

@@ -9,6 +9,7 @@ import Background from './ui/Background.svelte';
 
 export default defineControl({
   id: 'bestiary',
+  optional: true,
   // Вкладка — «Карточки»: в ней монстры, NPC и персонажи партии (модуль по-прежнему bestiary).
   get title() {
     return t('module.bestiary');

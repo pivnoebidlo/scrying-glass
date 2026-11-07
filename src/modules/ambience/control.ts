@@ -7,6 +7,7 @@ import OnScreen from './ui/OnScreen.svelte';
 
 export default defineControl({
   id: 'ambience',
+  optional: true,
   get title() {
     return t('module.ambience');
   },

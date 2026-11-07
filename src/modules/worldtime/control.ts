@@ -7,6 +7,7 @@ import { usesHere } from '../../shared/adventures';
 
 export default defineControl({
   id: 'worldtime',
+  optional: true,
   get title() {
     return t('module.worldtime');
   },

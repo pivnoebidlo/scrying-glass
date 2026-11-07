@@ -15,6 +15,7 @@ import Settings from './ui/Settings.svelte';
 
 export default defineControl({
   id: 'initiative',
+  optional: true,
   get title() {
     return t('module.initiative');
   },

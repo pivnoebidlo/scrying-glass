@@ -41,6 +41,8 @@ export interface VaultState {
   roles: RoleNames;
   // Отключённые в настройках ролевые системы (id).
   systemsOff: string[];
+  // Parts of the interface the GM hid (shared/parts.ts); their data stays.
+  partsOff: string[];
   // Systems described by packs (built-in and the GM's own, shared/syspack.ts): the windows register them.
   systems: SystemPack[];
   // Content of systems installed to the library (shared/content.ts): what built-in creatures and books there are.

@@ -811,6 +811,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   (`sheetText`, `namesInText`; типы — `SystemPlugin.sheetEntries`, русские названия сервиса — `importer.table.aliases`), `conditions` — состояния с записью;
   `/api/<токен>/entry?name=` отдаёт `publicEntry` только для них, весь справочник не листается. Записи читаются с диска раз в `BOOK_LIFE` (30 с): правка мастера доходит с задержкой.
   На странице — те же `spellLinks` / `peekEntry`, панель `renderer/player/EntrySheet.svelte`. Дальше: расходники (Pathfinder, пакеты), броски в журнал мастера, загадки с телефона (ход живёт в окне мастера).
+- Части приложения (`shared/parts.ts`): мастер скрывает модули (`optional: true` в `control.ts`) и инструменты (`tool:<id>`) — `settings.partsOff` → `vault.partsOff`, действие `vault/setPartsOff`, список — `renderer/control/PartsList.svelte` (раздел настроек и второй шаг `ChooseSystems`). Скрытое — только не видно: `Ribbon`, `ScreenPanel`, `Settings`, `imageActionsOn` / `audioActionsOn`, `placeOf` у инструментов; состояние, фоновые компоненты и слои игроков работают, ссылка из другой части открывает вкладку. Модули систем (`aspects`, `clocks`, `crew`, `factions`) не выключаются: их показывает `uses`.
 - Подборка правой панели (`modules/scenes/tray.ts`, вид — `scenes/ui/Tray.svelte` в блоках фона, карты, портретов и
   раздатки, `TrayChips.svelte` + `renderer/lib/ListPicker.svelte` — в музыке (плейлисты и треки; трек — действие
   `music/playTrack`, тогда `playlist` — путь трека) и инициативе (id заготовок; `Combatant.encounter` от

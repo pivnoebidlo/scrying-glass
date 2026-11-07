@@ -10,6 +10,7 @@ import { sendToTelegram, tgReady } from './ui/tg.svelte';
 
 export default defineControl({
   id: 'telegram',
+  optional: true,
   get title() {
     return t('tg.title');
   },

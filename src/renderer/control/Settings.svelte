@@ -4,9 +4,11 @@
   import Lead from '../lib/Lead.svelte';
   import { hint } from '../../shared/hotkeys';
   import { HIDDEN_THEMES, THEMES, type ThemeSetting } from '../../shared/vault';
-  import { Globe, Info, Keyboard, X } from '@lucide/svelte';
+  import { Globe, Info, Keyboard, LayoutGrid, X } from '@lucide/svelte';
   import About from './About.svelte';
   import Hotkeys from './Hotkeys.svelte';
+  import PartsList from './PartsList.svelte';
+  import { isOff } from '../../shared/parts';
   import { controlContributions } from '../lib/registry';
   import { dispatch, store } from '../lib/store.svelte';
   import { t } from '../lib/i18n.svelte';
@@ -47,8 +49,10 @@
   const themes = $derived(THEMES.filter((id) => !HIDDEN_THEMES.includes(id) || store.state.vault.themesFound.includes(id) || store.state.vault.theme === id));
   const GENERAL = 'general';
   const ABOUT = 'about';
-  const moduleSections = controlContributions.filter((c) => c.settings);
+  const moduleSections = $derived(controlContributions.filter((c) => c.settings && !isOff(store.state.vault.partsOff, c.id)));
   const HOTKEYS_SECTION = 'hotkeys';
+  const PARTS_SECTION = 'parts';
+  const parts = $derived(workspace.settingsSection === PARTS_SECTION);
   const about = $derived(workspace.settingsSection === ABOUT);
   const hotkeys = $derived(workspace.settingsSection === HOTKEYS_SECTION);
   // A section that is not set or gone — the first one.
@@ -58,8 +62,8 @@
   const close = () => (workspace.settingsOpen = false);
 
   // ↑ ↓ — the previous / next section, as the lists of the side panel (not in a field: there the keys are its own).
-  const order = $derived([GENERAL, HOTKEYS_SECTION, ...moduleSections.map((c) => c.id as string), ABOUT]);
-  const sectionNow = $derived(about ? ABOUT : hotkeys ? HOTKEYS_SECTION : current ? (current.id as string) : GENERAL);
+  const order = $derived([GENERAL, HOTKEYS_SECTION, PARTS_SECTION, ...moduleSections.map((c) => c.id as string), ABOUT]);
+  const sectionNow = $derived(about ? ABOUT : hotkeys ? HOTKEYS_SECTION : parts ? PARTS_SECTION : current ? (current.id as string) : GENERAL);
   // Esc closes the top layer only: a dialog, a picker or a menu opened over the settings goes first.
   let win = $state<HTMLElement | null>(null);
   const layerAbove = () =>
@@ -86,13 +90,17 @@
   <div class="modal" role="dialog" aria-modal="true" aria-label={t('app.settings')} bind:this={win}>
     <nav class="nav">
       <div class="pane-title">{t('app.settings')}</div>
-      <button class="nav-item" class:active={!about && !hotkeys && (general || !current)} onclick={() => (workspace.settingsSection = GENERAL)}>
+      <button class="nav-item" class:active={!about && !hotkeys && !parts && (general || !current)} onclick={() => (workspace.settingsSection = GENERAL)}>
         <Globe size={14} />
         {t('settings.general')}
       </button>
       <button class="nav-item" class:active={hotkeys} onclick={() => (workspace.settingsSection = HOTKEYS_SECTION)}>
         <Keyboard size={14} />
         {t('hk.title')}
+      </button>
+      <button class="nav-item" class:active={parts} onclick={() => (workspace.settingsSection = PARTS_SECTION)}>
+        <LayoutGrid size={14} />
+        {t('parts.title')}
       </button>
       {#each moduleSections as c (c.id)}
         {@const Icon = c.settingsIcon ?? c.icon}
@@ -116,7 +124,7 @@
       {:else if hotkeys}
         <h2>{t('hk.title')}</h2>
         <Hotkeys />
-      {:else if general || !current}
+      {:else if !parts && (general || !current)}
         <h2>{t('settings.general')}</h2>
         <div class="setting">
           <div class="info">
@@ -166,6 +174,10 @@
           <label class="check"><input type="checkbox" checked={updates.check} onchange={async (e) => (updates = await window.api.setUpdateSettings({ check: e.currentTarget.checked }))} /> {t('updates.onLaunch')}</label>
           <button class="btn" disabled={checking} onclick={checkNow}>{t('updates.checkNow')}</button>
         </div>
+      {:else if parts}
+        <h2>{t('parts.title')}</h2>
+        <p class="faint">{t('parts.text')}</p>
+        <PartsList />
       {:else if current?.settings}
         <h2>{current.settingsTitle ?? current.title}</h2>
         <current.settings ms={store.state[current.id]} app={store.state} />

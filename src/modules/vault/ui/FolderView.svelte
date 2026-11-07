@@ -9,7 +9,7 @@
   import { findFolder, folderRole } from '../../../shared/vault';
   import ImageCard from '../../../renderer/lib/ImageCard.svelte';
   import NameField from '../../../renderer/lib/NameField.svelte';
-  import { audioActions } from '../../../renderer/lib/registry';
+  import { audioActionsOn } from '../../../renderer/lib/registry';
   import { store } from '../../../renderer/lib/store.svelte';
   import { trackName } from '../../../shared/vault';
   import { folderIcon, followAdventure, ui } from './ui.svelte';
@@ -93,6 +93,7 @@
     const parts = path.split('/');
     for (let i = 1; i < parts.length; i++) ui.expanded[parts.slice(0, i).join('/')] = true;
   }
+  const audioActions = $derived(audioActionsOn(store.state.vault.partsOff));
 </script>
 
 <svelte:window {onkeydown} />

@@ -8,6 +8,7 @@ import View from './ui/View.svelte';
 
 export default defineControl({
   id: 'compendium',
+  optional: true,
   get title() {
     return t('module.compendium');
   },
