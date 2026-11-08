@@ -6,7 +6,7 @@
   import { markdownKeys } from '../../renderer/lib/markdownKeys';
   import { t } from '../../renderer/lib/i18n.svelte';
   import type { CardKind } from '../../shared/cards';
-  import { blankStats, boxesOf, evalFormula, loc, sectionsFor, slotGroups, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { blankStats, boxesOf, boxMark, clickMarks, heavyOf, insideTracks, evalFormula, loc, sectionsFor, slotGroups, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
   import { packOf } from '../packs';
 
   let {
@@ -31,6 +31,13 @@
   const str = (key: string) => (typeof stats[key] === 'string' ? (stats[key] as string) : '');
   const num = (key: string) => (typeof stats[key] === 'number' ? (stats[key] as number) : 0);
   const setMarks = (key: string, n: number) => (stats[key] = num(key) === n ? n - 1 : n);
+  // A track of two kinds: one set of boxes, its heavy track's marks first.
+  const inside = $derived(insideTracks(pack));
+  function clickTwo(f: FieldDef, h: FieldDef, i: number) {
+    const m = clickMarks({ light: num(f.key), heavy: num(h.key) }, boxesOf(pack, stats, f), i);
+    stats[f.key] = m.light;
+    stats[h.key] = m.heavy;
+  }
   const rows = (f: FieldDef) => (Array.isArray(stats[f.key]) ? (stats[f.key] as Record<string, unknown>[]) : []);
   const tags = (f: FieldDef) => (Array.isArray(stats[f.key]) ? (stats[f.key] as string[]) : []);
   const blankRow = (cols: ColumnDef[]) => Object.fromEntries(cols.map((c) => [c.key, c.type === 'number' || c.type === 'dots' ? 0 : '']));
@@ -57,7 +64,7 @@
     <section>
       <h4>{L(sec.title)}</h4>
       <div class="grid">
-        {#each sec.fields.filter((f) => !['textarea', 'list', 'tags', 'slots'].includes(f.type)) as f (f.key)}
+        {#each sec.fields.filter((f) => !['textarea', 'list', 'tags', 'slots'].includes(f.type) && !inside.has(f.key)) as f (f.key)}
           <label class="field" class:small={f.type === 'number' || f.type === 'formula'} title={L(f.hint)}>
             <span>{L(f.title)}</span>
             {#if f.type === 'number'}
@@ -77,6 +84,14 @@
               <span class="marks">
                 {#each { length: f.max ?? 5 } as _, i (i)}
                   <button type="button" class="dot" class:on={i < num(f.key)} aria-label={String(i + 1)} onclick={(e) => (e.preventDefault(), setMarks(f.key, i + 1))}></button>
+                {/each}
+              </span>
+            {:else if f.type === 'track' && heavyOf(pack, f)}
+              {@const h = heavyOf(pack, f)!}
+              <span class="marks">
+                {#each { length: boxesOf(pack, stats, f) } as _, i (i)}
+                  {@const at = boxMark({ light: num(f.key), heavy: num(h.key) }, i)}
+                  <button type="button" class="box" class:on={at === 'heavy'} class:slash={at === 'light'} aria-label={String(i + 1)} onclick={(e) => (e.preventDefault(), clickTwo(f, h, i))}></button>
                 {/each}
               </span>
             {:else if f.type === 'track'}
@@ -220,6 +235,10 @@
   .box.on {
     border-color: var(--accent);
     background: var(--accent);
+  }
+  .box.slash {
+    border-color: var(--accent);
+    background: linear-gradient(to bottom right, transparent calc(50% - 1px), var(--accent) calc(50% - 1px), var(--accent) calc(50% + 1px), transparent calc(50% + 1px));
   }
   .wide {
     display: flex;

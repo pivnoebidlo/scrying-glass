@@ -7,7 +7,7 @@
   import { dispatch, store } from '../../renderer/lib/store.svelte';
   import type { Combatant } from '../../modules/initiative/types';
   import { currentSystem } from '../../shared/adventures';
-  import { fieldMap, loc } from '../../shared/syspack';
+  import { boxMark, clickMarks, fieldMap, heavyOf, insideTracks, loc, type TwoMarks } from '../../shared/syspack';
   import { getLang } from '../../shared/i18n';
   import { packOf } from '../packs';
   import { atTable, tableKeys } from '../../modules/initiative/table';
@@ -20,8 +20,8 @@
   const defence = $derived(pack?.tracker.defence ? loc(fields.get(pack.tracker.defence)?.title, getLang()) : '');
   const cells = $derived(
     (pack?.tracker.cells ?? [])
-      .filter((k) => k !== pack?.tracker.hp)
-      .map((k) => ({ key: k, track: fields.get(k)?.type === 'track', text: ['text', 'textarea'].includes(fields.get(k)?.type ?? ''), title: loc(fields.get(k)?.title, getLang()) })),
+      .filter((k) => k !== pack?.tracker.hp && !(pack && insideTracks(pack).has(k)))
+      .map((k) => ({ key: k, heavy: pack && fields.get(k) ? heavyOf(pack, fields.get(k)!)?.key : undefined, track: fields.get(k)?.type === 'track', text: ['text', 'textarea'].includes(fields.get(k)?.type ?? ''), title: loc(fields.get(k)?.title, getLang()) })),
   );
   const setText = (c: Combatant, key: string, v: string) => update(c, { texts: { ...(c.texts ?? {}), [key]: v.trim() } });
 
@@ -53,6 +53,17 @@
     const to = marked(c, key) === n ? n - 1 : n;
     if (onTable(c, key)) return void toTable(c, key, to);
     update(c, { stress: (c.stress ?? []).map((s) => (s.id === key ? { ...s, boxes: s.boxes.map((_, i) => i < to) } : s)) });
+  }
+  // A track of two kinds: the heavy track's boxes are the same ones (heavy marks first).
+  const twoOf = (c: Combatant, key: string, heavy: string): TwoMarks => ({ light: marked(c, key), heavy: marked(c, heavy) });
+  const boxesIn = (c: Combatant, key: string) => c.stress?.find((s) => s.id === key)?.boxes.length ?? 0;
+  function clickTwo(c: Combatant, key: string, heavy: string, i: number) {
+    const m = clickMarks(twoOf(c, key, heavy), boxesIn(c, key), i);
+    if (onTable(c, key) && onTable(c, heavy)) return void (toTable(c, key, m.light), toTable(c, heavy, m.heavy));
+    const to = (id: string, n: number) => (s: { id: string; boxes: boolean[] }) => (s.id === id ? { ...s, boxes: s.boxes.map((_, j) => j < n) } : s);
+    const has = (c.stress ?? []).some((s) => s.id === heavy);
+    const lines = (c.stress ?? []).map(to(key, m.light)).map(to(heavy, m.heavy));
+    update(c, { stress: has ? lines : [...lines, { id: heavy, boxes: Array.from({ length: boxesIn(c, key) }, (_, j) => j < m.heavy) }] });
   }
   function setAttr(c: Combatant, key: string, value: number | null) {
     const old = c.attrs?.find((a) => a.id === key);
@@ -98,9 +109,16 @@
         <input type="text" class="txt" class:filled={!!c.texts?.[cell.key]} value={c.texts?.[cell.key] ?? ''} placeholder={cell.title} onchange={(e) => setText(it, cell.key, e.currentTarget.value)} />
       {:else if cell.track}
         {@const line = c.stress?.find((s) => s.id === cell.key)}
-        <span class="track">
-          {#each line?.boxes ?? [] as on, i (i)}<button class="box" class:on aria-label={String(i + 1)} onclick={() => setBoxes(it, cell.key, i + 1)}></button>{/each}
-        </span>
+        {#if cell.heavy}
+          {@const m = twoOf(c, cell.key, cell.heavy)}
+          <span class="track">
+            {#each line?.boxes ?? [] as _, i (i)}{@const at = boxMark(m, i)}<button class="box" class:on={at === 'heavy'} class:slash={at === 'light'} aria-label={String(i + 1)} onclick={() => clickTwo(it, cell.key, cell.heavy!, i)}></button>{/each}
+          </span>
+        {:else}
+          <span class="track">
+            {#each line?.boxes ?? [] as on, i (i)}<button class="box" class:on aria-label={String(i + 1)} onclick={() => setBoxes(it, cell.key, i + 1)}></button>{/each}
+          </span>
+        {/if}
       {:else}
         {@const a = c.attrs?.find((x) => x.id === cell.key)}
         <input class="n" type="text" inputmode="numeric" value={a?.value ?? ''} placeholder="—" onchange={(e) => setAttr(it, cell.key, num(e.currentTarget.value))} />{#if a?.max}<span class="faint">/{a.max}</span>{/if}
@@ -163,6 +181,10 @@
   .box.on {
     border-color: var(--danger);
     background: var(--danger);
+  }
+  .box.slash {
+    border-color: var(--danger);
+    background: linear-gradient(to bottom right, transparent calc(50% - 1px), var(--danger) calc(50% - 1px), var(--danger) calc(50% + 1px), transparent calc(50% + 1px));
   }
   .out.on {
     color: var(--danger);

@@ -51,10 +51,12 @@ export type RollSpec =
   // marked — that many dice of the pool are special: they count as the others, a push leaves them, and they can say
   // something (top — a pair of top faces with one of them, one — a failure with a 1 on one of them); pairs — extra
   // successes for each pair of top faces; pushMax — a push rolls no more dice than this.
+  // pair — sections whose fields can join the pool at the moment of the roll (an attribute and a skill): the field's
+  // value is added to the count, its title to the roll's name.
   | {
       type: 'pool'; sides: number; count: string; success?: number; best?: boolean; push?: boolean; resist?: boolean;
       kind?: PoolKind; groups?: PoolGroup[]; pushStress?: boolean; ask?: boolean; askRange?: number; max?: number;
-      need?: boolean; tweak?: boolean; marked?: PoolMarked; pairs?: number; pushMax?: number;
+      need?: boolean; tweak?: boolean; marked?: PoolMarked; pairs?: number; pushMax?: number; pair?: string[];
     }
   // 4dF + bonus.
   | { type: 'fate'; bonus: string; labels?: RollLabels }
@@ -140,6 +142,10 @@ export interface FieldDef {
   auto?: string;
   // A roll by a click on the field (on a row of a list).
   roll?: RollSpec;
+  // track: the key of another track whose marks are a second, heavier kind in these same boxes (light and heavy
+  // damage of one Health track): heavy marks fill the boxes first, light marks past the end turn into heavy ones. The
+  // other track isn't drawn on its own; an older app shows the two tracks apart.
+  heavy?: string;
   // A track, dots, a number (with `max`) or a formula (its value is the most there can be: hit points) marked at the
   // table, apart from the card: 'both' — by the player too, 'gm' —
   // by the GM only (shared/players.ts).
@@ -195,7 +201,7 @@ export interface TrackerSpec {
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 9;
+export const PACK_FORMAT = 10;
 
 export interface SystemPack {
   scryingGlass: 'system';
@@ -474,6 +480,7 @@ function rollOf(x: unknown): RollSpec | null {
         ...(plain && marked ? { marked } : {}),
         ...(plain && num(x['pairs']) && (x['pairs'] as number) >= 1 ? { pairs: Math.min(10, Math.round(x['pairs'] as number)) } : {}),
         ...(plain && num(x['pushMax']) && (x['pushMax'] as number) >= 1 ? { pushMax: Math.min(30, Math.round(x['pushMax'] as number)) } : {}),
+        ...(pairOf(x['pair']) ? { pair: pairOf(x['pair'])! } : {}),
       };
     }
     case 'fate':
@@ -504,6 +511,7 @@ function fieldOf(x: unknown): FieldDef | null {
     if (LIVE_TYPES.includes(type) && (type !== 'number' || f.max !== undefined)) f.live = x['live'];
   }
   if (type === 'track') {
+    if (typeof x['heavy'] === 'string' && KEY_RE.test(x['heavy']) && x['heavy'] !== x['key']) f.heavy = x['heavy'];
     const b = x['boxes'];
     if (typeof b === 'number' && b >= 1 && b <= 40) f.boxes = Math.round(b);
     else if (typeof b === 'string' && KEY_RE.test(b)) f.boxes = b;
@@ -553,6 +561,11 @@ function fieldOf(x: unknown): FieldDef | null {
   }
   return f;
 }
+
+const pairOf = (v: unknown): string[] | null => {
+  const keys = (typeof v === 'string' ? [v] : Array.isArray(v) ? v : []).filter((k): k is string => typeof k === 'string' && KEY_RE.test(k)).slice(0, 8);
+  return keys.length ? keys : null;
+};
 
 function viewOf(s: Record<string, unknown>): Pick<SectionDef, 'view' | 'grid'> {
   if (s['view'] === 'lines') return { view: 'lines' };
@@ -1008,6 +1021,60 @@ export const sectionsFor = (pack: SystemPack, kind: CardKind) => pack.sections.f
 export const boxesOf = (pack: SystemPack, stats: PackStats, f: FieldDef) =>
   Math.max(0, Math.min(40, Math.round(typeof f.boxes === 'number' ? f.boxes : f.boxes ? evalFormula(pack, stats, f.boxes) : 0)));
 
+// The fields that can join a pool (`pair`): numbers of those sections the card has.
+export const pairFields = (pack: SystemPack, ids: string[], kind: CardKind): FieldDef[] =>
+  sectionsFor(pack, kind).filter((s) => ids.includes(s.id)).flatMap((s) => s.fields).filter((f) => f.type === 'number' || f.type === 'dots' || f.type === 'formula');
+
+// A track with two kinds of marks: the heavy track drawn in its boxes (a track, not itself holding another).
+export function heavyOf(pack: SystemPack, f: FieldDef): FieldDef | undefined {
+  if (f.type !== 'track' || !f.heavy) return undefined;
+  const h = fieldMap(pack).get(f.heavy);
+  return h && h.type === 'track' && !h.heavy && h.key !== f.key ? h : undefined;
+}
+// The fields of the tracker's cells, with the heavy track of a track of two kinds right after it.
+export function trackerCells(pack: SystemPack): FieldDef[] {
+  const fields = fieldMap(pack);
+  const out: FieldDef[] = [];
+  for (const k of pack.tracker.cells ?? []) {
+    const f = fields.get(k);
+    if (!f || out.includes(f)) continue;
+    out.push(f);
+    const h = heavyOf(pack, f);
+    if (h && !out.includes(h)) out.push(h);
+  }
+  return out;
+}
+// The tracks drawn inside another one: not shown on their own.
+export const insideTracks = (pack: SystemPack): Set<string> =>
+  new Set(pack.sections.flatMap((s) => s.fields).flatMap((f) => (heavyOf(pack, f) ? [f.heavy!] : [])));
+
+export interface TwoMarks {
+  light: number;
+  heavy: number;
+}
+// What box `i` (from 0) of a track of two kinds holds: heavy marks first, then light ones.
+export const boxMark = (m: TwoMarks, i: number): 'heavy' | 'light' | null => (i < m.heavy ? 'heavy' : i < m.heavy + m.light ? 'light' : null);
+// A click on box `i`: an empty one — light marks up to it, a light one turns heavy, a heavy one — heavy marks down to
+// it (it and those after it are no longer heavy).
+export function clickMarks(m: TwoMarks, boxes: number, i: number): TwoMarks {
+  const at = boxMark(m, i);
+  if (at === null) return { heavy: m.heavy, light: Math.min(boxes, i + 1) - m.heavy };
+  if (at === 'light') return { heavy: m.heavy + 1, light: m.light - 1 };
+  return { heavy: i, light: Math.min(m.light, boxes - i) };
+}
+// Marks added (n > 0) or taken (n < 0) of a kind. A full track takes more by turning a light mark heavy; when all are
+// heavy, nothing more fits.
+export function addMarks(m: TwoMarks, boxes: number, kind: keyof TwoMarks, n: number): TwoMarks {
+  let { light, heavy } = m;
+  if (n < 0) return kind === 'light' ? { heavy, light: Math.max(0, light + n) } : { light, heavy: Math.max(0, heavy + n) };
+  for (let k = 0; k < n; k++) {
+    if (heavy + light < boxes) kind === 'light' ? light++ : heavy++;
+    else if (light > 0) (light--, heavy++);
+    else break;
+  }
+  return { light, heavy };
+}
+
 // ---- Cards ----
 export function blankStats(pack: SystemPack, kind: CardKind): PackStats {
   const out: PackStats = {};
@@ -1046,7 +1113,7 @@ export function packCombat(pack: SystemPack, stats: PackStats): CombatStats {
   const hpField = t.hp ? fields.get(t.hp) : undefined;
   const hp = hpField ? (hpField.type === 'track' ? boxesOf(pack, stats, hpField) : evalFormula(pack, stats, hpField.key)) : null;
   const initiative = t.init.type === 'roll' && t.init.bonus ? evalFormula(pack, stats, t.init.bonus) : t.init.type === 'value' ? evalFormula(pack, stats, t.init.value) : 0;
-  const cells = (t.cells ?? []).map((k) => fields.get(k)).filter((f): f is FieldDef => !!f && f.key !== t.hp);
+  const cells = trackerCells(pack).filter((f) => f.key !== t.hp);
   return {
     hp: hp && hp > 0 ? Math.round(hp) : null,
     ac: t.defence && fields.has(t.defence) ? evalFormula(pack, stats, t.defence) : null,

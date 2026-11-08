@@ -6,7 +6,7 @@
   import type { Card } from '../../shared/cards';
   import { modeOf, rolls } from '../../renderer/lib/rolls.svelte';
   import { usedAfter } from '../../shared/players';
-  import { aloneOnLine, boxesOf, cellDice, cellText, evalFormula, lineGroups, loc, longColumn, packResources, sectionsFor, signedNum, slotGroups, tabsOf, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
+  import { addMarks, aloneOnLine, boxesOf, boxMark, clickMarks, fieldMap, heavyOf, insideTracks, pairFields, type TwoMarks, cellDice, cellText, evalFormula, lineGroups, loc, longColumn, packResources, sectionsFor, signedNum, slotGroups, tabsOf, type ColumnDef, type FieldDef, type PackSlot, type PackStats, type SystemPack } from '../../shared/syspack';
   import { Dices } from '@lucide/svelte';
   import { entryHtml } from '../../renderer/lib/entry/markup';
   import { escape } from '../../renderer/lib/markdown';
@@ -31,6 +31,16 @@
   // The field can be changed here.
   const marks = (f: FieldDef) => !!host && !!res && Object.hasOwn(res.limits, f.key) && !(host.player && res.gmOnly?.includes(f.key));
   const mark = (f: FieldDef, box: number) => host?.set(card, f.key, usedAfter(num(f), box));
+  // A track of two kinds: its own marks are light, the heavy track's — heavy (one set of boxes).
+  const inside = $derived(insideTracks(pack));
+  const twoOf = (f: FieldDef, h: FieldDef): TwoMarks => ({ light: num(f), heavy: num(h) });
+  const setTwo = (f: FieldDef, h: FieldDef, m: TwoMarks) => (host?.set(card, f.key, m.light), host?.set(card, h.key, m.heavy));
+  const markTrack = (f: FieldDef, i: number) => {
+    const h = heavyOf(pack, f);
+    if (!h) return mark(f, i);
+    setTwo(f, h, clickMarks(twoOf(f, h), boxesOf(pack, s, f), i));
+  };
+  const marksTrack = (f: FieldDef) => marks(f) && (!heavyOf(pack, f) || marks(heavyOf(pack, f)!));
   const step = (f: FieldDef, by: number) => host?.set(card, f.key, Math.max(0, Math.min(res?.limits[f.key] ?? 0, num(f) + by)));
   const resets = $derived(host && pack ? (pack.resets ?? []).filter((r) => res?.resets[r.id] && !(host.player && res.resets[r.id]!.some((k) => res.gmOnly?.includes(k)))) : []);
   function reset(id: string, title: string) {
@@ -45,7 +55,7 @@
   // A field shows if it has something (an empty text or list isn't drawn; numbers always are).
   const slots = (f: FieldDef) => (Array.isArray(s[f.key]) ? (s[f.key] as PackSlot[]) : []);
   const filled = (f: FieldDef) =>
-    f.hidden ? false : f.type === 'track' ? boxesOf(pack, s, f) > 0 : f.type === 'text' || f.type === 'textarea'
+    f.hidden || inside.has(f.key) ? false : f.type === 'track' ? boxesOf(pack, s, f) > 0 : f.type === 'text' || f.type === 'textarea'
       ? !!text(f).trim()
       : f.type === 'list' || f.type === 'tags'
         ? (f.type === 'list' ? rows(f) : tags(f)).length > 0
@@ -60,11 +70,13 @@
 
   function roll(f: FieldDef, e: MouseEvent, row?: Record<string, unknown>, extra = 0, step = 0) {
     if (!f.roll) return;
-    // A pool that asks: dice added or taken first (help, darkness) — the chips under the field.
-    if (f.roll.type === 'pool' && f.roll.ask && asking === null) return void (asking = { key: f.key, row, mode: modeOf(e) });
-    const named = row ? rowName(f, row) : L(f.title);
+    // A pool that asks: dice added or taken first (help, darkness), a second trait — the chips under the field.
+    if (f.roll.type === 'pool' && (f.roll.ask || pairsOf(f).length) && asking === null) return void (asking = { key: f.key, row, mode: modeOf(e) });
+    const with_ = asking?.with ? fieldMap(pack).get(asking.with) : undefined;
+    const base = row ? rowName(f, row) : L(f.title);
+    const named = with_ ? `${base} + ${L(with_.title)}` : base;
     const label = step ? `${named} (${t('pack.step', { n: step + 1 })})` : named;
-    const spec = extra && f.roll.type === 'pool' ? { ...f.roll, count: `(${f.roll.count}) + ${extra}` } : step && f.roll.type === 'd20' ? { ...f.roll, bonus: stepped(f.roll.bonus, f.roll.steps?.[step - 1]) } : f.roll;
+    const spec = (extra || with_) && f.roll.type === 'pool' ? { ...f.roll, count: `(${f.roll.count}) + ${extra}${with_ ? ` + ${with_.key}` : ''}` } : step && f.roll.type === 'd20' ? { ...f.roll, bonus: stepped(f.roll.bonus, f.roll.steps?.[step - 1]) } : f.roll;
     const done = rolls.packRoll(card.name, extra ? `${label} (${extra > 0 ? '+' : '−'}${Math.abs(extra)})` : label, spec, (formula) => evalFormula(pack, s, formula, row), asking?.mode ?? modeOf(e), row);
     if (done.change) apply(done.id, done.change);
     asking = null;
@@ -80,17 +92,30 @@
   }
   // An outcome changes the sheet: a field marked at the table, here and now; the log can take it back.
   function apply(id: number, c: { field: string; by: number }) {
-    const f = sections.flatMap((x) => x.fields).find((x) => x.key === c.field);
+    const all = fieldMap(pack);
+    const f = all.get(c.field);
     if (!f) return;
     const title = L(f.title);
     if (!marks(f)) return rolls.changed(id, { title, by: c.by });
+    // One kind of a track of two: a full track turns light marks heavy.
+    const owner = heavyOf(pack, f) ? f : [...all.values()].find((x) => heavyOf(pack, x)?.key === f.key);
+    const heavy = owner && heavyOf(pack, owner);
+    if (owner && heavy && marks(owner) && marks(heavy)) {
+      const was = twoOf(owner, heavy);
+      const next = addMarks(was, boxesOf(pack, s, owner), owner === f ? 'light' : 'heavy', c.by);
+      setTwo(owner, heavy, next);
+      const from = owner === f ? was.light : was.heavy;
+      return rolls.changed(id, { title, by: c.by, from, to: owner === f ? next.light : next.heavy, undo: () => setTwo(owner, heavy, was) });
+    }
     const from = num(f);
     const to = Math.max(0, Math.min(res?.limits[f.key] ?? 0, from + c.by));
     host?.set(card, f.key, to);
     rolls.changed(id, { title, by: c.by, from, to, undo: () => host?.set(card, f.key, from) });
   }
   // The field whose pool asks for added or taken dice now.
-  let asking = $state<{ key: string; row?: Record<string, unknown>; mode: ReturnType<typeof modeOf> } | null>(null);
+  // with — the second trait picked (pair).
+  let asking = $state<{ key: string; row?: Record<string, unknown>; mode: ReturnType<typeof modeOf>; with?: string } | null>(null);
+  const pairsOf = (f: FieldDef | undefined) => (f?.roll?.type === 'pool' && f.roll.pair ? pairFields(pack, f.roll.pair, card.kind).filter((x) => x.key !== f.key) : []);
   // −N…+N: the pool's askRange (3 if not set).
   const modsOf = (f: FieldDef | undefined) => {
     const n = f?.roll?.type === 'pool' ? (f.roll.askRange ?? 3) : 3;
@@ -147,6 +172,17 @@
   {#each shownCols(f).filter((c) => hasCell(row[c.key])) as c, n (c.key)}{c.show === 'label' ? (n ? ', ' : '') : n ? ' ' : ''}{#if c.show === 'label'}<strong>{L(c.title)}</strong>{' '}{/if}{#if c.key === main?.key}{#each stepsOf(f, row).length ? stepsOf(f, row) : [row[c.key]] as v, i (i)}{i ? ' / ' : ''}<button class="inroll" title={t('pack.rollHint')} onclick={(e) => roll(f, e, row, 0, i)}>{inlineCell(c, v)}</button>{/each}{:else if c.type === 'dice' && cellDice(String(row[c.key]))}<button class="inroll" title={t('pack.rollHint')} onclick={() => hit(f, row, c, false)}>{cellText(String(row[c.key]))}</button>{#if c.crit}{' '}<button class="inroll" title={t('pack.crit')} onclick={() => hit(f, row, c, true)}>×2</button>{/if}{:else if c.show === 'note'}<span class="note">({cell_(row[c.key])})</span>{:else if c.show === 'strong'}<strong>{row[c.key]}</strong>{:else}{inlineCell(c, row[c.key])}{/if}{/each}
 {/snippet}
 
+<!-- A track: boxes, marked by a click where the field is marked at the table; of two kinds — light ones slashed,
+     heavy ones filled. -->
+{#snippet track(f: FieldDef)}
+  {@const n = boxesOf(pack, s, f)}
+  {@const h = heavyOf(pack, f)}
+  {@const m = h ? twoOf(f, h) : { light: num(f), heavy: 0 }}
+  {@const edit = marksTrack(f)}
+  <span class="boxes" aria-label={h ? `${m.light} + ${m.heavy} / ${n}` : `${m.light} / ${n}`}
+    >{#each { length: n } as _, i (i)}{@const at = boxMark(m, i)}{#if edit}<button class="mark" class:on={at === 'heavy' || (!h && at === 'light')} class:slash={!!h && at === 'light'} aria-label={String(i + 1)} onclick={() => markTrack(f, i)}></button>{:else}<i class:on={at === 'heavy' || (!h && at === 'light')} class:slash={!!h && at === 'light'}></i>{/if}{/each}</span>
+{/snippet}
+
 {#snippet lineValue(f: FieldDef)}
   {#if f.type === 'list'}
     {#each rows(f) as row, r (r)}{r ? ', ' : ''}{@render rowCells(f, row)}{/each}
@@ -157,9 +193,10 @@
   {:else if f.type === 'select'}
     {L(f.options?.[s[f.key] as number])}
   {:else if marks(f)}
-    {#if f.type === 'dots' || f.type === 'track'}
-      {@const n = f.type === 'track' ? boxesOf(pack, s, f) : (f.max ?? 5)}
-      <span class={f.type === 'track' ? 'boxes' : 'dots'}>{#each { length: n } as _, i (i)}<button class="mark" class:on={i < num(f)} aria-label={String(i + 1)} onclick={() => mark(f, i + 1)}><i class:on={i < num(f)}></i></button>{/each}</span>
+    {#if f.type === 'track'}
+      {@render track(f)}
+    {:else if f.type === 'dots'}
+      <span class="dots">{#each { length: f.max ?? 5 } as _, i (i)}<button class="mark" class:on={i < num(f)} aria-label={String(i + 1)} onclick={() => mark(f, i)}></button>{/each}</span>
     {:else}
       <span class="stepper">
         <button class="btn" aria-label="−1" onclick={() => step(f, -1)}>−</button>
@@ -167,9 +204,11 @@
         <button class="btn" aria-label="+1" onclick={() => step(f, 1)}>+</button>
       </span>
     {/if}
-  {:else if f.type === 'dots' || f.type === 'track'}
-    {@const n = f.type === 'track' ? boxesOf(pack, s, f) : (f.max ?? 5)}
-    <span class={f.type === 'track' ? 'boxes' : 'dots'} aria-label="{num(f)} / {n}">{#each { length: n } as _, i (i)}<i class:on={i < num(f)}></i>{/each}</span>
+  {:else if f.type === 'track'}
+    {@render track(f)}
+  {:else if f.type === 'dots'}
+    {@const n = f.max ?? 5}
+    <span class="dots" aria-label="{num(f)} / {n}">{#each { length: n } as _, i (i)}<i class:on={i < num(f)}></i>{/each}</span>
   {:else if f.roll}
     <button class="inroll" title={t('pack.rollHint')} onclick={(e) => roll(f, e)}>{inlineValue(f)}</button>
   {:else}
@@ -224,9 +263,19 @@
   <article class="sheet">
     {#if asking}
       {@const f = sections.flatMap((x) => x.fields).find((x) => x.key === asking!.key)}
+      {@const pairs = pairsOf(f)}
       <div class="ask" role="group">
-        <span>{t('pack.askDice', { name: f ? L(f.title) : '' })}</span>
-        {#each modsOf(f) as m (m)}<button class="chip" class:zero={m === 0} onclick={(e) => f && roll(f, e, asking!.row, m)}>{m > 0 ? `+${m}` : m < 0 ? `−${-m}` : '±0'}</button>{/each}
+        {#if pairs.length}
+          <span>{t('pack.askWith', { name: f ? L(f.title) : '' })}</span>
+          {#each pairs as p (p.key)}<button class="chip" class:picked={asking.with === p.key} onclick={(e) => { asking!.with = asking!.with === p.key ? undefined : p.key; if (f && !(f.roll?.type === 'pool' && f.roll.ask) && asking!.with) roll(f, e, asking!.row); }}>{L(p.title)} {num(p)}</button>{/each}
+        {/if}
+        {#if f?.roll?.type === 'pool' && f.roll.ask}
+          {#if pairs.length}<span class="break"></span>{/if}
+          <span>{t('pack.askDice', { name: f ? L(f.title) : '' })}</span>
+          {#each modsOf(f) as m (m)}<button class="chip" class:zero={m === 0} onclick={(e) => f && roll(f, e, asking!.row, m)}>{m > 0 ? `+${m}` : m < 0 ? `−${-m}` : '±0'}</button>{/each}
+        {:else if f}
+          <button class="chip zero" onclick={(e) => f && roll(f, e, asking!.row)}>{t('pack.askAlone')}</button>
+        {/if}
         <button class="icon-btn" title={t('pack.askCancel')} onclick={() => (asking = null)}>✕</button>
       </div>
     {/if}
@@ -309,8 +358,7 @@
                 {#if f.type === 'dots'}
                   <span class="dots" aria-label={String(num(f))}>{#each { length: f.max ?? 5 } as _, i (i)}{#if marks(f)}<button class="mark" class:on={i < num(f)} aria-label={String(i + 1)} onclick={() => mark(f, i)}></button>{:else}<i class:on={i < num(f)}></i>{/if}{/each}</span>
                 {:else if f.type === 'track'}
-                  {@const n = boxesOf(pack, s, f)}
-                  <span class="boxes" aria-label="{num(f)} / {n}">{#each { length: n } as _, i (i)}{#if marks(f)}<button class="mark" class:on={i < num(f)} aria-label={String(i + 1)} onclick={() => mark(f, i)}></button>{:else}<i class:on={i < num(f)}></i>{/if}{/each}</span>
+                  {@render track(f)}
                 {:else if f.type === 'select'}
                   <span class="value">{L(f.options?.[s[f.key] as number])}</span>
                 {:else if f.type === 'text'}
@@ -364,6 +412,14 @@
   }
   .ask .chip.zero {
     border-color: var(--accent);
+  }
+  .ask .chip.picked {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .ask .break {
+    flex-basis: 100%;
   }
   .sheet {
     max-width: 760px;
@@ -715,6 +771,12 @@
   }
   .mark.on {
     background: var(--accent);
+  }
+  /* A light mark of a track of two kinds: a slash across the box. */
+  .boxes i.slash,
+  .mark.slash {
+    border-color: var(--accent);
+    background: linear-gradient(to bottom right, transparent calc(50% - 1px), var(--accent) calc(50% - 1px), var(--accent) calc(50% + 1px), transparent calc(50% + 1px));
   }
   /* Last: it has to outweigh .mark. */
   @media (pointer: coarse) {

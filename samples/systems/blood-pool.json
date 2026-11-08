@@ -1,7 +1,7 @@
 {
  "scryingGlass": "system",
  "version": 1,
- "format": 4,
+ "format": 10,
  "uses": [
   "worldtime",
   "clocks"
@@ -99,7 +99,10 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "skills"
+      ]
      }
     },
     {
@@ -132,7 +135,10 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "skills"
+      ]
      }
     },
     {
@@ -165,7 +171,10 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "skills"
+      ]
      }
     }
    ]
@@ -207,7 +216,10 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "skills"
+      ]
      }
     },
     {
@@ -240,7 +252,10 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "skills"
+      ]
      }
     },
     {
@@ -273,7 +288,10 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "skills"
+      ]
      }
     }
    ]
@@ -315,7 +333,10 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "skills"
+      ]
      }
     },
     {
@@ -348,7 +369,10 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "skills"
+      ]
      }
     },
     {
@@ -381,7 +405,10 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "skills"
+      ]
      }
     }
    ]
@@ -423,7 +450,12 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "body",
+       "charm",
+       "mind"
+      ]
      }
     },
     {
@@ -456,7 +488,12 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "body",
+       "charm",
+       "mind"
+      ]
      }
     },
     {
@@ -489,7 +526,12 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "body",
+       "charm",
+       "mind"
+      ]
      }
     },
     {
@@ -522,7 +564,12 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "body",
+       "charm",
+       "mind"
+      ]
      }
     },
     {
@@ -555,7 +602,12 @@
         "en": "The beast breaks loose",
         "ru": "Зверь вырвался"
        }
-      }
+      },
+      "pair": [
+       "body",
+       "charm",
+       "mind"
+      ]
      }
     }
    ]
@@ -638,17 +690,19 @@
       "en": "Health",
       "ru": "Здоровье"
      },
-     "formula": "stamina + 3"
+     "formula": "stamina + 3",
+     "hidden": true
     },
     {
      "key": "hurt",
      "type": "track",
      "title": {
-      "en": "Light damage",
-      "ru": "Лёгкий урон"
+      "en": "Health",
+      "ru": "Здоровье"
      },
      "boxes": "health",
-     "live": "both"
+     "live": "both",
+     "heavy": "wound"
     },
     {
      "key": "wound",

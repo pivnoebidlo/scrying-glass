@@ -4,7 +4,7 @@
 // survives a new fight. Only a hero: two goblins of one card share no table.
 import { sameRef } from '../../shared/cards';
 import type { PlayerUsage } from '../../shared/players';
-import { fieldMap, type SystemPack } from '../../shared/syspack';
+import { fieldMap, trackerCells, type SystemPack } from '../../shared/syspack';
 import type { Combatant, InitiativeState } from './types';
 
 export interface TableKeys {
@@ -17,7 +17,7 @@ export interface TableKeys {
 export function tableKeys(pack: SystemPack): TableKeys {
   const fields = fieldMap(pack);
   const hp = pack.tracker.hp ? fields.get(pack.tracker.hp) : undefined;
-  const cells = (pack.tracker.cells ?? []).map((k) => fields.get(k)).filter((f) => !!f?.live && f.key !== pack.tracker.hp);
+  const cells = trackerCells(pack).filter((f) => !!f.live && f.key !== pack.tracker.hp);
   return {
     ...(hp?.live && hp.type !== 'track' ? { hp: hp.key } : {}),
     cells: cells.map((f) => ({ key: f!.key, track: f!.type === 'track' })),

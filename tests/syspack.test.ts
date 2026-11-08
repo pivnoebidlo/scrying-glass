@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { threatByHeroes, threatOfRaw } from '../src/shared/threat';
 import { describe, expect, it } from 'vitest';
-import { cellDice, cellText, tabsOf, entryLine, filterMatches, filterValues, groupOfEntry, lineGroups, signedNum, type FieldDef, blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, type RollWords, type SystemPack } from '../src/shared/syspack';
+import { cellDice, cellText, tabsOf, entryLine, filterMatches, filterValues, groupOfEntry, lineGroups, signedNum, type FieldDef, blankStats, evalFormula, fieldMap, formulaProblems, slotGroups, packCombat, packSubtitle, parseFormula, entriesFromMarkdown, pushPool, rollPack, tweakPool, validatePack, addMarks, boxMark, clickMarks, heavyOf, insideTracks, pairFields, trackerCells, type RollWords, type SystemPack } from '../src/shared/syspack';
 
 const words: RollWords = { success: 'Success', failure: 'Failure', successes: (n) => `${n} successes`, critical: 'Critical' };
 // Dice that fall as told, in order.
@@ -410,6 +410,48 @@ describe('a pool with special dice', () => {
     expect(again.dice).toEqual([[6, 6, 6, 5, 7], [1]]);
     expect(again.total).toBe(4);
     expect(again.onFail).toBe('The beast breaks loose');
+  });
+
+  it('a pool takes a second trait from the sections it names', () => {
+    expect(spec.type === 'pool' && spec.pair).toEqual(['body', 'charm', 'mind']);
+    const strength = fieldMap(pack).get('strength')!.roll!;
+    expect(strength.type === 'pool' && pairFields(pack, strength.pair!, 'character').map((f) => f.key)).toEqual(['fight', 'stealth', 'talk', 'lore', 'craft']);
+    const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', tracker: {}, sections: [{ id: 'm', title: 'M', fields: [{ key: 'a', title: 'A', type: 'dots', max: 5, roll: { type: 'pool', sides: 10, count: 'a', success: 6, pair: ['m', 'no way!'] } }] }] };
+    expect(fieldMap(validatePack(raw) as SystemPack).get('a')!.roll).toMatchObject({ pair: ['m'] });
+  });
+
+  it('a track of two kinds: heavy marks first, one set of boxes, in the tracker too', () => {
+    const health = fieldMap(pack).get('hurt')!;
+    expect(heavyOf(pack, health)?.key).toBe('wound');
+    expect([...insideTracks(pack)]).toEqual(['wound']);
+    expect(trackerCells(pack).map((f) => f.key)).toEqual(['hunger', 'hurt', 'wound', 'strain']);
+    const stats = { ...blankStats(pack, 'character'), stamina: 2, hurt: 1, wound: 1 };
+    expect(packCombat(pack, stats).stress).toEqual([{ id: 'hunger', boxes: 5 }, { id: 'hurt', boxes: 5 }, { id: 'wound', boxes: 5 }, { id: 'strain', boxes: 2 }]);
+    // A track holding itself or another two-kind track is one kind.
+    const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', tracker: {}, sections: [{ id: 'm', title: 'M', fields: [
+      { key: 'a', title: 'A', type: 'track', boxes: 3, heavy: 'b' }, { key: 'b', title: 'B', type: 'track', boxes: 3, heavy: 'c' }, { key: 'c', title: 'C', type: 'track', boxes: 3, heavy: 'c' }, { key: 'd', title: 'D', type: 'track', boxes: 3, heavy: 'nope' },
+    ] }] };
+    const p = validatePack(raw) as SystemPack;
+    const f = fieldMap(p);
+    expect(heavyOf(p, f.get('a')!)).toBeUndefined();
+    expect(heavyOf(p, f.get('b')!)?.key).toBe('c');
+    expect(f.get('c')!.heavy).toBeUndefined();
+    expect(heavyOf(p, f.get('d')!)).toBeUndefined();
+  });
+
+  it('marks of two kinds: a click and damage past a full track', () => {
+    const m = { light: 2, heavy: 1 };
+    expect([0, 1, 2, 3].map((i) => boxMark(m, i))).toEqual(['heavy', 'light', 'light', null]);
+    // An empty box — light up to it; a light one turns heavy; a heavy one — heavy down to it.
+    expect(clickMarks(m, 5, 4)).toEqual({ heavy: 1, light: 4 });
+    expect(clickMarks(m, 5, 2)).toEqual({ heavy: 2, light: 1 });
+    expect(clickMarks(m, 5, 0)).toEqual({ heavy: 0, light: 2 });
+    expect(clickMarks({ light: 0, heavy: 5 }, 5, 2)).toEqual({ heavy: 2, light: 0 });
+    // Light past the end turns light marks heavy; all heavy — nothing more fits.
+    expect(addMarks({ light: 3, heavy: 1 }, 5, 'light', 3)).toEqual({ light: 2, heavy: 3 });
+    expect(addMarks({ light: 4, heavy: 0 }, 4, 'heavy', 1)).toEqual({ light: 3, heavy: 1 });
+    expect(addMarks({ light: 0, heavy: 4 }, 4, 'light', 2)).toEqual({ light: 0, heavy: 4 });
+    expect(addMarks({ light: 2, heavy: 2 }, 5, 'light', -5)).toEqual({ light: 0, heavy: 2 });
   });
 
   it('an outcome changes the sheet: a band says what, dice are rolled, nonsense is dropped', () => {

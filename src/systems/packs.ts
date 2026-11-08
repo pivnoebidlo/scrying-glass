@@ -6,7 +6,7 @@ import type { Combatant } from '../modules/initiative/types';
 import { getLang, t } from '../shared/i18n';
 import { die } from '../shared/dice';
 import type { SheetResources } from '../shared/players';
-import { blankStats, entryLine, evalFormula, fieldMap, loc, packCombat, packResources, packSubtitle, type PackEntryType, type PackStats, type SystemPack } from '../shared/syspack';
+import { blankStats, entryLine, evalFormula, fieldMap, heavyOf, insideTracks, loc, packCombat, packResources, packSubtitle, type PackEntryType, type PackStats, type SystemPack } from '../shared/syspack';
 import { COMMON_FIELDS, setPackTypes } from '../shared/compendium';
 import type { TypeDef } from '../shared/entrytypes';
 import { conditionValue, type CombatField, type TrackerDef } from './tracker';
@@ -133,9 +133,10 @@ export function packTracker(p: SystemPack): TrackerDef {
     : [];
   // Text cells (consequences) are written in the tracker itself, not entered on adding.
   const cells: CombatField[] = (p.tracker.cells ?? [])
-    .filter((k) => k !== p.tracker.hp && !['text', 'textarea'].includes(fields.get(k)?.type ?? ''))
+    .filter((k) => k !== p.tracker.hp && !['text', 'textarea'].includes(fields.get(k)?.type ?? '') && !insideTracks(p).has(k))
     .map((key) => {
       const track = fields.get(key)?.type === 'track';
+      const heavy = fields.get(key) ? heavyOf(p, fields.get(key)!)?.key : undefined;
       return {
         key,
         get label() {
@@ -145,10 +146,13 @@ export function packTracker(p: SystemPack): TrackerDef {
           return title(key);
         },
         get: (c: Combatant) => (track ? (c.stress?.find((s) => s.id === key)?.boxes.length ?? null) : (c.attrs?.find((a) => a.id === key)?.max ?? null)),
-        set: (v: number | null, c?: Combatant) =>
-          track
-            ? { stress: [...(c?.stress ?? []).filter((s) => s.id !== key), { id: key, boxes: boxes(v ?? 0, c?.stress?.find((s) => s.id === key)?.boxes.filter(Boolean).length ?? 0) }] }
-            : { attrs: [...(c?.attrs ?? []).filter((a) => a.id !== key), { id: key, value: v ?? 0, max: v ?? 0 }] },
+        set: (v: number | null, c?: Combatant) => {
+          if (!track) return { attrs: [...(c?.attrs ?? []).filter((a) => a.id !== key), { id: key, value: v ?? 0, max: v ?? 0 }] };
+          // A track of two kinds: the heavy track has as many boxes.
+          const ids = [key, ...(heavy ? [heavy] : [])];
+          const line = (id: string) => ({ id, boxes: boxes(v ?? 0, c?.stress?.find((s) => s.id === id)?.boxes.filter(Boolean).length ?? 0) });
+          return { stress: [...(c?.stress ?? []).filter((s) => !ids.includes(s.id)), ...ids.map(line)] };
+        },
       };
     });
   const roll = init.type === 'roll' ? /^\s*(\d*)\s*[dк]\s*(\d+)/i.exec(init.dice) : null;

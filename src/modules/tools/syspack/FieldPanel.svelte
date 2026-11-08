@@ -41,6 +41,15 @@
   const valueOf = (formula: string) => (pack ? evalFormula(pack, $state.snapshot(builder.previewStats), formula, f.type === 'list' ? sampleRow : undefined) : 0);
   const example = (formula: string) => (pack && formula.trim() ? valueOf(formula) : null);
 
+  // Tracks that can be the heavy marks of this one: not this one, not holding another themselves.
+  const tracks = $derived(pack ? [...fieldMap(pack)].filter(([k, x]) => k !== f.key && x.type === 'track' && !x.heavy).map(([k]) => k) : []);
+  // Sections a pool's second trait can come from.
+  const sectionList = $derived(pack ? pack.sections.map((x) => ({ id: x.id, title: L(x.title) || x.id })) : []);
+  function togglePair(r: { pair?: string[] }, id: string, on: boolean) {
+    const next = on ? [...(r.pair ?? []), id] : (r.pair ?? []).filter((x) => x !== id);
+    if (next.length) r.pair = next;
+    else delete r.pair;
+  }
   // A new field has a key from «New field»: it follows the title until the GM changes it.
   // What an outcome can change: the fields marked at the table.
   const liveFields = $derived(pack ? [...fieldMap(pack)].filter(([, x]) => x.live).map(([k, x]): [string, string] => [k, L(x.title) || k]) : []);
@@ -178,6 +187,13 @@
         {/if}
       </div>
     </div>
+    <label class="row" title={t('sb.heavyHint')}>
+      <span>{t('sb.heavy')}</span>
+      <select {disabled} value={f.heavy ?? ''} onchange={(e) => (e.currentTarget.value ? (f.heavy = e.currentTarget.value) : delete f.heavy)}>
+        <option value="">{t('sb.heavyNone')}</option>
+        {#each tracks as k (k)}<option value={k}>{names[k] ?? k}</option>{/each}
+      </select>
+    </label>
   {/if}
   {#if LIVE_TYPES.includes(f.type)}
     <div class="row">
@@ -343,6 +359,12 @@
                 </label>
               {/if}
               {#if r.type === 'pool'}
+                <div class="row" title={t('sb.pairHint')}>
+                  <span>{t('sb.pair')}</span>
+                  <div class="inline wrap">
+                    {#each sectionList as sec (sec.id)}<label class="check"><input type="checkbox" {disabled} checked={!!r.pair?.includes(sec.id)} onchange={(e) => togglePair(r, sec.id, e.currentTarget.checked)} /> {sec.title}</label>{/each}
+                  </div>
+                </div>
                 <label class="check"><input type="checkbox" {disabled} checked={!!r.push} onchange={(e) => (e.currentTarget.checked ? (r.push = true) : delete r.push)} /> {t('sb.push')}</label>
                 <label class="row" title={t('sb.kindHint')}>
                   <span>{t('sb.kind')}</span>
@@ -574,6 +596,10 @@
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+  .inline.wrap {
+    flex-wrap: wrap;
+    gap: 4px 10px;
   }
   .col :global(input[type='text']:not(.key)) {
     flex: 1;
