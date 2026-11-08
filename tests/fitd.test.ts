@@ -56,7 +56,7 @@ describe('Forged in the Dark: the pack', () => {
     expect(packSubtitle(pack, stats, 'en')).toBe('Cutter · Iruvia');
     expect(packSubtitle(pack, { playbook: 'Cutter' }, 'en')).toBe('Cutter');
     const c = packCombat(pack, { ...stats, stress: 3 });
-    expect(c.stress).toEqual([{ id: 'stress', boxes: 9 }]);
+    expect(c.stress).toEqual([{ id: 'stress', boxes: 9, marked: 3 }]);
     expect(pack.tracker.cells).toEqual(['stress', 'harm1', 'harm2', 'harm3', 'harm4', 'harm5']);
   });
 

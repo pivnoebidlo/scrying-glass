@@ -1119,7 +1119,11 @@ export function packCombat(pack: SystemPack, stats: PackStats): CombatStats {
     ac: t.defence && fields.has(t.defence) ? evalFormula(pack, stats, t.defence) : null,
     ...(pack.threat?.xpField && fields.has(pack.threat.xpField) ? { xp: evalFormula(pack, stats, pack.threat.xpField) } : {}),
     initiative: Math.round(initiative),
-    stress: cells.filter((f) => f.type === 'track').map((f) => ({ id: f.key, boxes: boxesOf(pack, stats, f) })),
+    stress: cells.filter((f) => f.type === 'track').map((f) => {
+      const boxes = boxesOf(pack, stats, f);
+      const marked = Math.max(0, Math.min(boxes, Math.round(evalFormula(pack, stats, f.key))));
+      return { id: f.key, boxes, ...(marked ? { marked } : {}) };
+    }),
     attrs: cells.filter((f) => f.type === 'number' || f.type === 'dots' || f.type === 'formula').map((f) => ({ id: f.key, value: Math.round(evalFormula(pack, stats, f.key)) })),
   };
 }

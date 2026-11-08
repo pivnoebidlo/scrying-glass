@@ -87,6 +87,10 @@ describe('the table and the tracker are one value', () => {
     const c = hero({ stress: [{ id: 'physical', boxes: [false, false, false] }] });
     expect(withTable(c, k, { physical: 2 }).stress![0]!.boxes).toEqual([true, true, false]);
     expect(withTable(withTable(c, k, { physical: 2 }), k, {}).stress![0]!.boxes).toEqual([false, false, false]);
+    // A track the card marks (hunger) keeps it while the table hasn't marked it.
+    const hungry = hero({ stress: [{ id: 'physical', boxes: [true, true, false], base: 2 }] });
+    expect(withTable(hungry, k, {}).stress![0]!.boxes).toEqual([true, true, false]);
+    expect(withTable(hungry, k, { physical: 0 }).stress![0]!.boxes).toEqual([false, false, false]);
   });
 
   it('damage past health is a setting of the system, not a name in the core', () => {

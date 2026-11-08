@@ -219,7 +219,7 @@ export function packTracker(p: SystemPack): TrackerDef {
         hp: s.hp,
         maxHp: s.hp,
         ac: s.ac,
-        stress: (s.stress ?? []).map((x) => ({ id: x.id, boxes: boxes(x.boxes) })),
+        stress: (s.stress ?? []).map((x) => ({ id: x.id, boxes: boxes(x.boxes, x.marked), ...(x.marked ? { base: x.marked } : {}) })),
         attrs: (s.attrs ?? []).map((a) => ({ id: a.id, value: a.value, max: a.value })),
         ...(p.tracker.overflow ? { overflow: p.tracker.overflow } : {}),
       };

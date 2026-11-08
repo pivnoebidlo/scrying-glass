@@ -27,7 +27,7 @@ export function tableKeys(pack: SystemPack): TableKeys {
 export const atTable = (c: Combatant, all: Combatant[]) =>
   !!c.card && c.side === 'party' && all.filter((x) => x.card && sameRef(x.card, c.card!)).length === 1;
 
-// A value not marked is the sheet's own: a full number, an empty track.
+// A value not marked is the sheet's own: a full number, a track as the card marks it (empty, if it doesn't).
 export function withTable(c: Combatant, keys: TableKeys, used: PlayerUsage = {}): Combatant {
   let out = c;
   if (keys.hp && c.maxHp !== null) {
@@ -37,7 +37,7 @@ export function withTable(c: Combatant, keys: TableKeys, used: PlayerUsage = {})
   for (const { key, track } of keys.cells) {
     if (track) {
       const line = out.stress?.find((s) => s.id === key);
-      const n = used[key] ?? 0;
+      const n = used[key] ?? line?.base ?? 0;
       if (line && line.boxes.filter(Boolean).length !== n) out = { ...out, stress: out.stress!.map((s) => (s.id === key ? { ...s, boxes: s.boxes.map((_, i) => i < n) } : s)) };
     } else {
       const a = out.attrs?.find((x) => x.id === key);

@@ -44,6 +44,8 @@ export interface StressTrack {
   // 'physical', 'mental' или свой ключ; подпись — `trackTitle`.
   id: string;
   boxes: boolean[];
+  // The boxes the card has marked: what the track holds while nothing is marked at the table.
+  base?: number;
 }
 
 export interface AttrScore {

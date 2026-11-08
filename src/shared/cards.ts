@@ -108,7 +108,8 @@ export interface CombatStats {
   // Опыт за победу (для расчёта сложности боя); у персонажей игроков нет.
   xp?: number;
   // Fate: дорожки стресса (сколько клеток) и последствия (на сколько сдвигов каждое).
-  stress?: { id: string; boxes: number }[];
+  // marked — the boxes the sheet has marked (a pack's track: hunger).
+  stress?: { id: string; boxes: number; marked?: number }[];
   consequences?: number[];
   // Mausritter: attribute scores (STR, DEX, WIL) — damage past HP goes to STR.
   attrs?: { id: string; value: number }[];

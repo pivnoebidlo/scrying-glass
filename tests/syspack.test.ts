@@ -426,7 +426,7 @@ describe('a pool with special dice', () => {
     expect([...insideTracks(pack)]).toEqual(['wound']);
     expect(trackerCells(pack).map((f) => f.key)).toEqual(['hunger', 'hurt', 'wound', 'strain']);
     const stats = { ...blankStats(pack, 'character'), stamina: 2, hurt: 1, wound: 1 };
-    expect(packCombat(pack, stats).stress).toEqual([{ id: 'hunger', boxes: 5 }, { id: 'hurt', boxes: 5 }, { id: 'wound', boxes: 5 }, { id: 'strain', boxes: 2 }]);
+    expect(packCombat(pack, stats).stress).toEqual([{ id: 'hunger', boxes: 5 }, { id: 'hurt', boxes: 5, marked: 1 }, { id: 'wound', boxes: 5, marked: 1 }, { id: 'strain', boxes: 2 }]);
     // A track holding itself or another two-kind track is one kind.
     const raw = { scryingGlass: 'system', version: 1, id: 'x-y', title: 'X', tracker: {}, sections: [{ id: 'm', title: 'M', fields: [
       { key: 'a', title: 'A', type: 'track', boxes: 3, heavy: 'b' }, { key: 'b', title: 'B', type: 'track', boxes: 3, heavy: 'c' }, { key: 'c', title: 'C', type: 'track', boxes: 3, heavy: 'c' }, { key: 'd', title: 'D', type: 'track', boxes: 3, heavy: 'nope' },
