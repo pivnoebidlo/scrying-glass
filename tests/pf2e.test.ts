@@ -10,7 +10,8 @@ import { validatePack, type SystemPack } from '../src/shared/syspack';
 import { upgradeCard } from '../src/shared/oldcards';
 import type { Card } from '../src/shared/cards';
 import { entrySubtitle, type BuiltinBook, type Entry } from '../src/shared/compendium';
-import { fromPathbuilder, pathbuilderImporter } from '../src/systems/pf2e/pathbuilder';
+import { fromPathbuilder, pathbuilderImporter, tableFields } from '../src/systems/pf2e/pathbuilder';
+import { packResources } from '../src/shared/syspack';
 
 const pack = validatePack(JSON.parse(fs.readFileSync('content/pf2e-core/system/pf2e.json', 'utf8'))) as SystemPack;
 const PF = pack.threat!;
@@ -173,5 +174,18 @@ describe('Pathbuilder 2e import', () => {
     expect(c.feats.map((f) => f.name)).toEqual(['Forager', 'Fleet']);
     expect(c.equipment).toEqual(["Explorer's Clothing", 'Backpack', 'Chalk ×10']);
     expect(c.money.gp).toBe(15);
+  });
+
+  it('marks at the table: slots by rank without innate spells, Focus Points, hit points up to the card', () => {
+    const more = { ...exp, build: { ...exp.build, focusPoints: 1, spellCasters: [...exp.build.spellCasters, { name: 'Elf', innate: true, perDay: [0, 1], spells: [{ spellLevel: 1, list: ['Fear'] }] }] } };
+    expect(tableFields(more)).toEqual({ hero: 1, slot1_max: 1, focus_max: 1 });
+    expect(tableFields({ nope: 1 })).toEqual({});
+    const pack = validatePack(JSON.parse(fs.readFileSync('content/pf2e-core/system/pf2e.json', 'utf8'))) as SystemPack;
+    const stats = pathbuilderImporter.read(more, {}).stats as Record<string, unknown>;
+    const r = packResources(pack, stats as never, 'character');
+    expect(r.limits).toEqual({ hp: 8 + (10 + 2) * 2, hero: 3, focus: 1, slot1: 1 });
+    expect(r.resets).toEqual({ daily: ['slot1', 'focus'], refocus: ['focus'], session: ['hero'] });
+    // A creature's stat block has no table.
+    expect(packResources(pack, stats as never, 'monster').limits).toEqual({});
   });
 });

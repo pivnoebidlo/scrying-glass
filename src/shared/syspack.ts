@@ -146,9 +146,9 @@ export interface FieldDef {
   // damage of one Health track): heavy marks fill the boxes first, light marks past the end turn into heavy ones. The
   // other track isn't drawn on its own; an older app shows the two tracks apart.
   heavy?: string;
-  // A track, dots, a number (with `max`) or a formula (its value is the most there can be: hit points) marked at the
-  // table, apart from the card: 'both' — by the player too, 'gm' —
-  // by the GM only (shared/players.ts).
+  // A track, dots, a number or a formula marked at the table, apart from the card: 'both' — by the player too, 'gm' —
+  // by the GM only (shared/players.ts). The most it can be: boxes of a track, dots, the `max` of a number, else — the
+  // card's own value (hit points), the value of a formula.
   live?: LiveBy;
 }
 
@@ -201,7 +201,7 @@ export interface TrackerSpec {
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 10;
+export const PACK_FORMAT = 11;
 
 export interface SystemPack {
   scryingGlass: 'system';
@@ -508,7 +508,7 @@ function fieldOf(x: unknown): FieldDef | null {
   for (const k of ['min', 'max'] as const) if (num(x[k]) !== undefined) f[k] = num(x[k]);
   if (typeof x['default'] === 'number' || typeof x['default'] === 'string') f.default = typeof x['default'] === 'string' ? x['default'].slice(0, LIMIT.long) : x['default'];
   if (x['live'] === 'both' || x['live'] === 'gm') {
-    if (LIVE_TYPES.includes(type) && (type !== 'number' || f.max !== undefined)) f.live = x['live'];
+    if (LIVE_TYPES.includes(type)) f.live = x['live'];
   }
   if (type === 'track') {
     if (typeof x['heavy'] === 'string' && KEY_RE.test(x['heavy']) && x['heavy'] !== x['key']) f.heavy = x['heavy'];
@@ -724,7 +724,11 @@ export function validatePack(x: unknown): SystemPack | string {
 
 // How far a field marked at the table goes.
 export const liveLimit = (pack: SystemPack, stats: PackStats, f: FieldDef) =>
-  f.type === 'track' ? boxesOf(pack, stats, f) : f.type === 'formula' ? Math.max(0, Math.round(evalFormula(pack, stats, f.key))) : (f.max ?? (f.type === 'dots' ? 5 : 0));
+  f.type === 'track'
+    ? boxesOf(pack, stats, f)
+    : f.type === 'formula' || (f.type === 'number' && f.max === undefined)
+      ? Math.max(0, Math.round(evalFormula(pack, stats, f.key)))
+      : (f.max ?? (f.type === 'dots' ? 5 : 0));
 
 // What a card of the system tracks at the table.
 export function packResources(pack: SystemPack, stats: PackStats, kind: CardKind): SheetResources {

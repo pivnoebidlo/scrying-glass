@@ -153,7 +153,7 @@ describe('a pack says what is marked at the table', () => {
   it('live is kept where it can work and dropped elsewhere', () => {
     const f = fieldMap(pack());
     expect(f.get('sanity')?.live).toBe('gm');
-    expect(f.get('free')?.live).toBeUndefined(); // a number without a maximum
+    expect(f.get('free')?.live).toBe('both'); // a number without a maximum: up to the card's value
     expect(f.get('name')?.live).toBeUndefined();
   });
 
@@ -170,6 +170,9 @@ describe('a pack says what is marked at the table', () => {
     expect(sheet.resets).toEqual({ night: ['hunger', 'power'], mad: ['sanity'] });
     expect(packResources(pack(), { size: 0 }, 'character').limits).not.toHaveProperty('wounds');
     expect(sheet.limits).not.toHaveProperty('rage');
+    // A number without a maximum goes up to the card's own value (hit points); none on the card — not marked.
+    expect(packResources(pack(), { size: 3, free: 12 }, 'character').limits).toMatchObject({ free: 12 });
+    expect(sheet.limits).not.toHaveProperty('free');
     // One card, many creatures: a stat block has no table.
     expect(packResources(pack(), {}, 'monster').limits).toEqual({});
   });

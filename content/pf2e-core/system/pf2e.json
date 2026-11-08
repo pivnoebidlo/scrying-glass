@@ -1,7 +1,7 @@
 {
  "scryingGlass": "system",
  "version": 1,
- "format": 9,
+ "format": 11,
  "id": "pf2e",
  "family": "pf2e",
  "title": "Pathfinder 2e",
@@ -1050,7 +1050,7 @@
      },
      "type": "number",
      "min": -50,
-     "max": 9999
+     "live": "both"
     },
     {
      "key": "hp_note",
@@ -1319,6 +1319,272 @@
    ]
   },
   {
+   "id": "table",
+   "title": {
+    "en": "At the table",
+    "ru": "За столом"
+   },
+   "kinds": [
+    "character"
+   ],
+   "view": "lines",
+   "noTitle": true,
+   "fields": [
+    {
+     "key": "hero",
+     "type": "dots",
+     "title": {
+      "en": "Hero Points",
+      "ru": "Очки героизма"
+     },
+     "max": 3,
+     "default": 1,
+     "live": "both"
+    },
+    {
+     "key": "focus_max",
+     "type": "number",
+     "title": {
+      "en": "Focus Points (most)",
+      "ru": "Очки Фокусировки (всего)"
+     },
+     "min": 0,
+     "max": 3,
+     "hidden": true
+    },
+    {
+     "key": "focus",
+     "type": "track",
+     "title": {
+      "en": "Focus Points",
+      "ru": "Очки Фокусировки"
+     },
+     "boxes": "focus_max",
+     "live": "both",
+     "join": ","
+    },
+    {
+     "key": "slot1_max",
+     "type": "number",
+     "title": {
+      "en": "Rank 1 slots (most)",
+      "ru": "Ячейки ранга 1 (всего)"
+     },
+     "min": 0,
+     "max": 9,
+     "hidden": true
+    },
+    {
+     "key": "slot2_max",
+     "type": "number",
+     "title": {
+      "en": "Rank 2 slots (most)",
+      "ru": "Ячейки ранга 2 (всего)"
+     },
+     "min": 0,
+     "max": 9,
+     "hidden": true
+    },
+    {
+     "key": "slot3_max",
+     "type": "number",
+     "title": {
+      "en": "Rank 3 slots (most)",
+      "ru": "Ячейки ранга 3 (всего)"
+     },
+     "min": 0,
+     "max": 9,
+     "hidden": true
+    },
+    {
+     "key": "slot4_max",
+     "type": "number",
+     "title": {
+      "en": "Rank 4 slots (most)",
+      "ru": "Ячейки ранга 4 (всего)"
+     },
+     "min": 0,
+     "max": 9,
+     "hidden": true
+    },
+    {
+     "key": "slot5_max",
+     "type": "number",
+     "title": {
+      "en": "Rank 5 slots (most)",
+      "ru": "Ячейки ранга 5 (всего)"
+     },
+     "min": 0,
+     "max": 9,
+     "hidden": true
+    },
+    {
+     "key": "slot6_max",
+     "type": "number",
+     "title": {
+      "en": "Rank 6 slots (most)",
+      "ru": "Ячейки ранга 6 (всего)"
+     },
+     "min": 0,
+     "max": 9,
+     "hidden": true
+    },
+    {
+     "key": "slot7_max",
+     "type": "number",
+     "title": {
+      "en": "Rank 7 slots (most)",
+      "ru": "Ячейки ранга 7 (всего)"
+     },
+     "min": 0,
+     "max": 9,
+     "hidden": true
+    },
+    {
+     "key": "slot8_max",
+     "type": "number",
+     "title": {
+      "en": "Rank 8 slots (most)",
+      "ru": "Ячейки ранга 8 (всего)"
+     },
+     "min": 0,
+     "max": 9,
+     "hidden": true
+    },
+    {
+     "key": "slot9_max",
+     "type": "number",
+     "title": {
+      "en": "Rank 9 slots (most)",
+      "ru": "Ячейки ранга 9 (всего)"
+     },
+     "min": 0,
+     "max": 9,
+     "hidden": true
+    },
+    {
+     "key": "slot10_max",
+     "type": "number",
+     "title": {
+      "en": "Rank 10 slots (most)",
+      "ru": "Ячейки ранга 10 (всего)"
+     },
+     "min": 0,
+     "max": 9,
+     "hidden": true
+    },
+    {
+     "key": "slot1",
+     "type": "track",
+     "title": {
+      "en": "Rank 1",
+      "ru": "Ранг 1"
+     },
+     "boxes": "slot1_max",
+     "live": "both"
+    },
+    {
+     "key": "slot2",
+     "type": "track",
+     "title": {
+      "en": "Rank 2",
+      "ru": "Ранг 2"
+     },
+     "boxes": "slot2_max",
+     "live": "both",
+     "join": ","
+    },
+    {
+     "key": "slot3",
+     "type": "track",
+     "title": {
+      "en": "Rank 3",
+      "ru": "Ранг 3"
+     },
+     "boxes": "slot3_max",
+     "live": "both",
+     "join": ","
+    },
+    {
+     "key": "slot4",
+     "type": "track",
+     "title": {
+      "en": "Rank 4",
+      "ru": "Ранг 4"
+     },
+     "boxes": "slot4_max",
+     "live": "both",
+     "join": ","
+    },
+    {
+     "key": "slot5",
+     "type": "track",
+     "title": {
+      "en": "Rank 5",
+      "ru": "Ранг 5"
+     },
+     "boxes": "slot5_max",
+     "live": "both",
+     "join": ","
+    },
+    {
+     "key": "slot6",
+     "type": "track",
+     "title": {
+      "en": "Rank 6",
+      "ru": "Ранг 6"
+     },
+     "boxes": "slot6_max",
+     "live": "both",
+     "join": ","
+    },
+    {
+     "key": "slot7",
+     "type": "track",
+     "title": {
+      "en": "Rank 7",
+      "ru": "Ранг 7"
+     },
+     "boxes": "slot7_max",
+     "live": "both",
+     "join": ","
+    },
+    {
+     "key": "slot8",
+     "type": "track",
+     "title": {
+      "en": "Rank 8",
+      "ru": "Ранг 8"
+     },
+     "boxes": "slot8_max",
+     "live": "both",
+     "join": ","
+    },
+    {
+     "key": "slot9",
+     "type": "track",
+     "title": {
+      "en": "Rank 9",
+      "ru": "Ранг 9"
+     },
+     "boxes": "slot9_max",
+     "live": "both",
+     "join": ","
+    },
+    {
+     "key": "slot10",
+     "type": "track",
+     "title": {
+      "en": "Rank 10",
+      "ru": "Ранг 10"
+     },
+     "boxes": "slot10_max",
+     "live": "both",
+     "join": ","
+    }
+   ]
+  },
+  {
    "id": "gear",
    "title": {
     "en": "Equipment",
@@ -1381,6 +1647,48 @@
      "hideZero": true,
      "join": ","
     }
+   ]
+  }
+ ],
+ "resets": [
+  {
+   "id": "daily",
+   "title": {
+    "en": "Daily preparations",
+    "ru": "Ежедневная подготовка"
+   },
+   "fields": [
+    "slot1",
+    "slot2",
+    "slot3",
+    "slot4",
+    "slot5",
+    "slot6",
+    "slot7",
+    "slot8",
+    "slot9",
+    "slot10",
+    "focus"
+   ]
+  },
+  {
+   "id": "refocus",
+   "title": {
+    "en": "Refocus",
+    "ru": "Сфокусироваться"
+   },
+   "fields": [
+    "focus"
+   ]
+  },
+  {
+   "id": "session",
+   "title": {
+    "en": "New session",
+    "ru": "Новая сессия"
+   },
+   "fields": [
+    "hero"
    ]
   }
  ]

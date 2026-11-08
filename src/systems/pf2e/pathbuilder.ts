@@ -17,6 +17,7 @@ type Build = {
   money?: Record<string, number>; acTotal?: { acTotal?: number };
   spellCasters?: { name?: string; magicTradition?: string; spellcastingType?: string; ability?: string; proficiency?: number; perDay?: number[]; spells?: { spellLevel: number; list: string[] }[]; innate?: boolean }[];
   focus?: Record<string, Record<string, { focusSpells?: string[]; focusCantrips?: string[]; proficiency?: number; abilityBonus?: number }>>;
+  focusPoints?: number;
 };
 
 const buildOf = (j: unknown): Build | null => {
@@ -118,6 +119,24 @@ export function fromPathbuilder(j: unknown): Pf2eCharacter {
   };
 }
 
+// What the sheet marks at the table: one Hero Point, the spell slots of each rank (all the casters but innate spells) and the most
+// Focus Points — fields of the pack's «At the table» section.
+export function tableFields(j: unknown): Record<string, number> {
+  const b = buildOf(j);
+  if (!b) return {};
+  // A hero starts a session with one Hero Point.
+  const out: Record<string, number> = { hero: 1 };
+  for (const c of b.spellCasters ?? []) {
+    if (c.innate) continue;
+    (c.perDay ?? []).forEach((n, rank) => {
+      if (rank >= 1 && rank <= 10 && Number.isFinite(n) && n > 0) out[`slot${rank}_max`] = Math.min(9, (out[`slot${rank}_max`] ?? 0) + n);
+    });
+  }
+  const focus = Number(b.focusPoints ?? 0);
+  if (Number.isFinite(focus) && focus > 0) out['focus_max'] = Math.min(3, Math.round(focus));
+  return out;
+}
+
 export const pathbuilderImporter: CardImporter = {
   id: 'pathbuilder',
   title: 'Pathbuilder 2e',
@@ -130,7 +149,7 @@ export const pathbuilderImporter: CardImporter = {
   },
   detect: (j) => buildOf(j) !== null,
   read(j) {
-    const stats = pf2eFields(fromPathbuilder(j) as unknown as Record<string, unknown>, 'en');
+    const stats = { ...pf2eFields(fromPathbuilder(j) as unknown as Record<string, unknown>, 'en'), ...tableFields(j) };
     const id = (j as { pathbuilderId?: unknown }).pathbuilderId;
     return { name: buildOf(j)!.name || t('pf2e.pb.unnamed'), system: 'pf2e', lang: 'en', stats, linkId: typeof id === 'string' || typeof id === 'number' ? String(id) : null, avatarUrl: null, warnings: [] };
   },

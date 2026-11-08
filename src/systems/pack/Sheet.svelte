@@ -200,7 +200,7 @@
     {:else}
       <span class="stepper">
         <button class="btn" aria-label="−1" onclick={() => step(f, -1)}>−</button>
-        <span class="value">{num(f)}{#if f.type === 'formula'}<span class="of"> / {res?.limits[f.key]}</span>{/if}</span>
+        <span class="value">{num(f)}{#if f.type === 'formula' || (f.type === 'number' && f.max === undefined)}<span class="of"> / {res?.limits[f.key]}</span>{/if}</span>
         <button class="btn" aria-label="+1" onclick={() => step(f, 1)}>+</button>
       </span>
     {/if}
@@ -366,7 +366,7 @@
                 {:else if marks(f)}
                   <span class="stepper">
                     <button class="btn" aria-label="−1" onclick={() => step(f, -1)}>−</button>
-                    <span class="value big">{num(f)}{#if f.type === 'formula'}<span class="of"> / {res?.limits[f.key]}</span>{/if}</span>
+                    <span class="value big">{num(f)}{#if f.type === 'formula' || (f.type === 'number' && f.max === undefined)}<span class="of"> / {res?.limits[f.key]}</span>{/if}</span>
                     <button class="btn" aria-label="+1" onclick={() => step(f, 1)}>+</button>
                   </span>
                 {:else}
@@ -756,6 +756,21 @@
   .stepper .btn {
     flex: 1;
     min-width: 0;
+  }
+  /* On a line of a stat block: − 38 / 38 + in the text, not a tile. */
+  .line .stepper {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    vertical-align: middle;
+  }
+  .line .stepper .value {
+    order: 0;
+    flex-basis: auto;
+  }
+  .line .stepper .btn {
+    flex: none;
+    padding: 0 8px;
+    line-height: 1.4;
   }
   .mark {
     width: 12px;
