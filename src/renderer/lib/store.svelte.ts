@@ -3,6 +3,7 @@ import { setHotkeys, trackHotkeys } from '../../shared/hotkeys';
 import type { DisplayInfo } from '../../shared/api';
 import type { AppState } from '../../shared/types';
 import { setRoleNames } from '../../shared/vault';
+import { adventureTheme } from '../../shared/adventures';
 import { setSystemsOff } from '../../systems';
 import { registerPacks } from '../../systems/packs';
 import { applyLang } from './i18n.svelte';
@@ -58,7 +59,8 @@ export async function connect(opts: { displays?: boolean } = {}) {
     setSystemsOff(s.vault.systemsOff);
     setHotkeys(s.vault.hotkeys);
     applyLang(s.vault.lang);
-    applyTheme(s.vault.theme);
+    // The open adventure may have a theme of its own.
+    applyTheme(adventureTheme(s.adventures) ?? s.vault.theme);
     store.state = s;
   };
   window.api.onState(apply);

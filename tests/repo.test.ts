@@ -335,6 +335,23 @@ describe('packs from strangers', () => {
     }
   });
 
+  it('a pack carries the adventure\'s theme, a known and open one only', async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-theme-'));
+    try {
+      fs.mkdirSync(path.join(tmp, 'adv'));
+      const out = path.join(tmp, 'x.sgpack');
+      const pack = (theme: string) => writePack(out, { folder: path.join(tmp, 'adv'), manifest: { scryingGlass: 'adventure', version: 1, name: 'Ночь', exported: 1, app: 't', music: false, theme }, slices: { scenes: [], maps: {}, encounters: [], order: {}, names: {} }, library: [] });
+      await pack('gothic');
+      expect((await packManifest(out)).theme).toBe('gothic');
+      for (const bad of ['oldschool', 'auto', 'url(x)']) {
+        await pack(bad);
+        expect((await packManifest(out)).theme).toBeUndefined();
+      }
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('a pack leaves PDFs behind when asked', async () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-pdf-'));
     try {

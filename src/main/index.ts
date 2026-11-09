@@ -6,7 +6,7 @@ import { moduleList } from '../modules';
 import type { Action, ModuleContext, ModuleDef, VaultAccess } from '../shared/module';
 import type { AppState } from '../shared/types';
 import { getLang, isLang, resolveLang, setLang, t, type Lang, type LangSetting } from '../shared/i18n';
-import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, HIDDEN_THEMES, isTheme, THEME_BACKGROUND, type RoleNames, type ThemeSetting, type VaultFolder, type VaultState } from '../shared/vault';
+import { allFiles, dirname, LIBRARY, renamePath, safeFileName, setRoleNames, HIDDEN_THEMES, isLightTheme, isTheme, THEME_BACKGROUND, type RoleNames, type ThemeSetting, type VaultFolder, type VaultState } from '../shared/vault';
 import { createSnapshot, listSnapshots, restoreSnapshot, type Reason } from './backups';
 import { factionsOf, factionsSlice, renamedModules, type FactionSlices } from '../shared/oldstate';
 import { folderFiles, freeFolder, PACK_EXT, packManifest, readPack, remap, writePack, type LibraryCard, type PackSlices, type Shrink } from './packs';
@@ -18,7 +18,7 @@ import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
-import { COVER_FILE, renameAdventurePaths, SUPPLEMENT_KINDS, systemFor, type SupplementKind } from '../shared/adventures';
+import { adventureTheme, COVER_FILE, renameAdventurePaths, SUPPLEMENT_KINDS, systemFor, type SupplementKind } from '../shared/adventures';
 import { defaultSystem, LEGACY_SYSTEM, setSystemsOff } from '../systems';
 import { PLUGINS } from '../systems/plugins';
 import { loadSystemPacks, ownPackFile, packBooks, savePack, systemPacks } from './syspacks';
@@ -371,10 +371,14 @@ const menu = () => buildMenu((section) => getControlWindow()?.webContents.send('
 
 // Colour theme: native parts (scrollbars, menus, dialogs) follow it through nativeTheme; the window background —
 // so a reload does not flash the wrong colour; the pages switch on the next state broadcast.
+// The theme now: the open adventure's own, otherwise the setting.
+const themeNow = (): ThemeSetting => (state.adventures && adventureTheme(state.adventures)) || (isTheme(settings.theme) ? settings.theme : 'auto');
+let themeApplied = '';
 function applyTheme() {
-  const theme = isTheme(settings.theme) ? settings.theme : 'auto';
-  nativeTheme.themeSource = theme === 'auto' ? 'system' : theme === 'light' || theme === 'parchment' ? 'light' : 'dark';
+  const theme = themeNow();
+  nativeTheme.themeSource = theme === 'auto' ? 'system' : isLightTheme(theme) ? 'light' : 'dark';
   const shown = theme === 'auto' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme;
+  themeApplied = theme;
   getControlWindow()?.setBackgroundColor(THEME_BACKGROUND[shown]);
 }
 // The window's title bar (windows.ts): chosen when the window is created, a change works after a restart.
@@ -385,9 +389,9 @@ let frame: WindowFrame = 'system';
 const titleBarSetting = (): TitleBarSetting => ({ on: settings.titleBar ?? titleBarByDefault, byDefault: titleBarByDefault, now: frame });
 // The system buttons over the corner before the page sends the theme's colours: by the window background.
 function overlayColors() {
-  const theme = isTheme(settings.theme) ? settings.theme : 'auto';
+  const theme = themeNow();
   const shown = theme === 'auto' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme;
-  const light = shown === 'light' || shown === 'parchment';
+  const light = isLightTheme(shown);
   return { color: THEME_BACKGROUND[shown], symbolColor: light ? '#2e3338' : '#dcddde' };
 }
 
@@ -456,6 +460,8 @@ function contentChanged() {
 
 // ---------- Рассылка состояния ----------
 function broadcastState() {
+  // Another adventure may bring another theme.
+  if (themeNow() !== themeApplied) applyTheme();
   for (const win of BrowserWindow.getAllWindows()) {
     win.webContents.send('state:changed', state);
   }
@@ -850,6 +856,8 @@ interface AdventureData extends FactionSlices<AnyRec> {
   tray?: AnyRec;
   // Ролевая система приключения (у удалённых до 0.18 нет).
   system?: string;
+  // Its theme (none before 0.101 or without one).
+  theme?: ThemeSetting;
   // The pinned journal notes and PDFs (none before 0.32, one path before 0.56).
   pinned?: string | string[];
   // Progress clocks (none before 0.54).
@@ -941,6 +949,7 @@ async function buildPack(adventure: string, out: string, opts: { music: boolean;
       app: app.getVersion(),
       music: opts.music,
       system: systemFor(state.adventures, adventure),
+      ...(state.adventures.themes?.[adventure] ? { theme: state.adventures.themes[adventure] } : {}),
       ...(state.adventures.supplements?.[adventure] ? { supplement: state.adventures.supplements[adventure] } : {}),
       needs: localNeeds(systemFor(state.adventures, adventure), adventure).flatMap(({ source, ...n }) => (sourceUrl(source) ? [{ ...n, url: sourceUrl(source) }] : [])),
     },
@@ -1046,6 +1055,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     names: drop(st['portraits']!['names'] as AnyRec, (k) => inAdventure(name, k)),
     tray: (st['scenes']!['trays'] as AnyRec | undefined)?.[name] as AnyRec | undefined,
     system: state.adventures.systems?.[name],
+    ...(state.adventures.themes?.[name] ? { theme: state.adventures.themes[name] } : {}),
     pinned: (st['journal']!['pinned'] as Record<string, string[]>)[name],
     factions: (st['factions']!['byAdventure'] as Record<string, AnyRec>)[name],
     clocks: (st['clocks']!['byAdventure'] as Record<string, unknown[]>)[name],
@@ -1161,6 +1171,8 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
       await runAction('adventures', 'mark', { path: main.to, supplement: (res.meta.data as AdventureData | undefined)?.supplement });
       const system = (res.meta.data as AdventureData | undefined)?.system;
       if (system) await runAction('adventures', 'setSystem', { path: main.to, system });
+      const theme = (res.meta.data as AdventureData | undefined)?.theme;
+      if (theme) await runAction('adventures', 'setTheme', { path: main.to, theme });
     }
   } else {
     for (const win of BrowserWindow.getAllWindows()) {
@@ -1302,6 +1314,7 @@ async function importPack(file: string, wanted: string) {
     const supplement = SUPPLEMENT_KINDS.find((k) => k === pack.manifest.supplement);
     await runAction('adventures', 'mark', { path: name, ...(supplement ? { supplement } : {}) });
     if (pack.manifest.system) await runAction('adventures', 'setSystem', { path: name, system: pack.manifest.system });
+    if (pack.manifest.theme) await runAction('adventures', 'setTheme', { path: name, theme: pack.manifest.theme });
     await runAction('adventures', 'select', { path: name });
     const needs = (pack.manifest.needs ?? []).map(({ url, ...n }) => ({ ...n, source: sourceByUrl(url) }));
     return { name, renamed: name !== from, scenes: scenes.length, encounters: encounters.length, cards, needs };

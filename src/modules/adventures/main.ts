@@ -2,6 +2,7 @@
 // Остальные модули фильтруют по нему то, что показывают (см. shared/adventures.ts).
 import * as fs from 'node:fs';
 import { defineModule, type ModuleContext } from '../../shared/module';
+import { isTheme, type ThemeSetting } from '../../shared/vault';
 import { isSupplement, looksLikeAdventure, withRecent, missingFolders, SUPPLEMENT_KINDS, type AdventuresState, type SupplementKind } from '../../shared/adventures';
 
 const initialState: AdventuresState = { list: [], current: null, initialized: false, systems: {} };
@@ -80,6 +81,12 @@ export default defineModule({
     // Ролевая система приключения (path: null — всего хранилища и общего).
     setSystem(s, { path, system }: { path: string | null; system: string }) {
       return { ...s, systems: { ...s.systems, [path ?? '']: system } };
+    },
+
+    // The adventure's theme (path: null — the whole vault's; theme: null — the one of the settings).
+    setTheme(s, { path, theme }: { path: string | null; theme: ThemeSetting | null }) {
+      const { [path ?? '']: _, ...rest } = s.themes ?? {};
+      return { ...s, themes: theme && isTheme(theme) && theme !== 'auto' ? { ...rest, [path ?? '']: theme } : rest };
     },
 
     // Новое приключение: папка со стандартными подпапками. Название с «/» и подобным не годится.

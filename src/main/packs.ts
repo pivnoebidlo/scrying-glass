@@ -11,7 +11,7 @@ import { t } from '../shared/i18n';
 import { factionsOf, type FactionSlices } from '../shared/oldstate';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { AUDIO_EXT } from '../shared/vault';
+import { AUDIO_EXT, HIDDEN_THEMES, isTheme } from '../shared/vault';
 import { checkNeeds, type Need, type PublishedMark } from '../shared/repo';
 import { folderDirs, folderFiles as walkFolder, readEntry, readZip, safeEntry, writeZip, type ZipEntry } from './zip';
 
@@ -45,6 +45,8 @@ export interface PackManifest {
   music: boolean;
   // Ролевая система приключения (нет — файл из версии до 0.18: D&D по умолчанию).
   system?: string;
+  // The adventure's theme of the control window (none before 0.101 or without one).
+  theme?: string;
   // A supplement, not an adventure: its kind (none before 0.61).
   supplement?: string;
   // What it needs from the Community (shared/repo.ts Need), with the address of the repository (none before 0.100).
@@ -169,6 +171,8 @@ const validManifest = (m: PackManifest | null): m is PackManifest => {
     const url = (raw.find((x) => x?.author === n.author && x?.id === n.id) as { url?: unknown } | undefined)?.url;
     return typeof url === 'string' && url.length <= 300 && /^https?:\/\//.test(url) ? [{ ...n, url }] : [];
   });
+  // A theme this app does not know (or a hidden one) is not taken.
+  if (m.theme !== undefined && !(isTheme(m.theme) && m.theme !== 'auto' && !HIDDEN_THEMES.includes(m.theme))) delete m.theme;
   if (ok.length) m.needs = ok;
   else delete m.needs;
   return true;

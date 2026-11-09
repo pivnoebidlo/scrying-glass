@@ -35,3 +35,21 @@ describe('recent adventures', () => {
     expect(renameAdventurePaths({ ...base, recent: ['F', 'A'] }, 'F', 'Ф').recent).toEqual(['Ф', 'A']);
   });
 });
+
+describe('the theme of an adventure', () => {
+  it('the open adventure asks for its theme; none or «automatic» — the settings decide', async () => {
+    const { adventureTheme } = await import('../src/shared/adventures');
+    let s = run(adventures, base, 'setTheme', { path: 'A', theme: 'gothic' });
+    s = run(adventures, s, 'setTheme', { path: null, theme: 'space' });
+    expect(adventureTheme({ ...s, current: 'A' })).toBe('gothic');
+    expect(adventureTheme({ ...s, current: null })).toBe('space');
+    expect(adventureTheme({ ...s, current: 'B' })).toBeNull();
+    s = run(adventures, s, 'setTheme', { path: 'A', theme: 'auto' });
+    expect(s.themes).toEqual({ '': 'space' });
+    s = run(adventures, s, 'setTheme', { path: null, theme: null });
+    expect(s.themes).toEqual({});
+  });
+  it('a renamed adventure keeps its theme', () => {
+    expect(renameAdventurePaths({ ...base, themes: { A: 'gothic' } }, 'A', 'Z').themes).toEqual({ Z: 'gothic' });
+  });
+});

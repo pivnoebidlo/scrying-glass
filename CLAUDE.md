@@ -36,8 +36,8 @@ Electron-приложение для мастера D&D: окно управле
 - Updates: `main/updates.ts` (GitHub `/releases/latest`), compare — `shared/updates.ts` (`isNewer`); setting
   `settings.updates` (`check`, `skip`), IPC `updates:*`; on launch (5 s later) — event `updates:available` →
   `renderer/control/UpdateBanner.svelte`; the General settings section has the switch and «Check now».
-- Theme of the control window: `settings.theme` ('auto' | 'dark' | 'light' | 'parchment' | 'space' | 'neon', `THEMES` in shared/vault.ts),
-  action `vault/setTheme`, state `vault.theme`; the core sets `nativeTheme.themeSource` and the window background
+- Theme of the control window: `settings.theme` ('auto' | 'dark' | 'light' | 'parchment' | 'space' | 'neon' | 'gothic', `THEMES` in shared/vault.ts),
+  action `vault/setTheme`, state `vault.theme`; an adventure's own theme — `adventures.themes[папка | '']` (действие `setTheme`, null — как в настройках; меню `Switcher`), важнее настройки: `adventureTheme` (shared/adventures.ts) в `store.svelte.ts` и `themeNow` в main/index.ts (`broadcastState` переключает фон окна и `nativeTheme`), уходит в корзину (`AdventureData.theme`) и в .sgpack (`manifest.theme`, `validManifest` берёт только известную открытую); the core sets `nativeTheme.themeSource` and the window background
   (`applyTheme`), the window — `<html data-theme>` (`applyTheme` in store.svelte.ts, the last one cached in
   localStorage for the next launch). Colours — only tokens in `renderer/lib/theme.css` (incl. `--warning`,
   `--success`, `--on-accent` — text on an accent background: dark on the cyan of space); hard-coded colours only on pictures and on the player screen.

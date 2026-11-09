@@ -8,10 +8,10 @@
   import { openRepo, repo } from '../../repo/ui/repo.svelte';
   import { currentSystem, isSupplement, recentAdventures, roleFolderHere, shownAdventures, visibleIn } from '../../../shared/adventures';
   import SystemSelect from './SystemSelect.svelte';
-  import { roleNames } from '../../../shared/vault';
+  import { HIDDEN_THEMES, roleNames, THEMES, type ThemeSetting } from '../../../shared/vault';
   import { bestiary, connectCards } from '../../bestiary/ui/cards.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
-  import { dispatch } from '../../../renderer/lib/store.svelte';
+  import { dispatch, store } from '../../../renderer/lib/store.svelte';
   import { openTab } from '../../../renderer/lib/nav';
   import { advUi } from './ui.svelte';
 
@@ -23,6 +23,8 @@
   // Система нового приключения: по умолчанию — как у текущего.
   let newSystem = $state('');
   const system = $derived(currentSystem(ms));
+  // Themes for an adventure: not «automatic», hidden ones once found.
+  const themes = $derived(THEMES.filter((id) => id !== 'auto' && (!HIDDEN_THEMES.includes(id) || store.state.vault.themesFound.includes(id))));
 
   // Приключения отключённых систем скрыты (настройки «Приключения» → «Ролевые системы»).
   const all = $derived(shownAdventures(ms));
@@ -176,6 +178,13 @@
       <label class="system" title={ms.current ? t('adv.systemHintAdv') : t('adv.systemHintVault')}>
         <span class="faint">{t('adv.system')}</span>
         <SystemSelect value={system} onchange={(v) => dispatch('adventures', 'setSystem', { path: ms.current, system: v })} />
+      </label>
+      <label class="system" title={ms.current ? t('adv.themeHintAdv') : t('adv.themeHintVault')}>
+        <span class="faint">{t('adv.theme')}</span>
+        <select value={ms.themes?.[ms.current ?? ''] ?? ''} onchange={(e) => dispatch('adventures', 'setTheme', { path: ms.current, theme: (e.currentTarget.value || null) as ThemeSetting | null })}>
+          <option value="">{t('adv.themeSettings')}</option>
+          {#each themes as id (id)}<option value={id}>{t(`settings.theme.${id}` as never)}</option>{/each}
+        </select>
       </label>
       <div class="sep"></div>
       {#if creating}

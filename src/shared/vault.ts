@@ -65,12 +65,14 @@ export interface VaultState {
 // Colour themes of the control window (renderer/lib/theme.css): 'auto' follows the system (dark or light); parchment
 // suits fantasy, space and neon (cyberpunk) — science fiction.
 // 'oldschool' — hidden (an easter egg: typed in Settings → About), in the list only once found.
-export const THEMES = ['auto', 'dark', 'light', 'parchment', 'space', 'neon', 'oldschool'] as const;
+export const THEMES = ['auto', 'dark', 'light', 'parchment', 'space', 'neon', 'gothic', 'oldschool'] as const;
 export const HIDDEN_THEMES: readonly string[] = ['oldschool'];
 export type ThemeSetting = (typeof THEMES)[number];
 export const isTheme = (v: unknown): v is ThemeSetting => THEMES.includes(v as ThemeSetting);
+// Light themes: native parts (scrollbars, menus, dialogs) go light with them.
+export const isLightTheme = (v: string) => v === 'light' || v === 'parchment';
 // The window background while the page loads, per theme (as --bg-primary).
-export const THEME_BACKGROUND: Record<Exclude<ThemeSetting, 'auto'>, string> = { dark: '#1e1e1e', light: '#ffffff', parchment: '#f3e9d2', space: '#0c1220', neon: '#0a0a12', oldschool: '#0000aa' };
+export const THEME_BACKGROUND: Record<Exclude<ThemeSetting, 'auto'>, string> = { dark: '#1e1e1e', light: '#ffffff', parchment: '#f3e9d2', space: '#0c1220', neon: '#0a0a12', gothic: '#110a0c', oldschool: '#0000aa' };
 
 // Назначение папки угадывается по названию. Это подсказка, а не требование.
 export type FolderRole = 'characters' | 'party' | 'maps' | 'music' | 'backgrounds' | 'handouts' | 'bestiary' | 'compendium' | 'journal';

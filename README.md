@@ -11,7 +11,7 @@ top of the window offers "Download" / "Skip this version". Turn it off in ⌘, �
 
 The interface is in English and Russian (⌘, → General → Language; by default — the system language if there is a
 translation for it, otherwise English). The language switches at once, without a restart. The theme of the GM window — automatic
-(as the system), dark, light, parchment (fantasy), space or neon (science fiction, cyberpunk) — is in the same place (⌘, → General → Theme); the player screen keeps its
+(as the system), dark, light, parchment (fantasy), space or neon (science fiction, cyberpunk), gothic (vampires, horror) — is in the same place (⌘, → General → Theme). An adventure can have a theme of its own (the adventure menu → Theme): it is on while the adventure is open and travels with it in a file; the player screen keeps its
 own look. The tab bar is the window's title bar, as in Obsidian (drag the window by its empty space): on in macOS,
 a beta in Windows and Linux, where the system buttons go to the top right corner — ⌘, → General → Tabs in the title
 bar (works at once). Over the side panel — search (⌘K), the roll log, the trash (with the number of items) and "Hide"; with the panel hidden, "Show" stands at the start of the tab

@@ -2,7 +2,7 @@
 // Вкладки показывают текущее приключение и «общее» — всё, что лежит вне приключений. Вкладка «Файлы»
 // по-прежнему показывает хранилище целиком. Только типы и чистые функции: используются ядром и окнами.
 import { t } from './i18n';
-import { basename, folderRole, roleNames, type FolderRole, type VaultFolder } from './vault';
+import { basename, folderRole, isTheme, roleNames, type FolderRole, type ThemeSetting, type VaultFolder } from './vault';
 import { LEGACY_SYSTEM, defaultSystem, familyOf, isEnabled, systems, usesOf } from '../systems';
 
 export interface AdventuresState {
@@ -19,6 +19,8 @@ export interface AdventuresState {
   // creatures (cards in its monsters folder) and compendium entries (spells, items, rules, own types) — any mix of
   // them; the kind only says what it is about.
   supplements?: Record<string, SupplementKind>;
+  // The control window's theme while this adventure is open ('' — the whole vault); none — the theme of the settings.
+  themes?: Record<string, ThemeSetting>;
   // Supplements an adventure uses: their cards and entries are seen in it as its own (adventure → supplement folders).
   uses?: Record<string, string[]>;
   // Adventures opened lately, the last one first (supplements are not kept): the switcher shows a few of them.
@@ -148,6 +150,12 @@ export function renameAdventurePaths<T>(value: T, from: string, to: string): T {
     return v;
   };
   return walk(value) as T;
+}
+
+// The theme the open adventure asks for (null — the one of the settings). 'auto' is not an adventure's theme.
+export function adventureTheme(adv: Pick<AdventuresState, 'themes' | 'current'>): ThemeSetting | null {
+  const own = adv.themes?.[adv.current ?? ''];
+  return isTheme(own) && own !== 'auto' ? own : null;
 }
 
 // The adventure's cover: a picture in its folder (the core makes it from any picture the GM gives).
