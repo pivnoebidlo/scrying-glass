@@ -7,7 +7,7 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { generateKeyPairSync, sign, type KeyObject } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { checkPublish, matchesQuery, signedText, updateFor, type PublishTicket, type RepoCatalog, type RepoEntry, type ReportedEntry, type BlockedEntry } from '../src/shared/repo';
+import { checkNeeds, checkPublish, MAX_NEEDS, matchesQuery, signedText, updateFor, type PublishTicket, type RepoCatalog, type RepoEntry, type ReportedEntry, type BlockedEntry } from '../src/shared/repo';
 import { Repo } from '../server/src/repo';
 import { handler } from '../server/src/http';
 import { sign as sigv4 } from '../server/src/s3';
@@ -52,6 +52,15 @@ describe('repository protocol', () => {
     expect(checkPublish({ ...ok, kind: 'supplement', subkind: 'spells' })).toMatchObject({ kind: 'supplement', subkind: 'spells' });
     expect(checkPublish({ ...ok, subkind: 'spells' })).not.toHaveProperty('subkind');
     expect(checkPublish({ ...ok, kind: 'supplement', subkind: '../x' })).not.toHaveProperty('subkind');
+  });
+
+  it('keeps only well-formed needs, each once', () => {
+    const a = 'A'.repeat(43);
+    const n = { kind: 'system', author: a, id: 'vtm5-entry', version: 2 };
+    expect(checkPublish({ ...ok, needs: [n, n, { ...n, id: '../x' }, { ...n, kind: 'game' }, { ...n, id: 'other-one', version: 0 }, 'x'] })).toMatchObject({ needs: [n] });
+    expect(checkPublish({ ...ok, needs: [] })).not.toHaveProperty('needs');
+    expect(checkPublish({ ...ok, needs: 'vtm5' })).not.toHaveProperty('needs');
+    expect(checkNeeds(Array.from({ length: 40 }, (_, i) => ({ ...n, id: `entry-${String(i).padStart(4, '0')}` })))).toHaveLength(MAX_NEEDS);
   });
 
   it('refuses bad ids, systems, sizes and covers', () => {
@@ -237,8 +246,10 @@ describe('repository service', () => {
   });
 
   it('supplements: listed only to apps that ask for them, with what they are about', async () => {
-    const r = await publish(60, me, { id: 'my-supplement-1', title: 'Swamp things', system: 'dnd5e-2024', kind: 'supplement', subkind: 'bestiary' });
-    expect(r.body).toMatchObject({ kind: 'supplement', subkind: 'bestiary' });
+    const needs = [{ kind: 'system', author: 'B'.repeat(43), id: 'some-system-1', version: 3 }];
+    const r = await publish(60, me, { id: 'my-supplement-1', title: 'Swamp things', system: 'dnd5e-2024', kind: 'supplement', subkind: 'bestiary', needs });
+    expect(r.body).toMatchObject({ kind: 'supplement', subkind: 'bestiary', needs });
+    expect((await catalog()).features).toContain('needs');
     const ids = async (q: string) => ((await (await fetch(base + '/api/v1/catalog' + q)).json()) as RepoCatalog).entries.map((e) => e.id);
     expect(await ids('?kinds=all')).not.toContain('my-supplement-1');
     expect(await ids('?kinds=adventure,system,bestiary')).not.toContain('my-supplement-1');

@@ -32,6 +32,9 @@ export interface RepoEntry {
   kind?: EntryKind;
   // What a supplement is about: bestiary, spells, items, rules, collection (shared/adventures.ts SUPPLEMENT_KINDS).
   subkind?: string;
+  // What it can't do without: other entries of the same repository (the system its adventure is for, the
+  // supplements it uses), at least of that version. None — an older app or service published it.
+  needs?: Need[];
   lang: string;
   // 1, 2, … — each publish of the same adventure is a new version.
   version: number;
@@ -48,7 +51,8 @@ export interface RepoEntry {
 
 export interface RepoCatalog {
   api: number;
-  // What the service knows beyond adventures: 'systems', 'bestiaries', 'supplements', 'content'. The catalog lists
+  // What the service knows beyond adventures: 'systems', 'bestiaries', 'supplements', 'content', 'needs' (entries
+  // keep what they need). The catalog lists
   // other kinds only when asked: ?kinds=adventure,system,bestiary,supplement,content (`all` — adventures and systems, as 0.59 asks: an older
   // app would take an unknown kind for an adventure).
   features?: string[];
@@ -73,7 +77,19 @@ export interface PublishRequest {
   cover?: number;
   kind?: EntryKind;
   subkind?: string;
+  needs?: Need[];
 }
+
+// Another entry of the same repository something needs: a system (its pack, or the content that brings it), a
+// supplement. The window finds its title in the catalog; gone from it — the GM is told so.
+export interface Need {
+  kind: EntryKind;
+  author: string;
+  id: string;
+  // The version the author had: older ones may lack what is used.
+  version: number;
+}
+export const MAX_NEEDS = 16;
 
 export type EntryKind = 'system' | 'bestiary' | 'supplement' | 'content';
 export const ENTRY_KINDS: EntryKind[] = ['system', 'bestiary', 'supplement', 'content'];
@@ -154,7 +170,23 @@ export function checkPublish(x: unknown): PublishRequest | string {
     ...(typeof cover === 'number' ? { cover } : {}),
     ...(ENTRY_KINDS.includes(o['kind'] as EntryKind) ? { kind: o['kind'] as EntryKind } : {}),
     ...(o['kind'] === 'supplement' && typeof o['subkind'] === 'string' && SUBKIND_RE.test(o['subkind']) ? { subkind: o['subkind'] } : {}),
+    ...(checkNeeds(o['needs']).length ? { needs: checkNeeds(o['needs']) } : {}),
   };
+}
+
+// The needs of a publish as the service keeps them: only well-formed ones, each once.
+export function checkNeeds(x: unknown): Need[] {
+  if (!Array.isArray(x)) return [];
+  const out: Need[] = [];
+  for (const n of x.slice(0, MAX_NEEDS)) {
+    if (!n || typeof n !== 'object') continue;
+    const o = n as Record<string, unknown>;
+    if (!ENTRY_KINDS.includes(o['kind'] as EntryKind) || typeof o['author'] !== 'string' || !AUTHOR_RE.test(o['author'])) continue;
+    if (typeof o['id'] !== 'string' || !ID_RE.test(o['id']) || typeof o['version'] !== 'number' || !Number.isInteger(o['version']) || o['version'] < 1) continue;
+    if (out.some((x) => x.author === o['author'] && x.id === o['id'])) continue;
+    out.push({ kind: o['kind'] as EntryKind, author: o['author'], id: o['id'], version: o['version'] });
+  }
+  return out;
 }
 
 // The app's side: where adventures come from, the author's name and key (null — nothing published from here yet).

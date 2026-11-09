@@ -54,7 +54,7 @@ import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
 import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, coverFromBytes, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, loadKeyWords, recoveryWords, wordsAuthor, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setContentMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
-import { ID_RE, OFFICIAL_AUTHOR, type BestiaryMark, type RepoEntry, type RepoProgress } from '../shared/repo';
+import { ID_RE, OFFICIAL_AUTHOR, sourceOf, type BestiaryMark, type Need, type RepoEntry, type RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
   closeDisplay, createControlWindow, getControlWindow, isDisplayOpen, listDisplays, openDisplay, recreateControlWindow, TITLE_HEIGHT, watchDisplays,
@@ -1364,6 +1364,29 @@ ipcMain.handle('repo:sizes', (_event, adventure: string) => {
   const files = all.filter((f) => f.rel !== COVER_FILE).length;
   return { total: all.reduce((n, f) => n + f.size, 0), music: sum(/\.(mp3|ogg|wav|flac|m4a)$/i), pdf: sum(/\.pdf$/i), images: sum(/\.(png|jpe?g)$/i), files };
 });
+// What an entry published to `source` needs from the same repository: the entry this library got the system from
+// (its pack, or the content that brings it — a system of a plugin needs nothing) and the entries of the supplements
+// an adventure uses, downloaded or published from here. Only what the catalog still has.
+async function needsFor(source: string, system: string | null, adventure?: string): Promise<Need[]> {
+  const info = repoInfo();
+  const out: Need[] = [];
+  const add = (kind: Need['kind'], m: { id: string; version: number; source?: string; author?: string } | undefined) => {
+    const author = m?.author ?? info.author;
+    if (m && author && sourceOf(m) === source && !out.some((n) => n.author === author && n.id === m.id)) out.push({ kind, author, id: m.id, version: m.version });
+  };
+  // The GM's own copy (published from here) wins over a downloaded one: it is the one in use.
+  const pick = <T>(published: T | undefined, installed: T | undefined) => published ?? installed;
+  const pack = system ? systemPacks().find((p) => p.id === system) : undefined;
+  if (pack?.own) add('system', pick(info.systems.published[pack.id], info.systems.installed[pack.id]));
+  else if (pack) {
+    const c = installedContent().find((x) => x.family === pack.family);
+    if (c) add('content', pick(info.content.published[c.id], info.content.installed[c.id]));
+  }
+  for (const folder of (adventure && state.adventures.uses?.[adventure]) || []) add('supplement', pick(state.repo.published[folder], state.repo.installed[folder]));
+  if (!out.length) return out;
+  const c = await repoCatalog(source).catch(() => null);
+  return c ? out.filter((n) => c.entries.some((e) => e.author === n.author && e.id === n.id)) : out;
+}
 // Publish (or update) an adventure: pack it into a temporary file, upload, remember the entry.
 ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf?: boolean; cover?: string; id?: string | null }) => {
   if (!vaultRoot || !state.adventures.list.includes(p.adventure)) return null;
@@ -1389,6 +1412,7 @@ ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: st
       description: p.description,
       system: systemFor(state.adventures, p.adventure),
       ...(state.adventures.supplements?.[p.adventure] ? { kind: 'supplement' as const, subkind: state.adventures.supplements[p.adventure] } : {}),
+      needs: await needsFor(p.source, systemFor(state.adventures, p.adventure), p.adventure),
       lang: p.lang,
       music: p.music,
       app: app.getVersion(),
@@ -1462,6 +1486,7 @@ ipcMain.handle('repo:publishBestiary', async (_event, p: { source: string; refs:
       title: p.title,
       description: p.description,
       system: bestiarySystem(refs),
+      needs: await needsFor(p.source, bestiarySystem(refs)),
       lang: p.lang,
       music: false,
       app: app.getVersion(),
@@ -1555,6 +1580,8 @@ ipcMain.handle('repo:publishContent', async (_event, p: { source: string; file: 
     title: p.title,
     description: p.description,
     system: m.family,
+    // Content without a system of its own is for one that came from a system entry.
+    needs: await needsFor(p.source, systemPacks().find((x) => x.family === m.family && x.own)?.id ?? null),
     lang: p.lang,
     music: false,
     app: app.getVersion(),

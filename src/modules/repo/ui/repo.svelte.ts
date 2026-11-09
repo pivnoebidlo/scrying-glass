@@ -5,7 +5,7 @@ import { t } from '../../../renderer/lib/i18n.svelte';
 import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import { isEnabled, systems } from '../../../systems';
 import type { CardRef } from '../../../shared/cards';
-import { OFFICIAL_AUTHOR, OFFICIAL_SOURCE, sourceOf, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type BlockedEntry, type Report, type ReportedEntry, type ReportReason, type SourceInfo } from '../../../shared/repo';
+import { OFFICIAL_AUTHOR, OFFICIAL_SOURCE, sourceOf, type Need, type SystemMark, type RepoCatalog, type RepoEntry, type RepoInfo, type RepoProgress, type BlockedEntry, type Report, type ReportedEntry, type ReportReason, type SourceInfo } from '../../../shared/repo';
 
 // An entry of a catalog with the source it is in.
 export type Found = RepoEntry & { source: string };
@@ -156,11 +156,55 @@ export function updatesHere(): { key: string; entry: Found }[] {
 // A system pack downloaded: which version this library has (0 — none).
 export const systemVersion = (e: Found) =>
   Object.values(repo.info?.systems.installed ?? {}).find((m) => m.source === e.source && m.author === e.author && m.id === e.id)?.version ?? 0;
-// The system an adventure needs and this app doesn't have: its entry in a catalog (null — known, or nowhere to get).
-export function missingSystem(e: Found): Found | null {
-  if (e.kind === 'system' || systems.some((s) => s.id === e.system)) return null;
-  return allFound().find((x) => x.kind === 'system' && x.system === e.system) ?? null;
+// What an entry needs (shared/repo.ts Need) and whether this app has it: `ok` — the version needed or newer (or the
+// system by other means: a plugin, the GM's own pack, content of the family), `old` — an older version, `missing`,
+// `gone` — not in the catalogs any more. Entries published before needs were kept get a guess: the system by id.
+export type NeedLine = { need: Need; entry: Found | null; have: 'ok' | 'old' | 'missing' | 'gone' };
+
+// The version of a need this library has (0 — none): downloaded or published from here.
+function haveVersion(source: string, n: Need): number {
+  const info = repo.info;
+  const me = info?.author;
+  const at = (m: { source?: string; id: string; author?: string } | undefined, author = m?.author) => !!m && sourceOf(m) === source && m.id === n.id && author === n.author;
+  const best = (marks: ({ source?: string; id: string; version: number; author?: string } | undefined)[], mine: boolean) =>
+    Math.max(0, ...marks.filter((m) => at(m, mine ? me ?? undefined : m?.author)).map((m) => m!.version));
+  if (n.kind === 'system') return Math.max(best(Object.values(info?.systems.installed ?? {}), false), best(Object.values(info?.systems.published ?? {}), true));
+  if (n.kind === 'content') {
+    const here = (marks: Record<string, SystemMark>) => Object.entries(marks).filter(([id]) => store.state.vault.content.some((c) => c.id === id)).map(([, m]) => m);
+    return Math.max(best(here(info?.content.installed ?? {}), false), best(here(info?.content.published ?? {}), true));
+  }
+  if (n.kind === 'bestiary') return Math.max(best(Object.values(info?.bestiaries.installed ?? {}), false), best(Object.values(info?.bestiaries.published ?? {}), true));
+  const inVault = (marks: Record<string, { source?: string; id: string; version: number; author?: string }>) =>
+    Object.entries(marks).filter(([folder]) => store.state.adventures.list.includes(folder)).map(([, m]) => m);
+  return Math.max(best(inVault(store.state.repo.installed), false), best(inVault(store.state.repo.published), true));
 }
+
+// The entry that brings a system the app doesn't know: a pack or content of that id, the official first, then the
+// same author's, then anyone's.
+function providerOf(e: Found): Found | null {
+  const all = allFound().filter((x) => (x.kind === 'system' || x.kind === 'content') && x.system === e.system);
+  const rank = (x: Found) => (x.source === e.source ? 0 : 4) + (x.author === OFFICIAL_AUTHOR ? 0 : x.author === e.author ? 1 : 2);
+  return all.sort((a, b) => rank(a) - rank(b))[0] ?? null;
+}
+
+export function needsOf(e: Found): NeedLine[] {
+  if (!e.needs) {
+    if (e.kind === 'system' || e.kind === 'content' || systemKnown(e.system)) return [];
+    const p = providerOf(e);
+    const need: Need = p ? { kind: p.kind!, author: p.author, id: p.id, version: 1 } : { kind: 'system', author: '', id: e.system, version: 1 };
+    return [{ need, entry: p, have: p ? 'missing' : 'gone' }];
+  }
+  return e.needs.map((need) => {
+    const entry = allFound().find((x) => x.source === e.source && x.author === need.author && x.id === need.id) ?? null;
+    const v = haveVersion(e.source, need);
+    // Had another way: the system is known (its own copy, a plugin), content of the family is in the library.
+    const other = entry && ((entry.kind === 'system' && systemKnown(entry.system)) || (entry.kind === 'content' && store.state.vault.content.some((c) => c.family === entry.system)));
+    const have = v >= need.version ? 'ok' : v ? 'old' : other ? 'ok' : entry ? 'missing' : 'gone';
+    return { need, entry, have } as NeedLine;
+  });
+}
+// What is still to download before the entry works (newer versions too).
+export const neededFor = (e: Found) => needsOf(e).filter((l) => (l.have === 'missing' || l.have === 'old') && l.entry);
 export const systemKnown = (id: string) => systems.some((s) => s.id === id);
 
 // A downloaded bestiary: which version the library has (0 — none).
@@ -372,8 +416,15 @@ export function installedFolder(e: Found): string | null {
   return marks.sort(([, a], [, b]) => b.version - a.version)[0]?.[0] ?? null;
 }
 
-// Download and install. An update first offers to move the old copy to the trash (and takes its name).
-export async function install(e: Found) {
+// Download and install, with what it needs first (each of those with its own needs). An update first offers to move
+// the old copy to the trash (and takes its name).
+export async function install(e: Found, seen = new Set<string>()) {
+  seen.add(`${e.source}/${e.author}/${e.id}`);
+  for (const l of neededFor(e)) if (!seen.has(`${l.entry!.source}/${l.entry!.author}/${l.entry!.id}`)) await install(l.entry!, seen);
+  return installOnly(e);
+}
+
+async function installOnly(e: Found) {
   if (e.kind === 'system') return installSystem(e);
   if (e.kind === 'content') return installContent(e);
   if (e.kind === 'bestiary') return installBestiary(e);
@@ -398,8 +449,11 @@ export async function finishInstall(file: string, name: string, e: Found) {
   const { source, ...entry } = $state.snapshot(e) as Found;
   const r = await work(t('repo.installing'), () => window.api.repoInstall(file, name, entry, source));
   if (r) {
-    const need = systemKnown(e.system) ? null : e.system;
-    notice(need ? t('repo.installedNeeds', { name: r.name, system: missingSystem(e)?.title ?? need }) : t('repo.installed', { name: r.name }));
+    // The supplements it uses, downloaded just before: linked to it as on the author's side.
+    const sups = needsOf(e).flatMap((l) => (l.need.kind === 'supplement' && l.entry ? [installedFolder(l.entry)] : [])).filter((f): f is string => !!f);
+    if (sups.length) await dispatch('adventures', 'setUses', { adventure: r.name, supplements: [...new Set([...(store.state.adventures.uses?.[r.name] ?? []), ...sups])] });
+    const left = needsOf(e).filter((l) => l.have !== 'ok');
+    notice(left.length ? t('repo.installedNeeds', { name: r.name, what: left.map((l) => l.entry?.title ?? l.need.id).join(', ') }) : t('repo.installed', { name: r.name }));
     await dispatch('adventures', 'select', { path: r.name });
   }
 }

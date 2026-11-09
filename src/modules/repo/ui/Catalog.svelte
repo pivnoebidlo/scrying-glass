@@ -14,7 +14,7 @@
   import { enabledSystems, FAMILIES, familyOf, systems } from '../../../systems';
   import { LANGS } from '../../../shared/i18n/core';
   import { matchesQuery, shortKey } from '../../../shared/repo';
-  import { adminRemove, allFound, bestiaryVersion, contentIdOf, contentVersion, removeContent, installSystem, missingSystem, removeBestiary, systemVersion, type What, unblock, updatesHere, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
+  import { adminRemove, allFound, bestiaryVersion, contentIdOf, contentVersion, removeContent, needsOf, neededFor, removeBestiary, systemVersion, type What, unblock, updatesHere, type Blocked, coverOf, dismiss, install, installedFolder, isAdmin, loadCatalogs, mb, reportsOf, repo, sourceName, sourcesOn, unpublish, type Found } from './repo.svelte';
 
   let query = $state('');
   let source = $state('');
@@ -343,12 +343,20 @@
                 <button class="btn link" disabled={!!repo.busy} onclick={() => (repo.reporting = e)}><Flag size={13} /> {t('repo.report.button')}</button>
               {/if}
             </div>
-            {#if (!e.kind || e.kind === 'supplement') && !systems.some((s) => s.id === e.system)}
-              {@const need = missingSystem(e)}
-              <p class="needs">
-                {t('repo.needsSystem', { system: need?.title ?? e.system })}
-                {#if need}<button class="btn" disabled={!!repo.busy} onclick={() => installSystem(need)}><Download size={14} /> {t('repo.installSystem')}</button>{/if}
-              </p>
+            {#if needsOf(e).length}
+              {@const needs = needsOf(e)}
+              <div class="needs">
+                <div class="needs-head">{t('repo.needs')}</div>
+                <ul>
+                  {#each needs as l, i (i)}
+                    <li class={l.have}>
+                      <span>{t(`repo.need.kind.${l.need.kind}`)}: <b>{l.entry?.title ?? (l.need.author ? l.need.id : e.system)}</b></span>
+                      <span class="faint">· {l.have === 'old' ? t('repo.need.old', { n: l.need.version }) : t(`repo.need.${l.have}`)}</span>
+                    </li>
+                  {/each}
+                </ul>
+                {#if neededFor(e).length}<p class="faint">{t('repo.alsoInstalls', { what: neededFor(e).map((l) => l.entry!.title).join(', ') })}</p>{/if}
+              </div>
             {/if}
             {#if isAdmin(e.source)}
               {@const reports = reportsOf(e)}
@@ -573,12 +581,26 @@
     white-space: pre-line;
   }
   .needs {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
     margin: 0 0 14px;
+  }
+  .needs-head {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .needs ul {
+    margin: 0 0 4px;
+    padding-left: 18px;
+  }
+  .needs li.old,
+  .needs li.missing,
+  .needs li.gone {
     color: var(--warning);
+  }
+  .needs li.ok {
+    color: var(--success);
+  }
+  .needs p {
+    margin: 0;
   }
   .admin .actions {
     margin: 10px 0 0;
