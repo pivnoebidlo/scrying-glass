@@ -14,7 +14,7 @@
   import { openTab } from '../../../renderer/lib/nav';
   import { LANGUAGES, SIDE_TITLES, cardAsset, cardImageUrl, langName, sameRef, type Card, type CardRef, type CardSide, type CardSummary } from '../../../shared/cards';
   import { importersOf, systemOf } from '../../../systems';
-  import { statsView, systemUi } from '../../../systems/ui';
+  import { paperOf, statsView, systemUi } from '../../../systems/ui';
   import { markdown } from '../../../renderer/lib/markdown';
   import { viewImage } from '../../../renderer/lib/view-image.svelte';
   import { bestiary } from './cards.svelte';
@@ -79,7 +79,7 @@
   const Stats = $derived(card ? statsView(card.system, card.stats) : null);
   // The buttons the card's system adds, and its paper sheet for Telegram.
   const actions = $derived(summary ? (systemUi(summary.system)?.cardActions?.(summary, card) ?? []) : []);
-  const paper = $derived(summary && card ? systemUi(summary.system)?.paper?.(card) : undefined);
+  const paper = $derived(summary && card ? paperOf(card) : undefined);
   // «D&D 5e (2024) · Встроенный SRD · SRD 5.2.1 (Wizards of the Coast)»
   const info = $derived.by(() => {
     if (!card || !summary) return '';

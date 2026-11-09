@@ -646,6 +646,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   (`setTables` / IPC `telegram:setTables`, `withTables`); текущий стол и стол приключения — localStorage окна
   (`table`, `setTable`, `followAdventure` в tg.svelte.ts, ключ «хранилище|приключение», следит `Background.svelte`);
   видимые чаты — `chatsAt` (его и без стола) через `enabledChats` / `visibleChat`.
+  Бумажный лист выбирает `paperOf(card)` (systems/ui.ts): персонаж пакета — общий `systems/pack/PaperSheet.svelte` (лист пакета в две колонки, `showOnly()`, цвета — `PARCHMENT` из `pack/parchment.ts`, общие с листом на экране игроков), иначе `SystemUi.paper`.
   Лист персонажа D&D в Telegram: задание `{ kind: 'card', ref }` (кнопка в `CardView`), `SendDialog` рисует
   `systems/dnd5e/PaperSheet.svelte` (бумажный лист, ширина 1180, подписи — `tr(card.lang)`, ключи `pap.*`) поверх окна,
   ужимает `zoom` до окна и снимает `telegramSendCapture`.

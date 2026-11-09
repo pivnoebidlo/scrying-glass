@@ -10,6 +10,7 @@ import HpCells from './HpCells.svelte';
 import PackSheet from './pack/Sheet.svelte';
 import PackEditor from './pack/Editor.svelte';
 import PackTrackerCells from './pack/TrackerCells.svelte';
+import PackPaper from './pack/PaperSheet.svelte';
 import { isPackFamily, packOf } from './packs';
 import type { Combatant } from '../modules/initiative/types';
 import type { CardKind } from '../shared/cards';
@@ -89,5 +90,8 @@ export const statsEditor = (system: string, stats?: unknown): StatsEditor =>
   packOf(system) ? (PackEditor as StatsEditor) : (systemUi(system)?.editor?.(system, stats) ?? GenericEditor);
 // Above a fight: a pack with a threat budget gets the common plaque, otherwise the system's own.
 export const aboutFight = (system: string) => (packOf(system)?.threat ? ThreatBadge : systemUi(system)?.encounter);
+// A character as a paper sheet for Telegram: a pack's character — the common paper, otherwise the system's own.
+export const paperOf = (card: Card): PaperView | undefined =>
+  packOf(card.system) ? (card.kind === 'character' ? (PackPaper as PaperView) : undefined) : systemUi(card.system)?.paper?.(card);
 export const trackerCells = (system: string): TrackerCells =>
   isPackFamily(familyOf(system)) ? PackTrackerCells : (systemUi(system)?.trackerCells ?? HpCells);

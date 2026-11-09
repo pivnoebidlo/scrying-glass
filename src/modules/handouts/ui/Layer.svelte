@@ -10,6 +10,7 @@
   import SketchView from '../../../renderer/lib/sketch/SketchView.svelte';
   import { vaultUrl } from '../../../shared/vault';
   import { statsView } from '../../../systems/ui';
+  import { PARCHMENT } from '../../../systems/pack/parchment';
   import { CARD_HANDOUT } from '../types';
   import { showOnly } from '../../../renderer/lib/sheetusage.svelte';
 
@@ -58,7 +59,7 @@
       {#if ms.card}
         {@const Stats = statsView(ms.card.system, ms.card.stats)}
         <div class="sheet-box" transition:scale|global={{ start: 0.94, duration: 400 }}>
-          <div class="sheet" use:fit={ms.card}>
+          <div class="sheet" style={PARCHMENT} use:fit={ms.card}>
             <h1>{ms.card.name}</h1>
             <Stats card={ms.card} />
           </div>
@@ -106,20 +107,6 @@
     overflow: hidden;
   }
   .sheet {
-    /* The players' window has no theme: the sheet brings parchment colours of its own. */
-    --bg-primary: #f3e9d2;
-    --bg-secondary: #e8dabb;
-    --bg-hover: #dfcea8;
-    --border: #cbb489;
-    --text-normal: #2e2215;
-    --text-muted: #5e4a33;
-    --text-faint: #8d785a;
-    --accent: #8b2e1f;
-    --accent-hover: #a33b29;
-    --on-accent: #fff;
-    --danger: #b0281d;
-    --radius-s: 4px;
-    --radius-m: 8px;
     position: absolute;
     top: 0;
     left: 0;

@@ -12,7 +12,7 @@
   import type { Note } from '../../../shared/notes';
   import { isSketchPath, type Sketch } from '../../../shared/sketch';
   import SketchView from '../../../renderer/lib/sketch/SketchView.svelte';
-  import { systemUi, type PaperView } from '../../../systems/ui';
+  import { paperOf, type PaperView } from '../../../systems/ui';
   import type { Card, CardRef } from '../../../shared/cards';
   import { enabledChats, lastSelected, loadTg, rememberSelected, sending, tg, tgReady } from './tg.svelte';
 
@@ -101,7 +101,7 @@
   async function sendCard(ref: CardRef, title: string, cap?: string) {
     ref = $state.snapshot(ref);
     const card = await window.api.getCard(ref);
-    const Paper = card && systemUi(card.system)?.paper?.(card);
+    const Paper = card && paperOf(card);
     if (!card || !Paper) return { sent: 0, errors: [title] };
     const j = sending.job;
     sending.job = null;

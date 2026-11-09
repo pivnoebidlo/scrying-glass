@@ -832,7 +832,7 @@ session" — up to refresh) and for the GM ("new scene" — one point per charac
 (by the portraits) in the chosen corners of the screen — by default bottom left and right; the corner is picked with
 the diagram by the title, next to it — the eye: show or not.
 
-A D&D player character can be sent to Telegram as a picture of a paper character sheet (the paper-plane button on the card): abilities, saves and skills, AC, HP, attacks, spells, features and equipment, labelled in the card's language.
+A D&D player character can be sent to Telegram as a picture of a paper character sheet (the paper-plane button on the card): abilities, saves and skills, AC, HP, attacks, spells, features and equipment, labelled in the card's language. A character of a system pack (yours included) goes the same way: its sheet on parchment in two columns, with the portrait and what is spent at the table.
 
 **Mausritter** is a system pack too (Community → Systems). One card for creatures and mice: HP (Hit Protection), STR,
 DEX, WIL, armour, attacks (a click on the row rolls its damage die), critical damage, abilities, wants, warband scale.
