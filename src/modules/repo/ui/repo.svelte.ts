@@ -44,6 +44,8 @@ export const repo = $state({
   // The recovery words window: show the key's words, or type words to get the key back.
   words: null as 'show' | 'restore' | null,
   keyLater: Number(localStorage.getItem('sg.repo.keyLater') ?? 0) || 0,
+  // An adventure from a file needs what this app lacks: the dialog offering to download it.
+  wanted: null as { adventure: string; lines: NeedLine[] } | null,
   // The last result to show (done or failed).
   notice: '',
 });
@@ -194,15 +196,47 @@ export function needsOf(e: Found): NeedLine[] {
     const need: Need = p ? { kind: p.kind!, author: p.author, id: p.id, version: 1 } : { kind: 'system', author: '', id: e.system, version: 1 };
     return [{ need, entry: p, have: p ? 'missing' : 'gone' }];
   }
-  return e.needs.map((need) => {
-    const entry = allFound().find((x) => x.source === e.source && x.author === need.author && x.id === need.id) ?? null;
-    const v = haveVersion(e.source, need);
-    // Had another way: the system is known (its own copy, a plugin), content of the family is in the library.
-    const other = entry && ((entry.kind === 'system' && systemKnown(entry.system)) || (entry.kind === 'content' && store.state.vault.content.some((c) => c.family === entry.system)));
-    const have = v >= need.version ? 'ok' : v ? 'old' : other ? 'ok' : entry ? 'missing' : 'gone';
-    return { need, entry, have } as NeedLine;
-  });
+  return e.needs.map((need) => lineOf(e.source, need));
 }
+
+// A need and what this app has of it. `source` — where to look (null — any source turned on).
+function lineOf(source: string | null, need: Need): NeedLine {
+  const entry = allFound().find((x) => (!source || x.source === source) && x.author === need.author && x.id === need.id) ?? null;
+  const v = haveVersion(entry?.source ?? source ?? OFFICIAL_SOURCE, need);
+  // Had another way: the system is known (its own copy, a plugin), content of the family is in the library.
+  const other = entry && ((entry.kind === 'system' && systemKnown(entry.system)) || (entry.kind === 'content' && store.state.vault.content.some((c) => c.family === entry.system)));
+  const have = v >= need.version ? 'ok' : v ? 'old' : other ? 'ok' : entry ? 'missing' : 'gone';
+  return { need, entry, have };
+}
+
+// The supplements among the needs that are in the vault now: linked to the adventure (as on the author's side).
+async function linkSupplements(adventure: string, lines: NeedLine[]) {
+  const sups = lines.flatMap((l) => (l.need.kind === 'supplement' && l.entry ? [installedFolder(l.entry)] : [])).filter((f): f is string => !!f);
+  if (sups.length) await dispatch('adventures', 'setUses', { adventure, supplements: [...new Set([...(store.state.adventures.uses?.[adventure] ?? []), ...sups])] });
+}
+
+// An adventure came from a file: what its pack says it needs is looked up in the catalogs; what is missing — offered
+// in a dialog (Background.svelte), what is here already — the supplements are linked.
+export async function offerNeeds(adventure: string, needs: (Need & { source: string | null })[]) {
+  if (!needs.length) return;
+  await loadCatalogs();
+  const lines = needs.map(({ source, ...n }) => lineOf(source, n));
+  await linkSupplements(adventure, lines);
+  if (lines.some((l) => l.have !== 'ok')) repo.wanted = { adventure, lines };
+}
+
+export async function installWanted() {
+  const w = repo.wanted;
+  if (!w) return;
+  repo.wanted = null;
+  const seen = new Set<string>();
+  for (const l of w.lines) if ((l.have === 'missing' || l.have === 'old') && l.entry) await install(l.entry, seen);
+  const after = w.lines.map((l) => lineOf(l.entry?.source ?? null, l.need));
+  await linkSupplements(w.adventure, after);
+  const left = after.filter((l) => l.have !== 'ok');
+  notice(left.length ? t('repo.installedNeeds', { name: w.adventure, what: left.map((l) => l.entry?.title ?? l.need.id).join(', ') }) : t('repo.needsInstalled', { name: w.adventure }));
+}
+
 // What is still to download before the entry works (newer versions too).
 export const neededFor = (e: Found) => needsOf(e).filter((l) => (l.have === 'missing' || l.have === 'old') && l.entry);
 export const systemKnown = (id: string) => systems.some((s) => s.id === id);
@@ -450,8 +484,7 @@ export async function finishInstall(file: string, name: string, e: Found) {
   const r = await work(t('repo.installing'), () => window.api.repoInstall(file, name, entry, source));
   if (r) {
     // The supplements it uses, downloaded just before: linked to it as on the author's side.
-    const sups = needsOf(e).flatMap((l) => (l.need.kind === 'supplement' && l.entry ? [installedFolder(l.entry)] : [])).filter((f): f is string => !!f);
-    if (sups.length) await dispatch('adventures', 'setUses', { adventure: r.name, supplements: [...new Set([...(store.state.adventures.uses?.[r.name] ?? []), ...sups])] });
+    await linkSupplements(r.name, needsOf(e));
     const left = needsOf(e).filter((l) => l.have !== 'ok');
     notice(left.length ? t('repo.installedNeeds', { name: r.name, what: left.map((l) => l.entry?.title ?? l.need.id).join(', ') }) : t('repo.installed', { name: r.name }));
     await dispatch('adventures', 'select', { path: r.name });

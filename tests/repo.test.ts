@@ -321,6 +321,20 @@ describe('packs from strangers', () => {
     }
   });
 
+  it('a pack carries its needs, only well-formed ones with a web address', async () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-needs-'));
+    try {
+      fs.mkdirSync(path.join(tmp, 'adv'));
+      const n = { kind: 'system' as const, author: 'A'.repeat(43), id: 'vtm5-entry', version: 2 };
+      const needs = [{ ...n, url: 'https://sg.sbin.ru' }, { ...n, id: 'other-entry', url: 'file:///etc' }, { ...n, id: '../bad', url: 'https://x' }];
+      const out = path.join(tmp, 'x.sgpack');
+      await writePack(out, { folder: path.join(tmp, 'adv'), manifest: { scryingGlass: 'adventure', version: 1, name: 'Ночь', exported: 1, app: 't', music: false, needs }, slices: { scenes: [], maps: {}, encounters: [], order: {}, names: {} }, library: [] });
+      expect((await packManifest(out)).needs).toEqual([{ ...n, url: 'https://sg.sbin.ru' }]);
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
+    }
+  });
+
   it('a pack leaves PDFs behind when asked', async () => {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sg-pdf-'));
     try {

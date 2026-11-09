@@ -12,7 +12,7 @@
   import KeyReminder from './KeyReminder.svelte';
   import KeyWords from './KeyWords.svelte';
   import Busy from './Busy.svelte';
-  import { cancelNaming, finishInstall, repo } from './repo.svelte';
+  import { cancelNaming, finishInstall, installWanted, repo } from './repo.svelte';
 
   let { app }: ModuleProps<'repo'> = $props();
 
@@ -58,6 +58,30 @@
   </div>
 {/if}
 
+{#if repo.wanted}
+  {@const w = repo.wanted}
+  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+  <div class="backdrop" onclick={(e) => e.target === e.currentTarget && (repo.wanted = null)}>
+    <div class="modal">
+      <h3>{t('repo.wantedTitle', { name: w.adventure })}</h3>
+      <ul>
+        {#each w.lines as l, i (i)}
+          <li class={l.have}>
+            {t(`repo.need.kind.${l.need.kind}`)}: <b>{l.entry?.title ?? l.need.id}</b>
+            <span class="faint">· {l.have === 'old' ? t('repo.need.old', { n: l.need.version }) : t(`repo.need.${l.have}`)}</span>
+          </li>
+        {/each}
+      </ul>
+      <div class="row">
+        <button class="btn" type="button" onclick={() => (repo.wanted = null)}>{t('repo.later')}</button>
+        {#if w.lines.some((l) => (l.have === 'missing' || l.have === 'old') && l.entry)}
+          <button class="btn primary" type="button" disabled={!!repo.busy} onclick={installWanted}>{t('repo.installNeeded')}</button>
+        {/if}
+      </div>
+    </div>
+  </div>
+{/if}
+
 <style>
   .backdrop {
     position: fixed;
@@ -88,6 +112,18 @@
   }
   .warn {
     color: var(--warning);
+  }
+  ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+  li.old,
+  li.missing,
+  li.gone {
+    color: var(--warning);
+  }
+  li.ok {
+    color: var(--success);
   }
   .row {
     display: flex;

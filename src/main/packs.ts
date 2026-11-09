@@ -12,7 +12,7 @@ import { factionsOf, type FactionSlices } from '../shared/oldstate';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { AUDIO_EXT } from '../shared/vault';
-import type { PublishedMark } from '../shared/repo';
+import { checkNeeds, type Need, type PublishedMark } from '../shared/repo';
 import { folderDirs, folderFiles as walkFolder, readEntry, readZip, safeEntry, writeZip, type ZipEntry } from './zip';
 
 export const PACK_EXT = 'sgpack';
@@ -47,6 +47,8 @@ export interface PackManifest {
   system?: string;
   // A supplement, not an adventure: its kind (none before 0.61).
   supplement?: string;
+  // What it needs from the Community (shared/repo.ts Need), with the address of the repository (none before 0.100).
+  needs?: (Need & { url: string })[];
 }
 
 export interface LibraryCard {
@@ -159,8 +161,18 @@ export interface ReadPack {
 
 // Описание приключения из файла — без распаковки (для вопроса о названии).
 // The adventure's name is a folder name inside the pack and the vault: one plain path part, nothing like «..».
-const validManifest = (m: PackManifest | null): m is PackManifest =>
-  m?.scryingGlass === 'adventure' && typeof m.name === 'string' && safeEntry(m.name) && !m.name.includes('/') && !m.name.startsWith('.');
+const validManifest = (m: PackManifest | null): m is PackManifest => {
+  if (!(m?.scryingGlass === 'adventure' && typeof m.name === 'string' && safeEntry(m.name) && !m.name.includes('/') && !m.name.startsWith('.'))) return false;
+  // Needs from a stranger's file: only well-formed ones with an address of a web repository.
+  const raw = Array.isArray(m.needs) ? m.needs : [];
+  const ok = checkNeeds(raw).flatMap((n) => {
+    const url = (raw.find((x) => x?.author === n.author && x?.id === n.id) as { url?: unknown } | undefined)?.url;
+    return typeof url === 'string' && url.length <= 300 && /^https?:\/\//.test(url) ? [{ ...n, url }] : [];
+  });
+  if (ok.length) m.needs = ok;
+  else delete m.needs;
+  return true;
+};
 
 export async function packManifest(file: string): Promise<PackManifest> {
   const b = await readEntry(file, 'manifest.json');

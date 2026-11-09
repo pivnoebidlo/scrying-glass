@@ -1,6 +1,6 @@
 // API, который preload открывает окнам как window.api.
 import type { GeneratorFile } from './generators';
-import type { BlockedEntry, RepoCatalog, RepoEntry, RepoInfo, RepoProgress, ReportedEntry, ReportReason } from './repo';
+import type { BlockedEntry, Need, RepoCatalog, RepoEntry, RepoInfo, RepoProgress, ReportedEntry, ReportReason } from './repo';
 import type { BuiltinSounds } from './sounds';
 import type { ContentManifest } from './content';
 import type { Card, CardRef, CardScope, CardSummary, ImportMatch, ImportPreview } from './cards';
@@ -239,7 +239,7 @@ export interface Api {
   // выбранным названием (занятое не принимается).
   pickAdventurePack(): Promise<{ file: string; name: string; exists: boolean; suggestion: string } | null>;
   adventureNameFree(name: string): Promise<boolean>;
-  importAdventure(file: string, name: string): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number } | null>;
+  importAdventure(file: string, name: string): Promise<{ name: string; renamed: boolean; scenes: number; encounters: number; cards: number; needs: (Need & { source: string | null })[] } | null>;
   // The adventure repository (main/repo.ts, shared/repo.ts). Errors come as `repo:<code>` in the message.
   repoInfo(): Promise<RepoInfo>;
   setRepoName(name: string): Promise<RepoInfo>;

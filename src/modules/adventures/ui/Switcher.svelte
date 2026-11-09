@@ -1,6 +1,7 @@
 <!-- Над боковой панелью: текущее приключение, выбор другого и создание нового; экспорт и импорт приключения
      одним файлом (.sgpack). -->
 <script lang="ts">
+  import { offerNeeds } from '../../repo/ui/repo.svelte';
   import Lead from '../../../renderer/lib/Lead.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { Castle, Check, ChevronsUpDown, LayoutGrid, CloudUpload, Download, Globe, Plus, Trash2, Upload, UserRoundPlus, UsersRound } from '@lucide/svelte';
@@ -97,7 +98,10 @@
     busy = t('adv.importing');
     try {
       const r = await window.api.importAdventure(file, name);
-      if (r) flash(t('adv.imported', { name: r.name, scenes: r.scenes, encounters: r.encounters, cards: r.cards ? t('adv.importedCards', { count: r.cards }) : '' }));
+      if (r) {
+        flash(t('adv.imported', { name: r.name, scenes: r.scenes, encounters: r.encounters, cards: r.cards ? t('adv.importedCards', { count: r.cards }) : '' }));
+        void offerNeeds(r.name, r.needs ?? []);
+      }
     } catch (e) {
       flash(t('adv.failed', { error: String(e) }));
     } finally {

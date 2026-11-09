@@ -941,6 +941,7 @@ async function buildPack(adventure: string, out: string, opts: { music: boolean;
       music: opts.music,
       system: systemFor(state.adventures, adventure),
       ...(state.adventures.supplements?.[adventure] ? { supplement: state.adventures.supplements[adventure] } : {}),
+      needs: localNeeds(systemFor(state.adventures, adventure), adventure).flatMap(({ source, ...n }) => (sourceUrl(source) ? [{ ...n, url: sourceUrl(source) }] : [])),
     },
     slices,
     library,
@@ -1301,7 +1302,8 @@ async function importPack(file: string, wanted: string) {
     await runAction('adventures', 'mark', { path: name, ...(supplement ? { supplement } : {}) });
     if (pack.manifest.system) await runAction('adventures', 'setSystem', { path: name, system: pack.manifest.system });
     await runAction('adventures', 'select', { path: name });
-    return { name, renamed: name !== from, scenes: scenes.length, encounters: encounters.length, cards };
+    const needs = (pack.manifest.needs ?? []).map(({ url, ...n }) => ({ ...n, source: sourceByUrl(url) }));
+    return { name, renamed: name !== from, scenes: scenes.length, encounters: encounters.length, cards, needs };
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
@@ -1364,15 +1366,15 @@ ipcMain.handle('repo:sizes', (_event, adventure: string) => {
   const files = all.filter((f) => f.rel !== COVER_FILE).length;
   return { total: all.reduce((n, f) => n + f.size, 0), music: sum(/\.(mp3|ogg|wav|flac|m4a)$/i), pdf: sum(/\.pdf$/i), images: sum(/\.(png|jpe?g)$/i), files };
 });
-// What an entry published to `source` needs from the same repository: the entry this library got the system from
-// (its pack, or the content that brings it — a system of a plugin needs nothing) and the entries of the supplements
-// an adventure uses, downloaded or published from here. Only what the catalog still has.
-async function needsFor(source: string, system: string | null, adventure?: string): Promise<Need[]> {
+// What something made here needs from the Community: the entry this library got the system from (its pack, or the
+// content that brings it — a system of a plugin needs nothing) and the entries of the supplements an adventure uses,
+// downloaded or published from here — each with the source it is in.
+function localNeeds(system: string | null, adventure?: string): (Need & { source: string })[] {
   const info = repoInfo();
-  const out: Need[] = [];
+  const out: (Need & { source: string })[] = [];
   const add = (kind: Need['kind'], m: { id: string; version: number; source?: string; author?: string } | undefined) => {
     const author = m?.author ?? info.author;
-    if (m && author && sourceOf(m) === source && !out.some((n) => n.author === author && n.id === m.id)) out.push({ kind, author, id: m.id, version: m.version });
+    if (m && author && !out.some((n) => n.author === author && n.id === m.id)) out.push({ kind, author, id: m.id, version: m.version, source: sourceOf(m) });
   };
   // The GM's own copy (published from here) wins over a downloaded one: it is the one in use.
   const pick = <T>(published: T | undefined, installed: T | undefined) => published ?? installed;
@@ -1383,10 +1385,18 @@ async function needsFor(source: string, system: string | null, adventure?: strin
     if (c) add('content', pick(info.content.published[c.id], info.content.installed[c.id]));
   }
   for (const folder of (adventure && state.adventures.uses?.[adventure]) || []) add('supplement', pick(state.repo.published[folder], state.repo.installed[folder]));
+  return out;
+}
+// The needs of an entry published to `source`: those of the same repository that its catalog still has.
+async function needsFor(source: string, system: string | null, adventure?: string): Promise<Need[]> {
+  const out = localNeeds(system, adventure).filter((n) => n.source === source).map(({ source: _s, ...n }) => n);
   if (!out.length) return out;
   const c = await repoCatalog(source).catch(() => null);
   return c ? out.filter((n) => c.entries.some((e) => e.author === n.author && e.id === n.id)) : out;
 }
+// The needs a pack file carries: the source by its address (ids of sources are this app's own).
+const sourceUrl = (id: string) => repoInfo().sources.find((x) => x.id === id)?.url ?? '';
+const sourceByUrl = (url: string) => repoInfo().sources.find((x) => x.url === url)?.id ?? null;
 // Publish (or update) an adventure: pack it into a temporary file, upload, remember the entry.
 ipcMain.handle('repo:publish', async (_event, p: { source: string; adventure: string; title: string; description: string; lang: string; music: boolean; pdf?: boolean; cover?: string; id?: string | null }) => {
   if (!vaultRoot || !state.adventures.list.includes(p.adventure)) return null;
