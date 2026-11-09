@@ -12,7 +12,7 @@
   import { escape } from '../../renderer/lib/markdown';
   import { peekEntry } from '../../renderer/lib/entry/peek.svelte';
   import { spellLinks } from '../../renderer/lib/namelinks';
-  import { sheetUsage } from '../../renderer/lib/sheetusage.svelte';
+  import { sheetHost } from '../../renderer/lib/sheetusage.svelte';
   import { packOf } from '../packs';
 
   // draft — a pack not saved yet (the builder's preview); otherwise the card's system.
@@ -20,7 +20,8 @@
 
   const pack = $derived(draft ?? (packOf(card.system) as SystemPack));
   // Fields marked at the table win over the card's values, in formulas too. A draft has no table.
-  const host = $derived(draft ? null : sheetUsage.host);
+  const hostOf = sheetHost();
+  const host = $derived(draft ? null : hostOf());
   const res = $derived(pack ? packResources(pack, card.stats ?? {}, card.kind) : null);
   const s = $derived.by(() => {
     const out: PackStats = { ...card.stats };
@@ -29,7 +30,7 @@
     return out;
   });
   // The field can be changed here.
-  const marks = (f: FieldDef) => !!host && !!res && Object.hasOwn(res.limits, f.key) && !(host.player && res.gmOnly?.includes(f.key));
+  const marks = (f: FieldDef) => !!host && !host.view && !!res && Object.hasOwn(res.limits, f.key) && !(host.player && res.gmOnly?.includes(f.key));
   const mark = (f: FieldDef, box: number) => host?.set(card, f.key, usedAfter(num(f), box));
   // A track of two kinds: its own marks are light, the heavy track's — heavy (one set of boxes).
   const inside = $derived(insideTracks(pack));
@@ -42,7 +43,7 @@
   };
   const marksTrack = (f: FieldDef) => marks(f) && (!heavyOf(pack, f) || marks(heavyOf(pack, f)!));
   const step = (f: FieldDef, by: number) => host?.set(card, f.key, Math.max(0, Math.min(res?.limits[f.key] ?? 0, num(f) + by)));
-  const resets = $derived(host && pack ? (pack.resets ?? []).filter((r) => res?.resets[r.id] && !(host.player && res.resets[r.id]!.some((k) => res.gmOnly?.includes(k)))) : []);
+  const resets = $derived(host && !host.view && pack ? (pack.resets ?? []).filter((r) => res?.resets[r.id] && !(host.player && res.resets[r.id]!.some((k) => res.gmOnly?.includes(k)))) : []);
   function reset(id: string, title: string) {
     if (confirm(t('pack.resetQ', { title, name: card.name }))) host?.reset(card, id);
   }
@@ -204,6 +205,8 @@
         <button class="btn" aria-label="+1" onclick={() => step(f, 1)}>+</button>
       </span>
     {/if}
+  {:else if host?.view && res && Object.hasOwn(res.limits, f.key) && f.type !== 'track' && f.type !== 'dots'}
+    <span class="value">{num(f)}<span class="of"> / {res.limits[f.key]}</span></span>
   {:else if f.type === 'track'}
     {@render track(f)}
   {:else if f.type === 'dots'}

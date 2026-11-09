@@ -48,6 +48,7 @@ import { resolvePdfjs } from './pdfjs';
 import { importNameLists, listNameLists, namesDir } from './names';
 import { checkForUpdates } from './updates';
 import { buildMenu } from './menu';
+import { CARD_HANDOUT } from '../modules/handouts/types';
 import { isAboutLink } from '../shared/about';
 import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnouncement } from './schedule';
 import type { Game } from '../shared/schedule';
@@ -2131,7 +2132,11 @@ app.whenReady().then(async () => {
       for (const win of BrowserWindow.getAllWindows()) win.webContents.send('players:status', status);
     },
   });
-  onCardsChanged(playersChanged);
+  onCardsChanged(() => {
+    playersChanged();
+    // A sheet on the players' screen follows its card.
+    if (state.handouts?.current?.startsWith(CARD_HANDOUT)) void runAction('handouts', 'refreshCard', {});
+  });
 
   // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>,
   // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>, встроенные звуки: sg-asset://s/<путь>,

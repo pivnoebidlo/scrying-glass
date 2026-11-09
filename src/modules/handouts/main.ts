@@ -8,12 +8,24 @@ import { readNoteFile } from '../../main/notes';
 import { isSketchPath } from '../../shared/sketch';
 import { readSketchFile } from '../../main/sketches';
 import { ROLL_RESULT } from '../../shared/rolltable';
-import type { HandoutsState } from './types';
+import { getCard } from '../../main/cards';
+import { playerCard } from '../../shared/players';
+import { handoutRef, type HandoutsState } from './types';
+
+// A sheet on the screen: what a player's phone would get, with the id (the players' window reads the table's
+// values by it). Not found (the cards are not read yet, or it was deleted) — nothing is drawn.
+function withCard(s: HandoutsState): HandoutsState {
+  const ref = s.current ? handoutRef(s.current) : null;
+  if (!ref) return s.card ? { ...s, card: null } : s;
+  const c = getCard(ref);
+  return { ...s, card: c ? { ...playerCard(c), id: c.id } : null };
+}
 
 // Записка у игроков — её содержимое с диска (перечитывается при каждом изменении файлов хранилища).
 function withNote(s: HandoutsState, ctx: ModuleContext): HandoutsState {
   // Запись справочника у игроков — только пока показана именно она.
   if (s.entry && !s.current) s = { ...s, entry: null };
+  s = withCard(s);
   const abs = s.current && isNotePath(s.current) ? ctx.vault.resolve(s.current) : null;
   const note = abs ? readNoteFile(abs) : null;
   // A canvas: the same (it changes while the GM draws — the file is reread after every line).
@@ -29,6 +41,7 @@ function prune(s: HandoutsState, ctx: ModuleContext): HandoutsState {
   if (!tree || !s.current) return withNote(s, ctx);
   // Запись справочника из библиотеки — вне хранилища, её не проверяем.
   // So is a roll table's result (an entry made by the roll log).
+  if (handoutRef(s.current)) return withNote(s, ctx);
   if ((s.current.startsWith(LIBRARY) || s.current.startsWith(BUILTIN) || s.current.startsWith(ROLL_RESULT)) && s.entry) return s;
   const exists = allFiles(tree).some((f) => f.path === s.current && (f.kind === 'image' || f.kind === 'note' || f.kind === 'sketch' || f.kind === 'entry'));
   return withNote(exists ? s : { ...s, current: null }, ctx);
@@ -52,7 +65,17 @@ export default defineModule({
 
     // Запись справочника: показать (та же — убрать). Окно передаёт запись целиком.
     toggleEntry(s, { path, entry }: { path: string; entry: Entry }) {
-      return s.current === path ? { ...s, current: null, entry: null, note: null, sketch: null } : { ...s, current: path, entry, note: null, sketch: null };
+      return s.current === path ? { ...s, current: null, entry: null, note: null, sketch: null, card: null } : { ...s, current: path, entry, note: null, sketch: null, card: null };
+    },
+
+    // A card's sheet: show (the same — take away).
+    toggleCard(s, { path }: { path: string }, ctx) {
+      return withNote({ ...s, current: s.current === path ? null : path, entry: null }, ctx);
+    },
+
+    // Cards changed: the sheet on the screen follows.
+    refreshCard(s) {
+      return withCard(s);
     },
 
     // Файл раздатки переименовали: показ остаётся (с той же запиской или записью).
@@ -71,7 +94,7 @@ export default defineModule({
     },
 
     clear(s) {
-      return { ...s, current: null, note: null, sketch: null, entry: null };
+      return { ...s, current: null, note: null, sketch: null, entry: null, card: null };
     },
   },
 });

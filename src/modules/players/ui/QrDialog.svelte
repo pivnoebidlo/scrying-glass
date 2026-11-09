@@ -1,6 +1,6 @@
 <!-- A character's QR code, big enough to scan across the table. ← → — the next character. -->
 <script lang="ts">
-  import { ChevronLeft, ChevronRight, Copy, RefreshCw, X } from '@lucide/svelte';
+  import { ChevronLeft, ChevronRight, Copy, Monitor, RefreshCw, X } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { refKey } from '../../../shared/cards';
   import Qr from './Qr.svelte';
@@ -24,6 +24,12 @@
   }
   function renew() {
     if (row && confirm(t('pl.renewQ', { name: row.name }))) void players.renew(row.ref);
+  }
+  // The whole party on the players' screen: this window is not needed then.
+  function toScreen() {
+    const on = !players.codes;
+    void players.showCodes(on);
+    if (on) close();
   }
   function onkeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') close();
@@ -65,6 +71,7 @@
       {/if}
       <div class="actions">
         <button class="btn" onclick={copy}><Copy size={14} /> {copied ? t('pl.copied') : t('pl.copy')}</button>
+        <button class="btn" onclick={toScreen}><Monitor size={14} /> {players.codes ? t('pl.codesOff') : t('pl.codesOn')}</button>
         <button class="btn" onclick={renew}><RefreshCw size={14} /> {t('pl.renew')}</button>
         <button class="btn" onclick={close}><X size={14} /> {t('pl.close')}</button>
       </div>

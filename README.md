@@ -649,6 +649,8 @@ Players can open their own character in a phone's browser: no app, no account. E
 network as the GM's computer (the Wi-Fi of the room, or one shared from the laptop). In the right panel → Sheets on
 phones, turn on "Open to the local network" and click a character: a player scans the QR code with the camera (← →
 go to the next character). The link works from game to game; "New link" (also in the right-click menu) replaces it.
+Before the game, "Codes on the player screen" puts the whole party's codes on the TV at once: everyone scans their own,
+and a character whose phone has opened the sheet gets a tick. The same button takes them away.
 
 The phone shows the sheet of that character and, during a fight, hit points, conditions, the round and "Your turn!",
 updated the moment you change them in the tracker. Nothing else leaves your computer: not your notes, other
@@ -658,6 +660,10 @@ and restores them with "Long rest"; you see the same boxes on the card and can c
 in the vault, apart from the sheet, so importing the character again does not touch them. A system pack can do the same: in the system builder, a track, dots or a number can be "Marked at the table" by the
 player and the GM or by the GM only, and the Tracker step adds resets such as a rest or a new day. Everything else is read only. The first time, the system may ask whether the app can accept connections: allow it. The sheets work while
 the switch is on and the app is open.
+
+Any character's sheet can also go on the player screen: the monitor button on the card ("Show the sheet on the player
+screen") shows it like a handout, in any system, the GM's own packs too. The sheet fits the screen by itself, shows
+what is spent at the table and follows your edits; the × in the right panel → Handouts or the same button removes it.
 
 ## Cards
 

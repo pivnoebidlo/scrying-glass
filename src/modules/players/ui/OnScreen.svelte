@@ -1,6 +1,6 @@
 <!-- Right panel: the switch of the sheets on phones and the party with a QR code each. -->
 <script lang="ts">
-  import { Copy, QrCode, RefreshCw } from '@lucide/svelte';
+  import { Copy, Monitor, QrCode, RefreshCw } from '@lucide/svelte';
   import ContextMenu from '../../../renderer/lib/ContextMenu.svelte';
   import HelpTip from '../../../renderer/lib/HelpTip.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
@@ -26,6 +26,11 @@
   {t('pl.serve')}
   <HelpTip text={t('pl.serveHint')} />
 </label>
+{#if s.party.length}
+  <button class="btn codes" class:on={players.codes} onclick={() => void players.showCodes(!players.codes)}>
+    <Monitor size={14} /> {players.codes ? t('pl.codesOff') : t('pl.codesOn')}
+  </button>
+{/if}
 {#if s.error}<p class="warning">{t('pl.failed', { error: s.error })}</p>{/if}
 {#if s.on && !s.addresses.length}<p class="warning">{t('pl.noNetwork')}</p>{/if}
 <ul>
@@ -59,6 +64,16 @@
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+  .codes {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+  }
+  .codes.on {
+    background: var(--accent-soft);
+    color: var(--accent);
   }
   .warning {
     margin: 6px 0 0;

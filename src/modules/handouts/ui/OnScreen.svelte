@@ -2,7 +2,8 @@
      (поверх всего), ещё щелчок — убирает. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Pencil, Send } from '@lucide/svelte';
+  import { Pencil, Send, X } from '@lucide/svelte';
+  import { CARD_HANDOUT } from '../types';
   import { entryToTelegram } from '../../../shared/telegram';
   import { typeDef } from '../../../renderer/lib/entry/types.svelte';
   import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
@@ -48,7 +49,13 @@
   {toggle}
   hint={t('handouts.trayHint')}
 >
-  {#if ms.current && (isNotePath(ms.current) || tgReady())}
+  {#if ms.current?.startsWith(CARD_HANDOUT)}
+    {@const p = ms.current}
+    <div class="row">
+      <span class="name">{ms.card?.name ?? '…'}</span>
+      <button class="icon-btn" title={t('best.removeFromScreen')} onclick={() => dispatch('handouts', 'toggleCard', { path: p })}><X size={14} /></button>
+    </div>
+  {:else if ms.current && (isNotePath(ms.current) || tgReady())}
     {@const p = ms.current}
     <div class="row">
       <span class="name" title={p}>{caption(p)}</span>

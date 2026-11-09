@@ -7,7 +7,7 @@
   import { markdown } from '../../renderer/lib/markdown';
   import { spellLinks } from '../../renderer/lib/namelinks';
   import { modeOf, rolls, rollHint } from '../../renderer/lib/rolls.svelte';
-  import { sheetUsage } from '../../renderer/lib/sheetusage.svelte';
+  import { sheetHost } from '../../renderer/lib/sheetusage.svelte';
   import { parseBonus, parseDice } from '../../shared/dice';
   import { usedAfter } from '../../shared/players';
   import { ABILITIES, dict, mod, signed, sizeText, SKILL_ABILITY } from './stats';
@@ -59,7 +59,8 @@
   );
 
   // Spent slots: more than there are now (a lower level) count as all spent until a rest.
-  const host = $derived(sheetUsage.host);
+  const hostOf = sheetHost();
+  const host = $derived(hostOf());
   const spent = $derived(host?.used(card) ?? {});
   const usedOf = (lvl: string) => Math.min(spent[slotKey(lvl)] ?? 0, c.spellcasting?.slots[lvl] ?? 0);
   const anySpent = $derived(Object.values(spent).some((n) => n > 0));
@@ -163,12 +164,12 @@
       <div class="vital"><span class="v">{spellDc}</span><span class="l">{t('dnd.sh.dc')}</span></div>
       <div class="vital"><button class="v roll" title={t('dnd.spellAttackHint', { hint: rollHint() })} onclick={(e) => check(e, t('dnd.spellAttack'), spellAttack)}>{signed(spellAttack)}</button><span class="l">{t('dnd.sh.atk')}</span></div>
     </div>
-    {#if host && anySpent}<button class="btn rest" onclick={longRest}>{t('dnd.sh.longRest')}</button>{/if}
+    {#if host && !host.view && anySpent}<button class="btn rest" onclick={longRest}>{t('dnd.sh.longRest')}</button>{/if}
     {#each spellLevels as lvl (lvl)}
       <section class="spell-level">
         <h4>
           {lvl === '0' ? t('dnd.cantrips') : t('dnd.levelN', { n: lvl })}
-          {#if c.spellcasting.slots[lvl]}<span class="slots">{#each Array(c.spellcasting.slots[lvl]) as _, i (i)}<button class="slot" class:used={i < usedOf(lvl)} disabled={!host} aria-label={t('dnd.sh.slotBox', { level: lvl, n: i + 1 })} onclick={() => useSlot(lvl, i)}></button>{/each} {t('dnd.sh.slotsLeft', { left: c.spellcasting.slots[lvl] - usedOf(lvl), n: c.spellcasting.slots[lvl] })}</span>{/if}
+          {#if c.spellcasting.slots[lvl]}<span class="slots">{#each Array(c.spellcasting.slots[lvl]) as _, i (i)}<button class="slot" class:used={i < usedOf(lvl)} disabled={!host || host.view} aria-label={t('dnd.sh.slotBox', { level: lvl, n: i + 1 })} onclick={() => useSlot(lvl, i)}></button>{/each} {t('dnd.sh.slotsLeft', { left: c.spellcasting.slots[lvl] - usedOf(lvl), n: c.spellcasting.slots[lvl] })}</span>{/if}
         </h4>
         {#if c.spellcasting.spells[lvl]}<div class="text spells" use:spellLinks={'text'}>{@html markdown(c.spellcasting.spells[lvl])}</div>{/if}
       </section>

@@ -8,6 +8,7 @@ import type { Part, Scene, SceneContent } from './types';
 import { leftovers, shown, type Tray } from './tray';
 import { isBuiltinSound } from '../../shared/sounds';
 import { ROLL_RESULT } from '../../shared/rolltable';
+import { CARD_HANDOUT } from '../handouts/types';
 
 // Что сейчас видят и слышат игроки.
 export function capture(app: AppState): SceneContent {
@@ -15,7 +16,7 @@ export function capture(app: AppState): SceneContent {
     background: { path: app.scene.background, fit: app.scene.fit },
     map: { path: app.maps.current },
     portraits: { paths: [...app.portraits.onScreen] },
-    handout: { path: app.handouts.current?.startsWith(ROLL_RESULT) ? null : app.handouts.current },
+    handout: { path: app.handouts.current?.startsWith(ROLL_RESULT) || app.handouts.current?.startsWith(CARD_HANDOUT) ? null : app.handouts.current },
     music: { playlist: app.music.playing ? app.music.playlist : null, shuffle: app.music.shuffle },
     ambience: { loops: app.music.ambiencePlaying ? app.music.ambience.map((a) => ({ ...a })) : [] },
   };

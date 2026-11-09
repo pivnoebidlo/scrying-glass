@@ -20,6 +20,7 @@
   import { bestiary } from './cards.svelte';
   import { addToInitiative } from './combat';
   import { folderLabel } from './places';
+  import { cardHandout } from '../../handouts/types';
 
   const SIDES: CardSide[] = ['enemy', 'ally', 'neutral', 'party'];
   // What a system's button said («Update from LSS…»: what changed); goes away in a few seconds.
@@ -72,6 +73,8 @@
   });
 
   const summary = $derived(bestiary.all.find((c) => sameRef(c.ref, ref)));
+  // This card's sheet is on the players' screen.
+  const sheetShown = $derived(!!summary && app.handouts.current === cardHandout(summary.ref));
   const versions = $derived(ref ? bestiary.versionsOf(ref) : []);
   const Stats = $derived(card ? statsView(card.system, card.stats) : null);
   // The buttons the card's system adds, and its paper sheet for Telegram.
@@ -184,6 +187,7 @@
             {@const Icon = a.icon}
             <button class="btn" title={a.title} onclick={() => runAction(a.run)}><Icon size={13} /> {a.label}</button>
           {/each}
+          <button class="icon-btn" class:on={sheetShown} title={sheetShown ? t('best.removeFromScreen') : t('best.sheetToPlayers')} onclick={() => dispatch('handouts', 'toggleCard', { path: cardHandout(cref) })}><Monitor size={14} /></button>
           {#if tgReady() && paper}
             <button class="icon-btn" title={t('best.sendSheet')} onclick={() => sendToTelegram({ kind: 'card', ref: cref, title: summary.name })}><Send size={14} /></button>
           {/if}
@@ -376,6 +380,10 @@
     height: 20px;
     background: rgba(0, 0, 0, 0.6);
     color: #fff;
+  }
+  .manage .icon-btn.on {
+    background: var(--accent-soft);
+    color: var(--accent);
   }
   .p-actions .icon-btn.on {
     background: var(--accent);

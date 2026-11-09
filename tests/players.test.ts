@@ -351,3 +351,17 @@ describe('the server', () => {
     await expect.poll(() => server.connected('good')).toBe(0);
   });
 });
+
+describe('a sheet and the codes on the players\' screen', () => {
+  it('the path of a sheet holds its ref, nothing else is one', async () => {
+    const { cardHandout, handoutRef } = await import('../src/modules/handouts/types');
+    expect(handoutRef(cardHandout({ scope: 'vault', id: 'a:b' }))).toEqual({ scope: 'vault', id: 'a:b' });
+    expect(handoutRef('card:nowhere:x')).toBeNull();
+    expect(handoutRef('handouts/map.png')).toBeNull();
+  });
+  it('the codes go away after a launch: the server is off then', async () => {
+    const mod = (await import('../src/modules/players/main')).default;
+    expect(mod.init!({ used: {}, codes: true }, {} as never).codes).toBe(false);
+    expect(mod.actions.showCodes({ used: {} }, { on: true }).codes).toBe(true);
+  });
+});
