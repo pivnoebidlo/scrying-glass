@@ -32,8 +32,9 @@ export interface Layout {
   w: number;
   h: number;
   // Rows of h strings of w characters. Walkable: '.' floor or grass, ',' path or street, 'P' paved square, 'S' sand,
-  // '=' a ford, 'I' ice, 'M' mud; not: '#' rock, 'T' tree, 'R' boulder, '~' water, 'H' a house, 'L' lava, 'X' a pit.
-  // The generator makes none of I, M, L, X: only the map editor paints them.
+  // '=' a ford, 'I' ice, 'M' mud, 'F' the floor of a building put up outdoors; not: '#' rock, 'T' tree, 'R' boulder,
+  // '~' water, 'H' a house, 'L' lava, 'X' a pit, 'B' the wall of such a building.
+  // The generator makes none of I, M, L, X, F, B: only the map editor paints them.
   cells: string[];
   rooms: LayoutRoom[];
   doors: LayoutDoor[];
@@ -48,6 +49,8 @@ export interface Layout {
   wall?: TownWall;
   // The ground's colour (TONES): autumn grass, a wooden floor; none — the usual one.
   tone?: string;
+  // Buildings put up of walls and floor ('B', 'F') that have a roof: a cell of each (the roof covers all of it).
+  roofs?: { x: number; y: number }[];
 }
 // Ground colours by kind of map: outdoors and in a town the grass, in a building and a cave the floor.
 export const TONES = {
@@ -161,7 +164,27 @@ function corridor(a: LayoutRoom, b: LayoutRoom, others: LayoutRoom[], r: Random)
   return null;
 }
 
-export const walkable = (c: string | undefined) => c === '.' || c === ',' || c === 'P' || c === 'S' || c === '=' || c === 'I' || c === 'M';
+export const walkable = (c: string | undefined) => c === '.' || c === ',' || c === 'P' || c === 'S' || c === '=' || c === 'I' || c === 'M' || c === 'F';
+// A building put up outdoors: its floor and walls.
+export const isBuilt = (c: string | undefined) => c === 'F' || c === 'B';
+// The cells of the building a cell belongs to (its walls and floor joined side by side); none — not a building.
+export function buildingAt(l: Layout, x: number, y: number): { x: number; y: number }[] {
+  if (!isBuilt(l.cells[y]?.[x])) return [];
+  const seen = new Set([`${x},${y}`]);
+  const out = [{ x, y }];
+  for (let i = 0; i < out.length; i++) {
+    const p = out[i]!;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+      const q = { x: p.x + dx, y: p.y + dy };
+      const k = `${q.x},${q.y}`;
+      if (!seen.has(k) && isBuilt(l.cells[q.y]?.[q.x])) {
+        seen.add(k);
+        out.push(q);
+      }
+    }
+  }
+  return out;
+}
 
 interface Margins {
   left: number;

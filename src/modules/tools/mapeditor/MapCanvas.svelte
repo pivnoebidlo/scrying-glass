@@ -5,7 +5,7 @@
   import { drawLayout } from '../mapgen/draw';
   import type { Layout } from '../mapgen/layout';
   import {
-    addHouse, addRoom, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, removeProp, STRETCH, stretchProp, toggleDoor, togglePillar, toggleTower,
+    addBuilding, addHouse, addRoom, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, removeProp, STRETCH, stretchProp, toggleDoor, togglePillar, toggleRoof, toggleTower,
   } from './edit';
   import { editor } from './store.svelte';
 
@@ -188,7 +188,7 @@
       return;
     }
     if (brush.toggle) {
-      const fn = brush.id === 'door' ? toggleDoor : brush.id === 'tower' ? toggleTower : togglePillar;
+      const fn = brush.id === 'door' ? toggleDoor : brush.id === 'tower' ? toggleTower : brush.id === 'roof' ? toggleRoof : togglePillar;
       editor.change(fn(l, p.x, p.y));
       return;
     }
@@ -248,7 +248,7 @@
     band = null;
     if (rect && editor.layout) {
       const r = normRect(rect.a, rect.b);
-      editor.change(brush.id === 'house' ? addHouse(editor.layout, r) : addRoom(editor.layout, r));
+      editor.change(brush.id === 'house' ? addHouse(editor.layout, r) : brush.id === 'build' ? addBuilding(editor.layout, r) : addRoom(editor.layout, r));
     }
     stroke = null;
     rect = null;

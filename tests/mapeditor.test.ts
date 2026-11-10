@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setTone, stretchProp, tintProp, toggleDoor, togglePillar, toggleTower,
+  addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setTone, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower,
 } from '../src/modules/tools/mapeditor/edit';
 import { generateLayout, LAYOUT_STYLES, seededRandom } from '../src/modules/tools/mapgen/layout';
 
@@ -136,5 +136,35 @@ describe('the map editor', () => {
     expect(lodge.cells[3]!.slice(3, 6)).toBe('HHH');
     // Painting grass over it takes the house away.
     expect(paint(lodge, [{ x: 4, y: 3 }], '.').houses ?? []).toEqual([]);
+  });
+
+  it('puts up a building of walls, floor, doors and a roof outdoors', () => {
+    let l = addBuilding(blankLayout('meadow', 12, 10, 1), { x: 2, y: 2, w: 5, h: 4 });
+    expect(l.cells.slice(2, 6).map((r) => r.slice(2, 7))).toEqual(['BBBBB', 'BFFFB', 'BFFFB', 'BBBBB']);
+    // A room built onto it shares the wall.
+    l = addBuilding(l, { x: 6, y: 2, w: 4, h: 4 });
+    expect(l.cells[3]!.slice(2, 10)).toBe('BFFFBFFB');
+    // A door goes into a wall only, across the wall it is in; away again — the wall is back.
+    expect(toggleDoor(l, 4, 3)).toBe(l);
+    const withDoor = toggleDoor(l, 4, 2);
+    expect(withDoor.cells[2]![4]).toBe('F');
+    expect(withDoor.doors).toEqual([{ x: 4, y: 2, along: 'y' }]);
+    expect(toggleDoor(withDoor, 6, 3).doors.at(-1)).toEqual({ x: 6, y: 3, along: 'x' });
+    const back = toggleDoor(withDoor, 4, 2);
+    expect(back.cells[2]![4]).toBe('B');
+    expect(back.doors).toEqual([]);
+    // One roof for the whole building, on and off; it goes when the building does.
+    const roofed = toggleRoof(withDoor, 3, 3);
+    expect(roofed.roofs).toEqual([{ x: 3, y: 3 }]);
+    expect(toggleRoof(roofed, 8, 4).roofs).toBeUndefined();
+    expect(toggleRoof(roofed, 0, 0)).toBe(roofed);
+    const cleared: { x: number; y: number }[] = [];
+    for (let y = 2; y < 6; y++) for (let x = 2; x < 10; x++) cleared.push({ x, y });
+    expect(paint(roofed, cleared, '.').roofs).toBeUndefined();
+    // Things stand on its floor; the draft keeps it all.
+    expect(placeProp(roofed, 'table', 3, 3, 0, 0.5).index).toBeGreaterThanOrEqual(0);
+    expect(parseDraft(draftOf(roofed))!.layout).toMatchObject({ roofs: [{ x: 3, y: 3 }], doors: [{ x: 4, y: 2, along: 'y' }] });
+    // A room marked over it keeps its walls and floor.
+    expect(addRoom(roofed, { x: 2, y: 2, w: 5, h: 4 }).cells[2]!.slice(2, 7)).toBe('BBFBB');
   });
 });

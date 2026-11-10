@@ -1,7 +1,7 @@
 // The map editor's data and moves: a draft is a layout of the map generator (mapgen/layout.ts), kept in a file
 // «Name.map.json» in an adventure's maps folder. Pure functions — every move returns a new layout; the picture is
 // drawn from it the same way as a generated one.
-import { LAYOUT_STYLES, isWild, tonesFor, walkable, type Layout, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
+import { LAYOUT_STYLES, buildingAt, isBuilt, isWild, tonesFor, walkable, type Layout, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
 import { PROP_KINDS, type Facing, type Prop, type PropKind } from '../mapgen/furnish';
 
 export const MAP_DRAFT_SUFFIX = '.map.json';
@@ -15,7 +15,7 @@ export interface MapDraft {
 
 export const MIN_SIDE = 6;
 export const MAX_SIDE = 120;
-const CELLS = /^[.#,PST~RH=WLIMX]*$/;
+const CELLS = /^[.#,PST~RH=WLIMXFB]*$/;
 const side = (n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= MIN_SIDE && n <= MAX_SIDE;
 const int = (n: unknown) => typeof n === 'number' && Number.isInteger(n);
 
@@ -78,6 +78,7 @@ export function parseDraft(x: unknown): MapDraft | null {
       props,
       ...(wall ? { wall } : {}),
       ...(typeof l['tone'] === 'string' && tonesFor(style).includes(l['tone']) ? { tone: l['tone'] } : {}),
+      ...(points(l['roofs'], 2000).length ? { roofs: points(l['roofs'], 2000) } : {}),
     },
   };
 }
@@ -94,7 +95,9 @@ export function blankLayout(style: LayoutStyle, w: number, h: number, seed: numb
 }
 
 // ---- Brushes ----
-export type BrushId = 'floor' | 'wall' | 'room' | 'door' | 'pillar' | 'grass' | 'road' | 'square' | 'house' | 'sand' | 'water' | 'ford' | 'tree' | 'boulder' | 'townWall' | 'tower' | 'lava' | 'ice' | 'mud' | 'pit' | 'erase';
+export type BrushId =
+  | 'floor' | 'wall' | 'room' | 'door' | 'pillar' | 'grass' | 'road' | 'square' | 'house' | 'sand' | 'water' | 'ford' | 'tree' | 'boulder' | 'townWall' | 'tower'
+  | 'lava' | 'ice' | 'mud' | 'pit' | 'planks' | 'timber' | 'build' | 'roof' | 'erase';
 export interface Brush {
   id: BrushId;
   // A cell's letter it paints; none — a tool of its own (a rectangle, a toggle).
@@ -108,12 +111,14 @@ export function brushesFor(style: LayoutStyle): Brush[] {
   const ice = B('ice', { cell: 'I' });
   const mud = B('mud', { cell: 'M' });
   const pit = B('pit', { cell: 'X' });
+  // A building of its own outdoors: walls round a floor, a wall or a floor cell by cell, doors in the walls, a roof on or off.
+  const built = [B('build', { rect: true }), B('timber', { cell: 'B' }), B('planks', { cell: 'F' }), B('door', { toggle: true }), B('roof', { toggle: true })];
   if (style === 'building')
     return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('door', { toggle: true }), B('pillar', { toggle: true }), B('water', { cell: '~' }), lava, ice, mud, pit, B('erase', { cell: '#' })];
   if (style === 'cave') return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('water', { cell: '~' }), lava, ice, mud, pit, B('erase', { cell: '#' })];
   if (style === 'town')
-    return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('square', { cell: 'P' }), B('house', { rect: true }), B('tree', { cell: 'T' }), B('water', { cell: '~' }), mud, ice, lava, pit, B('pillar', { toggle: true }), B('townWall', { cell: 'W' }), B('tower', { toggle: true }), B('erase', { cell: '.' })];
-  return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('sand', { cell: 'S' }), B('water', { cell: '~' }), B('ford', { cell: '=' }), mud, ice, lava, pit, B('tree', { cell: 'T' }), B('boulder', { cell: 'R' }), B('room', { rect: true }), B('house', { rect: true }), B('erase', { cell: '.' })];
+    return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('square', { cell: 'P' }), B('house', { rect: true }), ...built, B('tree', { cell: 'T' }), B('water', { cell: '~' }), mud, ice, lava, pit, B('pillar', { toggle: true }), B('townWall', { cell: 'W' }), B('tower', { toggle: true }), B('erase', { cell: '.' })];
+  return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('sand', { cell: 'S' }), B('water', { cell: '~' }), B('ford', { cell: '=' }), mud, ice, lava, pit, B('tree', { cell: 'T' }), B('boulder', { cell: 'R' }), B('room', { rect: true }), B('house', { rect: true }), ...built, B('erase', { cell: '.' })];
 }
 
 // ---- Moves ----
@@ -146,15 +151,30 @@ export function tidy(l: Layout): Layout {
   const out: Layout = {
     ...l,
     rooms,
-    doors: l.doors.filter((d) => at(l, d.x, d.y) === '.'),
+    doors: l.doors.filter((d) => at(l, d.x, d.y) === (isOutdoor(l.style) ? 'F' : '.')),
+    // A roof stays on its building; one roof to a building.
+    roofs: roofsOf(l),
     pillars: l.pillars.filter((p) => at(l, p.x, p.y) === (l.style === 'town' ? 'P' : '.')),
     props,
     ...(houses.length ? { houses: houses.map(({ a }) => a) } : { houses: undefined }),
     ...(landmarks.length ? { landmarks } : { landmarks: undefined }),
     wall: hasWall ? { towers: (l.wall?.towers ?? []).filter((t) => at(l, t.x, t.y) === 'W'), gates: l.wall?.gates ?? [] } : undefined,
   };
-  for (const k of ['houses', 'landmarks', 'wall'] as const) if (out[k] === undefined) delete out[k];
+  for (const k of ['houses', 'landmarks', 'wall', 'roofs'] as const) if (out[k] === undefined) delete out[k];
   return out;
+}
+
+// The roofs that still stand on a building, one to each.
+function roofsOf(l: Layout): Layout['roofs'] {
+  const taken = new Set<string>();
+  const out: { x: number; y: number }[] = [];
+  for (const r of l.roofs ?? []) {
+    const cells = buildingAt(l, r.x, r.y);
+    if (!cells.length || cells.some((p) => taken.has(`${p.x},${p.y}`))) continue;
+    for (const p of cells) taken.add(`${p.x},${p.y}`);
+    out.push({ x: r.x, y: r.y });
+  }
+  return out.length ? out : undefined;
 }
 
 export function paint(l: Layout, cells: { x: number; y: number }[], ch: string): Layout {
@@ -193,10 +213,11 @@ export const normRect = (a: { x: number; y: number }, b: { x: number; y: number 
 export function addRoom(l: Layout, r: LayoutRoom): Layout {
   const a = clip(l, r);
   if (!a) return l;
-  const ch = l.style === 'building' || l.style === 'cave' ? '.' : '.';
   const cells: { x: number; y: number }[] = [];
-  for (let y = a.y; y < a.y + a.h; y++) for (let x = a.x; x < a.x + a.w; x++) cells.push({ x, y });
-  const painted = paint(l, cells, ch);
+  // Outdoors a room is a clearing; a room of a building put up there keeps its floor and walls.
+  const keep = (x: number, y: number) => isOutdoor(l.style) && (walkable(at(l, x, y)) || isBuilt(at(l, x, y)) || at(l, x, y) === 'H');
+  for (let y = a.y; y < a.y + a.h; y++) for (let x = a.x; x < a.x + a.w; x++) if (!keep(x, y)) cells.push({ x, y });
+  const painted = paint(l, cells, '.');
   return { ...painted, rooms: [...painted.rooms.filter((o) => !(o.x === a.x && o.y === a.y && o.w === a.w && o.h === a.h)), a] };
 }
 
@@ -210,6 +231,34 @@ export function addHouse(l: Layout, r: LayoutRoom): Layout {
   return tidy({ ...l, cells: rows.map((row) => row.join('')), houses: [...(l.houses ?? []), a] });
 }
 
+// A building put up outdoors: walls round the rectangle, floor inside (an open building, without a roof). Walls it meets
+// are shared: a room built onto another has one wall between them.
+export function addBuilding(l: Layout, r: LayoutRoom): Layout {
+  const a = clip(l, r);
+  if (!a || a.w < 3 || a.h < 3) return l;
+  const rows = l.cells.map((row) => row.split(''));
+  for (let y = a.y; y < a.y + a.h; y++)
+    for (let x = a.x; x < a.x + a.w; x++) {
+      if (rows[y]![x] === 'H') continue;
+      const edge = x === a.x || y === a.y || x === a.x + a.w - 1 || y === a.y + a.h - 1;
+      rows[y]![x] = edge ? (rows[y]![x] === 'F' && l.doors.some((d) => d.x === x && d.y === y) ? 'F' : 'B') : 'F';
+    }
+  return tidy({ ...l, cells: rows.map((row) => row.join('')) });
+}
+
+// A roof over the building under the cell, or away.
+export function toggleRoof(l: Layout, x: number, y: number): Layout {
+  const cells = buildingAt(l, x, y);
+  if (!cells.length) return l;
+  const mine = new Set(cells.map((p) => `${p.x},${p.y}`));
+  const roofs = l.roofs ?? [];
+  const kept = roofs.filter((r) => !mine.has(`${r.x},${r.y}`));
+  const next = kept.length === roofs.length ? [...roofs, { x, y }] : kept;
+  const out: Layout = { ...l, roofs: next };
+  if (!next.length) delete out.roofs;
+  return out;
+}
+
 function clip(l: Layout, a: LayoutRoom): LayoutRoom | null {
   const x = Math.max(0, a.x);
   const y = Math.max(0, a.y);
@@ -220,6 +269,20 @@ function clip(l: Layout, a: LayoutRoom): LayoutRoom | null {
 
 // A door on a floor cell, the way through it from its neighbours; again — away.
 export function toggleDoor(l: Layout, x: number, y: number): Layout {
+  // Outdoors a door goes into the wall of a building put up there; taken away, the wall closes again.
+  if (isOutdoor(l.style)) {
+    const rows = l.cells.map((row) => row.split(''));
+    const was = l.doors.some((d) => d.x === x && d.y === y);
+    if (was) rows[y]![x] = 'B';
+    else if (at(l, x, y) === 'B') rows[y]![x] = 'F';
+    else return l;
+    const cells = rows.map((row) => row.join(''));
+    if (was) return { ...l, cells, doors: l.doors.filter((d) => d.x !== x || d.y !== y) };
+    const wall = (dx: number, dy: number) => at(l, x + dx, y + dy) === 'B';
+    // The door lies along the wall it is in.
+    const along: 'x' | 'y' = wall(-1, 0) || wall(1, 0) ? 'y' : 'x';
+    return { ...l, cells, doors: [...l.doors, { x, y, along }] };
+  }
   if (l.doors.some((d) => d.x === x && d.y === y)) return { ...l, doors: l.doors.filter((d) => d.x !== x || d.y !== y) };
   if (at(l, x, y) !== '.') return l;
   const open = (dx: number, dy: number) => walkable(at(l, x + dx, y + dy));
@@ -365,6 +428,7 @@ export function resize(l: Layout, w: number, h: number): Layout {
     houses: houses.map(({ a }) => a),
     landmarks,
     wall: l.wall && { towers: l.wall.towers.filter(keep), gates: l.wall.gates.filter((g2) => g2.x < W && g2.y < H) },
+    roofs: l.roofs?.filter(keep),
   });
 }
 

@@ -1,7 +1,7 @@
 // Draws a layout on a canvas, by the app, so that no assets are needed: dark rock with hatching round the walls and a
 // pale floor; outdoors grass, water, paths, trees and boulders. The picture holds nothing secret: it goes to the players; room numbers are the preview's only.
 import { drawProps } from './draw-props';
-import { isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type WildStyle } from './layout';
+import { buildingAt, isBuilt, isOpenAir, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type WildStyle } from './layout';
 
 export const CELL = 40;
 // The texture of one cell: its own randomness from the layout's seed and its place, so that changing a cell (the map
@@ -185,6 +185,7 @@ function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: Wi
   fillArea(ctx, contour(l, c, (x, y) => at(x, y) === ',').area, '#a98f63');
   drawWater(ctx, l, c);
   drawSurfaces(ctx, l, c);
+  drawBuilt(ctx, l, c);
 
   // From the top down, so that a nearer tree covers the one behind it.
   for (let y = 0; y < l.h; y++) {
@@ -578,6 +579,7 @@ function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   ctx.lineWidth = Math.max(1, c / 14);
   ctx.lineCap = 'round';
   ctx.stroke(road.edges);
+  drawBuilt(ctx, l, c);
   for (let y = 0; y < l.h; y++) {
     for (let x = 0; x < l.w; x++) if (at(x, y) === 'T') drawTree(ctx, (x + 0.5) * c, (y + 0.5) * c, c, look, cellNoise(l, x, y, 2));
   }
@@ -721,21 +723,152 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
       ctx.arc((p.x + 0.5) * c, (p.y + 0.5) * c, c * 0.36, 0, Math.PI * 2);
       ctx.fill();
     }
-    for (const d of l.doors) {
-      const long = c * 0.92;
-      const thick = c * 0.3;
-      const w = d.along === 'x' ? thick : long;
-      const h = d.along === 'x' ? long : thick;
-      const px = (d.x + 0.5) * c - w / 2;
-      const py = (d.y + 0.5) * c - h / 2;
-      ctx.fillStyle = '#7a5230';
-      ctx.fillRect(px, py, w, h);
-      ctx.strokeStyle = WALL;
-      ctx.lineWidth = Math.max(1, c / 16);
-      ctx.strokeRect(px, py, w, h);
-    }
+    drawDoors(ctx, l, c);
   }
 
+}
+
+function drawDoors(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
+  for (const d of l.doors) {
+    const long = c * 0.92;
+    const thick = c * 0.3;
+    const w = d.along === 'x' ? thick : long;
+    const h = d.along === 'x' ? long : thick;
+    const px = (d.x + 0.5) * c - w / 2;
+    const py = (d.y + 0.5) * c - h / 2;
+    ctx.fillStyle = '#7a5230';
+    ctx.fillRect(px, py, w, h);
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1, c / 16);
+    ctx.strokeRect(px, py, w, h);
+  }
+}
+
+// Edges of a set of cells where it meets what is not in it.
+function edgesOf(c: number, cells: { x: number; y: number }[], inSet: (x: number, y: number) => boolean) {
+  const p = new Path2D();
+  for (const { x, y } of cells) {
+    if (!inSet(x, y - 1)) (p.moveTo(x * c, y * c), p.lineTo((x + 1) * c, y * c));
+    if (!inSet(x, y + 1)) (p.moveTo(x * c, (y + 1) * c), p.lineTo((x + 1) * c, (y + 1) * c));
+    if (!inSet(x - 1, y)) (p.moveTo(x * c, y * c), p.lineTo(x * c, (y + 1) * c));
+    if (!inSet(x + 1, y)) (p.moveTo((x + 1) * c, y * c), p.lineTo((x + 1) * c, (y + 1) * c));
+  }
+  return p;
+}
+
+const PLANKS = ['#a87a4a', '#9c6f42', '#b08352'];
+const TIMBER = ['#6b5038', '#5e4630', '#735840'];
+// A building put up outdoors, without its roof: a plank floor, timber walls with a shadow outside, doors.
+function drawBuilt(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
+  const cells: { x: number; y: number }[] = [];
+  for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) if (isBuilt(l.cells[y]![x])) cells.push({ x, y });
+  if (!cells.length) return;
+  const at = (x: number, y: number) => l.cells[y]?.[x];
+  ctx.fillStyle = 'rgba(20, 16, 10, 0.35)';
+  for (const { x, y } of cells) ctx.fillRect(x * c + c * 0.14, y * c + c * 0.18, c, c);
+  ctx.lineCap = 'butt';
+  for (const { x, y } of cells) {
+    const r = cellNoise(l, x, y, 7);
+    if (at(x, y) === 'F') {
+      ctx.fillStyle = PLANKS[Math.floor(r() * PLANKS.length)]!;
+      ctx.fillRect(x * c, y * c, c, c);
+      ctx.strokeStyle = LINE;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let k = 0; k < 3; k++) {
+        const py = y * c + (k * c) / 3 + 0.5;
+        ctx.moveTo(x * c, py);
+        ctx.lineTo(x * c + c, py);
+        const end = x * c + (((x + k * 2 + y) % 3) * c) / 3;
+        ctx.moveTo(end + 0.5, py);
+        ctx.lineTo(end + 0.5, py + c / 3);
+      }
+      ctx.stroke();
+    } else {
+      // Logs along the wall: across a wall that runs up and down, along one that runs side to side.
+      ctx.fillStyle = TIMBER[Math.floor(r() * TIMBER.length)]!;
+      ctx.fillRect(x * c, y * c, c, c);
+      const upright = at(x, y - 1) === 'B' || at(x, y + 1) === 'B';
+      const sideways = at(x - 1, y) === 'B' || at(x + 1, y) === 'B';
+      ctx.strokeStyle = 'rgba(25, 16, 8, 0.45)';
+      ctx.lineWidth = Math.max(1, c / 22);
+      ctx.beginPath();
+      for (let k = 1; k < 3; k++) {
+        if (sideways || !upright) (ctx.moveTo(x * c, y * c + (k * c) / 3), ctx.lineTo((x + 1) * c, y * c + (k * c) / 3));
+        else (ctx.moveTo(x * c + (k * c) / 3, y * c), ctx.lineTo(x * c + (k * c) / 3, (y + 1) * c));
+      }
+      ctx.stroke();
+    }
+  }
+  // The walls' outline: where a wall meets the floor or the ground.
+  ctx.strokeStyle = WALL;
+  ctx.lineWidth = Math.max(1.5, c / 12);
+  ctx.lineCap = 'square';
+  const walls = cells.filter((p) => at(p.x, p.y) === 'B');
+  ctx.stroke(edgesOf(c, walls, (x, y) => at(x, y) === 'B' || l.doors.some((d) => d.x === x && d.y === y)));
+  const floors = cells.filter((p) => at(p.x, p.y) === 'F');
+  ctx.stroke(edgesOf(c, floors, (x, y) => isBuilt(at(x, y))));
+  drawDoors(ctx, l, c);
+}
+
+// Roofs over the buildings put up outdoors (Layout.roofs): over the things inside them too.
+function drawRoofs(ctx: CanvasRenderingContext2D, l: Layout, c: number, snow: boolean) {
+  for (const mark of l.roofs ?? []) {
+    const cells = buildingAt(l, mark.x, mark.y);
+    if (!cells.length) continue;
+    const mine = new Set(cells.map((p) => `${p.x},${p.y}`));
+    const inSet = (x: number, y: number) => mine.has(`${x},${y}`);
+    const xs = cells.map((p) => p.x);
+    const ys = cells.map((p) => p.y);
+    const x0 = Math.min(...xs) * c;
+    const y0 = Math.min(...ys) * c;
+    const w = (Math.max(...xs) + 1) * c - x0;
+    const h = (Math.max(...ys) + 1) * c - y0;
+    const area = new Path2D();
+    for (const p of cells) area.rect(p.x * c, p.y * c, c, c);
+    const roof = ROOFS[Math.floor(cellNoise(l, Math.min(...xs), Math.min(...ys), 4)() * ROOFS.length)]!;
+    const across = w >= h;
+    ctx.save();
+    ctx.translate(c * 0.16, c * 0.2);
+    ctx.fillStyle = 'rgba(20, 16, 10, 0.4)';
+    ctx.fill(area);
+    ctx.restore();
+    ctx.save();
+    ctx.clip(area);
+    ctx.fillStyle = roof[0];
+    ctx.fillRect(x0, y0, w, h);
+    ctx.fillStyle = roof[1];
+    if (across) ctx.fillRect(x0, y0 + h / 2, w, h / 2);
+    else ctx.fillRect(x0 + w / 2, y0, w / 2, h);
+    if (snow) {
+      ctx.fillStyle = 'rgba(246, 249, 251, 0.85)';
+      if (across) ctx.fillRect(x0, y0, w, h / 2);
+      else ctx.fillRect(x0, y0, w / 2, h);
+      ctx.fillStyle = 'rgba(208, 218, 226, 0.65)';
+      if (across) ctx.fillRect(x0, y0 + h / 2, w, h / 2);
+      else ctx.fillRect(x0 + w / 2, y0, w / 2, h);
+    }
+    ctx.strokeStyle = 'rgba(30, 20, 12, 0.3)';
+    ctx.lineWidth = Math.max(1, c / 26);
+    ctx.beginPath();
+    const step = c * 0.32;
+    for (let t = step; t < (across ? h : w); t += step) {
+      if (across) (ctx.moveTo(x0, y0 + t), ctx.lineTo(x0 + w, y0 + t));
+      else (ctx.moveTo(x0 + t, y0), ctx.lineTo(x0 + t, y0 + h));
+    }
+    ctx.stroke();
+    ctx.strokeStyle = roof[2];
+    ctx.lineWidth = Math.max(1, c / 9);
+    ctx.beginPath();
+    ctx.moveTo(across ? x0 : x0 + w / 2, across ? y0 + h / 2 : y0);
+    ctx.lineTo(across ? x0 + w : x0 + w / 2, across ? y0 + h / 2 : y0 + h);
+    ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1, c / 12);
+    ctx.lineCap = 'square';
+    ctx.stroke(edgesOf(c, cells, inSet));
+  }
 }
 
 export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, over: Overlay = {}) {
@@ -743,6 +876,7 @@ export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, 
   else if (l.style === 'town') drawTown(ctx, l, c);
   else drawIndoor(ctx, l, c);
   drawProps(ctx, l, c);
+  if (isOpenAir(l.style)) drawRoofs(ctx, l, c, l.tone === 'winter');
 
   for (const m of over.marks ?? []) {
     const size = m.size ?? 1;

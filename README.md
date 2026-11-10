@@ -390,7 +390,10 @@ fortress's guards sleep in barracks).
 **Map editor**: change a generated map or draw one yourself from an empty field (a building, a cave, a town or open
 country of a size in cells), without other programs. Brushes paint the cells: floor and wall, a room (a rectangle that gets a
 number and a pin), doors and pillars indoors; grass, roads, squares, sand, water, fords, trees and boulders outdoors;
-houses, wells, the town wall and its towers in a town (a house stands in a forest or a swamp too); lava, ice, mud and
+houses, wells, the town wall and its towers in a town (a house stands in a forest or a swamp too). Outdoors a building can
+also be put up of its parts: «Building» drags a rectangle of walls round a plank floor (a room built onto another shares
+its wall), «Wall» and «Floor» go cell by cell, «Door» cuts a door into a wall, and «Roof» puts a roof over the whole
+building or takes it off — to show the players what is inside; lava, ice, mud and
 pits on any map. The ground takes a colour: spring, autumn, snow (with snow on the trees, the stones and the roofs), dry
 steppe or ash outdoors; a wooden, marble, dark or sandstone floor indoors.
 
