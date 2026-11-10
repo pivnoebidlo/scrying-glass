@@ -158,6 +158,61 @@
 :root[data-theme='gothic'] .btn.primary:hover { background: linear-gradient(180deg, #d82a45, #a1122a); }
 :root[data-theme='gothic'] :is(input[type=text], input[type=number], select, textarea):focus { box-shadow: 0 0 0 1px var(--accent), 0 0 10px var(--accent-soft); }
 :root[data-theme='gothic'] ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 30%, var(--bg-active)); background-clip: padding-box; }
+/* Western: sun-bleached paper of a wanted poster, saddle leather, rust for the accent. */
+:root[data-theme='western'] {
+  color-scheme: light;
+  --bg-primary: #efe0c4;
+  --bg-secondary: #e5d1ab;
+  --bg-hover: #dbc498;
+  --bg-active: #cfb482;
+  --border: #b9955f;
+  --text-normal: #3a2513;
+  --text-muted: #6d4c2b;
+  --text-faint: #997852;
+  --accent: #a3441b;
+  --accent-hover: #bd5525;
+  --accent-soft: rgba(163, 68, 27, 0.15);
+  --on-accent: #fff6e8;
+  --danger: #a8261a;
+  --warning: #8a5a00;
+  --success: #4f6b2a;
+}
+:root[data-theme='western'] body {
+  background:
+    radial-gradient(ellipse 70% 50% at 20% 0%, rgba(255, 248, 230, 0.6), transparent 70%),
+    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(150, 100, 50, 0.18), transparent 70%),
+    var(--bg-primary);
+}
+:root[data-theme='western'] .pane-title { color: #7a2f12; font-family: Rockwell, 'Roboto Slab', Georgia, serif; font-weight: 700; letter-spacing: 0.16em; }
+:root[data-theme='western'] .btn.primary { background: linear-gradient(180deg, #b4501f, #8c3714); border-color: #6e2a0f; }
+/* Post-apocalypse: dust and rust, hazard amber for the accent, a toxic green for the titles. */
+:root[data-theme='wasteland'] {
+  color-scheme: dark;
+  --bg-primary: #15140f;
+  --bg-secondary: #1c1a14;
+  --bg-hover: #27241a;
+  --bg-active: #312d20;
+  --border: #3b3627;
+  --text-normal: #ddd5bf;
+  --text-muted: #a2997e;
+  --text-faint: #6a634e;
+  --accent: #e3a01b;
+  --accent-hover: #f2b53a;
+  --accent-soft: rgba(227, 160, 27, 0.16);
+  --on-accent: #1a1406;
+  --danger: #ff5a3c;
+  --warning: #f2d04b;
+  --success: #93bf3d;
+}
+:root[data-theme='wasteland'] body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(180, 110, 30, 0.14), transparent 70%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.012) 0 2px, transparent 2px 6px),
+    var(--bg-primary);
+}
+:root[data-theme='wasteland'] .pane-title { color: #9cc23f; font-family: ui-monospace, Menlo, Consolas, monospace; letter-spacing: 0.14em; }
+:root[data-theme='wasteland'] .btn.primary { background: repeating-linear-gradient(135deg, #e3a01b 0 10px, #d29214 10px 20px); border-color: #a87410; }
+:root[data-theme='wasteland'] ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 25%, var(--bg-active)); background-clip: padding-box; }
 :root[data-theme='neon'] ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--accent) 35%, var(--bg-active)); background-clip: padding-box; }
 
 * { box-sizing: border-box; }
