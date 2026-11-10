@@ -68,6 +68,10 @@ export const PROP_KINDS = [
   'moonthrone', 'silvertree', 'elvenlamp', 'elvenfountain', 'orcthrone', 'skullpile', 'wargpen', 'spikedgate', 'sunkenhull', 'barnacles', 'anchorchain', 'drownedchest', 'yetibed', 'icechunks', 'mammothtusk', 'frozencarcass', 'cultaltar', 'bloodcircle', 'sacrificeslab', 'cultrobes',
   // draw-sets22.ts: a terraforming station; a speakeasy; a gym; a library and a newspaper office.
   'terraformer', 'atmoplant', 'seedvault', 'soilbeds', 'moonshine', 'hiddenbar', 'slotdoor', 'pokertable', 'treadmill', 'weightbench', 'punchbag', 'dumbbells', 'boxingring', 'readingtable', 'cardcatalog', 'printpress', 'newspapers', 'newsdesk',
+  // draw-sets23.ts: steampunk: an inventor's laboratory; a steam city's street.
+  'diffengine', 'pneumatictubes', 'brassdiver', 'gearwall', 'dynamo', 'gaslamp', 'pennyfarthing', 'steamcar', 'steamtram', 'ornithopter', 'smokestack',
+  // draw-sets24.ts: a gryphon's eyrie; a plague doctor; a prison ship; an ice station; a restaurant; a morgue; a military base; a campsite.
+  'gryphonnest', 'gryphonfeathers', 'plaguemask', 'leechjars', 'bloodletting', 'cryocell', 'prisonbunk', 'drillrig', 'weathermast', 'icecore', 'diningtable', 'winerack', 'chefstove', 'morguedrawers', 'autopsy', 'sandbags', 'battletank', 'radar', 'bunker', 'domtent', 'sleepingbag', 'camper', 'grill',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

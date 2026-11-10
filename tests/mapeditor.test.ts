@@ -217,7 +217,7 @@ describe('the map editor', () => {
     expect(setGenre(ship, 'fantasy').genre).toBeUndefined();
     expect(setGenre(l, 'fantasy')).toBe(l);
     expect(parseDraft(draftOf(ship))!.layout.genre).toBe('scifi');
-    expect(parseDraft(draftOf({ ...l, genre: 'steampunk' as never }))!.layout.genre).toBeUndefined();
+    expect(parseDraft(draftOf({ ...l, genre: 'weirdwest' as never }))!.layout.genre).toBeUndefined();
     expect(tonesIn('building', 'scifi')).toContain('metal');
     expect(tonesIn('building', 'fantasy')).not.toContain('metal');
     expect(tonesIn('meadow', 'scifi')).toEqual(expect.arrayContaining(['mars', 'moon', 'winter']));

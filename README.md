@@ -459,7 +459,15 @@ bread oven, a kitchen table, hanging pans), an alchemist's garden (mandrakes, a 
 abandoned asylum (an iron cot, a shock chair, a padded wall, a straitjacket); a mech hangar (a repair gantry, a wrecked
 walker, a spare arm, ammo crates), a building site (a tower crane, scaffolding, a cement mixer, traffic cones, rebar), a
 container port (shipping containers, a container crane, a mooring bollard) and an amusement park (a Ferris wheel, a
-roller coaster, bumper cars, candy floss, a ticket booth). And an elven palace (a moon throne, a silver tree, elven lamps,
+roller coaster, bumper cars, candy floss, a ticket booth). Steampunk is a world of its own, with sooty cobbles outside
+and brass deck plates inside: an inventor's laboratory (a difference engine, a dynamo, a diving suit, pneumatic tubes,
+cogs in the wall) and a steam city (gas lamps, a steam carriage, a steam tram, a penny-farthing, an ornithopter, a factory
+chimney), and the workshops, the port, the circus, the mad scientist's lab and others of the older sets are there too.
+Also a gryphon's eyrie (a nest with eggs, feathers), a plague doctor (a beaked mask and coat, jars of leeches, a
+bloodletting tray), a prison ship (cryo cells, bunks), an ice research station (an ice drill, a weather mast, ice cores),
+a restaurant (dining tables, a wine rack, a chef's range), a morgue (cold drawers, an autopsy table), a military base
+(sandbags, a battle tank, a radar dish, a concrete bunker) and a campsite (dome tents, sleeping bags, a camper van, a
+barbecue). And an elven palace (a moon throne, a silver tree, elven lamps,
 a fountain), an orc fortress (a bone throne, piles of skulls, a warg pen, a spiked gate), a sunken ship (a hull on the sea
 floor, barnacles, an anchor chain, a drowned chest), a yeti's cave (a yeti's bed, chunks of ice, a mammoth tusk, a frozen
 carcass), a cultists' lair (a black altar, a circle in blood, a sacrificial slab, hooded cultists); a terraforming station
@@ -467,7 +475,7 @@ carcass), a cultists' lair (a black altar, a circle in blood, a sacrificial slab
 a poker table), a gym (a treadmill, a weight bench, a punch bag, dumbbells, a boxing ring) and a library with a newspaper
 office (reading tables, a card catalogue, a rotary press, newspapers, an editor's desk).
 
-A map has its world: fantasy, science fiction, gothic horror, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
+A map has its world: fantasy, science fiction, gothic horror, steampunk, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),
 the forest and the road (a lean-to, a footbridge, a milestone, a wayside shrine, a bear trap), a port (a pier, bollards,
 nets, an anchor, a buoy, a lighthouse), a temple and magic (a lectern, a font, a mirror, a crystal ball, runes, a

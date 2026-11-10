@@ -59,22 +59,22 @@ export interface Layout {
   genre?: Genre;
 }
 // Worlds of maps: the palette shows the things and grounds of the map's world and those of any world.
-export const GENRES = ['fantasy', 'scifi', 'gothic', 'noir', 'modern', 'wasteland'] as const;
+export const GENRES = ['fantasy', 'scifi', 'gothic', 'steampunk', 'noir', 'modern', 'wasteland'] as const;
 export type Genre = (typeof GENRES)[number];
 export const genreOf = (l: Pick<Layout, 'genre'>): Genre => l.genre ?? 'fantasy';
 export const LIGHTS = ['dawn', 'dusk', 'night'] as const;
 export type Light = (typeof LIGHTS)[number];
 // Ground colours by kind of map: outdoors and in a town the grass, in a building and a cave the floor.
 export const TONES = {
-  outdoor: ['spring', 'autumn', 'winter', 'dry', 'ash', 'jungle', 'mars', 'moon', 'barrow', 'asphalt', 'wastes', 'seabed'],
-  building: ['wood', 'marble', 'dark', 'sandstone', 'metal', 'grating', 'lino'],
+  outdoor: ['spring', 'autumn', 'winter', 'dry', 'ash', 'jungle', 'mars', 'moon', 'barrow', 'asphalt', 'wastes', 'seabed', 'soot'],
+  building: ['wood', 'marble', 'dark', 'sandstone', 'metal', 'grating', 'lino', 'brass'],
   cave: ['dark', 'sandstone', 'frost'],
 } as const;
 export const tonesFor = (style: LayoutStyle): readonly string[] => (style === 'building' ? TONES.building : style === 'cave' ? TONES.cave : TONES.outdoor);
 // The grounds of one world only (the rest are of any).
 export const TONE_GENRE: Record<string, Genre[]> = {
   mars: ['scifi'], moon: ['scifi'], metal: ['scifi'], grating: ['scifi'], barrow: ['gothic', 'fantasy'], asphalt: ['noir', 'scifi', 'modern'], lino: ['noir', 'modern'],
-  wastes: ['wasteland', 'scifi'],
+  wastes: ['wasteland', 'scifi'], soot: ['steampunk', 'noir', 'gothic'], brass: ['steampunk'],
 };
 export const tonesIn = (style: LayoutStyle, genre: Genre) => tonesFor(style).filter((t) => !TONE_GENRE[t] || TONE_GENRE[t]!.includes(genre));
 export interface TownWall {

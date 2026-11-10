@@ -27,6 +27,8 @@ import { SET19_TILED, SET19_TINTS } from './draw-sets19';
 import { SET20_TILED, SET20_TINTS } from './draw-sets20';
 import { SET21_TILED, SET21_TINTS } from './draw-sets21';
 import { SET22_TILED, SET22_TINTS } from './draw-sets22';
+import { SET23_TILED, SET23_TINTS } from './draw-sets23';
+import { SET24_TILED, SET24_TINTS } from './draw-sets24';
 
 
 // The colours a thing can be painted in, as the editor offers them: a tint picks one of them (i + 0.5) / n.
@@ -57,10 +59,12 @@ export const TINTS: Partial<Record<Prop['kind'], readonly string[]>> = {
   ...SET20_TINTS,
   ...SET21_TINTS,
   ...SET22_TINTS,
+  ...SET23_TINTS,
+  ...SET24_TINTS,
 };
 export const tintOf = (i: number, n: number) => (i + 0.5) / n;
 // Scattered things drawn once a cell when stretched: a field of rubble, a bed of flowers.
-const TILED = new Set<Prop['kind']>(['rubble', 'flowers', 'reeds', 'bones', 'coins', 'mushrooms', ...MORE_TILED, ...SET_TILED, ...SET2_TILED, ...SET3_TILED, ...SET4_TILED, ...SET5_TILED, ...SET6_TILED, ...SET7_TILED, ...SET8_TILED, ...SET9_TILED, ...SET10_TILED, ...SET11_TILED, ...SET12_TILED, ...SET13_TILED, ...SET14_TILED, ...SET15_TILED, ...SET16_TILED, ...SET17_TILED, ...SET18_TILED, ...SET19_TILED, ...SET20_TILED, ...SET21_TILED, ...SET22_TILED]);
+const TILED = new Set<Prop['kind']>(['rubble', 'flowers', 'reeds', 'bones', 'coins', 'mushrooms', ...MORE_TILED, ...SET_TILED, ...SET2_TILED, ...SET3_TILED, ...SET4_TILED, ...SET5_TILED, ...SET6_TILED, ...SET7_TILED, ...SET8_TILED, ...SET9_TILED, ...SET10_TILED, ...SET11_TILED, ...SET12_TILED, ...SET13_TILED, ...SET14_TILED, ...SET15_TILED, ...SET16_TILED, ...SET17_TILED, ...SET18_TILED, ...SET19_TILED, ...SET20_TILED, ...SET21_TILED, ...SET22_TILED, ...SET23_TILED, ...SET24_TILED]);
 
 
 // w and h: the frame, the front up; c: a cell.

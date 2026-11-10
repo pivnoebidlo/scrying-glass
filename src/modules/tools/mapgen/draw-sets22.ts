@@ -2,6 +2,7 @@
 // A terraforming station; a speakeasy; a gym; a library and a newspaper office.
 import type { Prop } from './furnish';
 import { circle, CLOTH, glow, lines, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets23 } from './draw-sets23';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -180,5 +181,7 @@ export function drawSets22(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       shape(ctx, tone(CLOTH, 0.1), circle(ctx, w / 2 - c * 0.3, c * 0.1, c * 0.1), thin);
       shape(ctx, '#5c3d22', circle(ctx, w / 2 - c * 0.3, c * 0.1, c * 0.06), 0);
       break;
+    default:
+      drawSets23(ctx, p, w, h, c);
   }
 }
