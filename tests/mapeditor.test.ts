@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setLight, setTone, swapKind, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower,
+  addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setGenre, setLight, setTone, swapKind, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower,
 } from '../src/modules/tools/mapeditor/edit';
 import { generateLayout, LAYOUT_STYLES, seededRandom } from '../src/modules/tools/mapgen/layout';
 
@@ -207,5 +207,20 @@ describe('the map editor', () => {
     expect(placeProp(nest.layout, 'nest', 6, 6).index).toBeGreaterThanOrEqual(0);
     // Water is still no place for a chair.
     expect(placeProp(paint(wild, [{ x: 1, y: 1 }], '~'), 'chair', 1, 1).index).toBe(-1);
+  });
+
+  it('keeps the world of a map and its grounds', async () => {
+    const { tonesIn } = await import('../src/modules/tools/mapgen/layout');
+    const l = blankLayout('building', 8, 8, 1);
+    const ship = setGenre(l, 'scifi');
+    expect(ship.genre).toBe('scifi');
+    expect(setGenre(ship, 'fantasy').genre).toBeUndefined();
+    expect(setGenre(l, 'fantasy')).toBe(l);
+    expect(parseDraft(draftOf(ship))!.layout.genre).toBe('scifi');
+    expect(parseDraft(draftOf({ ...l, genre: 'steampunk' as never }))!.layout.genre).toBeUndefined();
+    expect(tonesIn('building', 'scifi')).toContain('metal');
+    expect(tonesIn('building', 'fantasy')).not.toContain('metal');
+    expect(tonesIn('meadow', 'scifi')).toEqual(expect.arrayContaining(['mars', 'moon', 'winter']));
+    expect(setTone(ship, 'metal').tone).toBe('metal');
   });
 });

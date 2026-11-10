@@ -21,6 +21,9 @@ export const PROP_KINDS = [
   'mimic',
   // Since 0.107: a picture of the GM's own (Prop.asset).
   'asset',
+  // Since 0.108 (draw-sets.ts): a tavern's kitchen; a ship and a colony.
+  'oven', 'spit', 'kegs', 'flour', 'dishes', 'washtub', 'block', 'hams', 'tankards',
+  'console', 'locker', 'cargo', 'hatch', 'bunk', 'terminal', 'holo', 'reactor', 'pipes', 'rayguns', 'rover', 'dish', 'solar', 'pod', 'beacon',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

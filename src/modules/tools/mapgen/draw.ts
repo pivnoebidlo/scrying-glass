@@ -41,6 +41,9 @@ const GRASS_TONES: Record<string, Look> = {
   winter: { grass: '#e3e9ec', tuft: '#c3ced5', tree: ['#3c5a48', '#476652', '#33503f'], snow: true },
   dry: { grass: '#b8a76a', tuft: '#9f8f55', tree: ['#6e7a3e', '#7d8848', '#5f6a35'] },
   ash: { grass: '#5a5550', tuft: '#48443f', tree: ['#3a3330', '#2e2926', '#463d38'] },
+  // Other worlds: red dust with strange growth, grey dust with none to speak of.
+  mars: { grass: '#b56a43', tuft: '#9a5434', tree: ['#7a4a8e', '#8e5a3a', '#6a3d6e'] },
+  moon: { grass: '#a3a29d', tuft: '#8c8b86', tree: ['#6e6d69', '#7d7c77', '#5f5e5a'] },
 };
 const FLOOR_TONES: Record<string, string[]> = {
   wood: ['#a87a4a', '#9c6f42', '#b08352'],
@@ -48,6 +51,8 @@ const FLOOR_TONES: Record<string, string[]> = {
   dark: ['#6d665c', '#655e55', '#736c62'],
   sandstone: ['#d8b98a', '#d0b07f', '#dfc297'],
   frost: ['#d6e3e8', '#cddbe1', '#dde8ec'],
+  metal: ['#8d949c', '#878e96', '#939aa1'],
+  grating: ['#4a4f55', '#464b51', '#4e535a'],
 };
 const lookOf = (l: Layout, base: Look) => (l.tone && GRASS_TONES[l.tone]) || base;
 // Surfaces the map editor paints: lava, ice, mud and pits. Not rock: indoors the walls go round them, not between.
@@ -920,12 +925,28 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (open(x + dx, y + dy)) return true;
     return false;
   };
+  // Another world: bulkheads of dark metal in panels, not rock.
+  if (l.genre === 'scifi' && l.style === 'building') {
+    ctx.fillStyle = '#2d3239';
+    ctx.fillRect(0, 0, l.w * c, l.h * c);
+    ctx.strokeStyle = 'rgba(120, 130, 140, 0.35)';
+    ctx.lineWidth = Math.max(1, c / 30);
+    ctx.beginPath();
+    for (let y = 0; y < l.h; y++)
+      for (let x = 0; x < l.w; x++) {
+        if (open(x, y) || !near(x, y)) continue;
+        ctx.rect(x * c + c * 0.08, y * c + c * 0.08, c * 0.84, c * 0.84);
+        if ((x + y) % 3 === 0) (ctx.moveTo(x * c + c * 0.2, y * c + c * 0.5), ctx.lineTo(x * c + c * 0.8, y * c + c * 0.5));
+      }
+    ctx.stroke();
+  }
   ctx.strokeStyle = HATCH;
   ctx.lineWidth = Math.max(1, c / 22);
   ctx.lineCap = 'round';
   ctx.beginPath();
   for (let y = 0; y < l.h; y++) {
     for (let x = 0; x < l.w; x++) {
+      if (l.genre === 'scifi' && l.style === 'building') break;
       if (open(x, y) || !near(x, y)) continue;
       const r = cellNoise(l, x, y, 5);
       const dir = r() < 0.5 ? 1 : -1;
@@ -983,11 +1004,34 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
           ctx.lineTo(end + 0.5, py + c / 3);
         }
       });
+    } else if (l.tone === 'grating') {
+      // A grating: a fine lattice over the dark below.
+      ctx.strokeStyle = 'rgba(160, 168, 176, 0.55)';
+      eachFloor((x, y) => {
+        for (let k = 1; k < 4; k++) {
+          ctx.moveTo(x * c + (k * c) / 4, y * c);
+          ctx.lineTo(x * c + (k * c) / 4, y * c + c);
+          ctx.moveTo(x * c, y * c + (k * c) / 4);
+          ctx.lineTo(x * c + c, y * c + (k * c) / 4);
+        }
+        ctx.rect(x * c + 0.5, y * c + 0.5, c, c);
+      });
     } else
       eachFloor((x, y) => {
         ctx.rect(x * c + 0.5, y * c + 0.5, c, c);
       });
     ctx.stroke();
+    // Metal plates: a rivet in each corner.
+    if (l.tone === 'metal') {
+      ctx.fillStyle = 'rgba(60, 64, 70, 0.6)';
+      eachFloor((x, y) => {
+        for (const [dx, dy] of [[0.12, 0.12], [0.88, 0.12], [0.12, 0.88], [0.88, 0.88]] as const) {
+          ctx.beginPath();
+          ctx.arc((x + dx) * c, (y + dy) * c, Math.max(0.8, c * 0.035), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
     // Water, lava, ice, a pit: in the room's floor.
     for (let y = 0; y < l.h; y++)
       for (let x = 0; x < l.w; x++)
@@ -1187,6 +1231,8 @@ const WARM = '255, 190, 110';
 const LIGHT_OF: Partial<Record<PropKind, { r: number; rgb?: string }>> = {
   candle: { r: 2.2 }, torch: { r: 3.8 }, brazier: { r: 4.2 }, campfire: { r: 5 }, hearth: { r: 4.2 }, chandelier: { r: 5.5 },
   lamppost: { r: 4.5 }, crystal: { r: 3, rgb: '140, 200, 255' }, cauldron: { r: 1.8, rgb: '150, 230, 120' },
+  oven: { r: 3 }, spit: { r: 4.5 }, console: { r: 2, rgb: '95, 211, 201' }, terminal: { r: 1.6, rgb: '95, 211, 201' },
+  holo: { r: 3, rgb: '120, 200, 255' }, reactor: { r: 5, rgb: '120, 255, 170' }, beacon: { r: 3, rgb: '255, 80, 60' },
 };
 // `power`: how much of the darkness the light takes away (windows less than a fire).
 export function lightsOf(l: Layout): { x: number; y: number; r: number; rgb: string; power: number }[] {

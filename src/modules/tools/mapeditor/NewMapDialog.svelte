@@ -4,8 +4,8 @@
   import { Dices } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import LayoutCanvas from '../mapgen/LayoutCanvas.svelte';
-  import { generateLayout, isOpenAir, LAYOUT_STYLES, MAX_ROOMS, MIN_ROOMS, roomCount, type Layout, type LayoutStyle } from '../mapgen/layout';
-  import { blankLayout, MAX_SIDE, MIN_SIDE } from './edit';
+  import { generateLayout, GENRES, isOpenAir, LAYOUT_STYLES, MAX_ROOMS, MIN_ROOMS, roomCount, type Genre, type Layout, type LayoutStyle } from '../mapgen/layout';
+  import { blankLayout, MAX_SIDE, MIN_SIDE, setGenre } from './edit';
   import { editor } from './store.svelte';
 
   let { onclose }: { onclose: () => void } = $props();
@@ -18,13 +18,14 @@
     h: number;
     rooms: number;
     walls: boolean;
+    genre: Genre;
   }
-  const DEFAULTS: Choice = { from: 'generator', style: 'building', w: 30, h: 20, rooms: 5, walls: false };
+  const DEFAULTS: Choice = { from: 'generator', style: 'building', w: 30, h: 20, rooms: 5, walls: false, genre: 'fantasy' };
   const ch = $state<Choice>(
     (() => {
       try {
         const v = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
-        return LAYOUT_STYLES.includes(v.style) ? v : { ...DEFAULTS };
+        return LAYOUT_STYLES.includes(v.style) && GENRES.includes(v.genre) ? v : { ...DEFAULTS };
       } catch {
         return { ...DEFAULTS };
       }
@@ -55,7 +56,7 @@
       /* not remembered */
     }
     const layout = ch.from === 'blank' ? blankLayout(ch.style, ch.w, ch.h, Math.floor(Math.random() * 2 ** 31)) : (preview ?? generateLayout(ch.style, { rooms: roomCount(ch.rooms) }));
-    const ok = await editor.create(title.trim() || t(`mapgen.style.${ch.style}` as never), layout);
+    const ok = await editor.create(title.trim() || t(`mapgen.style.${ch.style}` as never), setGenre(layout, ch.genre));
     busy = false;
     if (ok) onclose();
   }
@@ -75,6 +76,11 @@
       <button type="button" class:on={ch.from === 'blank'} onclick={() => (ch.from = 'blank')}><b>{t('mapedit.fromBlank')}</b><span>{t('mapedit.fromBlankHint')}</span></button>
     </div>
     <div class="row">
+      <label>{t('mapedit.world')}
+        <select bind:value={ch.genre}>
+          {#each GENRES as g (g)}<option value={g}>{t(`mapedit.genre.${g}` as never)}</option>{/each}
+        </select>
+      </label>
       <label>{t('mapgen.kind')}
         <select bind:value={ch.style}>
           {#each LAYOUT_STYLES as id (id)}<option value={id}>{t(`mapgen.style.${id}` as never)}</option>{/each}

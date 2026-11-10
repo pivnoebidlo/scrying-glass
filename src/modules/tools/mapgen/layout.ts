@@ -55,16 +55,25 @@ export interface Layout {
   roofs?: { x: number; y: number }[];
   // The time of day (LIGHTS); none — day.
   light?: Light;
+  // The world the map is of (GENRES): what the palette offers; none — fantasy.
+  genre?: Genre;
 }
+// Worlds of maps: the palette shows the things and grounds of the map's world and those of any world.
+export const GENRES = ['fantasy', 'scifi'] as const;
+export type Genre = (typeof GENRES)[number];
+export const genreOf = (l: Pick<Layout, 'genre'>): Genre => l.genre ?? 'fantasy';
 export const LIGHTS = ['dawn', 'dusk', 'night'] as const;
 export type Light = (typeof LIGHTS)[number];
 // Ground colours by kind of map: outdoors and in a town the grass, in a building and a cave the floor.
 export const TONES = {
-  outdoor: ['spring', 'autumn', 'winter', 'dry', 'ash'],
-  building: ['wood', 'marble', 'dark', 'sandstone'],
+  outdoor: ['spring', 'autumn', 'winter', 'dry', 'ash', 'mars', 'moon'],
+  building: ['wood', 'marble', 'dark', 'sandstone', 'metal', 'grating'],
   cave: ['dark', 'sandstone', 'frost'],
 } as const;
 export const tonesFor = (style: LayoutStyle): readonly string[] => (style === 'building' ? TONES.building : style === 'cave' ? TONES.cave : TONES.outdoor);
+// The grounds of one world only (the rest are of any).
+export const TONE_GENRE: Record<string, Genre> = { mars: 'scifi', moon: 'scifi', metal: 'scifi', grating: 'scifi' };
+export const tonesIn = (style: LayoutStyle, genre: Genre) => tonesFor(style).filter((t) => (TONE_GENRE[t] ?? genre) === genre);
 export interface TownWall {
   towers: { x: number; y: number }[];
   // The middle of a gate (between the two cells of the road) and the way through it.

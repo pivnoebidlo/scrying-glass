@@ -1,7 +1,7 @@
 // The map editor's data and moves: a draft is a layout of the map generator (mapgen/layout.ts), kept in a file
 // «Name.map.json» in an adventure's maps folder. Pure functions — every move returns a new layout; the picture is
 // drawn from it the same way as a generated one.
-import { LAYOUT_STYLES, LIGHTS, buildingAt, isBuilt, isWild, tonesFor, walkable, type Layout, type Light, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
+import { GENRES, LAYOUT_STYLES, LIGHTS, buildingAt, isBuilt, isWild, tonesFor, walkable, type Genre, type Layout, type Light, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
 import { PROP_KINDS, type Facing, type Prop, type PropKind } from '../mapgen/furnish';
 import { MAX_ASSET_SIDE, safeAssetPath } from '../../../shared/mapassets';
 
@@ -81,6 +81,7 @@ export function parseDraft(x: unknown): MapDraft | null {
       ...(typeof l['tone'] === 'string' && tonesFor(style).includes(l['tone']) ? { tone: l['tone'] } : {}),
       ...(points(l['roofs'], 2000).length ? { roofs: points(l['roofs'], 2000) } : {}),
       ...(LIGHTS.includes(l['light'] as Light) ? { light: l['light'] as Light } : {}),
+      ...(GENRES.includes(l['genre'] as Genre) && l['genre'] !== 'fantasy' ? { genre: l['genre'] as Genre } : {}),
     },
   };
 }
@@ -314,10 +315,13 @@ const LONG: Partial<Record<PropKind, [number, number]>> = {
   table: [2, 1], bench: [2, 1], bed: [1, 2], sarcophagus: [1, 2], rug: [2, 2], stall: [2, 1], cart: [1, 2], log: [2, 1], bedroll: [1, 2],
   stairs: [1, 2], roundtable: [2, 2], wardrobe: [2, 1], fountain: [2, 2], tent: [2, 2], boat: [1, 2],
   bathtub: [1, 2], counter: [2, 1], workbench: [2, 1], circle: [2, 2], fence: [2, 1],
+  oven: [2, 2], spit: [2, 1], kegs: [2, 1], dishes: [2, 1], hams: [2, 1], console: [2, 1], bunk: [1, 2], holo: [2, 2], reactor: [2, 2],
+  pipes: [2, 1], rayguns: [2, 1], rover: [2, 3], solar: [2, 1], pod: [1, 2],
 };
 // Things that stretch over several cells: a long table, a big puddle, a carpet runner, a wide stair.
 export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe',
-  'counter', 'workbench', 'circle', 'spikes', 'web', 'fence', 'woodpile', 'fern', 'chains', 'plate'];
+  'counter', 'workbench', 'circle', 'spikes', 'web', 'fence', 'woodpile', 'fern', 'chains', 'plate',
+  'kegs', 'dishes', 'hams', 'flour', 'tankards', 'console', 'pipes', 'solar', 'cargo'];
 export const MAX_STRETCH = 12;
 export function footprint(kind: PropKind, face: Facing): { w: number; h: number } {
   const [w, h] = LONG[kind] ?? [1, 1];
@@ -459,6 +463,14 @@ export function resize(l: Layout, w: number, h: number): Layout {
     wall: l.wall && { towers: l.wall.towers.filter(keep), gates: l.wall.gates.filter((g2) => g2.x < W && g2.y < H) },
     roofs: l.roofs?.filter(keep),
   });
+}
+
+// The world of the map (fantasy is no field at all: old maps are fantasy).
+export function setGenre(l: Layout, genre: Genre): Layout {
+  if ((l.genre ?? 'fantasy') === genre) return l;
+  const out: Layout = { ...l, genre };
+  if (genre === 'fantasy') delete out.genre;
+  return out;
 }
 
 // The time of day: dawn, dusk, night; null — day.

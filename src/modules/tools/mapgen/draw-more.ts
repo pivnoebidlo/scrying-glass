@@ -1,6 +1,7 @@
 // More things for the map editor (0.104), in the same manner as draw-props.ts: centred in their frame, the front up.
 import type { Prop } from './furnish';
 import { circle, CLOTH, GLOW, glow, INK, lines, rect, shape, STONE, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets } from './draw-sets';
 
 export const MORE_TINTS: Partial<Record<Prop['kind'], readonly string[]>> = {
   cushion: CLOTH, circle: GLOW, crystal: GLOW, counter: WOOD, workbench: WOOD, fence: WOOD, stool: WOOD, urn: ['#b0663e', '#8d8a80', '#3f5d86', '#c9a442'],
@@ -237,5 +238,7 @@ export function drawMore(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       shape(ctx, '#5c4430', circle(ctx, 0, 0, c * 0.22), thin);
       for (const [x, y] of [[-0.07, -0.04], [0.08, 0.02], [0, 0.1]] as const) shape(ctx, '#e8e2d0', () => ctx.ellipse(x * c, y * c, c * 0.06, c * 0.08, 0, 0, Math.PI * 2), thin);
       break;
+    default:
+      drawSets(ctx, p, w, h, c);
   }
 }

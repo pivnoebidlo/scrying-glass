@@ -6,10 +6,10 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import type { PropKind } from '../mapgen/furnish';
-  import { isOpenAir, LIGHTS, tonesFor, type Light } from '../mapgen/layout';
+  import { genreOf, GENRES, isOpenAir, LIGHTS, tonesIn, type Genre, type Light } from '../mapgen/layout';
   import { landmarkPins } from '../mapgen/landmarks';
   import { layoutToMaps } from '../mapgen/toMaps';
-  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProps, resize, rotateProp, setAssetVariant, setLight, setTone, STRETCH, tintProp, type BrushId } from './edit';
+  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProps, resize, rotateProp, setAssetVariant, setGenre, setLight, setTone, STRETCH, tintProp, type BrushId } from './edit';
   import { TINTS, tintOf } from '../mapgen/draw-props';
   import MapCanvas from './MapCanvas.svelte';
   import NewMapDialog from './NewMapDialog.svelte';
@@ -57,13 +57,17 @@
     lava: '#e2561b', ice: '#cfe6ee', mud: '#6b5638', pit: '#0b0907', planks: '#a87a4a', timber: '#5e4630', build: '#8a6a48', roof: '#9b4a35', erase: '#555',
     cobbles: '#9a9282', flags: '#b7ad98', field: '#8a6c44', sea: '#2a5c78', mountain: '#8a8174', pine: '#2c4a33', palm: '#5f8f3c', snag: '#5b4a3a',
   };
-  const GROUPS: { id: string; kinds: PropKind[] }[] = [
+  // `genres`: the worlds a group belongs to; none — any world (tables and barrels are everywhere).
+  const GROUPS: { id: string; kinds: PropKind[]; genres?: Genre[] }[] = [
     { id: 'furniture', kinds: ['table', 'roundtable', 'counter', 'chair', 'stool', 'bench', 'cushion', 'bed', 'shelf', 'wardrobe', 'desk', 'throne', 'hearth', 'bathtub', 'chandelier', 'rug'] },
     { id: 'storage', kinds: ['barrel', 'crate', 'sack', 'chest', 'coins', 'rack', 'urn', 'bucket', 'woodpile'] },
-    { id: 'work', kinds: ['workbench', 'anvil', 'grindstone', 'cauldron', 'trough'] },
-    { id: 'shrine', kinds: ['altar', 'candle', 'brazier', 'statue', 'idol', 'pedestal', 'crystal', 'circle', 'obelisk', 'sarcophagus', 'grave', 'bones'] },
-    { id: 'dungeon', kinds: ['stairs', 'trapdoor', 'cage', 'chains', 'stocks', 'spikes', 'web', 'lever', 'plate', 'torch', 'rubble'] },
-    { id: 'town', kinds: ['stall', 'cart', 'haystack', 'tent', 'boat', 'fence', 'signpost', 'lamppost', 'gallows', 'well', 'fountain'] },
+    { id: 'kitchen', kinds: ['oven', 'spit', 'kegs', 'tankards', 'flour', 'dishes', 'washtub', 'block', 'hams'], genres: ['fantasy'] },
+    { id: 'work', kinds: ['workbench', 'anvil', 'grindstone', 'cauldron', 'trough'], genres: ['fantasy'] },
+    { id: 'shrine', kinds: ['altar', 'candle', 'brazier', 'statue', 'idol', 'pedestal', 'crystal', 'circle', 'obelisk', 'sarcophagus', 'grave', 'bones'], genres: ['fantasy'] },
+    { id: 'dungeon', kinds: ['stairs', 'trapdoor', 'cage', 'chains', 'stocks', 'spikes', 'web', 'lever', 'plate', 'torch', 'rubble'], genres: ['fantasy'] },
+    { id: 'town', kinds: ['stall', 'cart', 'haystack', 'tent', 'boat', 'fence', 'signpost', 'lamppost', 'gallows', 'well', 'fountain'], genres: ['fantasy'] },
+    { id: 'ship', kinds: ['console', 'terminal', 'locker', 'cargo', 'bunk', 'hatch', 'holo', 'reactor', 'pipes', 'rayguns'], genres: ['scifi'] },
+    { id: 'colony', kinds: ['rover', 'pod', 'dish', 'solar', 'beacon'], genres: ['scifi'] },
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];
@@ -105,7 +109,7 @@
   const found = $derived.by(() => {
     const q = query.trim().toLowerCase();
     if (!q) return null;
-    return GROUPS.flatMap((g) => g.kinds).filter((k) => t(`mapedit.prop.${k}` as never).toLowerCase().includes(q) || k.includes(q));
+    return groups.flatMap((g) => g.kinds).filter((k) => t(`mapedit.prop.${k}` as never).toLowerCase().includes(q) || k.includes(q));
   });
   // The colours of the thing being put down or the one chosen.
   const tintKind = $derived(editor.mode === 'place' ? editor.prop : editor.mode === 'select' ? (layout?.props?.[editor.selected]?.kind ?? null) : null);
@@ -263,7 +267,10 @@
         ? t('mapedit.hint.place')
         : t('mapedit.hint.select'),
   );
-  const tones = $derived(layout ? tonesFor(layout.style) : []);
+  const genre = $derived(layout ? genreOf(layout) : 'fantasy');
+  // The palette of the map's world.
+  const groups = $derived(GROUPS.filter((g) => !g.genres || g.genres.includes(genre)));
+  const tones = $derived(layout ? tonesIn(layout.style, genre) : []);
 
   function onkeydown(e: KeyboardEvent) {
     const el = e.target as HTMLElement | null;
@@ -356,6 +363,11 @@
       <span class="faint small">{t('mapedit.thickness')}</span>
       {#each [1, 2, 3] as n (n)}<button class="btn size" class:on={editor.size === n} onclick={() => (editor.size = n)}>{n}</button>{/each}
       <span class="sep"></span>
+      <label class="check">{t('mapedit.world')}
+        <select value={genre} onchange={(e) => editor.layout && editor.change(setGenre(editor.layout, e.currentTarget.value as Genre))}>
+          {#each GENRES as g (g)}<option value={g}>{t(`mapedit.genre.${g}` as never)}</option>{/each}
+        </select>
+      </label>
       <label class="check">{t('mapedit.ground')}
         <select value={layout.tone ?? ''} onchange={(e) => editor.layout && editor.change(setTone(editor.layout, e.currentTarget.value || null))}>
           <option value="">{t('mapedit.tone.usual')}</option>
@@ -482,7 +494,7 @@
             </button>
             {#if !folded.includes(g.id)}{@render brushList(g.list)}{/if}
           {/each}
-          {#each GROUPS as g (g.id)}
+          {#each groups as g (g.id)}
             <button class="group fold" aria-expanded={!folded.includes(g.id)} onclick={() => fold(g.id)}>
               {#if folded.includes(g.id)}<ChevronRight size={13} />{:else}<ChevronDown size={13} />{/if}
               {t(`mapedit.group.${g.id}` as never)}

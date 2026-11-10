@@ -411,6 +411,12 @@ mouse; while editing, Space or the middle button does it; V picks things, B goes
 «Name.map.json» in the adventure's maps folder; «To Maps» adds the picture with the fog, a grid and a pin on every
 room.
 
+A map has its world: fantasy or science fiction (chosen for a new map, changed above the map). The palette shows the
+things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…)
+in fantasy; a ship and a colony (consoles, lockers, cargo, a holo table, a reactor, pipes, a ray gun rack, a rover, an
+escape pod…) in science fiction, with red or grey dust outdoors, metal plates or a grating indoors and bulkheads for
+walls.
+
 Your own pictures go on the map too: put them into the «assets» folder of the library (the folder button under «My
 assets» in the palette opens it). Folders become groups, a name like «Kiln_Stone_B1_2x3.png» says the thing, its
 variant and its size in cells (none — one cell); variants of one thing are one item of the palette with a choice of

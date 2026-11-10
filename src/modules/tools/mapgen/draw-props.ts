@@ -5,6 +5,7 @@ import type { Prop } from './furnish';
 
 import { circle, CLOTH, INK, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
 import { drawMore, MORE_TINTS, MORE_TILED } from './draw-more';
+import { SET_TILED, SET_TINTS } from './draw-sets';
 
 
 // The colours a thing can be painted in, as the editor offers them: a tint picks one of them (i + 0.5) / n.
@@ -13,10 +14,11 @@ export const TINTS: Partial<Record<Prop['kind'], readonly string[]>> = {
   cart: WOOD, table: WOOD, roundtable: WOOD, wardrobe: WOOD, boat: WOOD,
   mushrooms: ['#b8473a', '#c9a46a', '#7fa1b8'], bush: ['#4f7a3a', '#5d8a42'], rubble: ['#8c857a', '#77706a'],
   ...MORE_TINTS,
+  ...SET_TINTS,
 };
 export const tintOf = (i: number, n: number) => (i + 0.5) / n;
 // Scattered things drawn once a cell when stretched: a field of rubble, a bed of flowers.
-const TILED = new Set<Prop['kind']>(['rubble', 'flowers', 'reeds', 'bones', 'coins', 'mushrooms', ...MORE_TILED]);
+const TILED = new Set<Prop['kind']>(['rubble', 'flowers', 'reeds', 'bones', 'coins', 'mushrooms', ...MORE_TILED, ...SET_TILED]);
 
 
 // w and h: the frame, the front up; c: a cell.
