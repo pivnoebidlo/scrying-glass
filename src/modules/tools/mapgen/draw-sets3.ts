@@ -3,6 +3,7 @@
 // a street).
 import type { Prop } from './furnish';
 import { circle, glow, lines, rect, shape, STONE, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets4 } from './draw-sets4';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -367,6 +368,7 @@ export function drawSets3(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
         ctx.lineTo(c * 0.08, -c * 0.18);
       });
       break;
+    default:
+      drawSets4(ctx, p, w, h, c);
   }
 }
-

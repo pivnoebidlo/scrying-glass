@@ -46,6 +46,10 @@ const GRASS_TONES: Record<string, Look> = {
   // A graveyard's dead grass; the asphalt of a city.
   barrow: { grass: '#5d6150', tuft: '#4a4e40', tree: ['#2f3329', '#3a3d31', '#262922'] },
   asphalt: { grass: '#4f5154', tuft: '#5b5d60', tree: ['#2f4a33', '#365a3b', '#284431'] },
+  // The wasteland: cracked, sun-bleached earth with dead growth.
+  wastes: { grass: '#a8976a', tuft: '#857552', tree: ['#5a5440', '#4a4434', '#6a6048'] },
+  // A jungle's deep green.
+  jungle: { grass: '#4a7a35', tuft: '#3a6a2a', tree: ['#2a5a2a', '#356a2a', '#1f4a24'] },
   moon: { grass: '#a3a29d', tuft: '#8c8b86', tree: ['#6e6d69', '#7d7c77', '#5f5e5a'] },
 };
 const FLOOR_TONES: Record<string, string[]> = {
@@ -1338,6 +1342,7 @@ const LIGHT_OF: Partial<Record<PropKind, { r: number; rgb?: string }>> = {
   tank: { r: 2, rgb: '120, 255, 170' }, forcefield: { r: 2.5, rgb: '120, 200, 255' }, holosign: { r: 3, rgb: '255, 120, 200' },
   goo: { r: 1.6, rgb: '150, 230, 120' }, xenocrystal: { r: 2, rgb: '180, 140, 255' }, candelabra: { r: 3.5 }, jukebox: { r: 2.5 },
   hovercar: { r: 2.5, rgb: '255, 233, 168' }, sedan: { r: 2.5, rgb: '255, 233, 168' },
+  tv: { r: 2, rgb: '120, 170, 255' }, computer: { r: 1.6, rgb: '120, 170, 255' }, burnbarrel: { r: 4 }, toxicbarrel: { r: 1.4, rgb: '160, 255, 90' },
 };
 // `power`: how much of the darkness the light takes away (windows less than a fire).
 export function lightsOf(l: Layout): { x: number; y: number; r: number; rgb: string; power: number }[] {

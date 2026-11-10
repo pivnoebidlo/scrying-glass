@@ -30,6 +30,8 @@ export const PROP_KINDS = [
   'shelter', 'beartrap', 'bridge', 'milestone', 'beehive', 'wayshrine', 'pier', 'bollard', 'nets', 'anchor', 'rope', 'buoy', 'lighthouse', 'lectern', 'font', 'mirror', 'runes', 'orb', 'portal', 'bars', 'torturerack', 'coffin', 'slime', 'skeleton', 'ironmaiden', 'coop', 'scarecrow', 'sheaf', 'churn', 'pumpkins', 'chickens',
   // draw-sets3.ts: a lab, a city of the future, aliens; a manor and its crypt; an office, a bar, a street.
   'medpod', 'labbench', 'tank', 'servers', 'robot', 'forcefield', 'hovercar', 'vending', 'holosign', 'eggs', 'alienplant', 'saucer', 'cocoon', 'xenocrystal', 'goo', 'candelabra', 'organ', 'piano', 'gargoyle', 'bloodpool', 'bats', 'ironfence', 'mausoleum', 'goblet', 'roses', 'tombstone', 'filing', 'typewriter', 'phone', 'jukebox', 'pooltable', 'ceilingfan', 'sedan', 'hydrant', 'newsstand', 'trashcan', 'phonebooth', 'chalk',
+  // draw-sets4.ts: jungle and desert, a sailing ship; a home and a street of today; the wasteland.
+  'cactus', 'skull', 'vines', 'bigleaf', 'idolhead', 'quicksand', 'joshua', 'mast', 'helm', 'cannon', 'hammock', 'capstan', 'sofa', 'tv', 'fridge', 'stove', 'computer', 'washer', 'bicycle', 'cone', 'toxicbarrel', 'wreck', 'tires', 'barricade', 'burnbarrel', 'radsign', 'shack',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 
