@@ -265,11 +265,6 @@
     if (over) over.style.cursor = space || editor.viewing ? 'grab' : '';
   }
 
-  function wheel(e: WheelEvent) {
-    if (!(e.ctrlKey || e.metaKey)) return;
-    e.preventDefault();
-    editor.cell = Math.min(72, Math.max(6, Math.round(editor.cell * (e.deltaY < 0 ? 1.12 : 0.89))));
-  }
 </script>
 
 <svelte:window onkeydown={keys} onkeyup={keys} />
@@ -288,7 +283,6 @@
     onpointercancel={up}
     onpointerleave={() => (hover = null)}
     oncontextmenu={(e) => e.preventDefault()}
-    onwheel={wheel}
   ></canvas>
 </div>
 
@@ -296,7 +290,6 @@
   .stack {
     position: relative;
     flex-shrink: 0;
-    margin: 16px;
   }
   canvas {
     position: absolute;

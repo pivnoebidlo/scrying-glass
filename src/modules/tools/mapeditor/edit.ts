@@ -109,11 +109,11 @@ export function brushesFor(style: LayoutStyle): Brush[] {
   const mud = B('mud', { cell: 'M' });
   const pit = B('pit', { cell: 'X' });
   if (style === 'building')
-    return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('door', { toggle: true }), B('pillar', { toggle: true }), B('water', { cell: '~' }), lava, ice, pit, B('erase', { cell: '#' })];
+    return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('door', { toggle: true }), B('pillar', { toggle: true }), B('water', { cell: '~' }), lava, ice, mud, pit, B('erase', { cell: '#' })];
   if (style === 'cave') return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('water', { cell: '~' }), lava, ice, mud, pit, B('erase', { cell: '#' })];
   if (style === 'town')
-    return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('square', { cell: 'P' }), B('house', { rect: true }), B('tree', { cell: 'T' }), B('water', { cell: '~' }), mud, ice, B('pillar', { toggle: true }), B('townWall', { cell: 'W' }), B('tower', { toggle: true }), B('erase', { cell: '.' })];
-  return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('sand', { cell: 'S' }), B('water', { cell: '~' }), B('ford', { cell: '=' }), mud, ice, lava, pit, B('tree', { cell: 'T' }), B('boulder', { cell: 'R' }), B('room', { rect: true }), B('erase', { cell: '.' })];
+    return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('square', { cell: 'P' }), B('house', { rect: true }), B('tree', { cell: 'T' }), B('water', { cell: '~' }), mud, ice, lava, pit, B('pillar', { toggle: true }), B('townWall', { cell: 'W' }), B('tower', { toggle: true }), B('erase', { cell: '.' })];
+  return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('sand', { cell: 'S' }), B('water', { cell: '~' }), B('ford', { cell: '=' }), mud, ice, lava, pit, B('tree', { cell: 'T' }), B('boulder', { cell: 'R' }), B('room', { rect: true }), B('house', { rect: true }), B('erase', { cell: '.' })];
 }
 
 // ---- Moves ----

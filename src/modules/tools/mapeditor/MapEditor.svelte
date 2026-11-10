@@ -7,13 +7,14 @@
   import { store } from '../../../renderer/lib/store.svelte';
   import type { PropKind } from '../mapgen/furnish';
   import { isOpenAir, tonesFor } from '../mapgen/layout';
+  import { landmarkPins } from '../mapgen/landmarks';
   import { layoutToMaps } from '../mapgen/toMaps';
   import { brushesFor, MAX_SIDE, MIN_SIDE, removeProps, resize, rotateProp, setTone, STRETCH, tintProp, type BrushId } from './edit';
   import { TINTS, tintOf } from '../mapgen/draw-props';
   import MapCanvas from './MapCanvas.svelte';
   import NewMapDialog from './NewMapDialog.svelte';
   import PropIcon from './PropIcon.svelte';
-  import { editor } from './store.svelte';
+  import { CELL_BASE, editor } from './store.svelte';
   import { modKey } from '../../../shared/hotkeys';
 
   // «⌘» or «Ctrl»: the strings add «+wheel» themselves.
@@ -102,10 +103,34 @@
     } else editor.tint = t;
   }
   const isTint = (i: number) => tints !== null && tintNow !== null && Math.floor(tintNow * tints.length) === i;
-  // The whole map in view.
+  // The box the map scrolls in: room around the map to take any of its corners to the middle (half the view on
+  // every side), a pinch or ⌘ / Ctrl + wheel zooms around the cursor, the wheel and two fingers scroll.
+  let viewport = $state<HTMLElement>();
   let scrollW = $state(0);
   let scrollH = $state(0);
-  const fit = () => layout && (editor.cell = Math.max(6, Math.min(72, Math.floor(Math.min((scrollW - 40) / layout.w, (scrollH - 40) / layout.h)))));
+  $effect(() => {
+    const box = viewport;
+    if (!box) return;
+    editor.viewport = box;
+    const wheel = (e: WheelEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      editor.wheelZoom(e);
+    };
+    box.addEventListener('wheel', wheel, { passive: false });
+    return () => {
+      box.removeEventListener('wheel', wheel);
+      if (editor.viewport === box) editor.viewport = null;
+    };
+  });
+  // A map just opened: all of it, in the middle.
+  let fitted: string | null = null;
+  $effect(() => {
+    const p = editor.path;
+    if (!viewport || !scrollW || !layout || p === fitted) return;
+    fitted = p;
+    requestAnimationFrame(() => editor.fit());
+  });
 
   const pickBrush = (id: BrushId) => ((editor.mode = 'brush'), (editor.brush = id), (editor.selected = -1));
   // Another thing — a random colour again (a red rug does not make every chest red).
@@ -115,7 +140,6 @@
     editor.prop = k;
     editor.selected = -1;
   };
-  const zoom = (by: number) => (editor.cell = Math.min(72, Math.max(6, Math.round(editor.cell * by))));
   function rotate() {
     if (!editor.layout) return;
     if (editor.picked.length) {
@@ -139,7 +163,7 @@
     const l = $state.snapshot(editor.layout);
     const open = isOpenAir(l.style);
     const room = (i: number) => ({ title: t(open ? 'mapgen.place' : 'mapgen.room', { n: i + 1 }), note: '', color: open ? ('green' as const) : ('gold' as const) });
-    failed = !(await layoutToMaps(l, editor.title, l.rooms.map((_, i) => room(i))));
+    failed = !(await layoutToMaps(l, editor.title, l.rooms.map((_, i) => room(i)), { pins: await landmarkPins(l) }));
   }
   function remove() {
     if (confirm(t('mapedit.deleteQ', { name: editor.title }))) void editor.remove();
@@ -172,6 +196,19 @@
     } else if (mod && e.code === 'KeyY') {
       e.preventDefault();
       editor.redo();
+    } else if (!mod && (e.code === 'Digit0' || e.code === 'Numpad0')) editor.fit();
+    else if (!mod && (e.code === 'Digit1' || e.code === 'Numpad1')) editor.zoomTo(CELL_BASE);
+    else if (!mod && (e.code === 'Equal' || e.code === 'NumpadAdd')) editor.zoomBy(1.25);
+    else if (!mod && (e.code === 'Minus' || e.code === 'NumpadSubtract')) editor.zoomBy(1 / 1.25);
+    else if (!mod && e.code === 'KeyH') setViewing(true);
+    else if (!mod && e.code === 'KeyV') {
+      setViewing(false);
+      editor.mode = 'select';
+      editor.prop = null;
+    } else if (!mod && e.code === 'KeyB') {
+      setViewing(false);
+      editor.mode = 'brush';
+      editor.selected = -1;
     } else if (editor.viewing) return;
     else if (mod && e.code === 'KeyA' && editor.mode === 'select') {
       e.preventDefault();
@@ -231,8 +268,8 @@
     {#if failed}<p class="warning small">{t('mapgen.noFolder')}</p>{/if}
     <div class="toolbar" role="toolbar" aria-label={t('mapedit.brushes')}>
       <div class="seg">
-        <button class:on={editor.viewing} onclick={() => setViewing(true)}><Eye size={14} /> {t('mapedit.view')}</button>
-        <button class:on={!editor.viewing} onclick={() => setViewing(false)}><Pencil size={14} /> {t('mapedit.edit')}</button>
+        <button class:on={editor.viewing} title="{t('mapedit.view')} · H" onclick={() => setViewing(true)}><Eye size={14} /> {t('mapedit.view')}</button>
+        <button class:on={!editor.viewing} title="{t('mapedit.edit')} · V / B" onclick={() => setViewing(false)}><Pencil size={14} /> {t('mapedit.edit')}</button>
       </div>
       <span class="sep"></span>
       {#if !editor.viewing}
@@ -259,12 +296,14 @@
     </div>
     <div class="body">
       <section class="map">
-        <div class="scroll" bind:clientWidth={scrollW} bind:clientHeight={scrollH}><MapCanvas {layout} /></div>
+        <div class="scroll" bind:this={viewport} bind:clientWidth={scrollW} bind:clientHeight={scrollH}>
+          <div class="room" style:padding="{Math.round(scrollH / 2)}px {Math.round(scrollW / 2)}px"><MapCanvas {layout} /></div>
+        </div>
         <div class="zoombar">
-          <button class="icon-btn" title={t('mapedit.zoomOut', mod)} onclick={() => zoom(0.85)}><ZoomOut size={16} /></button>
-          <span class="percent">{Math.round((editor.cell / 28) * 100)}%</span>
-          <button class="icon-btn" title={t('mapedit.zoomIn', mod)} onclick={() => zoom(1.18)}><ZoomIn size={16} /></button>
-          <button class="btn fitbtn" title={t('mapedit.fitHint')} onclick={fit}>{t('mapedit.fit')}</button>
+          <button class="icon-btn" title={t('mapedit.zoomOut', mod)} onclick={() => editor.zoomBy(1 / 1.25)}><ZoomOut size={16} /></button>
+          <span class="percent">{Math.round((editor.cell / CELL_BASE) * 100)}%</span>
+          <button class="icon-btn" title={t('mapedit.zoomIn', mod)} onclick={() => editor.zoomBy(1.25)}><ZoomIn size={16} /></button>
+          <button class="btn fitbtn" title={t('mapedit.fitHint')} onclick={() => editor.fit()}>{t('mapedit.fit')}</button>
         </div>
         <div class="hint" title={hint}>{hint}</div>
       </section>
@@ -272,7 +311,7 @@
       <section class="palette" aria-label={t('mapedit.things')}>
         <div class="head">
         <div class="row">
-          <button class="tool grow" class:on={editor.mode === 'select'} onclick={() => ((editor.mode = 'select'), (editor.prop = null))}><MousePointer2 size={14} /> {t('mapedit.select')}</button>
+          <button class="tool grow" title="{t('mapedit.select')} · V" class:on={editor.mode === 'select'} onclick={() => ((editor.mode = 'select'), (editor.prop = null))}><MousePointer2 size={14} /> {t('mapedit.select')}</button>
           <button class="icon-btn" title={t('mapedit.rotate')} onclick={rotate}><RotateCw size={15} /></button>
           <button class="icon-btn" title={t('mapedit.removePicked')} disabled={!editor.picked.length} onclick={removeSelected}><Trash2 size={15} /></button>
         </div>
@@ -500,7 +539,9 @@
     flex: 1;
     min-height: 0;
     overflow: auto;
-    display: flex;
+  }
+  .room {
+    width: max-content;
   }
   .map {
     position: relative;

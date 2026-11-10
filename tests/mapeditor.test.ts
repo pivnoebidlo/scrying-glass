@@ -126,4 +126,15 @@ describe('the map editor', () => {
     expect(d.layout.rooms).toEqual([{ x: 1, y: 1, w: 2, h: 2 }]);
     expect(d.layout.props).toEqual([{ kind: 'barrel', x: 1, y: 1, w: 1, h: 1 }]);
   });
+
+  it('lets houses stand in the wild and lava and pits lie anywhere', () => {
+    const ids = (style: Parameters<typeof brushesFor>[0]) => brushesFor(style).map((b) => b.id);
+    for (const style of ['forest', 'swamp', 'meadow', 'shore'] as const) expect(ids(style)).toContain('house');
+    for (const style of ['building', 'cave', 'town', 'forest'] as const) expect(ids(style)).toEqual(expect.arrayContaining(['lava', 'pit', 'mud', 'ice']));
+    const lodge = addHouse(blankLayout('forest', 12, 12, 1), { x: 3, y: 3, w: 3, h: 2 });
+    expect(lodge.houses).toEqual([{ x: 3, y: 3, w: 3, h: 2 }]);
+    expect(lodge.cells[3]!.slice(3, 6)).toBe('HHH');
+    // Painting grass over it takes the house away.
+    expect(paint(lodge, [{ x: 4, y: 3 }], '.').houses ?? []).toEqual([]);
+  });
 });

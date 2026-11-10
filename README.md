@@ -369,10 +369,10 @@ each room has a hidden pin with its text, its creature card and a "Lift the fog 
 rerolled; copy or to the journal (creatures and items as [[links]]). "To an encounter" on a room
 with creatures makes an encounter preset of the current adventure with them and opens it in Initiative.
 
-**Map generator** (Tools → Map generator, any system): a building, a cave, a town quarter, a forest, an open field, a shore or a swamp, with
-3–30 rooms or places, drawn by the app. Outdoors the places are clearings joined by paths, with trees, boulders, rivers
+**Maps** (Tools → Map editor, any system). «New map…» generates a building, a cave, a town quarter, a forest, an open
+field, a shore or a swamp with 3–30 rooms or places, drawn by the app; «Another one» rolls it again until you like it. Outdoors the places are clearings joined by paths, with trees, boulders, rivers
 with fords, the sea or ponds around them. "To Maps"
-adds the picture to the current adventure with the fog of war, a grid that matches its cells and a hidden pin on every
+in the editor adds the picture to the current adventure with the fog of war, a grid that matches its cells and a hidden pin on every
 room or place. Numbers are only in the preview and on your pins: the players see a clean map.
 
 A town quarter has squares, crossroads, streets and rows of houses. Its tavern, temple, shop, town hall and smithy stand
@@ -387,20 +387,21 @@ crates; outdoors there are logs, stumps, bushes and flowers or reeds. Nothing st
 the dungeon generator a room is furnished by its part in the story and the kind of dungeon (a tomb's lair is a crypt, a
 fortress's guards sleep in barracks).
 
-**Map editor** (Tools → Map editor, any system): draw a simple map yourself, without other programs. A new map starts
-from an empty field (a building, a cave, a town or open country of a size in cells) or from the generator — the map
-generator's «Edit» opens its map here too. Brushes paint the cells: floor and wall, a room (a rectangle that gets a
+**Map editor**: change a generated map or draw one yourself from an empty field (a building, a cave, a town or open
+country of a size in cells), without other programs. Brushes paint the cells: floor and wall, a room (a rectangle that gets a
 number and a pin), doors and pillars indoors; grass, roads, squares, sand, water, fords, trees and boulders outdoors;
-houses, wells, the town wall and its towers in a town; lava, ice, mud and pits. The ground takes a colour: spring,
-autumn, snow, dry steppe or ash outdoors; a wooden, marble, dark or sandstone floor indoors.
+houses, wells, the town wall and its towers in a town (a house stands in a forest or a swamp too); lava, ice, mud and
+pits on any map. The ground takes a colour: spring, autumn, snow (with snow on the trees, the stones and the roofs), dry
+steppe or ash outdoors; a wooden, marble, dark or sandstone floor indoors.
 
 Things come from the palette: about a hundred of them in furniture, stores, workshop, shrine, dungeon, town, cave and
 outdoors; the groups fold, and a search finds a thing by name. A thing goes on a cell, on top of other things too (a
 chest on a rug); R turns it, dragging moves it, Delete or the right button takes it away. Several are picked with a
 rectangle or Shift+click and move, turn and go together. A rug, a table, a puddle and others stretch by their corner; a
 rug, a bed, a tent and others take the colour you choose. Thickness 1–3, Shift+click draws a straight line, the right
-button erases, ⌘+wheel or the buttons in the corner zoom («Fit» shows the whole map), ⌘+Z undoes. «View» drags the map
-about with the mouse; while editing, Space or the middle button does it. The draft is saved by itself as
+button erases, ⌘+Z undoes. The wheel or two fingers scroll the map, a pinch or ⌘+wheel zooms around the cursor, and the
+map can go past its edges; 0 shows the whole map, 1 — 100 %, + and − zoom. «View» (H) drags the map about with the
+mouse; while editing, Space or the middle button does it; V picks things, B goes back to the brushes. The draft is saved by itself as
 «Name.map.json» in the adventure's maps folder; «To Maps» adds the picture with the fog, a grid and a pin on every
 room.
 

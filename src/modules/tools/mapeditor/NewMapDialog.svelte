@@ -1,24 +1,61 @@
-<!-- A new map: from an empty field or from the generator, of a kind, of a size, with a name. -->
+<!-- A new map: from an empty field or from the generator (a preview to roll again), of a kind, of a size, with a name.
+     The window remembers the choice. -->
 <script lang="ts">
+  import { Dices } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { generateLayout, LAYOUT_STYLES, type LayoutStyle } from '../mapgen/layout';
+  import LayoutCanvas from '../mapgen/LayoutCanvas.svelte';
+  import { generateLayout, isOpenAir, LAYOUT_STYLES, MAX_ROOMS, MIN_ROOMS, roomCount, type Layout, type LayoutStyle } from '../mapgen/layout';
   import { blankLayout, MAX_SIDE, MIN_SIDE } from './edit';
   import { editor } from './store.svelte';
 
   let { onclose }: { onclose: () => void } = $props();
 
-  let from = $state<'blank' | 'generator'>('blank');
-  let style = $state<LayoutStyle>('building');
-  let w = $state(30);
-  let h = $state(20);
-  let rooms = $state(5);
+  const KEY = 'sg.mapedit.new';
+  interface Choice {
+    from: 'blank' | 'generator';
+    style: LayoutStyle;
+    w: number;
+    h: number;
+    rooms: number;
+    walls: boolean;
+  }
+  const DEFAULTS: Choice = { from: 'generator', style: 'building', w: 30, h: 20, rooms: 5, walls: false };
+  const ch = $state<Choice>(
+    (() => {
+      try {
+        const v = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
+        return LAYOUT_STYLES.includes(v.style) ? v : { ...DEFAULTS };
+      } catch {
+        return { ...DEFAULTS };
+      }
+    })(),
+  );
   let title = $state('');
   let busy = $state(false);
+  let preview = $state.raw<Layout | null>(null);
+
+  function roll() {
+    ch.rooms = roomCount(ch.rooms);
+    preview = generateLayout(ch.style, { rooms: ch.rooms, walls: ch.style === 'town' && ch.walls });
+  }
+  // A fresh preview whenever what it is made of changes.
+  $effect(() => {
+    if (ch.from !== 'generator') return;
+    void ch.style;
+    void ch.walls;
+    void ch.rooms;
+    roll();
+  });
 
   async function create() {
     busy = true;
-    const layout = from === 'blank' ? blankLayout(style, w, h, Math.floor(Math.random() * 2 ** 31)) : generateLayout(style, { rooms });
-    const ok = await editor.create(title.trim() || t(`mapgen.style.${style}` as never), layout);
+    try {
+      localStorage.setItem(KEY, JSON.stringify($state.snapshot(ch)));
+    } catch {
+      /* not remembered */
+    }
+    const layout = ch.from === 'blank' ? blankLayout(ch.style, ch.w, ch.h, Math.floor(Math.random() * 2 ** 31)) : (preview ?? generateLayout(ch.style, { rooms: roomCount(ch.rooms) }));
+    const ok = await editor.create(title.trim() || t(`mapgen.style.${ch.style}` as never), layout);
     busy = false;
     if (ok) onclose();
   }
@@ -31,26 +68,33 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="backdrop" onclick={(e) => e.target === e.currentTarget && onclose()}>
-  <form class="modal" onsubmit={(e) => (e.preventDefault(), void create())}>
+  <form class="modal" class:wide={ch.from === 'generator'} onsubmit={(e) => (e.preventDefault(), void create())}>
     <h3>{t('mapedit.new')}</h3>
     <div class="choice">
-      <button type="button" class:on={from === 'blank'} onclick={() => (from = 'blank')}><b>{t('mapedit.fromBlank')}</b><span>{t('mapedit.fromBlankHint')}</span></button>
-      <button type="button" class:on={from === 'generator'} onclick={() => (from = 'generator')}><b>{t('mapedit.fromGenerator')}</b><span>{t('mapedit.fromGeneratorHint')}</span></button>
+      <button type="button" class:on={ch.from === 'generator'} onclick={() => (ch.from = 'generator')}><b>{t('mapedit.fromGenerator')}</b><span>{t('mapedit.fromGeneratorHint')}</span></button>
+      <button type="button" class:on={ch.from === 'blank'} onclick={() => (ch.from = 'blank')}><b>{t('mapedit.fromBlank')}</b><span>{t('mapedit.fromBlankHint')}</span></button>
     </div>
-    <label>{t('mapgen.kind')}
-      <select bind:value={style}>
-        {#each LAYOUT_STYLES as id (id)}<option value={id}>{t(`mapgen.style.${id}` as never)}</option>{/each}
-      </select>
-    </label>
-    {#if from === 'blank'}
-      <div class="row">
-        <label>{t('mapedit.width')} <input type="number" min={MIN_SIDE} max={MAX_SIDE} bind:value={w} /></label>
-        <label>{t('mapedit.height')} <input type="number" min={MIN_SIDE} max={MAX_SIDE} bind:value={h} /></label>
-      </div>
-    {:else}
-      <label>{t(style === 'town' || style === 'forest' || style === 'meadow' || style === 'shore' || style === 'swamp' ? 'mapgen.places' : 'mapgen.rooms')}
-        <input type="number" min="3" max="30" bind:value={rooms} />
+    <div class="row">
+      <label>{t('mapgen.kind')}
+        <select bind:value={ch.style}>
+          {#each LAYOUT_STYLES as id (id)}<option value={id}>{t(`mapgen.style.${id}` as never)}</option>{/each}
+        </select>
       </label>
+      {#if ch.from === 'blank'}
+        <label>{t('mapedit.width')} <input type="number" min={MIN_SIDE} max={MAX_SIDE} bind:value={ch.w} /></label>
+        <label>{t('mapedit.height')} <input type="number" min={MIN_SIDE} max={MAX_SIDE} bind:value={ch.h} /></label>
+      {:else}
+        <label>{t(isOpenAir(ch.style) ? 'mapgen.places' : 'mapgen.rooms')}
+          <input type="number" min={MIN_ROOMS} max={MAX_ROOMS} bind:value={ch.rooms} />
+        </label>
+        {#if ch.style === 'town'}
+          <label class="check"><input type="checkbox" bind:checked={ch.walls} /> {t('mapgen.walls')}</label>
+        {/if}
+        <button type="button" class="btn again" title={t('mapedit.againHint')} onclick={roll}><Dices size={14} /> {t('mapedit.again')}</button>
+      {/if}
+    </div>
+    {#if ch.from === 'generator' && preview}
+      <div class="preview"><LayoutCanvas layout={preview} /></div>
     {/if}
     <label>{t('mapedit.name')} <input type="text" bind:value={title} placeholder={t('mapedit.namePh')} /></label>
     <footer>
@@ -75,6 +119,8 @@
     flex-direction: column;
     gap: 12px;
     width: min(460px, 92vw);
+    max-height: 92vh;
+    overflow: auto;
     padding: 16px 18px;
     border: 1px solid var(--border);
     border-radius: var(--radius-m);
@@ -121,8 +167,29 @@
     display: flex;
     gap: 12px;
   }
-  .row input {
-    width: 100px;
+  .row {
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .row input[type='number'] {
+    width: 90px;
+  }
+  .modal.wide {
+    width: min(760px, 94vw);
+  }
+  label.check {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 6px;
+    color: var(--text-normal);
+    font-size: 13px;
+  }
+  .again {
+    margin-left: auto;
+  }
+  .preview :global(canvas) {
+    max-height: 46vh;
   }
   footer {
     display: flex;

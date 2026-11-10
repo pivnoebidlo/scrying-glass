@@ -1,5 +1,6 @@
 // The map editor in the control window: the drafts of the adventure, the one open, its undo and redo, the tool. The
 // draft is saved by itself a moment after every change.
+import { flushSync } from 'svelte';
 import { store } from '../../../renderer/lib/store.svelte';
 import { roleFolderHere, visibleIn } from '../../../shared/adventures';
 import { roleNames } from '../../../shared/vault';
@@ -8,6 +9,11 @@ import type { Layout } from '../mapgen/layout';
 import { draftOf, MAP_DRAFT_SUFFIX, type BrushId } from './edit';
 
 const UNDO = 100;
+// The size of a cell on screen: the least, the most, «100 %».
+export const CELL_MIN = 6;
+export const CELL_MAX = 72;
+export const CELL_BASE = 28;
+const clampCell = (c: number) => Math.min(CELL_MAX, Math.max(CELL_MIN, c));
 
 class Editor {
   drafts = $state<string[]>([]);
@@ -36,6 +42,10 @@ class Editor {
   numbers = $state(true);
   undos = $state(0);
   redos = $state(0);
+  // The scrolling box the map lies in (MapEditor sets it): zooming keeps the point under the cursor in place.
+  viewport: HTMLElement | null = null;
+  // Where a pinch is heading: small steps of the trackpad add up before the whole cell changes.
+  private goal = CELL_BASE;
   private past: Layout[] = [];
   private future: Layout[] = [];
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -99,6 +109,53 @@ class Editor {
     this.path = null;
     this.layout = null;
     await this.refresh();
+  }
+
+  // Zoom to `next` around a point of the window (none — the middle of the view).
+  zoomTo(next: number, at?: { x: number; y: number }) {
+    const cell = clampCell(Math.round(next));
+    const box = this.viewport;
+    const stack = box?.querySelector<HTMLElement>('.stack');
+    if (cell === this.cell) return;
+    if (!box || !stack) {
+      this.cell = cell;
+      return;
+    }
+    const b = box.getBoundingClientRect();
+    const p = at ?? { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+    const r = stack.getBoundingClientRect();
+    const mx = (p.x - r.left) / this.cell;
+    const my = (p.y - r.top) / this.cell;
+    flushSync(() => (this.cell = cell));
+    const r2 = stack.getBoundingClientRect();
+    box.scrollLeft += r2.left + mx * cell - p.x;
+    box.scrollTop += r2.top + my * cell - p.y;
+  }
+  zoomBy(k: number, at?: { x: number; y: number }) {
+    this.goal = this.cell;
+    this.zoomTo(Math.abs(this.cell * k - this.cell) < 1 ? this.cell + Math.sign(k - 1) : this.cell * k, at);
+  }
+  // A pinch of the trackpad or the wheel with ⌘ / Ctrl: smooth, around the cursor.
+  wheelZoom(e: WheelEvent) {
+    if (Math.abs(this.goal - this.cell) >= 1) this.goal = this.cell;
+    const d = Math.max(-40, Math.min(40, e.deltaY * (e.deltaMode === 1 ? 16 : 1)));
+    this.goal = clampCell(this.goal * Math.exp(-d * 0.012));
+    this.zoomTo(this.goal, { x: e.clientX, y: e.clientY });
+  }
+  // The whole map in view, in the middle.
+  fit() {
+    const box = this.viewport;
+    if (!box || !this.layout) return;
+    const cell = clampCell(Math.floor(Math.min((box.clientWidth - 48) / this.layout.w, (box.clientHeight - 48) / this.layout.h)));
+    flushSync(() => (this.cell = cell));
+    this.goal = cell;
+    this.centre();
+  }
+  centre() {
+    const box = this.viewport;
+    if (!box) return;
+    box.scrollLeft = (box.scrollWidth - box.clientWidth) / 2;
+    box.scrollTop = (box.scrollHeight - box.clientHeight) / 2;
   }
 
   // A change: the layout before goes to undo (one per stroke: `merge` — the same stroke goes on).

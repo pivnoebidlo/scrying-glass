@@ -15,6 +15,8 @@ interface Look {
   grass: string;
   tuft: string;
   tree: string[];
+  // Snow on the crowns, the stones and the roofs.
+  snow?: boolean;
 }
 const TOWN: Look = { grass: '#7f9558', tuft: '#6d8349', tree: ['#3f6a35', '#4a7a3c', '#35592e'] };
 // Lit slope, shaded slope, ridge.
@@ -35,7 +37,7 @@ const LINE = 'rgba(70, 58, 42, 0.22)';
 const GRASS_TONES: Record<string, Look> = {
   spring: { grass: '#86ad5a', tuft: '#6f9a45', tree: ['#4f8a3e', '#5c9a48', '#6aa954'] },
   autumn: { grass: '#a59a55', tuft: '#8e8243', tree: ['#b5602a', '#c98a2e', '#8e3d22', '#a8762c'] },
-  winter: { grass: '#e3e9ec', tuft: '#c3ced5', tree: ['#3c5a48', '#476652', '#33503f'] },
+  winter: { grass: '#e3e9ec', tuft: '#c3ced5', tree: ['#3c5a48', '#476652', '#33503f'], snow: true },
   dry: { grass: '#b8a76a', tuft: '#9f8f55', tree: ['#6e7a3e', '#7d8848', '#5f6a35'] },
   ash: { grass: '#5a5550', tuft: '#48443f', tree: ['#3a3330', '#2e2926', '#463d38'] },
 };
@@ -144,15 +146,30 @@ function drawTree(ctx: CanvasRenderingContext2D, px: number, py: number, c: numb
   ctx.arc(px + size * 0.18, py + size * 0.22, size, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = look.tree[Math.floor(r() * look.tree.length)]!;
-  ctx.beginPath();
+  const crown = new Path2D();
+  const lobes: [number, number][] = [];
   for (let i = 0; i < 5; i++) {
     const angle = (i / 5) * Math.PI * 2 + r();
     const lobeX = px + Math.cos(angle) * size * 0.48;
     const lobeY = py + Math.sin(angle) * size * 0.48;
-    ctx.moveTo(lobeX + size * 0.6, lobeY);
-    ctx.arc(lobeX, lobeY, size * 0.6, 0, Math.PI * 2);
+    lobes.push([lobeX, lobeY]);
+    crown.moveTo(lobeX + size * 0.6, lobeY);
+    crown.arc(lobeX, lobeY, size * 0.6, 0, Math.PI * 2);
   }
-  ctx.fill();
+  ctx.fill(crown);
+  // Snow lies on the lit side of every lobe; the needles show in the shade.
+  if (look.snow) {
+    ctx.save();
+    ctx.clip(crown);
+    ctx.fillStyle = 'rgba(246, 249, 251, 0.92)';
+    ctx.beginPath();
+    for (const [lx, ly] of lobes) {
+      ctx.moveTo(lx - size * 0.2 + size * 0.34, ly - size * 0.24);
+      ctx.arc(lx - size * 0.2, ly - size * 0.24, size * 0.34, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.restore();
+  }
   ctx.fillStyle = 'rgba(255, 255, 220, 0.09)';
   ctx.beginPath();
   ctx.arc(px - size * 0.2, py - size * 0.22, size * 0.5, 0, Math.PI * 2);
@@ -179,27 +196,38 @@ function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: Wi
       const py = (y + 0.5 + (r() - 0.5) * 0.3) * c;
       if (cell === 'R') {
         const size = c * (0.3 + r() * 0.16);
-        ctx.beginPath();
+        const stone = new Path2D();
         for (let i = 0; i < 7; i++) {
           const angle = (i / 7) * Math.PI * 2;
           const reach = size * (0.75 + r() * 0.35);
-          ctx.lineTo(px + Math.cos(angle) * reach, py + Math.sin(angle) * reach * 0.8);
+          stone.lineTo(px + Math.cos(angle) * reach, py + Math.sin(angle) * reach * 0.8);
         }
-        ctx.closePath();
+        stone.closePath();
         ctx.fillStyle = '#8c8c86';
-        ctx.fill();
+        ctx.fill(stone);
+        if (look.snow) {
+          ctx.save();
+          ctx.clip(stone);
+          ctx.fillStyle = 'rgba(246, 249, 251, 0.95)';
+          ctx.beginPath();
+          ctx.arc(px - size * 0.25, py - size * 0.3, size * 0.75, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
         ctx.strokeStyle = '#3d3b37';
         ctx.lineWidth = Math.max(1, c / 16);
-        ctx.stroke();
+        ctx.stroke(stone);
         continue;
       }
       drawTree(ctx, px, py, c, look, r);
     }
   }
+  // A forester's lodge, a hut in the swamp.
+  (l.houses ?? []).forEach((a) => drawHouse(ctx, a, c, cellNoise(l, a.x, a.y, 4), undefined, look.snow));
 }
 
 // A roof from above: two slopes that meet at the ridge, rows of tiles or thatch, a chimney on some.
-function drawHouse(ctx: CanvasRenderingContext2D, a: LayoutRoom, c: number, r: () => number, kind?: LandmarkKind) {
+function drawHouse(ctx: CanvasRenderingContext2D, a: LayoutRoom, c: number, r: () => number, kind?: LandmarkKind, snow = false) {
   const plain = ROOFS[Math.floor(r() * ROOFS.length)]!;
   const roof = (kind && SPECIAL_ROOFS[kind]) ?? plain;
   const x = a.x * c + c * 0.06;
@@ -215,6 +243,16 @@ function drawHouse(ctx: CanvasRenderingContext2D, a: LayoutRoom, c: number, r: (
   ctx.fillStyle = roof[1];
   if (across) ctx.fillRect(x, y + h / 2, w, h / 2);
   else ctx.fillRect(x + w / 2, y, w / 2, h);
+  // Snow on both slopes, thinner by the eaves where the roof shows.
+  if (snow) {
+    const e = c * 0.18;
+    ctx.fillStyle = 'rgba(246, 249, 251, 0.85)';
+    if (across) ctx.fillRect(x + e, y + e, w - 2 * e, h / 2 - e);
+    else ctx.fillRect(x + e, y + e, w / 2 - e, h - 2 * e);
+    ctx.fillStyle = 'rgba(208, 218, 226, 0.65)';
+    if (across) ctx.fillRect(x + e, y + h / 2, w - 2 * e, h / 2 - e);
+    else ctx.fillRect(x + w / 2, y + e, w / 2 - e, h - 2 * e);
+  }
   ctx.strokeStyle = 'rgba(30, 20, 12, 0.3)';
   ctx.lineWidth = Math.max(1, c / 26);
   ctx.beginPath();
@@ -543,7 +581,7 @@ function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   for (let y = 0; y < l.h; y++) {
     for (let x = 0; x < l.w; x++) if (at(x, y) === 'T') drawTree(ctx, (x + 0.5) * c, (y + 0.5) * c, c, look, cellNoise(l, x, y, 2));
   }
-  (l.houses ?? []).forEach((a, i) => drawHouse(ctx, a, c, cellNoise(l, a.x, a.y, 4), l.landmarks?.find((m) => m.house === i)?.kind));
+  (l.houses ?? []).forEach((a, i) => drawHouse(ctx, a, c, cellNoise(l, a.x, a.y, 4), l.landmarks?.find((m) => m.house === i)?.kind, look.snow));
   if (l.wall) drawWall(ctx, l, c);
   // Wells.
   for (const p of l.pillars) {
