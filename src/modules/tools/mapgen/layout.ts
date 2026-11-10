@@ -184,8 +184,10 @@ function corridor(a: LayoutRoom, b: LayoutRoom, others: LayoutRoom[], r: Random)
 
 // Floors and walls of any material, on any map (0.108): 'F' planks, 's' stone flags, 't' tiles, 'c' a carpet, 'd' earth,
 // 'm' marble; 'B' a wooden wall, 'k' a stone wall, 'r' a brick wall.
-export const FLOORS = 'Fstcdm';
-export const WALLS = 'Bkr';
+// Fortifications (0.108): 'w' the walk along a castle wall (a floor); 'p' a palisade, 'g' a castle wall with merlons, 'z' a
+// barricade, 'y' a hedge (walls). A ditch 'h' is a surface: no walls, no walking.
+export const FLOORS = 'Fstcdmw';
+export const WALLS = 'Bkrpgzy';
 export const isFloor = (c: string | undefined) => !!c && FLOORS.includes(c);
 export const isWall = (c: string | undefined) => !!c && WALLS.includes(c);
 export const walkable = (c: string | undefined) =>

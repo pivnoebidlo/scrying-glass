@@ -66,7 +66,7 @@ const FLOOR_TONES: Record<string, string[]> = {
 };
 const lookOf = (l: Layout, base: Look) => (l.tone && GRASS_TONES[l.tone]) || base;
 // Surfaces the map editor paints: lava, ice, mud and pits. Not rock: indoors the walls go round them, not between.
-const SURFACES = 'LIMX~=';
+const SURFACES = 'LIMX~=h';
 const isSurface = (ch: string | undefined) => !!ch && SURFACES.includes(ch);
 
 // What the preview shows over the picture; the map gets tokens and hidden pins instead.
@@ -744,6 +744,31 @@ function drawSurfaces(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   const each = (ch: string, f: (x: number, y: number) => void) => {
     for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) if (at(x, y) === ch) f(x, y);
   };
+  if (has('h')) {
+    // A dry ditch: dark earth sloping down to a bottom of stones.
+    const ditch = contour(l, c, (x, y) => at(x, y) === 'h');
+    fillArea(ctx, ditch.area, '#5c4a36');
+    ctx.save();
+    ctx.clip(ditch.area);
+    ctx.strokeStyle = 'rgba(30, 22, 12, 0.45)';
+    ctx.lineWidth = Math.max(1, c / 20);
+    ctx.beginPath();
+    each('h', (x, y) => {
+      const r = cellNoise(l, x, y, 15);
+      for (let k = 0; k < 3; k++) {
+        const px = (x + r()) * c;
+        const py = (y + r()) * c;
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + c * 0.12, py + c * 0.16);
+      }
+    });
+    ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = '#3a2e20';
+    ctx.lineWidth = Math.max(2, c / 8);
+    ctx.lineJoin = 'round';
+    ctx.stroke(ditch.edges);
+  }
   if (has('M')) {
     const mud = contour(l, c, (x, y) => at(x, y) === 'M');
     fillArea(ctx, mud.area, '#6b5638');
@@ -1129,7 +1154,9 @@ function drawBuilt(ctx: CanvasRenderingContext2D, l: Layout, c: number, outdoors
   const at = (x: number, y: number) => l.cells[y]?.[x];
   // A shadow on the ground: of the whole building outdoors, of the walls indoors.
   ctx.fillStyle = 'rgba(20, 16, 10, 0.35)';
-  for (const { x, y } of cells) if (outdoors || isWall(at(x, y))) ctx.fillRect(x * c + c * 0.14, y * c + c * 0.18, c, c);
+  // Walls you see through (a palisade, a hedge, a barricade) cast their own shadows.
+  const open = (ch: string | undefined) => ch === 'p' || ch === 'y' || ch === 'z';
+  for (const { x, y } of cells) if ((outdoors || isWall(at(x, y))) && !open(at(x, y))) ctx.fillRect(x * c + c * 0.14, y * c + c * 0.18, c, c);
   ctx.lineCap = 'butt';
   const seams = (colour: string, width: number, draw: () => void) => {
     ctx.strokeStyle = colour;
@@ -1228,6 +1255,95 @@ function drawBuilt(ctx: CanvasRenderingContext2D, l: Layout, c: number, outdoors
         fill(['#9a4a34', '#a3523a', '#8f442f']);
         courses(4, 3, 'rgba(225, 210, 190, 0.55)', Math.max(1, c / 26));
         break;
+      case 'w':
+        // The walk along a castle wall: worn flags.
+        fill(['#9a9386', '#948d80', '#a09a8e']);
+        courses(2, 2, 'rgba(50, 44, 36, 0.4)', Math.max(1, c / 26));
+        break;
+      case 'g': {
+        // A castle wall: big blocks, and merlons on every side that does not go on into wall.
+        fill(['#8a8476', '#827c6e', '#908a7c']);
+        courses(2, 2, 'rgba(30, 26, 20, 0.45)', Math.max(1, c / 22));
+        const wallish = (ch: string | undefined) => ch === 'g' || ch === 'w';
+        ctx.fillStyle = '#5c574d';
+        const m = c * 0.22;
+        for (let k = 0; k < 2; k++) {
+          const o = (k * 2 + 0.5) * (c / 4) - m / 2 + c / 8;
+          if (!wallish(at(x, y - 1))) ctx.fillRect(X + o, Y, m, m);
+          if (!wallish(at(x, y + 1))) ctx.fillRect(X + o, Y + c - m, m, m);
+          if (!wallish(at(x - 1, y))) ctx.fillRect(X, Y + o, m, m);
+          if (!wallish(at(x + 1, y))) ctx.fillRect(X + c - m, Y + o, m, m);
+        }
+        break;
+      }
+      case 'p': {
+        // A palisade: sharpened logs side by side, along the way it runs.
+        const upright = isWall(at(x, y - 1)) || isWall(at(x, y + 1));
+        const sideways = isWall(at(x - 1, y)) || isWall(at(x + 1, y));
+        const across = sideways || !upright;
+        for (let k = 0; k < 3; k++) {
+          const px = across ? X + (k + 0.5) * (c / 3) : X + c / 2;
+          const py = across ? Y + c / 2 : Y + (k + 0.5) * (c / 3);
+          ctx.fillStyle = 'rgba(20, 16, 10, 0.35)';
+          ctx.beginPath();
+          ctx.arc(px + c * 0.06, py + c * 0.08, c * 0.17, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = TIMBER[(x + y + k) % TIMBER.length]!;
+          ctx.strokeStyle = WALL;
+          ctx.lineWidth = Math.max(1, c / 20);
+          ctx.beginPath();
+          ctx.arc(px, py, c * 0.16, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#c9a46a';
+          ctx.beginPath();
+          ctx.arc(px, py, c * 0.05, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+      }
+      case 'y': {
+        // A hedge: clipped bushes in a row.
+        ctx.fillStyle = 'rgba(15, 25, 12, 0.3)';
+        ctx.fillRect(X + c * 0.1, Y + c * 0.14, c, c);
+        for (const [dx, dy, rr] of [[0.3, 0.3, 0.3], [0.7, 0.3, 0.3], [0.3, 0.7, 0.3], [0.7, 0.7, 0.3], [0.5, 0.5, 0.28]] as const) {
+          ctx.fillStyle = (x + y) % 2 ? '#3f6a35' : '#477539';
+          ctx.beginPath();
+          ctx.arc(X + dx * c, Y + dy * c, rr * c, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(255, 255, 220, 0.12)';
+        ctx.beginPath();
+        ctx.arc(X + c * 0.4, Y + c * 0.36, c * 0.18, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      case 'z': {
+        // A barricade: planks across, a crate, a stake.
+        const r2 = cellNoise(l, x, y, 16);
+        ctx.strokeStyle = WALL;
+        ctx.lineWidth = Math.max(1, c / 22);
+        ctx.fillStyle = '#7a5432';
+        ctx.save();
+        ctx.translate(X + c / 2, Y + c / 2);
+        ctx.rotate((r2() - 0.5) * 0.8);
+        ctx.fillRect(-c * 0.48, -c * 0.12, c * 0.96, c * 0.24);
+        ctx.strokeRect(-c * 0.48, -c * 0.12, c * 0.96, c * 0.24);
+        ctx.restore();
+        if (r2() < 0.5) {
+          ctx.fillStyle = '#9a6b3c';
+          ctx.fillRect(X + c * 0.2, Y + c * 0.18, c * 0.36, c * 0.36);
+          ctx.strokeRect(X + c * 0.2, Y + c * 0.18, c * 0.36, c * 0.36);
+        }
+        ctx.save();
+        ctx.translate(X + c / 2, Y + c / 2);
+        ctx.rotate(0.9 + (r2() - 0.5));
+        ctx.fillStyle = '#5c3d22';
+        ctx.fillRect(-c * 0.42, -c * 0.06, c * 0.84, c * 0.12);
+        ctx.strokeRect(-c * 0.42, -c * 0.06, c * 0.84, c * 0.12);
+        ctx.restore();
+        break;
+      }
       default: {
         // Logs along the wall: across a wall that runs up and down, along one that runs side to side.
         fill(TIMBER);
@@ -1258,7 +1374,7 @@ function drawBuilt(ctx: CanvasRenderingContext2D, l: Layout, c: number, outdoors
   ctx.strokeStyle = WALL;
   ctx.lineWidth = Math.max(1.5, c / 12);
   ctx.lineCap = 'square';
-  const walls = cells.filter((p) => isWall(at(p.x, p.y)));
+  const walls = cells.filter((p) => isWall(at(p.x, p.y)) && !open(at(p.x, p.y)));
   ctx.stroke(edgesOf(c, walls, (x, y) => isWall(at(x, y)) || l.doors.some((d) => d.x === x && d.y === y)));
   if (outdoors) {
     const floors = cells.filter((p) => isFloor(at(p.x, p.y)));

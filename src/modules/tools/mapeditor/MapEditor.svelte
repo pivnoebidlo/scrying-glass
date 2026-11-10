@@ -55,6 +55,7 @@
     floor: '#d9cfb8', wall: '#26221d', room: '#d9cfb8', door: '#7a5230', pillar: '#120f0b', grass: '#7f9558', road: '#b3a78f', square: '#c2b8a2',
     house: '#a9583c', sand: '#d9c893', water: '#3f7d97', ford: '#7fb0bd', tree: '#3f6a35', boulder: '#8c8c86', townWall: '#857e72', tower: '#7a7368',
     lava: '#e2561b', ice: '#cfe6ee', mud: '#6b5638', pit: '#0b0907', planks: '#a87a4a', timber: '#5e4630', build: '#8a6a48', roof: '#9b4a35', erase: '#555',
+    palisade: '#6b5038', rampart: '#8a8476', blockade: '#7a5432', hedge: '#3f6a35', ditch: '#5c4a36',
     flagstone: '#a8a196', tiles: '#c9764f', carpet: '#8a2f2b', earth: '#7d6448', marble: '#e6e2da', stonewall: '#7d776d', brick: '#9a4a34',
     cobbles: '#9a9282', flags: '#b7ad98', field: '#8a6c44', sea: '#2a5c78', mountain: '#8a8174', pine: '#2c4a33', palm: '#5f8f3c', snag: '#5b4a3a',
   };
@@ -99,6 +100,7 @@
     { id: 'steampunk', kinds: ['gears', 'boiler', 'automaton', 'teslacoil', 'telescope', 'gauges'], genres: ['fantasy', 'gothic', 'noir', 'scifi'] },
     { id: 'nomads', kinds: ['yurt', 'camel', 'tripod', 'hiderack', 'sheep'] },
     { id: 'pirates', kinds: ['treasurepile', 'jollyroger', 'plank', 'charttable', 'parrot', 'ropebridge'], genres: ['fantasy', 'gothic'] },
+    { id: 'military', kinds: ['roundtower', 'squaretower', 'watchtower', 'stakes', 'ballista', 'catapult'], genres: ['fantasy', 'gothic', 'wasteland'] },
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];
@@ -125,7 +127,7 @@
   let query = $state('');
   // The brushes, by what they make: the ground, and what is built on it.
   const FLOOR_IDS: BrushId[] = ['floor', 'planks', 'flagstone', 'tiles', 'carpet', 'earth', 'marble'];
-  const WALL_IDS: BrushId[] = ['wall', 'timber', 'stonewall', 'brick', 'door', 'pillar', 'build'];
+  const WALL_IDS: BrushId[] = ['wall', 'timber', 'stonewall', 'brick', 'rampart', 'palisade', 'blockade', 'hedge', 'door', 'pillar', 'build'];
   const BUILDING: BrushId[] = ['room', 'house', 'roof', 'townWall', 'tower'];
   const GROWTH: BrushId[] = ['tree', 'pine', 'palm', 'snag', 'boulder', 'mountain'];
   const brushGroups = $derived(
@@ -504,7 +506,7 @@
         {#snippet brushList(list: typeof brushes)}
           <div class="brushes">
             {#each list as b (b.id)}
-              <button class="tool" class:on={editor.mode === 'brush' && editor.brush === b.id} title={b.id === 'build' || b.id === 'roof' ? t('mapedit.buildHint') : t(`mapedit.brush.${b.id}` as never)} onclick={() => pickBrush(b.id)}>
+              <button class="tool" class:on={editor.mode === 'brush' && editor.brush === b.id} title={b.id === 'build' || b.id === 'roof' ? t('mapedit.buildHint') : b.id === 'rampart' ? t('mapedit.rampartHint') : t(`mapedit.brush.${b.id}` as never)} onclick={() => pickBrush(b.id)}>
                 <span class="swatch {b.id}" style:background={SWATCH[b.id]}></span>
                 <span class="bname">{t(`mapedit.brush.${b.id}` as never)}</span>
               </button>

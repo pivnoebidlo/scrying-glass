@@ -38,6 +38,8 @@ export const PROP_KINDS = [
   'windmill', 'watermill', 'breadrack', 'horse', 'hayrack', 'saddle', 'forge', 'quench', 'bathpool', 'waterfall', 'cliff', 'cavecrystals', 'giantmushroom', 'glowshrooms', 'lilypads', 'driftwood', 'produce', 'dummy', 'archery', 'stage', 'seats', 'podium', 'cryptentrance',
   // draw-sets7.ts: under the sea; the sky; a steampunk workshop; a nomads' camp; a pirates' cove.
   'coral', 'kelp', 'giantclam', 'shipwreck', 'anemone', 'bubbles', 'cloud', 'airship', 'mooringmast', 'floatrock', 'balloon', 'gears', 'boiler', 'automaton', 'telescope', 'teslacoil', 'gauges', 'yurt', 'camel', 'tripod', 'hiderack', 'sheep', 'treasurepile', 'jollyroger', 'plank', 'charttable', 'parrot', 'ropebridge',
+  // draw-sets8.ts: towers, a watchtower, siege engines, stakes.
+  'roundtower', 'squaretower', 'watchtower', 'ballista', 'catapult', 'stakes',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

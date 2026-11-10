@@ -16,7 +16,7 @@ export interface MapDraft {
 
 export const MIN_SIDE = 6;
 export const MAX_SIDE = 120;
-const CELLS = /^[.#,PST~RH=WLIMXFBCKVOANJQstcdmkr]*$/;
+const CELLS = /^[.#,PST~RH=WLIMXFBCKVOANJQstcdmkrwpgzyh]*$/;
 const side = (n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= MIN_SIDE && n <= MAX_SIDE;
 const int = (n: unknown) => typeof n === 'number' && Number.isInteger(n);
 
@@ -102,7 +102,8 @@ export type BrushId =
   | 'floor' | 'wall' | 'room' | 'door' | 'pillar' | 'grass' | 'road' | 'square' | 'house' | 'sand' | 'water' | 'ford' | 'tree' | 'boulder' | 'townWall' | 'tower'
   | 'lava' | 'ice' | 'mud' | 'pit' | 'planks' | 'timber' | 'build' | 'roof' | 'erase'
   | 'cobbles' | 'flags' | 'field' | 'sea' | 'mountain' | 'pine' | 'palm' | 'snag'
-  | 'flagstone' | 'tiles' | 'carpet' | 'earth' | 'marble' | 'stonewall' | 'brick';
+  | 'flagstone' | 'tiles' | 'carpet' | 'earth' | 'marble' | 'stonewall' | 'brick'
+  | 'palisade' | 'rampart' | 'blockade' | 'hedge' | 'ditch';
 export interface Brush {
   id: BrushId;
   // A cell's letter it paints; none — a tool of its own (a rectangle, a toggle).
@@ -123,6 +124,8 @@ export function brushesFor(style: LayoutStyle): Brush[] {
   const materials = [
     B('planks', { cell: 'F' }), B('flagstone', { cell: 's' }), B('tiles', { cell: 't' }), B('carpet', { cell: 'c' }), B('earth', { cell: 'd' }), B('marble', { cell: 'm' }),
     B('timber', { cell: 'B' }), B('stonewall', { cell: 'k' }), B('brick', { cell: 'r' }),
+    // Fortifications: a castle wall three wide (or two with a gap) gets its walk on top by itself.
+    B('palisade', { cell: 'p' }), B('rampart', { cell: 'g' }), B('blockade', { cell: 'z' }), B('hedge', { cell: 'y' }), B('ditch', { cell: 'h' }),
   ];
   const built = [B('build', { rect: true }), ...materials, B('door', { toggle: true }), B('roof', { toggle: true })];
   if (style === 'building')
@@ -142,7 +145,8 @@ const covers = (a: { x: number; y: number; w: number; h: number }, x: number, y:
 export const WALL_DECOR: readonly PropKind[] = ['window', 'banner', 'painting', 'trophy', 'curtain', 'wallshelf'];
 // …and what goes over water or a wall: a bridge, a pier, a buoy, iron bars.
 const FREE = new Set<PropKind>(['asset', ...WALL_DECOR, 'bridge', 'pier', 'buoy', 'bars', 'forcefield', 'holosign', 'bats', 'ceilingfan', 'vines', 'quicksand', 'viewscreen', 'vaultdoor', 'drone', 'waterfall', 'cliff', 'lilypads', 'watermill',
-  'bubbles', 'cloud', 'airship', 'balloon', 'floatrock', 'gauges', 'plank', 'ropebridge', 'jollyroger', 'kelp', 'coral']);
+  'bubbles', 'cloud', 'airship', 'balloon', 'floatrock', 'gauges', 'plank', 'ropebridge', 'jollyroger', 'kelp', 'coral',
+  'roundtower', 'squaretower', 'watchtower']);
 // …and on a tree's crown or a boulder (a nest, a lookout, a raven), over them on the picture.
 export const standable = (c: string | undefined) => walkable(c) || (!!c && 'TRNJQA'.includes(c));
 
@@ -195,6 +199,26 @@ function roofsOf(l: Layout): Layout['roofs'] {
   return out.length ? out : undefined;
 }
 
+// The walk along a castle wall: the middle of a wall three wide, or the gap of one between two walls; where the walls
+// no longer hold it on both sides, it is wall again.
+function walkways(rows: string[][]) {
+  const at = (x: number, y: number) => rows[y]?.[x];
+  const wallish = (c: string | undefined) => c === 'g' || c === 'w';
+  const four = (x: number, y: number) => [at(x - 1, y), at(x + 1, y), at(x, y - 1), at(x, y + 1)];
+  for (let y = 0; y < rows.length; y++)
+    for (let x = 0; x < rows[y]!.length; x++) {
+      const c = rows[y]![x];
+      if (c === 'g' && four(x, y).every(wallish)) rows[y]![x] = 'w';
+      else if ((c === '.' || c === ',') && ((at(x - 1, y) === 'g' && at(x + 1, y) === 'g') || (at(x, y - 1) === 'g' && at(x, y + 1) === 'g'))) rows[y]![x] = 'w';
+    }
+  for (let y = 0; y < rows.length; y++)
+    for (let x = 0; x < rows[y]!.length; x++) {
+      if (rows[y]![x] !== 'w') continue;
+      const across = (wallish(at(x - 1, y)) && wallish(at(x + 1, y))) || (wallish(at(x, y - 1)) && wallish(at(x, y + 1)));
+      if (!across) rows[y]![x] = 'g';
+    }
+}
+
 export function paint(l: Layout, cells: { x: number; y: number }[], ch: string): Layout {
   if (!CELLS.test(ch) || ch.length !== 1) return l;
   const rows = l.cells.map((r) => r.split(''));
@@ -206,6 +230,7 @@ export function paint(l: Layout, cells: { x: number; y: number }[], ch: string):
     rows[y]![x] = ch;
     changed = true;
   }
+  if (changed && (ch === 'g' || l.cells.some((r) => r.includes('g')))) walkways(rows);
   return changed ? tidy({ ...l, cells: rows.map((r) => r.join('')) }) : l;
 }
 
@@ -345,6 +370,7 @@ const LONG: Partial<Record<PropKind, [number, number]>> = {
   cliff: [3, 1], cavecrystals: [2, 2], giantmushroom: [2, 2], stage: [3, 2], cryptentrance: [2, 2],
   shipwreck: [3, 4], giantclam: [2, 2], airship: [3, 6], balloon: [2, 2], floatrock: [3, 3], boiler: [2, 2], telescope: [1, 2], gauges: [1, 1],
   yurt: [3, 3], camel: [1, 2], hiderack: [2, 1], treasurepile: [2, 2], plank: [1, 3], charttable: [2, 1], ropebridge: [1, 4],
+  roundtower: [3, 3], squaretower: [3, 3], watchtower: [2, 2], ballista: [1, 2], catapult: [2, 3], stakes: [2, 1],
 };
 // Things that stretch over several cells: a long table, a big puddle, a carpet runner, a wide stair.
 export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe',
@@ -355,7 +381,8 @@ export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', '
   'vines', 'bigleaf', 'quicksand', 'sofa', 'tires', 'barricade',
   'iceblock', 'snowdrift', 'bamboo', 'zengarden', 'tatami', 'fabric', 'scrolls', 'landingpad', 'viewscreen', 'potionshelf', 'bookcase',
   'bathpool', 'waterfall', 'cliff', 'glowshrooms', 'lilypads', 'produce', 'stage', 'seats', 'breadrack',
-  'coral', 'kelp', 'bubbles', 'cloud', 'gears', 'sheep', 'plank', 'ropebridge', 'hiderack', 'treasurepile', 'floatrock'];
+  'coral', 'kelp', 'bubbles', 'cloud', 'gears', 'sheep', 'plank', 'ropebridge', 'hiderack', 'treasurepile', 'floatrock',
+  'roundtower', 'squaretower', 'watchtower', 'stakes'];
 export const MAX_STRETCH = 12;
 export function footprint(kind: PropKind, face: Facing): { w: number; h: number } {
   const [w, h] = LONG[kind] ?? [1, 1];

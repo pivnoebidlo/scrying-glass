@@ -416,6 +416,11 @@ gold border, an earth floor, marble; wooden, stone and brick walls. A door goes 
 closes again), and windows, curtains, banners, paintings, hunting trophies and wall shelves hang on the walls — enough
 for a large tavern with its hall, kitchen and rooms.
 
+Fortifications too: a palisade of sharpened logs, a castle wall with merlons, a barricade, a hedge and a dry ditch (a moat
+is water). A castle wall three cells thick, or two walls with a gap of one, gets a walk on top by itself; a gate goes
+into any of them with «Door». Round and square stone towers and a wooden watchtower stand right on the wall; a ballista,
+a catapult and stakes against horses are for the siege (in fantasy, gothic horror and the wasteland).
+
 A map has its world: fantasy, science fiction, gothic horror, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),
 the forest and the road (a lean-to, a footbridge, a milestone, a wayside shrine, a bear trap), a port (a pier, bollards,

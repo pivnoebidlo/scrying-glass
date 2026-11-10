@@ -2,6 +2,7 @@
 // Under the sea; the sky and airships; a steampunk workshop; a nomads' camp; a pirates' cove.
 import type { Prop } from './furnish';
 import { circle, CLOTH, glow, lines, rect, shape, STONE, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets8 } from './draw-sets8';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -319,5 +320,7 @@ export function drawSets7(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
         for (const x of [-0.36, 0.36]) (ctx.moveTo(x * c, T), ctx.lineTo(x * c, h / 2));
       });
       break;
+    default:
+      drawSets8(ctx, p, w, h, c);
   }
 }

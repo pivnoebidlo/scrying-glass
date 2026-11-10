@@ -244,4 +244,25 @@ describe('the map editor', () => {
     expect(m.pillars).toEqual([{ x: 3, y: 6 }]);
     expect(parseDraft(draftOf(m))!.layout.cells).toEqual(m.cells);
   });
+
+  it('gives a castle wall its walk and puts gates into fortifications', () => {
+    const band: { x: number; y: number }[] = [];
+    for (let y = 2; y < 5; y++) for (let x = 1; x < 9; x++) band.push({ x, y });
+    let l = paint(blankLayout('meadow', 10, 10, 1), band, 'g');
+    // Three thick: the middle row is the walk, the ends stay wall.
+    expect(l.cells[3]).toBe('.gwwwwwwg.');
+    expect(l.cells[2]).toBe('.gggggggg.');
+    // Two walls with a gap of one: the gap is the walk too.
+    let two = paint(blankLayout('meadow', 10, 10, 1), [1, 2, 3, 4, 5].map((x) => ({ x, y: 6 })), 'g');
+    two = paint(two, [1, 2, 3, 4, 5].map((x) => ({ x, y: 8 })), 'g');
+    expect(two.cells[7]).toBe('.wwwww....');
+    // A breach: the wall is open there, the walk runs up to it.
+    l = paint(l, [{ x: 4, y: 2 }, { x: 4, y: 3 }, { x: 4, y: 4 }], '.');
+    expect(l.cells[3]).toBe('.gww.wwwg.');
+    // A gate in a palisade, and things on the walk.
+    let camp = paint(blankLayout('forest', 8, 8, 1), [1, 2, 3, 4, 5].map((x) => ({ x, y: 1 })), 'p');
+    camp = toggleDoor(camp, 3, 1);
+    expect(camp.doors).toEqual([{ x: 3, y: 1, along: 'y' }]);
+    expect(placeProp(paint(blankLayout('meadow', 10, 10, 1), band, 'g'), 'brazier', 3, 3).index).toBeGreaterThanOrEqual(0);
+  });
 });
