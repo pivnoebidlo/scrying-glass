@@ -1,7 +1,7 @@
 // Draws a layout on a canvas, by the app, so that no assets are needed: dark rock with hatching round the walls and a
 // pale floor; outdoors grass, water, paths, trees and boulders. The picture holds nothing secret: it goes to the players; room numbers are the preview's only.
 import { drawProps } from './draw-props';
-import { buildingAt, isBuilt, isOpenAir, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type Light, type WildStyle } from './layout';
+import { buildingAt, isBuilt, isFloor, isOpenAir, isWall, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type Light, type WildStyle } from './layout';
 import type { PropKind } from './furnish';
 
 export const CELL = 40;
@@ -914,7 +914,8 @@ function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
 }
 
 function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
-  const floor = (x: number, y: number) => l.cells[y]?.[x] === '.';
+  // Plain floor and floors of any material: what the rock is cut away from.
+  const floor = (x: number, y: number) => l.cells[y]?.[x] === '.' || isFloor(l.cells[y]?.[x]);
   ctx.fillStyle = ROCK;
   ctx.fillRect(0, 0, l.w * c, l.h * c);
 
@@ -984,6 +985,7 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
     });
     drawWater(ctx, l, c);
     drawSurfaces(ctx, l, c);
+    drawBuilt(ctx, l, c, false);
   } else {
     eachFloor((x, y) => {
       ctx.fillStyle = tints[Math.floor(cellNoise(l, x, y, 7)() * tints.length)]!;
@@ -1041,6 +1043,7 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
         }
     drawWater(ctx, l, c);
     drawSurfaces(ctx, l, c);
+    drawBuilt(ctx, l, c, false);
     // Walls: every edge between floor and rock.
     ctx.strokeStyle = WALL;
     ctx.lineWidth = Math.max(2, c / 8);
@@ -1108,56 +1111,149 @@ function edgesOf(c: number, cells: { x: number; y: number }[], inSet: (x: number
 const PLANKS = ['#a87a4a', '#9c6f42', '#b08352'];
 const TIMBER = ['#6b5038', '#5e4630', '#735840'];
 // A building put up outdoors, without its roof: a plank floor, timber walls with a shadow outside, doors.
-function drawBuilt(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
+function drawBuilt(ctx: CanvasRenderingContext2D, l: Layout, c: number, outdoors = true) {
   const cells: { x: number; y: number }[] = [];
   for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) if (isBuilt(l.cells[y]![x])) cells.push({ x, y });
   if (!cells.length) return;
   const at = (x: number, y: number) => l.cells[y]?.[x];
+  // A shadow on the ground: of the whole building outdoors, of the walls indoors.
   ctx.fillStyle = 'rgba(20, 16, 10, 0.35)';
-  for (const { x, y } of cells) ctx.fillRect(x * c + c * 0.14, y * c + c * 0.18, c, c);
+  for (const { x, y } of cells) if (outdoors || isWall(at(x, y))) ctx.fillRect(x * c + c * 0.14, y * c + c * 0.18, c, c);
   ctx.lineCap = 'butt';
+  const seams = (colour: string, width: number, draw: () => void) => {
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    draw();
+    ctx.stroke();
+  };
   for (const { x, y } of cells) {
     const r = cellNoise(l, x, y, 7);
-    if (at(x, y) === 'F') {
-      ctx.fillStyle = PLANKS[Math.floor(r() * PLANKS.length)]!;
-      ctx.fillRect(x * c, y * c, c, c);
-      ctx.strokeStyle = LINE;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let k = 0; k < 3; k++) {
-        const py = y * c + (k * c) / 3 + 0.5;
-        ctx.moveTo(x * c, py);
-        ctx.lineTo(x * c + c, py);
-        const end = x * c + (((x + k * 2 + y) % 3) * c) / 3;
-        ctx.moveTo(end + 0.5, py);
-        ctx.lineTo(end + 0.5, py + c / 3);
+    const X = x * c;
+    const Y = y * c;
+    const fill = (colours: readonly string[]) => {
+      ctx.fillStyle = colours[Math.floor(r() * colours.length)]!;
+      ctx.fillRect(X, Y, c, c);
+    };
+    // Courses of blocks or bricks: rows of `n` a cell, every other row half a block along.
+    const courses = (rows: number, per: number, colour: string, width: number) =>
+      seams(colour, width, () => {
+        for (let k = 0; k < rows; k++) {
+          const top = Y + (k * c) / rows;
+          ctx.moveTo(X, top);
+          ctx.lineTo(X + c, top);
+          const off = ((y * rows + k) % 2) * (c / per / 2);
+          for (let j = 0; j <= per; j++) {
+            const px = X + off + (j * c) / per;
+            if (px > X && px < X + c) (ctx.moveTo(px, top), ctx.lineTo(px, top + c / rows));
+          }
+        }
+      });
+    switch (at(x, y)) {
+      case 'F':
+        fill(PLANKS);
+        seams(LINE, 1, () => {
+          for (let k = 0; k < 3; k++) {
+            const py = Y + (k * c) / 3 + 0.5;
+            ctx.moveTo(X, py);
+            ctx.lineTo(X + c, py);
+            const end = X + (((x + k * 2 + y) % 3) * c) / 3;
+            ctx.moveTo(end + 0.5, py);
+            ctx.lineTo(end + 0.5, py + c / 3);
+          }
+        });
+        break;
+      case 's':
+        fill(['#a8a196', '#a09a8e', '#b0a99d']);
+        courses(2, 2, 'rgba(60, 54, 44, 0.45)', Math.max(1, c / 26));
+        break;
+      case 't':
+        // Tiles: cream and terracotta in a chequer.
+        for (let j = 0; j < 2; j++)
+          for (let i = 0; i < 2; i++) {
+            ctx.fillStyle = (x * 2 + i + y * 2 + j) % 2 ? '#c9764f' : '#e3d6b4';
+            ctx.fillRect(X + (i * c) / 2, Y + (j * c) / 2, c / 2, c / 2);
+          }
+        seams('rgba(70, 50, 30, 0.35)', Math.max(1, c / 34), () => {
+          ctx.rect(X + 0.5, Y + 0.5, c / 2, c / 2);
+          ctx.rect(X + c / 2, Y + c / 2, c / 2, c / 2);
+        });
+        break;
+      case 'c':
+        ctx.fillStyle = '#8a2f2b';
+        ctx.fillRect(X, Y, c, c);
+        // A gold lozenge in each cell.
+        ctx.fillStyle = 'rgba(214, 168, 74, 0.55)';
+        ctx.beginPath();
+        ctx.moveTo(X + c / 2, Y + c * 0.25);
+        ctx.lineTo(X + c * 0.75, Y + c / 2);
+        ctx.lineTo(X + c / 2, Y + c * 0.75);
+        ctx.lineTo(X + c * 0.25, Y + c / 2);
+        ctx.closePath();
+        ctx.fill();
+        break;
+      case 'd':
+        fill(['#7d6448', '#756043', '#836a4e']);
+        ctx.fillStyle = 'rgba(40, 30, 18, 0.35)';
+        for (let k = 0; k < 4; k++) {
+          ctx.beginPath();
+          ctx.arc(X + r() * c, Y + r() * c, c * (0.02 + r() * 0.03), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        break;
+      case 'm':
+        fill(['#e6e2da', '#ebe7df', '#dfdbd2']);
+        seams('rgba(120, 118, 130, 0.35)', Math.max(1, c / 34), () => {
+          ctx.moveTo(X + r() * c, Y);
+          ctx.quadraticCurveTo(X + r() * c, Y + c / 2, X + r() * c, Y + c);
+          ctx.rect(X + 0.5, Y + 0.5, c, c);
+        });
+        break;
+      case 'k':
+        fill(['#7d776d', '#857f74', '#757066']);
+        courses(3, 2, 'rgba(30, 26, 20, 0.55)', Math.max(1, c / 22));
+        break;
+      case 'r':
+        fill(['#9a4a34', '#a3523a', '#8f442f']);
+        courses(4, 3, 'rgba(225, 210, 190, 0.55)', Math.max(1, c / 26));
+        break;
+      default: {
+        // Logs along the wall: across a wall that runs up and down, along one that runs side to side.
+        fill(TIMBER);
+        const upright = isWall(at(x, y - 1)) || isWall(at(x, y + 1));
+        const sideways = isWall(at(x - 1, y)) || isWall(at(x + 1, y));
+        seams('rgba(25, 16, 8, 0.45)', Math.max(1, c / 22), () => {
+          for (let k = 1; k < 3; k++) {
+            if (sideways || !upright) (ctx.moveTo(X, Y + (k * c) / 3), ctx.lineTo(X + c, Y + (k * c) / 3));
+            else (ctx.moveTo(X + (k * c) / 3, Y), ctx.lineTo(X + (k * c) / 3, Y + c));
+          }
+        });
       }
-      ctx.stroke();
-    } else {
-      // Logs along the wall: across a wall that runs up and down, along one that runs side to side.
-      ctx.fillStyle = TIMBER[Math.floor(r() * TIMBER.length)]!;
-      ctx.fillRect(x * c, y * c, c, c);
-      const upright = at(x, y - 1) === 'B' || at(x, y + 1) === 'B';
-      const sideways = at(x - 1, y) === 'B' || at(x + 1, y) === 'B';
-      ctx.strokeStyle = 'rgba(25, 16, 8, 0.45)';
-      ctx.lineWidth = Math.max(1, c / 22);
-      ctx.beginPath();
-      for (let k = 1; k < 3; k++) {
-        if (sideways || !upright) (ctx.moveTo(x * c, y * c + (k * c) / 3), ctx.lineTo((x + 1) * c, y * c + (k * c) / 3));
-        else (ctx.moveTo(x * c + (k * c) / 3, y * c), ctx.lineTo(x * c + (k * c) / 3, (y + 1) * c));
-      }
-      ctx.stroke();
     }
   }
-  // The walls' outline: where a wall meets the floor or the ground.
+  // A carpet's gold border, where it meets another floor.
+  const carpet = cells.filter((p) => at(p.x, p.y) === 'c');
+  if (carpet.length) {
+    const area = new Path2D();
+    for (const p of carpet) area.rect(p.x * c, p.y * c, c, c);
+    ctx.save();
+    ctx.clip(area);
+    ctx.strokeStyle = '#d6a84a';
+    ctx.lineWidth = Math.max(2, c / 6);
+    ctx.stroke(edgesOf(c, carpet, (x, y) => at(x, y) === 'c'));
+    ctx.restore();
+  }
+  // The walls' outline: where a wall meets the floor or the ground; outdoors the building's own edge too.
   ctx.strokeStyle = WALL;
   ctx.lineWidth = Math.max(1.5, c / 12);
   ctx.lineCap = 'square';
-  const walls = cells.filter((p) => at(p.x, p.y) === 'B');
-  ctx.stroke(edgesOf(c, walls, (x, y) => at(x, y) === 'B' || l.doors.some((d) => d.x === x && d.y === y)));
-  const floors = cells.filter((p) => at(p.x, p.y) === 'F');
-  ctx.stroke(edgesOf(c, floors, (x, y) => isBuilt(at(x, y))));
-  drawDoors(ctx, l, c);
+  const walls = cells.filter((p) => isWall(at(p.x, p.y)));
+  ctx.stroke(edgesOf(c, walls, (x, y) => isWall(at(x, y)) || l.doors.some((d) => d.x === x && d.y === y)));
+  if (outdoors) {
+    const floors = cells.filter((p) => isFloor(at(p.x, p.y)));
+    ctx.stroke(edgesOf(c, floors, (x, y) => isBuilt(at(x, y))));
+    drawDoors(ctx, l, c);
+  }
 }
 
 // Roofs over the buildings put up outdoors (Layout.roofs): over the things inside them too.

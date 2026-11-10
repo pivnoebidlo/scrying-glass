@@ -223,4 +223,25 @@ describe('the map editor', () => {
     expect(tonesIn('meadow', 'scifi')).toEqual(expect.arrayContaining(['mars', 'moon', 'winter']));
     expect(setTone(ship, 'metal').tone).toBe('metal');
   });
+
+  it('builds rooms of any material indoors, with doors in their walls and things on them', () => {
+    let l = blankLayout('building', 12, 10, 1);
+    const all: { x: number; y: number }[] = [];
+    for (let y = 1; y < 9; y++) for (let x = 1; x < 11; x++) all.push({ x, y });
+    l = paint(l, all, 's');
+    l = paint(l, [1, 2, 3, 4, 5, 6, 7, 8].map((y) => ({ x: 6, y })), 'r');
+    // A door in the brick wall: the floor beside it, across the wall; away — the brick is back.
+    const d = toggleDoor(l, 6, 4);
+    expect(d.cells[4]![6]).toBe('s');
+    expect(d.doors).toEqual([{ x: 6, y: 4, along: 'x' }]);
+    expect(toggleDoor(d, 6, 4).cells[4]![6]).toBe('r');
+    // Things stand on the stone floor; a window hangs on the wall itself.
+    expect(placeProp(d, 'table', 2, 2).index).toBeGreaterThanOrEqual(0);
+    expect(placeProp(d, 'window', 6, 2).index).toBeGreaterThanOrEqual(0);
+    expect(placeProp(d, 'table', 6, 6).index).toBe(-1);
+    // A pillar on a marble floor; the draft keeps it all.
+    const m = togglePillar(paint(d, [{ x: 3, y: 6 }], 'm'), 3, 6);
+    expect(m.pillars).toEqual([{ x: 3, y: 6 }]);
+    expect(parseDraft(draftOf(m))!.layout.cells).toEqual(m.cells);
+  });
 });

@@ -1,7 +1,7 @@
 // The map editor's data and moves: a draft is a layout of the map generator (mapgen/layout.ts), kept in a file
 // «Name.map.json» in an adventure's maps folder. Pure functions — every move returns a new layout; the picture is
 // drawn from it the same way as a generated one.
-import { GENRES, LAYOUT_STYLES, LIGHTS, buildingAt, isBuilt, isWild, tonesFor, walkable, type Genre, type Layout, type Light, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
+import { GENRES, LAYOUT_STYLES, LIGHTS, buildingAt, isBuilt, isFloor, isWall, WALLS, isWild, tonesFor, walkable, type Genre, type Layout, type Light, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
 import { PROP_KINDS, type Facing, type Prop, type PropKind } from '../mapgen/furnish';
 import { MAX_ASSET_SIDE, safeAssetPath } from '../../../shared/mapassets';
 
@@ -16,7 +16,7 @@ export interface MapDraft {
 
 export const MIN_SIDE = 6;
 export const MAX_SIDE = 120;
-const CELLS = /^[.#,PST~RH=WLIMXFBCKVOANJQ]*$/;
+const CELLS = /^[.#,PST~RH=WLIMXFBCKVOANJQstcdmkr]*$/;
 const side = (n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= MIN_SIDE && n <= MAX_SIDE;
 const int = (n: unknown) => typeof n === 'number' && Number.isInteger(n);
 
@@ -101,7 +101,8 @@ export function blankLayout(style: LayoutStyle, w: number, h: number, seed: numb
 export type BrushId =
   | 'floor' | 'wall' | 'room' | 'door' | 'pillar' | 'grass' | 'road' | 'square' | 'house' | 'sand' | 'water' | 'ford' | 'tree' | 'boulder' | 'townWall' | 'tower'
   | 'lava' | 'ice' | 'mud' | 'pit' | 'planks' | 'timber' | 'build' | 'roof' | 'erase'
-  | 'cobbles' | 'flags' | 'field' | 'sea' | 'mountain' | 'pine' | 'palm' | 'snag';
+  | 'cobbles' | 'flags' | 'field' | 'sea' | 'mountain' | 'pine' | 'palm' | 'snag'
+  | 'flagstone' | 'tiles' | 'carpet' | 'earth' | 'marble' | 'stonewall' | 'brick';
 export interface Brush {
   id: BrushId;
   // A cell's letter it paints; none — a tool of its own (a rectangle, a toggle).
@@ -118,9 +119,14 @@ export function brushesFor(style: LayoutStyle): Brush[] {
   // Outdoors anywhere: ground, the sea, mountains, trees of other kinds.
   const outdoors = [B('cobbles', { cell: 'C' }), B('flags', { cell: 'K' }), B('field', { cell: 'V' }), B('sea', { cell: 'O' }), B('mountain', { cell: 'A' }), B('pine', { cell: 'N' }), B('palm', { cell: 'J' }), B('snag', { cell: 'Q' })];
   // A building of its own outdoors: walls round a floor, a wall or a floor cell by cell, doors in the walls, a roof on or off.
-  const built = [B('build', { rect: true }), B('timber', { cell: 'B' }), B('planks', { cell: 'F' }), B('door', { toggle: true }), B('roof', { toggle: true })];
+  // Floors and walls of any material.
+  const materials = [
+    B('planks', { cell: 'F' }), B('flagstone', { cell: 's' }), B('tiles', { cell: 't' }), B('carpet', { cell: 'c' }), B('earth', { cell: 'd' }), B('marble', { cell: 'm' }),
+    B('timber', { cell: 'B' }), B('stonewall', { cell: 'k' }), B('brick', { cell: 'r' }),
+  ];
+  const built = [B('build', { rect: true }), ...materials, B('door', { toggle: true }), B('roof', { toggle: true })];
   if (style === 'building')
-    return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('door', { toggle: true }), B('pillar', { toggle: true }), B('water', { cell: '~' }), lava, ice, mud, pit, B('erase', { cell: '#' })];
+    return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('door', { toggle: true }), B('pillar', { toggle: true }), ...materials, B('water', { cell: '~' }), lava, ice, mud, pit, B('erase', { cell: '#' })];
   if (style === 'cave') return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('water', { cell: '~' }), lava, ice, mud, pit, B('erase', { cell: '#' })];
   if (style === 'town')
     return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('square', { cell: 'P' }), B('house', { rect: true }), ...built, B('tree', { cell: 'T' }), ...outdoors, B('water', { cell: '~' }), mud, ice, lava, pit, B('pillar', { toggle: true }), B('townWall', { cell: 'W' }), B('tower', { toggle: true }), B('erase', { cell: '.' })];
@@ -132,6 +138,9 @@ const at = (l: Layout, x: number, y: number) => l.cells[y]?.[x];
 const inMap = (l: Layout, x: number, y: number) => x >= 0 && y >= 0 && x < l.w && y < l.h;
 const covers = (a: { x: number; y: number; w: number; h: number }, x: number, y: number) => x >= a.x && y >= a.y && x < a.x + a.w && y < a.y + a.h;
 // Where a thing can stand.
+// Things that go anywhere: a picture of the GM's own, and what hangs on walls (a window, a banner).
+export const WALL_DECOR: readonly PropKind[] = ['window', 'banner', 'painting', 'trophy', 'curtain', 'wallshelf'];
+const FREE = new Set<PropKind>(['asset', ...WALL_DECOR]);
 // …and on a tree's crown or a boulder (a nest, a lookout, a raven), over them on the picture.
 export const standable = (c: string | undefined) => walkable(c) || (!!c && 'TRNJQA'.includes(c));
 
@@ -150,7 +159,7 @@ export function tidy(l: Layout): Layout {
     return false;
   });
   const props = (l.props ?? []).filter((p) => {
-    if (p.kind === 'rug' || p.kind === 'asset') return true;
+    if (p.kind === 'rug' || FREE.has(p.kind)) return true;
     for (let y = p.y; y < p.y + p.h; y++) for (let x = p.x; x < p.x + p.w; x++) if (!standable(at(l, x, y))) return false;
     return true;
   });
@@ -158,10 +167,10 @@ export function tidy(l: Layout): Layout {
   const out: Layout = {
     ...l,
     rooms,
-    doors: l.doors.filter((d) => at(l, d.x, d.y) === (isOutdoor(l.style) ? 'F' : '.')),
+    doors: l.doors.filter((d) => at(l, d.x, d.y) === '.' || isFloor(at(l, d.x, d.y))),
     // A roof stays on its building; one roof to a building.
     roofs: roofsOf(l),
-    pillars: l.pillars.filter((p) => at(l, p.x, p.y) === (l.style === 'town' ? 'P' : '.')),
+    pillars: l.pillars.filter((p) => at(l, p.x, p.y) === (l.style === 'town' ? 'P' : '.') || (l.style !== 'town' && isFloor(at(l, p.x, p.y)))),
     props,
     ...(houses.length ? { houses: houses.map(({ a }) => a) } : { houses: undefined }),
     ...(landmarks.length ? { landmarks } : { landmarks: undefined }),
@@ -276,22 +285,29 @@ function clip(l: Layout, a: LayoutRoom): LayoutRoom | null {
 
 // A door on a floor cell, the way through it from its neighbours; again — away.
 export function toggleDoor(l: Layout, x: number, y: number): Layout {
-  // Outdoors a door goes into the wall of a building put up there; taken away, the wall closes again.
-  if (isOutdoor(l.style)) {
+  // A door goes into a wall of any material: the cell becomes the floor beside it; taken away, the wall closes again.
+  const near = [at(l, x - 1, y), at(l, x + 1, y), at(l, x, y - 1), at(l, x, y + 1)];
+  const was = l.doors.some((d) => d.x === x && d.y === y);
+  if (!was && isWall(at(l, x, y))) {
     const rows = l.cells.map((row) => row.split(''));
-    const was = l.doors.some((d) => d.x === x && d.y === y);
-    if (was) rows[y]![x] = 'B';
-    else if (at(l, x, y) === 'B') rows[y]![x] = 'F';
-    else return l;
-    const cells = rows.map((row) => row.join(''));
-    if (was) return { ...l, cells, doors: l.doors.filter((d) => d.x !== x || d.y !== y) };
-    const wall = (dx: number, dy: number) => at(l, x + dx, y + dy) === 'B';
+    rows[y]![x] = near.find(isFloor) ?? (isOutdoor(l.style) ? 'F' : '.');
+    const wall = (dx: number, dy: number) => isWall(at(l, x + dx, y + dy));
     // The door lies along the wall it is in.
     const along: 'x' | 'y' = wall(-1, 0) || wall(1, 0) ? 'y' : 'x';
-    return { ...l, cells, doors: [...l.doors, { x, y, along }] };
+    return { ...l, cells: rows.map((row) => row.join('')), doors: [...l.doors, { x, y, along }] };
   }
-  if (l.doors.some((d) => d.x === x && d.y === y)) return { ...l, doors: l.doors.filter((d) => d.x !== x || d.y !== y) };
-  if (at(l, x, y) !== '.') return l;
+  if (was) {
+    const doors = l.doors.filter((d) => d.x !== x || d.y !== y);
+    // In a wall of its own: the wall of the most of its neighbours comes back.
+    const walls = near.filter(isWall);
+    if (walls.length < 2) return { ...l, doors };
+    const most = [...WALLS].sort((a, b) => walls.filter((w) => w === b).length - walls.filter((w) => w === a).length)[0]!;
+    const rows = l.cells.map((row) => row.split(''));
+    rows[y]![x] = most;
+    return { ...l, cells: rows.map((row) => row.join('')), doors };
+  }
+  if (isOutdoor(l.style)) return l;
+  if (at(l, x, y) !== '.' && !isFloor(at(l, x, y))) return l;
   const open = (dx: number, dy: number) => walkable(at(l, x + dx, y + dy));
   const along: 'x' | 'y' = open(0, -1) || open(0, 1) ? (open(-1, 0) && open(1, 0) && !(open(0, -1) && open(0, 1)) ? 'x' : 'y') : 'x';
   return { ...l, doors: [...l.doors, { x, y, along }] };
@@ -300,7 +316,7 @@ export function toggleDoor(l: Layout, x: number, y: number): Layout {
 // A pillar indoors, a well on a town's square.
 export function togglePillar(l: Layout, x: number, y: number): Layout {
   if (l.pillars.some((p) => p.x === x && p.y === y)) return { ...l, pillars: l.pillars.filter((p) => p.x !== x || p.y !== y) };
-  return at(l, x, y) === (l.style === 'town' ? 'P' : '.') ? { ...l, pillars: [...l.pillars, { x, y }] } : l;
+  return at(l, x, y) === (l.style === 'town' ? 'P' : '.') || (l.style !== 'town' && isFloor(at(l, x, y))) ? { ...l, pillars: [...l.pillars, { x, y }] } : l;
 }
 
 export function toggleTower(l: Layout, x: number, y: number): Layout {
@@ -321,7 +337,7 @@ const LONG: Partial<Record<PropKind, [number, number]>> = {
 // Things that stretch over several cells: a long table, a big puddle, a carpet runner, a wide stair.
 export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe',
   'counter', 'workbench', 'circle', 'spikes', 'web', 'fence', 'woodpile', 'fern', 'chains', 'plate',
-  'kegs', 'dishes', 'hams', 'flour', 'tankards', 'console', 'pipes', 'solar', 'cargo'];
+  'kegs', 'dishes', 'hams', 'flour', 'tankards', 'console', 'pipes', 'solar', 'cargo', 'window', 'curtain', 'wallshelf'];
 export const MAX_STRETCH = 12;
 export function footprint(kind: PropKind, face: Facing): { w: number; h: number } {
   const [w, h] = LONG[kind] ?? [1, 1];
@@ -342,8 +358,8 @@ function fits(l: Layout, p: Prop, _except = -1) {
       if (!inMap(l, x, y)) return false;
       // Things may stand on things (a chest on a rug, a candle on a table): the later one is drawn on top.
       // A picture of the GM's own goes anywhere (a bridge on water, a beam over a wall).
-      if (p.kind !== 'rug' && p.kind !== 'asset' && !standable(at(l, x, y))) return false;
-      if (p.kind !== 'rug' && p.kind !== 'asset' && l.doors.some((d) => d.x === x && d.y === y)) return false;
+      if (p.kind !== 'rug' && !FREE.has(p.kind) && !standable(at(l, x, y))) return false;
+      if (p.kind !== 'rug' && !FREE.has(p.kind) && l.doors.some((d) => d.x === x && d.y === y)) return false;
     }
   return true;
 }

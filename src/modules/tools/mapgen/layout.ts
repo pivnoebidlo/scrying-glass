@@ -179,10 +179,16 @@ function corridor(a: LayoutRoom, b: LayoutRoom, others: LayoutRoom[], r: Random)
   return null;
 }
 
+// Floors and walls of any material, on any map (0.108): 'F' planks, 's' stone flags, 't' tiles, 'c' a carpet, 'd' earth,
+// 'm' marble; 'B' a wooden wall, 'k' a stone wall, 'r' a brick wall.
+export const FLOORS = 'Fstcdm';
+export const WALLS = 'Bkr';
+export const isFloor = (c: string | undefined) => !!c && FLOORS.includes(c);
+export const isWall = (c: string | undefined) => !!c && WALLS.includes(c);
 export const walkable = (c: string | undefined) =>
-  c === '.' || c === ',' || c === 'P' || c === 'S' || c === '=' || c === 'I' || c === 'M' || c === 'F' || c === 'C' || c === 'K' || c === 'V';
-// A building put up outdoors: its floor and walls.
-export const isBuilt = (c: string | undefined) => c === 'F' || c === 'B';
+  c === '.' || c === ',' || c === 'P' || c === 'S' || c === '=' || c === 'I' || c === 'M' || c === 'C' || c === 'K' || c === 'V' || isFloor(c);
+// A building put up of floors and walls.
+export const isBuilt = (c: string | undefined) => isFloor(c) || isWall(c);
 // The cells of the building a cell belongs to (its walls and floor joined side by side); none — not a building.
 export function buildingAt(l: Layout, x: number, y: number): { x: number; y: number }[] {
   if (!isBuilt(l.cells[y]?.[x])) return [];

@@ -55,6 +55,7 @@
     floor: '#d9cfb8', wall: '#26221d', room: '#d9cfb8', door: '#7a5230', pillar: '#120f0b', grass: '#7f9558', road: '#b3a78f', square: '#c2b8a2',
     house: '#a9583c', sand: '#d9c893', water: '#3f7d97', ford: '#7fb0bd', tree: '#3f6a35', boulder: '#8c8c86', townWall: '#857e72', tower: '#7a7368',
     lava: '#e2561b', ice: '#cfe6ee', mud: '#6b5638', pit: '#0b0907', planks: '#a87a4a', timber: '#5e4630', build: '#8a6a48', roof: '#9b4a35', erase: '#555',
+    flagstone: '#a8a196', tiles: '#c9764f', carpet: '#8a2f2b', earth: '#7d6448', marble: '#e6e2da', stonewall: '#7d776d', brick: '#9a4a34',
     cobbles: '#9a9282', flags: '#b7ad98', field: '#8a6c44', sea: '#2a5c78', mountain: '#8a8174', pine: '#2c4a33', palm: '#5f8f3c', snag: '#5b4a3a',
   };
   // `genres`: the worlds a group belongs to; none — any world (tables and barrels are everywhere).
@@ -68,6 +69,7 @@
     { id: 'town', kinds: ['stall', 'cart', 'haystack', 'tent', 'boat', 'fence', 'signpost', 'lamppost', 'gallows', 'well', 'fountain'], genres: ['fantasy'] },
     { id: 'ship', kinds: ['console', 'terminal', 'locker', 'cargo', 'bunk', 'hatch', 'holo', 'reactor', 'pipes', 'rayguns'], genres: ['scifi'] },
     { id: 'colony', kinds: ['rover', 'pod', 'dish', 'solar', 'beacon'], genres: ['scifi'] },
+    { id: 'decor', kinds: ['window', 'curtain', 'banner', 'painting', 'trophy', 'wallshelf'] },
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];
@@ -93,12 +95,16 @@
   }
   let query = $state('');
   // The brushes, by what they make: the ground, and what is built on it.
-  const BUILDING: BrushId[] = ['room', 'house', 'build', 'timber', 'planks', 'door', 'roof', 'pillar', 'townWall', 'tower'];
+  const FLOOR_IDS: BrushId[] = ['floor', 'planks', 'flagstone', 'tiles', 'carpet', 'earth', 'marble'];
+  const WALL_IDS: BrushId[] = ['wall', 'timber', 'stonewall', 'brick', 'door', 'pillar', 'build'];
+  const BUILDING: BrushId[] = ['room', 'house', 'roof', 'townWall', 'tower'];
   const GROWTH: BrushId[] = ['tree', 'pine', 'palm', 'snag', 'boulder', 'mountain'];
   const brushGroups = $derived(
     [
-      { id: 'surfaces', list: brushes.filter((b) => !BUILDING.includes(b.id) && !GROWTH.includes(b.id)) },
+      { id: 'surfaces', list: brushes.filter((b) => ![...BUILDING, ...GROWTH, ...FLOOR_IDS, ...WALL_IDS].includes(b.id)) },
       { id: 'growth', list: brushes.filter((b) => GROWTH.includes(b.id)) },
+      { id: 'floors', list: brushes.filter((b) => FLOOR_IDS.includes(b.id)) },
+      { id: 'walls', list: brushes.filter((b) => WALL_IDS.includes(b.id)) },
       { id: 'building', list: brushes.filter((b) => BUILDING.includes(b.id)) },
     ].filter((g) => g.list.length),
   );

@@ -10,10 +10,10 @@ const SCREEN = '#5fd3c9';
 const HULL = ['#8d949c', '#6f7a52', '#9a5a3a', '#d6d6cf', '#3f5170'];
 
 export const SET_TINTS: Partial<Record<Prop['kind'], readonly string[]>> = {
-  cargo: HULL, locker: HULL, bunk: CLOTH, rover: HULL, pod: HULL, kegs: WOOD,
+  cargo: HULL, locker: HULL, bunk: CLOTH, rover: HULL, pod: HULL, kegs: WOOD, banner: CLOTH, curtain: CLOTH,
 };
 // Drawn once a cell when stretched.
-export const SET_TILED: Prop['kind'][] = ['flour', 'tankards'];
+export const SET_TILED: Prop['kind'][] = ['flour', 'tankards', 'banner', 'trophy', 'painting'];
 
 export function drawSets(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
   const line = Math.max(1, c / 18);
@@ -240,6 +240,66 @@ export function drawSets(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       shape(ctx, '#5fa8d3', () => ctx.ellipse(0, -h * 0.18, w * 0.2, h * 0.14, 0, 0, Math.PI * 2), thin);
       lines(ctx, 'rgba(20, 20, 25, 0.5)', thin, () => (ctx.moveTo(-w * 0.36, h * 0.06), ctx.lineTo(w * 0.36, h * 0.06)));
       shape(ctx, '#e8c14a', rect(ctx, -c * 0.12, h * 0.2, c * 0.24, c * 0.08), thin);
+      break;
+    // ---- On the walls: put on a wall cell; the room is below (turn it for another wall) ----
+    case 'window':
+      shape(ctx, '#5c3d22', rect(ctx, L + c * 0.04, -c * 0.17, w - c * 0.08, c * 0.34), line);
+      for (let x = L + c * 0.12; x < w / 2 - c * 0.1; x += c / 2) shape(ctx, '#a9d3e0', rect(ctx, x, -c * 0.09, c * 0.36, c * 0.18), thin);
+      lines(ctx, 'rgba(255, 255, 255, 0.8)', thin, () => {
+        for (let x = L + c * 0.18; x < w / 2 - c * 0.1; x += c / 2) (ctx.moveTo(x, c * 0.04), ctx.lineTo(x + c * 0.1, -c * 0.05));
+      });
+      break;
+    case 'curtain':
+      // Drapes falling into the room, gathered to the sides.
+      for (const side of [-1, 1]) {
+        shape(ctx, tone(CLOTH, t), () => {
+          const x0 = side < 0 ? L + c * 0.04 : w / 2 - c * 0.04;
+          const x1 = side < 0 ? L + w * 0.42 : w / 2 - w * 0.42;
+          ctx.moveTo(x0, -c * 0.1);
+          ctx.lineTo(x1, -c * 0.1);
+          ctx.quadraticCurveTo(x0 + (x1 - x0) * 0.4, c * 0.1, x0 + (x1 - x0) * 0.2, c * 0.42);
+          ctx.lineTo(x0, c * 0.42);
+          ctx.closePath();
+        }, thin);
+      }
+      lines(ctx, BRASS, Math.max(1.5, c / 14), () => (ctx.moveTo(L + c * 0.02, -c * 0.12), ctx.lineTo(w / 2 - c * 0.02, -c * 0.12)));
+      break;
+    case 'banner':
+      lines(ctx, '#5c3d22', Math.max(2, c / 12), () => (ctx.moveTo(-c * 0.34, -c * 0.06), ctx.lineTo(c * 0.34, -c * 0.06)));
+      shape(ctx, tone(CLOTH, t), () => {
+        ctx.moveTo(-c * 0.24, -c * 0.06);
+        ctx.lineTo(c * 0.24, -c * 0.06);
+        ctx.lineTo(c * 0.24, c * 0.44);
+        ctx.lineTo(0, c * 0.32);
+        ctx.lineTo(-c * 0.24, c * 0.44);
+        ctx.closePath();
+      }, thin);
+      shape(ctx, '#d6a84a', circle(ctx, 0, c * 0.14, c * 0.08), thin);
+      break;
+    case 'painting':
+      shape(ctx, '#c9a442', rect(ctx, -c * 0.36, c * 0.04, c * 0.72, c * 0.2, c * 0.02), line);
+      shape(ctx, '#4f7a8e', rect(ctx, -c * 0.3, c * 0.08, c * 0.6, c * 0.12), thin);
+      shape(ctx, '#7f9a48', rect(ctx, -c * 0.3, c * 0.14, c * 0.6, c * 0.06), 0);
+      break;
+    case 'trophy':
+      // An antlered head on a shield.
+      shape(ctx, '#5c3d22', () => ctx.ellipse(0, c * 0.02, c * 0.16, c * 0.1, 0, 0, Math.PI * 2), thin);
+      lines(ctx, '#e3d6b4', Math.max(1.5, c / 16), () => {
+        for (const sx of [-1, 1]) {
+          ctx.moveTo(sx * c * 0.08, c * 0.06);
+          ctx.quadraticCurveTo(sx * c * 0.32, c * 0.02, sx * c * 0.4, c * 0.3);
+          ctx.moveTo(sx * c * 0.24, c * 0.1);
+          ctx.lineTo(sx * c * 0.2, c * 0.28);
+        }
+      });
+      shape(ctx, '#7a5432', () => ctx.ellipse(0, c * 0.2, c * 0.1, c * 0.16, 0, 0, Math.PI * 2), thin);
+      break;
+    case 'wallshelf':
+      shape(ctx, tone(WOOD, 0.4), rect(ctx, L + c * 0.04, c * 0.02, w - c * 0.08, c * 0.22), line);
+      for (let x = L + c * 0.14; x < w / 2 - c * 0.12; x += c * 0.12) {
+        ctx.fillStyle = CLOTH[Math.floor(((x + w) / c) * 7) % CLOTH.length]!;
+        ctx.fillRect(x, c * 0.05, c * 0.09, c * 0.16);
+      }
       break;
     case 'beacon':
       shape(ctx, '#55585e', circle(ctx, 0, 0, c * 0.24), line);

@@ -411,6 +411,11 @@ mouse; while editing, Space or the middle button does it; V picks things, B goes
 «Name.map.json» in the adventure's maps folder; «To Maps» adds the picture with the fog, a grid and a pin on every
 room.
 
+Rooms are built of floors and walls of any material, on any map: planks, stone flags, tiles, a carpet floor with a
+gold border, an earth floor, marble; wooden, stone and brick walls. A door goes into any wall (taken away, the wall
+closes again), and windows, curtains, banners, paintings, hunting trophies and wall shelves hang on the walls — enough
+for a large tavern with its hall, kitchen and rooms.
+
 A map has its world: fantasy or science fiction (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…)
 in fantasy; a ship and a colony (consoles, lockers, cargo, a holo table, a reactor, pipes, a ray gun rack, a rover, an
