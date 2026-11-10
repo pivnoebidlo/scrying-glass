@@ -10,6 +10,9 @@ export const PROP_KINDS = [
   'barrel', 'crate', 'sack', 'bed', 'chest', 'table', 'chair', 'bench', 'shelf', 'desk', 'altar', 'candle', 'rug',
   'sarcophagus', 'rack', 'rubble', 'bones', 'hearth', 'coins', 'stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll',
   'stall', 'cart', 'log', 'stump', 'bush', 'flowers', 'reeds',
+  // Since 0.104, for the map editor.
+  'stairs', 'trapdoor', 'throne', 'statue', 'brazier', 'cauldron', 'anvil', 'cage', 'roundtable', 'wardrobe', 'fountain', 'tent',
+  'boat', 'haystack', 'grave', 'well',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

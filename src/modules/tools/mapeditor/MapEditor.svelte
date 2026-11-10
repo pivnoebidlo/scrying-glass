@@ -8,7 +8,8 @@
   import type { PropKind } from '../mapgen/furnish';
   import { isOpenAir } from '../mapgen/layout';
   import { layoutToMaps } from '../mapgen/toMaps';
-  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProp, resize, rotateProp, type BrushId } from './edit';
+  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProp, resize, rotateProp, STRETCH, tintProp, type BrushId } from './edit';
+  import { TINTS, tintOf } from '../mapgen/draw-props';
   import MapCanvas from './MapCanvas.svelte';
   import NewMapDialog from './NewMapDialog.svelte';
   import PropIcon from './PropIcon.svelte';
@@ -46,17 +47,39 @@
     house: '#a9583c', sand: '#d9c893', water: '#3f7d97', ford: '#7fb0bd', tree: '#3f6a35', boulder: '#8c8c86', townWall: '#857e72', tower: '#7a7368', erase: '#555',
   };
   const GROUPS: { id: string; kinds: PropKind[] }[] = [
-    { id: 'furniture', kinds: ['table', 'chair', 'bench', 'bed', 'shelf', 'desk', 'hearth', 'rug'] },
-    { id: 'storage', kinds: ['barrel', 'crate', 'sack', 'chest', 'coins', 'rack'] },
-    { id: 'shrine', kinds: ['altar', 'candle', 'sarcophagus', 'bones', 'rubble'] },
+    { id: 'furniture', kinds: ['table', 'roundtable', 'chair', 'bench', 'bed', 'shelf', 'wardrobe', 'desk', 'throne', 'hearth', 'rug'] },
+    { id: 'storage', kinds: ['barrel', 'crate', 'sack', 'chest', 'coins', 'rack', 'cage', 'anvil'] },
+    { id: 'shrine', kinds: ['altar', 'candle', 'brazier', 'statue', 'sarcophagus', 'grave', 'bones', 'rubble'] },
+    { id: 'ways', kinds: ['stairs', 'trapdoor', 'well', 'fountain', 'cauldron'] },
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll'] },
-    { id: 'town', kinds: ['stall', 'cart'] },
+    { id: 'town', kinds: ['stall', 'cart', 'haystack', 'tent', 'boat'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds'] },
   ];
+  // The colours of the thing being put down or the one chosen.
+  const tintKind = $derived(editor.mode === 'place' ? editor.prop : editor.mode === 'select' ? (layout?.props?.[editor.selected]?.kind ?? null) : null);
+  const tints = $derived(tintKind ? (TINTS[tintKind] ?? null) : null);
+  const tintNow = $derived(editor.mode === 'select' ? (layout?.props?.[editor.selected]?.tint ?? null) : editor.tint);
+  function pickTint(i: number | null) {
+    if (!tints) return;
+    const t = i === null ? null : tintOf(i, tints.length);
+    if (editor.mode === 'select' && editor.layout && editor.selected >= 0) editor.change(tintProp(editor.layout, editor.selected, t ?? Math.random()));
+    else editor.tint = t;
+  }
+  const isTint = (i: number) => tints !== null && tintNow !== null && Math.floor(tintNow * tints.length) === i;
+  // The whole map in view.
+  let scrollW = $state(0);
+  let scrollH = $state(0);
+  const fit = () => layout && (editor.cell = Math.max(6, Math.min(72, Math.floor(Math.min((scrollW - 40) / layout.w, (scrollH - 40) / layout.h)))));
 
   const pickBrush = (id: BrushId) => ((editor.mode = 'brush'), (editor.brush = id), (editor.selected = -1));
-  const pickProp = (k: PropKind) => ((editor.mode = 'place'), (editor.prop = k), (editor.selected = -1));
-  const zoom = (by: number) => (editor.cell = Math.min(64, Math.max(10, Math.round(editor.cell * by))));
+  // Another thing — a random colour again (a red rug does not make every chest red).
+  const pickProp = (k: PropKind) => {
+    if (editor.prop !== k) editor.tint = null;
+    editor.mode = 'place';
+    editor.prop = k;
+    editor.selected = -1;
+  };
+  const zoom = (by: number) => (editor.cell = Math.min(72, Math.max(6, Math.round(editor.cell * by))));
   function rotate() {
     if (!editor.layout) return;
     if (editor.selected >= 0) editor.change(rotateProp(editor.layout, editor.selected));
@@ -169,12 +192,16 @@
       <span class="sep"></span>
       <label class="check"><input type="checkbox" bind:checked={editor.grid} /> {t('mapedit.grid')}</label>
       <label class="check"><input type="checkbox" bind:checked={editor.numbers} /> {t('mapedit.numbers')}</label>
-      <button class="icon-btn" title={t('mapedit.zoomOut')} onclick={() => zoom(0.85)}><ZoomOut size={15} /></button>
-      <button class="icon-btn" title={t('mapedit.zoomIn')} onclick={() => zoom(1.18)}><ZoomIn size={15} /></button>
     </div>
     <div class="body">
       <section class="map">
-        <div class="scroll"><MapCanvas {layout} /></div>
+        <div class="scroll" bind:clientWidth={scrollW} bind:clientHeight={scrollH}><MapCanvas {layout} /></div>
+        <div class="zoombar">
+          <button class="icon-btn" title={t('mapedit.zoomOut')} onclick={() => zoom(0.85)}><ZoomOut size={16} /></button>
+          <span class="percent">{Math.round((editor.cell / 28) * 100)}%</span>
+          <button class="icon-btn" title={t('mapedit.zoomIn')} onclick={() => zoom(1.18)}><ZoomIn size={16} /></button>
+          <button class="btn fitbtn" title={t('mapedit.fitHint')} onclick={fit}>{t('mapedit.fit')}</button>
+        </div>
         <div class="hint" title={hint}>{hint}</div>
       </section>
       <section class="palette" aria-label={t('mapedit.things')}>
@@ -182,6 +209,16 @@
           <button class="tool grow" class:on={editor.mode === 'select'} onclick={() => ((editor.mode = 'select'), (editor.prop = null))}><MousePointer2 size={14} /> {t('mapedit.select')}</button>
           <button class="icon-btn" title={t('mapedit.rotate')} onclick={rotate}><RotateCw size={15} /></button>
         </div>
+        {#if tints}
+          <div class="group">{t('mapedit.colour')}</div>
+          <div class="tints">
+            {#if editor.mode === 'place'}<button class="tintbtn random" class:on={editor.tint === null} title={t('mapedit.randomColour')} onclick={() => pickTint(null)}>?</button>{/if}
+            {#each tints as colour, i (i)}<button class="tintbtn" class:on={isTint(i)} style:background={colour} aria-label={colour} onclick={() => pickTint(i)}></button>{/each}
+          </div>
+        {/if}
+        {#if editor.mode === 'select' && editor.selected >= 0 && layout.props?.[editor.selected] && STRETCH.includes(layout.props[editor.selected]!.kind)}
+          <p class="faint small">{t('mapedit.stretchHint')}</p>
+        {/if}
         {#each GROUPS as g (g.id)}
           <div class="group">{t(`mapedit.group.${g.id}` as never)}</div>
           <div class="grid">
@@ -378,6 +415,55 @@
     min-height: 0;
     overflow: auto;
     display: flex;
+  }
+  .map {
+    position: relative;
+  }
+  .zoombar {
+    position: absolute;
+    right: 12px;
+    bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    background: var(--bg-secondary);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  }
+  .percent {
+    min-width: 42px;
+    text-align: center;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+  }
+  .fitbtn {
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+  .tints {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 0 2px 4px;
+  }
+  .tintbtn {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .tintbtn.on {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  .tintbtn.random {
+    background: var(--bg-primary);
+    color: var(--text-muted);
+    font-size: 12px;
   }
   .hint {
     padding: 6px 12px;

@@ -19,6 +19,8 @@ class Editor {
   size = $state(1);
   prop = $state<PropKind | null>(null);
   face = $state<Facing>(0);
+  // The colour of things put down (null — a random one).
+  tint = $state<number | null>(null);
   selected = $state(-1);
   cell = $state(28);
   grid = $state(true);

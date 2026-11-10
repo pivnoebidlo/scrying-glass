@@ -44,7 +44,7 @@ export function parseDraft(x: unknown): MapDraft | null {
     .slice(0, 2000)
     .map((d) => ({ x: d.x, y: d.y, along: d.along }));
   const props = (Array.isArray(l['props']) ? l['props'] : [])
-    .filter((p): p is Prop => !!p && PROP_KINDS.includes(p.kind) && int(p.x) && int(p.y) && int(p.w) && int(p.h) && p.w > 0 && p.h > 0 && p.w <= 8 && p.h <= 8 && inside(p))
+    .filter((p): p is Prop => !!p && PROP_KINDS.includes(p.kind) && int(p.x) && int(p.y) && int(p.w) && int(p.h) && p.w > 0 && p.h > 0 && p.w <= 12 && p.h <= 12 && inside(p))
     .slice(0, 5000)
     .map((p) => ({ kind: p.kind, x: p.x, y: p.y, w: p.w, h: p.h, ...(p.face === 1 || p.face === 2 || p.face === 3 ? { face: p.face } : {}), ...(typeof p.tint === 'number' && p.tint >= 0 && p.tint <= 1 ? { tint: p.tint } : {}) }));
   const houses = rects(l['houses'], 2000);
@@ -235,7 +235,13 @@ export function toggleTower(l: Layout, x: number, y: number): Layout {
 
 // ---- Things ----
 // The footprint of a thing turned to its facing: long things lie across when they face left or right.
-const LONG: Partial<Record<PropKind, [number, number]>> = { table: [2, 1], bench: [2, 1], bed: [1, 2], sarcophagus: [1, 2], rug: [2, 2], stall: [2, 1], cart: [1, 2], log: [2, 1], bedroll: [1, 2] };
+const LONG: Partial<Record<PropKind, [number, number]>> = {
+  table: [2, 1], bench: [2, 1], bed: [1, 2], sarcophagus: [1, 2], rug: [2, 2], stall: [2, 1], cart: [1, 2], log: [2, 1], bedroll: [1, 2],
+  stairs: [1, 2], roundtable: [2, 2], wardrobe: [2, 1], fountain: [2, 2], tent: [2, 2], boat: [1, 2],
+};
+// Things that stretch over several cells: a long table, a big puddle, a carpet runner, a wide stair.
+export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe'];
+export const MAX_STRETCH = 12;
 export function footprint(kind: PropKind, face: Facing): { w: number; h: number } {
   const [w, h] = LONG[kind] ?? [1, 1];
   return face % 2 === 1 ? { w: h, h: w } : { w, h };
@@ -243,16 +249,18 @@ export function footprint(kind: PropKind, face: Facing): { w: number; h: number 
 
 export const propAt = (l: Layout, x: number, y: number): number => {
   const props = l.props ?? [];
+  // The topmost: a rug lies under everything, whenever it was put down.
+  for (let i = props.length - 1; i >= 0; i--) if (props[i]!.kind !== 'rug' && covers(props[i]!, x, y)) return i;
   for (let i = props.length - 1; i >= 0; i--) if (covers(props[i]!, x, y)) return i;
   return -1;
 };
 
-function fits(l: Layout, p: Prop, except = -1) {
+function fits(l: Layout, p: Prop, _except = -1) {
   for (let y = p.y; y < p.y + p.h; y++)
     for (let x = p.x; x < p.x + p.w; x++) {
       if (!inMap(l, x, y)) return false;
+      // Things may stand on things (a chest on a rug, a candle on a table): the later one is drawn on top.
       if (p.kind !== 'rug' && !standable(at(l, x, y))) return false;
-      if (p.kind !== 'rug' && (l.props ?? []).some((o, i) => i !== except && o.kind !== 'rug' && covers(o, x, y))) return false;
       if (p.kind !== 'rug' && l.doors.some((d) => d.x === x && d.y === y)) return false;
     }
   return true;
@@ -278,6 +286,23 @@ export function rotateProp(l: Layout, i: number): Layout {
   const next: Prop = { ...p, ...footprint(p.kind, face), face };
   if (!next.face) delete next.face;
   return fits(l, next, i) ? { ...l, props: l.props!.map((o, n) => (n === i ? next : o)) } : l;
+}
+
+// A thing made larger or smaller (only those that stretch), from its top-left corner.
+export function stretchProp(l: Layout, i: number, w: number, h: number): Layout {
+  const p = l.props?.[i];
+  if (!p || !STRETCH.includes(p.kind)) return l;
+  const W = Math.min(MAX_STRETCH, Math.max(1, Math.round(w)));
+  const H = Math.min(MAX_STRETCH, Math.max(1, Math.round(h)));
+  if (W === p.w && H === p.h) return l;
+  const next = { ...p, w: W, h: H };
+  return fits(l, next, i) ? { ...l, props: l.props!.map((o, n) => (n === i ? next : o)) } : l;
+}
+
+// A thing's colour or pattern (TINTS in draw-props.ts).
+export function tintProp(l: Layout, i: number, tint: number): Layout {
+  const p = l.props?.[i];
+  return p && p.tint !== tint ? { ...l, props: l.props!.map((o, n) => (n === i ? { ...o, tint } : o)) } : l;
 }
 
 export function moveProp(l: Layout, i: number, x: number, y: number): Layout {

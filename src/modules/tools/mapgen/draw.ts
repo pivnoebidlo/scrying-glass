@@ -147,13 +147,7 @@ function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: Wi
 
   fillArea(ctx, contour(l, c, (x, y) => at(x, y) === 'S' || at(x, y) === '~').area, '#d9c893');
   fillArea(ctx, contour(l, c, (x, y) => at(x, y) === ',').area, '#a98f63');
-  const wet = contour(l, c, (x, y) => at(x, y) === '~' || at(x, y) === '=');
-  fillArea(ctx, wet.area, '#7fb0bd');
-  fillArea(ctx, contour(l, c, (x, y) => at(x, y) === '~').area, '#3f7d97');
-  ctx.strokeStyle = 'rgba(232, 244, 244, 0.7)';
-  ctx.lineWidth = Math.max(1, c / 12);
-  ctx.lineCap = 'round';
-  ctx.stroke(wet.edges);
+  drawWater(ctx, l, c);
 
   // From the top down, so that a nearer tree covers the one behind it.
   for (let y = 0; y < l.h; y++) {
@@ -387,9 +381,23 @@ function drawWall(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   }
 }
 
+// Water: shallows and fords pale, the deep darker, a light line along the shore. Outdoors, in a town and in a cave.
+function drawWater(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
+  const at = (x: number, y: number) => l.cells[y]?.[x];
+  if (!l.cells.some((r) => r.includes('~') || r.includes('='))) return;
+  const wet = contour(l, c, (x, y) => at(x, y) === '~' || at(x, y) === '=');
+  fillArea(ctx, wet.area, '#7fb0bd');
+  fillArea(ctx, contour(l, c, (x, y) => at(x, y) === '~').area, '#3f7d97');
+  ctx.strokeStyle = 'rgba(232, 244, 244, 0.7)';
+  ctx.lineWidth = Math.max(1, c / 12);
+  ctx.lineCap = 'round';
+  ctx.stroke(wet.edges);
+}
+
 function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   const at = (x: number, y: number) => l.cells[y]?.[x];
   drawGrass(ctx, l, c, TOWN);
+  drawWater(ctx, l, c);
   const stone = (x: number, y: number) => at(x, y) === ',' || at(x, y) === 'P';
   const road = contour(l, c, stone);
   fillArea(ctx, road.area, '#b3a78f');
@@ -450,8 +458,10 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   ctx.fillRect(0, 0, l.w * c, l.h * c);
 
   // Hatching: short strokes in the rock near the floor.
+  // Floor or water: what is not rock.
+  const open = (x: number, y: number) => floor(x, y) || l.cells[y]?.[x] === '~' || l.cells[y]?.[x] === '=';
   const near = (x: number, y: number) => {
-    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (floor(x + dx, y + dy)) return true;
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (open(x + dx, y + dy)) return true;
     return false;
   };
   ctx.strokeStyle = HATCH;
@@ -460,7 +470,7 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   ctx.beginPath();
   for (let y = 0; y < l.h; y++) {
     for (let x = 0; x < l.w; x++) {
-      if (floor(x, y) || !near(x, y)) continue;
+      if (open(x, y) || !near(x, y)) continue;
       const r = cellNoise(l, x, y, 5);
       const dir = r() < 0.5 ? 1 : -1;
       for (let i = 0; i < 3; i++) {
@@ -479,7 +489,8 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
     for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) if (floor(x, y)) f(x, y);
   };
   if (l.style === 'cave') {
-    const rock = contour(l, c, floor);
+    // An underground lake is open ground too: the rock goes round it.
+    const rock = contour(l, c, (x, y) => floor(x, y) || l.cells[y]?.[x] === '~' || l.cells[y]?.[x] === '=');
     fillArea(ctx, rock.area, tints[0]!);
     ctx.strokeStyle = WALL;
     ctx.lineWidth = Math.max(2, c / 7);
@@ -494,6 +505,7 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
         ctx.fill();
       }
     });
+    drawWater(ctx, l, c);
   } else {
     eachFloor((x, y) => {
       ctx.fillStyle = tints[Math.floor(cellNoise(l, x, y, 7)() * tints.length)]!;

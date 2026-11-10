@@ -392,8 +392,8 @@ from an empty field (a building, a cave, a town or open country of a size in cel
 generator's «Edit» opens its map here too. Brushes paint the cells: floor and wall, a room (a rectangle that gets a
 number and a pin), doors and pillars indoors; grass, roads, squares, sand, water, fords, trees and boulders outdoors;
 houses, wells, the town wall and its towers in a town. Things from the palette — furniture, stores, shrine, cave, town,
-outdoors — go on a cell, turn with R, move by dragging and go with Delete or the right button. Thickness 1–3,
-Shift+click draws a straight line, the right button erases, ⌘+wheel zooms, ⌘+Z undoes. The draft is saved by
+outdoors, stairs, a throne, a fountain, a tent, a boat and more — go on a cell (on top of other things too: a chest on a rug), turn with R, move by dragging and go with Delete or the right button. A rug, a table, a puddle and others stretch by their corner; a rug, a bed, a tent and others take the colour you choose. Thickness 1–3,
+Shift+click draws a straight line, the right button erases, ⌘+wheel or the buttons in the corner zoom («Fit» shows the whole map), ⌘+Z undoes. The draft is saved by
 itself as «Name.map.json» in the adventure's maps folder; «To Maps» adds the picture with the fog, a grid and a pin on
 every room.
 

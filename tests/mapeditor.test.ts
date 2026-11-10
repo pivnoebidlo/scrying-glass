@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, removeProp, resize, rotateProp, toggleDoor, togglePillar, toggleTower,
+  addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, removeProp, resize, rotateProp, stretchProp, tintProp, toggleDoor, togglePillar, toggleTower,
 } from '../src/modules/tools/mapeditor/edit';
 import { generateLayout, LAYOUT_STYLES, seededRandom } from '../src/modules/tools/mapgen/layout';
 
@@ -43,13 +43,16 @@ describe('the map editor', () => {
     expect(paint(t, [{ x: 3, y: 3 }], ',')).toBe(t);
     expect(paint(t, [{ x: 3, y: 3 }], '.').houses).toBeUndefined();
   });
-  it('things stand on floor, not on each other or a door; turn, move, go away', () => {
+  it('things stand on floor, on each other too, not on a door; turn, move, go away', () => {
     let l = room();
     const placed = placeProp(l, 'table', 3, 3);
     expect(placed.index).toBe(0);
     l = placed.layout;
     expect(l.props![0]).toMatchObject({ kind: 'table', x: 3, y: 3, w: 2, h: 1 });
-    expect(placeProp(l, 'barrel', 4, 3).index).toBe(-1);
+    // A candle on the table: the later thing lies on top and is the one picked.
+    const candle = placeProp(l, 'candle', 4, 3);
+    expect(candle.index).toBe(1);
+    expect(propAt(candle.layout, 4, 3)).toBe(1);
     expect(placeProp(l, 'barrel', 0, 0).index).toBe(-1);
     expect(placeProp(l, 'rug', 2, 2).index).toBe(0);
     expect(propAt(l, 4, 3)).toBe(0);
@@ -60,6 +63,17 @@ describe('the map editor', () => {
     expect(removeProp(l, 0).props).toEqual([]);
     // Rock painted under a thing takes it away.
     expect(paint(l, [{ x: 3, y: 3 }], '#').props).toEqual([]);
+  });
+  it('things stretch and take a colour', () => {
+    let l = placeProp(room(), 'rug', 1, 1).layout;
+    l = stretchProp(l, 0, 6, 1);
+    expect(l.props![0]).toMatchObject({ w: 6, h: 1 });
+    // Not past the walls, and not a thing that does not stretch.
+    expect(stretchProp(l, 0, 40, 1)).toBe(l);
+    const barrel = placeProp(l, 'barrel', 2, 3).layout;
+    expect(stretchProp(barrel, 1, 3, 3)).toBe(barrel);
+    expect(tintProp(l, 0, 0.1).props![0]!.tint).toBe(0.1);
+    expect(parseDraft(JSON.parse(JSON.stringify(draftOf(l))))!.layout.props![0]).toMatchObject({ w: 6, h: 1 });
   });
   it('the map grows and shrinks from its top-left corner', () => {
     const l = resize(room(), 6, 6);

@@ -5,7 +5,7 @@
   import { drawLayout } from '../mapgen/draw';
   import type { Layout } from '../mapgen/layout';
   import {
-    addHouse, addRoom, brushCells, brushesFor, footprint, lineCells, moveProp, normRect, paint, placeProp, propAt, removeProp, toggleDoor, togglePillar, toggleTower,
+    addHouse, addRoom, brushCells, brushesFor, footprint, lineCells, moveProp, normRect, paint, placeProp, propAt, removeProp, STRETCH, stretchProp, toggleDoor, togglePillar, toggleTower,
   } from './edit';
   import { editor } from './store.svelte';
 
@@ -50,7 +50,17 @@
       ctx.restore();
     };
     const sel = layout.props?.[editor.selected];
-    if (sel) box(sel.x, sel.y, sel.w, sel.h, '#f2c14e', true);
+    if (sel) {
+      box(sel.x, sel.y, sel.w, sel.h, '#f2c14e', true);
+      // The corner to pull: a thing that stretches.
+      if (STRETCH.includes(sel.kind)) {
+        ctx.fillStyle = '#f2c14e';
+        ctx.strokeStyle = '#1e1e1e';
+        ctx.lineWidth = 1.5;
+        ctx.fillRect((sel.x + sel.w) * c - 9, (sel.y + sel.h) * c - 9, 10, 10);
+        ctx.strokeRect((sel.x + sel.w) * c - 9, (sel.y + sel.h) * c - 9, 10, 10);
+      }
+    }
     if (rect) {
       const r = normRect(rect.a, rect.b);
       box(r.x, r.y, r.w, r.h, '#a78bfa', true);
@@ -74,6 +84,17 @@
 
   let stroke: { last: { x: number; y: number }; started: boolean; ch: string } | null = null;
   let drag: { index: number; dx: number; dy: number; started: boolean } | null = null;
+  let pull: { index: number; started: boolean } | null = null;
+  // Is the pointer on the stretching corner of the chosen thing?
+  const onCorner = (e: PointerEvent) => {
+    const sel = layout.props?.[editor.selected];
+    if (!sel || !STRETCH.includes(sel.kind)) return false;
+    const r = over!.getBoundingClientRect();
+    const k = r.width / (layout.w * c);
+    const px = (e.clientX - r.left) / k;
+    const py = (e.clientY - r.top) / k;
+    return Math.abs(px - (sel.x + sel.w) * c) < 12 && Math.abs(py - (sel.y + sel.h) * c) < 12;
+  };
   let lastPainted: { x: number; y: number } | null = null;
 
   function paintTo(to: { x: number; y: number }) {
@@ -107,7 +128,11 @@
       paintTo(p);
       return;
     }
-    if (editor.mode === 'select' || (editor.mode === 'place' && propAt(l, p.x, p.y) >= 0 && !e.altKey)) {
+    if (editor.mode !== 'brush' && onCorner(e)) {
+      pull = { index: editor.selected, started: false };
+      return;
+    }
+    if (editor.mode === 'select') {
       const i = propAt(l, p.x, p.y);
       editor.selected = i;
       if (i >= 0) {
@@ -118,7 +143,7 @@
       return;
     }
     if (editor.mode === 'place' && editor.prop) {
-      const { layout: next, index } = placeProp(l, editor.prop, p.x, p.y, editor.face, Math.random());
+      const { layout: next, index } = placeProp(l, editor.prop, p.x, p.y, editor.face, editor.tint ?? Math.random());
       if (index >= 0) {
         editor.change(next);
         editor.selected = index;
@@ -141,9 +166,19 @@
   function move(e: PointerEvent) {
     const p = cellAt(e);
     if (!hover || hover.x !== p.x || hover.y !== p.y) hover = p;
+    over!.style.cursor = pull || (editor.mode !== 'brush' && onCorner(e)) ? 'nwse-resize' : '';
     if (stroke) paintTo(p);
     else if (rect) rect = { a: rect.a, b: p };
-    else if (drag && editor.layout) {
+    else if (pull && editor.layout) {
+      const q = editor.layout.props?.[pull.index];
+      if (q) {
+        const next = stretchProp(editor.layout, pull.index, p.x - q.x + 1, p.y - q.y + 1);
+        if (next !== editor.layout) {
+          editor.change(next, pull.started);
+          pull.started = true;
+        }
+      }
+    } else if (drag && editor.layout) {
       const next = moveProp(editor.layout, drag.index, p.x - drag.dx, p.y - drag.dy);
       if (next !== editor.layout) {
         editor.change(next, drag.started);
@@ -160,12 +195,13 @@
     stroke = null;
     rect = null;
     drag = null;
+    pull = null;
   }
 
   function wheel(e: WheelEvent) {
     if (!(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
-    editor.cell = Math.min(64, Math.max(10, Math.round(editor.cell * (e.deltaY < 0 ? 1.12 : 0.89))));
+    editor.cell = Math.min(72, Math.max(6, Math.round(editor.cell * (e.deltaY < 0 ? 1.12 : 0.89))));
   }
 </script>
 

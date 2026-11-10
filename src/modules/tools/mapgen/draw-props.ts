@@ -5,7 +5,17 @@ import type { Prop } from './furnish';
 
 const INK = '#120f0b';
 const WOOD = ['#9a6b3c', '#8a5f35', '#a87a45'];
-const CLOTH = ['#8e3b32', '#3f5d86', '#5b7a3c', '#7a5a8e', '#a8823a'];
+const CLOTH = ['#8e3b32', '#3f5d86', '#5b7a3c', '#7a5a8e', '#a8823a', '#2f6f6a', '#2b2a2e', '#d8cdb3'];
+
+// The colours a thing can be painted in, as the editor offers them: a tint picks one of them (i + 0.5) / n.
+export const TINTS: Partial<Record<Prop['kind'], readonly string[]>> = {
+  rug: CLOTH, bed: CLOTH, bedroll: CLOTH, stall: CLOTH, tent: CLOTH, throne: CLOTH,
+  cart: WOOD, table: WOOD, roundtable: WOOD, wardrobe: WOOD, boat: WOOD,
+  mushrooms: ['#b8473a', '#c9a46a', '#7fa1b8'], bush: ['#4f7a3a', '#5d8a42'], rubble: ['#8c857a', '#77706a'],
+};
+export const tintOf = (i: number, n: number) => (i + 0.5) / n;
+// Scattered things drawn once a cell when stretched: a field of rubble, a bed of flowers.
+const TILED = new Set<Prop['kind']>(['rubble', 'flowers', 'reeds', 'bones', 'coins', 'mushrooms']);
 
 type Ctx = CanvasRenderingContext2D;
 const tone = (list: readonly string[], t = 0) => list[Math.floor(t * list.length) % list.length]!;
@@ -107,8 +117,8 @@ function drawOne(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       break;
     }
     case 'altar':
-      shape(ctx, '#bdb5a3', rect(ctx, -c * 0.42, -c * 0.26, c * 0.84, c * 0.52, c * 0.04), line);
-      shape(ctx, '#8e2f2a', rect(ctx, -c * 0.12, -c * 0.26, c * 0.24, c * 0.52), line);
+      shape(ctx, '#bdb5a3', rect(ctx, L + c * 0.08, T + c * 0.24, w - c * 0.16, h - c * 0.48, c * 0.04), line);
+      shape(ctx, '#8e2f2a', rect(ctx, -c * 0.12, T + c * 0.24, c * 0.24, h - c * 0.48), line);
       break;
     case 'candle': {
       const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, c * 0.45);
@@ -144,7 +154,8 @@ function drawOne(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       break;
     case 'rack':
       shape(ctx, '#5e3f22', rect(ctx, L + c * 0.06, h / 2 - c * 0.24, w - c * 0.12, c * 0.18), line);
-      for (const dx of [-0.26, 0, 0.26]) {
+      for (let k = 0, n = Math.max(3, Math.round((w / c) * 3)); k < n; k++) {
+        const dx = (L + c * 0.2 + ((w - c * 0.4) * k) / Math.max(1, n - 1)) / c;
         shape(ctx, '#6b4a2e', rect(ctx, dx * c - c * 0.035, T + c * 0.2, c * 0.07, h - c * 0.44), line * 0.6);
         shape(ctx, '#b9bec4', () => {
           ctx.moveTo(dx * c, T + c * 0.06);
@@ -201,7 +212,8 @@ function drawOne(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
     case 'puddle':
       ctx.fillStyle = 'rgba(70, 110, 140, 0.55)';
       ctx.beginPath();
-      ctx.ellipse(0, 0, c * (0.34 + t * 0.1), c * 0.24, t * Math.PI, 0, Math.PI * 2);
+      if (w > c || h > c) ctx.ellipse(0, 0, w / 2 - c * 0.12, h / 2 - c * 0.12, 0, 0, Math.PI * 2);
+      else ctx.ellipse(0, 0, c * (0.34 + t * 0.1), c * 0.24, t * Math.PI, 0, Math.PI * 2);
       ctx.fill();
       break;
     case 'campfire': {
@@ -290,17 +302,183 @@ function drawOne(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       ctx.fillStyle = '#5b3d22';
       for (const dx of [-0.08, 0.16]) ctx.fillRect((dx + 0.03) * c, -c * 0.28, c * 0.06, c * 0.14);
       break;
+    case 'stairs': {
+      // Steps down from the top: each a little darker.
+      shape(ctx, '#8c857a', rect(ctx, L + c * 0.06, T + c * 0.06, w - c * 0.12, h - c * 0.12), line);
+      const n = Math.max(4, Math.round((h / c) * 4));
+      for (let k = 0; k < n; k++) {
+        ctx.fillStyle = `rgba(20, 16, 10, ${0.05 + (k / n) * 0.45})`;
+        ctx.fillRect(L + c * 0.06, T + c * 0.06 + ((h - c * 0.12) * k) / n, w - c * 0.12, (h - c * 0.12) / n);
+      }
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = Math.max(1, c / 26);
+      ctx.beginPath();
+      for (let k = 1; k < n; k++) {
+        const y = T + c * 0.06 + ((h - c * 0.12) * k) / n;
+        ctx.moveTo(L + c * 0.06, y);
+        ctx.lineTo(w / 2 - c * 0.06, y);
+      }
+      ctx.stroke();
+      break;
+    }
+    case 'trapdoor':
+      shape(ctx, '#6b4a2e', rect(ctx, -c * 0.38, -c * 0.38, c * 0.76, c * 0.76), line);
+      ctx.strokeStyle = '#4a2f14';
+      ctx.lineWidth = Math.max(1, c / 26);
+      ctx.beginPath();
+      for (const k of [-0.13, 0.13]) (ctx.moveTo(k * c, -c * 0.38), ctx.lineTo(k * c, c * 0.38));
+      ctx.stroke();
+      ctx.strokeStyle = '#2b2a2e';
+      ctx.lineWidth = Math.max(1.5, c / 16);
+      ctx.beginPath();
+      ctx.arc(0, c * 0.2, c * 0.09, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    case 'throne':
+      shape(ctx, '#c9a442', rect(ctx, -c * 0.4, -c * 0.36, c * 0.8, c * 0.78, c * 0.08), line);
+      shape(ctx, tone(CLOTH, t), rect(ctx, -c * 0.26, -c * 0.24, c * 0.52, c * 0.42, c * 0.05), line);
+      shape(ctx, '#a8862e', rect(ctx, -c * 0.44, c * 0.18, c * 0.88, c * 0.24, c * 0.06), line);
+      break;
+    case 'statue':
+      shape(ctx, '#a9a294', rect(ctx, -c * 0.42, -c * 0.42, c * 0.84, c * 0.84, c * 0.04), line);
+      shape(ctx, '#cfc8b8', () => ctx.ellipse(0, c * 0.06, c * 0.26, c * 0.16, 0, 0, Math.PI * 2), line);
+      shape(ctx, '#cfc8b8', circle(ctx, 0, -c * 0.12, c * 0.13), line);
+      break;
+    case 'brazier': {
+      shape(ctx, '#3b3632', circle(ctx, 0, 0, c * 0.32), line);
+      const fire = ctx.createRadialGradient(0, 0, 0, 0, 0, c * 0.26);
+      fire.addColorStop(0, '#ffe08a');
+      fire.addColorStop(1, '#d9480f');
+      ctx.fillStyle = fire;
+      ctx.beginPath();
+      ctx.arc(0, 0, c * 0.24, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    case 'cauldron':
+      shape(ctx, '#232220', circle(ctx, 0, 0, c * 0.36), line);
+      shape(ctx, '#5f9a3c', circle(ctx, 0, 0, c * 0.26), line * 0.6);
+      ctx.fillStyle = '#9fd36a';
+      for (const [dx, dy] of [[-0.08, -0.06], [0.1, 0.05], [0.0, 0.12]] as const) {
+        ctx.beginPath();
+        ctx.arc(dx * c, dy * c, c * 0.04, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    case 'anvil':
+      shape(ctx, '#5b5e66', () => {
+        ctx.moveTo(-c * 0.4, -c * 0.12);
+        ctx.lineTo(c * 0.2, -c * 0.14);
+        ctx.lineTo(c * 0.42, 0);
+        ctx.lineTo(c * 0.2, c * 0.14);
+        ctx.lineTo(-c * 0.4, c * 0.12);
+        ctx.closePath();
+      }, line);
+      shape(ctx, '#4a2f14', rect(ctx, -c * 0.22, c * 0.16, c * 0.3, c * 0.2), line * 0.7);
+      break;
+    case 'cage': {
+      shape(ctx, 'rgba(60, 60, 64, 0.25)', rect(ctx, -c * 0.4, -c * 0.4, c * 0.8, c * 0.8), line);
+      ctx.strokeStyle = '#3b3632';
+      ctx.lineWidth = Math.max(1.5, c / 16);
+      ctx.beginPath();
+      for (const k of [-0.2, 0, 0.2]) (ctx.moveTo(k * c, -c * 0.4), ctx.lineTo(k * c, c * 0.4), ctx.moveTo(-c * 0.4, k * c), ctx.lineTo(c * 0.4, k * c));
+      ctx.stroke();
+      break;
+    }
+    case 'roundtable': {
+      shape(ctx, tone(WOOD, t), () => ctx.ellipse(0, 0, w / 2 - c * 0.12, h / 2 - c * 0.12, 0, 0, Math.PI * 2), line);
+      ctx.strokeStyle = 'rgba(60, 38, 18, 0.4)';
+      ctx.lineWidth = Math.max(1, c / 30);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, Math.max(1, w / 2 - c * 0.32), Math.max(1, h / 2 - c * 0.32), 0, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    }
+    case 'wardrobe':
+      shape(ctx, tone(WOOD, t), rect(ctx, L + c * 0.06, h / 2 - c * 0.56, w - c * 0.12, c * 0.5, c * 0.03), line);
+      ctx.strokeStyle = 'rgba(40, 25, 10, 0.6)';
+      ctx.lineWidth = Math.max(1, c / 26);
+      ctx.beginPath();
+      ctx.moveTo(0, h / 2 - c * 0.56);
+      ctx.lineTo(0, h / 2 - c * 0.06);
+      ctx.stroke();
+      break;
+    case 'fountain':
+      shape(ctx, '#a9a294', () => ctx.ellipse(0, 0, w / 2 - c * 0.08, h / 2 - c * 0.08, 0, 0, Math.PI * 2), line);
+      shape(ctx, '#4f8fa8', () => ctx.ellipse(0, 0, w / 2 - c * 0.26, h / 2 - c * 0.26, 0, 0, Math.PI * 2), line * 0.6);
+      shape(ctx, '#cfc8b8', circle(ctx, 0, 0, c * 0.2), line);
+      break;
+    case 'tent':
+      shape(ctx, tone(CLOTH, t), rect(ctx, L + c * 0.12, T + c * 0.12, w - c * 0.24, h - c * 0.24, c * 0.06), line);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+      ctx.fillRect(0, T + c * 0.12, w / 2 - c * 0.12, h - c * 0.24);
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = line;
+      ctx.beginPath();
+      ctx.moveTo(0, T + c * 0.12);
+      ctx.lineTo(0, h / 2 - c * 0.12);
+      ctx.stroke();
+      break;
+    case 'boat':
+      shape(ctx, tone(WOOD, t), () => {
+        ctx.moveTo(0, T + c * 0.06);
+        ctx.quadraticCurveTo(w / 2 - c * 0.08, T + h * 0.35, w / 2 - c * 0.12, h / 2 - c * 0.12);
+        ctx.lineTo(L + c * 0.12, h / 2 - c * 0.12);
+        ctx.quadraticCurveTo(L + c * 0.08, T + h * 0.35, 0, T + c * 0.06);
+        ctx.closePath();
+      }, line);
+      ctx.strokeStyle = 'rgba(40, 25, 10, 0.6)';
+      ctx.lineWidth = Math.max(1, c / 20);
+      ctx.beginPath();
+      for (const k of [0.35, 0.65]) (ctx.moveTo(L + c * 0.16, T + h * k), ctx.lineTo(w / 2 - c * 0.16, T + h * k));
+      ctx.stroke();
+      break;
+    case 'haystack':
+      shape(ctx, '#d6b54e', circle(ctx, 0, 0, c * 0.42), line);
+      ctx.strokeStyle = '#a8862e';
+      ctx.lineWidth = Math.max(1, c / 30);
+      ctx.beginPath();
+      for (let k = 0; k < 9; k++) {
+        const a = (k / 9) * Math.PI * 2;
+        ctx.moveTo(Math.cos(a) * c * 0.1, Math.sin(a) * c * 0.1);
+        ctx.lineTo(Math.cos(a) * c * 0.36, Math.sin(a) * c * 0.36);
+      }
+      ctx.stroke();
+      break;
+    case 'grave':
+      shape(ctx, '#6b5a43', rect(ctx, -c * 0.26, -c * 0.1, c * 0.52, c * 0.48, c * 0.14), line);
+      shape(ctx, '#a9a294', rect(ctx, -c * 0.3, -c * 0.4, c * 0.6, c * 0.26, c * 0.1), line);
+      break;
+    case 'well':
+      shape(ctx, '#7d7a72', circle(ctx, 0, 0, c * 0.42), line);
+      shape(ctx, '#2c5566', circle(ctx, 0, 0, c * 0.26), line * 0.6);
+      break;
   }
 }
 
 export function drawProps(ctx: Ctx, l: Layout, c: number) {
-  for (const p of l.props ?? []) {
+  // Rugs first: everything else stands on them, whenever it was put down.
+  const all = l.props ?? [];
+  for (const p of [...all.filter((q) => q.kind === 'rug'), ...all.filter((q) => q.kind !== 'rug')]) {
     const f = p.face ?? 0;
     const turned = f % 2 === 1;
     ctx.save();
     ctx.translate((p.x + p.w / 2) * c, (p.y + p.h / 2) * c);
     ctx.rotate((f * Math.PI) / 2);
     ctx.lineJoin = 'round';
+    if (TILED.has(p.kind) && (p.w > 1 || p.h > 1)) {
+      ctx.restore();
+      // Once a cell, each a little different.
+      for (let y = 0; y < p.h; y++)
+        for (let x = 0; x < p.w; x++) {
+          ctx.save();
+          ctx.translate((p.x + x + 0.5) * c, (p.y + y + 0.5) * c);
+          ctx.rotate(((x * 3 + y * 7) % 4) * (Math.PI / 2));
+          drawOne(ctx, { ...p, tint: p.tint ?? ((x * 13 + y * 7) % 10) / 10 }, c, c, c);
+          ctx.restore();
+        }
+      continue;
+    }
     drawOne(ctx, p, (turned ? p.h : p.w) * c, (turned ? p.w : p.h) * c, c);
     ctx.restore();
   }
