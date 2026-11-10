@@ -101,6 +101,10 @@
     { id: 'nomads', kinds: ['yurt', 'camel', 'tripod', 'hiderack', 'sheep'] },
     { id: 'pirates', kinds: ['treasurepile', 'jollyroger', 'plank', 'charttable', 'parrot', 'ropebridge'], genres: ['fantasy', 'gothic'] },
     { id: 'military', kinds: ['roundtower', 'squaretower', 'watchtower', 'stakes', 'ballista', 'catapult'], genres: ['fantasy', 'gothic', 'wasteland'] },
+    { id: 'camp', kinds: ['commandtent', 'supplywagon', 'armorstand', 'drawbridge', 'portcullis'], genres: ['fantasy', 'gothic'] },
+    { id: 'arcane', kinds: ['stonecircle', 'observatory', 'pentagram', 'necroaltar', 'floatingbooks'], genres: ['fantasy', 'gothic'] },
+    { id: 'festival', kinds: ['carousel', 'maypole', 'garland', 'fairtent', 'foodcart', 'puppetshow', 'balloons'] },
+    { id: 'civic', kinds: ['clocktower', 'noticeboard', 'guardbooth', 'pillory'], genres: ['fantasy', 'gothic'] },
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];

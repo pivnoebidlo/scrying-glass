@@ -1465,6 +1465,8 @@ const LIGHT_OF: Partial<Record<PropKind, { r: number; rgb?: string }>> = {
   forge: { r: 4.5 }, cavecrystals: { r: 3.5, rgb: '170, 140, 255' }, glowshrooms: { r: 1.8, rgb: '140, 230, 200' }, stage: { r: 3 },
   boiler: { r: 3.5 }, teslacoil: { r: 3, rgb: '140, 200, 255' }, treasurepile: { r: 2.5, rgb: '255, 220, 110' }, giantclam: { r: 1.6, rgb: '255, 240, 230' },
   tripod: { r: 3.5 },
+  necroaltar: { r: 3, rgb: '140, 255, 140' }, pentagram: { r: 3.5, rgb: '255, 90, 60' }, carousel: { r: 4.5 }, garland: { r: 2.5, rgb: '255, 220, 140' },
+  floatingbooks: { r: 1.5, rgb: '180, 160, 255' },
 };
 // `power`: how much of the darkness the light takes away (windows less than a fire).
 export function lightsOf(l: Layout): { x: number; y: number; r: number; rgb: string; power: number }[] {

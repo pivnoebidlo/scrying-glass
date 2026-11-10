@@ -2,6 +2,7 @@
 // Towers that stand on a castle wall, a watchtower, siege engines, stakes against horses.
 import type { Prop } from './furnish';
 import { circle, lines, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets9 } from './draw-sets9';
 
 const STONE = '#8a8476';
 const MERLON = '#5c574d';
@@ -91,5 +92,7 @@ export function drawSets8(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       });
       for (const [x, y] of [[-0.42, -0.3], [-0.06, -0.3], [0.06, -0.3], [0.42, -0.3]] as const) shape(ctx, '#d6c69a', circle(ctx, x * c, y * c, c * 0.04), 0);
       break;
+    default:
+      drawSets9(ctx, p, w, h, c);
   }
 }

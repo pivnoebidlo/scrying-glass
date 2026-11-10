@@ -419,7 +419,11 @@ for a large tavern with its hall, kitchen and rooms.
 Fortifications too: a palisade of sharpened logs, a castle wall with merlons, a barricade, a hedge and a dry ditch (a moat
 is water). A castle wall three cells thick, or two walls with a gap of one, gets a walk on top by itself; a gate goes
 into any of them with «Door». Round and square stone towers and a wooden watchtower stand right on the wall; a ballista,
-a catapult and stakes against horses are for the siege (in fantasy, gothic horror and the wasteland).
+a catapult and stakes against horses are for the siege (in fantasy, gothic horror and the wasteland), with an army's camp beside it (a commander's tent, a
+supply wagon, an armour stand, a drawbridge over the moat, a portcullis in the gate). Fantasy and gothic horror also have
+magic places (a stone circle, an observatory, a pentagram, a necromancer's altar, floating books) and a town square (a
+clock tower, a notice board, a sentry box, a pillory); any world has a festival (a carousel, a maypole, bunting, a fair
+tent, a food cart, a puppet show, balloons).
 
 A map has its world: fantasy, science fiction, gothic horror, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),
