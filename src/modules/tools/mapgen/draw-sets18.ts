@@ -2,6 +2,7 @@
 // An asteroid base; a cyber clinic; a night club; an airport; a cinema.
 import type { Prop } from './furnish';
 import { circle, CLOTH, glow, lines, rect, shape, tone, type Ctx } from './prop-paint';
+import { drawSets19 } from './draw-sets19';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -188,6 +189,8 @@ export function drawSets18(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       shape(ctx, '#3a4a58', circle(ctx, 0, c * 0.24, c * 0.07), thin);
       glow(ctx, 0, c * 0.4, c * 0.3, 'rgba(255, 250, 220, 0.5)');
       break;
+    default:
+      drawSets19(ctx, p, w, h, c);
   }
 }
 

@@ -1482,6 +1482,8 @@ const LIGHT_OF: Partial<Record<PropKind, { r: number; rgb?: string }>> = {
   censer: { r: 2 }, dragonsword: { r: 1.4, rgb: '160, 200, 255' }, mininglaser: { r: 1.6, rgb: '255, 80, 60' }, surgerybot: { r: 2, rgb: '95, 211, 201' },
   djbooth: { r: 3, rgb: '255, 80, 200' }, discofloor: { r: 1.2, rgb: '255, 120, 220' }, neonbar: { r: 3, rgb: '80, 210, 255' }, cinemascreen: { r: 4, rgb: '230, 235, 255' },
   popcornstand: { r: 1.6 }, projector: { r: 2, rgb: '255, 250, 220' },
+  roastspit: { r: 4 }, greatoven: { r: 3 }, shockchair: { r: 1.4, rgb: '160, 200, 255' }, mechwreck: { r: 1.6, rgb: '255, 200, 100' },
+  ticketbooth: { r: 2 }, ferriswheel: { r: 3, rgb: '255, 200, 140' },
 };
 // `power`: how much of the darkness the light takes away (windows less than a fire).
 export function lightsOf(l: Layout): { x: number; y: number; r: number; rgb: string; power: number }[] {

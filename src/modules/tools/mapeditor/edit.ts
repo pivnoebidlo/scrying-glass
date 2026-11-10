@@ -149,7 +149,8 @@ const FREE = new Set<PropKind>(['asset', ...WALL_DECOR, 'bridge', 'pier', 'buoy'
   'roundtower', 'squaretower', 'watchtower', 'drawbridge', 'portcullis', 'garland', 'balloons', 'floatingbooks',
   'galleon', 'minesupport', 'runedoor', 'outflow', 'treehouse', 'brasslamps', 'wisps', 'vinewall', 'icicles', 'herbs', 'airlock', 'starwindow', 'corkboard', 'blastdoor',
   'hieroglyphs', 'graffiti', 'cables', 'switchboard', 'lightbox', 'mugshot', 'curtainscreen',
-  'feathers', 'tightrope', 'viewport', 'blackboard', 'canopy', 'quarantine', 'cyberlimbs', 'departures', 'cinemascreen', 'teleportcircle']);
+  'feathers', 'tightrope', 'viewport', 'blackboard', 'canopy', 'quarantine', 'cyberlimbs', 'departures', 'cinemascreen', 'teleportcircle',
+  'trollbridge', 'tollsign', 'potrack', 'paddedwall', 'scaffold', 'towercrane', 'gantrycrane', 'coaster', 'ferriswheel']);
 // …and on a tree's crown or a boulder (a nest, a lookout, a raven), over them on the picture.
 export const standable = (c: string | undefined) => walkable(c) || (!!c && 'TRNJQA'.includes(c));
 
@@ -389,6 +390,9 @@ const LONG: Partial<Record<PropKind, [number, number]>> = {
   dwarfstatue: [2, 2], runeforge: [2, 2], goldhoard: [2, 2], stonetable: [3, 2], teleportcircle: [3, 3], plaguecart: [2, 2],
   orecrusher: [2, 2], dockclamp: [3, 3], cyberlimbs: [2, 1], surgerybot: [2, 2], djbooth: [3, 1], velvetrope: [3, 1], neonbar: [4, 2],
   jetliner: [8, 8], baggagebelt: [4, 2], airportseats: [3, 1], departures: [3, 1], cinemascreen: [5, 1], cinemaseats: [4, 1],
+  trollbridge: [5, 2], tiltrail: [6, 1], pavilion: [3, 3], lancerack: [2, 1], roastspit: [3, 1], greatoven: [2, 2], kitchentable: [3, 1], potrack: [2, 1],
+  gardenarch: [2, 1], asylumbed: [1, 2], paddedwall: [3, 1], mechgantry: [3, 4], mechwreck: [3, 3], mecharm: [3, 1], towercrane: [2, 2], scaffold: [4, 1],
+  container: [1, 3], gantrycrane: [4, 3], ferriswheel: [4, 4], coaster: [5, 1], bumpercars: [4, 3],
 };
 // Things that stretch over several cells: a long table, a big puddle, a carpet runner, a wide stair.
 export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe',
@@ -409,7 +413,9 @@ export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', '
   'specimenshelf', 'curtainscreen', 'mugshot', 'barrier', 'switchboard',
   'feathers', 'tightrope', 'ballfloor', 'beastcage', 'helmconsole', 'viewport', 'blackboard', 'lockers', 'aisleshelf', 'freezer', 'tirestack', 'oilcans', 'canopy',
   'alecask', 'koboldtrap', 'goldhoard', 'corpsepile', 'stonetable', 'teleportcircle', 'discofloor', 'velvetrope', 'neonbar', 'baggagebelt', 'airportseats',
-  'departures', 'cinemascreen', 'cinemaseats', 'cyberlimbs', 'djbooth'];
+  'departures', 'cinemascreen', 'cinemaseats', 'cyberlimbs', 'djbooth',
+  'trollbridge', 'tiltrail', 'lancerack', 'roastspit', 'kitchentable', 'potrack', 'mandrake', 'herbspiral', 'gardenarch', 'paddedwall', 'scaffold',
+  'trafficcones', 'rebar', 'container', 'gantrycrane', 'coaster', 'bumpercars', 'mecharm'];
 export const MAX_STRETCH = 12;
 export function footprint(kind: PropKind, face: Facing): { w: number; h: number } {
   const [w, h] = LONG[kind] ?? [1, 1];

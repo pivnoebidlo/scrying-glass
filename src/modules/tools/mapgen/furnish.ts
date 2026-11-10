@@ -60,6 +60,10 @@ export const PROP_KINDS = [
   'dwarfstatue', 'runeforge', 'alecask', 'stonetable', 'koboldtrap', 'kobolddragon', 'tunnelhole', 'goldhoard', 'crown', 'dragonsword', 'teleportcircle', 'crystalball', 'staffrack', 'perch', 'plaguecart', 'quarantine', 'corpsepile', 'censer',
   // draw-sets18.ts: an asteroid base; a cyber clinic; a night club; an airport; a cinema.
   'mininglaser', 'orecrusher', 'dockclamp', 'gravboots', 'cyberlimbs', 'surgerybot', 'implantcase', 'djbooth', 'discofloor', 'velvetrope', 'neonbar', 'jetliner', 'baggagebelt', 'airportseats', 'departures', 'cinemascreen', 'cinemaseats', 'popcornstand', 'projector',
+  // draw-sets19.ts: a troll's bridge; a knights' tournament; a royal kitchen; an alchemist's garden; an abandoned asylum.
+  'trollbridge', 'tollsign', 'tiltrail', 'pavilion', 'lancerack', 'joustbanner', 'roastspit', 'greatoven', 'kitchentable', 'potrack', 'mandrake', 'herbspiral', 'gardenarch', 'sundial', 'asylumbed', 'shockchair', 'paddedwall', 'straitjacket',
+  // draw-sets20.ts: a mech hangar; a building site; a container port; an amusement park.
+  'mechgantry', 'mechwreck', 'mecharm', 'ammocrates', 'towercrane', 'scaffold', 'cementmixer', 'trafficcones', 'rebar', 'container', 'gantrycrane', 'mooring', 'ferriswheel', 'coaster', 'bumpercars', 'cottoncandy', 'ticketbooth',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

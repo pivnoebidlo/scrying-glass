@@ -453,7 +453,13 @@ as big as you stretch it, a crown, a legendary sword), a wizard's lair (a telepo
 staves, a familiar's perch), a plague quarter (a dead cart, a marked door, shrouded bodies, a smoking brazier); an
 asteroid base (a mining laser, an ore crusher, a docking clamp, mag boots), a cyber clinic (a surgical rig, spare limbs,
 an implant case); a night club (a DJ booth, a lit dance floor, a velvet rope, a neon bar), an airport (an airliner, a
-baggage carousel, rows of seats, a departures board) and a cinema (a screen, seats, a popcorn stand, a projector).
+baggage carousel, rows of seats, a departures board) and a cinema (a screen, seats, a popcorn stand, a projector). Further: a troll's bridge (a humped stone bridge, a toll
+sign), a knights' tournament (a tilt barrier, pavilions, a rack of lances, pennons), a royal kitchen (a roasting spit, a
+bread oven, a kitchen table, hanging pans), an alchemist's garden (mandrakes, a herb spiral, a rose arch, a sundial), an
+abandoned asylum (an iron cot, a shock chair, a padded wall, a straitjacket); a mech hangar (a repair gantry, a wrecked
+walker, a spare arm, ammo crates), a building site (a tower crane, scaffolding, a cement mixer, traffic cones, rebar), a
+container port (shipping containers, a container crane, a mooring bollard) and an amusement park (a Ferris wheel, a
+roller coaster, bumper cars, candy floss, a ticket booth).
 
 A map has its world: fantasy, science fiction, gothic horror, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),
