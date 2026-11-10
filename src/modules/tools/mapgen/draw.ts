@@ -182,20 +182,40 @@ function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: Wi
   const at = (x: number, y: number) => l.cells[y]?.[x];
   drawGrass(ctx, l, c, look);
 
-  fillArea(ctx, contour(l, c, (x, y) => at(x, y) === 'S' || at(x, y) === '~').area, '#d9c893');
+  fillArea(ctx, contour(l, c, (x, y) => at(x, y) === 'S' || at(x, y) === '~' || at(x, y) === 'O').area, '#d9c893');
   fillArea(ctx, contour(l, c, (x, y) => at(x, y) === ',').area, '#a98f63');
+  drawGround(ctx, l, c);
   drawWater(ctx, l, c);
   drawSurfaces(ctx, l, c);
+  drawMountains(ctx, l, c, look);
   drawBuilt(ctx, l, c);
+  drawGrowth(ctx, l, c, look);
+  // A forester's lodge, a hut in the swamp.
+  (l.houses ?? []).forEach((a) => drawHouse(ctx, a, c, cellNoise(l, a.x, a.y, 4), undefined, look.snow));
+}
 
-  // From the top down, so that a nearer tree covers the one behind it.
+// Trees of every kind and boulders, from the top down, so that a nearer one covers the one behind it.
+const GROWTH = 'RTNJQ';
+function drawGrowth(ctx: CanvasRenderingContext2D, l: Layout, c: number, look: Look) {
   for (let y = 0; y < l.h; y++) {
     for (let x = 0; x < l.w; x++) {
-      const cell = at(x, y);
-      if (cell !== 'R' && cell !== 'T') continue;
+      const cell = l.cells[y]![x]!;
+      if (!GROWTH.includes(cell)) continue;
       const r = cellNoise(l, x, y, 2);
       const px = (x + 0.5 + (r() - 0.5) * 0.3) * c;
       const py = (y + 0.5 + (r() - 0.5) * 0.3) * c;
+      if (cell === 'N') {
+        drawPine(ctx, px, py, c, look, r);
+        continue;
+      }
+      if (cell === 'J') {
+        drawPalm(ctx, px, py, c, r);
+        continue;
+      }
+      if (cell === 'Q') {
+        drawSnag(ctx, px, py, c, r);
+        continue;
+      }
       if (cell === 'R') {
         const size = c * (0.3 + r() * 0.16);
         const stone = new Path2D();
@@ -224,8 +244,269 @@ function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: Wi
       drawTree(ctx, px, py, c, look, r);
     }
   }
-  // A forester's lodge, a hut in the swamp.
-  (l.houses ?? []).forEach((a) => drawHouse(ctx, a, c, cellNoise(l, a.x, a.y, 4), undefined, look.snow));
+}
+
+// A fir from above: rings of needles, darker inside; it keeps its green in autumn.
+const PINE = ['#2c4a33', '#33543a', '#284431'];
+function drawPine(ctx: CanvasRenderingContext2D, px: number, py: number, c: number, look: Look, r: () => number) {
+  const size = c * (0.48 + r() * 0.16);
+  const turn = r() * Math.PI;
+  ctx.fillStyle = 'rgba(15, 25, 12, 0.35)';
+  ctx.beginPath();
+  ctx.arc(px + size * 0.2, py + size * 0.24, size * 0.9, 0, Math.PI * 2);
+  ctx.fill();
+  const tone = PINE[Math.floor(r() * PINE.length)]!;
+  for (const [k, shade] of [[1, tone], [0.68, 'rgba(0, 0, 0, 0.18)'], [0.38, 'rgba(0, 0, 0, 0.22)']] as const) {
+    const star = new Path2D();
+    const n = 9;
+    for (let i = 0; i <= n * 2; i++) {
+      const a = turn + (i / (n * 2)) * Math.PI * 2;
+      const reach = size * k * (i % 2 ? 0.62 : 1);
+      if (i) star.lineTo(px + Math.cos(a) * reach, py + Math.sin(a) * reach);
+      else star.moveTo(px + Math.cos(a) * reach, py + Math.sin(a) * reach);
+    }
+    ctx.fillStyle = shade;
+    ctx.fill(star);
+    if (k === 1) {
+      ctx.strokeStyle = 'rgba(10, 20, 10, 0.55)';
+      ctx.lineWidth = Math.max(1, c / 28);
+      ctx.stroke(star);
+      if (look.snow) {
+        ctx.save();
+        ctx.clip(star);
+        ctx.fillStyle = 'rgba(246, 249, 251, 0.88)';
+        ctx.beginPath();
+        ctx.arc(px - size * 0.3, py - size * 0.32, size * 0.62, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+  }
+}
+
+// A palm from above: long fronds out of the middle.
+function drawPalm(ctx: CanvasRenderingContext2D, px: number, py: number, c: number, r: () => number) {
+  const size = c * (0.55 + r() * 0.15);
+  const turn = r() * Math.PI;
+  const n = 7;
+  ctx.fillStyle = 'rgba(15, 25, 12, 0.3)';
+  ctx.beginPath();
+  ctx.arc(px + size * 0.2, py + size * 0.24, size * 0.7, 0, Math.PI * 2);
+  ctx.fill();
+  for (let i = 0; i < n; i++) {
+    const a = turn + (i / n) * Math.PI * 2;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(a);
+    ctx.fillStyle = i % 2 ? '#5f8f3c' : '#4f7d33';
+    ctx.beginPath();
+    ctx.ellipse(size * 0.5, 0, size * 0.52, size * 0.16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(30, 50, 20, 0.7)';
+    ctx.lineWidth = Math.max(1, c / 30);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(size, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.fillStyle = '#7a5a34';
+  ctx.beginPath();
+  ctx.arc(px, py, size * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// A dead tree from above: bare branches out of the trunk.
+function drawSnag(ctx: CanvasRenderingContext2D, px: number, py: number, c: number, r: () => number) {
+  const size = c * (0.45 + r() * 0.15);
+  ctx.lineCap = 'round';
+  const branch = (x: number, y: number, a: number, len: number, w: number, depth: number) => {
+    const x2 = x + Math.cos(a) * len;
+    const y2 = y + Math.sin(a) * len;
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    if (depth > 0) for (const d of [-0.5, 0.45]) branch(x2, y2, a + d + (r() - 0.5) * 0.4, len * 0.6, w * 0.6, depth - 1);
+  };
+  ctx.strokeStyle = 'rgba(15, 12, 8, 0.3)';
+  for (let i = 0; i < 4; i++) branch(px + c * 0.08, py + c * 0.1, i * 1.6 + r(), size * 0.55, Math.max(1, c / 10), 1);
+  ctx.strokeStyle = '#5b4a3a';
+  const turn = r() * 6;
+  for (let i = 0; i < 4; i++) branch(px, py, turn + i * 1.6 + r() * 0.5, size * 0.55, Math.max(1, c / 10), 2);
+  ctx.fillStyle = '#4a3b2c';
+  ctx.beginPath();
+  ctx.arc(px, py, size * 0.16, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Ground the editor paints outdoors: cobbles, a road of stone slabs, a ploughed field with its rows.
+function drawGround(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
+  const at = (x: number, y: number) => l.cells[y]?.[x];
+  const has = (ch: string) => l.cells.some((row) => row.includes(ch));
+  const each = (ch: string, f: (x: number, y: number) => void) => {
+    for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) if (at(x, y) === ch) f(x, y);
+  };
+  if (has('V')) {
+    const field = contour(l, c, (x, y) => at(x, y) === 'V');
+    fillArea(ctx, field.area, '#8a6c44');
+    ctx.save();
+    ctx.clip(field.area);
+    ctx.lineCap = 'round';
+    each('V', (x, y) => {
+      for (let k = 0; k < 3; k++) {
+        const py = (y + (k + 0.5) / 3) * c;
+        ctx.strokeStyle = 'rgba(60, 44, 24, 0.55)';
+        ctx.lineWidth = Math.max(1, c / 14);
+        ctx.beginPath();
+        ctx.moveTo(x * c, py + c * 0.06);
+        ctx.lineTo((x + 1) * c, py + c * 0.06);
+        ctx.stroke();
+        ctx.strokeStyle = '#7f9a48';
+        ctx.lineWidth = Math.max(1, c / 9);
+        ctx.setLineDash([c * 0.12, c * 0.1]);
+        ctx.beginPath();
+        ctx.moveTo(x * c, py - c * 0.03);
+        ctx.lineTo((x + 1) * c, py - c * 0.03);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    });
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(60, 44, 24, 0.6)';
+    ctx.lineWidth = Math.max(1, c / 14);
+    ctx.stroke(field.edges);
+  }
+  if (has('K')) {
+    const road = contour(l, c, (x, y) => at(x, y) === 'K');
+    fillArea(ctx, road.area, '#a79f8f');
+    ctx.save();
+    ctx.clip(road.area);
+    ctx.strokeStyle = 'rgba(60, 52, 40, 0.5)';
+    ctx.lineWidth = Math.max(1, c / 22);
+    each('K', (x, y) => {
+      // Slabs in staggered rows, a little different each.
+      const r = cellNoise(l, x, y, 11);
+      for (let k = 0; k < 2; k++) {
+        const top = (y + k / 2) * c;
+        const off = ((y * 2 + k) % 2) * 0.5;
+        for (let j = -1; j < 2; j++) {
+          const left = (x + j * 0.66 + off * 0.66) * c;
+          ctx.fillStyle = `rgba(255, 250, 235, ${0.05 + r() * 0.12})`;
+          ctx.fillRect(left, top, c * 0.66, c / 2);
+          ctx.strokeRect(left, top, c * 0.66, c / 2);
+        }
+      }
+    });
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(60, 52, 40, 0.75)';
+    ctx.lineWidth = Math.max(1.5, c / 10);
+    ctx.stroke(road.edges);
+  }
+  if (has('C')) {
+    const cobbles = contour(l, c, (x, y) => at(x, y) === 'C');
+    fillArea(ctx, cobbles.area, '#8f8778');
+    ctx.save();
+    ctx.clip(cobbles.area);
+    ctx.strokeStyle = 'rgba(50, 44, 36, 0.55)';
+    ctx.lineWidth = Math.max(1, c / 28);
+    each('C', (x, y) => {
+      const r = cellNoise(l, x, y, 12);
+      for (let j = 0; j < 3; j++)
+        for (let i = 0; i < 3; i++) {
+          const cx = (x + (i + 0.5 + (j % 2) * 0.5) / 3) * c;
+          const cy = (y + (j + 0.5) / 3) * c;
+          ctx.fillStyle = ['#a39b8b', '#9a9282', '#aca594'][Math.floor(r() * 3)]!;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, c * (0.13 + r() * 0.03), c * (0.12 + r() * 0.03), r() * 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
+    });
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(50, 44, 36, 0.7)';
+    ctx.lineWidth = Math.max(1.5, c / 10);
+    ctx.stroke(cobbles.edges);
+  }
+}
+
+// Mountains: a mass of rock with its edge in shade, ridges and screes; snow on the tops in winter.
+function drawMountains(ctx: CanvasRenderingContext2D, l: Layout, c: number, look: Look) {
+  const at = (x: number, y: number) => l.cells[y]?.[x];
+  if (!l.cells.some((row) => row.includes('A'))) return;
+  const rock = contour(l, c, (x, y) => at(x, y) === 'A');
+  ctx.save();
+  ctx.translate(c * 0.18, c * 0.22);
+  ctx.fillStyle = 'rgba(20, 16, 10, 0.4)';
+  ctx.fill(rock.area);
+  ctx.restore();
+  fillArea(ctx, rock.area, '#8a8174');
+  ctx.save();
+  ctx.clip(rock.area);
+  // How deep inside the range a cell is: the tops are the cells farthest from its edge.
+  const depth = (x: number, y: number) => {
+    for (let d = 1; d < 4; d++)
+      for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++) if (at(x + dx, y + dy) !== 'A') return d - 1;
+    return 3;
+  };
+  for (let y = 0; y < l.h; y++)
+    for (let x = 0; x < l.w; x++) {
+      if (at(x, y) !== 'A') continue;
+      const r = cellNoise(l, x, y, 13);
+      const d = depth(x, y);
+      // Not a peak on every cell: some cells are slopes between them.
+      if (r() < (d ? 0.45 : 0.6)) {
+        ctx.fillStyle = 'rgba(60, 52, 42, 0.35)';
+        for (let k = 0; k < 3; k++) {
+          ctx.beginPath();
+          ctx.arc((x + r()) * c, (y + r()) * c, c * (0.03 + r() * 0.04), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        continue;
+      }
+      const px = (x + 0.5 + (r() - 0.5) * 0.5) * c;
+      const py = (y + 0.6 + (r() - 0.5) * 0.4) * c;
+      const hgt = c * (0.55 + d * 0.3 + r() * 0.3);
+      const wid = c * (0.7 + d * 0.15 + r() * 0.3);
+      // A peak: its lit face and its shaded one, split by the ridge.
+      ctx.fillStyle = d >= 2 && look.snow ? '#eef2f4' : `rgb(${150 + d * 12}, ${142 + d * 12}, ${128 + d * 12})`;
+      ctx.beginPath();
+      ctx.moveTo(px - wid, py + hgt * 0.4);
+      ctx.lineTo(px, py - hgt);
+      ctx.lineTo(px, py + hgt * 0.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = d >= 2 && look.snow ? '#c9d3da' : `rgb(${96 + d * 8}, ${90 + d * 8}, ${80 + d * 8})`;
+      ctx.beginPath();
+      ctx.moveTo(px, py - hgt);
+      ctx.lineTo(px + wid, py + hgt * 0.4);
+      ctx.lineTo(px, py + hgt * 0.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(40, 34, 28, 0.6)';
+      ctx.lineWidth = Math.max(1, c / 24);
+      ctx.beginPath();
+      ctx.moveTo(px - wid, py + hgt * 0.4);
+      ctx.lineTo(px, py - hgt);
+      ctx.lineTo(px + wid, py + hgt * 0.4);
+      ctx.stroke();
+      // The high tops white with snow in any season.
+      if (d >= 2 && !look.snow) {
+        ctx.fillStyle = 'rgba(246, 249, 251, 0.9)';
+        ctx.beginPath();
+        ctx.moveTo(px - wid * 0.3, py - hgt * 0.45);
+        ctx.lineTo(px, py - hgt);
+        ctx.lineTo(px + wid * 0.3, py - hgt * 0.45);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  ctx.restore();
+  ctx.strokeStyle = '#3d362d';
+  ctx.lineWidth = Math.max(2, c / 8);
+  ctx.lineJoin = 'round';
+  ctx.stroke(rock.edges);
 }
 
 // A roof from above: two slopes that meet at the ridge, rows of tiles or thatch, a chimney on some.
@@ -533,10 +814,33 @@ function drawSurfaces(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
 
 function drawWater(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   const at = (x: number, y: number) => l.cells[y]?.[x];
-  if (!l.cells.some((r) => r.includes('~') || r.includes('='))) return;
-  const wet = contour(l, c, (x, y) => at(x, y) === '~' || at(x, y) === '=');
+  if (!l.cells.some((r) => r.includes('~') || r.includes('=') || r.includes('O'))) return;
+  const wet = contour(l, c, (x, y) => at(x, y) === '~' || at(x, y) === '=' || at(x, y) === 'O');
   fillArea(ctx, wet.area, '#7fb0bd');
-  fillArea(ctx, contour(l, c, (x, y) => at(x, y) === '~').area, '#3f7d97');
+  fillArea(ctx, contour(l, c, (x, y) => at(x, y) === '~' || at(x, y) === 'O').area, '#3f7d97');
+  // The sea: deeper, with waves.
+  if (l.cells.some((r) => r.includes('O'))) {
+    const deep = contour(l, c, (x, y) => at(x, y) === 'O');
+    fillArea(ctx, deep.area, '#2a5c78');
+    ctx.save();
+    ctx.clip(deep.area);
+    ctx.strokeStyle = 'rgba(210, 236, 244, 0.45)';
+    ctx.lineWidth = Math.max(1, c / 20);
+    ctx.lineCap = 'round';
+    for (let y = 0; y < l.h; y++)
+      for (let x = 0; x < l.w; x++) {
+        if (at(x, y) !== 'O') continue;
+        const r = cellNoise(l, x, y, 14);
+        if (r() < 0.4) continue;
+        const wx = (x + r()) * c;
+        const wy = (y + r()) * c;
+        ctx.beginPath();
+        ctx.arc(wx - c * 0.12, wy, c * 0.12, Math.PI * 1.1, Math.PI * 1.9);
+        ctx.arc(wx + c * 0.12, wy, c * 0.12, Math.PI * 1.1, Math.PI * 1.9);
+        ctx.stroke();
+      }
+    ctx.restore();
+  }
   ctx.strokeStyle = 'rgba(232, 244, 244, 0.7)';
   ctx.lineWidth = Math.max(1, c / 12);
   ctx.lineCap = 'round';
@@ -580,10 +884,10 @@ function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   ctx.lineWidth = Math.max(1, c / 14);
   ctx.lineCap = 'round';
   ctx.stroke(road.edges);
+  drawGround(ctx, l, c);
+  drawMountains(ctx, l, c, look);
   drawBuilt(ctx, l, c);
-  for (let y = 0; y < l.h; y++) {
-    for (let x = 0; x < l.w; x++) if (at(x, y) === 'T') drawTree(ctx, (x + 0.5) * c, (y + 0.5) * c, c, look, cellNoise(l, x, y, 2));
-  }
+  drawGrowth(ctx, l, c, look);
   (l.houses ?? []).forEach((a, i) => drawHouse(ctx, a, c, cellNoise(l, a.x, a.y, 4), l.landmarks?.find((m) => m.house === i)?.kind, look.snow));
   if (l.wall) drawWall(ctx, l, c);
   // Wells.

@@ -394,14 +394,16 @@ houses, wells, the town wall and its towers in a town (a house stands in a fores
 also be put up of its parts: «Building» drags a rectangle of walls round a plank floor (a room built onto another shares
 its wall), «Wall» and «Floor» go cell by cell, «Door» cuts a door into a wall, and «Roof» puts a roof over the whole
 building or takes it off — to show the players what is inside; lava, ice, mud and
-pits on any map. The ground takes a colour: spring, autumn, snow (with snow on the trees, the stones and the roofs), dry
+pits on any map; outdoors also cobbles, a stone road, a ploughed field, the sea (with a sandy shore), mountains, firs,
+palms and dead trees. The ground takes a colour: spring, autumn, snow (with snow on the trees, the stones and the roofs), dry
 steppe or ash outdoors; the time of day — dawn, dusk or night, when fires, torches, braziers, lamps, crystals, lava and
 lit windows keep their light (one place at different hours — one map exported several times); a wooden, marble, dark or sandstone floor indoors.
 
 Things come from the palette: about a hundred of them in furniture, stores, workshop, shrine, dungeon, town, cave and
 outdoors; the groups fold, and a search finds a thing by name. A thing goes on a cell, on top of other things too (a
 chest on a rug); R turns it, dragging moves it, Delete or the right button takes it away. Several are picked with a
-rectangle or Shift+click and move, turn and go together. A rug, a table, a puddle and others stretch by their corner; a
+rectangle or Shift+click and move, turn and go together. A rug, a table, a puddle and others stretch by any side or corner; things stand on trees and boulders too (a nest on a
+fir); a
 rug, a bed, a tent and others take the colour you choose. Thickness 1–3, Shift+click draws a straight line, the right
 button erases, ⌘+Z undoes. The wheel or two fingers scroll the map, a pinch or ⌘+wheel zooms around the cursor, and the
 map can go past its edges; 0 shows the whole map, 1 — 100 %, + and − zoom. «View» (H) drags the map about with the

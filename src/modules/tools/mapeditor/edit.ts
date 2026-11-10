@@ -16,7 +16,7 @@ export interface MapDraft {
 
 export const MIN_SIDE = 6;
 export const MAX_SIDE = 120;
-const CELLS = /^[.#,PST~RH=WLIMXFB]*$/;
+const CELLS = /^[.#,PST~RH=WLIMXFBCKVOANJQ]*$/;
 const side = (n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= MIN_SIDE && n <= MAX_SIDE;
 const int = (n: unknown) => typeof n === 'number' && Number.isInteger(n);
 
@@ -99,7 +99,8 @@ export function blankLayout(style: LayoutStyle, w: number, h: number, seed: numb
 // ---- Brushes ----
 export type BrushId =
   | 'floor' | 'wall' | 'room' | 'door' | 'pillar' | 'grass' | 'road' | 'square' | 'house' | 'sand' | 'water' | 'ford' | 'tree' | 'boulder' | 'townWall' | 'tower'
-  | 'lava' | 'ice' | 'mud' | 'pit' | 'planks' | 'timber' | 'build' | 'roof' | 'erase';
+  | 'lava' | 'ice' | 'mud' | 'pit' | 'planks' | 'timber' | 'build' | 'roof' | 'erase'
+  | 'cobbles' | 'flags' | 'field' | 'sea' | 'mountain' | 'pine' | 'palm' | 'snag';
 export interface Brush {
   id: BrushId;
   // A cell's letter it paints; none — a tool of its own (a rectangle, a toggle).
@@ -113,14 +114,16 @@ export function brushesFor(style: LayoutStyle): Brush[] {
   const ice = B('ice', { cell: 'I' });
   const mud = B('mud', { cell: 'M' });
   const pit = B('pit', { cell: 'X' });
+  // Outdoors anywhere: ground, the sea, mountains, trees of other kinds.
+  const outdoors = [B('cobbles', { cell: 'C' }), B('flags', { cell: 'K' }), B('field', { cell: 'V' }), B('sea', { cell: 'O' }), B('mountain', { cell: 'A' }), B('pine', { cell: 'N' }), B('palm', { cell: 'J' }), B('snag', { cell: 'Q' })];
   // A building of its own outdoors: walls round a floor, a wall or a floor cell by cell, doors in the walls, a roof on or off.
   const built = [B('build', { rect: true }), B('timber', { cell: 'B' }), B('planks', { cell: 'F' }), B('door', { toggle: true }), B('roof', { toggle: true })];
   if (style === 'building')
     return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('door', { toggle: true }), B('pillar', { toggle: true }), B('water', { cell: '~' }), lava, ice, mud, pit, B('erase', { cell: '#' })];
   if (style === 'cave') return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('water', { cell: '~' }), lava, ice, mud, pit, B('erase', { cell: '#' })];
   if (style === 'town')
-    return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('square', { cell: 'P' }), B('house', { rect: true }), ...built, B('tree', { cell: 'T' }), B('water', { cell: '~' }), mud, ice, lava, pit, B('pillar', { toggle: true }), B('townWall', { cell: 'W' }), B('tower', { toggle: true }), B('erase', { cell: '.' })];
-  return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('sand', { cell: 'S' }), B('water', { cell: '~' }), B('ford', { cell: '=' }), mud, ice, lava, pit, B('tree', { cell: 'T' }), B('boulder', { cell: 'R' }), B('room', { rect: true }), B('house', { rect: true }), ...built, B('erase', { cell: '.' })];
+    return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('square', { cell: 'P' }), B('house', { rect: true }), ...built, B('tree', { cell: 'T' }), ...outdoors, B('water', { cell: '~' }), mud, ice, lava, pit, B('pillar', { toggle: true }), B('townWall', { cell: 'W' }), B('tower', { toggle: true }), B('erase', { cell: '.' })];
+  return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('sand', { cell: 'S' }), B('water', { cell: '~' }), B('ford', { cell: '=' }), mud, ice, lava, pit, B('tree', { cell: 'T' }), ...outdoors, B('boulder', { cell: 'R' }), B('room', { rect: true }), B('house', { rect: true }), ...built, B('erase', { cell: '.' })];
 }
 
 // ---- Moves ----
@@ -128,7 +131,8 @@ const at = (l: Layout, x: number, y: number) => l.cells[y]?.[x];
 const inMap = (l: Layout, x: number, y: number) => x >= 0 && y >= 0 && x < l.w && y < l.h;
 const covers = (a: { x: number; y: number; w: number; h: number }, x: number, y: number) => x >= a.x && y >= a.y && x < a.x + a.w && y < a.y + a.h;
 // Where a thing can stand.
-export const standable = (c: string | undefined) => walkable(c);
+// …and on a tree's crown or a boulder (a nest, a lookout, a raven), over them on the picture.
+export const standable = (c: string | undefined) => walkable(c) || (!!c && 'TRNJQA'.includes(c));
 
 // What no longer fits after the ground changed: houses not all house, rooms without floor, doors and pillars off the
 // floor, things standing on rock or water, towers off the wall.
@@ -405,13 +409,16 @@ export const setTone = (l: Layout, tone: string | null): Layout =>
   (tone ?? undefined) === l.tone ? l : tone && tonesFor(l.style).includes(tone) ? { ...l, tone } : (({ tone: _, ...rest }) => rest)(l);
 
 // A thing made larger or smaller (only those that stretch), from its top-left corner.
-export function stretchProp(l: Layout, i: number, w: number, h: number): Layout {
+// x, y: a new top-left corner (pulled by the left or top side); none — it stays.
+export function stretchProp(l: Layout, i: number, w: number, h: number, x?: number, y?: number): Layout {
   const p = l.props?.[i];
   if (!p || !STRETCH.includes(p.kind)) return l;
   const W = Math.min(MAX_STRETCH, Math.max(1, Math.round(w)));
   const H = Math.min(MAX_STRETCH, Math.max(1, Math.round(h)));
-  if (W === p.w && H === p.h) return l;
-  const next = { ...p, w: W, h: H };
+  const X = x ?? p.x;
+  const Y = y ?? p.y;
+  if (W === p.w && H === p.h && X === p.x && Y === p.y) return l;
+  const next = { ...p, x: X, y: Y, w: W, h: H };
   return fits(l, next, i) ? { ...l, props: l.props!.map((o, n) => (n === i ? next : o)) } : l;
 }
 

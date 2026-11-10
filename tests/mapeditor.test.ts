@@ -191,4 +191,21 @@ describe('the map editor', () => {
     expect(swapKind(m, index, 'chest').props![index]!.kind).toBe('chest');
     expect(swapKind(m, 99, 'chest')).toBe(m);
   });
+
+  it('stretches a thing from any side and puts things on trees', () => {
+    const { layout: l, index } = placeProp(blankLayout('meadow', 12, 10, 1), 'rug', 5, 5, 0, 0.5);
+    // Pulled by the top-left corner: the bottom-right one stays.
+    const big = stretchProp(l, index, 4, 3, 3, 4);
+    expect(big.props![index]).toMatchObject({ x: 3, y: 4, w: 4, h: 3 });
+    // Off the map — nothing changes.
+    expect(stretchProp(l, index, 8, 2, -1, 5)).toBe(l);
+    // A nest on a tree, a raven on a boulder.
+    let wild = paint(blankLayout('forest', 8, 8, 1), [{ x: 2, y: 2 }, { x: 4, y: 4 }], 'T');
+    wild = paint(wild, [{ x: 6, y: 6 }], 'R');
+    const nest = placeProp(wild, 'nest', 2, 2);
+    expect(nest.index).toBeGreaterThanOrEqual(0);
+    expect(placeProp(nest.layout, 'nest', 6, 6).index).toBeGreaterThanOrEqual(0);
+    // Water is still no place for a chair.
+    expect(placeProp(paint(wild, [{ x: 1, y: 1 }], '~'), 'chair', 1, 1).index).toBe(-1);
+  });
 });

@@ -5,7 +5,7 @@
   import { drawLayout } from '../mapgen/draw';
   import type { Layout } from '../mapgen/layout';
   import {
-    addBuilding, addHouse, addRoom, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower,
+    addBuilding, addHouse, addRoom, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, MAX_STRETCH, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower,
   } from './edit';
   import { editor } from './store.svelte';
   import { assets } from './assets.svelte';
@@ -89,13 +89,15 @@
     const sel = layout.props?.[editor.selected];
     if (sel) {
       box(sel.x, sel.y, sel.w, sel.h, '#f2c14e', true);
-      // The corner to pull: a thing that stretches.
+      // The handles to pull: corners and sides of a thing that stretches.
       if (STRETCH.includes(sel.kind)) {
         ctx.fillStyle = '#f2c14e';
         ctx.strokeStyle = '#1e1e1e';
         ctx.lineWidth = 1.5;
-        ctx.fillRect((sel.x + sel.w) * c - 9, (sel.y + sel.h) * c - 9, 10, 10);
-        ctx.strokeRect((sel.x + sel.w) * c - 9, (sel.y + sel.h) * c - 9, 10, 10);
+        for (const [hx, hy] of handlesOf(sel)) {
+          ctx.fillRect(hx - 5, hy - 5, 10, 10);
+          ctx.strokeRect(hx - 5, hy - 5, 10, 10);
+        }
       }
     }
     if (band) {
@@ -132,17 +134,34 @@
   let pan: { x: number; y: number; left: number; top: number } | null = null;
   let space = $state(false);
   const hand = $derived(editor.viewing || space);
-  let pull: { index: number; started: boolean } | null = null;
-  // Is the pointer on the stretching corner of the chosen thing?
-  const onCorner = (e: PointerEvent) => {
+  // Pulling a side or a corner: which way (-1 left / top, 1 right / bottom, 0 that side stays) and the thing as it was.
+  type Side = { sx: -1 | 0 | 1; sy: -1 | 0 | 1 };
+  let pull: (Side & { index: number; started: boolean; from: { x: number; y: number; w: number; h: number } }) | null = null;
+  const SIDES: Side[] = [
+    { sx: -1, sy: -1 }, { sx: 1, sy: -1 }, { sx: -1, sy: 1 }, { sx: 1, sy: 1 },
+    { sx: 0, sy: -1 }, { sx: 0, sy: 1 }, { sx: -1, sy: 0 }, { sx: 1, sy: 0 },
+  ];
+  const handleAt = (q: { x: number; y: number; w: number; h: number }, s: Side): [number, number] => [
+    (q.x + (q.w * (s.sx + 1)) / 2) * c,
+    (q.y + (q.h * (s.sy + 1)) / 2) * c,
+  ];
+  // The sides only when the thing is large enough on screen to tell them from the corners.
+  const sidesOf = (q: { w: number; h: number }) => SIDES.filter((s) => (s.sx && s.sy) || (s.sx ? q.h * c >= 36 : q.w * c >= 36));
+  const handlesOf = (q: { x: number; y: number; w: number; h: number }) => sidesOf(q).map((s) => handleAt(q, s));
+  // The handle of the chosen thing under the pointer.
+  const onCorner = (e: PointerEvent): Side | null => {
     const sel = layout.props?.[editor.selected];
-    if (!sel || !STRETCH.includes(sel.kind)) return false;
+    if (!sel || !STRETCH.includes(sel.kind)) return null;
     const r = over!.getBoundingClientRect();
     const k = r.width / (layout.w * c);
     const px = (e.clientX - r.left) / k;
     const py = (e.clientY - r.top) / k;
-    return Math.abs(px - (sel.x + sel.w) * c) < 12 && Math.abs(py - (sel.y + sel.h) * c) < 12;
+    return sidesOf(sel).find((s) => {
+      const [hx, hy] = handleAt(sel, s);
+      return Math.abs(px - hx) < 10 && Math.abs(py - hy) < 10;
+    }) ?? null;
   };
+  const cursorOf = (s: Side | null) => (!s ? '' : s.sx && s.sy ? (s.sx === s.sy ? 'nwse-resize' : 'nesw-resize') : s.sx ? 'ew-resize' : 'ns-resize');
   let lastPainted: { x: number; y: number } | null = null;
   // A chest woken a moment ago: its teeth show.
   let chomp = $state<{ i: number } | null>(null);
@@ -201,8 +220,10 @@
       paintTo(p);
       return;
     }
-    if (editor.mode !== 'brush' && onCorner(e)) {
-      pull = { index: editor.selected, started: false };
+    const side = editor.mode !== 'brush' ? onCorner(e) : null;
+    const was = layout.props?.[editor.selected];
+    if (side && was) {
+      pull = { ...side, index: editor.selected, started: false, from: { x: was.x, y: was.y, w: was.w, h: was.h } };
       return;
     }
     if (editor.mode === 'select') {
@@ -272,14 +293,19 @@
     }
     const p = cellAt(e);
     if (!hover || hover.x !== p.x || hover.y !== p.y) hover = p;
-    over!.style.cursor = pull || (editor.mode !== 'brush' && onCorner(e)) ? 'nwse-resize' : '';
+    over!.style.cursor = cursorOf(pull ?? (editor.mode !== 'brush' ? onCorner(e) : null));
     if (stroke) paintTo(p);
     else if (rect) rect = { a: rect.a, b: p };
     else if (band) band = { ...band, b: p };
     else if (pull && editor.layout) {
-      const q = editor.layout.props?.[pull.index];
-      if (q) {
-        const next = stretchProp(editor.layout, pull.index, p.x - q.x + 1, p.y - q.y + 1);
+      const f = pull.from;
+      // The opposite side stays where it was; the pulled one follows the pointer, no further than the largest size.
+      const span = (lo: number, hi: number, dir: number, at: number) =>
+        dir > 0 ? [lo, Math.min(lo + MAX_STRETCH - 1, Math.max(lo, at))] : dir < 0 ? [Math.max(hi - MAX_STRETCH + 1, Math.min(hi, at)), hi] : [lo, hi];
+      const [x0, x1] = span(f.x, f.x + f.w - 1, pull.sx, p.x);
+      const [y0, y1] = span(f.y, f.y + f.h - 1, pull.sy, p.y);
+      {
+        const next = stretchProp(editor.layout, pull.index, x1! - x0! + 1, y1! - y0! + 1, x0, y0);
         if (next !== editor.layout) {
           editor.change(next, pull.started);
           pull.started = true;

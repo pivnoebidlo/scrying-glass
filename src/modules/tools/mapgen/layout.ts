@@ -34,7 +34,9 @@ export interface Layout {
   // Rows of h strings of w characters. Walkable: '.' floor or grass, ',' path or street, 'P' paved square, 'S' sand,
   // '=' a ford, 'I' ice, 'M' mud, 'F' the floor of a building put up outdoors; not: '#' rock, 'T' tree, 'R' boulder,
   // '~' water, 'H' a house, 'L' lava, 'X' a pit, 'B' the wall of such a building.
-  // The generator makes none of I, M, L, X, F, B: only the map editor paints them.
+  // Since 0.108, outdoors: 'C' cobbles, 'K' a road of stone slabs, 'V' a ploughed field (walkable); 'O' the sea, 'A' mountains,
+  // 'N' a fir, 'J' a palm, 'Q' a dead tree (not).
+  // The generator makes none of I, M, L, X, F, B and those: only the map editor paints them.
   cells: string[];
   rooms: LayoutRoom[];
   doors: LayoutDoor[];
@@ -168,7 +170,8 @@ function corridor(a: LayoutRoom, b: LayoutRoom, others: LayoutRoom[], r: Random)
   return null;
 }
 
-export const walkable = (c: string | undefined) => c === '.' || c === ',' || c === 'P' || c === 'S' || c === '=' || c === 'I' || c === 'M' || c === 'F';
+export const walkable = (c: string | undefined) =>
+  c === '.' || c === ',' || c === 'P' || c === 'S' || c === '=' || c === 'I' || c === 'M' || c === 'F' || c === 'C' || c === 'K' || c === 'V';
 // A building put up outdoors: its floor and walls.
 export const isBuilt = (c: string | undefined) => c === 'F' || c === 'B';
 // The cells of the building a cell belongs to (its walls and floor joined side by side); none — not a building.
