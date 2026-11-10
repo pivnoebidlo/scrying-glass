@@ -48,6 +48,8 @@ const GRASS_TONES: Record<string, Look> = {
   asphalt: { grass: '#4f5154', tuft: '#5b5d60', tree: ['#2f4a33', '#365a3b', '#284431'] },
   // The wasteland: cracked, sun-bleached earth with dead growth.
   wastes: { grass: '#a8976a', tuft: '#857552', tree: ['#5a5440', '#4a4434', '#6a6048'] },
+  // The sea floor: pale sand under the water, sea grass for growth.
+  seabed: { grass: '#5d8a8a', tuft: '#4a7676', tree: ['#2f6a5a', '#3a7a6a', '#245a4c'] },
   // A jungle's deep green.
   jungle: { grass: '#4a7a35', tuft: '#3a6a2a', tree: ['#2a5a2a', '#356a2a', '#1f4a24'] },
   moon: { grass: '#a3a29d', tuft: '#8c8b86', tree: ['#6e6d69', '#7d7c77', '#5f5e5a'] },
@@ -1345,6 +1347,8 @@ const LIGHT_OF: Partial<Record<PropKind, { r: number; rgb?: string }>> = {
   tv: { r: 2, rgb: '120, 170, 255' }, computer: { r: 1.6, rgb: '120, 170, 255' }, burnbarrel: { r: 4 }, toxicbarrel: { r: 1.4, rgb: '160, 255, 90' },
   lantern: { r: 3 }, alembic: { r: 1.6 }, viewscreen: { r: 3, rgb: '120, 200, 255' }, cryopod: { r: 2, rgb: '160, 220, 255' },
   forge: { r: 4.5 }, cavecrystals: { r: 3.5, rgb: '170, 140, 255' }, glowshrooms: { r: 1.8, rgb: '140, 230, 200' }, stage: { r: 3 },
+  boiler: { r: 3.5 }, teslacoil: { r: 3, rgb: '140, 200, 255' }, treasurepile: { r: 2.5, rgb: '255, 220, 110' }, giantclam: { r: 1.6, rgb: '255, 240, 230' },
+  tripod: { r: 3.5 },
 };
 // `power`: how much of the darkness the light takes away (windows less than a fire).
 export function lightsOf(l: Layout): { x: number; y: number; r: number; rgb: string; power: number }[] {

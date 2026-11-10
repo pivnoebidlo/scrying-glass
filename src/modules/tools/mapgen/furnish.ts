@@ -36,6 +36,8 @@ export const PROP_KINDS = [
   'igloo', 'sled', 'iceblock', 'snowdrift', 'runestone', 'icehole', 'pagoda', 'lantern', 'zengarden', 'zenrock', 'bamboo', 'torii', 'tatami', 'lowtable', 'koipond', 'captainchair', 'viewscreen', 'cryopod', 'restraint', 'shuttle', 'fueltank', 'mech', 'landingpad', 'drone', 'alembic', 'potionshelf', 'mannequin', 'loom', 'fabric', 'bookcase', 'globe', 'scrolls', 'safe', 'scales', 'vaultdoor',
   // draw-sets6.ts: crafts; nature; a city's places.
   'windmill', 'watermill', 'breadrack', 'horse', 'hayrack', 'saddle', 'forge', 'quench', 'bathpool', 'waterfall', 'cliff', 'cavecrystals', 'giantmushroom', 'glowshrooms', 'lilypads', 'driftwood', 'produce', 'dummy', 'archery', 'stage', 'seats', 'podium', 'cryptentrance',
+  // draw-sets7.ts: under the sea; the sky; a steampunk workshop; a nomads' camp; a pirates' cove.
+  'coral', 'kelp', 'giantclam', 'shipwreck', 'anemone', 'bubbles', 'cloud', 'airship', 'mooringmast', 'floatrock', 'balloon', 'gears', 'boiler', 'automaton', 'telescope', 'teslacoil', 'gauges', 'yurt', 'camel', 'tripod', 'hiderack', 'sheep', 'treasurepile', 'jollyroger', 'plank', 'charttable', 'parrot', 'ropebridge',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

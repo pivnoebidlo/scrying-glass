@@ -94,6 +94,11 @@
     { id: 'crafts', kinds: ['forge', 'quench', 'breadrack', 'windmill', 'watermill', 'horse', 'hayrack', 'saddle', 'bathpool'], genres: ['fantasy', 'gothic'] },
     { id: 'nature', kinds: ['waterfall', 'cliff', 'cavecrystals', 'giantmushroom', 'glowshrooms', 'lilypads', 'driftwood'] },
     { id: 'places', kinds: ['produce', 'dummy', 'archery', 'stage', 'seats', 'podium', 'cryptentrance'], genres: ['fantasy', 'gothic'] },
+    { id: 'underwater', kinds: ['coral', 'kelp', 'anemone', 'giantclam', 'shipwreck', 'bubbles'] },
+    { id: 'sky', kinds: ['cloud', 'floatrock', 'airship', 'balloon', 'mooringmast'] },
+    { id: 'steampunk', kinds: ['gears', 'boiler', 'automaton', 'teslacoil', 'telescope', 'gauges'], genres: ['fantasy', 'gothic', 'noir', 'scifi'] },
+    { id: 'nomads', kinds: ['yurt', 'camel', 'tripod', 'hiderack', 'sheep'] },
+    { id: 'pirates', kinds: ['treasurepile', 'jollyroger', 'plank', 'charttable', 'parrot', 'ropebridge'], genres: ['fantasy', 'gothic'] },
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];

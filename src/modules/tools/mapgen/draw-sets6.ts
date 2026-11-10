@@ -3,6 +3,7 @@
 // places (a market, an arena, a theatre, a crypt).
 import type { Prop } from './furnish';
 import { circle, CLOTH, GLOW, glow, lines, rect, shape, STONE, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets7 } from './draw-sets7';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -225,6 +226,7 @@ export function drawSets6(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       for (const x of [L + c * 0.24, w / 2 - c * 0.24]) shape(ctx, '#6b665d', circle(ctx, x, T + c * 0.24, c * 0.14), thin);
       shape(ctx, '#a39d90', rect(ctx, w / 2 - c * 0.7, h / 2 - c * 0.5, c * 0.6, c * 0.36, c * 0.04), thin);
       break;
+    default:
+      drawSets7(ctx, p, w, h, c);
   }
 }
-

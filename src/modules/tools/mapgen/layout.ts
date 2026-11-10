@@ -66,7 +66,7 @@ export const LIGHTS = ['dawn', 'dusk', 'night'] as const;
 export type Light = (typeof LIGHTS)[number];
 // Ground colours by kind of map: outdoors and in a town the grass, in a building and a cave the floor.
 export const TONES = {
-  outdoor: ['spring', 'autumn', 'winter', 'dry', 'ash', 'jungle', 'mars', 'moon', 'barrow', 'asphalt', 'wastes'],
+  outdoor: ['spring', 'autumn', 'winter', 'dry', 'ash', 'jungle', 'mars', 'moon', 'barrow', 'asphalt', 'wastes', 'seabed'],
   building: ['wood', 'marble', 'dark', 'sandstone', 'metal', 'grating', 'lino'],
   cave: ['dark', 'sandstone', 'frost'],
 } as const;

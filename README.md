@@ -437,7 +437,11 @@ bamboo, a koi pond) and an alchemist and a tailor (an alembic, a shelf of potion
 science fiction has a starship and a hangar (a captain's chair, a viewscreen, cryopods, a restraint chair, a shuttle, a
 cargo loader, a landing pad, drones). Fantasy and gothic horror also have a mill, a stable and a forge (a windmill, a water wheel, a bread rack, a horse, a hay
 rack, a saddle, a forge, a quenching barrel, a bath pool) and a market, an arena and a theatre (a produce stall, a
-training dummy, an archery target, a stage, rows of seats, a podium, a crypt entrance). Any world has wonders of nature (a
+training dummy, an archery target, a stage, rows of seats, a podium, a crypt entrance). Any world also has the sea floor (coral, kelp, an anemone, a giant clam, a shipwreck, bubbles; a sea floor ground), the
+sky (clouds, a floating island, an airship, a hot-air balloon, a mooring mast) and a nomads' camp (a yurt, a camel, a pot on
+a tripod, drying hides, sheep); a steampunk workshop (gears, a steam boiler, an automaton, a Tesla coil, a telescope,
+pressure gauges) is in every world but the wasteland and modern, and a pirates' cove (a treasure hoard, the Jolly Roger, a
+plank, a chart table, a parrot, a rope bridge) in fantasy and gothic horror. Any world has wonders of nature (a
 waterfall, a cliff edge, a crystal cluster, a giant mushroom, glowing mushrooms, lily pads, driftwood), the north (an igloo, a sled, blocks of ice, snowdrifts, a runestone,
 an ice hole) and a library and a bank (bookcases, a globe, scrolls, a safe, scales, a vault door).
 
