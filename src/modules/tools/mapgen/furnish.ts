@@ -44,6 +44,10 @@ export const PROP_KINDS = [
   'commandtent', 'supplywagon', 'drawbridge', 'portcullis', 'armorstand', 'stonecircle', 'observatory', 'necroaltar', 'pentagram', 'floatingbooks', 'carousel', 'maypole', 'garland', 'fairtent', 'foodcart', 'puppetshow', 'balloons', 'clocktower', 'noticeboard', 'guardbooth', 'pillory',
   // draw-sets10.ts: a graveyard; a harbour; a bazaar; a dragon's lair; a mine; an elven wood; the sewers.
   'freshgrave', 'angelstatue', 'gravelantern', 'shovel', 'wreath', 'galleon', 'harborcrane', 'fishbasket', 'rugstall', 'spicesacks', 'hookah', 'brasslamps', 'dragonskull', 'dragoneggs', 'ribcage', 'scorch', 'minecart', 'rails', 'ore', 'minesupport', 'runedoor', 'treehouse', 'moonwell', 'elvenarch', 'glowflowers', 'grate', 'outflow', 'sludge', 'rats', 'manhole',
+  // draw-sets11.ts: a witch's swamp; a jungle temple; an ice castle; a volcano's forge.
+  'witchhut', 'herbs', 'wisps', 'skullpost', 'fairyring', 'pyramid', 'serpent', 'sunaltar', 'traptiles', 'vinewall', 'icepillar', 'icethrone', 'frozen', 'icicles', 'lavaforge', 'obsidian', 'firevent', 'giantanvil',
+  // draw-sets12.ts: a space station; a Mars colony; a detective's office and a casino; an office and the metro; a shelter.
+  'airlock', 'hydroponics', 'oxygen', 'spacesuit', 'starwindow', 'habdome', 'rocket', 'extractor', 'colonyflag', 'corkboard', 'coatrack', 'roulette', 'cardtable', 'slotmachine', 'cubicle', 'watercooler', 'copier', 'turnstile', 'subwaycar', 'ticketmachine', 'blastdoor', 'exosuit', 'purifier', 'hamradio', 'cans', 'generator',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

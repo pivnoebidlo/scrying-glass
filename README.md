@@ -427,7 +427,15 @@ tent, a food cart, a puppet show, balloons), a graveyard (a fresh grave, an ange
 shovel) and sewers (a drain grate, an outflow pipe, sludge, rats, a manhole). Fantasy has a harbour (a galleon at the
 quay, a harbour crane, baskets of fish), an eastern bazaar (a rug stall, sacks of spices, a hookah, brass lamps), a
 dragon's lair (a dragon's skull, giant ribs, dragon's eggs, scorch marks), a dwarven mine (a mine cart, rails, ore, mine
-props, a rune door) and an elven wood (a tree house, a moonwell, a living arch, glowing flowers).
+props, a rune door) and an elven wood (a tree house, a moonwell, a living arch, glowing flowers), a witch's swamp (a hut on stilts, drying
+herbs, will-o'-the-wisps, a skull on a pole, a fairy ring), a jungle temple (a stepped pyramid, a serpent statue, a sun
+altar, pressure plates, vines on the wall), an ice castle (ice pillars, an ice throne, someone frozen in ice, icicles)
+and a volcano's forge (a lava forge, a giant's anvil, a fire vent, obsidian). Science fiction has a space station (an
+airlock, a window onto space, hydroponics, oxygen tanks, a spacesuit) and a Mars colony (a habitat dome, a landed rocket,
+a water extractor, a colony flag); noir and modern share a detective agency and a casino (an evidence board, a coat rack,
+a roulette table, a card table, a slot machine); modern has an office and the metro (cubicles, a water cooler, a copier,
+a turnstile, a metro car, a ticket machine); the wasteland has a bomb shelter (a blast door, an armoured exoskeleton, a
+water purifier, a radio set, tinned food, a diesel generator).
 
 A map has its world: fantasy, science fiction, gothic horror, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),

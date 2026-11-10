@@ -2,6 +2,7 @@
 // A graveyard; a harbour; an eastern bazaar; a dragon's lair; a dwarven mine; an elven wood; the sewers.
 import type { Prop } from './furnish';
 import { circle, CLOTH, glow, lines, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets11 } from './draw-sets11';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -319,5 +320,7 @@ export function drawSets10(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
         for (let y = -0.16; y <= 0.17; y += 0.08) (ctx.moveTo(-c * 0.2, y * c), ctx.lineTo(c * 0.2, y * c));
       });
       break;
+    default:
+      drawSets11(ctx, p, w, h, c);
   }
 }
