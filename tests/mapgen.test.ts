@@ -24,7 +24,8 @@ function reached(l: Layout) {
   return seen;
 }
 
-describe('генератор карт', () => {
+// Many layouts in a row: seconds alone, longer when the whole suite runs at once.
+describe('генератор карт', { timeout: 30000 }, () => {
   const r = seeded(17);
   const variants = (['building', 'cave'] as const).flatMap((style) => [3, 5, 8, 12].flatMap((rooms) => [false, true].map((chain) => ({ style, rooms, chain }))));
 

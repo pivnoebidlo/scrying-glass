@@ -576,6 +576,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   `content/{en,ru}.ts` — списки парами строка в строку, по-русски глаголы в настоящем времени — подходят заказчику любого
   пола; `text.ts`, `store.svelte.ts`); заказчик — из генератора NPC через `helpers` поселений; инструмент `hooks` — `SOME`,
   его берут D&D и Pathfinder (`claims`).
+  Корабли и гильдии с культами (`ui.tool = 'ships'` / `'orgs'`, `SOME`, возможности `ships` / `orgs` с формата пакета 12, `claims` D&D и Pathfinder): общий движок частей `tools/lore/engine.ts` (`PartSpec` — часть пишет строки результата, следующая читает предыдущие; `generate` / `reroll` / `rerollOne`, `loreMarkdown`), окно — `lore/store.svelte.ts` (`loreStore`: вид, результат, закреплённое — localStorage окна; люди — генератор NPC через `helpers` поселений) и `LorePage.svelte` (страница даёт слова и `view` — части с подписями); содержимое — `lore/ships/{en,ru}.ts` (виды парами, название — прилагательное по роду существительного) и `lore/orgs/{en,ru}.ts` (ремёсла и сущности парами со своими названиями, целями, обрядами). Новый генератор частей — содержимое, `parts.ts` и страница-обёртка.
   Загадки и головоломки (общий, `ui.tool = 'riddles'`): `tools/riddles/` — `logic.ts` (чистое: шифры `encipher` /
   `decipher` (reverse, numbers, caesar, atbash; Ё → Е), порядок — `orderClues` (условия по весам, пока не останется одна
   перестановка, потом лишние выкидываются; `at` — не больше `maxAt`), шкатулки — `casketPuzzle` / `casketSolutions`

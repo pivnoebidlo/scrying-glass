@@ -201,7 +201,7 @@ export interface TrackerSpec {
 // The format this app writes. A pack remembers the format it was saved in (none — 1), so an app knows what it can
 // offer an older pack and can refuse to rewrite a newer one: it would lose what it doesn't know. `version` stays 1:
 // older apps refuse any other, and they read a newer pack well enough.
-export const PACK_FORMAT = 11;
+export const PACK_FORMAT = 12;
 
 export interface SystemPack {
   scryingGlass: 'system';

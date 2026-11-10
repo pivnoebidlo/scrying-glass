@@ -412,6 +412,14 @@ adventure. Each part can be rerolled or pinned; to the journal or copy.
 random) → who asks the heroes and how (the patron comes from the NPC generator), the task with a deadline and what is at
 stake, where, who stands in the way, a twist and the reward. Each part can be rerolled or pinned; to the journal or copy.
 
+**Ships** (Tools → Ships): a ship in port or at sea — what she is (from a fishing smack to a galleon) and her name, the
+captain (from the NPC generator), the crew by her size and their mood, the cargo, what is odd about her, her secret and
+her trouble. **Guilds and cults** (Tools → Guilds and cults): a guild of the city — its trade and name, the leader,
+where it meets, what it wants, its custom, rival, secret and sign, and what it can offer the heroes — or a cult: whom
+it serves, its leader and public face, the rite, the sign, who joins, its goal, secret and the omens the heroes may
+notice first. Both like the hooks: parts rerolled or pinned, to the journal or copy; in D&D and Pathfinder from the
+start, in a system pack — when it turns them on (system builder → Features).
+
 **Riddles and puzzles** (Tools → Riddles and puzzles, any system): a kind and a difficulty → a trial for a door, a
 chest or a guardian. A riddle (ours, with two hints); a cipher (mirror writing, letter numbers, a shifted or reversed
 alphabet) with a hint at the key in the world; an order puzzle — statues in niches, books on a shelf, rune stones,

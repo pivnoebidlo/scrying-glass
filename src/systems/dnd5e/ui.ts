@@ -82,5 +82,5 @@ export const dnd5eUi: SystemUi = {
   integrations: LssSettings,
   paper: (card) => (isCharacter(card.stats) ? (PaperSheet as PaperView) : undefined),
   // The core's fantasy generators, shown as D&D's own.
-  claims: ['names', 'npc', 'tavern', 'settlement', 'hooks'],
+  claims: ['names', 'npc', 'tavern', 'settlement', 'hooks', 'ships', 'orgs'],
 };

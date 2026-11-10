@@ -3,7 +3,7 @@
 // the settings (Tools → "Tools of other systems", remembered by the window). A system plugin brings its own tools
 // (SystemUi.tools, with their pages) and claims the core's generators it shows as its own (SystemUi.claims).
 import type { Component } from 'svelte';
-import { Beer, Blocks, Map as MapIcon, Dices, CalendarClock, Castle, Flag, Hourglass, Compass, Puzzle, Send, Signature, Swords, Table2, UserRound } from '@lucide/svelte';
+import { Beer, Blocks, Map as MapIcon, Dices, CalendarClock, Castle, Flag, Hourglass, Compass, Puzzle, Send, Ship, Signature, Swords, Table2, UserRound, Landmark } from '@lucide/svelte';
 import { systemUis } from '../../../systems/ui';
 import { enabledSystems, systems, usesOf } from '../../../systems';
 import { t } from '../../../renderer/lib/i18n.svelte';
@@ -59,6 +59,8 @@ const CORE: ToolDef[] = [
   tool('tavern', Beer, 'tools.side.tavern', SOME),
   tool('settlement', Castle, 'tools.side.settlement', SOME),
   tool('hooks', Compass, 'tools.side.hooks', SOME),
+  tool('ships', Ship, 'tools.side.ships', SOME),
+  tool('orgs', Landmark, 'tools.side.orgs', SOME),
   tool('riddles', Puzzle, 'tools.side.riddles'),
   tool('mapgen', MapIcon, 'tools.side.mapgen'),
   tool('generators', Table2, 'tools.side.generators', FROM_PACKAGES),
