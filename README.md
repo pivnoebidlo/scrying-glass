@@ -423,7 +423,11 @@ a catapult and stakes against horses are for the siege (in fantasy, gothic horro
 supply wagon, an armour stand, a drawbridge over the moat, a portcullis in the gate). Fantasy and gothic horror also have
 magic places (a stone circle, an observatory, a pentagram, a necromancer's altar, floating books) and a town square (a
 clock tower, a notice board, a sentry box, a pillory); any world has a festival (a carousel, a maypole, bunting, a fair
-tent, a food cart, a puppet show, balloons).
+tent, a food cart, a puppet show, balloons), a graveyard (a fresh grave, an angel statue, grave lanterns, a wreath, a
+shovel) and sewers (a drain grate, an outflow pipe, sludge, rats, a manhole). Fantasy has a harbour (a galleon at the
+quay, a harbour crane, baskets of fish), an eastern bazaar (a rug stall, sacks of spices, a hookah, brass lamps), a
+dragon's lair (a dragon's skull, giant ribs, dragon's eggs, scorch marks), a dwarven mine (a mine cart, rails, ore, mine
+props, a rune door) and an elven wood (a tree house, a moonwell, a living arch, glowing flowers).
 
 A map has its world: fantasy, science fiction, gothic horror, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),

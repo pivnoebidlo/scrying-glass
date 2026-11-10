@@ -105,6 +105,13 @@
     { id: 'arcane', kinds: ['stonecircle', 'observatory', 'pentagram', 'necroaltar', 'floatingbooks'], genres: ['fantasy', 'gothic'] },
     { id: 'festival', kinds: ['carousel', 'maypole', 'garland', 'fairtent', 'foodcart', 'puppetshow', 'balloons'] },
     { id: 'civic', kinds: ['clocktower', 'noticeboard', 'guardbooth', 'pillory'], genres: ['fantasy', 'gothic'] },
+    { id: 'graveyard', kinds: ['freshgrave', 'angelstatue', 'gravelantern', 'wreath', 'shovel'] },
+    { id: 'harbour', kinds: ['galleon', 'harborcrane', 'fishbasket'], genres: ['fantasy', 'gothic'] },
+    { id: 'bazaar', kinds: ['rugstall', 'spicesacks', 'hookah', 'brasslamps'], genres: ['fantasy'] },
+    { id: 'lair', kinds: ['dragonskull', 'ribcage', 'dragoneggs', 'scorch'], genres: ['fantasy'] },
+    { id: 'mine', kinds: ['minecart', 'rails', 'ore', 'minesupport', 'runedoor'], genres: ['fantasy', 'gothic', 'wasteland'] },
+    { id: 'elven', kinds: ['treehouse', 'moonwell', 'elvenarch', 'glowflowers'], genres: ['fantasy'] },
+    { id: 'sewers', kinds: ['grate', 'outflow', 'sludge', 'rats', 'manhole'] },
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];

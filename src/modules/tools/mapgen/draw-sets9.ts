@@ -2,6 +2,7 @@
 // An army's camp; magic places; a festival; a town's own things.
 import type { Prop } from './furnish';
 import { circle, CLOTH, GLOW, glow, lines, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets10 } from './draw-sets10';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -258,5 +259,7 @@ export function drawSets9(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       shape(ctx, tone(WOOD, 0.2), rect(ctx, -c * 0.4, -c * 0.12, c * 0.8, c * 0.24, c * 0.03), line);
       for (const x of [-0.24, 0, 0.24]) shape(ctx, DARK, circle(ctx, x * c, 0, x ? c * 0.05 : c * 0.08), 0);
       break;
+    default:
+      drawSets10(ctx, p, w, h, c);
   }
 }

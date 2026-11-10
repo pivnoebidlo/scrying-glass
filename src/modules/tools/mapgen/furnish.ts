@@ -42,6 +42,8 @@ export const PROP_KINDS = [
   'roundtower', 'squaretower', 'watchtower', 'ballista', 'catapult', 'stakes',
   // draw-sets9.ts: an army's camp; magic places; a festival; a town's own things.
   'commandtent', 'supplywagon', 'drawbridge', 'portcullis', 'armorstand', 'stonecircle', 'observatory', 'necroaltar', 'pentagram', 'floatingbooks', 'carousel', 'maypole', 'garland', 'fairtent', 'foodcart', 'puppetshow', 'balloons', 'clocktower', 'noticeboard', 'guardbooth', 'pillory',
+  // draw-sets10.ts: a graveyard; a harbour; a bazaar; a dragon's lair; a mine; an elven wood; the sewers.
+  'freshgrave', 'angelstatue', 'gravelantern', 'shovel', 'wreath', 'galleon', 'harborcrane', 'fishbasket', 'rugstall', 'spicesacks', 'hookah', 'brasslamps', 'dragonskull', 'dragoneggs', 'ribcage', 'scorch', 'minecart', 'rails', 'ore', 'minesupport', 'runedoor', 'treehouse', 'moonwell', 'elvenarch', 'glowflowers', 'grate', 'outflow', 'sludge', 'rats', 'manhole',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

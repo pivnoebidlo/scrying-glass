@@ -146,7 +146,8 @@ export const WALL_DECOR: readonly PropKind[] = ['window', 'banner', 'painting', 
 // …and what goes over water or a wall: a bridge, a pier, a buoy, iron bars.
 const FREE = new Set<PropKind>(['asset', ...WALL_DECOR, 'bridge', 'pier', 'buoy', 'bars', 'forcefield', 'holosign', 'bats', 'ceilingfan', 'vines', 'quicksand', 'viewscreen', 'vaultdoor', 'drone', 'waterfall', 'cliff', 'lilypads', 'watermill',
   'bubbles', 'cloud', 'airship', 'balloon', 'floatrock', 'gauges', 'plank', 'ropebridge', 'jollyroger', 'kelp', 'coral',
-  'roundtower', 'squaretower', 'watchtower', 'drawbridge', 'portcullis', 'garland', 'balloons', 'floatingbooks']);
+  'roundtower', 'squaretower', 'watchtower', 'drawbridge', 'portcullis', 'garland', 'balloons', 'floatingbooks',
+  'galleon', 'minesupport', 'runedoor', 'outflow', 'treehouse', 'brasslamps']);
 // …and on a tree's crown or a boulder (a nest, a lookout, a raven), over them on the picture.
 export const standable = (c: string | undefined) => walkable(c) || (!!c && 'TRNJQA'.includes(c));
 
@@ -373,6 +374,8 @@ const LONG: Partial<Record<PropKind, [number, number]>> = {
   roundtower: [3, 3], squaretower: [3, 3], watchtower: [2, 2], ballista: [1, 2], catapult: [2, 3], stakes: [2, 1],
   commandtent: [3, 3], supplywagon: [2, 3], drawbridge: [2, 3], portcullis: [2, 1], stonecircle: [3, 3], observatory: [3, 3], necroaltar: [2, 1],
   pentagram: [2, 2], carousel: [3, 3], garland: [3, 1], fairtent: [2, 2], foodcart: [1, 2], puppetshow: [2, 1], clocktower: [2, 2], noticeboard: [2, 1],
+  freshgrave: [1, 2], galleon: [3, 8], harborcrane: [2, 2], rugstall: [2, 2], dragonskull: [3, 3], dragoneggs: [2, 2], ribcage: [3, 2], minecart: [1, 2],
+  rails: [1, 3], runedoor: [2, 1], treehouse: [3, 3], moonwell: [2, 2], elvenarch: [2, 1], outflow: [1, 2],
 };
 // Things that stretch over several cells: a long table, a big puddle, a carpet runner, a wide stair.
 export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe',
@@ -385,7 +388,8 @@ export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', '
   'bathpool', 'waterfall', 'cliff', 'glowshrooms', 'lilypads', 'produce', 'stage', 'seats', 'breadrack',
   'coral', 'kelp', 'bubbles', 'cloud', 'gears', 'sheep', 'plank', 'ropebridge', 'hiderack', 'treasurepile', 'floatrock',
   'roundtower', 'squaretower', 'watchtower', 'stakes',
-  'drawbridge', 'portcullis', 'garland', 'balloons', 'floatingbooks', 'pentagram', 'commandtent', 'fairtent'];
+  'drawbridge', 'portcullis', 'garland', 'balloons', 'floatingbooks', 'pentagram', 'commandtent', 'fairtent',
+  'fishbasket', 'spicesacks', 'brasslamps', 'scorch', 'ore', 'glowflowers', 'sludge', 'rats', 'rails', 'elvenarch', 'runedoor'];
 export const MAX_STRETCH = 12;
 export function footprint(kind: PropKind, face: Facing): { w: number; h: number } {
   const [w, h] = LONG[kind] ?? [1, 1];
