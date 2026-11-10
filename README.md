@@ -388,7 +388,7 @@ the dungeon generator a room is furnished by its part in the story and the kind 
 fortress's guards sleep in barracks).
 
 **Map editor**: change a generated map or draw one yourself from an empty field (a building, a cave, a town or open
-country of a size in cells), without other programs. Brushes paint the cells: floor and wall, a room (a rectangle that gets a
+country of a size in cells), without other programs. Brushes (a list at the top of the palette, by ground and buildings) paint the cells: floor and wall, a room (a rectangle that gets a
 number and a pin), doors and pillars indoors; grass, roads, squares, sand, water, fords, trees and boulders outdoors;
 houses, wells, the town wall and its towers in a town (a house stands in a forest or a swamp too). Outdoors a building can
 also be put up of its parts: «Building» drags a rectangle of walls round a plank floor (a room built onto another shares

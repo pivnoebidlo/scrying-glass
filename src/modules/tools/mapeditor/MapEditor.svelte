@@ -83,6 +83,16 @@
     }
   }
   let query = $state('');
+  // The brushes, by what they make: the ground, and what is built on it.
+  const BUILDING: BrushId[] = ['room', 'house', 'build', 'timber', 'planks', 'door', 'roof', 'pillar', 'townWall', 'tower'];
+  const brushGroups = $derived([
+    { id: 'surfaces', list: brushes.filter((b) => !BUILDING.includes(b.id)) },
+    { id: 'building', list: brushes.filter((b) => BUILDING.includes(b.id)) },
+  ]);
+  const foundBrushes = $derived.by(() => {
+    const q = query.trim().toLowerCase();
+    return q ? brushes.filter((b) => t(`mapedit.brush.${b.id}` as never).toLowerCase().includes(q)) : [];
+  });
   const found = $derived.by(() => {
     const q = query.trim().toLowerCase();
     if (!q) return null;
@@ -273,14 +283,6 @@
       </div>
       <span class="sep"></span>
       {#if !editor.viewing}
-      {#each brushes as b (b.id)}
-        {#if b.id === 'build'}<span class="sep" title={t('mapedit.buildHint')}></span>{/if}
-        <button class="tool" class:on={editor.mode === 'brush' && editor.brush === b.id} title={b.id === 'build' || b.id === 'roof' ? t('mapedit.buildHint') : undefined} onclick={() => pickBrush(b.id)}>
-          <span class="swatch {b.id}" style:background={SWATCH[b.id]}></span>
-          {t(`mapedit.brush.${b.id}` as never)}
-        </button>
-      {/each}
-      <span class="sep"></span>
       <span class="faint small">{t('mapedit.thickness')}</span>
       {#each [1, 2, 3] as n (n)}<button class="btn size" class:on={editor.size === n} onclick={() => (editor.size = n)}>{n}</button>{/each}
       <span class="sep"></span>
@@ -343,9 +345,28 @@
             {/each}
           </div>
         {/snippet}
+        {#snippet brushList(list: typeof brushes)}
+          <div class="brushes">
+            {#each list as b (b.id)}
+              <button class="tool" class:on={editor.mode === 'brush' && editor.brush === b.id} title={b.id === 'build' || b.id === 'roof' ? t('mapedit.buildHint') : t(`mapedit.brush.${b.id}` as never)} onclick={() => pickBrush(b.id)}>
+                <span class="swatch {b.id}" style:background={SWATCH[b.id]}></span>
+                <span class="bname">{t(`mapedit.brush.${b.id}` as never)}</span>
+              </button>
+            {/each}
+          </div>
+        {/snippet}
         {#if found}
-          {#if found.length}{@render things(found)}{:else}<p class="faint small">{t('mapedit.nothingFound')}</p>{/if}
+          {#if foundBrushes.length}{@render brushList(foundBrushes)}{/if}
+          {#if found.length}{@render things(found)}{:else if !foundBrushes.length}<p class="faint small">{t('mapedit.nothingFound')}</p>{/if}
         {:else}
+          {#each brushGroups as g (g.id)}
+            <button class="group fold" aria-expanded={!folded.includes(g.id)} onclick={() => fold(g.id)}>
+              {#if folded.includes(g.id)}<ChevronRight size={13} />{:else}<ChevronDown size={13} />{/if}
+              {t(`mapedit.group.${g.id}` as never)}
+              <span class="count">{g.list.length}</span>
+            </button>
+            {#if !folded.includes(g.id)}{@render brushList(g.list)}{/if}
+          {/each}
           {#each GROUPS as g (g.id)}
             <button class="group fold" aria-expanded={!folded.includes(g.id)} onclick={() => fold(g.id)}>
               {#if folded.includes(g.id)}<ChevronRight size={13} />{:else}<ChevronDown size={13} />{/if}
@@ -495,6 +516,23 @@
     min-width: 28px;
     justify-content: center;
     padding: 2px 6px;
+  }
+  .brushes {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1px;
+    margin-bottom: 6px;
+  }
+  .brushes .tool {
+    min-width: 0;
+    justify-content: flex-start;
+    padding: 3px 6px;
+    font-size: 13px;
+  }
+  .brushes .bname {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .swatch {
     width: 14px;
