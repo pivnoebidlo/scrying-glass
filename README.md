@@ -442,7 +442,12 @@ huge club, a cooking pit) and a pharaoh's tomb (a golden sarcophagus, canopic ja
 cyberpunk quarter (a noodle stand, a hover bike, an implant chair, cables, graffiti) and an alien hive (a brood sac, nest
 pods, hive resin, spines) for science fiction; a mad scientist's lab (an operating table, a brain in a jar, a lever panel,
 a shelf of specimens) for gothic and noir; a hospital (a bed, a drip stand, a wheelchair, a bed curtain, an X-ray light
-box) and a police station (a police car, a height chart, a barrier) for modern.
+box) and a police station (a police car, a height chart, a barrier) for modern. Then a travelling circus (a big top, a ring, a beast
+cage wagon, a tightrope, a sweets cart), harpies' nests (a nest with eggs, feathers), a vampire's ballroom (a chequered
+dance floor, a fountain of blood, a coffin, a crimson throne), an underwater temple (a shell throne, a clam with a pearl,
+a trident statue, a conch); a starship's bridge (a command chair, a helm console, a star chart, a forward viewport); a
+school (desks, a blackboard, lockers, a globe), a supermarket (shelves of goods, a checkout, a trolley, a freezer) and a
+petrol station (fuel pumps, a forecourt roof, tyres, oil cans).
 
 A map has its world: fantasy, science fiction, gothic horror, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),

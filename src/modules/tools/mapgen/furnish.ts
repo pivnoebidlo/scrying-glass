@@ -52,6 +52,10 @@ export const PROP_KINDS = [
   'bigbell', 'scriptorium', 'herbbed', 'reliquary', 'spiralstair', 'armchair', 'bookpile', 'runecarpet', 'gobtent', 'junkpile', 'warbanner', 'bonefire', 'trollnest', 'boulderpile', 'bigclub', 'cookpit', 'goldsarcophagus', 'canopic', 'jackalstatue', 'hieroglyphs',
   // draw-sets14.ts: a cyberpunk quarter; an alien hive; a mad scientist's lab; a hospital; a police station.
   'noodlestand', 'cables', 'graffiti', 'hoverbike', 'cyberchair', 'hivewall', 'broodmother', 'spines', 'nestpods', 'operatingtable', 'brainjar', 'switchboard', 'specimenshelf', 'hospitalbed', 'ivdrip', 'wheelchair', 'curtainscreen', 'lightbox', 'policecar', 'mugshot', 'barrier',
+  // draw-sets15.ts: a travelling circus; harpies' nests; a vampire's ballroom; an underwater temple.
+  'bigtop', 'circusring', 'beastcage', 'tightrope', 'candycart', 'harpynest', 'feathers', 'ballfloor', 'bloodfountain', 'vampcoffin', 'bloodthrone', 'merthrone', 'pearlclam', 'tridentstatue', 'conchhorn',
+  // draw-sets16.ts: a starship's bridge; a school; a supermarket; a petrol station.
+  'commandchair', 'helmconsole', 'starmap', 'viewport', 'schooldesk', 'blackboard', 'lockers', 'schoolglobe', 'aisleshelf', 'checkout', 'shopcart', 'freezer', 'fuelpump', 'tirestack', 'oilcans', 'canopy',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

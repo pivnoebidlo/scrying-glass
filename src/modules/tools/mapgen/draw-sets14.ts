@@ -2,6 +2,7 @@
 // A cyberpunk quarter; an alien hive; a mad scientist's lab; a hospital; a police station.
 import type { Prop } from './furnish';
 import { circle, glow, lines, rect, shape, tone, type Ctx } from './prop-paint';
+import { drawSets15 } from './draw-sets15';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -210,5 +211,7 @@ export function drawSets14(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
         for (let x = L + c * 0.12; x < w / 2 - c * 0.08; x += c * 0.3) (ctx.moveTo(x, c * 0.06), ctx.lineTo(x + c * 0.12, -c * 0.06));
       });
       break;
+    default:
+      drawSets15(ctx, p, w, h, c);
   }
 }
