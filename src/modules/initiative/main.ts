@@ -78,6 +78,12 @@ export default defineModule({
   },
 
   actions: {
+    // A card changed (main/index.ts): the heroes' cells worked out from it follow. No other action changes then, so
+    // afterAction would not run — the core hands in the system and the table's values.
+    resync(s, { system, used }: { system: string; used?: PlayersState['used'] }) {
+      return syncTable(s, packOf(system), used);
+    },
+
     // encounter — добавить в заготовку, а не в текущий бой.
     add(s, { c, encounter }: { c: Partial<Omit<Combatant, 'id'>>; encounter?: string }) {
       const full: Combatant = {

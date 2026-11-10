@@ -31,6 +31,8 @@
   const table = $derived(pack ? tableKeys(pack) : null);
   const atHeroTable = (c: Combatant) => atTable(c, store.state.initiative.combatants);
   const onTable = (c: Combatant, key: string) => !!table && atHeroTable(c) && (table.hp === key || table.cells.some((x) => x.key === key));
+  // A hero's cell worked out from what is marked (the Nineties: debuffs): only shown, it follows the table.
+  const derivedHere = (c: Combatant, key: string) => !!table?.derived?.some((d) => d.key === key) && atHeroTable(c);
   const toTable = (c: Combatant, key: string, used: number) => dispatch('players', 'setUsed', { card: c.card!.id, key, used });
   function applyHp(c: Combatant, input: HTMLInputElement) {
     const v = input.value.trim();
@@ -121,7 +123,11 @@
         {/if}
       {:else}
         {@const a = c.attrs?.find((x) => x.id === cell.key)}
+        {#if derivedHere(c, cell.key)}
+          <span class="n worked" title={t('pack.tr.worked')}>{a?.value ?? '—'}</span>
+        {:else}
         <input class="n" type="text" inputmode="numeric" value={a?.value ?? ''} placeholder="—" onchange={(e) => setAttr(it, cell.key, num(e.currentTarget.value))} />{#if a?.max}<span class="faint">/{a.max}</span>{/if}
+        {/if}
       {/if}
     </td>
   {/each}
@@ -131,6 +137,11 @@
 {/if}
 
 <style>
+  .worked {
+    display: inline-block;
+    padding: 0 4px;
+    font-variant-numeric: tabular-nums;
+  }
   .c-hp {
     width: 110px;
     white-space: nowrap;

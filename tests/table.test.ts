@@ -102,3 +102,19 @@ describe('the table and the tracker are one value', () => {
     expect((validatePack({ ...JSON.parse(readFileSync('content/mausritter/system/mausritter.json', 'utf8')), format: undefined, tracker: { hp: 'hp', cells: ['str'] } }) as SystemPack).tracker.overflow).toBe('str');
   });
 });
+
+describe('a tracker cell worked out from what is marked', () => {
+  const nineties = read('samples/systems/nineties.json');
+  it('the Nineties count their debuffs from the table, a phone mark included', async () => {
+    const { setTableCards } = await import('../src/modules/initiative/table');
+    const keys = tableKeys(nineties);
+    expect(keys.derived?.map((d) => d.key)).toEqual(['debuffs']);
+    setTableCards(() => ({ format: 1, id: 'hero', kind: 'character', system: 'nineties', lang: 'ru', name: 'Серёга', portraits: [], tags: [], notes: '', stats: { trauma: 1 } }));
+    const s = fight([hero({ attrs: [{ id: 'debuffs', value: 1, max: 1 }] })]);
+    expect(syncTable(s, nineties, {}).combatants[0]!.attrs![0]!.value).toBe(1);
+    expect(syncTable(s, nineties, { hero: { shiver: 1, scared: 1 } }).combatants[0]!.attrs![0]!.value).toBe(3);
+    // Nothing differs — the same state.
+    expect(syncTable(s, nineties, {})).toBe(s);
+    setTableCards(() => null);
+  });
+});

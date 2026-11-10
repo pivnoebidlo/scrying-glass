@@ -18,7 +18,7 @@ import type { CardRef, CardScope } from '../shared/cards';
 import type { PortraitsState } from '../modules/portraits/types';
 import { clipboardImage, copyImageFile, freeName, isDir, readJson, writeJsonAtomic } from './files';
 import { scanVault } from './scan';
-import { adventureTheme, COVER_FILE, renameAdventurePaths, SUPPLEMENT_KINDS, systemFor, type SupplementKind } from '../shared/adventures';
+import { adventureTheme, COVER_FILE, currentSystem, renameAdventurePaths, SUPPLEMENT_KINDS, systemFor, type SupplementKind } from '../shared/adventures';
 import { defaultSystem, LEGACY_SYSTEM, setSystemsOff } from '../systems';
 import { PLUGINS } from '../systems/plugins';
 import { loadSystemPacks, ownPackFile, packBooks, savePack, systemPacks } from './syspacks';
@@ -49,6 +49,7 @@ import { importNameLists, listNameLists, namesDir } from './names';
 import { checkForUpdates } from './updates';
 import { buildMenu } from './menu';
 import { CARD_HANDOUT } from '../modules/handouts/types';
+import { setTableCards } from '../modules/initiative/table';
 import { isAboutLink } from '../shared/about';
 import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnouncement } from './schedule';
 import type { Game } from '../shared/schedule';
@@ -2145,8 +2146,12 @@ app.whenReady().then(async () => {
       for (const win of BrowserWindow.getAllWindows()) win.webContents.send('players:status', status);
     },
   });
+  setTableCards(getCard);
   onCardsChanged(() => {
     playersChanged();
+    // Cells of the tracker worked out from a card follow it.
+    if (state.initiative?.combatants.some((c) => c.card && c.side === 'party'))
+      void runAction('initiative', 'resync', { system: currentSystem(state.adventures), used: state.players?.used });
     // A sheet on the players' screen follows its card.
     if (state.handouts?.current?.startsWith(CARD_HANDOUT)) void runAction('handouts', 'refreshCard', {});
   });
