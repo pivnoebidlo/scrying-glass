@@ -417,8 +417,11 @@ closes again), and windows, curtains, banners, paintings, hunting trophies and w
 for a large tavern with its hall, kitchen and rooms.
 
 A map has its world: fantasy or science fiction (chosen for a new map, changed above the map). The palette shows the
-things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…)
-in fantasy; a ship and a colony (consoles, lockers, cargo, a holo table, a reactor, pipes, a ray gun rack, a rover, an
+things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),
+the forest and the road (a lean-to, a footbridge, a milestone, a wayside shrine, a bear trap), a port (a pier, bollards,
+nets, an anchor, a buoy, a lighthouse), a temple and magic (a lectern, a font, a mirror, a crystal ball, runes, a
+portal), a prison (iron bars, a rack, an iron maiden, a coffin, a chained skeleton, slime) and a village and a farm (a
+henhouse, a scarecrow, sheaves, pumpkins, hens) in fantasy; a footbridge, a pier and a buoy go on the water; a ship and a colony (consoles, lockers, cargo, a holo table, a reactor, pipes, a ray gun rack, a rover, an
 escape pod…) in science fiction, with red or grey dust outdoors, metal plates or a grating indoors and bulkheads for
 walls.
 

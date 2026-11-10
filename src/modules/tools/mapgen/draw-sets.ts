@@ -2,6 +2,7 @@
 // A tavern's kitchen and taproom (fantasy); a ship and a colony (science fiction, brass and rivets as much as chrome).
 import type { Prop } from './furnish';
 import { circle, CLOTH, glow, lines, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets2 } from './draw-sets2';
 
 const METAL = ['#8d949c', '#6f7882', '#a3a9ad'];
 const BRASS = '#b8913e';
@@ -306,5 +307,7 @@ export function drawSets(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       glow(ctx, 0, 0, c * 0.5, 'rgba(255, 70, 50, 0.6)');
       shape(ctx, '#ff5a3c', circle(ctx, 0, 0, c * 0.1), thin);
       break;
+    default:
+      drawSets2(ctx, p, w, h, c);
   }
 }

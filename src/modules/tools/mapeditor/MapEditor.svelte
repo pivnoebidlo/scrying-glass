@@ -70,6 +70,11 @@
     { id: 'ship', kinds: ['console', 'terminal', 'locker', 'cargo', 'bunk', 'hatch', 'holo', 'reactor', 'pipes', 'rayguns'], genres: ['scifi'] },
     { id: 'colony', kinds: ['rover', 'pod', 'dish', 'solar', 'beacon'], genres: ['scifi'] },
     { id: 'decor', kinds: ['window', 'curtain', 'banner', 'painting', 'trophy', 'wallshelf'] },
+    { id: 'road', kinds: ['shelter', 'bridge', 'milestone', 'wayshrine', 'beartrap', 'beehive'] },
+    { id: 'port', kinds: ['pier', 'bollard', 'rope', 'nets', 'anchor', 'buoy', 'lighthouse'], genres: ['fantasy'] },
+    { id: 'magic', kinds: ['lectern', 'font', 'mirror', 'orb', 'runes', 'portal'], genres: ['fantasy'] },
+    { id: 'prison', kinds: ['bars', 'torturerack', 'ironmaiden', 'coffin', 'skeleton', 'slime'], genres: ['fantasy'] },
+    { id: 'farm', kinds: ['coop', 'scarecrow', 'sheaf', 'pumpkins', 'chickens', 'churn'], genres: ['fantasy'] },
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];

@@ -1329,6 +1329,7 @@ const LIGHT_OF: Partial<Record<PropKind, { r: number; rgb?: string }>> = {
   lamppost: { r: 4.5 }, crystal: { r: 3, rgb: '140, 200, 255' }, cauldron: { r: 1.8, rgb: '150, 230, 120' },
   oven: { r: 3 }, spit: { r: 4.5 }, console: { r: 2, rgb: '95, 211, 201' }, terminal: { r: 1.6, rgb: '95, 211, 201' },
   holo: { r: 3, rgb: '120, 200, 255' }, reactor: { r: 5, rgb: '120, 255, 170' }, beacon: { r: 3, rgb: '255, 80, 60' },
+  lighthouse: { r: 8 }, wayshrine: { r: 1.6 }, orb: { r: 2.5, rgb: '160, 140, 255' }, portal: { r: 4, rgb: '170, 120, 255' }, runes: { r: 1.5, rgb: '170, 120, 255' },
 };
 // `power`: how much of the darkness the light takes away (windows less than a fire).
 export function lightsOf(l: Layout): { x: number; y: number; r: number; rgb: string; power: number }[] {

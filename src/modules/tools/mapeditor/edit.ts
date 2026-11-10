@@ -140,7 +140,8 @@ const covers = (a: { x: number; y: number; w: number; h: number }, x: number, y:
 // Where a thing can stand.
 // Things that go anywhere: a picture of the GM's own, and what hangs on walls (a window, a banner).
 export const WALL_DECOR: readonly PropKind[] = ['window', 'banner', 'painting', 'trophy', 'curtain', 'wallshelf'];
-const FREE = new Set<PropKind>(['asset', ...WALL_DECOR]);
+// …and what goes over water or a wall: a bridge, a pier, a buoy, iron bars.
+const FREE = new Set<PropKind>(['asset', ...WALL_DECOR, 'bridge', 'pier', 'buoy', 'bars']);
 // …and on a tree's crown or a boulder (a nest, a lookout, a raven), over them on the picture.
 export const standable = (c: string | undefined) => walkable(c) || (!!c && 'TRNJQA'.includes(c));
 
@@ -333,11 +334,13 @@ const LONG: Partial<Record<PropKind, [number, number]>> = {
   bathtub: [1, 2], counter: [2, 1], workbench: [2, 1], circle: [2, 2], fence: [2, 1],
   oven: [2, 2], spit: [2, 1], kegs: [2, 1], dishes: [2, 1], hams: [2, 1], console: [2, 1], bunk: [1, 2], holo: [2, 2], reactor: [2, 2],
   pipes: [2, 1], rayguns: [2, 1], rover: [2, 3], solar: [2, 1], pod: [1, 2],
+  shelter: [2, 2], bridge: [1, 3], pier: [1, 3], nets: [2, 1], lighthouse: [2, 2], portal: [2, 2], torturerack: [1, 2], coffin: [1, 2], coop: [2, 2],
 };
 // Things that stretch over several cells: a long table, a big puddle, a carpet runner, a wide stair.
 export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe',
   'counter', 'workbench', 'circle', 'spikes', 'web', 'fence', 'woodpile', 'fern', 'chains', 'plate',
-  'kegs', 'dishes', 'hams', 'flour', 'tankards', 'console', 'pipes', 'solar', 'cargo', 'window', 'curtain', 'wallshelf'];
+  'kegs', 'dishes', 'hams', 'flour', 'tankards', 'console', 'pipes', 'solar', 'cargo', 'window', 'curtain', 'wallshelf',
+  'bridge', 'pier', 'nets', 'runes', 'slime', 'bars', 'sheaf', 'pumpkins', 'chickens'];
 export const MAX_STRETCH = 12;
 export function footprint(kind: PropKind, face: Facing): { w: number; h: number } {
   const [w, h] = LONG[kind] ?? [1, 1];

@@ -26,6 +26,8 @@ export const PROP_KINDS = [
   'console', 'locker', 'cargo', 'hatch', 'bunk', 'terminal', 'holo', 'reactor', 'pipes', 'rayguns', 'rover', 'dish', 'solar', 'pod', 'beacon',
   // On walls: they go over the wall cells.
   'window', 'banner', 'painting', 'trophy', 'curtain', 'wallshelf',
+  // draw-sets2.ts: the forest and the road, a port, a temple and magic, a prison, a village and a farm.
+  'shelter', 'beartrap', 'bridge', 'milestone', 'beehive', 'wayshrine', 'pier', 'bollard', 'nets', 'anchor', 'rope', 'buoy', 'lighthouse', 'lectern', 'font', 'mirror', 'runes', 'orb', 'portal', 'bars', 'torturerack', 'coffin', 'slime', 'skeleton', 'ironmaiden', 'coop', 'scarecrow', 'sheaf', 'churn', 'pumpkins', 'chickens',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 
