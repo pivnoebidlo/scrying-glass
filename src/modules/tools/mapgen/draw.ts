@@ -1,5 +1,6 @@
 // Draws a layout on a canvas, by the app, so that no assets are needed: dark rock with hatching round the walls and a
 // pale floor; outdoors grass, water, paths, trees and boulders. The picture holds nothing secret: it goes to the players; room numbers are the preview's only.
+import { drawProps } from './draw-props';
 import { isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type WildStyle } from './layout';
 
 export const CELL = 40;
@@ -465,6 +466,7 @@ export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, 
   if (isWild(l.style)) drawWild(ctx, l, c, l.style);
   else if (l.style === 'town') drawTown(ctx, l, c);
   else drawIndoor(ctx, l, c);
+  drawProps(ctx, l, c);
 
   for (const m of over.marks ?? []) {
     const size = m.size ?? 1;

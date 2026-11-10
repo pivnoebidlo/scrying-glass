@@ -378,6 +378,14 @@ room or place. Numbers are only in the preview and on your pins: the players see
 A town quarter has squares, crossroads, streets and rows of houses. Its tavern, temple, shop, town hall and smithy stand
 out on the map, and each gets a hidden pin with who runs it.
 
+The maps are furnished, drawn in the same manner: each room of a building is for something — a storeroom of barrels and
+crates, barracks with beds and chests, a hall with a long table, benches, a hearth and a rug, a library of shelves, a
+shrine with an altar, candles and pews, a crypt of sarcophagi, an armoury of weapon racks, a treasury, a ruin of rubble
+and bones. A cave has stalagmites, mushrooms, bones, puddles and a camp; a town's squares have market stalls, carts and
+crates; outdoors there are logs, stumps, bushes and flowers or reeds. Nothing stands in a doorway or on a clearing. In
+the dungeon generator a room is furnished by its part in the story and the kind of dungeon (a tomb's lair is a crypt, a
+fortress's guards sleep in barracks).
+
 **Wilderness encounter** (D&D, Tools → Wilderness encounter): forest, field, shore, swamp or a town quarter, the party's level and size
 and the difficulty → a scene (ambush, roadblock, lair ahead, pursuit, surrounded, chance meeting) with what the foes want,
 a complication and what the ground means at the table. Foes are SRD creatures of that place, a group or a leader with

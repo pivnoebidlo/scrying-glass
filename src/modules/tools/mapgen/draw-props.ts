@@ -1,0 +1,307 @@
+// Draws the things of a layout (furnish.ts) in the map's own manner: flat colours seen from above, a dark outline, like
+// the doors and the houses. Each is drawn in its own frame: centred, its front up, then turned to its facing.
+import type { Layout } from './layout';
+import type { Prop } from './furnish';
+
+const INK = '#120f0b';
+const WOOD = ['#9a6b3c', '#8a5f35', '#a87a45'];
+const CLOTH = ['#8e3b32', '#3f5d86', '#5b7a3c', '#7a5a8e', '#a8823a'];
+
+type Ctx = CanvasRenderingContext2D;
+const tone = (list: readonly string[], t = 0) => list[Math.floor(t * list.length) % list.length]!;
+
+function shape(ctx: Ctx, fill: string, path: () => void, line: number) {
+  ctx.beginPath();
+  path();
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = line;
+  ctx.stroke();
+}
+const rect = (ctx: Ctx, x: number, y: number, w: number, h: number, r = 0) => () => ctx.roundRect(x, y, w, h, r);
+const circle = (ctx: Ctx, x: number, y: number, r: number) => () => ctx.arc(x, y, r, 0, Math.PI * 2);
+
+// w and h: the frame, the front up; c: a cell.
+function drawOne(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
+  const line = Math.max(1, c / 18);
+  const L = -w / 2;
+  const T = -h / 2;
+  const t = p.tint ?? 0;
+  switch (p.kind) {
+    case 'barrel':
+      shape(ctx, '#8a5a2b', circle(ctx, 0, 0, c * 0.36), line);
+      ctx.strokeStyle = '#4e321a';
+      ctx.lineWidth = line;
+      ctx.beginPath();
+      ctx.arc(0, 0, c * 0.24, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    case 'crate': {
+      const s = c * 0.74;
+      shape(ctx, '#a87a45', rect(ctx, -s / 2, -s / 2, s, s), line);
+      ctx.strokeStyle = '#6e4a24';
+      ctx.beginPath();
+      ctx.moveTo(-s / 2, -s / 2);
+      ctx.lineTo(s / 2, s / 2);
+      ctx.moveTo(s / 2, -s / 2);
+      ctx.lineTo(-s / 2, s / 2);
+      ctx.stroke();
+      break;
+    }
+    case 'sack':
+      shape(ctx, '#c9b58a', () => ctx.ellipse(0, c * 0.04, c * 0.3, c * 0.34, 0, 0, Math.PI * 2), line);
+      shape(ctx, '#a8935f', circle(ctx, 0, -c * 0.28, c * 0.08), line);
+      break;
+    case 'bed':
+      shape(ctx, '#6b4a2e', rect(ctx, L + c * 0.1, T + c * 0.06, w - c * 0.2, h - c * 0.12, c * 0.06), line);
+      shape(ctx, tone(CLOTH, t), rect(ctx, L + c * 0.14, T + c * 0.1, w - c * 0.28, h * 0.6), line);
+      shape(ctx, '#ece4d2', rect(ctx, L + c * 0.2, h / 2 - c * 0.5, w - c * 0.4, c * 0.3, c * 0.08), line);
+      break;
+    case 'chest':
+      shape(ctx, '#7a4f24', rect(ctx, -c * 0.34, -c * 0.24, c * 0.68, c * 0.48, c * 0.05), line);
+      ctx.strokeStyle = '#4a2f14';
+      ctx.beginPath();
+      ctx.moveTo(-c * 0.34, -c * 0.02);
+      ctx.lineTo(c * 0.34, -c * 0.02);
+      ctx.stroke();
+      shape(ctx, '#d4a640', rect(ctx, -c * 0.06, -c * 0.08, c * 0.12, c * 0.12), line);
+      break;
+    case 'table':
+    case 'desk': {
+      const inset = c * 0.1;
+      shape(ctx, p.kind === 'desk' ? '#7e5530' : '#9a6b3c', rect(ctx, L + inset, T + inset, w - inset * 2, h - inset * 2, c * 0.04), line);
+      ctx.strokeStyle = 'rgba(60, 38, 18, 0.45)';
+      ctx.lineWidth = Math.max(1, c / 30);
+      ctx.beginPath();
+      for (let i = 1; i < 3; i++) {
+        ctx.moveTo(L + inset, T + inset + ((h - inset * 2) * i) / 3);
+        ctx.lineTo(w / 2 - inset, T + inset + ((h - inset * 2) * i) / 3);
+      }
+      ctx.stroke();
+      if (p.kind === 'desk') {
+        shape(ctx, '#efe7d3', rect(ctx, -c * 0.2, -c * 0.16, c * 0.26, c * 0.32), line);
+        shape(ctx, '#1f1a14', circle(ctx, c * 0.22, -c * 0.12, c * 0.06), line);
+      }
+      break;
+    }
+    case 'chair':
+      shape(ctx, '#7d5631', rect(ctx, -c * 0.22, -c * 0.2, c * 0.44, c * 0.44, c * 0.04), line);
+      shape(ctx, '#5e3f22', rect(ctx, -c * 0.24, c * 0.16, c * 0.48, c * 0.1), line);
+      break;
+    case 'bench': {
+      const long = Math.max(w, h);
+      const wide = w >= h;
+      const s = c * 0.3;
+      shape(ctx, '#86603a', rect(ctx, wide ? -long / 2 + c * 0.1 : -s / 2, wide ? -s / 2 : -long / 2 + c * 0.1, wide ? long - c * 0.2 : s, wide ? s : long - c * 0.2, c * 0.04), line);
+      break;
+    }
+    case 'shelf': {
+      const deep = c * 0.42;
+      shape(ctx, '#5e3f22', rect(ctx, L + c * 0.04, h / 2 - deep, w - c * 0.08, deep), line);
+      const n = 6;
+      for (let i = 0; i < n; i++) {
+        ctx.fillStyle = tone(CLOTH, (i * 0.37 + t) % 1);
+        ctx.fillRect(L + c * 0.1 + ((w - c * 0.2) * i) / n, h / 2 - deep + c * 0.08, (w - c * 0.2) / n - 1, deep - c * 0.16);
+      }
+      break;
+    }
+    case 'altar':
+      shape(ctx, '#bdb5a3', rect(ctx, -c * 0.42, -c * 0.26, c * 0.84, c * 0.52, c * 0.04), line);
+      shape(ctx, '#8e2f2a', rect(ctx, -c * 0.12, -c * 0.26, c * 0.24, c * 0.52), line);
+      break;
+    case 'candle': {
+      const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, c * 0.45);
+      glow.addColorStop(0, 'rgba(255, 200, 90, 0.55)');
+      glow.addColorStop(1, 'rgba(255, 200, 90, 0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(-c / 2, -c / 2, c, c);
+      shape(ctx, '#efe2c2', circle(ctx, 0, 0, c * 0.1), line);
+      ctx.fillStyle = '#f2a33a';
+      ctx.beginPath();
+      ctx.arc(0, 0, c * 0.04, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    case 'rug': {
+      const inset = c * 0.18;
+      shape(ctx, tone(CLOTH, t), rect(ctx, L + inset, T + inset, w - inset * 2, h - inset * 2), line);
+      ctx.strokeStyle = 'rgba(240, 220, 170, 0.7)';
+      ctx.lineWidth = Math.max(1, c / 20);
+      ctx.strokeRect(L + inset * 1.8, T + inset * 1.8, w - inset * 3.6, h - inset * 3.6);
+      break;
+    }
+    case 'sarcophagus':
+      shape(ctx, '#a9a294', rect(ctx, L + c * 0.12, T + c * 0.08, w - c * 0.24, h - c * 0.16, c * 0.18), line);
+      ctx.strokeStyle = '#6f695d';
+      ctx.lineWidth = line;
+      ctx.beginPath();
+      ctx.moveTo(0, T + c * 0.35);
+      ctx.lineTo(0, h / 2 - c * 0.35);
+      ctx.moveTo(-c * 0.16, T + c * 0.62);
+      ctx.lineTo(c * 0.16, T + c * 0.62);
+      ctx.stroke();
+      break;
+    case 'rack':
+      shape(ctx, '#5e3f22', rect(ctx, L + c * 0.06, h / 2 - c * 0.24, w - c * 0.12, c * 0.18), line);
+      for (const dx of [-0.26, 0, 0.26]) {
+        shape(ctx, '#6b4a2e', rect(ctx, dx * c - c * 0.035, T + c * 0.2, c * 0.07, h - c * 0.44), line * 0.6);
+        shape(ctx, '#b9bec4', () => {
+          ctx.moveTo(dx * c, T + c * 0.06);
+          ctx.lineTo(dx * c + c * 0.08, T + c * 0.22);
+          ctx.lineTo(dx * c - c * 0.08, T + c * 0.22);
+          ctx.closePath();
+        }, line * 0.6);
+      }
+      break;
+    case 'rubble':
+      for (const [dx, dy, s] of [[-0.18, -0.1, 0.2], [0.14, 0.04, 0.16], [-0.04, 0.2, 0.12], [0.2, -0.2, 0.1]] as const)
+        shape(ctx, t < 0.5 ? '#8c857a' : '#77706a', () => {
+          ctx.moveTo((dx - s) * c, dy * c);
+          ctx.lineTo(dx * c, (dy - s) * c);
+          ctx.lineTo((dx + s) * c, (dy + s * 0.3) * c);
+          ctx.lineTo((dx + s * 0.2) * c, (dy + s) * c);
+          ctx.closePath();
+        }, line);
+      break;
+    case 'bones':
+      ctx.strokeStyle = '#e8e1cf';
+      ctx.lineWidth = Math.max(1.5, c / 14);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-c * 0.28, c * 0.2);
+      ctx.lineTo(c * 0.1, -c * 0.06);
+      ctx.moveTo(-c * 0.06, c * 0.26);
+      ctx.lineTo(c * 0.26, c * 0.12);
+      ctx.stroke();
+      shape(ctx, '#e8e1cf', circle(ctx, c * 0.16, -c * 0.2, c * 0.12), line);
+      break;
+    case 'hearth': {
+      shape(ctx, '#77706a', rect(ctx, L + c * 0.02, h / 2 - c * 0.5, w - c * 0.04, c * 0.5), line);
+      const fire = ctx.createRadialGradient(0, h / 2 - c * 0.26, 0, 0, h / 2 - c * 0.26, c * 0.24);
+      fire.addColorStop(0, '#ffd35a');
+      fire.addColorStop(1, '#c2410c');
+      ctx.fillStyle = fire;
+      ctx.beginPath();
+      ctx.arc(0, h / 2 - c * 0.26, c * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    case 'coins':
+      for (const [dx, dy] of [[-0.12, 0], [0.1, -0.08], [0.04, 0.12], [-0.02, -0.16], [0.18, 0.1]] as const) shape(ctx, '#e0b23f', circle(ctx, dx * c, dy * c, c * 0.09), line * 0.7);
+      break;
+    case 'stalagmite':
+      shape(ctx, '#6e665b', circle(ctx, 0, 0, c * (0.28 + t * 0.12)), line);
+      shape(ctx, '#8a8174', circle(ctx, -c * 0.04, -c * 0.04, c * (0.14 + t * 0.06)), line * 0.6);
+      break;
+    case 'mushrooms':
+      for (const [dx, dy, s] of [[-0.15, 0.05, 0.12], [0.12, -0.08, 0.1], [0.05, 0.18, 0.08]] as const)
+        shape(ctx, t < 0.4 ? '#b8473a' : t < 0.7 ? '#c9a46a' : '#7fa1b8', circle(ctx, dx * c, dy * c, s * c), line * 0.7);
+      break;
+    case 'puddle':
+      ctx.fillStyle = 'rgba(70, 110, 140, 0.55)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, c * (0.34 + t * 0.1), c * 0.24, t * Math.PI, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    case 'campfire': {
+      for (let i = 0; i < 7; i++) {
+        const a = (i / 7) * Math.PI * 2;
+        shape(ctx, '#7a736a', circle(ctx, Math.cos(a) * c * 0.3, Math.sin(a) * c * 0.3, c * 0.08), line * 0.7);
+      }
+      const fire = ctx.createRadialGradient(0, 0, 0, 0, 0, c * 0.22);
+      fire.addColorStop(0, '#ffe08a');
+      fire.addColorStop(1, '#d9480f');
+      ctx.fillStyle = fire;
+      ctx.beginPath();
+      ctx.arc(0, 0, c * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+    case 'bedroll':
+      shape(ctx, tone(CLOTH, t), rect(ctx, -w / 2 + c * 0.18, T + c * 0.12, w - c * 0.36, h - c * 0.24, c * 0.12), line);
+      shape(ctx, '#d8cdb3', rect(ctx, -w / 2 + c * 0.22, h / 2 - c * 0.42, w - c * 0.44, c * 0.24, c * 0.08), line);
+      break;
+    case 'stall': {
+      shape(ctx, '#7e5530', rect(ctx, L + c * 0.06, T + c * 0.06, w - c * 0.12, h - c * 0.12), line);
+      const stripes = Math.max(3, Math.round(w / (c * 0.25)));
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(L + c * 0.06, T + c * 0.06, w - c * 0.12, h * 0.62);
+      ctx.clip();
+      for (let i = 0; i < stripes; i++) {
+        ctx.fillStyle = i % 2 ? '#efe6d2' : tone(CLOTH, t);
+        ctx.fillRect(L + c * 0.06 + ((w - c * 0.12) * i) / stripes, T, (w - c * 0.12) / stripes + 1, h);
+      }
+      ctx.restore();
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = line;
+      ctx.strokeRect(L + c * 0.06, T + c * 0.06, w - c * 0.12, h * 0.62);
+      break;
+    }
+    case 'cart': {
+      for (const sy of [-1, 1]) shape(ctx, '#3b3026', rect(ctx, sy * c * 0.42 - c * 0.07, -c * 0.32, c * 0.14, c * 0.64, c * 0.04), line);
+      shape(ctx, tone(WOOD, t), rect(ctx, -c * 0.36, T + c * 0.4, c * 0.72, h - c * 0.6), line);
+      ctx.strokeStyle = '#5e3f22';
+      ctx.lineWidth = Math.max(1.5, c / 16);
+      ctx.beginPath();
+      ctx.moveTo(-c * 0.16, T + c * 0.4);
+      ctx.lineTo(-c * 0.16, T + c * 0.04);
+      ctx.moveTo(c * 0.16, T + c * 0.4);
+      ctx.lineTo(c * 0.16, T + c * 0.04);
+      ctx.stroke();
+      break;
+    }
+    case 'log':
+      shape(ctx, '#6b4a2e', rect(ctx, L + c * 0.1, -c * 0.2, w - c * 0.2, c * 0.4, c * 0.2), line);
+      shape(ctx, '#b48a5a', () => ctx.ellipse(w / 2 - c * 0.2, 0, c * 0.1, c * 0.19, 0, 0, Math.PI * 2), line * 0.8);
+      break;
+    case 'stump':
+      shape(ctx, '#6b4a2e', circle(ctx, 0, 0, c * 0.3), line);
+      shape(ctx, '#b48a5a', circle(ctx, 0, 0, c * 0.22), line * 0.6);
+      ctx.strokeStyle = '#8a6a44';
+      ctx.lineWidth = Math.max(1, c / 34);
+      ctx.beginPath();
+      ctx.arc(0, 0, c * 0.12, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    case 'bush': {
+      const g = t < 0.5 ? '#4f7a3a' : '#5d8a42';
+      for (const [dx, dy, s] of [[-0.14, 0.06, 0.24], [0.14, 0.04, 0.22], [0, -0.14, 0.24]] as const) shape(ctx, g, circle(ctx, dx * c, dy * c, s * c), line * 0.6);
+      break;
+    }
+    case 'flowers':
+      for (const [dx, dy] of [[-0.2, -0.1], [0.12, -0.2], [0.18, 0.14], [-0.08, 0.2], [0.02, 0]] as const) {
+        ctx.fillStyle = tone(['#e8d34a', '#e07ba0', '#f2efe6', '#8f7fd6'], (t + dx + 1) % 1);
+        ctx.beginPath();
+        ctx.arc(dx * c, dy * c, c * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    case 'reeds':
+      ctx.strokeStyle = '#7d7a3e';
+      ctx.lineWidth = Math.max(1, c / 26);
+      ctx.beginPath();
+      for (const dx of [-0.2, -0.08, 0.04, 0.16, 0.26]) {
+        ctx.moveTo(dx * c, c * 0.3);
+        ctx.lineTo((dx + 0.06) * c, -c * 0.28);
+      }
+      ctx.stroke();
+      ctx.fillStyle = '#5b3d22';
+      for (const dx of [-0.08, 0.16]) ctx.fillRect((dx + 0.03) * c, -c * 0.28, c * 0.06, c * 0.14);
+      break;
+  }
+}
+
+export function drawProps(ctx: Ctx, l: Layout, c: number) {
+  for (const p of l.props ?? []) {
+    const f = p.face ?? 0;
+    const turned = f % 2 === 1;
+    ctx.save();
+    ctx.translate((p.x + p.w / 2) * c, (p.y + p.h / 2) * c);
+    ctx.rotate((f * Math.PI) / 2);
+    ctx.lineJoin = 'round';
+    drawOne(ctx, p, (turned ? p.h : p.w) * c, (turned ? p.w : p.h) * c, c);
+    ctx.restore();
+  }
+}

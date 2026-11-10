@@ -7,6 +7,7 @@ import { ATMOSPHERES, BUILDERS, ENTRANCES, FATES, FEATURES, HOOKS, MONSTERS, PLA
 import { OWNERS } from '../relic/content';
 import { generateTrap, type Trap } from '../trap/generate';
 import { generateLayout, groupCells, roomCells, seededRandom, trapCell, type Cell, type Layout, type LayoutStyle } from '../../../../modules/tools/mapgen/layout';
+import type { RoomTheme } from '../../../../modules/tools/mapgen/furnish';
 
 export const DUNGEON_TYPES = ['tomb', 'cave', 'mine', 'temple', 'fortress', 'tower', 'sewer', 'ruins'] as const;
 export type DungeonType = (typeof DUNGEON_TYPES)[number];
@@ -136,9 +137,23 @@ export function generateRooms(d: Pick<Dungeon, 'type' | 'tier'>, count: number, 
 // Natural or dug places are caves on the map, the rest are built.
 const MAP_STYLE: Record<DungeonType, LayoutStyle> = { tomb: 'building', cave: 'cave', mine: 'cave', temple: 'building', fortress: 'building', tower: 'building', sewer: 'cave', ruins: 'building' };
 
+// What a room is for on the map, by its part in the story and the kind of the dungeon (the things in it).
+const BUILT: Record<'tomb' | 'temple' | 'fortress' | 'tower' | 'ruins', Record<Role, RoomTheme>> = {
+  tomb: { guardian: 'crypt', puzzle: 'shrine', lair: 'crypt', empty: 'ruin', trap: 'crypt', climax: 'shrine', reward: 'treasury' },
+  temple: { guardian: 'barracks', puzzle: 'library', lair: 'ruin', empty: 'storage', trap: 'shrine', climax: 'shrine', reward: 'treasury' },
+  fortress: { guardian: 'barracks', puzzle: 'library', lair: 'ruin', empty: 'storage', trap: 'armory', climax: 'hall', reward: 'treasury' },
+  tower: { guardian: 'armory', puzzle: 'library', lair: 'ruin', empty: 'storage', trap: 'library', climax: 'hall', reward: 'treasury' },
+  ruins: { guardian: 'ruin', puzzle: 'shrine', lair: 'ruin', empty: 'ruin', trap: 'ruin', climax: 'hall', reward: 'treasury' },
+};
+export function themeOf(type: DungeonType, role: Role | undefined): RoomTheme | undefined {
+  if (!role) return undefined;
+  if (type in BUILT) return BUILT[type as keyof typeof BUILT][role];
+  return role === 'reward' ? 'treasury' : role === 'lair' ? 'ruin' : undefined;
+}
+
 const planOf = (d: Pick<Dungeon, 'type' | 'rooms'>, r: Random) => {
   const climax = d.rooms.findIndex((x) => x?.role === 'climax');
-  return generateLayout(MAP_STYLE[d.type], { rooms: d.rooms.length, chain: true, big: climax < 0 ? [] : [climax] }, r);
+  return generateLayout(MAP_STYLE[d.type], { rooms: d.rooms.length, chain: true, big: climax < 0 ? [] : [climax], themes: d.rooms.map((x) => themeOf(d.type, x?.role)) }, r);
 };
 
 // What stands where on the plan, the same every time: creatures in a group, a trap at its place, the hoard.

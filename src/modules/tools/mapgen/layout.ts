@@ -1,6 +1,8 @@
 // A generated map as data: floor cells, rooms and doors. Pure and system-free: the picture is drawn from it (draw.ts),
 // and later styles, assets and editing work on the same data. One cell is one square of the map's grid.
 
+import { furnish, type Prop, type RoomTheme } from './furnish';
+
 export const LAYOUT_STYLES = ['building', 'cave', 'town', 'forest', 'meadow', 'shore', 'swamp'] as const;
 export type LayoutStyle = (typeof LAYOUT_STYLES)[number];
 // Under the open sky: places are clearings joined by paths, not rooms.
@@ -39,6 +41,8 @@ export interface Layout {
   houses?: LayoutRoom[];
   // Which of the houses are more than houses, each by the place it stands at.
   landmarks?: Landmark[];
+  // Things standing about (furnish.ts); none in a layout made before 0.103.
+  props?: Prop[];
 }
 export const LANDMARKS = ['tavern', 'temple', 'shop', 'hall', 'smithy'] as const;
 export type LandmarkKind = (typeof LANDMARKS)[number];
@@ -53,6 +57,8 @@ export interface LayoutOptions {
   chain?: boolean;
   // Rooms made larger (the final fight).
   big?: number[];
+  // What each room is for, by its index (the things in it); none — chosen at random.
+  themes?: (RoomTheme | undefined)[];
 }
 
 // How many rooms a generated map can have.
@@ -674,6 +680,11 @@ export function ringCells(l: Layout, at: Cell, count: number, r: Random, { near,
 }
 
 export function generateLayout(style: LayoutStyle, o: LayoutOptions, r: Random = Math.random): Layout {
+  const l = bareLayout(style, o, r);
+  return { ...l, props: furnish(l, o.themes) };
+}
+
+function bareLayout(style: LayoutStyle, o: LayoutOptions, r: Random): Layout {
   const seed = index(2 ** 31, r);
   if (style === 'town' || isWild(style)) {
     const make = (placed: Placed) => (style === 'town' ? town(placed, o, r, seed) : wild(placed, style, r, seed));
