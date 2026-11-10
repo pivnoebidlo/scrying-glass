@@ -2,6 +2,7 @@
 // The north; the East; a starship and a hangar; shops and crafts: an alchemist, a tailor, a library, a bank.
 import type { Prop } from './furnish';
 import { circle, CLOTH, GLOW, glow, lines, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets6 } from './draw-sets6';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -314,5 +315,7 @@ export function drawSets5(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       });
       for (let k = 0; k < 8; k++) shape(ctx, '#3a3d42', circle(ctx, Math.cos((k * Math.PI) / 4) * Math.min(w, h) * 0.4, Math.sin((k * Math.PI) / 4) * Math.min(w, h) * 0.4, c * 0.04), 0);
       break;
+    default:
+      drawSets6(ctx, p, w, h, c);
   }
 }

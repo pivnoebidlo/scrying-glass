@@ -91,6 +91,9 @@
     { id: 'hangar', kinds: ['shuttle', 'mech', 'fueltank', 'landingpad', 'drone'], genres: ['scifi'] },
     { id: 'alchemy', kinds: ['alembic', 'potionshelf', 'mannequin', 'loom', 'fabric'], genres: ['fantasy', 'gothic'] },
     { id: 'library', kinds: ['bookcase', 'globe', 'scrolls', 'safe', 'scales', 'vaultdoor'] },
+    { id: 'crafts', kinds: ['forge', 'quench', 'breadrack', 'windmill', 'watermill', 'horse', 'hayrack', 'saddle', 'bathpool'], genres: ['fantasy', 'gothic'] },
+    { id: 'nature', kinds: ['waterfall', 'cliff', 'cavecrystals', 'giantmushroom', 'glowshrooms', 'lilypads', 'driftwood'] },
+    { id: 'places', kinds: ['produce', 'dummy', 'archery', 'stage', 'seats', 'podium', 'cryptentrance'], genres: ['fantasy', 'gothic'] },
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];

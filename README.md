@@ -435,7 +435,10 @@ desert (giant leaves, vines, a stone head, quicksand, cacti, a yucca, a bull sku
 mast, a ship's wheel, cannons, a capstan, hammocks), the East (a pagoda, a torii gate, paper lanterns, tatami, raked sand,
 bamboo, a koi pond) and an alchemist and a tailor (an alembic, a shelf of potions, a mannequin, a loom, bolts of cloth);
 science fiction has a starship and a hangar (a captain's chair, a viewscreen, cryopods, a restraint chair, a shuttle, a
-cargo loader, a landing pad, drones). Any world has the north (an igloo, a sled, blocks of ice, snowdrifts, a runestone,
+cargo loader, a landing pad, drones). Fantasy and gothic horror also have a mill, a stable and a forge (a windmill, a water wheel, a bread rack, a horse, a hay
+rack, a saddle, a forge, a quenching barrel, a bath pool) and a market, an arena and a theatre (a produce stall, a
+training dummy, an archery target, a stage, rows of seats, a podium, a crypt entrance). Any world has wonders of nature (a
+waterfall, a cliff edge, a crystal cluster, a giant mushroom, glowing mushrooms, lily pads, driftwood), the north (an igloo, a sled, blocks of ice, snowdrifts, a runestone,
 an ice hole) and a library and a bank (bookcases, a globe, scrolls, a safe, scales, a vault door).
 
 Your own pictures go on the map too: put them into the «assets» folder of the library (the folder button under «My

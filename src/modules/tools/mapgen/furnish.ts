@@ -34,6 +34,8 @@ export const PROP_KINDS = [
   'cactus', 'skull', 'vines', 'bigleaf', 'idolhead', 'quicksand', 'joshua', 'mast', 'helm', 'cannon', 'hammock', 'capstan', 'sofa', 'tv', 'fridge', 'stove', 'computer', 'washer', 'bicycle', 'cone', 'toxicbarrel', 'wreck', 'tires', 'barricade', 'burnbarrel', 'radsign', 'shack',
   // draw-sets5.ts: the north; the East; a starship and a hangar; an alchemist, a tailor, a library, a bank.
   'igloo', 'sled', 'iceblock', 'snowdrift', 'runestone', 'icehole', 'pagoda', 'lantern', 'zengarden', 'zenrock', 'bamboo', 'torii', 'tatami', 'lowtable', 'koipond', 'captainchair', 'viewscreen', 'cryopod', 'restraint', 'shuttle', 'fueltank', 'mech', 'landingpad', 'drone', 'alembic', 'potionshelf', 'mannequin', 'loom', 'fabric', 'bookcase', 'globe', 'scrolls', 'safe', 'scales', 'vaultdoor',
+  // draw-sets6.ts: crafts; nature; a city's places.
+  'windmill', 'watermill', 'breadrack', 'horse', 'hayrack', 'saddle', 'forge', 'quench', 'bathpool', 'waterfall', 'cliff', 'cavecrystals', 'giantmushroom', 'glowshrooms', 'lilypads', 'driftwood', 'produce', 'dummy', 'archery', 'stage', 'seats', 'podium', 'cryptentrance',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 
