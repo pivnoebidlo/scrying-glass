@@ -435,7 +435,14 @@ airlock, a window onto space, hydroponics, oxygen tanks, a spacesuit) and a Mars
 a water extractor, a colony flag); noir and modern share a detective agency and a casino (an evidence board, a coat rack,
 a roulette table, a card table, a slot machine); modern has an office and the metro (cubicles, a water cooler, a copier,
 a turnstile, a metro car, a ticket machine); the wasteland has a bomb shelter (a blast door, an armoured exoskeleton, a
-water purifier, a radio set, tinned food, a diesel generator).
+water purifier, a radio set, tinned food, a diesel generator). More fantasy: a monastery (a great bell, a scriptorium
+desk, an herb bed, a reliquary), an enchanted library (a spiral stair, an armchair, piles of books, a rune carpet), a
+goblin camp (a ragged tent, a heap of junk, a war banner, a bonfire of bones), a troll's cave (a troll's bed, boulders, a
+huge club, a cooking pit) and a pharaoh's tomb (a golden sarcophagus, canopic jars, a jackal statue, hieroglyphs); a
+cyberpunk quarter (a noodle stand, a hover bike, an implant chair, cables, graffiti) and an alien hive (a brood sac, nest
+pods, hive resin, spines) for science fiction; a mad scientist's lab (an operating table, a brain in a jar, a lever panel,
+a shelf of specimens) for gothic and noir; a hospital (a bed, a drip stand, a wheelchair, a bed curtain, an X-ray light
+box) and a police station (a police car, a height chart, a barrier) for modern.
 
 A map has its world: fantasy, science fiction, gothic horror, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),

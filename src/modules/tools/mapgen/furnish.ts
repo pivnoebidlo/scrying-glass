@@ -48,6 +48,10 @@ export const PROP_KINDS = [
   'witchhut', 'herbs', 'wisps', 'skullpost', 'fairyring', 'pyramid', 'serpent', 'sunaltar', 'traptiles', 'vinewall', 'icepillar', 'icethrone', 'frozen', 'icicles', 'lavaforge', 'obsidian', 'firevent', 'giantanvil',
   // draw-sets12.ts: a space station; a Mars colony; a detective's office and a casino; an office and the metro; a shelter.
   'airlock', 'hydroponics', 'oxygen', 'spacesuit', 'starwindow', 'habdome', 'rocket', 'extractor', 'colonyflag', 'corkboard', 'coatrack', 'roulette', 'cardtable', 'slotmachine', 'cubicle', 'watercooler', 'copier', 'turnstile', 'subwaycar', 'ticketmachine', 'blastdoor', 'exosuit', 'purifier', 'hamradio', 'cans', 'generator',
+  // draw-sets13.ts: a monastery; an enchanted library; a goblin camp; a troll's cave; a pharaoh's tomb.
+  'bigbell', 'scriptorium', 'herbbed', 'reliquary', 'spiralstair', 'armchair', 'bookpile', 'runecarpet', 'gobtent', 'junkpile', 'warbanner', 'bonefire', 'trollnest', 'boulderpile', 'bigclub', 'cookpit', 'goldsarcophagus', 'canopic', 'jackalstatue', 'hieroglyphs',
+  // draw-sets14.ts: a cyberpunk quarter; an alien hive; a mad scientist's lab; a hospital; a police station.
+  'noodlestand', 'cables', 'graffiti', 'hoverbike', 'cyberchair', 'hivewall', 'broodmother', 'spines', 'nestpods', 'operatingtable', 'brainjar', 'switchboard', 'specimenshelf', 'hospitalbed', 'ivdrip', 'wheelchair', 'curtainscreen', 'lightbox', 'policecar', 'mugshot', 'barrier',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

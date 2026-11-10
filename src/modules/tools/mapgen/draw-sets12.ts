@@ -3,6 +3,7 @@
 // in the wasteland, built in the atomic age.
 import type { Prop } from './furnish';
 import { circle, CLOTH, glow, lines, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets13 } from './draw-sets13';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -251,5 +252,7 @@ export function drawSets12(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       shape(ctx, '#e0523a', circle(ctx, c * 0.1, -c * 0.18, c * 0.04), 0);
       lines(ctx, DARK, Math.max(2, c / 12), () => (ctx.moveTo(w / 2 - c * 0.06, c * 0.2), ctx.quadraticCurveTo(w / 2 + c * 0.2, c * 0.3, w / 2 + c * 0.1, c * 0.48)));
       break;
+    default:
+      drawSets13(ctx, p, w, h, c);
   }
 }
