@@ -43,6 +43,9 @@ const GRASS_TONES: Record<string, Look> = {
   ash: { grass: '#5a5550', tuft: '#48443f', tree: ['#3a3330', '#2e2926', '#463d38'] },
   // Other worlds: red dust with strange growth, grey dust with none to speak of.
   mars: { grass: '#b56a43', tuft: '#9a5434', tree: ['#7a4a8e', '#8e5a3a', '#6a3d6e'] },
+  // A graveyard's dead grass; the asphalt of a city.
+  barrow: { grass: '#5d6150', tuft: '#4a4e40', tree: ['#2f3329', '#3a3d31', '#262922'] },
+  asphalt: { grass: '#4f5154', tuft: '#5b5d60', tree: ['#2f4a33', '#365a3b', '#284431'] },
   moon: { grass: '#a3a29d', tuft: '#8c8b86', tree: ['#6e6d69', '#7d7c77', '#5f5e5a'] },
 };
 const FLOOR_TONES: Record<string, string[]> = {
@@ -53,6 +56,7 @@ const FLOOR_TONES: Record<string, string[]> = {
   frost: ['#d6e3e8', '#cddbe1', '#dde8ec'],
   metal: ['#8d949c', '#878e96', '#939aa1'],
   grating: ['#4a4f55', '#464b51', '#4e535a'],
+  lino: ['#e8e4dc', '#2b2a2e'],
 };
 const lookOf = (l: Layout, base: Look) => (l.tone && GRASS_TONES[l.tone]) || base;
 // Surfaces the map editor paints: lava, ice, mud and pits. Not rock: indoors the walls go round them, not between.
@@ -988,7 +992,8 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
     drawBuilt(ctx, l, c, false);
   } else {
     eachFloor((x, y) => {
-      ctx.fillStyle = tints[Math.floor(cellNoise(l, x, y, 7)() * tints.length)]!;
+      // Linoleum: black and white in a chequer.
+      ctx.fillStyle = l.tone === 'lino' ? tints[(x + y) % 2]! : tints[Math.floor(cellNoise(l, x, y, 7)() * tints.length)]!;
       ctx.fillRect(x * c, y * c, c, c);
     });
     ctx.strokeStyle = LINE;
@@ -1330,6 +1335,9 @@ const LIGHT_OF: Partial<Record<PropKind, { r: number; rgb?: string }>> = {
   oven: { r: 3 }, spit: { r: 4.5 }, console: { r: 2, rgb: '95, 211, 201' }, terminal: { r: 1.6, rgb: '95, 211, 201' },
   holo: { r: 3, rgb: '120, 200, 255' }, reactor: { r: 5, rgb: '120, 255, 170' }, beacon: { r: 3, rgb: '255, 80, 60' },
   lighthouse: { r: 8 }, wayshrine: { r: 1.6 }, orb: { r: 2.5, rgb: '160, 140, 255' }, portal: { r: 4, rgb: '170, 120, 255' }, runes: { r: 1.5, rgb: '170, 120, 255' },
+  tank: { r: 2, rgb: '120, 255, 170' }, forcefield: { r: 2.5, rgb: '120, 200, 255' }, holosign: { r: 3, rgb: '255, 120, 200' },
+  goo: { r: 1.6, rgb: '150, 230, 120' }, xenocrystal: { r: 2, rgb: '180, 140, 255' }, candelabra: { r: 3.5 }, jukebox: { r: 2.5 },
+  hovercar: { r: 2.5, rgb: '255, 233, 168' }, sedan: { r: 2.5, rgb: '255, 233, 168' },
 };
 // `power`: how much of the darkness the light takes away (windows less than a fire).
 export function lightsOf(l: Layout): { x: number; y: number; r: number; rgb: string; power: number }[] {

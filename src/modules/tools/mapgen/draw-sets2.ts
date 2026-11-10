@@ -2,6 +2,7 @@
 // The forest and the road, a port, a temple and magic, a prison, a village and a farm.
 import type { Prop } from './furnish';
 import { circle, CLOTH, GLOW, glow, lines, rect, shape, STONE, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets3 } from './draw-sets3';
 
 const IRON = '#55585e';
 const SLIME = ['#7ac74f', '#4fa8c7', '#c74f8e', '#c7b24f'];
@@ -324,5 +325,7 @@ export function drawSets2(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
         ctx.restore();
       }
       break;
+    default:
+      drawSets3(ctx, p, w, h, c);
   }
 }

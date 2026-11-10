@@ -416,14 +416,19 @@ gold border, an earth floor, marble; wooden, stone and brick walls. A door goes 
 closes again), and windows, curtains, banners, paintings, hunting trophies and wall shelves hang on the walls — enough
 for a large tavern with its hall, kitchen and rooms.
 
-A map has its world: fantasy or science fiction (chosen for a new map, changed above the map). The palette shows the
+A map has its world: fantasy, science fiction, gothic horror or noir (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),
 the forest and the road (a lean-to, a footbridge, a milestone, a wayside shrine, a bear trap), a port (a pier, bollards,
 nets, an anchor, a buoy, a lighthouse), a temple and magic (a lectern, a font, a mirror, a crystal ball, runes, a
 portal), a prison (iron bars, a rack, an iron maiden, a coffin, a chained skeleton, slime) and a village and a farm (a
 henhouse, a scarecrow, sheaves, pumpkins, hens) in fantasy; a footbridge, a pier and a buoy go on the water; a ship and a colony (consoles, lockers, cargo, a holo table, a reactor, pipes, a ray gun rack, a rover, an
-escape pod…) in science fiction, with red or grey dust outdoors, metal plates or a grating indoors and bulkheads for
-walls.
+escape pod…), a lab, a city of the future and aliens (a med pod, a specimen tank, a robot, a force field, a hover car,
+a holo sign, a crashed saucer, eggs, a cocoon, xenocrystals) in science fiction, with red or grey dust outdoors, metal
+plates or a grating indoors and bulkheads for walls; a manor and its crypt (a candelabra, an organ, a grand piano, a
+gargoyle, a mausoleum, tombstones, an iron railing, black roses, bats, a pool of blood) on graveyard grass in gothic
+horror; an office, a bar and a street (a filing cabinet, a typewriter, a jukebox, a pool table, a sedan, a phone booth,
+a newsstand, a chalk outline) on asphalt or linoleum in noir. Gothic horror takes the fantasy kitchen, shrine, prison and
+farm too; noir takes the port.
 
 Your own pictures go on the map too: put them into the «assets» folder of the library (the folder button under «My
 assets» in the palette opens it). Folders become groups, a name like «Kiln_Stone_B1_2x3.png» says the thing, its

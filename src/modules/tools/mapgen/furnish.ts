@@ -28,6 +28,8 @@ export const PROP_KINDS = [
   'window', 'banner', 'painting', 'trophy', 'curtain', 'wallshelf',
   // draw-sets2.ts: the forest and the road, a port, a temple and magic, a prison, a village and a farm.
   'shelter', 'beartrap', 'bridge', 'milestone', 'beehive', 'wayshrine', 'pier', 'bollard', 'nets', 'anchor', 'rope', 'buoy', 'lighthouse', 'lectern', 'font', 'mirror', 'runes', 'orb', 'portal', 'bars', 'torturerack', 'coffin', 'slime', 'skeleton', 'ironmaiden', 'coop', 'scarecrow', 'sheaf', 'churn', 'pumpkins', 'chickens',
+  // draw-sets3.ts: a lab, a city of the future, aliens; a manor and its crypt; an office, a bar, a street.
+  'medpod', 'labbench', 'tank', 'servers', 'robot', 'forcefield', 'hovercar', 'vending', 'holosign', 'eggs', 'alienplant', 'saucer', 'cocoon', 'xenocrystal', 'goo', 'candelabra', 'organ', 'piano', 'gargoyle', 'bloodpool', 'bats', 'ironfence', 'mausoleum', 'goblet', 'roses', 'tombstone', 'filing', 'typewriter', 'phone', 'jukebox', 'pooltable', 'ceilingfan', 'sedan', 'hydrant', 'newsstand', 'trashcan', 'phonebooth', 'chalk',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 
