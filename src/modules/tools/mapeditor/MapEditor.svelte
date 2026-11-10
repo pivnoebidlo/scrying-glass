@@ -6,10 +6,10 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import type { PropKind } from '../mapgen/furnish';
-  import { isOpenAir, tonesFor } from '../mapgen/layout';
+  import { isOpenAir, LIGHTS, tonesFor, type Light } from '../mapgen/layout';
   import { landmarkPins } from '../mapgen/landmarks';
   import { layoutToMaps } from '../mapgen/toMaps';
-  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProps, resize, rotateProp, setTone, STRETCH, tintProp, type BrushId } from './edit';
+  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProps, resize, rotateProp, setLight, setTone, STRETCH, tintProp, type BrushId } from './edit';
   import { TINTS, tintOf } from '../mapgen/draw-props';
   import MapCanvas from './MapCanvas.svelte';
   import NewMapDialog from './NewMapDialog.svelte';
@@ -290,6 +290,12 @@
         <select value={layout.tone ?? ''} onchange={(e) => editor.layout && editor.change(setTone(editor.layout, e.currentTarget.value || null))}>
           <option value="">{t('mapedit.tone.usual')}</option>
           {#each tones as tn (tn)}<option value={tn}>{t(`mapedit.tone.${tn}` as never)}</option>{/each}
+        </select>
+      </label>
+      <label class="check">{t('mapedit.light')}
+        <select value={layout.light ?? ''} onchange={(e) => editor.layout && editor.change(setLight(editor.layout, (e.currentTarget.value || null) as Light | null))}>
+          <option value="">{t('mapedit.light.day')}</option>
+          {#each LIGHTS as h (h)}<option value={h}>{t(`mapedit.light.${h}` as never)}</option>{/each}
         </select>
       </label>
       <span class="sep"></span>

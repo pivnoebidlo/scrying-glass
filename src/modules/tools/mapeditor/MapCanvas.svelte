@@ -5,7 +5,7 @@
   import { drawLayout } from '../mapgen/draw';
   import type { Layout } from '../mapgen/layout';
   import {
-    addBuilding, addHouse, addRoom, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, removeProp, STRETCH, stretchProp, toggleDoor, togglePillar, toggleRoof, toggleTower,
+    addBuilding, addHouse, addRoom, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower,
   } from './edit';
   import { editor } from './store.svelte';
 
@@ -49,6 +49,35 @@
       ctx.strokeRect(x * c + 1, y * c + 1, w * c - 2, h * c - 2);
       ctx.restore();
     };
+    // The mimic: a chest to the players, to the master a chest that looks back (and bites when it is woken).
+    (layout.props ?? []).forEach((q, i) => {
+      if (q.kind !== 'mimic') return;
+      const px = (q.x + q.w / 2) * c;
+      const py = (q.y + q.h / 2) * c;
+      if (chomp?.i === i) {
+        ctx.fillStyle = '#7a1f2b';
+        ctx.fillRect(px - c * 0.3, py - c * 0.07, c * 0.6, c * 0.14);
+        ctx.fillStyle = '#f4efe2';
+        ctx.beginPath();
+        for (let k = 0; k < 6; k++) {
+          const tx = px - c * 0.3 + (k + 0.5) * c * 0.1;
+          ctx.moveTo(tx - c * 0.045, py - c * 0.07);
+          ctx.lineTo(tx, py + c * 0.02);
+          ctx.lineTo(tx + c * 0.045, py - c * 0.07);
+        }
+        ctx.fill();
+      }
+      for (const dx of [-0.16, 0.16]) {
+        ctx.fillStyle = '#f6f1e4';
+        ctx.beginPath();
+        ctx.arc(px + dx * c, py - c * 0.13, c * 0.07, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1a1208';
+        ctx.beginPath();
+        ctx.arc(px + dx * c + (hover ? Math.sign(hover.x + 0.5 - q.x - q.w / 2) * c * 0.025 : 0), py - c * 0.13 + (hover ? Math.sign(hover.y + 0.5 - q.y - q.h / 2) * c * 0.025 : 0), c * 0.035, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
     if (editor.viewing) return;
     for (const i of editor.picked) {
       const q = layout.props?.[i];
@@ -111,6 +140,21 @@
     return Math.abs(px - (sel.x + sel.w) * c) < 12 && Math.abs(py - (sel.y + sel.h) * c) < 12;
   };
   let lastPainted: { x: number; y: number } | null = null;
+  // A chest woken a moment ago: its teeth show.
+  let chomp = $state<{ i: number } | null>(null);
+  function dblclick(e: MouseEvent) {
+    if (!editor.layout || editor.viewing || editor.mode !== 'select') return;
+    const r = over!.getBoundingClientRect();
+    const p = { x: Math.floor(((e.clientX - r.left) / r.width) * layout.w), y: Math.floor(((e.clientY - r.top) / r.height) * layout.h) };
+    const i = propAt(editor.layout, p.x, p.y);
+    const kind = editor.layout.props?.[i]?.kind;
+    if (kind !== 'chest' && kind !== 'mimic') return;
+    editor.change(swapKind(editor.layout, i, kind === 'chest' ? 'mimic' : 'chest'));
+    if (kind === 'chest') {
+      chomp = { i };
+      setTimeout(() => (chomp = null), 700);
+    }
+  }
 
   function paintTo(to: { x: number; y: number }) {
     if (!stroke || !editor.layout) return;
@@ -283,6 +327,7 @@
     onpointercancel={up}
     onpointerleave={() => (hover = null)}
     oncontextmenu={(e) => e.preventDefault()}
+    ondblclick={dblclick}
   ></canvas>
 </div>
 

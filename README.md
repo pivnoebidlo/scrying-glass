@@ -395,7 +395,8 @@ also be put up of its parts: «Building» drags a rectangle of walls round a pla
 its wall), «Wall» and «Floor» go cell by cell, «Door» cuts a door into a wall, and «Roof» puts a roof over the whole
 building or takes it off — to show the players what is inside; lava, ice, mud and
 pits on any map. The ground takes a colour: spring, autumn, snow (with snow on the trees, the stones and the roofs), dry
-steppe or ash outdoors; a wooden, marble, dark or sandstone floor indoors.
+steppe or ash outdoors; the time of day — dawn, dusk or night, when fires, torches, braziers, lamps, crystals, lava and
+lit windows keep their light (one place at different hours — one map exported several times); a wooden, marble, dark or sandstone floor indoors.
 
 Things come from the palette: about a hundred of them in furniture, stores, workshop, shrine, dungeon, town, cave and
 outdoors; the groups fold, and a search finds a thing by name. A thing goes on a cell, on top of other things too (a

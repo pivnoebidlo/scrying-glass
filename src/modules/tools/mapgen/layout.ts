@@ -51,7 +51,11 @@ export interface Layout {
   tone?: string;
   // Buildings put up of walls and floor ('B', 'F') that have a roof: a cell of each (the roof covers all of it).
   roofs?: { x: number; y: number }[];
+  // The time of day (LIGHTS); none — day.
+  light?: Light;
 }
+export const LIGHTS = ['dawn', 'dusk', 'night'] as const;
+export type Light = (typeof LIGHTS)[number];
 // Ground colours by kind of map: outdoors and in a town the grass, in a building and a cave the floor.
 export const TONES = {
   outdoor: ['spring', 'autumn', 'winter', 'dry', 'ash'],

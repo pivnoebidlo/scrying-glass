@@ -1,7 +1,7 @@
 // The map editor's data and moves: a draft is a layout of the map generator (mapgen/layout.ts), kept in a file
 // «Name.map.json» in an adventure's maps folder. Pure functions — every move returns a new layout; the picture is
 // drawn from it the same way as a generated one.
-import { LAYOUT_STYLES, buildingAt, isBuilt, isWild, tonesFor, walkable, type Layout, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
+import { LAYOUT_STYLES, LIGHTS, buildingAt, isBuilt, isWild, tonesFor, walkable, type Layout, type Light, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
 import { PROP_KINDS, type Facing, type Prop, type PropKind } from '../mapgen/furnish';
 
 export const MAP_DRAFT_SUFFIX = '.map.json';
@@ -79,6 +79,7 @@ export function parseDraft(x: unknown): MapDraft | null {
       ...(wall ? { wall } : {}),
       ...(typeof l['tone'] === 'string' && tonesFor(style).includes(l['tone']) ? { tone: l['tone'] } : {}),
       ...(points(l['roofs'], 2000).length ? { roofs: points(l['roofs'], 2000) } : {}),
+      ...(LIGHTS.includes(l['light'] as Light) ? { light: l['light'] as Light } : {}),
     },
   };
 }
@@ -430,6 +431,21 @@ export function resize(l: Layout, w: number, h: number): Layout {
     wall: l.wall && { towers: l.wall.towers.filter(keep), gates: l.wall.gates.filter((g2) => g2.x < W && g2.y < H) },
     roofs: l.roofs?.filter(keep),
   });
+}
+
+// The time of day: dawn, dusk, night; null — day.
+export function setLight(l: Layout, light: Light | null): Layout {
+  if ((l.light ?? null) === light) return l;
+  const out: Layout = { ...l, light: light ?? undefined };
+  if (!light) delete out.light;
+  return out;
+}
+
+// A thing of one kind becomes another where it stands (a chest and the mimic it really is).
+export function swapKind(l: Layout, i: number, kind: PropKind): Layout {
+  const p = l.props?.[i];
+  if (!p || p.kind === kind) return l;
+  return { ...l, props: l.props!.map((q, n) => (n === i ? { ...q, kind } : q)) };
 }
 
 export const isOutdoor = (style: LayoutStyle) => style === 'town' || isWild(style);

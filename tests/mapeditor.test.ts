@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setTone, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower,
+  addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setLight, setTone, swapKind, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower,
 } from '../src/modules/tools/mapeditor/edit';
 import { generateLayout, LAYOUT_STYLES, seededRandom } from '../src/modules/tools/mapgen/layout';
 
@@ -166,5 +166,29 @@ describe('the map editor', () => {
     expect(parseDraft(draftOf(roofed))!.layout).toMatchObject({ roofs: [{ x: 3, y: 3 }], doors: [{ x: 4, y: 2, along: 'y' }] });
     // A room marked over it keeps its walls and floor.
     expect(addRoom(roofed, { x: 2, y: 2, w: 5, h: 4 }).cells[2]!.slice(2, 7)).toBe('BBFBB');
+  });
+
+  it('keeps the time of day and finds the lights', async () => {
+    const { lightsOf } = await import('../src/modules/tools/mapgen/draw');
+    let l = placeProp(blankLayout('forest', 12, 10, 1), 'campfire', 4, 4, 0, 0.5).layout;
+    l = paint(l, [{ x: 8, y: 8 }], 'L');
+    const night = setLight(l, 'night');
+    expect(night.light).toBe('night');
+    expect(setLight(night, null).light).toBeUndefined();
+    expect(setLight(night, 'night')).toBe(night);
+    expect(parseDraft(draftOf(night))!.layout.light).toBe('night');
+    expect(parseDraft({ ...draftOf(night), layout: { ...night, light: 'eclipse' } })!.layout.light).toBeUndefined();
+    const lights = lightsOf(night);
+    expect(lights).toHaveLength(2);
+    expect(lights[0]).toMatchObject({ x: 4.5, y: 4.5 });
+  });
+
+  it('wakes a chest into a mimic and back', () => {
+    const { layout: l, index } = placeProp(room(), 'chest', 3, 3, 0, 0.5);
+    const m = swapKind(l, index, 'mimic');
+    expect(m.props![index]!.kind).toBe('mimic');
+    expect(parseDraft(draftOf(m))!.layout.props![index]!.kind).toBe('mimic');
+    expect(swapKind(m, index, 'chest').props![index]!.kind).toBe('chest');
+    expect(swapKind(m, 99, 'chest')).toBe(m);
   });
 });

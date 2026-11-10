@@ -1,7 +1,8 @@
 // Draws a layout on a canvas, by the app, so that no assets are needed: dark rock with hatching round the walls and a
 // pale floor; outdoors grass, water, paths, trees and boulders. The picture holds nothing secret: it goes to the players; room numbers are the preview's only.
 import { drawProps } from './draw-props';
-import { buildingAt, isBuilt, isOpenAir, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type WildStyle } from './layout';
+import { buildingAt, isBuilt, isOpenAir, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type Light, type WildStyle } from './layout';
+import type { PropKind } from './furnish';
 
 export const CELL = 40;
 // The texture of one cell: its own randomness from the layout's seed and its place, so that changing a cell (the map
@@ -871,12 +872,79 @@ function drawRoofs(ctx: CanvasRenderingContext2D, l: Layout, c: number, snow: bo
   }
 }
 
+// The time of day: the picture is tinted (multiplied) by the colour of the hour, and at dusk and at night the fires,
+// lamps, glowing things, lava and lit windows keep their light round them.
+const HOURS: Record<Light, { tint: string; lit: number }> = {
+  dawn: { tint: 'rgb(255, 214, 190)', lit: 0 },
+  dusk: { tint: 'rgb(214, 146, 150)', lit: 0.5 },
+  night: { tint: 'rgb(48, 60, 112)', lit: 1 },
+};
+const WARM = '255, 190, 110';
+const LIGHT_OF: Partial<Record<PropKind, { r: number; rgb?: string }>> = {
+  candle: { r: 2.2 }, torch: { r: 3.8 }, brazier: { r: 4.2 }, campfire: { r: 5 }, hearth: { r: 4.2 }, chandelier: { r: 5.5 },
+  lamppost: { r: 4.5 }, crystal: { r: 3, rgb: '140, 200, 255' }, cauldron: { r: 1.8, rgb: '150, 230, 120' },
+};
+// `power`: how much of the darkness the light takes away (windows less than a fire).
+export function lightsOf(l: Layout): { x: number; y: number; r: number; rgb: string; power: number }[] {
+  const out: { x: number; y: number; r: number; rgb: string; power: number }[] = [];
+  for (const p of l.props ?? []) {
+    const k = LIGHT_OF[p.kind];
+    if (k) out.push({ x: p.x + p.w / 2, y: p.y + p.h / 2, r: k.r * Math.max(1, Math.sqrt((p.w * p.h) / 2)), rgb: k.rgb ?? WARM, power: 1 });
+  }
+  for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) if (l.cells[y]![x] === 'L') out.push({ x: x + 0.5, y: y + 0.5, r: 1.8, rgb: '255, 110, 40', power: 1 });
+  // Lit windows: a glow round every house.
+  for (const a of l.houses ?? []) out.push({ x: a.x + a.w / 2, y: a.y + a.h / 2, r: Math.max(a.w, a.h) / 2 + 0.6, rgb: WARM, power: 0.4 });
+  return out;
+}
+function drawHour(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
+  if (!l.light) return;
+  const hour = HOURS[l.light];
+  const lights = hour.lit ? lightsOf(l) : [];
+  // The darkness is smooth: a small mask, stretched — a big map at a big scale would not fit another full canvas.
+  const k = 8;
+  const mask = typeof OffscreenCanvas === 'undefined' ? null : new OffscreenCanvas(l.w * k, l.h * k);
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  if (mask) {
+    const m = mask.getContext('2d')!;
+    m.fillStyle = hour.tint;
+    m.fillRect(0, 0, mask.width, mask.height);
+    m.globalCompositeOperation = 'destination-out';
+    for (const s of lights) {
+      const g = m.createRadialGradient(s.x * k, s.y * k, 0, s.x * k, s.y * k, s.r * k);
+      g.addColorStop(0, `rgba(0, 0, 0, ${hour.lit * s.power})`);
+      g.addColorStop(0.45, `rgba(0, 0, 0, ${hour.lit * s.power * 0.75})`);
+      g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      m.fillStyle = g;
+      m.fillRect((s.x - s.r) * k, (s.y - s.r) * k, s.r * 2 * k, s.r * 2 * k);
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(mask, 0, 0, l.w * c, l.h * c);
+  } else {
+    ctx.fillStyle = hour.tint;
+    ctx.fillRect(0, 0, l.w * c, l.h * c);
+  }
+  ctx.restore();
+  // The light's own colour on what it falls on.
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  for (const s of lights) {
+    const g = ctx.createRadialGradient(s.x * c, s.y * c, 0, s.x * c, s.y * c, s.r * c);
+    g.addColorStop(0, `rgba(${s.rgb}, ${0.32 * hour.lit * s.power})`);
+    g.addColorStop(1, `rgba(${s.rgb}, 0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect((s.x - s.r) * c, (s.y - s.r) * c, s.r * 2 * c, s.r * 2 * c);
+  }
+  ctx.restore();
+}
+
 export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, over: Overlay = {}) {
   if (isWild(l.style)) drawWild(ctx, l, c, l.style);
   else if (l.style === 'town') drawTown(ctx, l, c);
   else drawIndoor(ctx, l, c);
   drawProps(ctx, l, c);
   if (isOpenAir(l.style)) drawRoofs(ctx, l, c, l.tone === 'winter');
+  drawHour(ctx, l, c);
 
   for (const m of over.marks ?? []) {
     const size = m.size ?? 1;

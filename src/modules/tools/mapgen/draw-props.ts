@@ -56,6 +56,7 @@ function drawOne(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       shape(ctx, '#ece4d2', rect(ctx, L + c * 0.2, h / 2 - c * 0.5, w - c * 0.4, c * 0.3, c * 0.08), line);
       break;
     case 'chest':
+    case 'mimic':
       shape(ctx, '#7a4f24', rect(ctx, -c * 0.34, -c * 0.24, c * 0.68, c * 0.48, c * 0.05), line);
       ctx.strokeStyle = '#4a2f14';
       ctx.beginPath();

@@ -17,6 +17,8 @@ export const PROP_KINDS = [
   'bathtub', 'chandelier', 'counter', 'stool', 'cushion', 'workbench', 'woodpile', 'bucket', 'urn', 'grindstone',
   'circle', 'crystal', 'pedestal', 'obelisk', 'idol', 'chains', 'stocks', 'spikes', 'web', 'lever', 'torch', 'plate',
   'fence', 'signpost', 'lamppost', 'trough', 'gallows', 'menhir', 'cairn', 'totem', 'deadtree', 'fern', 'nest',
+  // Since 0.106: not in the palette (a chest becomes one); drawn as a chest.
+  'mimic',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 
