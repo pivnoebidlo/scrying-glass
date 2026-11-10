@@ -160,7 +160,7 @@ journal / журнал / заметки / notes — журнал мастера.
 следы когтей, сургучные печати (со знаком или буквой, целые или сломанные) и чернильные штампы с надписью по кругу.
 Перо рисует прямо по листу — карту к кладу, набросок, стрелки: чернила записки, три толщины, ластик и отмена (⌘Z); игроки
 видят рисунок вместе с текстом. Редактор записки разделён на три части: текст и лист, перо, следы. Девятнадцать шрифтов с кириллицей: от руки, каллиграфия, книжные, старорусский, летопись, древняя рукопись, жуткие
-(потёки, истёртый, чудовищный); «неровность почерка» заставляет буквы плясать. Записка — файл «Название.note.json» в папке раздатки приключения: она стоит в «Раздатке» и «Файлах»
+(потёки, истёртый, чудовищный, почерк безумца, исчирканный, обугленный); «неровность почерка» заставляет буквы плясать. Записка — файл «Название.note.json» в папке раздатки приключения: она стоит в «Раздатке» и «Файлах»
 рядом с картинками и показывается игрокам так же. Сохраняется сама; если записка у игроков, правки видны сразу.
 
 **Холсты** («Инструменты» → «Холсты», «Новый холст» в «Раздатке» или «Рисовать поверх» на любой картинке) — раздатка,
@@ -932,7 +932,8 @@ GNU GPL версии 3 или новее (`LICENSE`). Встроенный бе�
 (Evil Hat Productions, CC BY 3.0); существа и справочник Mausritter — Mausritter SRD 2.3.1 (Losing Games и
 Isaac Williams, CC BY 4.0); Forged in the Dark — SRD Blades in the Dark (One Seven Design, John Harper, CC BY 3.0). PDF показывает pdf.js (Mozilla, Apache 2.0). Шрифты записок (Marck Script, Bad Script, Caveat, Great Vibes, Amatic SC,
 Neucha, Comforter Brush, Cormorant Garamond, Old Standard TT, Kurale, Forum, Yeseva One, Ruslan Display, Ponomar,
-Monomakh, Underdog, Rubik Wet Paint, Rubik Distressed, Rubik Beastly) — SIL Open Font License 1.1, тексты лицензий
+Monomakh, Underdog, Rubik Wet Paint, Rubik Distressed, Rubik Beastly, Rubik Marker Hatch, Rubik Burned, Shantell Sans — его
+неподвижный вариант со скачущими буквами) — SIL Open Font License 1.1, тексты лицензий
 лежат рядом со шрифтами в `src/renderer/lib/note/fonts/`. Шрифт IBM VGA одной скрытой темы (PxPlus IBM VGA 8x16) —
 The Ultimate Oldschool PC Font Pack, автор VileR (https://int10h.org/oldschool-pc-fonts/), CC BY-SA 4.0, текст
 лицензии — в `src/renderer/lib/fonts/oldschool/`. Знаки печатей — контуры Lucide (ISC).

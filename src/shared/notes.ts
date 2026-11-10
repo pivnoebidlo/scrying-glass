@@ -110,6 +110,22 @@ export const NOTE_FONTS = {
   }, family: 'Rubik Beastly', get group() {
     return t('notes.fontGroup.creepy');
   } },
+  // Shantell Sans with its bounce and irregularity fixed at the top (a static instance, OFL: no reserved name).
+  madman: { get title() {
+    return t('notes.font.madman');
+  }, family: 'Shantell Sans Wild', get group() {
+    return t('notes.fontGroup.creepy');
+  } },
+  hatch: { get title() {
+    return t('notes.font.hatch');
+  }, family: 'Rubik Marker Hatch', get group() {
+    return t('notes.fontGroup.creepy');
+  } },
+  burned: { get title() {
+    return t('notes.font.burned');
+  }, family: 'Rubik Burned', get group() {
+    return t('notes.fontGroup.creepy');
+  } },
 } as const;
 export type NoteFont = keyof typeof NOTE_FONTS;
 

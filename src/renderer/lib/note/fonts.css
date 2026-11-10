@@ -21,4 +21,7 @@
 @font-face { font-family: 'Monomakh'; src: url('./fonts/monomakh/Monomakh-Regular.ttf') format('truetype'); font-display: block; }
 @font-face { font-family: 'Rubik Wet Paint'; src: url('./fonts/rubikwetpaint/RubikWetPaint-Regular.ttf') format('truetype'); font-display: block; }
 @font-face { font-family: 'Rubik Distressed'; src: url('./fonts/rubikdistressed/RubikDistressed-Regular.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'Shantell Sans Wild'; src: url('./fonts/shantellsans/ShantellSansWild.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'Rubik Marker Hatch'; src: url('./fonts/rubikmarkerhatch/RubikMarkerHatch-Regular.ttf') format('truetype'); font-display: block; }
+@font-face { font-family: 'Rubik Burned'; src: url('./fonts/rubikburned/RubikBurned-Regular.ttf') format('truetype'); font-display: block; }
 @font-face { font-family: 'Rubik Beastly'; src: url('./fonts/rubikbeastly/RubikBeastly-Regular.ttf') format('truetype'); font-display: block; }
