@@ -32,6 +32,8 @@ export interface PackSlices extends FactionSlices<unknown> {
   clocks?: unknown;
   // The Forged in the Dark crew (none before 0.54).
   crew?: unknown;
+  // The world's calendar (modules/worldtime/calendar.ts; none before 0.102 or without one).
+  calendar?: unknown;
   // The adventure's entry in the repository, if its author published it (shared/repo.ts; none before 0.57).
   repo?: PublishedMark;
 }
@@ -200,7 +202,7 @@ export async function readPack(file: string, tmp: string): Promise<ReadPack> {
     .map((n) => ({ id: path.basename(n, '.json'), json: json(n) }));
   return {
     manifest,
-    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' || Array.isArray(slices.pinned) ? slices.pinned : undefined, factions: factionsOf(slices), clocks: Array.isArray(slices.clocks) ? slices.clocks : undefined, crew: slices.crew, repo: validMark(slices.repo) },
+    slices: { scenes: slices.scenes ?? [], maps: slices.maps ?? {}, encounters: slices.encounters ?? [], order: slices.order ?? {}, names: slices.names ?? {}, tray: slices.tray, pinned: typeof slices.pinned === 'string' || Array.isArray(slices.pinned) ? slices.pinned : undefined, factions: factionsOf(slices), clocks: Array.isArray(slices.clocks) ? slices.clocks : undefined, crew: slices.crew, calendar: slices.calendar, repo: validMark(slices.repo) },
     dir: tmp,
     cards,
   };

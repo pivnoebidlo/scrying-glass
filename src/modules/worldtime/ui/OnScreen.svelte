@@ -2,7 +2,9 @@
      the time sets it by hand; the eye shows the day and the time of day to the players, in the chosen corner. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { Eye, EyeOff, Moon, RotateCcw, Sun, Sunrise, Sunset } from '@lucide/svelte';
+  import { CalendarDays, Eye, EyeOff, Moon, RotateCcw, Sun, Sunrise, Sunset } from '@lucide/svelte';
+  import { dateOf, dateText, PHASE_ICON } from '../calendar';
+  import CalendarDialog from './CalendarDialog.svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { dispatch } from '../../../renderer/lib/store.svelte';
   import CornerPick from '../../aspects/ui/CornerPick.svelte';
@@ -16,6 +18,9 @@
   const part = $derived(partOf(now.hour));
   const ICON: Record<DayPart, typeof Sun> = { night: Moon, morning: Sunrise, day: Sun, evening: Sunset };
   const Icon = $derived(ICON[part]);
+  const calendar = $derived(ms.calendars?.[adventure ?? ''] ?? null);
+  const date = $derived(calendar ? dateOf(calendar, now.day) : null);
+  let calendarOpen = $state(false);
 
   const STEPS = [
     { label: 'worldtime.plus10', hint: 'worldtime.plus10Hint', minutes: 10 },
@@ -67,10 +72,18 @@
         <button class="icon-btn" title={w.shown ? t('worldtime.hide') : t('worldtime.show')} onclick={() => dispatch('worldtime', 'show', { adventure, shown: !w.shown })}>
           {#if w.shown}<Eye size={14} />{:else}<EyeOff size={14} />{/if}
         </button>
+        <button class="icon-btn" title={t('worldtime.cal.open')} onclick={() => (calendarOpen = true)}><CalendarDays size={14} /></button>
         <button class="icon-btn" title={t('worldtime.reset')} onclick={reset}><RotateCcw size={13} /></button>
       </span>
     {/if}
   </div>
+  {#if calendar && date && !editing}
+    <div class="date">
+      <span class="when">{dateText(calendar, date)}{#if date.weekday}, {date.weekday}{/if}</span>
+      {#each date.moons as m (m.name)}<span class="moon" title={t(`worldtime.phase.${m.phase}`)}>{PHASE_ICON[m.phase]} {m.name}</span>{/each}
+      {#each date.holidays as h (h)}<span class="holiday">{h}</span>{/each}
+    </div>
+  {/if}
   <div class="steps">
     {#each STEPS as s (s.minutes)}
       <button
@@ -83,10 +96,29 @@
     <button class="btn" title={t('worldtime.morningHint')} onclick={() => dispatch('worldtime', 'untilMorning', { adventure })}>{t('worldtime.morning')}</button>
   </div>
 {/if}
+{#if calendarOpen}
+  <CalendarDialog {adventure} {calendar} today={now.day} onclose={() => (calendarOpen = false)} />
+{/if}
 
 <style>
+  .date {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    padding: 0 4px;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .when {
+    color: var(--text-normal);
+  }
+  .holiday {
+    color: var(--accent);
+    font-weight: 600;
+  }
   .head {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 4px;
     min-height: 30px;

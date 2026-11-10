@@ -867,6 +867,8 @@ interface AdventureData extends FactionSlices<AnyRec> {
   crew?: AnyRec;
   // Time in the game world (none before 0.72).
   worldtime?: AnyRec;
+  // Its calendar (none before 0.102).
+  calendar?: unknown;
   // A supplement, not an adventure: its kind (none before 0.61).
   supplement?: SupplementKind;
 }
@@ -920,6 +922,7 @@ async function buildPack(adventure: string, out: string, opts: { music: boolean;
     ...factionsSlice(state.factions.byAdventure[adventure]),
     clocks: state.clocks.byAdventure[adventure],
     crew: state.crew.byAdventure[adventure] as unknown as AnyRec | undefined,
+    calendar: state.worldtime.calendars?.[adventure],
     repo: state.repo.published[adventure],
   };
   // Общие карточки, на которые ссылаются заготовки и метки карт приключения.
@@ -1062,6 +1065,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
     clocks: (st['clocks']!['byAdventure'] as Record<string, unknown[]>)[name],
     crew: (st['crew']!['byAdventure'] as Record<string, AnyRec>)[name],
     worldtime: (st['worldtime']!['byAdventure'] as Record<string, AnyRec>)[name],
+    calendar: (st['worldtime']!['calendars'] as Record<string, unknown> | undefined)?.[name],
     ...(state.adventures.supplements?.[name] ? { supplement: state.adventures.supplements[name] } : {}),
   };
   try {
@@ -1083,7 +1087,7 @@ ipcMain.handle('adventures:delete', async (_event, name: string) => {
   await merge('factions', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
   await merge('clocks', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
   await merge('crew', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
-  await merge('worldtime', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name) }));
+  await merge('worldtime', (st) => ({ ...st, byAdventure: drop(st['byAdventure'] as AnyRec, (k) => k !== name), calendars: drop((st['calendars'] as AnyRec | undefined) ?? {}, (k) => k !== name) }));
   await merge('initiative', (st) => ({ ...st, encounters: (st['encounters'] as AnyRec[]).filter((x) => x['adventure'] !== name) }));
   await merge('maps', (st) => ({ ...st, maps: drop(st['maps'] as AnyRec, (k) => !inAdventure(name, k)) }));
   await merge('order', (st) => ({ ...st, groups: drop(st['groups'] as AnyRec, (k) => !mine(k)) }));
@@ -1164,6 +1168,7 @@ ipcMain.handle('trash:restore', async (_event, { place, id }: { place: TrashPlac
     if (data.clocks) await merge('clocks', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.clocks } }));
     if (data.crew) await merge('crew', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.crew } }));
     if (data.worldtime) await merge('worldtime', (st) => ({ ...st, byAdventure: { ...(st['byAdventure'] as AnyRec), [main.to]: data.worldtime } }));
+    if (data.calendar) await merge('worldtime', (st) => ({ ...st, calendars: { ...(st['calendars'] as AnyRec | undefined), [main.to]: data.calendar } }));
     saveVault();
   }
   if (place === 'vault') {
@@ -1308,6 +1313,7 @@ async function importPack(file: string, wanted: string) {
     const factions = factionsOf(sl);
     if (factions) await merge('factions', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: factions } }));
     if (sl.clocks) await merge('clocks', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.clocks } }));
+    if (sl.calendar) await runAction('worldtime', 'setCalendar', { adventure: name, calendar: sl.calendar });
     if (sl.crew) await merge('crew', (s) => ({ ...s, byAdventure: { ...(s['byAdventure'] as AnyRec), [name]: sl.crew } }));
     if (sl.repo) await merge('repo', (s) => ({ ...s, published: { ...(s['published'] as AnyRec), [name]: sl.repo } }));
     saveVault();

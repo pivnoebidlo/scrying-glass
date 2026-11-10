@@ -513,6 +513,12 @@ the players neither see nor hear it.
 time sets the day and the time by hand. The eye shows the players "Day 3, evening" in the chosen corner — the day and
 the part of the day, without the minutes. Mausritter adventures have their own exploration clock instead.
 
+The calendar button of the block gives the adventure a **calendar of its world**: months of their own length, a week, the
+year and reckoning of day 1, moons with their cycles and holidays — written as text, a line a month («Frostmoot | 30»,
+«January / января | 31» where a date wants another form), from a sample (fantasy with two moons, our Earth, simple).
+Then the block shows the date, the weekday, the moon phases and a holiday, and the players see «15 Thawing 1012 AF,
+morning» with the moons. «Start over» keeps the calendar; it goes with the adventure into a file and the trash.
+
 **Point buy** (Tools → Point buy): 27 points, 8 to 15 before bonuses (the budget and limits can be changed for house
 rules), the cost, total and modifier of each ability, the standard array in one click. Bonuses — from the background
 (2024: +2/+1 or +1/+1/+1), from the race (2014: race → subrace, for example "Halfling → Lightfoot"; the SRD races are

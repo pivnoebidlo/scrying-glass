@@ -669,7 +669,7 @@ min(15, x) — «x, не больше 15»), вставка — числовые
   Время в игре — модуль `modules/worldtime` (`byAdventure[приключение | '']` — `minutes` от начала дня 1 и `shown`;
   правила — `types.ts`: `clockOf`, `partOf`, `nextMorning`; действия `advance` / `untilMorning` / `set` / `show` / `reset` /
   `setPlace`): блок правой панели `ui/OnScreen.svelte` (возможность `worldtime`; у Mausritter её нет — там свой счётчик), слой игроков `ui/Layer.svelte`
-  (order 34, только день и время суток); в корзину — `AdventureData.worldtime`, в .sgpack не идёт (это ход игры, не содержимое).
+  (order 34, только день и время суток); в корзину — `AdventureData.worldtime`, в .sgpack не идёт (это ход игры, не содержимое). Календарь мира — `worldtime.calendars[приключение | '']` (`Calendar` в `worldtime/calendar.ts`: месяцы с `of` — форма в дате, неделя, год, `month` / `day` дня 1, `era`, луны `cycle` / `offset`, праздники; `dateOf`, `phaseOf` — 8 фаз, `dateText`; текст мастера — `monthsOfText` и др.; чужое — `validCalendar`), образцы — `presets.ts` (fantasy / earth из `Intl` / simple), окно — `ui/CalendarDialog.svelte`, действие `setCalendar`; `reset` его не трогает; уходит в .sgpack (`PackSlices.calendar`) и в корзину (`AdventureData.calendar`).
   Таймер — свой модуль `modules/timer` (без вкладки: блок в правой панели, слой игроков order 35, фоновый `Background` —
   `Chime` (сигнал WebAudio на устройство вывода музыки) и `GmBar` (плашка мастера вверху окна: `TimerState.gm` — off / end / always)); время — от часов ядра (`endsAt` идёт / `remaining` на паузе, `timeLeft`),
   окна только пересчитывают остаток по `setInterval`. Страница в «Инструментах» — `timer/ui/TimerTool.svelte`.

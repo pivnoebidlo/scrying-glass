@@ -1,6 +1,7 @@
 // Time in the game world: minutes since the start of day 1, for each adventure ('' — the whole vault). The GM moves
 // it on (ten minutes of searching, a long rest, until morning); the players may see the day and the part of the day.
 import type { Corner } from '../aspects/types';
+import type { Calendar } from './calendar';
 
 export interface WorldTime {
   minutes: number;
@@ -11,6 +12,8 @@ export interface WorldTimeState {
   byAdventure: Record<string, WorldTime>;
   // Where it stands on the player screen.
   place: Corner;
+  // The world's calendar of an adventure ('' — the whole vault): apart from the time, «Start over» keeps it.
+  calendars?: Record<string, Calendar>;
 }
 
 export const DAY = 24 * 60;

@@ -2,6 +2,7 @@
 import { defineModule } from '../../shared/module';
 import { CORNERS, type Corner } from '../aspects/types';
 import { nextMorning, START, type WorldTime, type WorldTimeState } from './types';
+import { validCalendar } from './calendar';
 
 const initialState: WorldTimeState = { byAdventure: {}, place: 'top-left' };
 
@@ -42,6 +43,13 @@ export default defineModule({
     reset(s, { adventure }: { adventure: string | null }) {
       const { [key(adventure)]: _, ...rest } = s.byAdventure;
       return { ...s, byAdventure: rest };
+    },
+
+    // The adventure's calendar (null — days only).
+    setCalendar(s, { adventure, calendar }: { adventure: string | null; calendar: unknown }) {
+      const { [key(adventure)]: _, ...rest } = s.calendars ?? {};
+      const c = validCalendar(calendar);
+      return { ...s, calendars: c ? { ...rest, [key(adventure)]: c } : rest };
     },
 
     setPlace(s, { place }: { place: Corner }) {

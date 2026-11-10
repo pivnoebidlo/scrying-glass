@@ -7,6 +7,7 @@
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { usesHere } from '../../../shared/adventures';
   import { clockOf, partOf, type DayPart } from '../types';
+  import { dateOf, dateText, PHASE_ICON } from '../calendar';
 
   let { ms, app }: ModuleProps<'worldtime'> = $props();
 
@@ -15,12 +16,24 @@
   const part = $derived(now ? partOf(now.hour) : 'day');
   const ICON: Record<DayPart, typeof Sun> = { night: Moon, morning: Sunrise, day: Sun, evening: Sunset };
   const Icon = $derived(ICON[part]);
+  // With a calendar, the players see the date, the moons and a holiday instead of «Day 3».
+  const calendar = $derived(ms.calendars?.[app.adventures.current ?? ''] ?? null);
+  const date = $derived(now && calendar ? dateOf(calendar, now.day) : null);
 </script>
 
 {#if now}
   <div class="corner {ms.place}" transition:fade|global={{ duration: 300 }}>
     {#key part}<span class="icon" in:fade|global={{ duration: 600 }}><Icon /></span>{/key}
-    <span>{t('worldtime.onScreen', { day: now.day, part: t(`worldtime.part.${part}`) })}</span>
+    <span class="text">
+      {#if calendar && date}
+        <span>{dateText(calendar, date)}, {t(`worldtime.part.${part}`)}</span>
+        {#if date.moons.length || date.holidays.length}
+          <span class="more">{[...date.moons.map((m) => PHASE_ICON[m.phase]), ...date.holidays].join(' · ')}</span>
+        {/if}
+      {:else}
+        <span>{t('worldtime.onScreen', { day: now.day, part: t(`worldtime.part.${part}`) })}</span>
+      {/if}
+    </span>
   </div>
 {/if}
 
@@ -35,6 +48,14 @@
     font-size: 3cqmin;
     text-shadow: 0 0 0.6cqmin #000, 0 0 1.2cqmin #000;
     pointer-events: none;
+  }
+  .text {
+    display: flex;
+    flex-direction: column;
+  }
+  .more {
+    font-size: 0.75em;
+    opacity: 0.85;
   }
   .icon {
     display: flex;
