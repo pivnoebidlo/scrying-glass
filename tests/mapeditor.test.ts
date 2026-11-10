@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, removeProp, resize, rotateProp, stretchProp, tintProp, toggleDoor, togglePillar, toggleTower,
+  addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setTone, stretchProp, tintProp, toggleDoor, togglePillar, toggleTower,
 } from '../src/modules/tools/mapeditor/edit';
 import { generateLayout, LAYOUT_STYLES, seededRandom } from '../src/modules/tools/mapgen/layout';
 
@@ -74,6 +74,34 @@ describe('the map editor', () => {
     expect(stretchProp(barrel, 1, 3, 3)).toBe(barrel);
     expect(tintProp(l, 0, 0.1).props![0]!.tint).toBe(0.1);
     expect(parseDraft(JSON.parse(JSON.stringify(draftOf(l))))!.layout.props![0]).toMatchObject({ w: 6, h: 1 });
+  });
+  it('several things are picked by a rectangle, moved together (all or none) and taken away', () => {
+    let l = room();
+    for (const [x, y] of [[2, 2], [3, 2], [6, 5]] as const) l = placeProp(l, 'barrel', x, y).layout;
+    expect(propsIn(l, { x: 1, y: 1, w: 3, h: 2 })).toEqual([0, 1]);
+    const moved = moveProps(l, [0, 1], 1, 1);
+    expect(moved.props!.map((p) => [p.x, p.y])).toEqual([[3, 3], [4, 3], [6, 5]]);
+    // One of them would go into the wall: none moves.
+    expect(moveProps(l, [0, 1], -2, 0)).toBe(l);
+    expect(removeProps(l, [0, 2]).props!.map((p) => [p.x, p.y])).toEqual([[3, 2]]);
+  });
+  it('lava, ice, mud and pits are painted and kept; the ground takes a colour of its kind', () => {
+    let l = blankLayout('cave', 10, 8, 1);
+    l = paint(l, [{ x: 1, y: 1 }, { x: 2, y: 1 }], 'L');
+    l = paint(l, [{ x: 1, y: 2 }], 'I');
+    l = paint(l, [{ x: 2, y: 2 }], 'X');
+    expect(brushesFor('cave').map((b) => b.cell)).toEqual(expect.arrayContaining(['L', 'I', 'M', 'X']));
+    // Things stand on ice, not in lava.
+    expect(placeProp(l, 'barrel', 1, 2).index).toBe(0);
+    expect(placeProp(l, 'barrel', 1, 1).index).toBe(-1);
+    l = setTone(l, 'frost');
+    expect(l.tone).toBe('frost');
+    // A tone of another kind of map is not taken.
+    expect(setTone(blankLayout('meadow', 8, 8, 1), 'frost').tone).toBeUndefined();
+    const back = parseDraft(JSON.parse(JSON.stringify(draftOf(l))))!.layout;
+    expect(back.cells).toEqual(l.cells);
+    expect(back.tone).toBe('frost');
+    expect(setTone(l, null).tone).toBeUndefined();
   });
   it('the map grows and shrinks from its top-left corner', () => {
     const l = resize(room(), 6, 6);

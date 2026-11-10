@@ -2,18 +2,22 @@
      of the map generator, so a generated map is edited the same way («Edit» in the generator). -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Map as MapIcon, MousePointer2, Plus, Redo2, RotateCw, Trash2, Undo2, ZoomIn, ZoomOut } from '@lucide/svelte';
+  import { ChevronDown, ChevronRight, Eye, Map as MapIcon, MousePointer2, Pencil, Plus, Redo2, RotateCw, Search, Trash2, Undo2, X, ZoomIn, ZoomOut } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import type { PropKind } from '../mapgen/furnish';
-  import { isOpenAir } from '../mapgen/layout';
+  import { isOpenAir, tonesFor } from '../mapgen/layout';
   import { layoutToMaps } from '../mapgen/toMaps';
-  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProp, resize, rotateProp, STRETCH, tintProp, type BrushId } from './edit';
+  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProps, resize, rotateProp, setTone, STRETCH, tintProp, type BrushId } from './edit';
   import { TINTS, tintOf } from '../mapgen/draw-props';
   import MapCanvas from './MapCanvas.svelte';
   import NewMapDialog from './NewMapDialog.svelte';
   import PropIcon from './PropIcon.svelte';
   import { editor } from './store.svelte';
+  import { modKey } from '../../../shared/hotkeys';
+
+  // «⌘» or «Ctrl»: the strings add «+wheel» themselves.
+  const mod = { mod: modKey().replace(/\+$/, '') };
 
   let creating = $state(false);
   let sizing = $state<{ w: number; h: number } | null>(null);
@@ -44,17 +48,45 @@
 
   const SWATCH: Record<BrushId, string> = {
     floor: '#d9cfb8', wall: '#26221d', room: '#d9cfb8', door: '#7a5230', pillar: '#120f0b', grass: '#7f9558', road: '#b3a78f', square: '#c2b8a2',
-    house: '#a9583c', sand: '#d9c893', water: '#3f7d97', ford: '#7fb0bd', tree: '#3f6a35', boulder: '#8c8c86', townWall: '#857e72', tower: '#7a7368', erase: '#555',
+    house: '#a9583c', sand: '#d9c893', water: '#3f7d97', ford: '#7fb0bd', tree: '#3f6a35', boulder: '#8c8c86', townWall: '#857e72', tower: '#7a7368',
+    lava: '#e2561b', ice: '#cfe6ee', mud: '#6b5638', pit: '#0b0907', erase: '#555',
   };
   const GROUPS: { id: string; kinds: PropKind[] }[] = [
-    { id: 'furniture', kinds: ['table', 'roundtable', 'chair', 'bench', 'bed', 'shelf', 'wardrobe', 'desk', 'throne', 'hearth', 'rug'] },
-    { id: 'storage', kinds: ['barrel', 'crate', 'sack', 'chest', 'coins', 'rack', 'cage', 'anvil'] },
-    { id: 'shrine', kinds: ['altar', 'candle', 'brazier', 'statue', 'sarcophagus', 'grave', 'bones', 'rubble'] },
-    { id: 'ways', kinds: ['stairs', 'trapdoor', 'well', 'fountain', 'cauldron'] },
-    { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll'] },
-    { id: 'town', kinds: ['stall', 'cart', 'haystack', 'tent', 'boat'] },
-    { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds'] },
+    { id: 'furniture', kinds: ['table', 'roundtable', 'counter', 'chair', 'stool', 'bench', 'cushion', 'bed', 'shelf', 'wardrobe', 'desk', 'throne', 'hearth', 'bathtub', 'chandelier', 'rug'] },
+    { id: 'storage', kinds: ['barrel', 'crate', 'sack', 'chest', 'coins', 'rack', 'urn', 'bucket', 'woodpile'] },
+    { id: 'work', kinds: ['workbench', 'anvil', 'grindstone', 'cauldron', 'trough'] },
+    { id: 'shrine', kinds: ['altar', 'candle', 'brazier', 'statue', 'idol', 'pedestal', 'crystal', 'circle', 'obelisk', 'sarcophagus', 'grave', 'bones'] },
+    { id: 'dungeon', kinds: ['stairs', 'trapdoor', 'cage', 'chains', 'stocks', 'spikes', 'web', 'lever', 'plate', 'torch', 'rubble'] },
+    { id: 'town', kinds: ['stall', 'cart', 'haystack', 'tent', 'boat', 'fence', 'signpost', 'lamppost', 'gallows', 'well', 'fountain'] },
+    { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
+    { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];
+  // Folded groups and the search of things: the window remembers the folds.
+  const FOLDS = 'sg.mapedit.folded';
+  let folded = $state<string[]>(
+    (() => {
+      try {
+        const v = JSON.parse(localStorage.getItem(FOLDS) ?? '[]');
+        return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+      } catch {
+        return [];
+      }
+    })(),
+  );
+  function fold(id: string) {
+    folded = folded.includes(id) ? folded.filter((x) => x !== id) : [...folded, id];
+    try {
+      localStorage.setItem(FOLDS, JSON.stringify(folded));
+    } catch {
+      /* the window forgets */
+    }
+  }
+  let query = $state('');
+  const found = $derived.by(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    return GROUPS.flatMap((g) => g.kinds).filter((k) => t(`mapedit.prop.${k}` as never).toLowerCase().includes(q) || k.includes(q));
+  });
   // The colours of the thing being put down or the one chosen.
   const tintKind = $derived(editor.mode === 'place' ? editor.prop : editor.mode === 'select' ? (layout?.props?.[editor.selected]?.kind ?? null) : null);
   const tints = $derived(tintKind ? (TINTS[tintKind] ?? null) : null);
@@ -62,8 +94,12 @@
   function pickTint(i: number | null) {
     if (!tints) return;
     const t = i === null ? null : tintOf(i, tints.length);
-    if (editor.mode === 'select' && editor.layout && editor.selected >= 0) editor.change(tintProp(editor.layout, editor.selected, t ?? Math.random()));
-    else editor.tint = t;
+    if (editor.mode === 'select' && editor.layout && editor.selected >= 0) {
+      // Every picked thing of the same kind takes the colour.
+      let next = editor.layout;
+      for (const n of editor.picked) if (next.props?.[n]?.kind === tintKind) next = tintProp(next, n, t ?? Math.random());
+      editor.change(next);
+    } else editor.tint = t;
   }
   const isTint = (i: number) => tints !== null && tintNow !== null && Math.floor(tintNow * tints.length) === i;
   // The whole map in view.
@@ -82,13 +118,20 @@
   const zoom = (by: number) => (editor.cell = Math.min(72, Math.max(6, Math.round(editor.cell * by))));
   function rotate() {
     if (!editor.layout) return;
-    if (editor.selected >= 0) editor.change(rotateProp(editor.layout, editor.selected));
-    else editor.face = ((editor.face + 1) % 4) as 0 | 1 | 2 | 3;
+    if (editor.picked.length) {
+      let next = editor.layout;
+      for (const n of editor.picked) next = rotateProp(next, n);
+      editor.change(next);
+    } else editor.face = ((editor.face + 1) % 4) as 0 | 1 | 2 | 3;
   }
   function removeSelected() {
-    if (!editor.layout || editor.selected < 0) return;
-    editor.change(removeProp(editor.layout, editor.selected));
-    editor.selected = -1;
+    if (!editor.layout || !editor.picked.length) return;
+    editor.change(removeProps(editor.layout, editor.picked));
+    editor.picked = [];
+  }
+  function setViewing(on: boolean) {
+    editor.viewing = on;
+    if (on) editor.picked = [];
   }
   async function toMaps() {
     if (!editor.layout) return;
@@ -108,12 +151,15 @@
   }
 
   const hint = $derived(
-    editor.mode === 'brush'
-      ? t(`mapedit.hint.${(brushes.find((b) => b.id === editor.brush)?.rect ? 'rect' : brushes.find((b) => b.id === editor.brush)?.toggle ? 'toggle' : 'paint')}` as never)
+    editor.viewing
+      ? t('mapedit.hint.view', mod)
+      : editor.mode === 'brush'
+      ? t(`mapedit.hint.${(brushes.find((b) => b.id === editor.brush)?.rect ? 'rect' : brushes.find((b) => b.id === editor.brush)?.toggle ? 'toggle' : 'paint')}` as never, mod)
       : editor.mode === 'place'
         ? t('mapedit.hint.place')
         : t('mapedit.hint.select'),
   );
+  const tones = $derived(layout ? tonesFor(layout.style) : []);
 
   function onkeydown(e: KeyboardEvent) {
     const el = e.target as HTMLElement | null;
@@ -126,8 +172,12 @@
     } else if (mod && e.code === 'KeyY') {
       e.preventDefault();
       editor.redo();
+    } else if (editor.viewing) return;
+    else if (mod && e.code === 'KeyA' && editor.mode === 'select') {
+      e.preventDefault();
+      editor.picked = (editor.layout.props ?? []).map((_, i) => i);
     } else if (!mod && e.code === 'KeyR') rotate();
-    else if ((e.key === 'Delete' || e.key === 'Backspace') && editor.selected >= 0) {
+    else if ((e.key === 'Delete' || e.key === 'Backspace') && editor.picked.length) {
       e.preventDefault();
       removeSelected();
     } else if (e.key === 'Escape') {
@@ -180,6 +230,12 @@
     {/if}
     {#if failed}<p class="warning small">{t('mapgen.noFolder')}</p>{/if}
     <div class="toolbar" role="toolbar" aria-label={t('mapedit.brushes')}>
+      <div class="seg">
+        <button class:on={editor.viewing} onclick={() => setViewing(true)}><Eye size={14} /> {t('mapedit.view')}</button>
+        <button class:on={!editor.viewing} onclick={() => setViewing(false)}><Pencil size={14} /> {t('mapedit.edit')}</button>
+      </div>
+      <span class="sep"></span>
+      {#if !editor.viewing}
       {#each brushes as b (b.id)}
         <button class="tool" class:on={editor.mode === 'brush' && editor.brush === b.id} onclick={() => pickBrush(b.id)}>
           <span class="swatch {b.id}" style:background={SWATCH[b.id]}></span>
@@ -190,6 +246,14 @@
       <span class="faint small">{t('mapedit.thickness')}</span>
       {#each [1, 2, 3] as n (n)}<button class="btn size" class:on={editor.size === n} onclick={() => (editor.size = n)}>{n}</button>{/each}
       <span class="sep"></span>
+      <label class="check">{t('mapedit.ground')}
+        <select value={layout.tone ?? ''} onchange={(e) => editor.layout && editor.change(setTone(editor.layout, e.currentTarget.value || null))}>
+          <option value="">{t('mapedit.tone.usual')}</option>
+          {#each tones as tn (tn)}<option value={tn}>{t(`mapedit.tone.${tn}` as never)}</option>{/each}
+        </select>
+      </label>
+      <span class="sep"></span>
+      {/if}
       <label class="check"><input type="checkbox" bind:checked={editor.grid} /> {t('mapedit.grid')}</label>
       <label class="check"><input type="checkbox" bind:checked={editor.numbers} /> {t('mapedit.numbers')}</label>
     </div>
@@ -197,18 +261,22 @@
       <section class="map">
         <div class="scroll" bind:clientWidth={scrollW} bind:clientHeight={scrollH}><MapCanvas {layout} /></div>
         <div class="zoombar">
-          <button class="icon-btn" title={t('mapedit.zoomOut')} onclick={() => zoom(0.85)}><ZoomOut size={16} /></button>
+          <button class="icon-btn" title={t('mapedit.zoomOut', mod)} onclick={() => zoom(0.85)}><ZoomOut size={16} /></button>
           <span class="percent">{Math.round((editor.cell / 28) * 100)}%</span>
-          <button class="icon-btn" title={t('mapedit.zoomIn')} onclick={() => zoom(1.18)}><ZoomIn size={16} /></button>
+          <button class="icon-btn" title={t('mapedit.zoomIn', mod)} onclick={() => zoom(1.18)}><ZoomIn size={16} /></button>
           <button class="btn fitbtn" title={t('mapedit.fitHint')} onclick={fit}>{t('mapedit.fit')}</button>
         </div>
         <div class="hint" title={hint}>{hint}</div>
       </section>
+      {#if !editor.viewing}
       <section class="palette" aria-label={t('mapedit.things')}>
+        <div class="head">
         <div class="row">
           <button class="tool grow" class:on={editor.mode === 'select'} onclick={() => ((editor.mode = 'select'), (editor.prop = null))}><MousePointer2 size={14} /> {t('mapedit.select')}</button>
           <button class="icon-btn" title={t('mapedit.rotate')} onclick={rotate}><RotateCw size={15} /></button>
+          <button class="icon-btn" title={t('mapedit.removePicked')} disabled={!editor.picked.length} onclick={removeSelected}><Trash2 size={15} /></button>
         </div>
+        {#if editor.picked.length > 1}<p class="faint small">{t('mapedit.picked', { count: editor.picked.length })}</p>{/if}
         {#if tints}
           <div class="group">{t('mapedit.colour')}</div>
           <div class="tints">
@@ -219,18 +287,36 @@
         {#if editor.mode === 'select' && editor.selected >= 0 && layout.props?.[editor.selected] && STRETCH.includes(layout.props[editor.selected]!.kind)}
           <p class="faint small">{t('mapedit.stretchHint')}</p>
         {/if}
-        {#each GROUPS as g (g.id)}
-          <div class="group">{t(`mapedit.group.${g.id}` as never)}</div>
+        <label class="search">
+          <Search size={13} />
+          <input type="search" placeholder={t('mapedit.searchThings')} bind:value={query} />
+          {#if query}<button class="icon-btn clear" aria-label={t('mapedit.cancel')} onclick={() => (query = '')}><X size={12} /></button>{/if}
+        </label>
+        </div>
+        {#snippet things(kinds: PropKind[])}
           <div class="grid">
-            {#each g.kinds as k (k)}
+            {#each kinds as k (k)}
               <button class="thing" class:on={editor.mode === 'place' && editor.prop === k} title={t(`mapedit.prop.${k}` as never)} onclick={() => pickProp(k)}>
                 <PropIcon kind={k} />
                 <span>{t(`mapedit.prop.${k}` as never)}</span>
               </button>
             {/each}
           </div>
-        {/each}
+        {/snippet}
+        {#if found}
+          {#if found.length}{@render things(found)}{:else}<p class="faint small">{t('mapedit.nothingFound')}</p>{/if}
+        {:else}
+          {#each GROUPS as g (g.id)}
+            <button class="group fold" aria-expanded={!folded.includes(g.id)} onclick={() => fold(g.id)}>
+              {#if folded.includes(g.id)}<ChevronRight size={13} />{:else}<ChevronDown size={13} />{/if}
+              {t(`mapedit.group.${g.id}` as never)}
+              <span class="count">{g.kinds.length}</span>
+            </button>
+            {#if !folded.includes(g.id)}{@render things(g.kinds)}{/if}
+          {/each}
+        {/if}
       </section>
+      {/if}
     </div>
   {/if}
 </div>
@@ -473,6 +559,76 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .head {
+    position: sticky;
+    top: -8px;
+    z-index: 1;
+    margin: -8px -8px 0;
+    padding: 8px 8px 6px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border);
+  }
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 0 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    color: var(--text-muted);
+  }
+  .search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: none;
+    padding: 4px 0;
+  }
+  .clear {
+    padding: 2px;
+  }
+  .fold {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+  }
+  .fold:hover {
+    color: var(--text-normal);
+  }
+  .count {
+    margin-left: auto;
+    font-weight: 400;
+    opacity: 0.7;
+  }
+  .seg {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    overflow: hidden;
+  }
+  .seg button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .seg button.on {
+    background: var(--accent-soft);
+    color: var(--text-normal);
+  }
+  .check select {
+    padding: 2px 4px;
   }
   .palette {
     width: 196px;

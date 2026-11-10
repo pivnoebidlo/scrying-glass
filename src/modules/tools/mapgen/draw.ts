@@ -31,6 +31,25 @@ const GROUND: Record<WildStyle, Look> = {
   swamp: { grass: '#646b43', tuft: '#535a38', tree: ['#3c4a2c', '#465430', '#333f26'] },
 };
 const LINE = 'rgba(70, 58, 42, 0.22)';
+// The ground's colour (Layout.tone): grass and trees outdoors, the floor indoors.
+const GRASS_TONES: Record<string, Look> = {
+  spring: { grass: '#86ad5a', tuft: '#6f9a45', tree: ['#4f8a3e', '#5c9a48', '#6aa954'] },
+  autumn: { grass: '#a59a55', tuft: '#8e8243', tree: ['#b5602a', '#c98a2e', '#8e3d22', '#a8762c'] },
+  winter: { grass: '#e3e9ec', tuft: '#c3ced5', tree: ['#3c5a48', '#476652', '#33503f'] },
+  dry: { grass: '#b8a76a', tuft: '#9f8f55', tree: ['#6e7a3e', '#7d8848', '#5f6a35'] },
+  ash: { grass: '#5a5550', tuft: '#48443f', tree: ['#3a3330', '#2e2926', '#463d38'] },
+};
+const FLOOR_TONES: Record<string, string[]> = {
+  wood: ['#a87a4a', '#9c6f42', '#b08352'],
+  marble: ['#e8e4dc', '#dedad2', '#f0ece6'],
+  dark: ['#6d665c', '#655e55', '#736c62'],
+  sandstone: ['#d8b98a', '#d0b07f', '#dfc297'],
+  frost: ['#d6e3e8', '#cddbe1', '#dde8ec'],
+};
+const lookOf = (l: Layout, base: Look) => (l.tone && GRASS_TONES[l.tone]) || base;
+// Surfaces the map editor paints: lava, ice, mud and pits. Not rock: indoors the walls go round them, not between.
+const SURFACES = 'LIMX~=';
+const isSurface = (ch: string | undefined) => !!ch && SURFACES.includes(ch);
 
 // What the preview shows over the picture; the map gets tokens and hidden pins instead.
 export interface LayoutMark extends Cell {
@@ -141,13 +160,14 @@ function drawTree(ctx: CanvasRenderingContext2D, px: number, py: number, c: numb
 }
 
 function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: WildStyle) {
-  const look = GROUND[style];
+  const look = lookOf(l, GROUND[style]);
   const at = (x: number, y: number) => l.cells[y]?.[x];
   drawGrass(ctx, l, c, look);
 
   fillArea(ctx, contour(l, c, (x, y) => at(x, y) === 'S' || at(x, y) === '~').area, '#d9c893');
   fillArea(ctx, contour(l, c, (x, y) => at(x, y) === ',').area, '#a98f63');
   drawWater(ctx, l, c);
+  drawSurfaces(ctx, l, c);
 
   // From the top down, so that a nearer tree covers the one behind it.
   for (let y = 0; y < l.h; y++) {
@@ -382,6 +402,95 @@ function drawWall(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
 }
 
 // Water: shallows and fords pale, the deep darker, a light line along the shore. Outdoors, in a town and in a cave.
+function drawSurfaces(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
+  const at = (x: number, y: number) => l.cells[y]?.[x];
+  const has = (ch: string) => l.cells.some((r) => r.includes(ch));
+  const each = (ch: string, f: (x: number, y: number) => void) => {
+    for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) if (at(x, y) === ch) f(x, y);
+  };
+  if (has('M')) {
+    const mud = contour(l, c, (x, y) => at(x, y) === 'M');
+    fillArea(ctx, mud.area, '#6b5638');
+    ctx.fillStyle = 'rgba(40, 30, 18, 0.35)';
+    each('M', (x, y) => {
+      const r = cellNoise(l, x, y, 8);
+      ctx.beginPath();
+      ctx.ellipse((x + r()) * c, (y + r()) * c, c * (0.1 + r() * 0.12), c * (0.06 + r() * 0.08), r() * 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.strokeStyle = 'rgba(40, 30, 18, 0.5)';
+    ctx.lineWidth = Math.max(1, c / 16);
+    ctx.stroke(mud.edges);
+  }
+  if (has('I')) {
+    const ice = contour(l, c, (x, y) => at(x, y) === 'I');
+    fillArea(ctx, ice.area, '#cfe6ee');
+    ctx.save();
+    ctx.clip(ice.area);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.lineWidth = Math.max(1, c / 26);
+    ctx.beginPath();
+    each('I', (x, y) => {
+      const r = cellNoise(l, x, y, 9);
+      if (r() < 0.5) return;
+      const px = (x + r()) * c;
+      const py = (y + r()) * c;
+      ctx.moveTo(px, py);
+      ctx.lineTo(px + (r() - 0.5) * c * 0.8, py + (r() - 0.5) * c * 0.8);
+    });
+    ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = '#8fb8c6';
+    ctx.lineWidth = Math.max(1, c / 12);
+    ctx.stroke(ice.edges);
+  }
+  if (has('X')) {
+    const pit = contour(l, c, (x, y) => at(x, y) === 'X');
+    fillArea(ctx, pit.area, '#0b0907');
+    ctx.strokeStyle = '#4b443a';
+    ctx.lineWidth = Math.max(2, c / 6);
+    ctx.lineJoin = 'round';
+    ctx.stroke(pit.edges);
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1, c / 16);
+    ctx.stroke(pit.edges);
+  }
+  if (has('L')) {
+    const lava = contour(l, c, (x, y) => at(x, y) === 'L');
+    ctx.save();
+    ctx.shadowColor = 'rgba(255, 110, 30, 0.8)';
+    ctx.shadowBlur = c * 0.6;
+    fillArea(ctx, lava.area, '#e2561b');
+    ctx.restore();
+    ctx.save();
+    ctx.clip(lava.area);
+    each('L', (x, y) => {
+      const r = cellNoise(l, x, y, 10);
+      for (let i = 0; i < 2; i++) {
+        const px = (x + r()) * c;
+        const py = (y + r()) * c;
+        const g = ctx.createRadialGradient(px, py, 0, px, py, c * 0.45);
+        g.addColorStop(0, 'rgba(255, 214, 90, 0.9)');
+        g.addColorStop(1, 'rgba(255, 140, 40, 0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(px - c * 0.45, py - c * 0.45, c * 0.9, c * 0.9);
+      }
+      if (r() < 0.45) {
+        // A crust floating on it.
+        ctx.fillStyle = 'rgba(58, 29, 18, 0.85)';
+        ctx.beginPath();
+        ctx.ellipse((x + r()) * c, (y + r()) * c, c * (0.12 + r() * 0.14), c * (0.08 + r() * 0.1), r() * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+    ctx.restore();
+    ctx.strokeStyle = '#3a1d12';
+    ctx.lineWidth = Math.max(2, c / 8);
+    ctx.lineJoin = 'round';
+    ctx.stroke(lava.edges);
+  }
+}
+
 function drawWater(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   const at = (x: number, y: number) => l.cells[y]?.[x];
   if (!l.cells.some((r) => r.includes('~') || r.includes('='))) return;
@@ -396,8 +505,10 @@ function drawWater(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
 
 function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   const at = (x: number, y: number) => l.cells[y]?.[x];
-  drawGrass(ctx, l, c, TOWN);
+  const look = lookOf(l, TOWN);
+  drawGrass(ctx, l, c, look);
   drawWater(ctx, l, c);
+  drawSurfaces(ctx, l, c);
   const stone = (x: number, y: number) => at(x, y) === ',' || at(x, y) === 'P';
   const road = contour(l, c, stone);
   fillArea(ctx, road.area, '#b3a78f');
@@ -430,7 +541,7 @@ function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   ctx.lineCap = 'round';
   ctx.stroke(road.edges);
   for (let y = 0; y < l.h; y++) {
-    for (let x = 0; x < l.w; x++) if (at(x, y) === 'T') drawTree(ctx, (x + 0.5) * c, (y + 0.5) * c, c, TOWN, cellNoise(l, x, y, 2));
+    for (let x = 0; x < l.w; x++) if (at(x, y) === 'T') drawTree(ctx, (x + 0.5) * c, (y + 0.5) * c, c, look, cellNoise(l, x, y, 2));
   }
   (l.houses ?? []).forEach((a, i) => drawHouse(ctx, a, c, cellNoise(l, a.x, a.y, 4), l.landmarks?.find((m) => m.house === i)?.kind));
   if (l.wall) drawWall(ctx, l, c);
@@ -458,8 +569,8 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   ctx.fillRect(0, 0, l.w * c, l.h * c);
 
   // Hatching: short strokes in the rock near the floor.
-  // Floor or water: what is not rock.
-  const open = (x: number, y: number) => floor(x, y) || l.cells[y]?.[x] === '~' || l.cells[y]?.[x] === '=';
+  // Floor, water, lava, ice, mud, a pit: what is not rock.
+  const open = (x: number, y: number) => floor(x, y) || isSurface(l.cells[y]?.[x]);
   const near = (x: number, y: number) => {
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (open(x + dx, y + dy)) return true;
     return false;
@@ -484,13 +595,13 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   }
   ctx.stroke();
 
-  const tints = l.style === 'cave' ? FLOOR.cave : FLOOR.building;
+  const tints = (l.tone && FLOOR_TONES[l.tone]) || (l.style === 'cave' ? FLOOR.cave : FLOOR.building);
   const eachFloor = (f: (x: number, y: number) => void) => {
     for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) if (floor(x, y)) f(x, y);
   };
   if (l.style === 'cave') {
     // An underground lake is open ground too: the rock goes round it.
-    const rock = contour(l, c, (x, y) => floor(x, y) || l.cells[y]?.[x] === '~' || l.cells[y]?.[x] === '=');
+    const rock = contour(l, c, open);
     fillArea(ctx, rock.area, tints[0]!);
     ctx.strokeStyle = WALL;
     ctx.lineWidth = Math.max(2, c / 7);
@@ -506,6 +617,7 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
       }
     });
     drawWater(ctx, l, c);
+    drawSurfaces(ctx, l, c);
   } else {
     eachFloor((x, y) => {
       ctx.fillStyle = tints[Math.floor(cellNoise(l, x, y, 7)() * tints.length)]!;
@@ -514,10 +626,32 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
     ctx.strokeStyle = LINE;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    eachFloor((x, y) => {
-      ctx.rect(x * c + 0.5, y * c + 0.5, c, c);
-    });
+    if (l.tone === 'wood') {
+      // Planks: three to a cell, their ends staggered.
+      eachFloor((x, y) => {
+        for (let k = 0; k < 3; k++) {
+          const py = y * c + (k * c) / 3 + 0.5;
+          ctx.moveTo(x * c, py);
+          ctx.lineTo(x * c + c, py);
+          const end = x * c + (((x + k * 2 + y) % 3) * c) / 3;
+          ctx.moveTo(end + 0.5, py);
+          ctx.lineTo(end + 0.5, py + c / 3);
+        }
+      });
+    } else
+      eachFloor((x, y) => {
+        ctx.rect(x * c + 0.5, y * c + 0.5, c, c);
+      });
     ctx.stroke();
+    // Water, lava, ice, a pit: in the room's floor.
+    for (let y = 0; y < l.h; y++)
+      for (let x = 0; x < l.w; x++)
+        if (isSurface(l.cells[y]?.[x])) {
+          ctx.fillStyle = tints[0]!;
+          ctx.fillRect(x * c, y * c, c, c);
+        }
+    drawWater(ctx, l, c);
+    drawSurfaces(ctx, l, c);
     // Walls: every edge between floor and rock.
     ctx.strokeStyle = WALL;
     ctx.lineWidth = Math.max(2, c / 8);
@@ -528,11 +662,20 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
         ctx.moveTo(x0 * c, y0 * c);
         ctx.lineTo(x1 * c, y1 * c);
       };
-      if (!floor(x, y - 1)) line(x, y, x + 1, y);
-      if (!floor(x, y + 1)) line(x, y + 1, x + 1, y + 1);
-      if (!floor(x - 1, y)) line(x, y, x, y + 1);
-      if (!floor(x + 1, y)) line(x + 1, y, x + 1, y + 1);
+      if (!open(x, y - 1)) line(x, y, x + 1, y);
+      if (!open(x, y + 1)) line(x, y + 1, x + 1, y + 1);
+      if (!open(x - 1, y)) line(x, y, x, y + 1);
+      if (!open(x + 1, y)) line(x + 1, y, x + 1, y + 1);
     });
+    // And round the surfaces where they touch the rock.
+    for (let y = 0; y < l.h; y++)
+      for (let x = 0; x < l.w; x++) {
+        if (!isSurface(l.cells[y]?.[x])) continue;
+        if (!open(x, y - 1)) (ctx.moveTo(x * c, y * c), ctx.lineTo((x + 1) * c, y * c));
+        if (!open(x, y + 1)) (ctx.moveTo(x * c, (y + 1) * c), ctx.lineTo((x + 1) * c, (y + 1) * c));
+        if (!open(x - 1, y)) (ctx.moveTo(x * c, y * c), ctx.lineTo(x * c, (y + 1) * c));
+        if (!open(x + 1, y)) (ctx.moveTo((x + 1) * c, y * c), ctx.lineTo((x + 1) * c, (y + 1) * c));
+      }
     ctx.stroke();
     for (const p of l.pillars) {
       ctx.fillStyle = WALL;

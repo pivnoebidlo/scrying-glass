@@ -21,7 +21,16 @@ class Editor {
   face = $state<Facing>(0);
   // The colour of things put down (null — a random one).
   tint = $state<number | null>(null);
-  selected = $state(-1);
+  // The things picked (the last one is the one the colour and the stretching corner belong to).
+  picked = $state<number[]>([]);
+  get selected() {
+    return this.picked.at(-1) ?? -1;
+  }
+  set selected(i: number) {
+    this.picked = i >= 0 ? [i] : [];
+  }
+  // Looking, not editing: the mouse drags the map about.
+  viewing = $state(false);
   cell = $state(28);
   grid = $state(true);
   numbers = $state(true);

@@ -3,34 +3,21 @@
 import type { Layout } from './layout';
 import type { Prop } from './furnish';
 
-const INK = '#120f0b';
-const WOOD = ['#9a6b3c', '#8a5f35', '#a87a45'];
-const CLOTH = ['#8e3b32', '#3f5d86', '#5b7a3c', '#7a5a8e', '#a8823a', '#2f6f6a', '#2b2a2e', '#d8cdb3'];
+import { circle, CLOTH, INK, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawMore, MORE_TINTS, MORE_TILED } from './draw-more';
+
 
 // The colours a thing can be painted in, as the editor offers them: a tint picks one of them (i + 0.5) / n.
 export const TINTS: Partial<Record<Prop['kind'], readonly string[]>> = {
   rug: CLOTH, bed: CLOTH, bedroll: CLOTH, stall: CLOTH, tent: CLOTH, throne: CLOTH,
   cart: WOOD, table: WOOD, roundtable: WOOD, wardrobe: WOOD, boat: WOOD,
   mushrooms: ['#b8473a', '#c9a46a', '#7fa1b8'], bush: ['#4f7a3a', '#5d8a42'], rubble: ['#8c857a', '#77706a'],
+  ...MORE_TINTS,
 };
 export const tintOf = (i: number, n: number) => (i + 0.5) / n;
 // Scattered things drawn once a cell when stretched: a field of rubble, a bed of flowers.
-const TILED = new Set<Prop['kind']>(['rubble', 'flowers', 'reeds', 'bones', 'coins', 'mushrooms']);
+const TILED = new Set<Prop['kind']>(['rubble', 'flowers', 'reeds', 'bones', 'coins', 'mushrooms', ...MORE_TILED]);
 
-type Ctx = CanvasRenderingContext2D;
-const tone = (list: readonly string[], t = 0) => list[Math.floor(t * list.length) % list.length]!;
-
-function shape(ctx: Ctx, fill: string, path: () => void, line: number) {
-  ctx.beginPath();
-  path();
-  ctx.fillStyle = fill;
-  ctx.fill();
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = line;
-  ctx.stroke();
-}
-const rect = (ctx: Ctx, x: number, y: number, w: number, h: number, r = 0) => () => ctx.roundRect(x, y, w, h, r);
-const circle = (ctx: Ctx, x: number, y: number, r: number) => () => ctx.arc(x, y, r, 0, Math.PI * 2);
 
 // w and h: the frame, the front up; c: a cell.
 function drawOne(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
@@ -453,6 +440,8 @@ function drawOne(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       shape(ctx, '#7d7a72', circle(ctx, 0, 0, c * 0.42), line);
       shape(ctx, '#2c5566', circle(ctx, 0, 0, c * 0.26), line * 0.6);
       break;
+    default:
+      drawMore(ctx, p, w, h, c);
   }
 }
 

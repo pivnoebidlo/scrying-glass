@@ -1,7 +1,7 @@
 // The map editor's data and moves: a draft is a layout of the map generator (mapgen/layout.ts), kept in a file
 // «Name.map.json» in an adventure's maps folder. Pure functions — every move returns a new layout; the picture is
 // drawn from it the same way as a generated one.
-import { LAYOUT_STYLES, isWild, walkable, type Layout, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
+import { LAYOUT_STYLES, isWild, tonesFor, walkable, type Layout, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
 import { PROP_KINDS, type Facing, type Prop, type PropKind } from '../mapgen/furnish';
 
 export const MAP_DRAFT_SUFFIX = '.map.json';
@@ -15,7 +15,7 @@ export interface MapDraft {
 
 export const MIN_SIDE = 6;
 export const MAX_SIDE = 120;
-const CELLS = /^[.#,PST~RH=W]*$/;
+const CELLS = /^[.#,PST~RH=WLIMX]*$/;
 const side = (n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= MIN_SIDE && n <= MAX_SIDE;
 const int = (n: unknown) => typeof n === 'number' && Number.isInteger(n);
 
@@ -77,6 +77,7 @@ export function parseDraft(x: unknown): MapDraft | null {
       ...(landmarks.length ? { landmarks } : {}),
       props,
       ...(wall ? { wall } : {}),
+      ...(typeof l['tone'] === 'string' && tonesFor(style).includes(l['tone']) ? { tone: l['tone'] } : {}),
     },
   };
 }
@@ -93,7 +94,7 @@ export function blankLayout(style: LayoutStyle, w: number, h: number, seed: numb
 }
 
 // ---- Brushes ----
-export type BrushId = 'floor' | 'wall' | 'room' | 'door' | 'pillar' | 'grass' | 'road' | 'square' | 'house' | 'sand' | 'water' | 'ford' | 'tree' | 'boulder' | 'townWall' | 'tower' | 'erase';
+export type BrushId = 'floor' | 'wall' | 'room' | 'door' | 'pillar' | 'grass' | 'road' | 'square' | 'house' | 'sand' | 'water' | 'ford' | 'tree' | 'boulder' | 'townWall' | 'tower' | 'lava' | 'ice' | 'mud' | 'pit' | 'erase';
 export interface Brush {
   id: BrushId;
   // A cell's letter it paints; none — a tool of its own (a rectangle, a toggle).
@@ -103,11 +104,16 @@ export interface Brush {
 }
 const B = (id: BrushId, more: Omit<Brush, 'id'> = {}): Brush => ({ id, ...more });
 export function brushesFor(style: LayoutStyle): Brush[] {
-  if (style === 'building') return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('door', { toggle: true }), B('pillar', { toggle: true }), B('erase', { cell: '#' })];
-  if (style === 'cave') return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('water', { cell: '~' }), B('erase', { cell: '#' })];
+  const lava = B('lava', { cell: 'L' });
+  const ice = B('ice', { cell: 'I' });
+  const mud = B('mud', { cell: 'M' });
+  const pit = B('pit', { cell: 'X' });
+  if (style === 'building')
+    return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('door', { toggle: true }), B('pillar', { toggle: true }), B('water', { cell: '~' }), lava, ice, pit, B('erase', { cell: '#' })];
+  if (style === 'cave') return [B('floor', { cell: '.' }), B('wall', { cell: '#' }), B('room', { rect: true }), B('water', { cell: '~' }), lava, ice, mud, pit, B('erase', { cell: '#' })];
   if (style === 'town')
-    return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('square', { cell: 'P' }), B('house', { rect: true }), B('tree', { cell: 'T' }), B('water', { cell: '~' }), B('pillar', { toggle: true }), B('townWall', { cell: 'W' }), B('tower', { toggle: true }), B('erase', { cell: '.' })];
-  return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('sand', { cell: 'S' }), B('water', { cell: '~' }), B('ford', { cell: '=' }), B('tree', { cell: 'T' }), B('boulder', { cell: 'R' }), B('room', { rect: true }), B('erase', { cell: '.' })];
+    return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('square', { cell: 'P' }), B('house', { rect: true }), B('tree', { cell: 'T' }), B('water', { cell: '~' }), mud, ice, B('pillar', { toggle: true }), B('townWall', { cell: 'W' }), B('tower', { toggle: true }), B('erase', { cell: '.' })];
+  return [B('grass', { cell: '.' }), B('road', { cell: ',' }), B('sand', { cell: 'S' }), B('water', { cell: '~' }), B('ford', { cell: '=' }), mud, ice, lava, pit, B('tree', { cell: 'T' }), B('boulder', { cell: 'R' }), B('room', { rect: true }), B('erase', { cell: '.' })];
 }
 
 // ---- Moves ----
@@ -238,9 +244,11 @@ export function toggleTower(l: Layout, x: number, y: number): Layout {
 const LONG: Partial<Record<PropKind, [number, number]>> = {
   table: [2, 1], bench: [2, 1], bed: [1, 2], sarcophagus: [1, 2], rug: [2, 2], stall: [2, 1], cart: [1, 2], log: [2, 1], bedroll: [1, 2],
   stairs: [1, 2], roundtable: [2, 2], wardrobe: [2, 1], fountain: [2, 2], tent: [2, 2], boat: [1, 2],
+  bathtub: [1, 2], counter: [2, 1], workbench: [2, 1], circle: [2, 2], fence: [2, 1],
 };
 // Things that stretch over several cells: a long table, a big puddle, a carpet runner, a wide stair.
-export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe'];
+export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe',
+  'counter', 'workbench', 'circle', 'spikes', 'web', 'fence', 'woodpile', 'fern', 'chains', 'plate'];
 export const MAX_STRETCH = 12;
 export function footprint(kind: PropKind, face: Facing): { w: number; h: number } {
   const [w, h] = LONG[kind] ?? [1, 1];
@@ -287,6 +295,29 @@ export function rotateProp(l: Layout, i: number): Layout {
   if (!next.face) delete next.face;
   return fits(l, next, i) ? { ...l, props: l.props!.map((o, n) => (n === i ? next : o)) } : l;
 }
+
+// Several things at once: taken away, moved by a step (all or none), those in a rectangle.
+export function removeProps(l: Layout, idx: readonly number[]): Layout {
+  if (!idx.length) return l;
+  const gone = new Set(idx);
+  return { ...l, props: (l.props ?? []).filter((_, i) => !gone.has(i)) };
+}
+export function moveProps(l: Layout, idx: readonly number[], dx: number, dy: number): Layout {
+  if (!idx.length || (!dx && !dy)) return l;
+  const moving = new Set(idx);
+  const props = (l.props ?? []).map((p, i) => (moving.has(i) ? { ...p, x: p.x + dx, y: p.y + dy } : p));
+  for (const i of idx) {
+    const p = props[i];
+    if (!p || p.x < 0 || p.y < 0 || p.x + p.w > l.w || p.y + p.h > l.h || !fits(l, p, i)) return l;
+  }
+  return { ...l, props };
+}
+export function propsIn(l: Layout, r: { x: number; y: number; w: number; h: number }): number[] {
+  return (l.props ?? []).flatMap((p, i) => (p.x < r.x + r.w && p.x + p.w > r.x && p.y < r.y + r.h && p.y + p.h > r.y ? [i] : []));
+}
+// The ground's colour, or none for the usual one.
+export const setTone = (l: Layout, tone: string | null): Layout =>
+  (tone ?? undefined) === l.tone ? l : tone && tonesFor(l.style).includes(tone) ? { ...l, tone } : (({ tone: _, ...rest }) => rest)(l);
 
 // A thing made larger or smaller (only those that stretch), from its top-left corner.
 export function stretchProp(l: Layout, i: number, w: number, h: number): Layout {

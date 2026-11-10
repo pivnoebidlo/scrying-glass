@@ -32,7 +32,8 @@ export interface Layout {
   w: number;
   h: number;
   // Rows of h strings of w characters. Walkable: '.' floor or grass, ',' path or street, 'P' paved square, 'S' sand,
-  // '=' a ford; not: '#' rock, 'T' tree, 'R' boulder, '~' water, 'H' a house.
+  // '=' a ford, 'I' ice, 'M' mud; not: '#' rock, 'T' tree, 'R' boulder, '~' water, 'H' a house, 'L' lava, 'X' a pit.
+  // The generator makes none of I, M, L, X: only the map editor paints them.
   cells: string[];
   rooms: LayoutRoom[];
   doors: LayoutDoor[];
@@ -45,7 +46,16 @@ export interface Layout {
   props?: Prop[];
   // A town's wall round the quarter: its cells are 'W'; towers stand on it, gates where the roads go out.
   wall?: TownWall;
+  // The ground's colour (TONES): autumn grass, a wooden floor; none — the usual one.
+  tone?: string;
 }
+// Ground colours by kind of map: outdoors and in a town the grass, in a building and a cave the floor.
+export const TONES = {
+  outdoor: ['spring', 'autumn', 'winter', 'dry', 'ash'],
+  building: ['wood', 'marble', 'dark', 'sandstone'],
+  cave: ['dark', 'sandstone', 'frost'],
+} as const;
+export const tonesFor = (style: LayoutStyle): readonly string[] => (style === 'building' ? TONES.building : style === 'cave' ? TONES.cave : TONES.outdoor);
 export interface TownWall {
   towers: { x: number; y: number }[];
   // The middle of a gate (between the two cells of the road) and the way through it.
@@ -151,7 +161,7 @@ function corridor(a: LayoutRoom, b: LayoutRoom, others: LayoutRoom[], r: Random)
   return null;
 }
 
-export const walkable = (c: string | undefined) => c === '.' || c === ',' || c === 'P' || c === 'S' || c === '=';
+export const walkable = (c: string | undefined) => c === '.' || c === ',' || c === 'P' || c === 'S' || c === '=' || c === 'I' || c === 'M';
 
 interface Margins {
   left: number;

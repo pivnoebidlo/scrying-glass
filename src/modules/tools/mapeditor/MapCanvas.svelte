@@ -5,7 +5,7 @@
   import { drawLayout } from '../mapgen/draw';
   import type { Layout } from '../mapgen/layout';
   import {
-    addHouse, addRoom, brushCells, brushesFor, footprint, lineCells, moveProp, normRect, paint, placeProp, propAt, removeProp, STRETCH, stretchProp, toggleDoor, togglePillar, toggleTower,
+    addHouse, addRoom, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, removeProp, STRETCH, stretchProp, toggleDoor, togglePillar, toggleTower,
   } from './edit';
   import { editor } from './store.svelte';
 
@@ -49,6 +49,11 @@
       ctx.strokeRect(x * c + 1, y * c + 1, w * c - 2, h * c - 2);
       ctx.restore();
     };
+    if (editor.viewing) return;
+    for (const i of editor.picked) {
+      const q = layout.props?.[i];
+      if (q && i !== editor.selected) box(q.x, q.y, q.w, q.h, '#f2c14e', true);
+    }
     const sel = layout.props?.[editor.selected];
     if (sel) {
       box(sel.x, sel.y, sel.w, sel.h, '#f2c14e', true);
@@ -61,7 +66,10 @@
         ctx.strokeRect((sel.x + sel.w) * c - 9, (sel.y + sel.h) * c - 9, 10, 10);
       }
     }
-    if (rect) {
+    if (band) {
+      const r = normRect(band.a, band.b);
+      box(r.x, r.y, r.w, r.h, '#f2c14e', true);
+    } else if (rect) {
       const r = normRect(rect.a, rect.b);
       box(r.x, r.y, r.w, r.h, '#a78bfa', true);
     } else if (hover) {
@@ -83,7 +91,14 @@
   };
 
   let stroke: { last: { x: number; y: number }; started: boolean; ch: string } | null = null;
-  let drag: { index: number; dx: number; dy: number; started: boolean } | null = null;
+  // Moving the picked things: the cell the pointer was last at.
+  let drag: { last: { x: number; y: number }; started: boolean } | null = null;
+  // A rectangle that picks the things in it.
+  let band = $state<{ a: { x: number; y: number }; b: { x: number; y: number }; add: boolean } | null>(null);
+  // Dragging the map about: looking, the middle button, or Space held.
+  let pan: { x: number; y: number; left: number; top: number } | null = null;
+  let space = $state(false);
+  const hand = $derived(editor.viewing || space);
   let pull: { index: number; started: boolean } | null = null;
   // Is the pointer on the stretching corner of the chosen thing?
   const onCorner = (e: PointerEvent) => {
@@ -110,7 +125,17 @@
   }
 
   function down(e: PointerEvent) {
-    if (!editor.layout || (e.button !== 0 && e.button !== 2)) return;
+    if (!editor.layout) return;
+    if (hand || e.button === 1) {
+      const box = over!.closest('.scroll');
+      if (!box) return;
+      e.preventDefault();
+      over!.setPointerCapture(e.pointerId);
+      pan = { x: e.clientX, y: e.clientY, left: box.scrollLeft, top: box.scrollTop };
+      over!.style.cursor = 'grabbing';
+      return;
+    }
+    if (e.button !== 0 && e.button !== 2) return;
     over!.setPointerCapture(e.pointerId);
     const p = cellAt(e);
     const l = editor.layout;
@@ -120,7 +145,7 @@
         const i = propAt(l, p.x, p.y);
         if (i >= 0) {
           editor.change(removeProp(l, i));
-          editor.selected = -1;
+          editor.picked = [];
         }
         return;
       }
@@ -134,12 +159,20 @@
     }
     if (editor.mode === 'select') {
       const i = propAt(l, p.x, p.y);
-      editor.selected = i;
-      if (i >= 0) {
-        editor.mode = 'select';
-        const q = l.props![i]!;
-        drag = { index: i, dx: p.x - q.x, dy: p.y - q.y, started: false };
+      // Shift: add to the picked or take away; nothing under the pointer — a rectangle to pick with.
+      if (i < 0) {
+        band = { a: p, b: p, add: e.shiftKey };
+        if (!e.shiftKey) editor.picked = [];
+        return;
       }
+      if (e.shiftKey) {
+        editor.picked = editor.picked.includes(i) ? editor.picked.filter((n) => n !== i) : [...editor.picked, i];
+        return;
+      }
+      // A thing among the picked moves them all; another one is picked alone.
+      if (!editor.picked.includes(i)) editor.picked = [i];
+      else editor.picked = [...editor.picked.filter((n) => n !== i), i];
+      drag = { last: p, started: false };
       return;
     }
     if (editor.mode === 'place' && editor.prop) {
@@ -164,11 +197,25 @@
   }
 
   function move(e: PointerEvent) {
+    if (pan) {
+      const box = over!.closest('.scroll');
+      if (box) {
+        box.scrollLeft = pan.left - (e.clientX - pan.x);
+        box.scrollTop = pan.top - (e.clientY - pan.y);
+      }
+      return;
+    }
+    if (hand) {
+      over!.style.cursor = 'grab';
+      hover = null;
+      return;
+    }
     const p = cellAt(e);
     if (!hover || hover.x !== p.x || hover.y !== p.y) hover = p;
     over!.style.cursor = pull || (editor.mode !== 'brush' && onCorner(e)) ? 'nwse-resize' : '';
     if (stroke) paintTo(p);
     else if (rect) rect = { a: rect.a, b: p };
+    else if (band) band = { ...band, b: p };
     else if (pull && editor.layout) {
       const q = editor.layout.props?.[pull.index];
       if (q) {
@@ -179,15 +226,26 @@
         }
       }
     } else if (drag && editor.layout) {
-      const next = moveProp(editor.layout, drag.index, p.x - drag.dx, p.y - drag.dy);
+      const next = moveProps(editor.layout, editor.picked, p.x - drag.last.x, p.y - drag.last.y);
       if (next !== editor.layout) {
         editor.change(next, drag.started);
         drag.started = true;
+        drag.last = p;
       }
     }
   }
 
   function up() {
+    if (pan) {
+      pan = null;
+      over!.style.cursor = hand ? 'grab' : '';
+      return;
+    }
+    if (band && editor.layout) {
+      const found = propsIn(editor.layout, normRect(band.a, band.b));
+      editor.picked = band.add ? [...editor.picked.filter((i) => !found.includes(i)), ...found] : found;
+    }
+    band = null;
     if (rect && editor.layout) {
       const r = normRect(rect.a, rect.b);
       editor.change(brush.id === 'house' ? addHouse(editor.layout, r) : addRoom(editor.layout, r));
@@ -198,6 +256,15 @@
     pull = null;
   }
 
+  // Space held: the hand for a moment.
+  function keys(e: KeyboardEvent) {
+    const el = e.target as HTMLElement | null;
+    if (e.code !== 'Space' || (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.tagName === 'BUTTON'))) return;
+    e.preventDefault();
+    space = e.type === 'keydown';
+    if (over) over.style.cursor = space || editor.viewing ? 'grab' : '';
+  }
+
   function wheel(e: WheelEvent) {
     if (!(e.ctrlKey || e.metaKey)) return;
     e.preventDefault();
@@ -205,13 +272,17 @@
   }
 </script>
 
+<svelte:window onkeydown={keys} onkeyup={keys} />
+
 <div class="stack" style:width="{layout.w * c}px" style:height="{layout.h * c}px">
   <canvas bind:this={base} aria-hidden="true"></canvas>
   <canvas
     bind:this={over}
     class="over"
     aria-label={editor.title}
+    class:hand
     onpointerdown={down}
+    onauxclick={(e) => e.preventDefault()}
     onpointermove={move}
     onpointerup={up}
     onpointercancel={up}
@@ -235,5 +306,8 @@
   .over {
     cursor: crosshair;
     touch-action: none;
+  }
+  .over.hand {
+    cursor: grab;
   }
 </style>

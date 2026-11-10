@@ -391,11 +391,18 @@ fortress's guards sleep in barracks).
 from an empty field (a building, a cave, a town or open country of a size in cells) or from the generator — the map
 generator's «Edit» opens its map here too. Brushes paint the cells: floor and wall, a room (a rectangle that gets a
 number and a pin), doors and pillars indoors; grass, roads, squares, sand, water, fords, trees and boulders outdoors;
-houses, wells, the town wall and its towers in a town. Things from the palette — furniture, stores, shrine, cave, town,
-outdoors, stairs, a throne, a fountain, a tent, a boat and more — go on a cell (on top of other things too: a chest on a rug), turn with R, move by dragging and go with Delete or the right button. A rug, a table, a puddle and others stretch by their corner; a rug, a bed, a tent and others take the colour you choose. Thickness 1–3,
-Shift+click draws a straight line, the right button erases, ⌘+wheel or the buttons in the corner zoom («Fit» shows the whole map), ⌘+Z undoes. The draft is saved by
-itself as «Name.map.json» in the adventure's maps folder; «To Maps» adds the picture with the fog, a grid and a pin on
-every room.
+houses, wells, the town wall and its towers in a town; lava, ice, mud and pits. The ground takes a colour: spring,
+autumn, snow, dry steppe or ash outdoors; a wooden, marble, dark or sandstone floor indoors.
+
+Things come from the palette: about a hundred of them in furniture, stores, workshop, shrine, dungeon, town, cave and
+outdoors; the groups fold, and a search finds a thing by name. A thing goes on a cell, on top of other things too (a
+chest on a rug); R turns it, dragging moves it, Delete or the right button takes it away. Several are picked with a
+rectangle or Shift+click and move, turn and go together. A rug, a table, a puddle and others stretch by their corner; a
+rug, a bed, a tent and others take the colour you choose. Thickness 1–3, Shift+click draws a straight line, the right
+button erases, ⌘+wheel or the buttons in the corner zoom («Fit» shows the whole map), ⌘+Z undoes. «View» drags the map
+about with the mouse; while editing, Space or the middle button does it. The draft is saved by itself as
+«Name.map.json» in the adventure's maps folder; «To Maps» adds the picture with the fog, a grid and a pin on every
+room.
 
 **Wilderness encounter** (D&D, Tools → Wilderness encounter): forest, field, shore, swamp or a town quarter, the party's level and size
 and the difficulty → a scene (ambush, roadblock, lair ahead, pursuit, surrounded, chance meeting) with what the foes want,
