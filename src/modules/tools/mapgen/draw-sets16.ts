@@ -2,6 +2,7 @@
 // A starship's bridge; a school; a supermarket; a petrol station.
 import type { Prop } from './furnish';
 import { circle, CLOTH, glow, lines, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets17 } from './draw-sets17';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -188,5 +189,7 @@ export function drawSets16(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       for (const [x, y] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) shape(ctx, '#8d949c', circle(ctx, x * (w / 2 - c * 0.5), y * (h / 2 - c * 0.5), c * 0.08), thin);
       break;
     }
+    default:
+      drawSets17(ctx, p, w, h, c);
   }
 }

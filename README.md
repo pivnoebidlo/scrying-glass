@@ -447,7 +447,13 @@ cage wagon, a tightrope, a sweets cart), harpies' nests (a nest with eggs, feath
 dance floor, a fountain of blood, a coffin, a crimson throne), an underwater temple (a shell throne, a clam with a pearl,
 a trident statue, a conch); a starship's bridge (a command chair, a helm console, a star chart, a forward viewport); a
 school (desks, a blackboard, lockers, a globe), a supermarket (shelves of goods, a checkout, a trolley, a freezer) and a
-petrol station (fuel pumps, a forecourt roof, tyres, oil cans).
+petrol station (fuel pumps, a forecourt roof, tyres, oil cans). Also a dwarven hall (a dwarf statue, a rune forge, ale
+casks, a stone feast table), a kobold warren (a spiked board, a dragon idol, a burrow), a dragon's hoard (a heap of gold
+as big as you stretch it, a crown, a legendary sword), a wizard's lair (a teleportation circle, a crystal ball, a rack of
+staves, a familiar's perch), a plague quarter (a dead cart, a marked door, shrouded bodies, a smoking brazier); an
+asteroid base (a mining laser, an ore crusher, a docking clamp, mag boots), a cyber clinic (a surgical rig, spare limbs,
+an implant case); a night club (a DJ booth, a lit dance floor, a velvet rope, a neon bar), an airport (an airliner, a
+baggage carousel, rows of seats, a departures board) and a cinema (a screen, seats, a popcorn stand, a projector).
 
 A map has its world: fantasy, science fiction, gothic horror, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),

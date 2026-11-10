@@ -56,6 +56,10 @@ export const PROP_KINDS = [
   'bigtop', 'circusring', 'beastcage', 'tightrope', 'candycart', 'harpynest', 'feathers', 'ballfloor', 'bloodfountain', 'vampcoffin', 'bloodthrone', 'merthrone', 'pearlclam', 'tridentstatue', 'conchhorn',
   // draw-sets16.ts: a starship's bridge; a school; a supermarket; a petrol station.
   'commandchair', 'helmconsole', 'starmap', 'viewport', 'schooldesk', 'blackboard', 'lockers', 'schoolglobe', 'aisleshelf', 'checkout', 'shopcart', 'freezer', 'fuelpump', 'tirestack', 'oilcans', 'canopy',
+  // draw-sets17.ts: a dwarven hall; a kobold warren; a dragon's hoard; a wizard's lair; a plague quarter.
+  'dwarfstatue', 'runeforge', 'alecask', 'stonetable', 'koboldtrap', 'kobolddragon', 'tunnelhole', 'goldhoard', 'crown', 'dragonsword', 'teleportcircle', 'crystalball', 'staffrack', 'perch', 'plaguecart', 'quarantine', 'corpsepile', 'censer',
+  // draw-sets18.ts: an asteroid base; a cyber clinic; a night club; an airport; a cinema.
+  'mininglaser', 'orecrusher', 'dockclamp', 'gravboots', 'cyberlimbs', 'surgerybot', 'implantcase', 'djbooth', 'discofloor', 'velvetrope', 'neonbar', 'jetliner', 'baggagebelt', 'airportseats', 'departures', 'cinemascreen', 'cinemaseats', 'popcornstand', 'projector',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 
