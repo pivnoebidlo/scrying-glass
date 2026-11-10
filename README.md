@@ -459,7 +459,13 @@ bread oven, a kitchen table, hanging pans), an alchemist's garden (mandrakes, a 
 abandoned asylum (an iron cot, a shock chair, a padded wall, a straitjacket); a mech hangar (a repair gantry, a wrecked
 walker, a spare arm, ammo crates), a building site (a tower crane, scaffolding, a cement mixer, traffic cones, rebar), a
 container port (shipping containers, a container crane, a mooring bollard) and an amusement park (a Ferris wheel, a
-roller coaster, bumper cars, candy floss, a ticket booth).
+roller coaster, bumper cars, candy floss, a ticket booth). And an elven palace (a moon throne, a silver tree, elven lamps,
+a fountain), an orc fortress (a bone throne, piles of skulls, a warg pen, a spiked gate), a sunken ship (a hull on the sea
+floor, barnacles, an anchor chain, a drowned chest), a yeti's cave (a yeti's bed, chunks of ice, a mammoth tusk, a frozen
+carcass), a cultists' lair (a black altar, a circle in blood, a sacrificial slab, hooded cultists); a terraforming station
+(a terraformer, an air plant, a seed vault, soil beds); a speakeasy (a copper still, a hidden bar, a door with a peephole,
+a poker table), a gym (a treadmill, a weight bench, a punch bag, dumbbells, a boxing ring) and a library with a newspaper
+office (reading tables, a card catalogue, a rotary press, newspapers, an editor's desk).
 
 A map has its world: fantasy, science fiction, gothic horror, noir, modern or the wasteland (chosen for a new map, changed above the map). The palette shows the
 things and grounds of that world and those of any: a tavern's kitchen (a bread oven, a spit roast, kegs, flour, hams…),

@@ -2,6 +2,7 @@
 // A mech hangar; a building site; a container port; an amusement park.
 import type { Prop } from './furnish';
 import { circle, glow, lines, rect, shape, tone, type Ctx } from './prop-paint';
+import { drawSets21 } from './draw-sets21';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -218,6 +219,8 @@ export function drawSets20(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       shape(ctx, 'rgba(200, 225, 240, 0.9)', rect(ctx, -c * 0.2, c * 0.06, c * 0.4, c * 0.2, c * 0.03), thin);
       glow(ctx, 0, 0, c * 0.4, 'rgba(255, 220, 120, 0.35)');
       break;
+    default:
+      drawSets21(ctx, p, w, h, c);
   }
 }
 

@@ -64,6 +64,10 @@ export const PROP_KINDS = [
   'trollbridge', 'tollsign', 'tiltrail', 'pavilion', 'lancerack', 'joustbanner', 'roastspit', 'greatoven', 'kitchentable', 'potrack', 'mandrake', 'herbspiral', 'gardenarch', 'sundial', 'asylumbed', 'shockchair', 'paddedwall', 'straitjacket',
   // draw-sets20.ts: a mech hangar; a building site; a container port; an amusement park.
   'mechgantry', 'mechwreck', 'mecharm', 'ammocrates', 'towercrane', 'scaffold', 'cementmixer', 'trafficcones', 'rebar', 'container', 'gantrycrane', 'mooring', 'ferriswheel', 'coaster', 'bumpercars', 'cottoncandy', 'ticketbooth',
+  // draw-sets21.ts: an elven palace; an orc fortress; a sunken ship; a yeti's cave; a cultists' lair.
+  'moonthrone', 'silvertree', 'elvenlamp', 'elvenfountain', 'orcthrone', 'skullpile', 'wargpen', 'spikedgate', 'sunkenhull', 'barnacles', 'anchorchain', 'drownedchest', 'yetibed', 'icechunks', 'mammothtusk', 'frozencarcass', 'cultaltar', 'bloodcircle', 'sacrificeslab', 'cultrobes',
+  // draw-sets22.ts: a terraforming station; a speakeasy; a gym; a library and a newspaper office.
+  'terraformer', 'atmoplant', 'seedvault', 'soilbeds', 'moonshine', 'hiddenbar', 'slotdoor', 'pokertable', 'treadmill', 'weightbench', 'punchbag', 'dumbbells', 'boxingring', 'readingtable', 'cardcatalog', 'printpress', 'newspapers', 'newsdesk',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 
