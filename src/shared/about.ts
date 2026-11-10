@@ -34,6 +34,7 @@ export const CREDITS: Credit[] = [
   { id: 'pf2eru', who: 'Доктор#0353 — «Русский перевод Pathfinder 2e и Starfinder 2e»', license: 'OGL 1.0a', url: 'https://gitlab.com/gnuraco/pf2r', licenseUrl: 'https://gitlab.com/gnuraco/pf2r/-/raw/master/LICENSE' },
   { id: 'fitd', who: 'One Seven Design — John Harper', license: 'CC BY 3.0', url: 'http://www.bladesinthedark.com/', licenseUrl: 'https://creativecommons.org/licenses/by/3.0/' },
   { id: 'ambience', who: 'JC Sounds — Nature Ambient Pack Vol 1', license: 'CC BY 4.0', url: 'https://opengameart.org/node/180349', licenseUrl: CC_BY_4 },
+  { id: 'ambiencePirate', who: 'JC Sounds — Pirate Pack Vol 1', license: 'CC BY 4.0', url: 'https://opengameart.org/node/180582', licenseUrl: CC_BY_4 },
   { id: 'sfx', who: 'Kenney, artisticdude, rubberduck', license: 'CC0', url: 'https://opengameart.org', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/' },
   { id: 'bigsoundbank', who: 'Joseph Sardin — BigSoundBank.com', license: 'CC0', url: 'https://bigsoundbank.com', licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/' },
   { id: 'vgafont', who: 'VileR', license: 'CC BY-SA 4.0', url: 'https://int10h.org/oldschool-pc-fonts/', licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/' },

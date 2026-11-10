@@ -104,6 +104,7 @@ const SOUNDS: Record<string, [id: string, group: SoundGroup]> = {
   'Лес ночью': ['forestNight', 'outdoors'],
   'Костёр': ['campfire', 'outdoors'],
   'Море': ['sea', 'outdoors'],
+  'Джунгли': ['jungle', 'outdoors'],
   'Болото': ['swamp', 'outdoors'],
   'Ночь в поле': ['fieldNight', 'outdoors'],
   'Пастбище': ['pasture', 'outdoors'],
@@ -124,6 +125,7 @@ const SOUNDS: Record<string, [id: string, group: SoundGroup]> = {
   'Толпа на площади': ['crowdSquare', 'places'],
   'Ферма': ['farm', 'places'],
   'Порт': ['harbour', 'places'],
+  'Палуба корабля': ['shipDeck', 'places'],
   'Жуткий лес': ['eerieForest', 'dark'],
   'Подземная река': ['undergroundRiver', 'dark'],
   'Факел': ['torch', 'dark'],
@@ -145,6 +147,7 @@ const SOUNDS: Record<string, [id: string, group: SoundGroup]> = {
   'Ночные птицы': ['nightBirds', 'outdoors'],
   'Дождь по палатке': ['tentRain', 'weather'],
   'Буря за стенами': ['stormOutside', 'weather'],
+  'Шторм в море': ['seaStorm', 'weather'],
   'Капель': ['drips', 'dark'],
 };
 

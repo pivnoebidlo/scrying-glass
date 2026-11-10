@@ -26,6 +26,16 @@ All 12 loops are **Nature Ambient Pack Vol 1** by **JC Sounds**, license
 | Зимний ветер | Weather — Winter Wind |
 | Пустынный ветер | Weather — Desert Wind |
 
+Three more loops are **Pirate Pack Vol 1** by **JC Sounds**, license
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Source: https://opengameart.org/node/180582 (WAV, re-encoded
+to AAC 112 kbit/s).
+
+| File | Source |
+|---|---|
+| Палуба корабля | Ambiences (Loops) — amb_deck_creaks |
+| Шторм в море | Ambiences (Loops) — amb_sea_storm |
+| Джунгли | Ambiences (Loops) — amb_jungle |
+
 ## Effects (`sfx/`)
 
 All are [CC0](https://creativecommons.org/publicdomain/zero/1.0/) (public domain; credit is not required, but we

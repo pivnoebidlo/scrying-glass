@@ -944,7 +944,7 @@ Monomakh, Underdog, Rubik Wet Paint, Rubik Distressed, Rubik Beastly, Rubik Mark
 лежат рядом со шрифтами в `src/renderer/lib/note/fonts/`. Шрифт IBM VGA одной скрытой темы (PxPlus IBM VGA 8x16) —
 The Ultimate Oldschool PC Font Pack, автор VileR (https://int10h.org/oldschool-pc-fonts/), CC BY-SA 4.0, текст
 лицензии — в `src/renderer/lib/fonts/oldschool/`. Знаки печатей — контуры Lucide (ISC).
-Встроенные звуки (`resources/sounds/`): атмосфера — Nature Ambient Pack Vol 1, JC Sounds, CC BY 4.0; эффекты —
+Встроенные звуки (`resources/sounds/`): атмосфера — Nature Ambient Pack Vol 1 и Pirate Pack Vol 1, JC Sounds, CC BY 4.0; эффекты —
 Kenney (RPG Audio), artisticdude (RPG Sound Pack), rubberduck (100 CC0 SFX #2), CC0; ещё атмосфера и эффекты —
 Joseph Sardin, BigSoundBank.com, CC0. Подробнее —
 `resources/sounds/README.md`.
