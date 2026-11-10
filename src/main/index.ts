@@ -50,6 +50,8 @@ import { checkForUpdates } from './updates';
 import { buildMenu } from './menu';
 import { CARD_HANDOUT } from '../modules/handouts/types';
 import { setTableCards } from '../modules/initiative/table';
+import { createDraft, listDrafts, readDraft, renameDraft, writeDraft } from './mapdrafts';
+import { isMapDraft, type MapDraft } from '../modules/tools/mapeditor/edit';
 import { isAboutLink } from '../shared/about';
 import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnouncement } from './schedule';
 import type { Game } from '../shared/schedule';
@@ -569,6 +571,13 @@ ipcMain.handle('sketches:create', async (_event, { folder, title, sketch }: { fo
   if (rel) await afterNoteWrite();
   return rel;
 });
+// The map editor's drafts (main/mapdrafts.ts): files of the vault, not of its tree.
+ipcMain.handle('mapdrafts:list', () => listDrafts(resolveInVault, vaultTree));
+ipcMain.handle('mapdrafts:read', (_event, rel: string) => readDraft(resolveInVault, rel));
+ipcMain.handle('mapdrafts:write', (_event, { path: rel, draft }: { path: string; draft: MapDraft }) => writeDraft(resolveInVault, rel, draft));
+ipcMain.handle('mapdrafts:create', (_event, { folder, title, draft }: { folder: string; title: string; draft: MapDraft }) => createDraft(resolveInVault, folder, title, draft));
+ipcMain.handle('mapdrafts:rename', (_event, { path: rel, title }: { path: string; title: string }) => renameDraft(resolveInVault, rel, title));
+ipcMain.handle('mapdrafts:delete', (_event, rel: string) => (vaultRoot && isMapDraft(rel) ? discard(vaultRoot, [rel], { title: rel.slice(rel.lastIndexOf('/') + 1), kind: 'file' }) : false));
 // A generated map: the window draws it, the core only writes the file.
 ipcMain.handle('maps:addImage', async (_event, { folder, title, data }: { folder: string; title: string; data: Uint8Array }) => {
   const dir = resolveInVault(folder);

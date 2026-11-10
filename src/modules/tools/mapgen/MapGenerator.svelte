@@ -9,6 +9,9 @@
   import { generateLayout, isOpenAir, LAYOUT_STYLES, MAX_ROOMS, MIN_ROOMS, roomCount, type Layout, type LandmarkKind, type LayoutStyle } from './layout';
   import { helpers } from '../settlement/store.svelte';
   import { landmarkCell, layoutToMaps, type MapExtras } from './toMaps';
+  import { editor } from '../mapeditor/store.svelte';
+  import { ui as toolsUi } from '../ui/ui.svelte';
+  import { PencilRuler } from '@lucide/svelte';
 
   const KEY = 'mapgen.state';
   interface Saved {
@@ -55,6 +58,11 @@
     });
   }
   let failed = $state(false);
+  // The generated map as a draft of the map editor, opened there.
+  async function edit() {
+    if (!mg.layout) return;
+    if (await editor.create(t(`mapgen.style.${mg.layout.style}` as never), $state.snapshot(mg.layout) as Layout)) toolsUi.tool = 'mapeditor';
+  }
   async function toMaps() {
     if (!mg.layout) return;
     const l = $state.snapshot(mg.layout) as Layout;
@@ -68,7 +76,10 @@
   <header class="head">
     <h2>{t('mapgen.title')}</h2>
     <div class="spacer"></div>
-    {#if mg.layout}<button class="btn" title={t('mapgen.toMapsHint')} onclick={toMaps}><MapIcon size={14} /> {t('mapgen.toMaps')}</button>{/if}
+    {#if mg.layout}
+      <button class="btn" title={t('mapedit.editHint')} onclick={edit}><PencilRuler size={14} /> {t('mapedit.edit')}</button>
+      <button class="btn" title={t('mapgen.toMapsHint')} onclick={toMaps}><MapIcon size={14} /> {t('mapgen.toMaps')}</button>
+    {/if}
   </header>
   <p class="faint about"><Lead text={t('mapgen.about')} /></p>
   <div class="options">

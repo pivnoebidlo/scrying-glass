@@ -27,6 +27,7 @@
   import OrgsPage from '../lore/orgs/OrgsPage.svelte';
   import RiddleGenerator from '../riddles/RiddleGenerator.svelte';
   import MapGenerator from '../mapgen/MapGenerator.svelte';
+  import MapEditor from '../mapeditor/MapEditor.svelte';
   import SchedulePage from '../../schedule/ui/SchedulePage.svelte';
   import TelegramCompose from '../../telegram/ui/Compose.svelte';
   import RollTables from '../rolltables/RollTables.svelte';
@@ -41,7 +42,7 @@
   // The page of each tool; a tool hidden in this system (another system's, not turned on) — the notes instead.
   const PAGES: Partial<Record<string, Component>> = {
     schedule: SchedulePage, names: NameGenerator, 
-    settlement: SettlementGenerator, hooks: HookGenerator, ships: ShipsPage, orgs: OrgsPage, riddles: RiddleGenerator, mapgen: MapGenerator,
+    settlement: SettlementGenerator, hooks: HookGenerator, ships: ShipsPage, orgs: OrgsPage, riddles: RiddleGenerator, mapgen: MapGenerator, mapeditor: MapEditor,
     generators: Generators, factions: Factions, npc: NpcGenerator,
     tavern: TavernGenerator, telegram: TelegramCompose, timer: TimerTool, crew: CrewSheet, systems: SystemBuilder, rollTables: RollTables,
   };

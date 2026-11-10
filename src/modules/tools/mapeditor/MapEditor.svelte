@@ -1,0 +1,448 @@
+<!-- Tools → Map editor: the drafts of the adventure, the map with its brushes and things, «To Maps». A draft is a layout
+     of the map generator, so a generated map is edited the same way («Edit» in the generator). -->
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { Map as MapIcon, MousePointer2, Plus, Redo2, RotateCw, Trash2, Undo2, ZoomIn, ZoomOut } from '@lucide/svelte';
+  import { t } from '../../../renderer/lib/i18n.svelte';
+  import { store } from '../../../renderer/lib/store.svelte';
+  import type { PropKind } from '../mapgen/furnish';
+  import { isOpenAir } from '../mapgen/layout';
+  import { layoutToMaps } from '../mapgen/toMaps';
+  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProp, resize, rotateProp, type BrushId } from './edit';
+  import MapCanvas from './MapCanvas.svelte';
+  import NewMapDialog from './NewMapDialog.svelte';
+  import PropIcon from './PropIcon.svelte';
+  import { editor } from './store.svelte';
+
+  let creating = $state(false);
+  let sizing = $state<{ w: number; h: number } | null>(null);
+  let failed = $state(false);
+  let titleInput = $state('');
+  // The «New map…» item of the list of maps.
+  const NEW = '\u0000new';
+
+  onMount(() => {
+    void editor.refresh();
+    return () => void editor.flush();
+  });
+  // The list follows the adventure.
+  $effect(() => {
+    void store.state.adventures.current;
+    void editor.refresh();
+  });
+  $effect(() => {
+    titleInput = editor.title;
+  });
+
+  const layout = $derived(editor.layout);
+  const brushes = $derived(layout ? brushesFor(layout.style) : []);
+  // A brush of another kind of map (a road in a cave) gives way to the first of this one.
+  $effect(() => {
+    if (layout && !brushes.some((b) => b.id === editor.brush)) editor.brush = brushes[0]!.id;
+  });
+
+  const SWATCH: Record<BrushId, string> = {
+    floor: '#d9cfb8', wall: '#26221d', room: '#d9cfb8', door: '#7a5230', pillar: '#120f0b', grass: '#7f9558', road: '#b3a78f', square: '#c2b8a2',
+    house: '#a9583c', sand: '#d9c893', water: '#3f7d97', ford: '#7fb0bd', tree: '#3f6a35', boulder: '#8c8c86', townWall: '#857e72', tower: '#7a7368', erase: '#555',
+  };
+  const GROUPS: { id: string; kinds: PropKind[] }[] = [
+    { id: 'furniture', kinds: ['table', 'chair', 'bench', 'bed', 'shelf', 'desk', 'hearth', 'rug'] },
+    { id: 'storage', kinds: ['barrel', 'crate', 'sack', 'chest', 'coins', 'rack'] },
+    { id: 'shrine', kinds: ['altar', 'candle', 'sarcophagus', 'bones', 'rubble'] },
+    { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll'] },
+    { id: 'town', kinds: ['stall', 'cart'] },
+    { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds'] },
+  ];
+
+  const pickBrush = (id: BrushId) => ((editor.mode = 'brush'), (editor.brush = id), (editor.selected = -1));
+  const pickProp = (k: PropKind) => ((editor.mode = 'place'), (editor.prop = k), (editor.selected = -1));
+  const zoom = (by: number) => (editor.cell = Math.min(64, Math.max(10, Math.round(editor.cell * by))));
+  function rotate() {
+    if (!editor.layout) return;
+    if (editor.selected >= 0) editor.change(rotateProp(editor.layout, editor.selected));
+    else editor.face = ((editor.face + 1) % 4) as 0 | 1 | 2 | 3;
+  }
+  function removeSelected() {
+    if (!editor.layout || editor.selected < 0) return;
+    editor.change(removeProp(editor.layout, editor.selected));
+    editor.selected = -1;
+  }
+  async function toMaps() {
+    if (!editor.layout) return;
+    await editor.flush();
+    const l = $state.snapshot(editor.layout);
+    const open = isOpenAir(l.style);
+    const room = (i: number) => ({ title: t(open ? 'mapgen.place' : 'mapgen.room', { n: i + 1 }), note: '', color: open ? ('green' as const) : ('gold' as const) });
+    failed = !(await layoutToMaps(l, editor.title, l.rooms.map((_, i) => room(i))));
+  }
+  function remove() {
+    if (confirm(t('mapedit.deleteQ', { name: editor.title }))) void editor.remove();
+  }
+  function applySize() {
+    if (!sizing || !editor.layout) return;
+    editor.change(resize(editor.layout, sizing.w, sizing.h));
+    sizing = null;
+  }
+
+  const hint = $derived(
+    editor.mode === 'brush'
+      ? t(`mapedit.hint.${(brushes.find((b) => b.id === editor.brush)?.rect ? 'rect' : brushes.find((b) => b.id === editor.brush)?.toggle ? 'toggle' : 'paint')}` as never)
+      : editor.mode === 'place'
+        ? t('mapedit.hint.place')
+        : t('mapedit.hint.select'),
+  );
+
+  function onkeydown(e: KeyboardEvent) {
+    const el = e.target as HTMLElement | null;
+    if (!editor.layout || creating || sizing || (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable))) return;
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && e.code === 'KeyZ') {
+      e.preventDefault();
+      if (e.shiftKey) editor.redo();
+      else editor.undo();
+    } else if (mod && e.code === 'KeyY') {
+      e.preventDefault();
+      editor.redo();
+    } else if (!mod && e.code === 'KeyR') rotate();
+    else if ((e.key === 'Delete' || e.key === 'Backspace') && editor.selected >= 0) {
+      e.preventDefault();
+      removeSelected();
+    } else if (e.key === 'Escape') {
+      editor.selected = -1;
+      editor.mode = editor.mode === 'place' ? 'select' : editor.mode;
+    }
+  }
+</script>
+
+<svelte:window {onkeydown} />
+
+<div class="editor">
+  {#if !layout}
+    <div class="empty">
+      <h2>{t('mapedit.title')}</h2>
+      <p class="faint">{t('mapedit.about')}</p>
+      <div class="row">
+        <button class="btn primary" onclick={() => (creating = true)}><Plus size={14} /> {t('mapedit.new')}</button>
+      </div>
+      {#if editor.drafts.length}
+        <div class="label">{t('mapedit.myMaps')}</div>
+        {#each editor.drafts as p (p)}
+          <button class="draft" title={p} onclick={() => void editor.open(p)}>{p.slice(p.lastIndexOf('/') + 1).replace(/\.map\.json$/i, '')}</button>
+        {/each}
+      {/if}
+    </div>
+  {:else}
+    <header>
+      <select class="maps" aria-label={t('mapedit.myMaps')} value={editor.path} onchange={(e) => (e.currentTarget.value === NEW ? ((creating = true), (e.currentTarget.value = editor.path ?? '')) : void editor.open(e.currentTarget.value))}>
+        {#each editor.drafts as p (p)}<option value={p}>{p.slice(p.lastIndexOf('/') + 1).replace(/\.map\.json$/i, '')}</option>{/each}
+        <option value={NEW}>{t('mapedit.new')}</option>
+      </select>
+      <input class="name" type="text" aria-label={t('mapedit.name')} bind:value={titleInput} onchange={() => void editor.rename(titleInput)} />
+      <span class="faint small">{t(`mapgen.style.${layout.style}` as never)} · {layout.w} × {layout.h}</span>
+      <div class="spacer"></div>
+      <button class="icon-btn" title={t('mapedit.undo')} disabled={!editor.undos} onclick={() => editor.undo()}><Undo2 size={15} /></button>
+      <button class="icon-btn" title={t('mapedit.redo')} disabled={!editor.redos} onclick={() => editor.redo()}><Redo2 size={15} /></button>
+      <button class="btn" onclick={() => (sizing = { w: layout.w, h: layout.h })}>{t('mapedit.size')}</button>
+      <button class="icon-btn" title={t('mapedit.delete')} onclick={remove}><Trash2 size={15} /></button>
+      <button class="btn primary" title={t('mapgen.toMapsHint')} onclick={toMaps}><MapIcon size={14} /> {t('mapgen.toMaps')}</button>
+    </header>
+    {#if sizing}
+      <form class="sizing" onsubmit={(e) => (e.preventDefault(), applySize())}>
+        <label>{t('mapedit.width')} <input type="number" min={MIN_SIDE} max={MAX_SIDE} bind:value={sizing.w} /></label>
+        <label>{t('mapedit.height')} <input type="number" min={MIN_SIDE} max={MAX_SIDE} bind:value={sizing.h} /></label>
+        <span class="faint small">{t('mapedit.sizeHint')}</span>
+        <button class="btn primary" type="submit">{t('mapedit.apply')}</button>
+        <button class="btn" type="button" onclick={() => (sizing = null)}>{t('mapedit.cancel')}</button>
+      </form>
+    {/if}
+    {#if failed}<p class="warning small">{t('mapgen.noFolder')}</p>{/if}
+    <div class="toolbar" role="toolbar" aria-label={t('mapedit.brushes')}>
+      {#each brushes as b (b.id)}
+        <button class="tool" class:on={editor.mode === 'brush' && editor.brush === b.id} onclick={() => pickBrush(b.id)}>
+          <span class="swatch {b.id}" style:background={SWATCH[b.id]}></span>
+          {t(`mapedit.brush.${b.id}` as never)}
+        </button>
+      {/each}
+      <span class="sep"></span>
+      <span class="faint small">{t('mapedit.thickness')}</span>
+      {#each [1, 2, 3] as n (n)}<button class="btn size" class:on={editor.size === n} onclick={() => (editor.size = n)}>{n}</button>{/each}
+      <span class="sep"></span>
+      <label class="check"><input type="checkbox" bind:checked={editor.grid} /> {t('mapedit.grid')}</label>
+      <label class="check"><input type="checkbox" bind:checked={editor.numbers} /> {t('mapedit.numbers')}</label>
+      <button class="icon-btn" title={t('mapedit.zoomOut')} onclick={() => zoom(0.85)}><ZoomOut size={15} /></button>
+      <button class="icon-btn" title={t('mapedit.zoomIn')} onclick={() => zoom(1.18)}><ZoomIn size={15} /></button>
+    </div>
+    <div class="body">
+      <section class="map">
+        <div class="scroll"><MapCanvas {layout} /></div>
+        <div class="hint" title={hint}>{hint}</div>
+      </section>
+      <section class="palette" aria-label={t('mapedit.things')}>
+        <div class="row">
+          <button class="tool grow" class:on={editor.mode === 'select'} onclick={() => ((editor.mode = 'select'), (editor.prop = null))}><MousePointer2 size={14} /> {t('mapedit.select')}</button>
+          <button class="icon-btn" title={t('mapedit.rotate')} onclick={rotate}><RotateCw size={15} /></button>
+        </div>
+        {#each GROUPS as g (g.id)}
+          <div class="group">{t(`mapedit.group.${g.id}` as never)}</div>
+          <div class="grid">
+            {#each g.kinds as k (k)}
+              <button class="thing" class:on={editor.mode === 'place' && editor.prop === k} title={t(`mapedit.prop.${k}` as never)} onclick={() => pickProp(k)}>
+                <PropIcon kind={k} />
+                <span>{t(`mapedit.prop.${k}` as never)}</span>
+              </button>
+            {/each}
+          </div>
+        {/each}
+      </section>
+    </div>
+  {/if}
+</div>
+
+{#if creating}<NewMapDialog onclose={() => (creating = false)} />{/if}
+
+<style>
+  .editor {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .label {
+    padding: 14px 0 6px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .draft {
+    display: block;
+    padding: 5px 8px;
+    border: none;
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--text-normal);
+    text-align: left;
+    cursor: pointer;
+  }
+  .draft:hover {
+    background: var(--bg-hover);
+  }
+  .small {
+    font-size: 12px;
+  }
+  .faint {
+    color: var(--text-muted);
+  }
+  .warning {
+    margin: 4px 14px;
+    color: var(--warning);
+  }
+  .empty {
+    padding: 24px;
+    max-width: 640px;
+  }
+  .empty h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .maps {
+    max-width: 180px;
+  }
+  .name {
+    width: 220px;
+    font-size: 15px;
+    font-weight: 600;
+    background: transparent;
+    border-color: transparent;
+  }
+  .name:hover,
+  .name:focus {
+    border-color: var(--border);
+  }
+  .spacer {
+    flex: 1;
+  }
+  .sizing {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sizing label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .sizing input {
+    width: 80px;
+  }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sep {
+    width: 1px;
+    height: 20px;
+    margin: 0 4px;
+    background: var(--border);
+  }
+  .tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-s);
+    background: none;
+    color: var(--text-normal);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .tool:hover {
+    background: var(--bg-hover);
+  }
+  .tool.on,
+  .size.on {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .size {
+    min-width: 28px;
+    justify-content: center;
+    padding: 2px 6px;
+  }
+  .swatch {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    border: 1px solid #120f0b;
+    border-radius: 3px;
+  }
+  .swatch.room {
+    box-shadow: inset 0 0 0 2px #120f0b;
+  }
+  .swatch.pillar,
+  .swatch.tree,
+  .swatch.tower {
+    border-radius: 50%;
+  }
+  .swatch.door {
+    transform: scaleX(0.45);
+  }
+  .swatch.erase {
+    background: repeating-linear-gradient(45deg, #666 0 3px, #2a2a2a 3px 6px) !important;
+  }
+  .check {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 4px;
+    font-size: 12px;
+  }
+  .body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+  }
+  .map {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: color-mix(in srgb, var(--bg-primary) 70%, #000);
+  }
+  .scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+  }
+  .hint {
+    padding: 6px 12px;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .palette {
+    width: 196px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px;
+    border-left: 1px solid var(--border);
+    overflow: auto;
+  }
+  .row {
+    display: flex;
+    gap: 4px;
+  }
+  .grow {
+    flex: 1;
+  }
+  .group {
+    padding: 10px 2px 4px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .thing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 52px;
+    padding: 4px 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: var(--bg-secondary);
+    color: var(--text-normal);
+    font-size: 10.5px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .thing span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .thing:hover {
+    background: var(--bg-hover);
+  }
+  .thing.on {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+</style>

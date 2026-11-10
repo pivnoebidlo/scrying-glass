@@ -387,6 +387,16 @@ crates; outdoors there are logs, stumps, bushes and flowers or reeds. Nothing st
 the dungeon generator a room is furnished by its part in the story and the kind of dungeon (a tomb's lair is a crypt, a
 fortress's guards sleep in barracks).
 
+**Map editor** (Tools → Map editor, any system): draw a simple map yourself, without other programs. A new map starts
+from an empty field (a building, a cave, a town or open country of a size in cells) or from the generator — the map
+generator's «Edit» opens its map here too. Brushes paint the cells: floor and wall, a room (a rectangle that gets a
+number and a pin), doors and pillars indoors; grass, roads, squares, sand, water, fords, trees and boulders outdoors;
+houses, wells, the town wall and its towers in a town. Things from the palette — furniture, stores, shrine, cave, town,
+outdoors — go on a cell, turn with R, move by dragging and go with Delete or the right button. Thickness 1–3,
+Shift+click draws a straight line, the right button erases, ⌘+wheel zooms, ⌘+Z undoes. The draft is saved by
+itself as «Name.map.json» in the adventure's maps folder; «To Maps» adds the picture with the fog, a grid and a pin on
+every room.
+
 **Wilderness encounter** (D&D, Tools → Wilderness encounter): forest, field, shore, swamp or a town quarter, the party's level and size
 and the difficulty → a scene (ambush, roadblock, lair ahead, pursuit, surrounded, chance meeting) with what the foes want,
 a complication and what the ground means at the table. Foes are SRD creatures of that place, a group or a leader with

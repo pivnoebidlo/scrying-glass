@@ -62,6 +62,12 @@ const api: Api = {
   createSketch: (folder, title, sketch) => ipcRenderer.invoke('sketches:create', { folder, title, sketch }),
   addMapImage: (folder, title, data) => ipcRenderer.invoke('maps:addImage', { folder, title, data }),
   renameSketch: (path, title) => ipcRenderer.invoke('sketches:rename', { path, title }),
+  listMapDrafts: () => ipcRenderer.invoke('mapdrafts:list'),
+  readMapDraft: (path) => ipcRenderer.invoke('mapdrafts:read', path),
+  writeMapDraft: (path, draft) => ipcRenderer.invoke('mapdrafts:write', { path, draft }),
+  createMapDraft: (folder, title, draft) => ipcRenderer.invoke('mapdrafts:create', { folder, title, draft }),
+  renameMapDraft: (path, title) => ipcRenderer.invoke('mapdrafts:rename', { path, title }),
+  deleteMapDraft: (path) => ipcRenderer.invoke('mapdrafts:delete', path),
 
   readEntry: (path) => ipcRenderer.invoke('compendium:read', path),
   listLibraryEntries: () => ipcRenderer.invoke('compendium:listLibrary'),

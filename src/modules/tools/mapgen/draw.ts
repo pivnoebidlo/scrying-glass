@@ -4,6 +4,9 @@ import { drawProps } from './draw-props';
 import { isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type WildStyle } from './layout';
 
 export const CELL = 40;
+// The texture of one cell: its own randomness from the layout's seed and its place, so that changing a cell (the map
+// editor) changes only what is drawn there, not the whole picture.
+const cellNoise = (l: Layout, x: number, y: number, salt = 0) => noise((l.seed ^ Math.imul(x + 1, 73856093) ^ Math.imul(y + 1, 19349663) ^ Math.imul(salt + 1, 83492791)) >>> 0);
 const ROCK = '#26221d';
 const HATCH = '#4b443a';
 const WALL = '#120f0b';
@@ -93,7 +96,7 @@ function fillArea(ctx: CanvasRenderingContext2D, area: Path2D, colour: string) {
 }
 
 // Grass with tufts: small marks that keep it from looking flat.
-function drawGrass(ctx: CanvasRenderingContext2D, l: Layout, c: number, look: Look, r: () => number) {
+function drawGrass(ctx: CanvasRenderingContext2D, l: Layout, c: number, look: Look) {
   ctx.fillStyle = look.grass;
   ctx.fillRect(0, 0, l.w * c, l.h * c);
   ctx.strokeStyle = look.tuft;
@@ -102,6 +105,7 @@ function drawGrass(ctx: CanvasRenderingContext2D, l: Layout, c: number, look: Lo
   ctx.beginPath();
   for (let y = 0; y < l.h; y++) {
     for (let x = 0; x < l.w; x++) {
+      const r = cellNoise(l, x, y, 1);
       if (r() > 0.45) continue;
       const px = (x + r()) * c;
       const py = (y + r()) * c;
@@ -137,10 +141,9 @@ function drawTree(ctx: CanvasRenderingContext2D, px: number, py: number, c: numb
 }
 
 function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: WildStyle) {
-  const r = noise(l.seed);
   const look = GROUND[style];
   const at = (x: number, y: number) => l.cells[y]?.[x];
-  drawGrass(ctx, l, c, look, r);
+  drawGrass(ctx, l, c, look);
 
   fillArea(ctx, contour(l, c, (x, y) => at(x, y) === 'S' || at(x, y) === '~').area, '#d9c893');
   fillArea(ctx, contour(l, c, (x, y) => at(x, y) === ',').area, '#a98f63');
@@ -157,6 +160,7 @@ function drawWild(ctx: CanvasRenderingContext2D, l: Layout, c: number, style: Wi
     for (let x = 0; x < l.w; x++) {
       const cell = at(x, y);
       if (cell !== 'R' && cell !== 'T') continue;
+      const r = cellNoise(l, x, y, 2);
       const px = (x + 0.5 + (r() - 0.5) * 0.3) * c;
       const py = (y + 0.5 + (r() - 0.5) * 0.3) * c;
       if (cell === 'R') {
@@ -384,9 +388,8 @@ function drawWall(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
 }
 
 function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
-  const r = noise(l.seed);
   const at = (x: number, y: number) => l.cells[y]?.[x];
-  drawGrass(ctx, l, c, TOWN, r);
+  drawGrass(ctx, l, c, TOWN);
   const stone = (x: number, y: number) => at(x, y) === ',' || at(x, y) === 'P';
   const road = contour(l, c, stone);
   fillArea(ctx, road.area, '#b3a78f');
@@ -402,6 +405,7 @@ function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
         const half = (y % 2) * c * 0.5;
         ctx.rect(x * c + half, y * c, c, c * 0.5);
       } else if (at(x, y) === ',') {
+        const r = cellNoise(l, x, y, 3);
         for (let i = 0; i < 3; i++) {
           const px = (x + 0.15 + r() * 0.7) * c;
           const py = (y + 0.15 + r() * 0.7) * c;
@@ -418,9 +422,9 @@ function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   ctx.lineCap = 'round';
   ctx.stroke(road.edges);
   for (let y = 0; y < l.h; y++) {
-    for (let x = 0; x < l.w; x++) if (at(x, y) === 'T') drawTree(ctx, (x + 0.5) * c, (y + 0.5) * c, c, TOWN, r);
+    for (let x = 0; x < l.w; x++) if (at(x, y) === 'T') drawTree(ctx, (x + 0.5) * c, (y + 0.5) * c, c, TOWN, cellNoise(l, x, y, 2));
   }
-  (l.houses ?? []).forEach((a, i) => drawHouse(ctx, a, c, r, l.landmarks?.find((m) => m.house === i)?.kind));
+  (l.houses ?? []).forEach((a, i) => drawHouse(ctx, a, c, cellNoise(l, a.x, a.y, 4), l.landmarks?.find((m) => m.house === i)?.kind));
   if (l.wall) drawWall(ctx, l, c);
   // Wells.
   for (const p of l.pillars) {
@@ -441,7 +445,6 @@ function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
 }
 
 function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
-  const r = noise(l.seed);
   const floor = (x: number, y: number) => l.cells[y]?.[x] === '.';
   ctx.fillStyle = ROCK;
   ctx.fillRect(0, 0, l.w * c, l.h * c);
@@ -458,6 +461,7 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   for (let y = 0; y < l.h; y++) {
     for (let x = 0; x < l.w; x++) {
       if (floor(x, y) || !near(x, y)) continue;
+      const r = cellNoise(l, x, y, 5);
       const dir = r() < 0.5 ? 1 : -1;
       for (let i = 0; i < 3; i++) {
         const px = (x + r()) * c;
@@ -483,6 +487,7 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
     ctx.stroke(rock.edges);
     ctx.fillStyle = 'rgba(80, 66, 48, 0.28)';
     eachFloor((x, y) => {
+      const r = cellNoise(l, x, y, 6);
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
         ctx.arc((x + r()) * c, (y + r()) * c, c * (0.015 + r() * 0.035), 0, Math.PI * 2);
@@ -491,7 +496,7 @@ function drawIndoor(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
     });
   } else {
     eachFloor((x, y) => {
-      ctx.fillStyle = tints[Math.floor(r() * tints.length)]!;
+      ctx.fillStyle = tints[Math.floor(cellNoise(l, x, y, 7)() * tints.length)]!;
       ctx.fillRect(x * c, y * c, c, c);
     });
     ctx.strokeStyle = LINE;
