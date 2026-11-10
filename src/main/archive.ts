@@ -7,6 +7,7 @@ import { t } from '../shared/i18n';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { folderDirs, folderFiles, readZip, writeZip, type ZipEntry } from './zip';
+import { ASSET_DIR } from '../shared/mapassets';
 
 export const BACKUP_EXT = 'sgbackup';
 
@@ -19,6 +20,8 @@ export interface BackupManifest {
   media: boolean;
 }
 
+const isAsset = (rel: string) => rel.startsWith(`${ASSET_DIR}/`);
+
 export interface BackupSources {
   vaultRoot: string | null;
   // Файлы приложения в хранилище (state.json, записки, таблицы, карточки) — пути внутри хранилища.
@@ -30,8 +33,10 @@ export interface BackupSources {
 // Сколько весят части копии (для вопроса «вместе с картинками и музыкой?»).
 export function backupSizes(src: BackupSources) {
   const sum = (l: { size: number }[]) => l.reduce((n, f) => n + f.size, 0);
-  const lib = src.library ? sum(folderFiles(src.library)) : 0;
-  const media = src.vaultRoot ? sum(folderFiles(src.vaultRoot)) : 0;
+  // The map editor's assets are pictures, as heavy as the vault's: they go with them.
+  const all = src.library ? folderFiles(src.library) : [];
+  const lib = sum(all.filter((f) => !isAsset(f.rel)));
+  const media = (src.vaultRoot ? sum(folderFiles(src.vaultRoot)) : 0) + sum(all.filter((f) => isAsset(f.rel)));
   return { library: lib, media };
 }
 
@@ -39,7 +44,7 @@ export async function writeBackup(out: string, src: BackupSources, manifest: Bac
   const enc = (v: unknown) => new TextEncoder().encode(JSON.stringify(v, null, 2));
   const entries: ZipEntry[] = [{ name: 'manifest.json', data: enc(manifest) }, { name: 'settings.json', abs: src.settingsFile }];
   if (src.library) {
-    for (const f of folderFiles(src.library, (rel) => rel.endsWith('.tmp'))) entries.push({ name: `library/${f.rel}`, abs: f.abs });
+    for (const f of folderFiles(src.library, (rel) => rel.endsWith('.tmp') || (!manifest.media && isAsset(rel)))) entries.push({ name: `library/${f.rel}`, abs: f.abs });
   }
   if (src.vaultRoot) {
     // Структура папок — всегда: пустые папки (новое приключение, стандартные папки) тоже должны вернуться.

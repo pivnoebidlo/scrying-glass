@@ -409,6 +409,13 @@ mouse; while editing, Space or the middle button does it; V picks things, B goes
 «Name.map.json» in the adventure's maps folder; «To Maps» adds the picture with the fog, a grid and a pin on every
 room.
 
+Your own pictures go on the map too: put them into the «assets» folder of the library (the folder button under «My
+assets» in the palette opens it). Folders become groups, a name like «Kiln_Stone_B1_2x3.png» says the thing, its
+variant and its size in cells (none — one cell); variants of one thing are one item of the palette with a choice of
+variant or a random one each time. Thousands of pictures are fine: the groups stay folded until opened, the search finds
+a thing by name, and a map loads only the pictures it uses. A picture goes anywhere — on water, over a wall — and turns
+with its size. Full backups take the assets only together with pictures and music.
+
 **Wilderness encounter** (D&D, Tools → Wilderness encounter): forest, field, shore, swamp or a town quarter, the party's level and size
 and the difficulty → a scene (ambush, roadblock, lair ahead, pursuit, surrounded, chance meeting) with what the foes want,
 a complication and what the ground means at the table. Foes are SRD creatures of that place, a group or a leader with

@@ -25,7 +25,8 @@ const pending = new Map<string, Promise<string | null>>();
 const original = new Set<string>();
 
 // Путь к готовой миниатюре (null — сделать не вышло, отдать оригинал).
-export function thumbnail(file: string, width: number): Promise<string | null> {
+// alpha: keep transparency (a PNG) — the map editor's assets; else a JPEG on black, much smaller.
+export function thumbnail(file: string, width: number, alpha = false): Promise<string | null> {
   let st: fs.Stats;
   try {
     st = fs.statSync(file);
@@ -33,14 +34,14 @@ export function thumbnail(file: string, width: number): Promise<string | null> {
     return Promise.resolve(null);
   }
   const w = thumbSize(width);
-  const key = createHash('sha1').update(`${file}\n${st.size}\n${st.mtimeMs}\n${w}`).digest('hex');
-  const out = path.join(dir(), key.slice(0, 2), key + '.jpg');
+  const key = createHash('sha1').update(`${file}\n${st.size}\n${st.mtimeMs}\n${w}${alpha ? '\na' : ''}`).digest('hex');
+  const out = path.join(dir(), key.slice(0, 2), key + (alpha ? '.png' : '.jpg'));
   if (original.has(out)) return Promise.resolve(null);
   if (fs.existsSync(out)) return Promise.resolve(out);
   let p = pending.get(out);
   if (!p) {
     p = queue
-      .then(() => make(file, out, w))
+      .then(() => make(file, out, w, alpha))
       .then((r) => (r ? r : (original.add(out), null)))
       .finally(() => pending.delete(out));
     queue = p.catch(() => null);
@@ -49,7 +50,7 @@ export function thumbnail(file: string, width: number): Promise<string | null> {
   return p;
 }
 
-async function make(file: string, out: string, w: number): Promise<string | null> {
+async function make(file: string, out: string, w: number, alpha = false): Promise<string | null> {
   // Даём главному процессу ответить на другие запросы между миниатюрами.
   await new Promise((r) => setImmediate(r));
   const img = nativeImage.createFromPath(file);
@@ -59,7 +60,7 @@ async function make(file: string, out: string, w: number): Promise<string | null
   if (size.width <= w * 1.25) return null;
   const small = img.resize({ width: w, quality: 'good' });
   // JPEG: прозрачный фон станет чёрным, как и фон плиток, а файл в разы меньше PNG.
-  const data = small.toJPEG(85);
+  const data = alpha ? small.toPNG() : small.toJPEG(85);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   const tmp = out + '.tmp';
   fs.writeFileSync(tmp, data);

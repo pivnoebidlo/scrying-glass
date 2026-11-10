@@ -441,9 +441,34 @@ function drawOne(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       shape(ctx, '#7d7a72', circle(ctx, 0, 0, c * 0.42), line);
       shape(ctx, '#2c5566', circle(ctx, 0, 0, c * 0.26), line * 0.6);
       break;
+    case 'asset': {
+      const img = p.asset ? assetPicture?.(p.asset) : null;
+      if (img) ctx.drawImage(img, L, T, w, h);
+      else {
+        // Not loaded yet, or the file is gone: a dashed frame with a question.
+        ctx.save();
+        ctx.strokeStyle = 'rgba(180, 160, 255, 0.9)';
+        ctx.setLineDash([c / 8, c / 10]);
+        ctx.lineWidth = Math.max(1, c / 24);
+        ctx.strokeRect(L + c * 0.08, T + c * 0.08, w - c * 0.16, h - c * 0.16);
+        ctx.fillStyle = 'rgba(180, 160, 255, 0.9)';
+        ctx.font = `bold ${c * 0.4}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('?', 0, 0);
+        ctx.restore();
+      }
+      break;
+    }
     default:
       drawMore(ctx, p, w, h, c);
   }
+}
+
+// The pictures of the GM's assets: the window loads them and says where they are (none — the frame with a question).
+let assetPicture: ((path: string) => CanvasImageSource | null) | null = null;
+export function setAssetPictures(fn: ((path: string) => CanvasImageSource | null) | null) {
+  assetPicture = fn;
 }
 
 export function drawProps(ctx: Ctx, l: Layout, c: number) {

@@ -51,6 +51,7 @@ import { buildMenu } from './menu';
 import { CARD_HANDOUT } from '../modules/handouts/types';
 import { setTableCards } from '../modules/initiative/table';
 import { createDraft, listDrafts, readDraft, renameDraft, writeDraft } from './mapdrafts';
+import { assetsDir, forgetMapAssets, listMapAssets, onMapAssetsChanged } from './mapassets';
 import { isMapDraft, type MapDraft } from '../modules/tools/mapeditor/edit';
 import { isAboutLink } from '../shared/about';
 import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnouncement } from './schedule';
@@ -573,6 +574,19 @@ ipcMain.handle('sketches:create', async (_event, { folder, title, sketch }: { fo
 });
 // The map editor's drafts (main/mapdrafts.ts): files of the vault, not of its tree.
 ipcMain.handle('mapdrafts:list', () => listDrafts(resolveInVault, vaultTree));
+ipcMain.handle('mapassets:list', (_e, fresh: boolean) => {
+  if (fresh) forgetMapAssets();
+  return listMapAssets(libraryPath());
+});
+ipcMain.handle('mapassets:reveal', async () => {
+  const lib = libraryPath();
+  if (!lib) return;
+  fs.mkdirSync(assetsDir(lib), { recursive: true });
+  await shell.openPath(assetsDir(lib));
+});
+onMapAssetsChanged(() => {
+  for (const win of BrowserWindow.getAllWindows()) win.webContents.send('mapassets:changed');
+});
 ipcMain.handle('mapdrafts:read', (_event, rel: string) => readDraft(resolveInVault, rel));
 ipcMain.handle('mapdrafts:write', (_event, { path: rel, draft }: { path: string; draft: MapDraft }) => writeDraft(resolveInVault, rel, draft));
 ipcMain.handle('mapdrafts:create', (_event, { folder, title, draft }: { folder: string; title: string; draft: MapDraft }) => createDraft(resolveInVault, folder, title, draft));
@@ -2174,7 +2188,7 @@ app.whenReady().then(async () => {
   // Файлы хранилища (картинки, музыка): sg-asset://v/<путь внутри хранилища>,
   // картинки библиотеки карточек: sg-asset://l/<путь внутри библиотеки>, встроенные звуки: sg-asset://s/<путь>,
   // data of pdf.js (CMaps, fonts, wasm): sg-asset://p/<path>.
-  // ?w=<ширина> — миниатюра.
+  // ?w=<ширина> — миниатюра (&a=1 — с прозрачностью, PNG: ассеты редактора карт).
   protocol.handle('sg-asset', async (request) => {
     const url = new URL(request.url);
     const rel = decodeURIComponent(url.pathname.slice(1));
@@ -2182,7 +2196,7 @@ app.whenReady().then(async () => {
     if (!file) return new Response('Not found', { status: 404 });
     const w = Number(url.searchParams.get('w'));
     if (w > 0 && canThumb(file)) {
-      const thumb = await thumbnail(file, w).catch(() => null);
+      const thumb = await thumbnail(file, w, url.searchParams.get('a') === '1').catch(() => null);
       if (thumb) return serveFile(thumb, request);
     }
     return serveFile(file, request);

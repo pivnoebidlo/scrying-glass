@@ -1,5 +1,6 @@
 // API, который preload открывает окнам как window.api.
 import type { MapDraft } from '../modules/tools/mapeditor/edit';
+import type { MapAsset } from './mapassets';
 import type { GeneratorFile } from './generators';
 import type { BlockedEntry, Need, RepoCatalog, RepoEntry, RepoInfo, RepoProgress, ReportedEntry, ReportReason } from './repo';
 import type { BuiltinSounds } from './sounds';
@@ -153,6 +154,10 @@ export interface Api {
   createMapDraft(folder: string, title: string, draft: MapDraft): Promise<string | null>;
   renameMapDraft(path: string, title: string): Promise<string | null>;
   deleteMapDraft(path: string): Promise<boolean>;
+  // The GM's own pictures for the map editor: the index of <library>/assets/ (main/mapassets.ts).
+  listMapAssets(fresh?: boolean): Promise<{ list: MapAsset[]; cut: boolean }>;
+  revealMapAssets(): Promise<void>;
+  onMapAssetsChanged(cb: () => void): void;
 
   // Справочник (shared/compendium.ts): Markdown-записи в папках справочника хранилища и в библиотеке
   // («library:compendium/…»). Удаление записи библиотеки — trashLibraryEntry.

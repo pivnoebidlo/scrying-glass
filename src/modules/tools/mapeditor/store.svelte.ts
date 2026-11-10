@@ -7,6 +7,7 @@ import { roleNames } from '../../../shared/vault';
 import type { Facing, PropKind } from '../mapgen/furnish';
 import type { Layout } from '../mapgen/layout';
 import { draftOf, MAP_DRAFT_SUFFIX, type BrushId } from './edit';
+import type { MapAsset } from '../../../shared/mapassets';
 
 const UNDO = 100;
 // The size of a cell on screen: the least, the most, «100 %».
@@ -27,6 +28,9 @@ class Editor {
   face = $state<Facing>(0);
   // The colour of things put down (null — a random one).
   tint = $state<number | null>(null);
+  // A picture of the GM's own being put down (prop 'asset'), and whether each goes as a random variant of it.
+  asset = $state.raw<MapAsset | null>(null);
+  assetAny = $state(false);
   // The things picked (the last one is the one the colour and the stretching corner belong to).
   picked = $state<number[]>([]);
   get selected() {

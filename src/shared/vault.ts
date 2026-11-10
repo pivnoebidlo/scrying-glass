@@ -254,7 +254,7 @@ export const assetUrl = (path: string) =>
 
 // Миниатюра картинки для плиток и списков (ширина в точках; ядро делает копии 128, 256, 512 и 1024 и кэширует).
 // На экране игроков — только полные картинки.
-export const thumb = (url: string, width: number) => {
+export const thumb = (url: string, width: number, alpha = false) => {
   const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
-  return `${url}?w=${Math.round(width * dpr)}`;
+  return `${url}?w=${Math.round(width * dpr)}${alpha ? '&a=1' : ''}`;
 };

@@ -68,6 +68,9 @@ const api: Api = {
   createMapDraft: (folder, title, draft) => ipcRenderer.invoke('mapdrafts:create', { folder, title, draft }),
   renameMapDraft: (path, title) => ipcRenderer.invoke('mapdrafts:rename', { path, title }),
   deleteMapDraft: (path) => ipcRenderer.invoke('mapdrafts:delete', path),
+  listMapAssets: (fresh) => ipcRenderer.invoke('mapassets:list', !!fresh),
+  revealMapAssets: () => ipcRenderer.invoke('mapassets:reveal'),
+  onMapAssetsChanged: (cb) => { ipcRenderer.on('mapassets:changed', () => cb()); },
 
   readEntry: (path) => ipcRenderer.invoke('compendium:read', path),
   listLibraryEntries: () => ipcRenderer.invoke('compendium:listLibrary'),

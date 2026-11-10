@@ -3,6 +3,7 @@
 // drawn from it the same way as a generated one.
 import { LAYOUT_STYLES, LIGHTS, buildingAt, isBuilt, isWild, tonesFor, walkable, type Layout, type Light, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
 import { PROP_KINDS, type Facing, type Prop, type PropKind } from '../mapgen/furnish';
+import { MAX_ASSET_SIDE, safeAssetPath } from '../../../shared/mapassets';
 
 export const MAP_DRAFT_SUFFIX = '.map.json';
 export const isMapDraft = (path: string) => path.toLowerCase().endsWith(MAP_DRAFT_SUFFIX);
@@ -44,9 +45,9 @@ export function parseDraft(x: unknown): MapDraft | null {
     .slice(0, 2000)
     .map((d) => ({ x: d.x, y: d.y, along: d.along }));
   const props = (Array.isArray(l['props']) ? l['props'] : [])
-    .filter((p): p is Prop => !!p && PROP_KINDS.includes(p.kind) && int(p.x) && int(p.y) && int(p.w) && int(p.h) && p.w > 0 && p.h > 0 && p.w <= 12 && p.h <= 12 && inside(p))
+    .filter((p): p is Prop => !!p && PROP_KINDS.includes(p.kind) && int(p.x) && int(p.y) && int(p.w) && int(p.h) && p.w > 0 && p.h > 0 && p.w <= 12 && p.h <= 12 && inside(p) && (p.kind !== 'asset' || safeAssetPath(p.asset)))
     .slice(0, 5000)
-    .map((p) => ({ kind: p.kind, x: p.x, y: p.y, w: p.w, h: p.h, ...(p.face === 1 || p.face === 2 || p.face === 3 ? { face: p.face } : {}), ...(typeof p.tint === 'number' && p.tint >= 0 && p.tint <= 1 ? { tint: p.tint } : {}) }));
+    .map((p) => ({ kind: p.kind, x: p.x, y: p.y, w: p.w, h: p.h, ...(p.face === 1 || p.face === 2 || p.face === 3 ? { face: p.face } : {}), ...(typeof p.tint === 'number' && p.tint >= 0 && p.tint <= 1 ? { tint: p.tint } : {}), ...(p.kind === 'asset' ? { asset: p.asset } : {}) }));
   const houses = rects(l['houses'], 2000);
   const landmarks = (Array.isArray(l['landmarks']) ? l['landmarks'] : []).filter(
     (m): m is { house: number; kind: 'tavern' | 'temple' | 'shop' | 'hall' | 'smithy' } => !!m && int(m.house) && m.house >= 0 && m.house < houses.length && ['tavern', 'temple', 'shop', 'hall', 'smithy'].includes(m.kind),
@@ -144,7 +145,7 @@ export function tidy(l: Layout): Layout {
     return false;
   });
   const props = (l.props ?? []).filter((p) => {
-    if (p.kind === 'rug') return true;
+    if (p.kind === 'rug' || p.kind === 'asset') return true;
     for (let y = p.y; y < p.y + p.h; y++) for (let x = p.x; x < p.x + p.w; x++) if (!standable(at(l, x, y))) return false;
     return true;
   });
@@ -332,8 +333,9 @@ function fits(l: Layout, p: Prop, _except = -1) {
     for (let x = p.x; x < p.x + p.w; x++) {
       if (!inMap(l, x, y)) return false;
       // Things may stand on things (a chest on a rug, a candle on a table): the later one is drawn on top.
-      if (p.kind !== 'rug' && !standable(at(l, x, y))) return false;
-      if (p.kind !== 'rug' && l.doors.some((d) => d.x === x && d.y === y)) return false;
+      // A picture of the GM's own goes anywhere (a bridge on water, a beam over a wall).
+      if (p.kind !== 'rug' && p.kind !== 'asset' && !standable(at(l, x, y))) return false;
+      if (p.kind !== 'rug' && p.kind !== 'asset' && l.doors.some((d) => d.x === x && d.y === y)) return false;
     }
   return true;
 }
@@ -347,6 +349,24 @@ export function placeProp(l: Layout, kind: PropKind, x: number, y: number, face:
   return { layout: { ...l, props }, index: kind === 'rug' ? 0 : props.length - 1 };
 }
 
+// A picture of the GM's own: its size in cells is the picture's (turned with it).
+export function placeAsset(l: Layout, a: { path: string; w: number; h: number }, x: number, y: number, face: Facing = 0): { layout: Layout; index: number } {
+  const [w, h] = face % 2 ? [a.h, a.w] : [a.w, a.h];
+  const p: Prop = { kind: 'asset', asset: a.path, x, y, w: Math.min(MAX_ASSET_SIDE, w), h: Math.min(MAX_ASSET_SIDE, h), ...(face ? { face } : {}) };
+  if (!fits(l, p)) return { layout: l, index: -1 };
+  const props = [...(l.props ?? []), p];
+  return { layout: { ...l, props }, index: props.length - 1 };
+}
+
+// Another variant of a picture where it stands (its size may differ).
+export function setAssetVariant(l: Layout, i: number, a: { path: string; w: number; h: number }): Layout {
+  const p = l.props?.[i];
+  if (!p || p.kind !== 'asset' || p.asset === a.path) return l;
+  const [w, h] = (p.face ?? 0) % 2 ? [a.h, a.w] : [a.w, a.h];
+  const next: Prop = { ...p, asset: a.path, w, h };
+  return fits(l, next, i) ? { ...l, props: l.props!.map((o, n) => (n === i ? next : o)) } : l;
+}
+
 export function removeProp(l: Layout, i: number): Layout {
   return i < 0 ? l : { ...l, props: (l.props ?? []).filter((_, n) => n !== i) };
 }
@@ -355,7 +375,8 @@ export function rotateProp(l: Layout, i: number): Layout {
   const p = l.props?.[i];
   if (!p) return l;
   const face = (((p.face ?? 0) + 1) % 4) as Facing;
-  const next: Prop = { ...p, ...footprint(p.kind, face), face };
+  // A picture keeps its own size: across, then along.
+  const next: Prop = { ...p, ...(p.kind === 'asset' ? { w: p.h, h: p.w } : footprint(p.kind, face)), face };
   if (!next.face) delete next.face;
   return fits(l, next, i) ? { ...l, props: l.props!.map((o, n) => (n === i ? next : o)) } : l;
 }

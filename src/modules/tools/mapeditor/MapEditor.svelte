@@ -2,19 +2,22 @@
      of the map generator, so a generated map is edited the same way («Edit» in the generator). -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ChevronDown, ChevronRight, Eye, Map as MapIcon, MousePointer2, Pencil, Plus, Redo2, RotateCw, Search, Trash2, Undo2, X, ZoomIn, ZoomOut } from '@lucide/svelte';
+  import { ChevronDown, ChevronRight, Eye, FolderOpen, RefreshCw, Map as MapIcon, MousePointer2, Pencil, Plus, Redo2, RotateCw, Search, Trash2, Undo2, X, ZoomIn, ZoomOut } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import type { PropKind } from '../mapgen/furnish';
   import { isOpenAir, LIGHTS, tonesFor, type Light } from '../mapgen/layout';
   import { landmarkPins } from '../mapgen/landmarks';
   import { layoutToMaps } from '../mapgen/toMaps';
-  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProps, resize, rotateProp, setLight, setTone, STRETCH, tintProp, type BrushId } from './edit';
+  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProps, resize, rotateProp, setAssetVariant, setLight, setTone, STRETCH, tintProp, type BrushId } from './edit';
   import { TINTS, tintOf } from '../mapgen/draw-props';
   import MapCanvas from './MapCanvas.svelte';
   import NewMapDialog from './NewMapDialog.svelte';
   import PropIcon from './PropIcon.svelte';
   import { CELL_BASE, editor } from './store.svelte';
+  import { assets, assetSrc } from './assets.svelte';
+  import { groupTitle, type AssetThing, type MapAsset } from '../../../shared/mapassets';
+  import { thumb } from '../../../shared/vault';
   import { modKey } from '../../../shared/hotkeys';
 
   // «⌘» or «Ctrl»: the strings add «+wheel» themselves.
@@ -29,6 +32,7 @@
 
   onMount(() => {
     void editor.refresh();
+    void assets.load();
     return () => void editor.flush();
   });
   // The list follows the adventure.
@@ -142,6 +146,66 @@
     requestAnimationFrame(() => editor.fit());
   });
 
+  // The GM's own pictures: groups by folder, folded until opened (there may be thousands); the search finds them too.
+  const OPEN = 'sg.mapedit.assetsOpen';
+  let opened = $state<string[]>(
+    (() => {
+      try {
+        const v = JSON.parse(localStorage.getItem(OPEN) ?? '[]');
+        return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : [];
+      } catch {
+        return [];
+      }
+    })(),
+  );
+  function openGroup(g: string) {
+    opened = opened.includes(g) ? opened.filter((x) => x !== g) : [...opened, g];
+    try {
+      localStorage.setItem(OPEN, JSON.stringify(opened));
+    } catch {
+      /* the window forgets */
+    }
+  }
+  const assetGroups = $derived.by(() => {
+    const by = new Map<string, AssetThing[]>();
+    for (const th of assets.things) by.set(th.group, [...(by.get(th.group) ?? []), th]);
+    return [...by.entries()].map(([group, list]) => ({ group, list }));
+  });
+  // A search shows no more than this many: a word like «a» would find everything.
+  const FOUND_MAX = 120;
+  const foundAssets = $derived.by(() => {
+    const q = query.trim().toLowerCase();
+    return q ? assets.things.filter((th) => th.title.toLowerCase().includes(q) || th.group.toLowerCase().includes(q)).slice(0, FOUND_MAX) : [];
+  });
+  const pickAsset = (th: AssetThing) => {
+    editor.mode = 'place';
+    editor.prop = 'asset';
+    editor.asset = th.variants[0]!;
+    editor.selected = -1;
+  };
+  // The variants of the picture being put down or of the one picked.
+  const pickedAsset = $derived(editor.mode === 'select' ? layout?.props?.[editor.selected] : undefined);
+  const variantsOf = $derived.by((): { thing: AssetThing; now: string | null } | null => {
+    const path = editor.mode === 'place' && editor.prop === 'asset' ? editor.asset?.path : pickedAsset?.kind === 'asset' ? pickedAsset.asset : undefined;
+    const a = path ? assets.byPath.get(path) : undefined;
+    const thing = a ? assets.byBase.get(a.base) : undefined;
+    return thing && thing.variants.length > 1 ? { thing, now: editor.mode === 'place' && editor.assetAny ? null : path! } : null;
+  });
+  function pickVariant(v: MapAsset | null) {
+    if (editor.mode === 'place') {
+      editor.assetAny = v === null;
+      if (v) editor.asset = v;
+      return;
+    }
+    if (!v || !editor.layout) return;
+    // Every picked picture of the same thing takes the variant.
+    let next = editor.layout;
+    for (const n of editor.picked) {
+      const q = next.props?.[n];
+      if (q?.kind === 'asset' && q.asset && assets.byPath.get(q.asset)?.base === v.base) next = setAssetVariant(next, n, v);
+    }
+    editor.change(next);
+  }
   const pickBrush = (id: BrushId) => ((editor.mode = 'brush'), (editor.brush = id), (editor.selected = -1));
   // Another thing — a random colour again (a red rug does not make every chest red).
   const pickProp = (k: PropKind) => {
@@ -171,6 +235,7 @@
     if (!editor.layout) return;
     await editor.flush();
     const l = $state.snapshot(editor.layout);
+    await assets.loadFor(l);
     const open = isOpenAir(l.style);
     const room = (i: number) => ({ title: t(open ? 'mapgen.place' : 'mapgen.room', { n: i + 1 }), note: '', color: open ? ('green' as const) : ('gold' as const) });
     failed = !(await layoutToMaps(l, editor.title, l.rooms.map((_, i) => room(i)), { pins: await landmarkPins(l) }));
@@ -332,6 +397,17 @@
             {#each tints as colour, i (i)}<button class="tintbtn" class:on={isTint(i)} style:background={colour} aria-label={colour} onclick={() => pickTint(i)}></button>{/each}
           </div>
         {/if}
+        {#if variantsOf}
+          <div class="group">{t('mapedit.variant')} · {variantsOf.thing.variants.length}</div>
+          <div class="variants">
+            {#if editor.mode === 'place'}<button class="variant random" class:on={editor.assetAny} title={t('mapedit.randomVariant')} onclick={() => pickVariant(null)}>?</button>{/if}
+            {#each variantsOf.thing.variants as v (v.path)}
+              <button class="variant" class:on={variantsOf.now === v.path} title={v.variant || v.title} onclick={() => pickVariant(v)}>
+                <img src={thumb(assetSrc(v.path), 40, true)} alt="" loading="lazy" draggable="false" />
+              </button>
+            {/each}
+          </div>
+        {/if}
         {#if editor.mode === 'select' && editor.selected >= 0 && layout.props?.[editor.selected] && STRETCH.includes(layout.props[editor.selected]!.kind)}
           <p class="faint small">{t('mapedit.stretchHint')}</p>
         {/if}
@@ -351,6 +427,28 @@
             {/each}
           </div>
         {/snippet}
+        {#snippet assetList(list: AssetThing[])}
+          <div class="grid">
+            {#each list as th (th.base)}
+              <button class="thing" class:on={editor.mode === 'place' && editor.prop === 'asset' && editor.asset?.base === th.base} title="{th.title}{th.variants.length > 1 ? ` · ${th.variants.length}` : ''}" onclick={() => pickAsset(th)}>
+                <img class="pic" src={thumb(assetSrc(th.variants[0]!.path), 40, true)} alt="" loading="lazy" draggable="false" />
+                <span>{th.title}</span>
+                {#if th.variants.length > 1}<span class="many">{th.variants.length}</span>{/if}
+              </button>
+            {/each}
+          </div>
+        {/snippet}
+        {#snippet assetHead()}
+          <div class="group assets-head">
+            <span>{t('mapedit.assets')}</span>
+            <span class="count">{assets.things.length}</span>
+            <span class="spacer"></span>
+            <button class="icon-btn" title={t('mapedit.assetsRefresh')} onclick={() => void assets.load(true)}><RefreshCw size={12} /></button>
+            <button class="icon-btn" title={t('mapedit.assetsFolderHint')} onclick={() => void window.api.revealMapAssets()}><FolderOpen size={13} /></button>
+          </div>
+          {#if assets.ready && !assets.list.length}<p class="faint small">{t('mapedit.assetsEmpty')}</p>{/if}
+          {#if assets.cut}<p class="warning small">{t('mapedit.assetsCut', { count: assets.list.length })}</p>{/if}
+        {/snippet}
         {#snippet brushList(list: typeof brushes)}
           <div class="brushes">
             {#each list as b (b.id)}
@@ -363,7 +461,13 @@
         {/snippet}
         {#if found}
           {#if foundBrushes.length}{@render brushList(foundBrushes)}{/if}
-          {#if found.length}{@render things(found)}{:else if !foundBrushes.length}<p class="faint small">{t('mapedit.nothingFound')}</p>{/if}
+          {#if found.length}{@render things(found)}{/if}
+          {#if foundAssets.length}
+            <div class="group">{t('mapedit.assets')}</div>
+            {@render assetList(foundAssets)}
+            {#if foundAssets.length === FOUND_MAX}<p class="faint small">{t('mapedit.foundMore', { count: FOUND_MAX })}</p>{/if}
+          {/if}
+          {#if !found.length && !foundBrushes.length && !foundAssets.length}<p class="faint small">{t('mapedit.nothingFound')}</p>{/if}
         {:else}
           {#each brushGroups as g (g.id)}
             <button class="group fold" aria-expanded={!folded.includes(g.id)} onclick={() => fold(g.id)}>
@@ -380,6 +484,15 @@
               <span class="count">{g.kinds.length}</span>
             </button>
             {#if !folded.includes(g.id)}{@render things(g.kinds)}{/if}
+          {/each}
+          {@render assetHead()}
+          {#each assetGroups as g (g.group)}
+            <button class="group fold" aria-expanded={opened.includes(g.group)} onclick={() => openGroup(g.group)}>
+              {#if opened.includes(g.group)}<ChevronDown size={13} />{:else}<ChevronRight size={13} />{/if}
+              <span class="gname" title={groupTitle(g.group)}>{#if g.group.includes('/')}<span class="faint">{groupTitle(g.group.slice(0, g.group.lastIndexOf('/')))} / </span>{/if}{g.group ? groupTitle(g.group.slice(g.group.lastIndexOf('/') + 1)) : t('mapedit.assets')}</span>
+              <span class="count">{g.list.length}</span>
+            </button>
+            {#if opened.includes(g.group)}{@render assetList(g.list)}{/if}
           {/each}
         {/if}
       </section>
@@ -768,6 +881,71 @@
   }
   .thing:hover {
     background: var(--bg-hover);
+  }
+  .thing {
+    position: relative;
+  }
+  .thing .pic {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+  }
+  .thing .many {
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    color: var(--text-faint);
+    font-size: 9.5px;
+  }
+  .variants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    max-height: 132px;
+    overflow-y: auto;
+    padding: 0 2px 4px;
+  }
+  .variant {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 1px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-s);
+    background: var(--bg-primary);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .variant img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .variant.on {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+  .assets-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 10px;
+  }
+  .assets-head .spacer {
+    flex: 1;
+  }
+  .gname {
+    display: flex;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  /* The folders above shrink first: the group's own name stays readable. */
+  .gname .faint {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: normal;
   }
   .thing.on {
     border-color: var(--accent);

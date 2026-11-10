@@ -19,6 +19,8 @@ export const PROP_KINDS = [
   'fence', 'signpost', 'lamppost', 'trough', 'gallows', 'menhir', 'cairn', 'totem', 'deadtree', 'fern', 'nest',
   // Since 0.106: not in the palette (a chest becomes one); drawn as a chest.
   'mimic',
+  // Since 0.107: a picture of the GM's own (Prop.asset).
+  'asset',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 
@@ -34,6 +36,8 @@ export interface Prop {
   face?: Facing;
   // A colour or variant, 0…1, for things that differ (a stall's awning, a rug).
   tint?: number;
+  // An 'asset': its picture, the path inside <library>/assets/ (shared/mapassets.ts).
+  asset?: string;
 }
 
 type Random = () => number;

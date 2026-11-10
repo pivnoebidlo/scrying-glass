@@ -5,9 +5,10 @@
   import { drawLayout } from '../mapgen/draw';
   import type { Layout } from '../mapgen/layout';
   import {
-    addBuilding, addHouse, addRoom, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower,
+    addBuilding, addHouse, addRoom, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower,
   } from './edit';
   import { editor } from './store.svelte';
+  import { assets } from './assets.svelte';
 
   let { layout }: { layout: Layout } = $props();
 
@@ -24,6 +25,8 @@
     if (!base) return;
     base.width = layout.w * c;
     base.height = layout.h * c;
+    // Again when a picture of the GM's has loaded.
+    void assets.rev;
     drawLayout(base.getContext('2d')!, layout, c, editor.numbers ? { labels: (i) => String(i + 1) } : {});
   });
 
@@ -103,7 +106,8 @@
       box(r.x, r.y, r.w, r.h, '#a78bfa', true);
     } else if (hover) {
       if (editor.mode === 'place' && editor.prop) {
-        const f = footprint(editor.prop, editor.face);
+        const a = editor.prop === 'asset' ? editor.asset : null;
+        const f = a ? (editor.face % 2 ? { w: a.h, h: a.w } : { w: a.w, h: a.h }) : footprint(editor.prop, editor.face);
         box(hover.x, hover.y, f.w, f.h, '#a78bfa');
       } else if (editor.mode === 'brush' && !brush.rect && !brush.toggle) {
         const cells = brushCells(hover.x, hover.y, editor.size);
@@ -217,6 +221,18 @@
       if (!editor.picked.includes(i)) editor.picked = [i];
       else editor.picked = [...editor.picked.filter((n) => n !== i), i];
       drag = { last: p, started: false };
+      return;
+    }
+    if (editor.mode === 'place' && editor.prop === 'asset') {
+      if (!editor.asset) return;
+      // A random variant of the thing each time, if asked.
+      const thing = editor.assetAny ? assets.byBase.get(editor.asset.base) : null;
+      const a = thing ? thing.variants[Math.floor(Math.random() * thing.variants.length)]! : editor.asset;
+      const { layout: next, index } = placeAsset(l, a, p.x, p.y, editor.face);
+      if (index >= 0) {
+        editor.change(next);
+        editor.selected = index;
+      }
       return;
     }
     if (editor.mode === 'place' && editor.prop) {
