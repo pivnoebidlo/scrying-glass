@@ -306,6 +306,83 @@ function drawLandmark(ctx: CanvasRenderingContext2D, kind: LandmarkKind, x: numb
   }
 }
 
+// The town wall seen from above: a band of stone with merlons on the outer side, round towers, gates with their leaves
+// open against the wall.
+function drawWall(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
+  const wall = (x: number, y: number) => l.cells[y]?.[x] === 'W';
+  const cx = l.w / 2;
+  const cy = l.h / 2;
+  ctx.fillStyle = '#857e72';
+  for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) if (wall(x, y)) ctx.fillRect(x * c, y * c, c, c);
+  // The walk on top, a little lighter, and the outline where the wall ends.
+  ctx.fillStyle = '#9b9488';
+  for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) if (wall(x, y)) ctx.fillRect(x * c + c * 0.2, y * c + c * 0.2, c * 0.6, c * 0.6);
+  ctx.strokeStyle = WALL;
+  ctx.lineWidth = Math.max(1.5, c / 12);
+  ctx.beginPath();
+  for (let y = 0; y < l.h; y++)
+    for (let x = 0; x < l.w; x++) {
+      if (!wall(x, y)) continue;
+      const edge = (x0: number, y0: number, x1: number, y1: number) => (ctx.moveTo(x0 * c, y0 * c), ctx.lineTo(x1 * c, y1 * c));
+      if (!wall(x, y - 1)) edge(x, y, x + 1, y);
+      if (!wall(x, y + 1)) edge(x, y + 1, x + 1, y + 1);
+      if (!wall(x - 1, y)) edge(x, y, x, y + 1);
+      if (!wall(x + 1, y)) edge(x + 1, y, x + 1, y + 1);
+    }
+  ctx.stroke();
+  // Merlons on the side that faces away from the town.
+  ctx.fillStyle = '#5f594f';
+  const m = c * 0.22;
+  for (let y = 0; y < l.h; y++)
+    for (let x = 0; x < l.w; x++) {
+      if (!wall(x, y)) continue;
+      const horizontal = wall(x - 1, y) || wall(x + 1, y);
+      for (const k of [0.15, 0.6]) {
+        if (horizontal) ctx.fillRect((x + k) * c, y < cy ? y * c : (y + 1) * c - m, c * 0.25, m);
+        else ctx.fillRect(x < cx ? x * c : (x + 1) * c - m, (y + k) * c, m, c * 0.25);
+      }
+    }
+  for (const g of l.wall!.gates) {
+    // The leaves of an open gate, folded back along the passage.
+    const px = (g.x + 0.5) * c;
+    const py = (g.y + 0.5) * c;
+    ctx.fillStyle = '#7a5230';
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1, c / 16);
+    for (const s of [-1, 1]) {
+      const [w, h] = g.along === 'y' ? [c * 0.18, c * 0.8] : [c * 0.8, c * 0.18];
+      const x = g.along === 'y' ? px + s * c * 0.95 - w / 2 : px - w / 2;
+      const y = g.along === 'y' ? py - h / 2 : py + s * c * 0.95 - h / 2;
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+    }
+  }
+  for (const t of l.wall!.towers) {
+    const px = (t.x + 0.5) * c;
+    const py = (t.y + 0.5) * c;
+    ctx.fillStyle = '#7a7368';
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1.5, c / 10);
+    ctx.beginPath();
+    ctx.arc(px, py, c * 0.95, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Merlons round the top, the floor of the tower inside.
+    ctx.fillStyle = '#5f594f';
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(px + Math.cos(a) * c * 0.8, py + Math.sin(a) * c * 0.8, c * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#9b9488';
+    ctx.beginPath();
+    ctx.arc(px, py, c * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
 function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
   const r = noise(l.seed);
   const at = (x: number, y: number) => l.cells[y]?.[x];
@@ -344,6 +421,7 @@ function drawTown(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
     for (let x = 0; x < l.w; x++) if (at(x, y) === 'T') drawTree(ctx, (x + 0.5) * c, (y + 0.5) * c, c, TOWN, r);
   }
   (l.houses ?? []).forEach((a, i) => drawHouse(ctx, a, c, r, l.landmarks?.find((m) => m.house === i)?.kind));
+  if (l.wall) drawWall(ctx, l, c);
   // Wells.
   for (const p of l.pillars) {
     const px = (p.x + 0.5) * c;

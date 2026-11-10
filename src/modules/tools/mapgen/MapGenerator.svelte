@@ -14,9 +14,11 @@
   interface Saved {
     style: LayoutStyle;
     rooms: number;
+    // A town quarter inside its walls.
+    walls: boolean;
     layout: Layout | null;
   }
-  const DEFAULTS: Saved = { style: 'building', rooms: 5, layout: null };
+  const DEFAULTS: Saved = { style: 'building', rooms: 5, walls: false, layout: null };
   function load(): Saved {
     try {
       return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
@@ -35,7 +37,7 @@
 
   function create() {
     mg.rooms = roomCount(mg.rooms);
-    mg.layout = generateLayout(mg.style, { rooms: mg.rooms });
+    mg.layout = generateLayout(mg.style, { rooms: mg.rooms, walls: mg.style === 'town' && mg.walls });
     save();
   }
   // A town's buildings as pins: what it is, who runs it, a name for the tavern. Made afresh for each map.
@@ -78,6 +80,9 @@
     <label>{t(isOpenAir(mg.style) ? 'mapgen.places' : 'mapgen.rooms')}
       <input type="number" min={MIN_ROOMS} max={MAX_ROOMS} bind:value={mg.rooms} onchange={save} />
     </label>
+    {#if mg.style === 'town'}
+      <label class="check"><input type="checkbox" bind:checked={mg.walls} onchange={save} /> {t('mapgen.walls')}</label>
+    {/if}
   </div>
   <div class="actions">
     <button class="btn primary big" onclick={create}><MapIcon size={16} /> {t('mapgen.create')}</button>
@@ -121,6 +126,15 @@
     gap: 3px;
     color: var(--text-muted);
     font-size: 12px;
+  }
+  .options label.check {
+    flex-direction: row;
+    align-items: center;
+    align-self: flex-end;
+    gap: 6px;
+    padding-bottom: 6px;
+    color: var(--text-normal);
+    font-size: 13px;
   }
   .options input {
     width: 72px;

@@ -43,6 +43,13 @@ export interface Layout {
   landmarks?: Landmark[];
   // Things standing about (furnish.ts); none in a layout made before 0.103.
   props?: Prop[];
+  // A town's wall round the quarter: its cells are 'W'; towers stand on it, gates where the roads go out.
+  wall?: TownWall;
+}
+export interface TownWall {
+  towers: { x: number; y: number }[];
+  // The middle of a gate (between the two cells of the road) and the way through it.
+  gates: { x: number; y: number; along: 'x' | 'y' }[];
 }
 export const LANDMARKS = ['tavern', 'temple', 'shop', 'hall', 'smithy'] as const;
 export type LandmarkKind = (typeof LANDMARKS)[number];
@@ -59,6 +66,8 @@ export interface LayoutOptions {
   big?: number[];
   // What each room is for, by its index (the things in it); none — chosen at random.
   themes?: (RoomTheme | undefined)[];
+  // A town quarter inside its walls.
+  walls?: boolean;
 }
 
 // How many rooms a generated map can have.
@@ -477,6 +486,68 @@ function town(placed: Placed, o: LayoutOptions, r: Random, seed: number): Layout
   return { style: 'town', seed, w, h, cells: grid.map((row) => row.join('')), rooms, doors: [], pillars, houses, landmarks };
 }
 
+// The quarter inside its wall: a band of field round it, the wall in that band with towers at the corners and along it;
+// the roads that left the quarter go on through gates to the edge of the map.
+const BAND = 5;
+const WALL_AT = 2;
+function walled(l: Layout): Layout {
+  const w = l.w + BAND * 2;
+  const h = l.h + BAND * 2;
+  const grid = Array.from({ length: h }, () => Array.from({ length: w }, () => '.'));
+  for (let y = 0; y < l.h; y++) for (let x = 0; x < l.w; x++) grid[y + BAND]![x + BAND] = l.cells[y]![x]!;
+  const lo = WALL_AT;
+  const hiX = w - 1 - WALL_AT;
+  const hiY = h - 1 - WALL_AT;
+  const onWall = (x: number, y: number) => ((x === lo || x === hiX) && y >= lo && y <= hiY) || ((y === lo || y === hiY) && x >= lo && x <= hiX);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (onWall(x, y)) grid[y]![x] = 'W';
+  // Roads out: a street cell on the quarter's edge goes on straight to the map's edge.
+  const gateCells: { x: number; y: number; along: 'x' | 'y' }[] = [];
+  const out = (x: number, y: number, dx: number, dy: number) => {
+    for (let cx = x + dx, cy = y + dy; cx >= 0 && cy >= 0 && cx < w && cy < h; cx += dx, cy += dy) {
+      if (grid[cy]![cx] === 'W') gateCells.push({ x: cx, y: cy, along: dx ? 'x' : 'y' });
+      grid[cy]![cx] = ',';
+    }
+  };
+  for (let x = 0; x < l.w; x++) {
+    if (l.cells[0]![x] === ',') out(x + BAND, BAND, 0, -1);
+    if (l.cells[l.h - 1]![x] === ',') out(x + BAND, BAND + l.h - 1, 0, 1);
+  }
+  for (let y = 0; y < l.h; y++) {
+    if (l.cells[y]![0] === ',') out(BAND, y + BAND, -1, 0);
+    if (l.cells[y]![l.w - 1] === ',') out(BAND + l.w - 1, y + BAND, 1, 0);
+  }
+  // A gate is two cells of road through the wall: its middle, once.
+  const gates: TownWall['gates'] = [];
+  for (const g of gateCells) {
+    const pair = gateCells.find((o) => o !== g && o.along === g.along && (g.along === 'y' ? o.y === g.y && o.x === g.x + 1 : o.x === g.x && o.y === g.y + 1));
+    if (pair) gates.push({ x: g.along === 'y' ? g.x + 0.5 : g.x, y: g.along === 'y' ? g.y : g.y + 0.5, along: g.along });
+    else if (!gateCells.some((o) => o !== g && o.along === g.along && (g.along === 'y' ? o.y === g.y && o.x === g.x - 1 : o.x === g.x && o.y === g.y - 1))) gates.push({ ...g });
+  }
+  // Towers: at the corners, on both sides of a gate, and every eight cells or so where nothing is near.
+  const towers: TownWall['towers'] = [];
+  const add = (x: number, y: number) => {
+    if (grid[y]?.[x] === 'W' && !towers.some((t) => Math.abs(t.x - x) + Math.abs(t.y - y) < 4)) towers.push({ x, y });
+  };
+  for (const g of gates) {
+    if (g.along === 'y') (add(Math.floor(g.x) - 1, g.y), add(Math.ceil(g.x) + 1, g.y));
+    else (add(g.x, Math.floor(g.y) - 1), add(g.x, Math.ceil(g.y) + 1));
+  }
+  for (const [x, y] of [[lo, lo], [hiX, lo], [lo, hiY], [hiX, hiY]] as const) add(x, y);
+  for (let x = lo + 8; x < hiX - 4; x += 8) (add(x, lo), add(x, hiY));
+  for (let y = lo + 8; y < hiY - 4; y += 8) (add(lo, y), add(hiX, y));
+  const move = <T extends { x: number; y: number }>(a: T): T => ({ ...a, x: a.x + BAND, y: a.y + BAND });
+  return {
+    ...l,
+    w,
+    h,
+    cells: grid.map((row) => row.join('')),
+    rooms: l.rooms.map(move),
+    pillars: l.pillars.map(move),
+    houses: l.houses?.map(move),
+    wall: { towers, gates },
+  };
+}
+
 // A small deterministic random (mulberry32): from a layout's seed, the same picture and the same places every time.
 export function seededRandom(seed: number): Random {
   let a = seed >>> 0;
@@ -687,7 +758,7 @@ export function generateLayout(style: LayoutStyle, o: LayoutOptions, r: Random =
 function bareLayout(style: LayoutStyle, o: LayoutOptions, r: Random): Layout {
   const seed = index(2 ** 31, r);
   if (style === 'town' || isWild(style)) {
-    const make = (placed: Placed) => (style === 'town' ? town(placed, o, r, seed) : wild(placed, style, r, seed));
+    const make = (placed: Placed) => (style === 'town' ? (o.walls ? walled(town(placed, o, r, seed)) : town(placed, o, r, seed)) : wild(placed, style, r, seed));
     for (let t = 0; t < 60; t++) {
       const placed = place(o, true, r, false);
       if (placed) return make(placed);

@@ -376,7 +376,8 @@ adds the picture to the current adventure with the fog of war, a grid that match
 room or place. Numbers are only in the preview and on your pins: the players see a clean map.
 
 A town quarter has squares, crossroads, streets and rows of houses. Its tavern, temple, shop, town hall and smithy stand
-out on the map, and each gets a hidden pin with who runs it.
+out on the map, and each gets a hidden pin with who runs it. With "Town walls" the quarter stands inside a stone wall with
+towers at the corners and along it; the roads leave through gates and go on to the edge of the map.
 
 The maps are furnished, drawn in the same manner: each room of a building is for something — a storeroom of barrels and
 crates, barracks with beds and chests, a hall with a long table, benches, a hearth and a rug, a library of shelves, a

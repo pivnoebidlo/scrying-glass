@@ -50,3 +50,40 @@ describe('things on a generated map', { timeout: 30000 }, () => {
       for (const role of ['guardian', 'puzzle', 'lair', 'empty', 'trap', 'climax', 'reward'] as const) expect(ROOM_THEMES).toContain(themeOf(t, role));
   });
 });
+
+describe('a walled town', { timeout: 30000 }, () => {
+  it('the wall goes round, broken only by its gates; the roads go out through them to the edge', () => {
+    for (let seed = 1; seed <= 6; seed++) {
+      const l = generateLayout('town', { rooms: 6, walls: true }, seededRandom(seed * 17));
+      const at = (x: number, y: number) => l.cells[y]?.[x];
+      const lo = 2;
+      const hiX = l.w - 3;
+      const hiY = l.h - 3;
+      const ring: [number, number][] = [];
+      for (let x = lo; x <= hiX; x++) ring.push([x, lo], [x, hiY]);
+      for (let y = lo + 1; y < hiY; y++) ring.push([lo, y], [hiX, y]);
+      const gaps = ring.filter(([x, y]) => at(x, y) !== 'W');
+      expect(gaps.every(([x, y]) => at(x, y) === ','), `seed ${seed}`).toBe(true);
+      expect(gaps.length).toBeGreaterThan(0);
+      expect(l.wall!.gates.length).toBeGreaterThan(0);
+      for (const t of l.wall!.towers) expect(at(t.x, t.y)).toBe('W');
+      // A road reaches the edge of the map.
+      const edge = [...Array(l.w).keys()].some((x) => at(x, 0) === ',' || at(x, l.h - 1) === ',') || [...Array(l.h).keys()].some((y) => at(0, y) === ',' || at(l.w - 1, y) === ',');
+      expect(edge).toBe(true);
+      // Every place can be walked to from the first one; nothing stands on the wall.
+      const start = l.rooms[0]!;
+      const seen = new Set<string>();
+      const queue: [number, number][] = [[start.x + (start.w >> 1), start.y + (start.h >> 1)]];
+      const walk = (c: string | undefined) => c === '.' || c === ',' || c === 'P';
+      while (queue.length) {
+        const [x, y] = queue.pop()!;
+        const k = `${x},${y}`;
+        if (seen.has(k) || !walk(at(x, y))) continue;
+        seen.add(k);
+        queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+      }
+      for (const a of l.rooms) expect(seen.has(`${a.x + (a.w >> 1)},${a.y + (a.h >> 1)}`), `seed ${seed}`).toBe(true);
+      for (const p of l.props ?? []) for (const [x, y] of cellsOf(p)) expect(at(x, y)).not.toBe('W');
+    }
+  });
+});
