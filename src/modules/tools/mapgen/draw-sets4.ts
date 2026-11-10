@@ -2,6 +2,7 @@
 // Jungle and desert, a sailing ship (fantasy); a home and a street of today (modern); the wasteland after the fall.
 import type { Prop } from './furnish';
 import { circle, CLOTH, glow, lines, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets5 } from './draw-sets5';
 
 const IRON = '#55585e';
 const DARK = '#2b2a2e';
@@ -271,5 +272,7 @@ export function drawSets4(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       });
       for (const [x, y] of [[-0.3, -0.2], [0.24, 0.3]] as const) shape(ctx, '#8d949c', rect(ctx, x * c, y * c, c * 0.32, c * 0.22, c * 0.02), thin);
       break;
+    default:
+      drawSets5(ctx, p, w, h, c);
   }
 }

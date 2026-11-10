@@ -85,6 +85,12 @@
     { id: 'sailing', kinds: ['mast', 'helm', 'cannon', 'capstan', 'hammock'], genres: ['fantasy', 'gothic'] },
     { id: 'home', kinds: ['sofa', 'tv', 'computer', 'fridge', 'stove', 'washer', 'bicycle', 'cone'], genres: ['modern'] },
     { id: 'wastes', kinds: ['wreck', 'shack', 'barricade', 'tires', 'toxicbarrel', 'burnbarrel', 'radsign', 'skull'], genres: ['wasteland'] },
+    { id: 'north', kinds: ['igloo', 'sled', 'iceblock', 'snowdrift', 'runestone', 'icehole'] },
+    { id: 'east', kinds: ['pagoda', 'torii', 'lantern', 'lowtable', 'tatami', 'zengarden', 'zenrock', 'bamboo', 'koipond'], genres: ['fantasy'] },
+    { id: 'starship', kinds: ['captainchair', 'viewscreen', 'cryopod', 'restraint', 'drone'], genres: ['scifi'] },
+    { id: 'hangar', kinds: ['shuttle', 'mech', 'fueltank', 'landingpad', 'drone'], genres: ['scifi'] },
+    { id: 'alchemy', kinds: ['alembic', 'potionshelf', 'mannequin', 'loom', 'fabric'], genres: ['fantasy', 'gothic'] },
+    { id: 'library', kinds: ['bookcase', 'globe', 'scrolls', 'safe', 'scales', 'vaultdoor'] },
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];

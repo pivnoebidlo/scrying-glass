@@ -32,6 +32,8 @@ export const PROP_KINDS = [
   'medpod', 'labbench', 'tank', 'servers', 'robot', 'forcefield', 'hovercar', 'vending', 'holosign', 'eggs', 'alienplant', 'saucer', 'cocoon', 'xenocrystal', 'goo', 'candelabra', 'organ', 'piano', 'gargoyle', 'bloodpool', 'bats', 'ironfence', 'mausoleum', 'goblet', 'roses', 'tombstone', 'filing', 'typewriter', 'phone', 'jukebox', 'pooltable', 'ceilingfan', 'sedan', 'hydrant', 'newsstand', 'trashcan', 'phonebooth', 'chalk',
   // draw-sets4.ts: jungle and desert, a sailing ship; a home and a street of today; the wasteland.
   'cactus', 'skull', 'vines', 'bigleaf', 'idolhead', 'quicksand', 'joshua', 'mast', 'helm', 'cannon', 'hammock', 'capstan', 'sofa', 'tv', 'fridge', 'stove', 'computer', 'washer', 'bicycle', 'cone', 'toxicbarrel', 'wreck', 'tires', 'barricade', 'burnbarrel', 'radsign', 'shack',
+  // draw-sets5.ts: the north; the East; a starship and a hangar; an alchemist, a tailor, a library, a bank.
+  'igloo', 'sled', 'iceblock', 'snowdrift', 'runestone', 'icehole', 'pagoda', 'lantern', 'zengarden', 'zenrock', 'bamboo', 'torii', 'tatami', 'lowtable', 'koipond', 'captainchair', 'viewscreen', 'cryopod', 'restraint', 'shuttle', 'fueltank', 'mech', 'landingpad', 'drone', 'alembic', 'potionshelf', 'mannequin', 'loom', 'fabric', 'bookcase', 'globe', 'scrolls', 'safe', 'scales', 'vaultdoor',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 

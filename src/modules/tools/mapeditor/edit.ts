@@ -141,7 +141,7 @@ const covers = (a: { x: number; y: number; w: number; h: number }, x: number, y:
 // Things that go anywhere: a picture of the GM's own, and what hangs on walls (a window, a banner).
 export const WALL_DECOR: readonly PropKind[] = ['window', 'banner', 'painting', 'trophy', 'curtain', 'wallshelf'];
 // …and what goes over water or a wall: a bridge, a pier, a buoy, iron bars.
-const FREE = new Set<PropKind>(['asset', ...WALL_DECOR, 'bridge', 'pier', 'buoy', 'bars', 'forcefield', 'holosign', 'bats', 'ceilingfan', 'vines', 'quicksand']);
+const FREE = new Set<PropKind>(['asset', ...WALL_DECOR, 'bridge', 'pier', 'buoy', 'bars', 'forcefield', 'holosign', 'bats', 'ceilingfan', 'vines', 'quicksand', 'viewscreen', 'vaultdoor', 'drone']);
 // …and on a tree's crown or a boulder (a nest, a lookout, a raven), over them on the picture.
 export const standable = (c: string | undefined) => walkable(c) || (!!c && 'TRNJQA'.includes(c));
 
@@ -338,6 +338,8 @@ const LONG: Partial<Record<PropKind, [number, number]>> = {
   medpod: [1, 2], labbench: [2, 1], forcefield: [2, 1], hovercar: [2, 3], holosign: [2, 1], saucer: [3, 3], cocoon: [1, 2],
   organ: [2, 1], piano: [2, 2], ironfence: [2, 1], mausoleum: [2, 2], pooltable: [2, 3], sedan: [2, 4], newsstand: [2, 1],
   idolhead: [2, 2], cannon: [1, 2], hammock: [1, 2], sofa: [2, 1], computer: [2, 1], wreck: [2, 4], shack: [2, 2],
+  igloo: [2, 2], sled: [1, 2], pagoda: [3, 3], torii: [3, 1], koipond: [2, 2], viewscreen: [3, 1], cryopod: [1, 2], shuttle: [3, 4],
+  mech: [2, 2], potionshelf: [2, 1], loom: [2, 1], bookcase: [2, 1], vaultdoor: [2, 2],
 };
 // Things that stretch over several cells: a long table, a big puddle, a carpet runner, a wide stair.
 export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe',
@@ -345,7 +347,8 @@ export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', '
   'kegs', 'dishes', 'hams', 'flour', 'tankards', 'console', 'pipes', 'solar', 'cargo', 'window', 'curtain', 'wallshelf',
   'bridge', 'pier', 'nets', 'runes', 'slime', 'bars', 'sheaf', 'pumpkins', 'chickens',
   'labbench', 'forcefield', 'holosign', 'eggs', 'goo', 'xenocrystal', 'bloodpool', 'bats', 'roses', 'ironfence',
-  'vines', 'bigleaf', 'quicksand', 'sofa', 'tires', 'barricade'];
+  'vines', 'bigleaf', 'quicksand', 'sofa', 'tires', 'barricade',
+  'iceblock', 'snowdrift', 'bamboo', 'zengarden', 'tatami', 'fabric', 'scrolls', 'landingpad', 'viewscreen', 'potionshelf', 'bookcase'];
 export const MAX_STRETCH = 12;
 export function footprint(kind: PropKind, face: Facing): { w: number; h: number } {
   const [w, h] = LONG[kind] ?? [1, 1];

@@ -432,7 +432,11 @@ farm too; noir takes the port. Modern has a home of today (a sofa, a television,
 washing machine, a bicycle, a traffic cone) with the noir street on asphalt; the wasteland has car wrecks, tin shacks,
 scrap barricades, tyres, toxic and burning barrels and radiation signs on cracked earth. Fantasy also has jungle and
 desert (giant leaves, vines, a stone head, quicksand, cacti, a yucca, a bull skull, jungle ground) and a sailing ship (a
-mast, a ship's wheel, cannons, a capstan, hammocks).
+mast, a ship's wheel, cannons, a capstan, hammocks), the East (a pagoda, a torii gate, paper lanterns, tatami, raked sand,
+bamboo, a koi pond) and an alchemist and a tailor (an alembic, a shelf of potions, a mannequin, a loom, bolts of cloth);
+science fiction has a starship and a hangar (a captain's chair, a viewscreen, cryopods, a restraint chair, a shuttle, a
+cargo loader, a landing pad, drones). Any world has the north (an igloo, a sled, blocks of ice, snowdrifts, a runestone,
+an ice hole) and a library and a bank (bookcases, a globe, scrolls, a safe, scales, a vault door).
 
 Your own pictures go on the map too: put them into the «assets» folder of the library (the folder button under «My
 assets» in the palette opens it). Folders become groups, a name like «Kiln_Stone_B1_2x3.png» says the thing, its
