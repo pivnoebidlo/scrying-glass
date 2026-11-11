@@ -1,7 +1,7 @@
 // Draws a layout on a canvas, by the app, so that no assets are needed: dark rock with hatching round the walls and a
 // pale floor; outdoors grass, water, paths, trees and boulders. The picture holds nothing secret: it goes to the players; room numbers are the preview's only.
 import { drawProps } from './draw-props';
-import { buildingAt, isBuilt, isFloor, isOpenAir, isWall, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type Light, type WildStyle } from './layout';
+import { buildingAt, isBuilt, isFence, isFloor, isOpenAir, isWall, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type Light, type WildStyle } from './layout';
 import type { PropKind } from './furnish';
 
 export const CELL = 40;
@@ -1150,6 +1150,183 @@ function edgesOf(c: number, cells: { x: number; y: number }[], inSet: (x: number
   return p;
 }
 
+// Fences drawn as lines along their arms (drawFence).
+const FENCE_LINES = 'fleibn';
+// Which ways a fence runs from its cell: to every wall or door beside it; alone or at an end — straight through.
+type Arm = [number, number];
+function fenceArms(at: (x: number, y: number) => string | undefined, x: number, y: number): Arm[] {
+  const arms = ([[0, -1], [1, 0], [0, 1], [-1, 0]] as Arm[]).filter(([dx, dy]) => isWall(at(x + dx, y + dy)));
+  if (!arms.length) return [[-1, 0], [1, 0]];
+  if (arms.length === 1) return [arms[0]!, [-arms[0]![0], -arms[0]![1]]];
+  return arms;
+}
+
+// A fence of one cell along its arms (from the middle of the cell to its sides). Seen from above: posts, rails, stones.
+// `shade`: only the shadow — every fence's shadow goes down first, so the next cell's shadow does not fall on this one.
+function drawFence(ctx: CanvasRenderingContext2D, kind: string, arms: Arm[], X: number, Y: number, c: number, r: () => number, shade = false) {
+  const mx = X + c / 2;
+  const my = Y + c / 2;
+  const shadow = 'rgba(20, 16, 10, 0.3)';
+  const line = (colour: string, width: number, off = 0, dx = 0, dy = 0) => {
+    if (shade !== (colour === shadow)) return;
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = width;
+    // Square ends meet the next cell's; the bend in the middle is round.
+    if (!off && arms.length > 1 && !(arms.length === 2 && arms[0]![0] === -arms[1]![0] && arms[0]![1] === -arms[1]![1])) {
+      ctx.fillStyle = colour;
+      ctx.beginPath();
+      ctx.arc(mx + dx, my + dy, width / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    for (const [ax, ay] of arms) {
+      // Off: a line beside the middle one (two wires), across the arm.
+      const ox = -ay * off * c;
+      const oy = ax * off * c;
+      ctx.moveTo(mx + ox + dx, my + oy + dy);
+      ctx.lineTo(mx + (ax * c) / 2 + ox + dx, my + (ay * c) / 2 + oy + dy);
+    }
+    ctx.stroke();
+  };
+  // Points along the arms, every `step` of a cell from the middle (the middle itself too).
+  const along = (step: number) => {
+    const out: [number, number, number, number][] = [[mx, my, arms[0]![0], arms[0]![1]]];
+    for (const [ax, ay] of arms) for (let d = step; d < 0.5 - 1e-6 + step / 2; d += step) out.push([mx + ax * d * c, my + ay * d * c, ax, ay]);
+    return out;
+  };
+  const post = (px: number, py: number, size: number, fill: string) => {
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1, c / 28);
+    ctx.fillRect(px - size / 2, py - size / 2, size, size);
+    ctx.strokeRect(px - size / 2, py - size / 2, size, size);
+  };
+  if (shade) {
+    // The widest band of each kind, a little down and to the right.
+    const width = ({ f: 0.16, l: 0.24, e: 0.46, i: 0.1, b: 0.06, n: 0.1 } as Record<string, number>)[kind] ?? 0.1;
+    line(shadow, c * width, 0, c * 0.05, c * 0.07);
+    return;
+  }
+  switch (kind) {
+    case 'f': {
+      // A picket fence: a rail, pale pickets across it, a post in the middle.
+      line('#6e5236', Math.max(1, c / 16));
+      for (const [px, py, ax] of along(1 / 6)) {
+        ctx.fillStyle = '#e8dcc0';
+        ctx.strokeStyle = '#4a3a28';
+        ctx.lineWidth = Math.max(1, c / 34);
+        const [w, h] = ax ? [c * 0.07, c * 0.2] : [c * 0.2, c * 0.07];
+        ctx.fillRect(px - w / 2, py - h / 2, w, h);
+        ctx.strokeRect(px - w / 2, py - h / 2, w, h);
+      }
+      post(mx, my, c * 0.14, '#7a5a3a');
+      break;
+    }
+    case 'l': {
+      // Wattle: rods woven between stakes — a brown band, the weave across it.
+      line('#4a3522', c * 0.24);
+      line('#8a6a40', c * 0.18);
+      ctx.strokeStyle = '#5e4428';
+      ctx.lineWidth = Math.max(1, c / 26);
+      ctx.beginPath();
+      for (const [px, py, ax, ay] of along(1 / 10)) {
+        // A rod over, a rod under: short strokes slanting one way and the other.
+        const k = Math.round((px - X + py - Y) / (c / 10)) % 2 ? 1 : -1;
+        ctx.moveTo(px - ay * c * 0.08 - ax * k * c * 0.03, py + ax * c * 0.08 - ay * k * c * 0.03);
+        ctx.lineTo(px + ay * c * 0.08 + ax * k * c * 0.03, py - ax * c * 0.08 + ay * k * c * 0.03);
+      }
+      ctx.stroke();
+      for (const [px, py] of along(0.5)) {
+        ctx.fillStyle = '#3e2c1a';
+        ctx.beginPath();
+        ctx.arc(px, py, c * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+    }
+    case 'e': {
+      // A dry-stone wall: a low band of rough stones, no mortar.
+      line('#4e4a44', c * 0.44);
+      const greys = ['#8f8a80', '#9d978b', '#7f7a71', '#a7a296'];
+      // Two rows of stones side by side, across the way the wall runs.
+      for (const [px, py, ax, ay] of along(1 / 8))
+        for (const side of [-1, 1]) {
+          const o = side * c * 0.09;
+          ctx.fillStyle = greys[Math.floor(r() * greys.length)]!;
+          ctx.beginPath();
+          ctx.ellipse(px - ay * o + (r() - 0.5) * c * 0.05, py + ax * o + (r() - 0.5) * c * 0.05, c * (0.09 + r() * 0.03), c * (0.08 + r() * 0.03), r() * Math.PI, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      break;
+    }
+    case 'i': {
+      // An iron railing: a thin black rail, spearheads along it, a stone post in the middle.
+      line('#1e1e22', Math.max(1.5, c / 14));
+      // Bars across the rail, each with its spearhead.
+      ctx.strokeStyle = '#1e1e22';
+      ctx.lineWidth = Math.max(1, c / 30);
+      ctx.beginPath();
+      for (const [px, py, ax, ay] of along(1 / 8)) {
+        ctx.moveTo(px - ay * c * 0.07, py + ax * c * 0.07);
+        ctx.lineTo(px + ay * c * 0.07, py - ax * c * 0.07);
+      }
+      ctx.stroke();
+      ctx.fillStyle = '#3a3a42';
+      for (const [px, py] of along(1 / 8)) {
+        ctx.beginPath();
+        ctx.arc(px, py, c * 0.035, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (arms.length !== 2 || arms[0]![0] !== -arms[1]![0]) post(mx, my, c * 0.22, '#8a857a');
+      break;
+    }
+    case 'b': {
+      // Barbed wire: two wires between wooden posts, barbs on them.
+      line('#5d5d5d', Math.max(1, c / 30), 0.06);
+      line('#5d5d5d', Math.max(1, c / 30), -0.06);
+      ctx.strokeStyle = '#3c3c3c';
+      ctx.lineWidth = Math.max(1, c / 36);
+      ctx.beginPath();
+      for (const [px, py, ax, ay] of along(1 / 6))
+        for (const off of [-0.06, 0.06]) {
+          const bx = px - ay * off * c;
+          const by = py + ax * off * c;
+          const k = c * 0.035;
+          ctx.moveTo(bx - k, by - k);
+          ctx.lineTo(bx + k, by + k);
+          ctx.moveTo(bx + k, by - k);
+          ctx.lineTo(bx - k, by + k);
+        }
+      ctx.stroke();
+      post(mx, my, c * 0.13, '#6b5038');
+      break;
+    }
+    case 'n': {
+      // Chain-link: a band of wire mesh between steel posts.
+      line('rgba(170, 176, 180, 0.9)', c * 0.1);
+      ctx.save();
+      ctx.strokeStyle = 'rgba(70, 76, 82, 0.8)';
+      ctx.lineWidth = Math.max(0.75, c / 50);
+      ctx.beginPath();
+      for (const [px, py, ax, ay] of along(1 / 12)) {
+        const k = c * 0.05;
+        ctx.moveTo(px - ay * k - ax * k * 0.5, py + ax * k - ay * k * 0.5);
+        ctx.lineTo(px + ay * k + ax * k * 0.5, py - ax * k + ay * k * 0.5);
+      }
+      ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = '#9aa0a6';
+      ctx.strokeStyle = WALL;
+      ctx.lineWidth = Math.max(1, c / 28);
+      ctx.beginPath();
+      ctx.arc(mx, my, c * 0.07, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      break;
+    }
+  }
+}
+
 const PLANKS = ['#a87a4a', '#9c6f42', '#b08352'];
 const TIMBER = ['#6b5038', '#5e4630', '#735840'];
 // A building put up outdoors, without its roof: a plank floor, timber walls with a shadow outside, doors.
@@ -1161,8 +1338,9 @@ function drawBuilt(ctx: CanvasRenderingContext2D, l: Layout, c: number, outdoors
   // A shadow on the ground: of the whole building outdoors, of the walls indoors.
   ctx.fillStyle = 'rgba(20, 16, 10, 0.35)';
   // Walls you see through (a palisade, a hedge, a barricade) cast their own shadows.
-  const open = (ch: string | undefined) => ch === 'p' || ch === 'y' || ch === 'z';
+  const open = isFence;
   for (const { x, y } of cells) if ((outdoors || isWall(at(x, y))) && !open(at(x, y))) ctx.fillRect(x * c + c * 0.14, y * c + c * 0.18, c, c);
+  for (const { x, y } of cells) if (FENCE_LINES.includes(at(x, y)!)) drawFence(ctx, at(x, y)!, fenceArms(at, x, y), x * c, y * c, c, () => 0.5, true);
   ctx.lineCap = 'butt';
   const seams = (colour: string, width: number, draw: () => void) => {
     ctx.strokeStyle = colour;
@@ -1283,13 +1461,11 @@ function drawBuilt(ctx: CanvasRenderingContext2D, l: Layout, c: number, outdoors
         break;
       }
       case 'p': {
-        // A palisade: sharpened logs side by side, along the way it runs.
-        const upright = isWall(at(x, y - 1)) || isWall(at(x, y + 1));
-        const sideways = isWall(at(x - 1, y)) || isWall(at(x + 1, y));
-        const across = sideways || !upright;
-        for (let k = 0; k < 3; k++) {
-          const px = across ? X + (k + 0.5) * (c / 3) : X + c / 2;
-          const py = across ? Y + c / 2 : Y + (k + 0.5) * (c / 3);
+        // A palisade: sharpened logs side by side along the way it runs — round corners and through crossings too.
+        const logs = [[0.5, 0.5], ...fenceArms(at, x, y).map(([dx, dy]) => [0.5 + dx / 3, 0.5 + dy / 3])];
+        logs.forEach(([fx, fy], k) => {
+          const px = X + fx! * c;
+          const py = Y + fy! * c;
           ctx.fillStyle = 'rgba(20, 16, 10, 0.35)';
           ctx.beginPath();
           ctx.arc(px + c * 0.06, py + c * 0.08, c * 0.17, 0, Math.PI * 2);
@@ -1305,9 +1481,17 @@ function drawBuilt(ctx: CanvasRenderingContext2D, l: Layout, c: number, outdoors
           ctx.beginPath();
           ctx.arc(px, py, c * 0.05, 0, Math.PI * 2);
           ctx.fill();
-        }
+        });
         break;
       }
+      case 'f':
+      case 'l':
+      case 'e':
+      case 'i':
+      case 'b':
+      case 'n':
+        drawFence(ctx, at(x, y)!, fenceArms(at, x, y), X, Y, c, cellNoise(l, x, y, 17));
+        break;
       case 'y': {
         // A hedge: clipped bushes in a row.
         ctx.fillStyle = 'rgba(15, 25, 12, 0.3)';

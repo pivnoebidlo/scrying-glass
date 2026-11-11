@@ -2,7 +2,7 @@
      of the map generator, so a generated map is edited the same way («Edit» in the generator). -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ChevronDown, ChevronRight, Eye, FolderOpen, RefreshCw, Map as MapIcon, MousePointer2, Pencil, Plus, Redo2, RotateCw, Search, Trash2, Undo2, X, ZoomIn, ZoomOut } from '@lucide/svelte';
+  import { ChevronDown, ChevronRight, Eraser, Eye, FolderOpen, RefreshCw, Map as MapIcon, MousePointer2, Pencil, Plus, Redo2, RotateCw, Search, Trash2, Undo2, X, ZoomIn, ZoomOut } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import type { PropKind } from '../mapgen/furnish';
@@ -18,7 +18,7 @@
   import { assets, assetSrc } from './assets.svelte';
   import { groupTitle, type AssetThing, type MapAsset } from '../../../shared/mapassets';
   import { thumb } from '../../../shared/vault';
-  import { modKey } from '../../../shared/hotkeys';
+  import { hint as keyHint, hotkeyLabel, matches, modKey } from '../../../shared/hotkeys';
 
   // «⌘» or «Ctrl»: the strings add «+wheel» themselves.
   const mod = { mod: modKey().replace(/\+$/, '') };
@@ -56,6 +56,7 @@
     house: '#a9583c', sand: '#d9c893', water: '#3f7d97', ford: '#7fb0bd', tree: '#3f6a35', boulder: '#8c8c86', townWall: '#857e72', tower: '#7a7368',
     lava: '#e2561b', ice: '#cfe6ee', mud: '#6b5638', pit: '#0b0907', planks: '#a87a4a', timber: '#5e4630', build: '#8a6a48', roof: '#9b4a35', erase: '#555',
     palisade: '#6b5038', rampart: '#8a8476', blockade: '#7a5432', hedge: '#3f6a35', ditch: '#5c4a36',
+    picket: '#e8dcc0', wattle: '#8a6a40', drystone: '#8f8a80', railing: '#1e1e22', barbed: '#5d5d5d', chainlink: '#aab0b4',
     flagstone: '#a8a196', tiles: '#c9764f', carpet: '#8a2f2b', earth: '#7d6448', marble: '#e6e2da', stonewall: '#7d776d', brick: '#9a4a34',
     cobbles: '#9a9282', flags: '#b7ad98', field: '#8a6c44', sea: '#2a5c78', mountain: '#8a8174', pine: '#2c4a33', palm: '#5f8f3c', snag: '#5b4a3a',
   };
@@ -210,15 +211,18 @@
   let query = $state('');
   // The brushes, by what they make: the ground, and what is built on it.
   const FLOOR_IDS: BrushId[] = ['floor', 'planks', 'flagstone', 'tiles', 'carpet', 'earth', 'marble'];
-  const WALL_IDS: BrushId[] = ['wall', 'timber', 'stonewall', 'brick', 'rampart', 'palisade', 'blockade', 'hedge', 'door', 'pillar', 'build'];
+  const WALL_IDS: BrushId[] = ['wall', 'timber', 'stonewall', 'brick', 'door', 'pillar', 'build'];
+  const FENCE_IDS: BrushId[] = ['rampart', 'palisade', 'picket', 'wattle', 'drystone', 'railing', 'barbed', 'chainlink', 'hedge', 'blockade', 'ditch'];
   const BUILDING: BrushId[] = ['room', 'house', 'roof', 'townWall', 'tower'];
   const GROWTH: BrushId[] = ['tree', 'pine', 'palm', 'snag', 'boulder', 'mountain'];
   const brushGroups = $derived(
     [
-      { id: 'surfaces', list: brushes.filter((b) => ![...BUILDING, ...GROWTH, ...FLOOR_IDS, ...WALL_IDS].includes(b.id)) },
+      { id: 'surfaces', list: brushes.filter((b) => ![...BUILDING, ...GROWTH, ...FLOOR_IDS, ...WALL_IDS, ...FENCE_IDS, 'erase'].includes(b.id)) },
       { id: 'growth', list: brushes.filter((b) => GROWTH.includes(b.id)) },
       { id: 'floors', list: brushes.filter((b) => FLOOR_IDS.includes(b.id)) },
       { id: 'walls', list: brushes.filter((b) => WALL_IDS.includes(b.id)) },
+      // In the order of FENCE_IDS, not of the brushes.
+      { id: 'fences', list: FENCE_IDS.flatMap((id) => brushes.filter((b) => b.id === id)) },
       { id: 'building', list: brushes.filter((b) => BUILDING.includes(b.id)) },
     ].filter((g) => g.list.length),
   );
@@ -336,6 +340,7 @@
     editor.change(next);
   }
   const pickBrush = (id: BrushId) => ((editor.mode = 'brush'), (editor.brush = id), (editor.selected = -1));
+  const erasing = $derived(editor.mode === 'brush' && editor.brush === 'erase');
   // Another thing — a random colour again (a red rug does not make every chest red).
   const pickProp = (k: PropKind) => {
     if (editor.prop !== k) editor.tint = null;
@@ -381,6 +386,8 @@
   const hint = $derived(
     editor.viewing
       ? t('mapedit.hint.view', mod)
+      : erasing
+      ? t('mapedit.hint.erase')
       : editor.mode === 'brush'
       ? t(`mapedit.hint.${(brushes.find((b) => b.id === editor.brush)?.rect ? 'rect' : brushes.find((b) => b.id === editor.brush)?.toggle ? 'toggle' : 'paint')}` as never, mod)
       : editor.mode === 'place'
@@ -403,24 +410,28 @@
     } else if (mod && e.code === 'KeyY') {
       e.preventDefault();
       editor.redo();
-    } else if (!mod && (e.code === 'Digit0' || e.code === 'Numpad0')) editor.fit();
-    else if (!mod && (e.code === 'Digit1' || e.code === 'Numpad1')) editor.zoomTo(CELL_BASE);
-    else if (!mod && (e.code === 'Equal' || e.code === 'NumpadAdd')) editor.zoomBy(1.25);
-    else if (!mod && (e.code === 'Minus' || e.code === 'NumpadSubtract')) editor.zoomBy(1 / 1.25);
-    else if (!mod && e.code === 'KeyH') setViewing(true);
-    else if (!mod && e.code === 'KeyV') {
+    } else if (matches(e, 'mapeditFit') || (!mod && e.code === 'Numpad0')) editor.fit();
+    else if (matches(e, 'mapeditActual') || (!mod && e.code === 'Numpad1')) editor.zoomTo(CELL_BASE);
+    else if (matches(e, 'mapeditZoomIn') || (!mod && e.code === 'NumpadAdd')) editor.zoomBy(1.25);
+    else if (matches(e, 'mapeditZoomOut') || (!mod && e.code === 'NumpadSubtract')) editor.zoomBy(1 / 1.25);
+    else if (matches(e, 'mapeditView')) setViewing(true);
+    else if (matches(e, 'mapeditSelect')) {
       setViewing(false);
       editor.mode = 'select';
       editor.prop = null;
-    } else if (!mod && e.code === 'KeyB') {
+    } else if (matches(e, 'mapeditBrush')) {
       setViewing(false);
       editor.mode = 'brush';
+      if (editor.brush === 'erase') editor.brush = brushes[0]!.id;
       editor.selected = -1;
+    } else if (matches(e, 'mapeditErase')) {
+      setViewing(false);
+      pickBrush('erase');
     } else if (editor.viewing) return;
     else if (mod && e.code === 'KeyA' && editor.mode === 'select') {
       e.preventDefault();
       editor.picked = (editor.layout.props ?? []).map((_, i) => i);
-    } else if (!mod && e.code === 'KeyR') rotate();
+    } else if (matches(e, 'mapeditRotate')) rotate();
     else if ((e.key === 'Delete' || e.key === 'Backspace') && editor.picked.length) {
       e.preventDefault();
       removeSelected();
@@ -475,8 +486,8 @@
     {#if failed}<p class="warning small">{t('mapgen.noFolder')}</p>{/if}
     <div class="toolbar" role="toolbar" aria-label={t('mapedit.brushes')}>
       <div class="seg">
-        <button class:on={editor.viewing} title="{t('mapedit.view')} · H" onclick={() => setViewing(true)}><Eye size={14} /> {t('mapedit.view')}</button>
-        <button class:on={!editor.viewing} title="{t('mapedit.edit')} · V / B" onclick={() => setViewing(false)}><Pencil size={14} /> {t('mapedit.edit')}</button>
+        <button class:on={editor.viewing} title={keyHint(t('mapedit.view'), 'mapeditView')} onclick={() => setViewing(true)}><Eye size={14} /> {t('mapedit.view')}</button>
+        <button class:on={!editor.viewing} title="{t('mapedit.edit')} · {hotkeyLabel('mapeditSelect')} / {hotkeyLabel('mapeditBrush')}" onclick={() => setViewing(false)}><Pencil size={14} /> {t('mapedit.edit')}</button>
       </div>
       <span class="sep"></span>
       {#if !editor.viewing}
@@ -526,8 +537,9 @@
       <section class="palette" aria-label={t('mapedit.things')}>
         <div class="head">
         <div class="row">
-          <button class="tool grow" title="{t('mapedit.select')} · V" class:on={editor.mode === 'select'} onclick={() => ((editor.mode = 'select'), (editor.prop = null))}><MousePointer2 size={14} /> {t('mapedit.select')}</button>
-          <button class="icon-btn" title={t('mapedit.rotate')} onclick={rotate}><RotateCw size={15} /></button>
+          <button class="tool grow" title={keyHint(t('mapedit.select'), 'mapeditSelect')} class:on={editor.mode === 'select'} onclick={() => ((editor.mode = 'select'), (editor.prop = null))}><MousePointer2 size={14} /> {t('mapedit.select')}</button>
+          <button class="tool" title={keyHint(t('mapedit.eraserHint'), 'mapeditErase')} class:on={erasing} onclick={() => pickBrush('erase')}><Eraser size={14} /></button>
+          <button class="icon-btn" title={keyHint(t('mapedit.rotate'), 'mapeditRotate')} onclick={rotate}><RotateCw size={15} /></button>
           <button class="icon-btn" title={t('mapedit.removePicked')} disabled={!editor.picked.length} onclick={removeSelected}><Trash2 size={15} /></button>
         </div>
         {#if editor.picked.length > 1}<p class="faint small">{t('mapedit.picked', { count: editor.picked.length })}</p>{/if}
@@ -922,6 +934,10 @@
     border-radius: var(--radius-s);
     color: var(--text-muted);
   }
+  /* Our own ✕ beside the field clears it: not the field's built-in one as well. */
+  .search input::-webkit-search-cancel-button {
+    display: none;
+  }
   .search input {
     flex: 1;
     min-width: 0;
@@ -1017,11 +1033,18 @@
     overflow: hidden;
     cursor: pointer;
   }
-  .thing span {
+  /* A long name takes two lines; the rest is in the hint (title). */
+  .thing span:not(.many) {
+    display: -webkit-box;
     max-width: 100%;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
   .thing:hover {
     background: var(--bg-hover);

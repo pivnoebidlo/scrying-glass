@@ -16,7 +16,7 @@ export interface MapDraft {
 
 export const MIN_SIDE = 6;
 export const MAX_SIDE = 120;
-const CELLS = /^[.#,PST~RH=WLIMXFBCKVOANJQstcdmkrwpgzyh]*$/;
+const CELLS = /^[.#,PST~RH=WLIMXFBCKVOANJQstcdmkrwpgzyhfleibn]*$/;
 const side = (n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= MIN_SIDE && n <= MAX_SIDE;
 const int = (n: unknown) => typeof n === 'number' && Number.isInteger(n);
 
@@ -103,7 +103,8 @@ export type BrushId =
   | 'lava' | 'ice' | 'mud' | 'pit' | 'planks' | 'timber' | 'build' | 'roof' | 'erase'
   | 'cobbles' | 'flags' | 'field' | 'sea' | 'mountain' | 'pine' | 'palm' | 'snag'
   | 'flagstone' | 'tiles' | 'carpet' | 'earth' | 'marble' | 'stonewall' | 'brick'
-  | 'palisade' | 'rampart' | 'blockade' | 'hedge' | 'ditch';
+  | 'palisade' | 'rampart' | 'blockade' | 'hedge' | 'ditch'
+  | 'picket' | 'wattle' | 'drystone' | 'railing' | 'barbed' | 'chainlink';
 export interface Brush {
   id: BrushId;
   // A cell's letter it paints; none — a tool of its own (a rectangle, a toggle).
@@ -126,6 +127,8 @@ export function brushesFor(style: LayoutStyle): Brush[] {
     B('timber', { cell: 'B' }), B('stonewall', { cell: 'k' }), B('brick', { cell: 'r' }),
     // Fortifications: a castle wall three wide (or two with a gap) gets its walk on top by itself.
     B('palisade', { cell: 'p' }), B('rampart', { cell: 'g' }), B('blockade', { cell: 'z' }), B('hedge', { cell: 'y' }), B('ditch', { cell: 'h' }),
+    // Fences, drawn along the way they run (corners and crossings too).
+    B('picket', { cell: 'f' }), B('wattle', { cell: 'l' }), B('drystone', { cell: 'e' }), B('railing', { cell: 'i' }), B('barbed', { cell: 'b' }), B('chainlink', { cell: 'n' }),
   ];
   const built = [B('build', { rect: true }), ...materials, B('door', { toggle: true }), B('roof', { toggle: true })];
   if (style === 'building')
@@ -239,6 +242,23 @@ export function paint(l: Layout, cells: { x: number; y: number }[], ch: string):
   }
   if (changed && (ch === 'g' || l.cells.some((r) => r.includes('g')))) walkways(rows);
   return changed ? tidy({ ...l, cells: rows.map((r) => r.join('')) }) : l;
+}
+
+// The eraser: everything on the cells goes — things standing on them (a rug under a table too), doors, pillars,
+// wells, towers — and the ground becomes the map's own (`ground`: rock indoors, grass outdoors).
+export function wipe(l: Layout, cells: { x: number; y: number }[], ground: string): Layout {
+  const hit = new Set(cells.filter((p) => inMap(l, p.x, p.y)).map((p) => `${p.x},${p.y}`));
+  if (!hit.size) return l;
+  const on = (p: { x: number; y: number }) => hit.has(`${p.x},${p.y}`);
+  const touches = (p: Prop) => cells.some((q) => covers(p, q.x, q.y));
+  const props = (l.props ?? []).filter((p) => !touches(p));
+  const doors = l.doors.filter((d) => !on(d));
+  const pillars = l.pillars.filter((p) => !on(p));
+  const towers = l.wall?.towers.filter((t) => !on(t));
+  const gone = props.length !== (l.props ?? []).length || doors.length !== l.doors.length || pillars.length !== l.pillars.length || towers?.length !== l.wall?.towers.length;
+  const cleared: Layout = gone ? { ...l, props, doors, pillars, ...(l.wall ? { wall: { ...l.wall, towers: towers! } } : {}) } : l;
+  const painted = paint(cleared, cells, ground);
+  return painted === cleared && gone ? tidy(cleared) : painted;
 }
 
 // The cells of a brush of some thickness round a cell (1 — the cell itself).

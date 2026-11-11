@@ -186,8 +186,12 @@ function corridor(a: LayoutRoom, b: LayoutRoom, others: LayoutRoom[], r: Random)
 // 'm' marble; 'B' a wooden wall, 'k' a stone wall, 'r' a brick wall.
 // Fortifications (0.108): 'w' the walk along a castle wall (a floor); 'p' a palisade, 'g' a castle wall with merlons, 'z' a
 // barricade, 'y' a hedge (walls). A ditch 'h' is a surface: no walls, no walking.
+// Fences (0.109): 'f' a picket fence, 'l' wattle, 'e' a dry-stone wall, 'i' an iron railing, 'b' barbed wire, 'n' chain-link.
 export const FLOORS = 'Fstcdmw';
-export const WALLS = 'Bkrpgzy';
+export const WALLS = 'Bkrpgzyfleibn';
+// Walls you see through — fences: no solid fill, no outline, a shadow of their own; drawn along the way they run.
+export const FENCES = 'pzyfleibn';
+export const isFence = (c: string | undefined) => !!c && FENCES.includes(c);
 export const isFloor = (c: string | undefined) => !!c && FLOORS.includes(c);
 export const isWall = (c: string | undefined) => !!c && WALLS.includes(c);
 export const walkable = (c: string | undefined) =>

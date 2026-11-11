@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   misfit,
-  addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setGenre, setLight, setTone, swapKind, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower,
+  addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setGenre, setLight, setTone, swapKind, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower, wipe,
 } from '../src/modules/tools/mapeditor/edit';
 import { generateLayout, LAYOUT_STYLES, seededRandom } from '../src/modules/tools/mapgen/layout';
 
@@ -279,5 +279,26 @@ describe('the map editor', () => {
     // Things for walls and the GM's pictures go anywhere.
     expect(misfit(rock, { kind: 'window', x: 1, y: 1, w: 1, h: 1 })).toBeNull();
     expect(misfit(rock, { kind: 'asset', x: 1, y: 1, w: 2, h: 2 })).toBeNull();
+  });
+
+  it('the eraser takes everything under it: things, doors, fences, the ground', () => {
+    let l = paint(blankLayout('meadow', 10, 10, 1), [1, 2, 3, 4, 5].map((x) => ({ x, y: 4 })), 'f');
+    l = toggleDoor(l, 3, 4);
+    l = placeProp(l, 'rug', 6, 6).layout;
+    l = placeProp(l, 'chest', 6, 6).layout;
+    expect(l.props).toHaveLength(2);
+    const e = wipe(l, [{ x: 3, y: 4 }, { x: 4, y: 4 }, { x: 6, y: 6 }], '.');
+    expect(e.cells[4]).toBe('.ff..f....');
+    expect(e.doors).toEqual([]);
+    expect(e.props).toEqual([]);
+    // Nothing there: the same layout.
+    expect(wipe(e, [{ x: 8, y: 8 }], '.')).toBe(e);
+    // Indoors the ground is rock.
+    expect(wipe(room(), [{ x: 3, y: 3 }], '#').cells[3]![3]).toBe('#');
+  });
+  it('the new fences are walls a draft keeps', () => {
+    const l = blankLayout('meadow', 8, 8, 1);
+    expect(parseDraft(draftOf({ ...l, cells: ['fleibn..', ...l.cells.slice(1)] }))).not.toBeNull();
+    for (const id of ['picket', 'wattle', 'drystone', 'railing', 'barbed', 'chainlink'] as const) expect(brushesFor('forest').some((b) => b.id === id)).toBe(true);
   });
 });

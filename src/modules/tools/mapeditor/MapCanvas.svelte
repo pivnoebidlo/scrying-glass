@@ -6,7 +6,7 @@
   import { drawLayout } from '../mapgen/draw';
   import type { Layout } from '../mapgen/layout';
   import {
-    addBuilding, addHouse, addRoom, misfit, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, MAX_STRETCH, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower,
+    addBuilding, addHouse, addRoom, misfit, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, MAX_STRETCH, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower, wipe,
   } from './edit';
   import { editor } from './store.svelte';
   import { assets } from './assets.svelte';
@@ -134,7 +134,8 @@
     return { x: Math.floor(((e.clientX - r.left) / r.width) * layout.w), y: Math.floor(((e.clientY - r.top) / r.height) * layout.h) };
   };
 
-  let stroke: { last: { x: number; y: number }; started: boolean; ch: string } | null = null;
+  // `wipe`: the eraser — things, doors and the rest go with the ground.
+  let stroke: { last: { x: number; y: number }; started: boolean; ch: string; wipe?: boolean } | null = null;
   // Moving the picked things: the cell the pointer was last at.
   let drag: { last: { x: number; y: number }; started: boolean } | null = null;
   // A rectangle that picks the things in it.
@@ -191,7 +192,7 @@
   function paintTo(to: { x: number; y: number }) {
     if (!stroke || !editor.layout) return;
     const cells = lineCells(stroke.last, to).flatMap((p) => brushCells(p.x, p.y, editor.size));
-    const next = paint(editor.layout, cells, stroke.ch);
+    const next = stroke.wipe ? wipe(editor.layout, cells, stroke.ch) : paint(editor.layout, cells, stroke.ch);
     if (next !== editor.layout) {
       editor.change(next, stroke.started);
       stroke.started = true;
@@ -215,17 +216,18 @@
     over!.setPointerCapture(e.pointerId);
     const p = cellAt(e);
     const l = editor.layout;
-    // The right button takes away: a thing in its modes, the ground under the brush.
+    // The right button takes away: with things in hand the topmost thing first; with a brush, or where there is no
+    // thing, everything under it (the eraser).
     if (e.button === 2) {
       if (editor.mode !== 'brush') {
         const i = propAt(l, p.x, p.y);
         if (i >= 0) {
           editor.change(removeProp(l, i));
           editor.picked = [];
+          return;
         }
-        return;
       }
-      stroke = { last: p, started: false, ch: erase };
+      stroke = { last: p, started: false, ch: erase, wipe: true };
       paintTo(p);
       return;
     }
@@ -282,7 +284,7 @@
       editor.change(fn(l, p.x, p.y));
       return;
     }
-    stroke = { last: e.shiftKey && lastPainted ? lastPainted : p, started: false, ch: brush.cell! };
+    stroke = { last: e.shiftKey && lastPainted ? lastPainted : p, started: false, ch: brush.cell!, wipe: brush.id === 'erase' };
     paintTo(p);
   }
 

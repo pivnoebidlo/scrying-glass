@@ -405,8 +405,9 @@ chest on a rug), but not on solid rock, water or a doorway: there its frame turn
 why (a blank «building» map is all rock until a floor is painted); R turns it, dragging moves it, Delete or the right button takes it away. Several are picked with a
 rectangle or Shift+click and move, turn and go together. A rug, a table, a puddle and others stretch by any side or corner; things stand on trees and boulders too (a nest on a
 fir); a
-rug, a bed, a tent and others take the colour you choose. Thickness 1–3, Shift+click draws a straight line, the right
-button erases, ⌘+Z undoes. The wheel or two fingers scroll the map, a pinch or ⌘+wheel zooms around the cursor, and the
+rug, a bed, a tent and others take the colour you choose. Thickness 1–3, Shift+click draws a straight line, ⌘+Z undoes.
+The eraser (E) takes everything under it — things, doors, walls and the ground; the right button takes away the thing
+under the cursor, and where there is none it erases too. Every key of the editor is in Settings → Hotkeys. The wheel or two fingers scroll the map, a pinch or ⌘+wheel zooms around the cursor, and the
 map can go past its edges; 0 shows the whole map, 1 — 100 %, + and − zoom. «View» (H) drags the map about with the
 mouse; while editing, Space or the middle button does it; V picks things, B goes back to the brushes. The draft is saved by itself as
 «Name.map.json» in the adventure's maps folder; «To Maps» adds the picture with the fog, a grid and a pin on every
@@ -417,8 +418,9 @@ gold border, an earth floor, marble; wooden, stone and brick walls. A door goes 
 closes again), and windows, curtains, banners, paintings, hunting trophies and wall shelves hang on the walls — enough
 for a large tavern with its hall, kitchen and rooms.
 
-Fortifications too: a palisade of sharpened logs, a castle wall with merlons, a barricade, a hedge and a dry ditch (a moat
-is water). A castle wall three cells thick, or two walls with a gap of one, gets a walk on top by itself; a gate goes
+Fences and fortifications: a palisade of sharpened logs, a picket fence, wattle, a dry-stone wall, an iron railing,
+barbed wire, chain-link, a castle wall with merlons, a barricade, a hedge and a dry ditch (a moat is water); fences turn
+corners and meet at crossings. A castle wall three cells thick, or two walls with a gap of one, gets a walk on top by itself; a gate goes
 into any of them with «Door». Round and square stone towers and a wooden watchtower stand right on the wall; a ballista,
 a catapult and stakes against horses are for the siege (in fantasy, gothic horror and the wasteland), with an army's camp beside it (a commander's tent, a
 supply wagon, an armour stand, a drawbridge over the moat, a portcullis in the gate). Fantasy and gothic horror also have

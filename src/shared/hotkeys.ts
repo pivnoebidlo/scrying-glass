@@ -8,8 +8,8 @@
 // layout (Russian, say) does not matter. Mouse «keys» (Click, Wheel, MiddleDrag) are only described.
 import { t } from './i18n';
 
-export type HotkeyGroup = 'app' | 'screen' | 'music' | 'search' | 'edit' | 'maps' | 'notes' | 'view' | 'markdown' | 'telegram' | 'tools' | 'dice';
-export const HOTKEY_GROUPS: HotkeyGroup[] = ['app', 'screen', 'music', 'search', 'view', 'edit', 'markdown', 'telegram', 'maps', 'notes', 'tools', 'dice'];
+export type HotkeyGroup = 'app' | 'screen' | 'music' | 'search' | 'edit' | 'maps' | 'mapedit' | 'notes' | 'view' | 'markdown' | 'telegram' | 'tools' | 'dice';
+export const HOTKEY_GROUPS: HotkeyGroup[] = ['app', 'screen', 'music', 'search', 'view', 'edit', 'markdown', 'telegram', 'maps', 'mapedit', 'notes', 'tools', 'dice'];
 
 export interface HotkeyDef {
   id: string;
@@ -59,6 +59,27 @@ export const HOTKEYS: HotkeyDef[] = [
   { id: 'mapZoom', group: 'maps', combo: 'Wheel' },
   { id: 'mapUndo', group: 'maps', combo: 'Mod+Z' },
   { id: 'mapDelete', group: 'maps', combo: 'Delete' },
+  // The map editor (Tools → Map editor; MapEditor.svelte checks them through matches()).
+  { id: 'mapeditView', group: 'mapedit', combo: 'H' },
+  { id: 'mapeditSelect', group: 'mapedit', combo: 'V' },
+  { id: 'mapeditBrush', group: 'mapedit', combo: 'B' },
+  { id: 'mapeditErase', group: 'mapedit', combo: 'E' },
+  { id: 'mapeditRotate', group: 'mapedit', combo: 'R' },
+  { id: 'mapeditDelete', group: 'mapedit', combo: 'Delete' },
+  { id: 'mapeditTakeAway', group: 'mapedit', combo: 'RightClick' },
+  { id: 'mapeditLine', group: 'mapedit', combo: 'Shift+Click' },
+  { id: 'mapeditAddPick', group: 'mapedit', combo: 'Shift+Click' },
+  { id: 'mapeditAll', group: 'mapedit', combo: 'Mod+A' },
+  { id: 'mapeditUndo', group: 'mapedit', combo: 'Mod+Z' },
+  { id: 'mapeditRedo', group: 'mapedit', combo: 'Mod+Shift+Z' },
+  { id: 'mapeditPan', group: 'mapedit', combo: 'Space' },
+  { id: 'mapeditPanMouse', group: 'mapedit', combo: 'MiddleDrag' },
+  { id: 'mapeditZoom', group: 'mapedit', combo: 'Mod+Wheel' },
+  { id: 'mapeditFit', group: 'mapedit', combo: '0' },
+  { id: 'mapeditActual', group: 'mapedit', combo: '1' },
+  { id: 'mapeditZoomIn', group: 'mapedit', combo: '=' },
+  { id: 'mapeditZoomOut', group: 'mapedit', combo: '-' },
+  { id: 'mapeditStop', group: 'mapedit', combo: 'Escape' },
   { id: 'noteUndo', group: 'notes', combo: 'Mod+Z' },
   { id: 'noteDelete', group: 'notes', combo: 'Delete' },
   { id: 'noteStop', group: 'notes', combo: 'Escape' },
@@ -156,7 +177,8 @@ const MAC_MOD: Record<string, string> = { Mod: '⌘', Alt: '⌥', Shift: '⇧' }
 const KEY_LABEL: Record<string, string> = {
   ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Escape: 'Esc', Delete: 'Delete', Backspace: '⌫', Enter: 'Enter', Tab: 'Tab',
 };
-const keyLabel = (k: string) => KEY_LABEL[k] ?? (['Space', 'Click', 'Wheel', 'MiddleDrag'].includes(k) ? t(`hk.key.${k}` as never) : k);
+const MOUSE = ['Click', 'RightClick', 'Wheel', 'MiddleDrag'];
+const keyLabel = (k: string) => KEY_LABEL[k] ?? (['Space', ...MOUSE].includes(k) ? t(`hk.key.${k}` as never) : k);
 
 // «⌘⇧A» in macOS, «Ctrl+Shift+A» elsewhere; several keys (a space between) — «← →».
 export function comboLabel(combo: string, mac = isMac()): string {
@@ -165,7 +187,7 @@ export function comboLabel(combo: string, mac = isMac()): string {
     .map((one) => {
       const parts = one.split('+');
       const key = keyLabel(parts.pop()!);
-      const mouse = ['Click', 'Wheel', 'MiddleDrag'].includes(one.split('+').at(-1)!);
+      const mouse = MOUSE.includes(one.split('+').at(-1)!);
       if (mac && !mouse) return parts.map((m) => MAC_MOD[m] ?? m).join('') + key;
       return [...parts.map((m) => (m === 'Mod' ? (mac ? '⌘' : 'Ctrl') : m === 'Alt' && mac ? '⌥' : m)), key].join(mac ? ' + ' : '+');
     })
