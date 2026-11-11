@@ -90,6 +90,17 @@ export interface MapToken {
   combatant?: string;
 }
 
+// What lies over part of the map (0.110): a roof; later a storey over a storey. Its picture is a PNG of the map's size,
+// clear where it does not cover, a file «Name.cover.png» beside the map (COVER_SUFFIX: not a map of its own) (one picture may serve several covers: the roofs of a town); `area` — the part it covers
+// ([x, y, w, h, …] in shares of the map, as a 'rects' fog op). Lifted — the players see what is under it.
+export interface MapCover {
+  id: string;
+  image: string;
+  area: number[];
+  title?: string;
+  lifted: boolean;
+}
+
 export interface MapData {
   fog: Fog;
   view: MapView;
@@ -98,6 +109,8 @@ export interface MapData {
   tokens: MapToken[];
   // Масштаб жетонов на этой карте: 1 — жетон 1×1 размером с клетку сетки.
   tokenScale?: number;
+  // Roofs and the like over parts of the map, drawn in order.
+  covers?: MapCover[];
 }
 
 export interface MapsState {

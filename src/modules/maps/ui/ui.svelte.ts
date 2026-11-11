@@ -2,9 +2,9 @@
 import type { PinIcon } from '../icons';
 import type { PinColor } from '../types';
 
-export type Tool = 'pan' | 'reveal' | 'hide' | 'revealRect' | 'hideRect' | 'view' | 'pin' | 'grid' | 'token';
+export type Tool = 'pan' | 'reveal' | 'hide' | 'revealRect' | 'hideRect' | 'view' | 'pin' | 'grid' | 'token' | 'cover';
 // The editor's sections: the top row of the toolbar picks one, the row under it holds its options.
-export type Tab = 'fog' | 'view' | 'grid' | 'tokens' | 'pins';
+export type Tab = 'fog' | 'view' | 'grid' | 'tokens' | 'pins' | 'covers';
 
 export const ui = $state({
   selected: null as string | null,

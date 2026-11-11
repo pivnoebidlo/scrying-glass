@@ -2,7 +2,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { vaultUrl } from '../../../shared/vault';
-  import { buildFog, drawMap, drawPins, fitCanvas, fitView, fogCanvas, loadImage, type LoadedImage } from '../render';
+  import { buildFog, coverPicture, drawMap, drawPins, fitCanvas, fitView, fogCanvas, loadImage, type LoadedImage } from '../render';
   import { drawTokens, tokenCell, type TokenView } from '../tokens';
   import type { MapData, MapView } from '../types';
 
@@ -32,6 +32,11 @@
       fogAlpha: 1,
       fogBlur: Math.max(canvas.width, canvas.height) * 0.006,
       grid: data.grid,
+      // Roofs not lifted: the players do not see inside.
+      covers: (data.covers ?? []).flatMap((cv) => {
+        const pic = cv.lifted ? null : coverPicture(vaultUrl(cv.image), draw);
+        return pic ? [{ img: pic, area: cv.area, alpha: 1 }] : [];
+      }),
       // Жетоны под туманом: в неоткрытой части их не видно.
       underFog: (c) => img && drawTokens(c, tokens, img, xf, { cell: tokenCell(data, img.w), onload: draw }),
     });
@@ -55,6 +60,7 @@
   // Сетка и метки перерисовываются сразу.
   $effect(() => {
     void data.grid;
+    void data.covers;
     void data.pins;
     void tokens;
     void data.tokenScale;

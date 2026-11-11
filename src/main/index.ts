@@ -42,7 +42,7 @@ import {
   accountCharacters, accountExport, clipboardExport, cardsOf, onCardsChanged, reloadBuiltin, systemsChanged as cardsSystemsChanged, readExport, updateFromExport, importerTableSize, importerTableOf, clearImporterTable, importerDialog, fetchImporterTable, importerAccount, copyDraft, setSrdPortraits, deleteCard, discardImages, reloadCards, revertSrd, ownImages, exportCards, getCard, importCards, migrateHiddenCards, moveCard, importCardImage, initCards, libraryPath, listCards, renameVaultImage, resolveInLibrary, saveCard, setCardsVault, setLibrary,
 } from './cards';
 import { accountStatus, signIn, signOut } from './accounts';
-import { IMAGE_EXT } from '../shared/vault';
+import { COVER_SUFFIX, IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { resolvePdfjs } from './pdfjs';
 import { importNameLists, listNameLists, namesDir } from './names';
@@ -593,10 +593,13 @@ ipcMain.handle('mapdrafts:create', (_event, { folder, title, draft }: { folder: 
 ipcMain.handle('mapdrafts:rename', (_event, { path: rel, title }: { path: string; title: string }) => renameDraft(resolveInVault, rel, title));
 ipcMain.handle('mapdrafts:delete', (_event, rel: string) => (vaultRoot && isMapDraft(rel) ? discard(vaultRoot, [rel], { title: rel.slice(rel.lastIndexOf('/') + 1), kind: 'file' }) : false));
 // A generated map: the window draws it, the core only writes the file.
-ipcMain.handle('maps:addImage', async (_event, { folder, title, data }: { folder: string; title: string; data: Uint8Array }) => {
+ipcMain.handle('maps:addImage', async (_event, { folder, title, data, cover }: { folder: string; title: string; data: Uint8Array; cover?: boolean }) => {
   const dir = resolveInVault(folder);
   if (!dir || !isDir(dir)) return null;
-  const name = freeName(dir, `${title.replace(/[/\\:*?"<>|]/g, ' ').trim().slice(0, 120) || 'map'}.png`);
+  const base = title.replace(/[/\\:*?"<>|]/g, ' ').trim().slice(0, 120) || 'map';
+  // The roofs of a map: «Name.cover.png» beside it (COVER_SUFFIX), a number before the suffix if taken.
+  let name = cover ? base + COVER_SUFFIX : freeName(dir, `${base}.png`);
+  for (let i = 2; cover && fs.existsSync(path.join(dir, name)); i++) name = `${base} (${i})${COVER_SUFFIX}`;
   fs.writeFileSync(path.join(dir, name), data, { flag: 'wx' });
   await afterNoteWrite();
   return folder ? `${folder}/${name}` : name;

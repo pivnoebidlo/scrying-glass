@@ -84,6 +84,8 @@ export interface LayoutMark extends Cell {
 export interface Overlay {
   labels?: (i: number) => string;
   marks?: LayoutMark[];
+  // false — without the roofs of buildings (they go to the Maps as covers of their own: roofLayer).
+  roofs?: boolean;
 }
 
 // An outline round a set of cells, by marching squares over the cell centres: cut corners, its points shifted a little
@@ -1890,7 +1892,7 @@ export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, 
   else drawIndoor(ctx, l, c);
   drawEdges(ctx, l, c);
   drawProps(ctx, l, c);
-  if (isOpenAir(l.style)) drawRoofs(ctx, l, c, l.tone === 'winter');
+  if (isOpenAir(l.style) && over.roofs !== false) drawRoofs(ctx, l, c, l.tone === 'winter');
   drawHour(ctx, l, c);
 
   for (const m of over.marks ?? []) {
@@ -1940,12 +1942,57 @@ export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, 
 }
 
 // The picture as a PNG file, without the room numbers.
-export function layoutPng(l: Layout): Promise<Uint8Array> {
+const pngOf = (canvas: HTMLCanvasElement): Promise<Uint8Array> =>
+  new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? b.arrayBuffer().then((data) => resolve(new Uint8Array(data)), reject) : reject(new Error('png'))), 'image/png'),
+  );
+
+export function layoutPng(l: Layout, over: Overlay = {}): Promise<Uint8Array> {
   const canvas = document.createElement('canvas');
   canvas.width = l.w * CELL;
   canvas.height = l.h * CELL;
-  drawLayout(canvas.getContext('2d')!, l, CELL);
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? b.arrayBuffer().then((data) => resolve(new Uint8Array(data)), reject) : reject(new Error('png'))), 'image/png'),
-  );
+  drawLayout(canvas.getContext('2d')!, l, CELL, over);
+  return pngOf(canvas);
+}
+
+// The roofs alone, clear around them, at the map's time of day: a picture for the Maps' covers, and the part of the map
+// each roof covers ([x, y, w, h, …] in shares of the map, a row of cells a rectangle). None — no roofs.
+export async function roofLayer(l: Layout): Promise<{ png: Uint8Array; areas: number[][] } | null> {
+  if (!isOpenAir(l.style) || !l.roofs?.length) return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = l.w * CELL;
+  canvas.height = l.h * CELL;
+  const ctx = canvas.getContext('2d')!;
+  drawRoofs(ctx, l, CELL, l.tone === 'winter');
+  if (l.light) {
+    // The hour tints the clear parts too: keep only what the roofs were.
+    const shape = document.createElement('canvas');
+    shape.width = canvas.width;
+    shape.height = canvas.height;
+    shape.getContext('2d')!.drawImage(canvas, 0, 0);
+    drawHour(ctx, l, CELL);
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(shape, 0, 0);
+    ctx.restore();
+  }
+  const areas = l.roofs.flatMap((mark) => {
+    const cells = buildingAt(l, mark.x, mark.y);
+    if (!cells.length) return [];
+    const rows = new Map<number, number[]>();
+    for (const p of cells) rows.set(p.y, [...(rows.get(p.y) ?? []), p.x]);
+    const out: number[] = [];
+    for (const [y, xs] of rows) {
+      xs.sort((a, b) => a - b);
+      for (let i = 0; i < xs.length; ) {
+        let j = i;
+        while (j + 1 < xs.length && xs[j + 1] === xs[j]! + 1) j++;
+        // The roof only: the building's own shadow is on the map already (drawBuilt).
+        out.push(xs[i]! / l.w, y / l.h, (xs[j]! - xs[i]! + 1) / l.w, 1 / l.h);
+        i = j + 1;
+      }
+    }
+    return [out];
+  });
+  return { png: await pngOf(canvas), areas };
 }

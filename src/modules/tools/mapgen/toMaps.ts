@@ -6,7 +6,8 @@ import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import { roleFolderHere } from '../../../shared/adventures';
 import type { MapPin, MapToken } from '../../maps/types';
 import { ui as mapsUi } from '../../maps/ui/ui.svelte';
-import { layoutPng } from './draw';
+import { layoutPng, roofLayer } from './draw';
+import type { MapCover } from '../../maps/types';
 import { cellCentre, roomCentre, roomReveal, type Cell, type Landmark, type Layout } from './layout';
 
 export type RoomPin = Pick<MapPin, 'title' | 'note' | 'color'> & Partial<Pick<MapPin, 'icon' | 'cards'>>;
@@ -37,9 +38,21 @@ export async function layoutToMaps(l: Layout, title: string, rooms: RoomPin[], e
   const { tree } = store.state.vault;
   const folder = tree ? roleFolderHere(tree, store.state.adventures, 'maps') : null;
   if (!folder) return false;
-  const path = await window.api.addMapImage(folder.path, title, await layoutPng(l));
+  // Roofs go as covers of their own: the GM lifts them in the Maps while the players watch.
+  const roofs = await roofLayer(l);
+  const path = await window.api.addMapImage(folder.path, title, await layoutPng(l, roofs ? { roofs: false } : {}));
   if (!path) return false;
-  await dispatch('maps', 'generated', { path, cells: l.w, pins: layoutPins(l, rooms, extras.pins), tokens: layoutTokens(l, extras.tokens), ...(extras.open === undefined ? {} : { open: roomReveal(l, extras.open) }) });
+  const name = path.slice(path.lastIndexOf('/') + 1).replace(/\.png$/i, '');
+  const image = roofs ? await window.api.addMapImage(folder.path, name, roofs.png, true) : null;
+  const covers: MapCover[] = roofs && image ? roofs.areas.map((area) => ({ id: crypto.randomUUID(), image, area, lifted: false })) : [];
+  await dispatch('maps', 'generated', {
+    path,
+    cells: l.w,
+    pins: layoutPins(l, rooms, extras.pins),
+    tokens: layoutTokens(l, extras.tokens),
+    ...(extras.open === undefined ? {} : { open: roomReveal(l, extras.open) }),
+    ...(covers.length ? { covers } : {}),
+  });
   mapsUi.selected = path;
   // The list of rooms is open; the hand tool, so that a click on the map adds no pin by accident.
   mapsUi.tab = 'pins';

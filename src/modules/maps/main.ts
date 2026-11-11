@@ -3,7 +3,7 @@ import { GRID_SHAPES } from './grid';
 import { defineModule, type ModuleContext } from '../../shared/module';
 import { allFiles } from '../../shared/vault';
 import { dataOf } from './data';
-import type { FogOp, Grid, MapData, MapPin, MapsState, MapToken, MapView } from './types';
+import type { FogOp, Grid, MapCover, MapData, MapPin, MapsState, MapToken, MapView } from './types';
 
 // Туман хранится операциями, но не бесконечно: самые старые сворачивать нечем, поэтому просто ограничиваем.
 const MAX_OPS = 2000;
@@ -57,9 +57,22 @@ export default defineModule({
     },
 
     // A map the generator just made: the grid matches its cells, the pins are its rooms; `open` — fog lifted at the start.
-    generated(s, { path, cells, pins, tokens, open }: { path: string; cells: number; pins: MapPin[]; tokens: MapToken[]; open?: number[] }) {
+    // `covers` — its roofs, all down.
+    generated(s, { path, cells, pins, tokens, open, covers }: { path: string; cells: number; pins: MapPin[]; tokens: MapToken[]; open?: number[]; covers?: MapCover[] }) {
       const ops: FogOp[] = open ? [{ mode: 'reveal', kind: 'rects', rects: open }] : [];
-      return withMap(s, path, (d) => ({ ...d, grid: { ...d.grid, on: true, cells: Math.min(200, Math.max(2, cells)), ox: 0, oy: 0 }, pins, tokens, fog: { ...d.fog, ops: [...d.fog.ops, ...ops] } }));
+      return withMap(s, path, (d) => ({
+        ...d,
+        grid: { ...d.grid, on: true, cells: Math.min(200, Math.max(2, cells)), ox: 0, oy: 0 },
+        pins,
+        tokens,
+        fog: { ...d.fog, ops: [...d.fog.ops, ...ops] },
+        ...(covers?.length ? { covers } : {}),
+      }));
+    },
+
+    // A roof lifted (the players see inside) or put back; no id — all of them.
+    liftCover(s, { path, id, lifted }: { path: string; id?: string; lifted: boolean }) {
+      return withMap(s, path, (d) => (d.covers ? { ...d, covers: d.covers.map((c) => (!id || c.id === id ? { ...c, lifted } : c)) } : d));
     },
 
     show(s, { path }: { path: string }) {

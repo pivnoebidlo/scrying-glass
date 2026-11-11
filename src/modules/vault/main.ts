@@ -6,7 +6,7 @@ import * as path from 'node:path';
 import { shell, type OpenDialogOptions } from 'electron';
 import { defineModule, type ModuleContext } from '../../shared/module';
 import type { LangSetting } from '../../shared/i18n/core';
-import { AUDIO_EXT, DEFAULT_ROLES, IMAGE_EXT, roleAccepts, type FolderRole, type RoleNames, type ThemeSetting, type VaultState } from '../../shared/vault';
+import { AUDIO_EXT, COVER_SUFFIX, DEFAULT_ROLES, IMAGE_EXT, roleAccepts, type FolderRole, type RoleNames, type ThemeSetting, type VaultState } from '../../shared/vault';
 import { clipboardFiles, clipboardImage, freeName } from '../../main/files';
 import { listCards } from '../../main/cards';
 import { deleteWords, discard, trashSettings } from '../../main/trash';
@@ -157,7 +157,12 @@ export default defineModule({
       const res = ctx.controlWindow ? await ctx.dialog.showMessageBox(ctx.controlWindow, opts) : await ctx.dialog.showMessageBox(opts);
       if (res.response !== 0) return s;
       const root = ctx.vault.root!;
-      for (const f of files) discard(root, [f.rel], { title: path.basename(f.abs), kind: fs.statSync(f.abs).isDirectory() ? 'folder' : 'file' });
+      // A map made in the map editor takes its roofs along («Name.cover.png»).
+      const coverOf = (rel: string) => {
+        const c = rel.replace(/\.png$/i, COVER_SUFFIX);
+        return c !== rel && ctx.vault.resolve(c) && fs.existsSync(ctx.vault.resolve(c)!) ? [c] : [];
+      };
+      for (const f of files) discard(root, [f.rel, ...coverOf(f.rel)], { title: path.basename(f.abs), kind: fs.statSync(f.abs).isDirectory() ? 'folder' : 'file' });
       return ctx.vault.rescan();
     },
 

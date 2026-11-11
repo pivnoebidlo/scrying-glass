@@ -4,7 +4,7 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
   import { untrack } from 'svelte';
-  import { Brush, CircleUserRound, Cloud, Eraser, Eye, EyeOff, Grid2x2X, Grid3x3, Hand, Hexagon, List, MapPin, MapPinPlus, Maximize, Move, Move3d, ScanEye, Shield, SquareDashed, SquareDashedMousePointer, Swords, Trash2, Undo2, UsersRound } from '@lucide/svelte';
+  import { Brush, CircleUserRound, Cloud, Eraser, Eye, EyeOff, Grid2x2X, Grid3x3, Hand, Hexagon, House, List, MapPin, MapPinPlus, Maximize, Move, Move3d, ScanEye, Shield, SquareDashed, SquareDashedMousePointer, Swords, Trash2, Undo2, UsersRound } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { playerDisplay } from '../../../renderer/lib/nav';
   import Slider from '../../../renderer/lib/Slider.svelte';
@@ -14,6 +14,8 @@
   import { mapGroups } from '../library';
   import {
     applyFogOp, buildFog, drawMap, drawPins, fitCanvas, fogCanvas, loadImage, pinHead, visibleArea, type LoadedImage, type Xf,
+    coverPicture,
+    inCover,
   } from '../render';
   import { FULL_VIEW, GRID_STYLE, type FogOp, type MapData, type MapPin as Pin, type MapToken, type MapView } from '../types';
   import { drawTokens, snap, tokenCell, tokenViews, type TokenView } from '../tokens';
@@ -45,7 +47,10 @@
     { id: 'grid', icon: Grid3x3 },
     { id: 'tokens', icon: UsersRound },
     { id: 'pins', icon: MapPin },
+    { id: 'covers', icon: House },
   ];
+  // Roofs: only on a map that has them (made in the map editor).
+  const tabs = $derived(TABS.filter((tb) => tb.id !== 'covers' || !!data?.covers?.length));
   const TAB_TOOLS: Record<Tab, ToolDef[]> = {
     fog: [
       PAN,
@@ -58,10 +63,11 @@
     grid: [PAN, { id: 'grid', icon: Move3d }],
     tokens: [PAN, { id: 'token', icon: CircleUserRound }],
     pins: [PAN, { id: 'pin', icon: MapPinPlus }],
+    covers: [PAN, { id: 'cover', icon: House }],
   };
   // The tool a section starts with; the fog remembers the last one.
   let fogTool: Tool = 'reveal';
-  const START: Record<Exclude<Tab, 'fog'>, Tool> = { view: 'view', grid: 'pan', tokens: 'token', pins: 'pin' };
+  const START: Record<Exclude<Tab, 'fog'>, Tool> = { view: 'view', grid: 'pan', tokens: 'token', pins: 'pin', covers: 'cover' };
 
   function openTab(tab: Tab) {
     if (ui.tab === 'fog' && ui.tool !== 'pan') fogTool = ui.tool;
@@ -143,6 +149,7 @@
   $effect(() => {
     void data?.view;
     void data?.grid;
+    void data?.covers;
     void data?.pins;
     void data?.tokenScale;
     void ui.tokenScale;
@@ -185,6 +192,11 @@
       fogAlpha: 0.6,
       fogBlur: 0,
       grid: gridPreview ? { ...data.grid, ...gridPreview } : data.grid,
+      // Roofs not lifted: the GM sees a little through them, and more so while lifting them.
+      covers: (data.covers ?? []).flatMap((cv) => {
+        const pic = cv.lifted ? null : coverPicture(vaultUrl(cv.image), draw);
+        return pic ? [{ img: pic, area: cv.area, alpha: ui.tab === 'covers' ? 0.6 : 0.85 }] : [];
+      }),
       underFog: (c) =>
         drawTokens(c, tv ? tokens.map((t) => (t.id === tv.id ? { ...t, x: tv.x, y: tv.y } : t)) : tokens, i, xf, {
           cell: tokenCell(live(data), i.w),
@@ -359,6 +371,11 @@
       dispatch('maps', 'addPin', { path, pin: { id, x: m.x, y: m.y, title: '', note: '', color: ui.pinColor, icon: ui.pinIcon, shown: ui.pinShown } });
       ui.pin = id;
       focusTitle = true;
+    } else if (e.button === 0 && !spaceDown && ui.tool === 'cover') {
+      // The topmost roof under the pointer goes up or down.
+      const m = toMap(p);
+      const cv = [...(data.covers ?? [])].reverse().find((c) => inCover(c.area, m.x, m.y));
+      if (cv) dispatch('maps', 'liftCover', { path, id: cv.id, lifted: !cv.lifted });
     } else if (e.button === 1 || spaceDown || ui.tool === 'pan') {
       drag = { kind: 'pan', sx: p.x, sy: p.y, ox: xf.ox, oy: xf.oy };
     } else if (ui.tool === 'reveal' || ui.tool === 'hide') {
@@ -699,11 +716,12 @@
     <header class="toolbar">
       <div class="tabs-row">
         <nav class="tabs">
-          {#each TABS as tab (tab.id)}
+          {#each tabs as tab (tab.id)}
             <button class:active={ui.tab === tab.id} onclick={() => openTab(tab.id)}>
               <tab.icon size={14} /> {t(`maps.tab.${tab.id}`)}
               {#if tab.id === 'tokens' && data.tokens.length}<span class="count">{data.tokens.length}</span>{/if}
               {#if tab.id === 'pins' && pins.length}<span class="count">{pins.length}</span>{/if}
+              {#if tab.id === 'covers'}<span class="count">{data.covers!.filter((cv) => !cv.lifted).length}/{data.covers!.length}</span>{/if}
             </button>
           {/each}
         </nav>
@@ -731,6 +749,11 @@
           </button>
           <button class="btn" onclick={() => resetFog('revealed')}>{t('maps.revealAll')}</button>
           <button class="btn" onclick={() => resetFog('hidden')}>{t('maps.hideAllBtn')}</button>
+        {:else if ui.tab === 'covers'}
+          <div class="sep"></div>
+          <button class="btn" onclick={() => dispatch('maps', 'liftCover', { path, lifted: true })}>{t('maps.liftAll')}</button>
+          <button class="btn" onclick={() => dispatch('maps', 'liftCover', { path, lifted: false })}>{t('maps.lowerAll')}</button>
+          <span class="faint note">{t('maps.coversHint')}</span>
         {:else if ui.tab === 'view'}
           <div class="sep"></div>
           <button class="btn" title={t('maps.wholeMapHint')} onclick={() => { ui.follow = false; dispatch('maps', 'setView', { path, view: FULL_VIEW }); }}>

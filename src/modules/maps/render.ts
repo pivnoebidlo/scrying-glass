@@ -110,7 +110,35 @@ export interface DrawOptions {
   grid: Grid;
   // Что рисовать под туманом (жетоны): у игроков туман их прячет.
   underFog?: (ctx: CanvasRenderingContext2D) => void;
+  // Roofs over the picture (MapCover), each in its own area; `alpha` — the GM sees through them.
+  covers?: { img: LoadedImage; area: number[]; alpha: number }[];
 }
+
+// The pictures of covers, loaded once each.
+const coverPictures = new Map<string, LoadedImage | 'loading' | 'failed'>();
+export function coverPicture(src: string, onload: () => void): LoadedImage | null {
+  const had = coverPictures.get(src);
+  if (had && had !== 'loading' && had !== 'failed') return had;
+  if (!had) {
+    coverPictures.set(src, 'loading');
+    loadImage(src).then(
+      (i) => (coverPictures.set(src, i), onload()),
+      () => coverPictures.set(src, 'failed'),
+    );
+  }
+  return null;
+}
+
+// A cover's area as a path in the map's pixels.
+export function coverPath(area: number[], img: { w: number; h: number }): Path2D {
+  const p = new Path2D();
+  for (let i = 0; i + 3 < area.length; i += 4) p.rect(area[i]! * img.w, area[i + 1]! * img.h, area[i + 2]! * img.w, area[i + 3]! * img.h);
+  return p;
+}
+export const inCover = (area: number[], x: number, y: number) => {
+  for (let i = 0; i + 3 < area.length; i += 4) if (x >= area[i]! && y >= area[i + 1]! && x < area[i]! + area[i + 2]! && y < area[i + 1]! + area[i + 3]!) return true;
+  return false;
+};
 
 export function drawMap(ctx: CanvasRenderingContext2D, img: LoadedImage, fog: HTMLCanvasElement, xf: Xf, o: DrawOptions) {
   const c = ctx.canvas;
@@ -123,6 +151,14 @@ export function drawMap(ctx: CanvasRenderingContext2D, img: LoadedImage, fog: HT
   ctx.setTransform(xf.s, 0, 0, xf.s, xf.ox, xf.oy);
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(img.el, 0, 0, img.w, img.h);
+  for (const cv of o.covers ?? []) {
+    if (cv.alpha <= 0) continue;
+    ctx.save();
+    ctx.clip(coverPath(cv.area, img));
+    ctx.globalAlpha = cv.alpha;
+    ctx.drawImage(cv.img.el, 0, 0, img.w, img.h);
+    ctx.restore();
+  }
 
   if (o.grid.on) {
     // Squares or hexes (grid.ts); hexes cross the edge of the map — clipped to it.

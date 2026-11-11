@@ -103,3 +103,24 @@ describe('карты: жетоны', () => {
     expect(dataOf(s, P).tokens).toEqual([]);
   });
 });
+
+describe('maps: roofs over houses', () => {
+  it('a map from the editor brings its roofs down; the GM lifts one or all and puts them back', async () => {
+    const { inCover } = await import('../src/modules/maps/render');
+    const { fileKind } = await import('../src/shared/vault');
+    const cover = (id: string) => ({ id, image: 'adv/maps/город.cover.png', area: [0.1, 0.1, 0.2, 0.2], lifted: false });
+    let s = act(S0, 'generated', { path: P, cells: 20, pins: [], tokens: [], covers: [cover('a'), cover('b')] });
+    expect(dataOf(s, P).covers!.map((c) => c.lifted)).toEqual([false, false]);
+    s = act(s, 'liftCover', { path: P, id: 'b', lifted: true });
+    expect(dataOf(s, P).covers!.map((c) => c.lifted)).toEqual([false, true]);
+    s = act(s, 'liftCover', { path: P, lifted: true });
+    expect(dataOf(s, P).covers!.every((c) => c.lifted)).toBe(true);
+    // A map without roofs stays without.
+    expect(dataOf(act(S0, 'liftCover', { path: P, lifted: true }), P).covers).toBeUndefined();
+    expect(inCover([0.1, 0.1, 0.2, 0.2], 0.15, 0.25)).toBe(true);
+    expect(inCover([0.1, 0.1, 0.2, 0.2], 0.35, 0.25)).toBe(false);
+    // The roofs' picture is not a map of its own.
+    expect(fileKind('город.cover.png')).toBeNull();
+    expect(fileKind('город.png')).toBe('image');
+  });
+});

@@ -123,7 +123,11 @@ export function folderRole(name: string): FolderRole | null {
   return null;
 }
 
+// The picture of a map's roofs (maps/types.ts MapCover): beside the map, not a picture of its own.
+export const COVER_SUFFIX = '.cover.png';
+
 export function fileKind(name: string): FileKind | null {
+  if (name.toLowerCase().endsWith(COVER_SUFFIX)) return null;
   if (name.toLowerCase().endsWith('.note.json')) return 'note';
   if (name.toLowerCase().endsWith('.sketch.json')) return 'sketch';
   const ext = extname(name);

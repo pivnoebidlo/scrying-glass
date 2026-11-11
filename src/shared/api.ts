@@ -145,7 +145,8 @@ export interface Api {
   writeSketch(path: string, sketch: Sketch): Promise<boolean>;
   createSketch(folder: string, title: string, sketch: Sketch): Promise<string | null>;
   // A generated picture into a maps folder, under a free name; its path.
-  addMapImage(folder: string, title: string, data: Uint8Array): Promise<string | null>;
+  // `cover` — the picture of a map's roofs: «title.cover.png».
+  addMapImage(folder: string, title: string, data: Uint8Array, cover?: boolean): Promise<string | null>;
   renameSketch(path: string, title: string): Promise<string | null>;
   // The map editor's drafts (main/mapdrafts.ts).
   listMapDrafts(): Promise<string[]>;
