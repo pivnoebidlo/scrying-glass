@@ -39,6 +39,14 @@ class Editor {
   set selected(i: number) {
     this.picked = i >= 0 ? [i] : [];
   }
+  // A word for the GM under the map (why a thing would not go down), gone after a while.
+  notice = $state<string | null>(null);
+  private noticeTimer: ReturnType<typeof setTimeout> | null = null;
+  tell(text: string) {
+    this.notice = text;
+    if (this.noticeTimer) clearTimeout(this.noticeTimer);
+    this.noticeTimer = setTimeout(() => (this.notice = null), 6000);
+  }
   // Looking, not editing: the mouse drags the map about.
   viewing = $state(false);
   cell = $state(28);

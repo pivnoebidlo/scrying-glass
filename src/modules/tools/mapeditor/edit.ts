@@ -439,17 +439,23 @@ export const propAt = (l: Layout, x: number, y: number): number => {
   return -1;
 };
 
-function fits(l: Layout, p: Prop, _except = -1) {
+// Why a thing does not fit where it is (null — it does): past the edge, in a doorway, or on ground nothing stands on.
+export type Misfit = 'edge' | 'door' | 'rock' | 'water' | 'wall' | 'house' | 'ground';
+export function misfit(l: Layout, p: Pick<Prop, 'kind' | 'x' | 'y' | 'w' | 'h'>): Misfit | null {
+  const anywhere = p.kind === 'rug' || FREE.has(p.kind);
   for (let y = p.y; y < p.y + p.h; y++)
     for (let x = p.x; x < p.x + p.w; x++) {
-      if (!inMap(l, x, y)) return false;
+      if (!inMap(l, x, y)) return 'edge';
       // Things may stand on things (a chest on a rug, a candle on a table): the later one is drawn on top.
       // A picture of the GM's own goes anywhere (a bridge on water, a beam over a wall).
-      if (p.kind !== 'rug' && !FREE.has(p.kind) && !standable(at(l, x, y))) return false;
-      if (p.kind !== 'rug' && !FREE.has(p.kind) && l.doors.some((d) => d.x === x && d.y === y)) return false;
+      if (anywhere) continue;
+      const c = at(l, x, y);
+      if (!standable(c)) return c === '#' ? 'rock' : c === '~' || c === 'O' ? 'water' : isWall(c) || c === 'W' ? 'wall' : c === 'H' ? 'house' : 'ground';
+      if (l.doors.some((d) => d.x === x && d.y === y)) return 'door';
     }
-  return true;
+  return null;
 }
+const fits = (l: Layout, p: Prop, _except = -1) => !misfit(l, p);
 
 // A thing put down with its top-left corner at the cell; the index of the new one, or -1 — it does not fit.
 export function placeProp(l: Layout, kind: PropKind, x: number, y: number, face: Facing = 0, tint?: number): { layout: Layout; index: number } {

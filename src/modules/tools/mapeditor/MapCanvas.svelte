@@ -2,10 +2,11 @@
      the cursor, the chosen thing, the rectangle being drawn. The mouse paints, puts things down, picks and moves them;
      the right button takes away. -->
 <script lang="ts">
+  import { t } from '../../../renderer/lib/i18n.svelte';
   import { drawLayout } from '../mapgen/draw';
   import type { Layout } from '../mapgen/layout';
   import {
-    addBuilding, addHouse, addRoom, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, MAX_STRETCH, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower,
+    addBuilding, addHouse, addRoom, misfit, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, MAX_STRETCH, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower,
   } from './edit';
   import { editor } from './store.svelte';
   import { assets } from './assets.svelte';
@@ -37,7 +38,8 @@
     over.height = layout.h * c;
     const ctx = over.getContext('2d')!;
     if (editor.grid) {
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.18)';
+      // Dark lines on a light picture; light ones on dark rock and at night, or the grid is lost.
+      ctx.strokeStyle = layout.light === 'night' || layout.light === 'dusk' ? 'rgba(255, 255, 255, 0.14)' : 'rgba(0, 0, 0, 0.18)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (let x = 1; x < layout.w; x++) (ctx.moveTo(x * c + 0.5, 0), ctx.lineTo(x * c + 0.5, layout.h * c));
@@ -110,7 +112,8 @@
       if (editor.mode === 'place' && editor.prop) {
         const a = editor.prop === 'asset' ? editor.asset : null;
         const f = a ? (editor.face % 2 ? { w: a.h, h: a.w } : { w: a.w, h: a.h }) : footprint(editor.prop, editor.face);
-        box(hover.x, hover.y, f.w, f.h, '#a78bfa');
+        // Red where it would not go down.
+        box(hover.x, hover.y, f.w, f.h, misfit(layout, { kind: editor.prop, x: hover.x, y: hover.y, ...f }) ? '#e0523a' : '#a78bfa');
       } else if (editor.mode === 'brush' && !brush.rect && !brush.toggle) {
         const cells = brushCells(hover.x, hover.y, editor.size);
         const xs = cells.map((p) => p.x);
@@ -119,6 +122,12 @@
       } else box(hover.x, hover.y, 1, 1, '#a78bfa');
     }
   });
+
+  // Why the thing would not go down there, in words under the map.
+  const tellMisfit = (l: typeof layout, p: Parameters<typeof misfit>[1]) => {
+    const why = misfit(l, p);
+    if (why) editor.tell(t(`mapedit.misfit.${why}` as never));
+  };
 
   const cellAt = (e: PointerEvent) => {
     const r = over!.getBoundingClientRect();
@@ -253,7 +262,7 @@
       if (index >= 0) {
         editor.change(next);
         editor.selected = index;
-      }
+      } else tellMisfit(l, { kind: 'asset', x: p.x, y: p.y, ...(editor.face % 2 ? { w: a.h, h: a.w } : { w: a.w, h: a.h }) });
       return;
     }
     if (editor.mode === 'place' && editor.prop) {
@@ -261,7 +270,7 @@
       if (index >= 0) {
         editor.change(next);
         editor.selected = index;
-      }
+      } else tellMisfit(l, { kind: editor.prop, x: p.x, y: p.y, ...footprint(editor.prop, editor.face) });
       return;
     }
     if (brush.rect) {

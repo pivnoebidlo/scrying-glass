@@ -516,7 +516,11 @@
           <button class="icon-btn" title={t('mapedit.zoomIn', mod)} onclick={() => editor.zoomBy(1.25)}><ZoomIn size={16} /></button>
           <button class="btn fitbtn" title={t('mapedit.fitHint')} onclick={() => editor.fit()}>{t('mapedit.fit')}</button>
         </div>
-        <div class="hint" title={hint}>{hint}</div>
+        {#if editor.notice}
+          <div class="hint notice" role="status" title={editor.notice}>{editor.notice}</div>
+        {:else}
+          <div class="hint" title={hint}>{hint}</div>
+        {/if}
       </section>
       {#if !editor.viewing}
       <section class="palette" aria-label={t('mapedit.things')}>
@@ -895,6 +899,9 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .hint.notice {
+    color: var(--warning);
   }
   .head {
     position: sticky;

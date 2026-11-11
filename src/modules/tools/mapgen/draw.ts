@@ -1454,7 +1454,7 @@ function drawRoofs(ctx: CanvasRenderingContext2D, l: Layout, c: number, snow: bo
 const HOURS: Record<Light, { tint: string; lit: number }> = {
   dawn: { tint: 'rgb(255, 214, 190)', lit: 0 },
   dusk: { tint: 'rgb(214, 146, 150)', lit: 0.5 },
-  night: { tint: 'rgb(48, 60, 112)', lit: 1 },
+  night: { tint: 'rgb(78, 92, 146)', lit: 1 },
 };
 const WARM = '255, 190, 110';
 const LIGHT_OF: Partial<Record<PropKind, { r: number; rgb?: string }>> = {

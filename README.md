@@ -401,7 +401,8 @@ lit windows keep their light (one place at different hours — one map exported 
 
 Things come from the palette: about a hundred of them in furniture, stores, workshop, shrine, dungeon, town, cave and
 outdoors; the groups fold, and a search finds a thing by name. A thing goes on a cell, on top of other things too (a
-chest on a rug); R turns it, dragging moves it, Delete or the right button takes it away. Several are picked with a
+chest on a rug), but not on solid rock, water or a doorway: there its frame turns red and the line under the map says
+why (a blank «building» map is all rock until a floor is painted); R turns it, dragging moves it, Delete or the right button takes it away. Several are picked with a
 rectangle or Shift+click and move, turn and go together. A rug, a table, a puddle and others stretch by any side or corner; things stand on trees and boulders too (a nest on a
 fir); a
 rug, a bed, a tent and others take the colour you choose. Thickness 1–3, Shift+click draws a straight line, the right

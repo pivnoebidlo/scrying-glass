@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  misfit,
   addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setGenre, setLight, setTone, swapKind, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower,
 } from '../src/modules/tools/mapeditor/edit';
 import { generateLayout, LAYOUT_STYLES, seededRandom } from '../src/modules/tools/mapgen/layout';
@@ -264,5 +265,19 @@ describe('the map editor', () => {
     camp = toggleDoor(camp, 3, 1);
     expect(camp.doors).toEqual([{ x: 3, y: 1, along: 'y' }]);
     expect(placeProp(paint(blankLayout('meadow', 10, 10, 1), band, 'g'), 'brazier', 3, 3).index).toBeGreaterThanOrEqual(0);
+  });
+
+  it('says why a thing does not go down', () => {
+    const rock = blankLayout('building', 10, 10, 1);
+    const sedan = { kind: 'sedan' as const, x: 2, y: 2, w: 2, h: 3 };
+    expect(misfit(rock, sedan)).toBe('rock');
+    expect(placeProp(rock, 'sedan', 2, 2).index).toBe(-1);
+    const field = blankLayout('meadow', 10, 10, 1);
+    expect(misfit(field, sedan)).toBeNull();
+    expect(misfit(field, { ...sedan, x: 9 })).toBe('edge');
+    expect(misfit(paint(field, [{ x: 2, y: 2 }], '~'), sedan)).toBe('water');
+    // Things for walls and the GM's pictures go anywhere.
+    expect(misfit(rock, { kind: 'window', x: 1, y: 1, w: 1, h: 1 })).toBeNull();
+    expect(misfit(rock, { kind: 'asset', x: 1, y: 1, w: 2, h: 2 })).toBeNull();
   });
 });
