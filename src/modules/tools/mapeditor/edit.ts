@@ -71,6 +71,14 @@ export function parseDraft(x: unknown): MapDraft | null {
       const d = parseDraft({ scryingGlass: 'map', level: true, layout: { ...(v as object), w: W, h: H, style } });
       return d ? [d.layout] : [];
     });
+  // Underground: a building or a cave of the same size.
+  const below = (Array.isArray(l['below']) && !(x as { level?: true }).level ? l['below'] : [])
+    .slice(0, MAX_LEVELS)
+    .flatMap((v) => {
+      const st = (v as { style?: unknown })?.style === 'cave' ? 'cave' : 'building';
+      const d = parseDraft({ scryingGlass: 'map', level: true, layout: { ...(v as object), w: W, h: H, style: st } });
+      return d ? [d.layout] : [];
+    });
   const seen = new Set<string>();
   const edges = (Array.isArray(l['edges']) ? l['edges'] : [])
     .filter((e): e is LayoutEdge => !!e && int(e.x) && int(e.y) && (e.side === 'top' || e.side === 'left') && typeof e.kind === 'string' && e.kind.length === 1 && EDGE_KINDS.includes(e.kind) && edgeInMap({ w: W, h: H }, e))
@@ -99,6 +107,7 @@ export function parseDraft(x: unknown): MapDraft | null {
       ...(GENRES.includes(l['genre'] as Genre) && l['genre'] !== 'fantasy' ? { genre: l['genre'] as Genre } : {}),
       ...(edges.length ? { edges } : {}),
       ...(levels.length ? { levels } : {}),
+      ...(below.length ? { below } : {}),
     },
   };
 }
@@ -693,6 +702,7 @@ export function resize(l: Layout, w: number, h: number, g = groundOf(l.style)): 
     roofs: l.roofs?.filter(keep),
     ...(l.edges ? { edges: l.edges.filter((e) => edgeInMap({ w: W, h: H }, e)) } : {}),
     ...(l.levels ? { levels: l.levels.map((v) => resize(v, W, H, NOTHING)) } : {}),
+    ...(l.below ? { below: l.below.map((v) => resize(v, W, H)) } : {}),
   });
 }
 
@@ -714,18 +724,30 @@ export function addLevel(l: Layout): Layout {
   const levels = l.levels ?? [];
   return levels.length >= MAX_LEVELS ? l : { ...l, levels: [...levels, blankLevel(l, levels.length + 1)] };
 }
-// Storey `n` (1 — the first over the map) gone, those over it go down one.
+// One level more underground, under the lowest: all rock, as a new building (a cave under a cave).
+export function addBelow(l: Layout): Layout {
+  const below = l.below ?? [];
+  if (below.length >= MAX_LEVELS) return l;
+  return { ...l, below: [...below, blankLayout(l.style === 'cave' ? 'cave' : 'building', l.w, l.h, (l.seed + Math.imul(below.length + 1, 104729)) >>> 0)] };
+}
+// Level `n` gone (1 — the first storey over the map, -1 — the first level under it); those further go one nearer.
 export function removeLevel(l: Layout, n: number): Layout {
-  const levels = (l.levels ?? []).filter((_, i) => i !== n - 1);
-  const out: Layout = { ...l, levels };
-  if (!levels.length) delete out.levels;
+  const key = n > 0 ? 'levels' : 'below';
+  const list = (l[key] ?? []).filter((_, i) => i !== Math.abs(n) - 1);
+  const out: Layout = { ...l, [key]: list };
+  if (!list.length) delete out[key];
   return out;
 }
-// The map with storey `n` (0 — the map itself) changed.
-export const withLevel = (l: Layout, n: number, next: Layout): Layout =>
-  n === 0 ? { ...next, ...(l.levels ? { levels: l.levels } : {}) } : { ...l, levels: (l.levels ?? []).map((v, i) => (i === n - 1 ? next : v)) };
-// Storey `n` of the map (0 — the map).
-export const levelOf = (l: Layout, n: number): Layout => (n === 0 ? l : (l.levels?.[n - 1] ?? l));
+// The map with level `n` (0 — the map itself, below zero — underground) changed.
+export function withLevel(l: Layout, n: number, next: Layout): Layout {
+  if (n === 0) return { ...next, ...(l.levels ? { levels: l.levels } : {}), ...(l.below ? { below: l.below } : {}) };
+  const key = n > 0 ? 'levels' : 'below';
+  return { ...l, [key]: (l[key] ?? []).map((v, i) => (i === Math.abs(n) - 1 ? next : v)) };
+}
+// Level `n` of the map (0 — the map).
+export const levelOf = (l: Layout, n: number): Layout => (n === 0 ? l : ((n > 0 ? l.levels : l.below)?.[Math.abs(n) - 1] ?? l));
+// The levels there are, from the lowest underground to the top storey.
+export const levelRange = (l: Layout): [number, number] => [-(l.below?.length ?? 0), l.levels?.length ?? 0];
 
 // The world of the map (fantasy is no field at all: old maps are fantasy).
 export function setGenre(l: Layout, genre: Genre): Layout {

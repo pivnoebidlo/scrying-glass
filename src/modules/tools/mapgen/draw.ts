@@ -2034,8 +2034,9 @@ function storeyCanvas(root: Layout, n: number, c: number, over: Overlay = {}, ho
   return canvas;
 }
 
-// The editor's picture of storey `n`: the map and the storeys under it, dimmed, then this one.
+// The editor's picture of level `n`: a storey over the map and the storeys under it, dimmed; a level underground alone.
 export function drawStoreys(ctx: CanvasRenderingContext2D, root: Layout, n: number, c: number, over: Overlay = {}) {
+  if (n < 0 && root.below?.[-n - 1]) return drawLayout(ctx, underOf(root, -n), c, over);
   if (!n || !root.levels?.[n - 1]) return drawLayout(ctx, root, c, over);
   drawLayout(ctx, root, c, { roofs: false });
   for (let k = 1; k < n; k++) ctx.drawImage(storeyCanvas(root, k, c, { roofs: false }), 0, 0);
@@ -2044,28 +2045,53 @@ export function drawStoreys(ctx: CanvasRenderingContext2D, root: Layout, n: numb
   ctx.drawImage(storeyCanvas(root, n, c, over), 0, 0);
 }
 
+// Level `k` underground as the map sees it: the map's world; no hour down there.
+export function underOf(root: Layout, k: number): Layout {
+  const v: Layout = { ...root.below![k - 1]! };
+  if (root.genre) v.genre = root.genre;
+  else delete v.genre;
+  delete v.light;
+  return v;
+}
+
+// The pieces of a level that stand apart (8 ways round), as areas of covers.
+function partsOf(v: Layout): number[][] {
+  const seen = new Set<string>();
+  const areas: number[][] = [];
+  for (let y = 0; y < v.h; y++)
+    for (let x = 0; x < v.w; x++) {
+      if (v.cells[y]![x] === NOTHING || seen.has(`${x},${y}`)) continue;
+      const part = [{ x, y }];
+      seen.add(`${x},${y}`);
+      for (let i = 0; i < part.length; i++)
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const q = { x: part[i]!.x + dx, y: part[i]!.y + dy };
+            const ch = v.cells[q.y]?.[q.x];
+            if (ch && ch !== NOTHING && !seen.has(`${q.x},${q.y}`)) (seen.add(`${q.x},${q.y}`), part.push(q));
+          }
+      areas.push(areaOf(v, part));
+    }
+  return areas;
+}
+
+// The levels underground for the Maps' covers, from the first one down: each whole, shown when the GM goes down.
+export async function underLayers(root: Layout): Promise<{ k: number; png: Uint8Array; areas: number[][] }[]> {
+  const out: { k: number; png: Uint8Array; areas: number[][] }[] = [];
+  for (let k = 1; k <= (root.below?.length ?? 0); k++) {
+    const v = underOf(root, k);
+    const areas = partsOf(v);
+    if (areas.length) out.push({ k, png: await layoutPng(v), areas });
+  }
+  return out;
+}
+
 // The storeys for the Maps' covers, from the first one up: each a picture without its roofs (they come after it) and its
 // parts — every piece of floor standing apart (a house's upper floor and the next house's) is lifted on its own.
 export async function storeyLayers(root: Layout): Promise<{ n: number; png: Uint8Array; areas: number[][] }[]> {
   const out: { n: number; png: Uint8Array; areas: number[][] }[] = [];
   for (let n = 1; n <= (root.levels?.length ?? 0); n++) {
-    const v = storeyOf(root, n);
-    const seen = new Set<string>();
-    const areas: number[][] = [];
-    for (let y = 0; y < v.h; y++)
-      for (let x = 0; x < v.w; x++) {
-        if (v.cells[y]![x] === NOTHING || seen.has(`${x},${y}`)) continue;
-        const part = [{ x, y }];
-        seen.add(`${x},${y}`);
-        for (let i = 0; i < part.length; i++)
-          for (let dy = -1; dy <= 1; dy++)
-            for (let dx = -1; dx <= 1; dx++) {
-              const q = { x: part[i]!.x + dx, y: part[i]!.y + dy };
-              const ch = v.cells[q.y]?.[q.x];
-              if (ch && ch !== NOTHING && !seen.has(`${q.x},${q.y}`)) (seen.add(`${q.x},${q.y}`), part.push(q));
-            }
-        areas.push(areaOf(v, part));
-      }
+    const areas = partsOf(storeyOf(root, n));
     if (areas.length) out.push({ n, png: await pngOf(storeyCanvas(root, n, CELL, { roofs: false }, true)), areas });
   }
   return out;

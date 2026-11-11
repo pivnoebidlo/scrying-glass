@@ -6,7 +6,7 @@ import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import { roleFolderHere } from '../../../shared/adventures';
 import type { MapPin, MapToken } from '../../maps/types';
 import { ui as mapsUi } from '../../maps/ui/ui.svelte';
-import { layoutPng, roofLayer, storeyLayers, storeyOf } from './draw';
+import { layoutPng, roofLayer, storeyLayers, storeyOf, underLayers } from './draw';
 import { t } from '../../../renderer/lib/i18n.svelte';
 import type { MapCover } from '../../maps/types';
 import { cellCentre, roomCentre, roomReveal, type Cell, type Landmark, type Layout } from './layout';
@@ -47,10 +47,12 @@ export async function layoutToMaps(l: Layout, title: string, rooms: RoomPin[], e
   const name = path.slice(path.lastIndexOf('/') + 1).replace(/\.png$/i, '');
   const covers: MapCover[] = [];
   // «Name.cover.png» — the map's roofs; «Name.storey2.cover.png», «Name.storey2-roof.cover.png» — a storey and its roofs.
-  const layer = async (png: Uint8Array, areas: number[][], suffix: string, title: string) => {
+  const layer = async (png: Uint8Array, areas: number[][], suffix: string, title: string, below = false) => {
     const image = await window.api.addMapImage(folder.path, name + suffix, png, true);
-    if (image) for (const area of areas) covers.push({ id: crypto.randomUUID(), image, area, title, lifted: false });
+    if (image) for (const area of areas) covers.push({ id: crypto.randomUUID(), image, area, title, lifted: false, ...(below ? { below } : {}) });
   };
+  // Underground first, from the first level down: shown when the GM goes down («Name.under1.cover.png»).
+  for (const u of await underLayers(l)) await layer(u.png, u.areas, `.under${u.k}`, t('mapedit.level.cover', { n: `−${u.k}` }), true);
   if (roofs) await layer(roofs.png, roofs.areas, '', t('mapedit.level.roof'));
   for (const s of storeys) {
     await layer(s.png, s.areas, `.storey${s.n + 1}`, t('mapedit.level.cover', { n: s.n + 1 }));

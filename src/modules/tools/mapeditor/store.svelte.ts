@@ -6,7 +6,7 @@ import { roleFolderHere, visibleIn } from '../../../shared/adventures';
 import { roleNames } from '../../../shared/vault';
 import type { Facing, PropKind } from '../mapgen/furnish';
 import type { Layout } from '../mapgen/layout';
-import { draftOf, levelOf, MAP_DRAFT_SUFFIX, withLevel, type BrushId } from './edit';
+import { draftOf, levelOf, levelRange, MAP_DRAFT_SUFFIX, withLevel, type BrushId } from './edit';
 import type { MapAsset } from '../../../shared/mapassets';
 
 const UNDO = 100;
@@ -21,11 +21,15 @@ class Editor {
   path = $state<string | null>(null);
   // The whole draft: the map and its storeys.
   root = $state.raw<Layout | null>(null);
-  // The storey being edited: 0 — the map itself, 1 — the first storey over it.
+  // The level being edited: 0 — the map itself, 1 — the first storey over it, -1 — the first level under it.
   level = $state(0);
-  // What the tools edit: the storey (the map at 0).
+  private here(root: Layout) {
+    const [lo, hi] = levelRange(root);
+    return Math.max(lo, Math.min(hi, this.level));
+  }
+  // What the tools edit: the level (the map at 0).
   get layout(): Layout | null {
-    return this.root && levelOf(this.root, Math.min(this.level, this.root.levels?.length ?? 0));
+    return this.root && levelOf(this.root, this.here(this.root));
   }
   // 'brush' paints cells, 'place' puts the chosen thing down, 'select' picks, moves and turns things.
   mode = $state<'brush' | 'place' | 'select'>('brush');
@@ -184,7 +188,7 @@ class Editor {
   // A change of the storey being edited: the draft before goes to undo (one per stroke: `merge` — the same stroke goes on).
   change(next: Layout, merge = false) {
     if (!this.root || next === this.layout) return;
-    this.changeRoot(withLevel(this.root, Math.min(this.level, this.root.levels?.length ?? 0), next), merge);
+    this.changeRoot(withLevel(this.root, this.here(this.root), next), merge);
   }
   // A change of the whole draft (its size, world, storeys).
   changeRoot(next: Layout, merge = false) {
@@ -200,9 +204,9 @@ class Editor {
     this.redos = 0;
     this.saveSoon();
   }
-  // No storey past the top one.
+  // No level past the top or the bottom one.
   private settle() {
-    this.level = Math.min(this.level, this.root?.levels?.length ?? 0);
+    if (this.root) this.level = this.here(this.root);
   }
   undo() {
     const prev = this.past.pop();

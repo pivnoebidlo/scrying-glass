@@ -124,3 +124,37 @@ describe('maps: roofs over houses', () => {
     expect(fileKind('город.png')).toBe('image');
   });
 });
+
+describe('maps: storeys and levels underground', () => {
+  it('a click lifts the roof, then the storey, then goes down level by level; the right button comes back', async () => {
+    const { coverStep, shownCovers } = await import('../src/modules/maps/render');
+    const area = [0, 0, 1, 1];
+    let covers = [
+      { id: 'u1', area, lifted: false, below: true },
+      { id: 'u2', area, lifted: false, below: true },
+      { id: 's2', area, lifted: false },
+      { id: 'roof', area, lifted: false },
+    ];
+    const click = (back = false) => {
+      const step = coverStep(covers, 0.5, 0.5, back)!;
+      covers = covers.map((c) => (c.id === step.id ? { ...c, lifted: step.lifted } : c));
+      return shownCovers(covers).map((c) => c.id);
+    };
+    expect(shownCovers(covers).map((c) => c.id)).toEqual(['s2', 'roof']);
+    expect(click()).toEqual(['s2']);
+    expect(click()).toEqual([]);
+    expect(click()).toEqual(['u1']);
+    expect(click()).toEqual(['u1', 'u2']);
+    // Nothing deeper: a click comes back up.
+    expect(click()).toEqual(['u1']);
+    expect(click(true)).toEqual([]);
+    expect(click(true)).toEqual(['s2']);
+    expect(coverStep(covers, 2, 2, false)).toBeNull();
+    // «Lift all» leaves the underground alone; «all as it was» closes it too.
+    let s = act(S0, 'generated', { path: P, cells: 20, pins: [], tokens: [], covers });
+    s = act(s, 'liftCover', { path: P, lifted: true });
+    expect(dataOf(s, P).covers!.filter((c) => c.lifted).map((c) => c.id)).toEqual(['s2', 'roof']);
+    s = act(s, 'liftCover', { path: P, lifted: false });
+    expect(dataOf(s, P).covers!.some((c) => c.lifted)).toBe(false);
+  });
+});

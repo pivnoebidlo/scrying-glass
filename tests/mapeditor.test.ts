@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   misfit,
   addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setGenre, setLight, setTone, swapKind, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower, wipe,
-  edgePath, nearestSide, setEdges, toggleEdgeDoor, addLevel, removeLevel, withLevel, levelOf, MAX_LEVELS,
+  edgePath, nearestSide, setEdges, toggleEdgeDoor, addLevel, addBelow, removeLevel, withLevel, levelOf, levelRange, MAX_LEVELS,
 } from '../src/modules/tools/mapeditor/edit';
 import { generateLayout, LAYOUT_STYLES, seededRandom } from '../src/modules/tools/mapgen/layout';
 
@@ -371,5 +371,28 @@ describe('the map editor', () => {
     let many = map;
     for (let i = 0; i < MAX_LEVELS + 2; i++) many = addLevel(many);
     expect(many.levels).toHaveLength(MAX_LEVELS);
+  });
+
+  it('levels underground: rock to cut rooms from, as many as storeys, kept and taken away', () => {
+    const map = blankLayout('meadow', 10, 8, 1);
+    let l = addBelow(addBelow(addLevel(map)));
+    expect(levelRange(l)).toEqual([-2, 1]);
+    expect(levelOf(l, -1).style).toBe('building');
+    expect(levelOf(l, -2).cells.every((r) => r === '#'.repeat(10))).toBe(true);
+    // Under a cave — a cave.
+    expect(levelOf(addBelow(blankLayout('cave', 10, 8, 1)), -1).style).toBe('cave');
+    l = withLevel(l, -2, addRoom(levelOf(l, -2), { x: 2, y: 2, w: 3, h: 2 }));
+    expect(levelOf(l, -2).cells[3]!.slice(2, 5)).toBe('...');
+    expect(levelOf(l, -1).cells[3]!.slice(2, 5)).toBe('###');
+    const back = parseDraft(draftOf(l))!.layout;
+    expect(back.below).toHaveLength(2);
+    expect(back.below![1]!.cells).toEqual(levelOf(l, -2).cells);
+    expect(resize(l, 12, 8).below![0]!.cells[0]).toBe('#'.repeat(12));
+    // The first level under goes: the second comes up one.
+    const one = removeLevel(l, -1);
+    expect(one.below).toHaveLength(1);
+    expect(levelOf(one, -1).cells[3]!.slice(2, 5)).toBe('...');
+    expect(removeLevel(one, -1).below).toBeUndefined();
+    expect(one.levels).toHaveLength(1);
   });
 });

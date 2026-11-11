@@ -2,7 +2,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { vaultUrl } from '../../../shared/vault';
-  import { buildFog, coverPicture, drawMap, drawPins, fitCanvas, fitView, fogCanvas, loadImage, type LoadedImage } from '../render';
+  import { buildFog, coverPicture, shownCovers, drawMap, drawPins, fitCanvas, fitView, fogCanvas, loadImage, type LoadedImage } from '../render';
   import { drawTokens, tokenCell, type TokenView } from '../tokens';
   import type { MapData, MapView } from '../types';
 
@@ -33,8 +33,8 @@
       fogBlur: Math.max(canvas.width, canvas.height) * 0.006,
       grid: data.grid,
       // Roofs not lifted: the players do not see inside.
-      covers: (data.covers ?? []).flatMap((cv) => {
-        const pic = cv.lifted ? null : coverPicture(vaultUrl(cv.image), draw);
+      covers: shownCovers(data.covers).flatMap((cv) => {
+        const pic = coverPicture(vaultUrl(cv.image), draw);
         return pic ? [{ img: pic, area: cv.area, alpha: 1 }] : [];
       }),
       // Жетоны под туманом: в неоткрытой части их не видно.

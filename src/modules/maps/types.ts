@@ -99,6 +99,8 @@ export interface MapCover {
   area: number[];
   title?: string;
   lifted: boolean;
+  // A level underground: shown only when the GM has gone down to it (`lifted` — gone down), over the map.
+  below?: boolean;
 }
 
 export interface MapData {

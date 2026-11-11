@@ -63,6 +63,9 @@ export interface Layout {
   // no floor of its own (the storey below shows there); things, doors, walls and roofs of its own. The time of day, the
   // ground's colour and the world are the map's. A storey has no storeys.
   levels?: Layout[];
+  // Levels under the map (0.110), from the first one down: each a whole underground of the same size, rock with rooms cut
+  // out of it (a building or a cave); no storeys, no levels of their own.
+  below?: Layout[];
 }
 // A cell of a storey with nothing in it.
 export const NOTHING = '_';

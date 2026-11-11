@@ -169,7 +169,7 @@ export default defineModule({
         } catch {
           /* no folder — no covers */
         }
-        const mine = (n: string) => n.toLowerCase().endsWith(COVER_SUFFIX) && (n.slice(0, -COVER_SUFFIX.length) === base || /^storey\d+(-roof)?$/.test(n.slice(base.length + 1, -COVER_SUFFIX.length))) && n.startsWith(base + '.');
+        const mine = (n: string) => n.toLowerCase().endsWith(COVER_SUFFIX) && (n.slice(0, -COVER_SUFFIX.length) === base || /^(storey\d+(-roof)?|under\d+)$/.test(n.slice(base.length + 1, -COVER_SUFFIX.length))) && n.startsWith(base + '.');
         return names.filter(mine).map((n) => (dir ? `${dir}/${n}` : n));
       };
       for (const f of files) discard(root, [f.rel, ...coverOf(f.rel)], { title: path.basename(f.abs), kind: fs.statSync(f.abs).isDirectory() ? 'folder' : 'file' });

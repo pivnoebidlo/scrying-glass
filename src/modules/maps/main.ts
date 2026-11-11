@@ -70,9 +70,11 @@ export default defineModule({
       }));
     },
 
-    // A roof lifted (the players see inside) or put back; no id — all of them.
+    // A roof lifted (the players see inside) or put back, a level underground gone down to or left; no id — all the roofs
+    // and storeys lifted, or everything as it was.
     liftCover(s, { path, id, lifted }: { path: string; id?: string; lifted: boolean }) {
-      return withMap(s, path, (d) => (d.covers ? { ...d, covers: d.covers.map((c) => (!id || c.id === id ? { ...c, lifted } : c)) } : d));
+      const hit = (c: MapCover) => (id ? c.id === id : !lifted || !c.below);
+      return withMap(s, path, (d) => (d.covers ? { ...d, covers: d.covers.map((c) => (hit(c) ? { ...c, lifted } : c)) } : d));
     },
 
     show(s, { path }: { path: string }) {

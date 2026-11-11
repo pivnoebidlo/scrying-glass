@@ -393,10 +393,12 @@ number and a pin), doors and pillars indoors; grass, roads, squares, sand, water
 houses, wells, the town wall and its towers in a town (a house stands in a forest or a swamp too). Outdoors a building can
 also be put up of its parts: «Building» drags a rectangle of walls round a plank floor (a room built onto another shares
 its wall), «Wall» and «Floor» go cell by cell, «Door» cuts a door into a wall, and «Roof» puts a roof over the whole
-building or takes it off (two houses that share a wall have a roof each; a door between them makes them one). A house can have storeys: «Storey» in the
-top bar adds one on top, and it is painted like the map, the storeys under it dimmed. Roofs and storeys go to the Maps as layers
-of their own: in the map's «Roofs & storeys» section a click lifts the top one for the players during the game (the roof, then the
-upper floor, then the one below), the right button puts it back; lava, ice, mud and
+building or takes it off (two houses that share a wall have a roof each; a door between them makes them one). A map can have storeys and levels underground: «Storey»
+in the top bar, with buttons for a storey on top and a level under the lowest. A storey is painted like the map, the storeys under it
+dimmed; a level underground is rock to cut rooms from (a cave under a cave). Stairs, trapdoors and hatches of the levels over and
+under show as dashed ghosts with ↑ or ↓, to line them up. Roofs, storeys and levels underground go to the Maps as layers of their
+own: in the map's «Levels» section a click lifts the top roof or storey for the players during the game, and when nothing is left
+over a place, goes down a level; the right button goes back; lava, ice, mud and
 pits on any map; outdoors also cobbles, a stone road, a ploughed field, the sea (with a sandy shore), mountains, firs,
 palms and dead trees. The ground takes a colour: spring, autumn, snow (with snow on the trees, the stones and the roofs), dry
 steppe or ash outdoors; the time of day — dawn, dusk or night, when fires, torches, braziers, lamps, crystals, lava and

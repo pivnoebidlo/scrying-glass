@@ -15,7 +15,8 @@
   import {
     applyFogOp, buildFog, drawMap, drawPins, fitCanvas, fogCanvas, loadImage, pinHead, visibleArea, type LoadedImage, type Xf,
     coverPicture,
-    inCover,
+    coverStep,
+    shownCovers,
   } from '../render';
   import { FULL_VIEW, GRID_STYLE, type FogOp, type MapData, type MapPin as Pin, type MapToken, type MapView } from '../types';
   import { drawTokens, snap, tokenCell, tokenViews, type TokenView } from '../tokens';
@@ -193,8 +194,8 @@
       fogBlur: 0,
       grid: gridPreview ? { ...data.grid, ...gridPreview } : data.grid,
       // Roofs and storeys not lifted: in their section as the players see them; elsewhere the GM sees a little through.
-      covers: (data.covers ?? []).flatMap((cv) => {
-        const pic = cv.lifted ? null : coverPicture(vaultUrl(cv.image), draw);
+      covers: shownCovers(data.covers).flatMap((cv) => {
+        const pic = coverPicture(vaultUrl(cv.image), draw);
         return pic ? [{ img: pic, area: cv.area, alpha: ui.tab === 'covers' ? 1 : 0.8 }] : [];
       }),
       underFog: (c) =>
@@ -372,14 +373,10 @@
       ui.pin = id;
       focusTitle = true;
     } else if ((e.button === 0 || e.button === 2) && !spaceDown && ui.tool === 'cover') {
-      // A click lifts the topmost roof or storey under the pointer that is still down; with none left there, or with the
-      // right button, the lowest lifted one goes back.
+      // A click lifts the topmost roof or storey there, then goes down underground; the right button goes back a step.
       const m = toMap(p);
-      const here = (data.covers ?? []).filter((c) => inCover(c.area, m.x, m.y));
-      const up = e.button === 0 ? here.findLast((c) => !c.lifted) : undefined;
-      const back = here.find((c) => c.lifted);
-      if (up) dispatch('maps', 'liftCover', { path, id: up.id, lifted: true });
-      else if (back) dispatch('maps', 'liftCover', { path, id: back.id, lifted: false });
+      const step = coverStep(data.covers ?? [], m.x, m.y, e.button === 2);
+      if (step) dispatch('maps', 'liftCover', { path, ...step });
     } else if (e.button === 1 || spaceDown || ui.tool === 'pan') {
       drag = { kind: 'pan', sx: p.x, sy: p.y, ox: xf.ox, oy: xf.oy };
     } else if (ui.tool === 'reveal' || ui.tool === 'hide') {
@@ -725,7 +722,6 @@
               <tab.icon size={14} /> {t(`maps.tab.${tab.id}`)}
               {#if tab.id === 'tokens' && data.tokens.length}<span class="count">{data.tokens.length}</span>{/if}
               {#if tab.id === 'pins' && pins.length}<span class="count">{pins.length}</span>{/if}
-              {#if tab.id === 'covers'}<span class="count">{data.covers!.filter((cv) => !cv.lifted).length}/{data.covers!.length}</span>{/if}
             </button>
           {/each}
         </nav>

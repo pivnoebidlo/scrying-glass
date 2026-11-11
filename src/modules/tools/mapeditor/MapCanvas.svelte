@@ -6,12 +6,14 @@
   import { drawStoreys } from '../mapgen/draw';
   import { EDGE_KINDS, NOTHING, type Layout } from '../mapgen/layout';
   import {
-    addBuilding, addHouse, addRoom, misfit, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, MAX_STRETCH, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower, wipe, edgeAt, edgePath, nearestSide, setEdges, toggleEdgeDoor,
+    levelOf, levelRange, addBuilding, addHouse, addRoom, misfit, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, MAX_STRETCH, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower, wipe, edgeAt, edgePath, nearestSide, setEdges, toggleEdgeDoor,
   } from './edit';
   import { editor } from './store.svelte';
   import { assets } from './assets.svelte';
 
   let { layout }: { layout: Layout } = $props();
+  // Things that lead to another level: shown on the levels over and under as ghosts.
+  const STAIRWAYS: string[] = ['stairs', 'spiralstair', 'trapdoor', 'hatch'];
 
   let base = $state<HTMLCanvasElement>();
   let over = $state<HTMLCanvasElement>();
@@ -20,7 +22,7 @@
   const c = $derived(editor.cell);
   const brush = $derived(brushesFor(layout.style).find((b) => b.id === editor.brush) ?? brushesFor(layout.style)[0]!);
   // A storey's eraser leaves nothing there: the storey below shows.
-  const erase = $derived(editor.level ? NOTHING : brushesFor(layout.style).find((b) => b.id === 'erase')!.cell!);
+  const erase = $derived(editor.level > 0 ? NOTHING : brushesFor(layout.style).find((b) => b.id === 'erase')!.cell!);
   // A wall or a fence to draw along the sides of cells.
   const thinKind = $derived(editor.thin && editor.mode === 'brush' && brush.cell && EDGE_KINDS.includes(brush.cell) ? brush.cell : null);
   // The pointer in cells, not rounded: for the corners and sides of cells.
@@ -60,6 +62,28 @@
       ctx.strokeRect(x * c + 1, y * c + 1, w * c - 2, h * c - 2);
       ctx.restore();
     };
+    // The way up and down: stairs, trapdoors and hatches of the levels over and under this one, dashed, with an arrow.
+    if (editor.root) {
+      const [lo, hi] = levelRange(editor.root);
+      for (const [d, arrow] of [[1, '↑'], [-1, '↓']] as const) {
+        const n = editor.level + d;
+        if (n < lo || n > hi) continue;
+        for (const q of levelOf(editor.root, n).props ?? []) {
+          if (!STAIRWAYS.includes(q.kind)) continue;
+          ctx.save();
+          ctx.strokeStyle = '#5ec8e5';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 4]);
+          ctx.strokeRect(q.x * c + 2, q.y * c + 2, q.w * c - 4, q.h * c - 4);
+          ctx.fillStyle = '#5ec8e5';
+          ctx.font = `700 ${Math.max(11, c * 0.5)}px -apple-system, system-ui, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(arrow, (q.x + q.w / 2) * c, (q.y + q.h / 2) * c);
+          ctx.restore();
+        }
+      }
+    }
     // The mimic: a chest to the players, to the master a chest that looks back (and bites when it is woken).
     (layout.props ?? []).forEach((q, i) => {
       if (q.kind !== 'mimic') return;

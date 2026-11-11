@@ -2,14 +2,14 @@
      of the map generator, so a generated map is edited the same way («Edit» in the generator). -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ChevronDown, ChevronRight, Eraser, Eye, FolderOpen, RefreshCw, Map as MapIcon, MousePointer2, Pencil, Plus, Redo2, RotateCw, Search, Trash2, Undo2, X, ZoomIn, ZoomOut } from '@lucide/svelte';
+  import { ArrowDownToLine, ArrowUpToLine, ChevronDown, ChevronRight, Eraser, Eye, FolderOpen, RefreshCw, Map as MapIcon, MousePointer2, Pencil, Plus, Redo2, RotateCw, Search, Trash2, Undo2, X, ZoomIn, ZoomOut } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import type { PropKind } from '../mapgen/furnish';
   import { EDGE_KINDS, genreOf, GENRES, isOpenAir, LIGHTS, tonesIn, type Genre, type Light } from '../mapgen/layout';
   import { landmarkPins } from '../mapgen/landmarks';
   import { layoutToMaps } from '../mapgen/toMaps';
-  import { addLevel, brushesFor, MAX_LEVELS, MAX_SIDE, MIN_SIDE, removeLevel, removeProps, resize, rotateProp, setAssetVariant, setGenre, setLight, setTone, STRETCH, tintProp, type BrushId } from './edit';
+  import { addBelow, addLevel, brushesFor, levelRange, MAX_LEVELS, MAX_SIDE, MIN_SIDE, removeLevel, removeProps, resize, rotateProp, setAssetVariant, setGenre, setLight, setTone, STRETCH, tintProp, type BrushId } from './edit';
   import { TINTS, tintOf } from '../mapgen/draw-props';
   import MapCanvas from './MapCanvas.svelte';
   import NewMapDialog from './NewMapDialog.svelte';
@@ -378,20 +378,28 @@
     const room = (i: number) => ({ title: t(open ? 'mapgen.place' : 'mapgen.room', { n: i + 1 }), note: '', color: open ? ('green' as const) : ('gold' as const) });
     failed = !(await layoutToMaps(l, editor.title, l.rooms.map((_, i) => room(i)), { pins: await landmarkPins(l) }));
   }
-  // Storeys: one more on top, or the one being edited away.
-  function addStorey() {
+  // Levels: a storey on top, a level under the lowest, or the one being edited away.
+  function addStorey(under = false) {
     if (!editor.root) return;
-    editor.changeRoot(addLevel(editor.root));
-    editor.level = editor.root.levels?.length ?? 0;
+    editor.changeRoot(under ? addBelow(editor.root) : addLevel(editor.root));
+    const [lo, hi] = levelRange(editor.root);
+    editor.level = under ? lo : hi;
     editor.picked = [];
   }
   function removeStorey() {
-    if (!editor.root || !editor.level || !confirm(t('mapedit.level.removeQ', { n: editor.level + 1 }))) return;
     const n = editor.level;
-    editor.level = n - 1;
+    if (!editor.root || !n || !confirm(t('mapedit.level.removeQ', { n: levelName(n) }))) return;
+    editor.level = n > 0 ? n - 1 : n + 1;
     editor.changeRoot(removeLevel(editor.root, n));
     editor.picked = [];
   }
+  // The name of a level: the map is the first storey, those under it −1, −2…
+  const levelName = (n: number) => (n >= 0 ? String(n + 1) : `−${-n}`);
+  const levels = $derived.by(() => {
+    if (!root) return [0];
+    const [lo, hi] = levelRange(root);
+    return Array.from({ length: hi - lo + 1 }, (_, i) => hi - i);
+  });
   function remove() {
     if (confirm(t('mapedit.deleteQ', { name: editor.title }))) void editor.remove();
   }
@@ -540,11 +548,12 @@
       <span class="sep"></span>
       <label class="check" title={t('mapedit.levelHint')}>{t('mapedit.level')}
         <select value={editor.level} onchange={(e) => ((editor.level = Number(e.currentTarget.value)), (editor.picked = []))}>
-          {#each [0, ...(root?.levels ?? []).map((_, i) => i + 1)] as n (n)}<option value={n}>{t('mapedit.level.n', { n: n + 1 })}</option>{/each}
+          {#each levels as n (n)}<option value={n}>{t('mapedit.level.n', { n: levelName(n) })}</option>{/each}
         </select>
       </label>
-      <button class="icon-btn" title={t('mapedit.level.add')} disabled={(root?.levels?.length ?? 0) >= MAX_LEVELS} onclick={addStorey}><Plus size={14} /></button>
-      {#if editor.level > 0}<button class="icon-btn" title={t('mapedit.level.remove')} onclick={removeStorey}><Trash2 size={14} /></button>{/if}
+      <button class="icon-btn" title={t('mapedit.level.add')} disabled={(root?.levels?.length ?? 0) >= MAX_LEVELS} onclick={() => addStorey()}><ArrowUpToLine size={14} /></button>
+      <button class="icon-btn" title={t('mapedit.level.addBelow')} disabled={(root?.below?.length ?? 0) >= MAX_LEVELS} onclick={() => addStorey(true)}><ArrowDownToLine size={14} /></button>
+      {#if editor.level !== 0}<button class="icon-btn" title={t('mapedit.level.remove')} onclick={removeStorey}><Trash2 size={14} /></button>{/if}
       <span class="sep"></span>
       {/if}
       <label class="check"><input type="checkbox" bind:checked={editor.grid} /> {t('mapedit.grid')}</label>

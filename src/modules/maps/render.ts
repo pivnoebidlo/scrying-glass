@@ -129,6 +129,31 @@ export function coverPicture(src: string, onload: () => void): LoadedImage | nul
   return null;
 }
 
+// What covers the map as the players see it, in drawing order: the levels underground gone down to (the deepest last),
+// then the roofs and storeys still down.
+export const shownCovers = <C extends { lifted: boolean; below?: boolean }>(covers: readonly C[] = []): C[] => [
+  ...covers.filter((c) => c.below && c.lifted),
+  ...covers.filter((c) => !c.below && !c.lifted),
+];
+
+// What a click at a point does (the GM in the Maps): lifts the topmost roof or storey still down there; with none left,
+// goes down to the next level underground; `back` (the right button, or nothing more to do) — the other way, one step.
+export function coverStep<C extends { id: string; lifted: boolean; below?: boolean; area: number[] }>(covers: readonly C[], x: number, y: number, back: boolean): { id: string; lifted: boolean } | null {
+  const here = covers.filter((c) => inCover(c.area, x, y));
+  const above = here.filter((c) => !c.below);
+  const under = here.filter((c) => c.below);
+  if (!back) {
+    const up = above.findLast((c) => !c.lifted);
+    if (up) return { id: up.id, lifted: true };
+    const down = under.find((c) => !c.lifted);
+    if (down) return { id: down.id, lifted: true };
+  }
+  const deepest = under.findLast((c) => c.lifted);
+  if (deepest) return { id: deepest.id, lifted: false };
+  const lowest = above.find((c) => c.lifted);
+  return lowest ? { id: lowest.id, lifted: false } : null;
+}
+
 // A cover's area as a path in the map's pixels.
 export function coverPath(area: number[], img: { w: number; h: number }): Path2D {
   const p = new Path2D();
