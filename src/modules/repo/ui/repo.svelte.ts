@@ -10,7 +10,7 @@ import { OFFICIAL_AUTHOR, OFFICIAL_SOURCE, sourceOf, type Need, type SystemMark,
 // An entry of a catalog with the source it is in.
 export type Found = RepoEntry & { source: string };
 // The kinds of things in the Community (the «What» of the window).
-export type What = 'everything' | 'adventures' | 'supplements' | 'systems' | 'bestiaries';
+export type What = 'everything' | 'adventures' | 'supplements' | 'systems' | 'bestiaries' | 'assets';
 
 export const repo = $state({
   info: null as RepoInfo | null,
@@ -48,6 +48,8 @@ export const repo = $state({
   wanted: null as { adventure: string; lines: NeedLine[] } | null,
   // The last result to show (done or failed).
   notice: '',
+  // The ids of the packs of map assets in the library now (a mark alone may be stale: the folder removed).
+  assetPacks: [] as string[],
 });
 
 let listening = false;
@@ -94,6 +96,7 @@ export const reportsOf = (e: Found): Report[] => repo.reports[e.source]?.find((r
 // The catalogs of every source turned on (one source — only it).
 export async function loadCatalogs(only?: string) {
   if (!repo.info) await loadInfo();
+  void loadAssetPacks();
   await Promise.all(sourcesOn().filter((s) => !only || s.id === only).map((s) => loadSource(s.id)));
 }
 
@@ -152,7 +155,10 @@ export function updatesHere(): { key: string; entry: Found }[] {
   const packs = Object.entries(repo.info?.systems.installed ?? {}).flatMap(([pack, m]) => (newer(m) ? [{ key: `system:${pack}`, entry: newer(m)! }] : []));
   const beasts = Object.entries(repo.info?.bestiaries.installed ?? {}).flatMap(([key, m]) => (newer(m) ? [{ key: `bestiary:${key}`, entry: newer(m)! }] : []));
   const content = Object.entries(repo.info?.content.installed ?? {}).flatMap(([id, m]) => (newer(m) ? [{ key: `content:${id}`, entry: newer(m)! }] : []));
-  return [...adventures, ...packs, ...beasts, ...content];
+  const assets = Object.entries(repo.info?.assets.installed ?? {})
+    .filter(([id]) => repo.assetPacks.includes(id))
+    .flatMap(([id, m]) => (newer(m) ? [{ key: `assets:${id}`, entry: newer(m)! }] : []));
+  return [...adventures, ...packs, ...beasts, ...content, ...assets];
 }
 
 // A system pack downloaded: which version this library has (0 — none).
@@ -276,6 +282,35 @@ export const contentIdOf = (e: Found) => contentMark(e)?.[0] ?? null;
 export const officialContent = (family: string) =>
   allFound().filter((e) => e.kind === 'content' && e.system === family && e.author === OFFICIAL_AUTHOR && e.source === OFFICIAL_SOURCE);
 
+// Packs of map assets (shared/mapassets.ts): which are in the library, which version of an entry it has (0 — none).
+export async function loadAssetPacks() {
+  repo.assetPacks = (await window.api.listMapAssets()).packs.map((p) => p.manifest.id);
+}
+const assetsMark = (e: Found) => Object.entries(repo.info?.assets.installed ?? {}).find(([, m]) => m.source === e.source && m.author === e.author && m.id === e.id);
+export const assetsVersion = (e: Found) => {
+  const m = assetsMark(e);
+  return m && repo.assetPacks.includes(m[0]) ? m[1].version : 0;
+};
+
+export async function installAssets(e: Found) {
+  const { source, ...entry } = $state.snapshot(e) as Found;
+  const r = await work(t('repo.downloading', { name: e.title }), () => window.api.repoInstallAssets(source, entry));
+  if (!r) return;
+  repo.info = await window.api.repoInfo();
+  await loadAssetPacks();
+  notice(t('repo.assetsInstalled', { name: e.title, folder: r.folder }));
+}
+
+export async function publishAssets(p: { source: string; folder: string; title: string; description: string; lang: string; author?: string; license?: string }) {
+  const entry = await work(t('repo.publishing', { name: p.title }), () => window.api.repoPublishAssets(p));
+  if (!entry) return false;
+  notice(t('repo.published', { name: entry.title, version: entry.version }));
+  repo.info = await window.api.repoInfo();
+  remindKey();
+  void loadCatalogs(p.source);
+  return true;
+}
+
 export async function installBestiary(e: Found) {
   const { source, ...entry } = $state.snapshot(e) as Found;
   const n = await work(t('repo.downloading', { name: e.title }), () => window.api.repoInstallBestiary(source, entry));
@@ -343,7 +378,7 @@ export const setCheckOnLaunch = (on: boolean) => localStorage.setItem(CHECK, on 
 export async function checkUpdates() {
   if (!checkOnLaunch()) return;
   if (!repo.info) await loadInfo();
-  const have = [store.state.repo.installed, repo.info?.systems.installed ?? {}, repo.info?.bestiaries.installed ?? {}];
+  const have = [store.state.repo.installed, repo.info?.systems.installed ?? {}, repo.info?.bestiaries.installed ?? {}, repo.info?.assets.installed ?? {}];
   if (!have.some((m) => Object.keys(m).length)) return;
   await loadCatalogs();
   const told = new Set<string>(JSON.parse(localStorage.getItem(ANNOUNCED) ?? '[]'));
@@ -462,6 +497,7 @@ async function installOnly(e: Found) {
   if (e.kind === 'system') return installSystem(e);
   if (e.kind === 'content') return installContent(e);
   if (e.kind === 'bestiary') return installBestiary(e);
+  if (e.kind === 'assets') return installAssets(e);
   const old = installedFolder(e);
   const got = await work(t('repo.downloading', { name: e.title }), () => window.api.repoDownload(e.source, e.author, e.id));
   if (!got) return;

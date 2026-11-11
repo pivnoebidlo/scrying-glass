@@ -60,7 +60,7 @@ import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnounc
 import type { Game } from '../shared/schedule';
 import { clearInbox, deleteSent, forgetChat, hideMessage, inboxPhoto, initTelegram, setTables, markRead, readInbox, sendPicture, sendText, setToken, status as tgStatus, stopTelegram, updateChat, type TgSettings } from './telegram';
 import { setHotkeys } from '../shared/hotkeys';
-import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, coverFromBytes, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, loadKeyWords, recoveryWords, wordsAuthor, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setBestiaryMark, setContentMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
+import { addSource, adminBlocked, adminDismiss, adminRemove, adminReports, adminUnblock, catalog as repoCatalog, cover as repoCover, coverFrom, coverFromBytes, discardDownload, download as repoDownload, initRepo, keyFile, keyKept, loadKeyFile, loadKeyWords, recoveryWords, wordsAuthor, newAdventureId, publish as repoPublish, removeSource, report as repoReport, repoInfo, setAdmin, setAuthorName, setAssetsMark, setBestiaryMark, setContentMark, setSystemMark, setSourceOff, unpublish as repoUnpublish, type RepoSettings } from './repo';
 import { ID_RE, OFFICIAL_AUTHOR, sourceOf, type BestiaryMark, type Need, type RepoEntry, type RepoProgress } from '../shared/repo';
 import { isReleaseUrl, type UpdateSettings } from '../shared/updates';
 import {
@@ -1672,6 +1672,46 @@ ipcMain.handle('repo:publishContent', async (_event, p: { source: string; file: 
   }, coverOf(p.cover, true));
   setContentMark('published', m.id, { source: p.source, id: entry.id, version: entry.version });
   return entry;
+});
+// Packs of map assets (main/assetpacks.ts) in the Community: a folder of the library's assets published as its pack
+// (the entry id — the pack's id: the same folder again is a new version), a pack downloaded into the library. Only to a
+// service that knows them (feature 'assets'): an older one would keep the entry as an adventure.
+ipcMain.handle('repo:publishAssets', async (_event, p: { source: string; folder: string; title: string; description: string; lang: string; author?: string; license?: string; cover?: string }) => {
+  const lib = libraryPath();
+  if (!lib) return null;
+  const cat = await repoCatalog(p.source);
+  if (!cat.features?.includes('assets')) throw new Error('repo:no-assets');
+  const tmp = path.join(app.getPath('userData'), 'repo', `assets-${randomUUID().slice(0, 8)}${ASSET_PACK_EXT}`);
+  fs.mkdirSync(path.dirname(tmp), { recursive: true });
+  try {
+    const m = await exportAssetPack(lib, p.folder, { title: p.title, author: p.author || repoInfo().name, license: p.license }, tmp);
+    const entry = await repoPublish(p.source, tmp, {
+      id: m.id,
+      title: p.title,
+      description: p.description,
+      system: 'assets',
+      lang: p.lang,
+      music: false,
+      app: app.getVersion(),
+      kind: 'assets',
+    }, coverOf(p.cover, true));
+    setAssetsMark('published', m.id, { source: p.source, id: entry.id, version: entry.version });
+    return entry;
+  } finally {
+    fs.rmSync(tmp, { force: true });
+  }
+});
+ipcMain.handle('repo:installAssets', async (_event, { source, entry }: { source: string; entry: RepoEntry }) => {
+  const lib = libraryPath();
+  if (!lib) return null;
+  const file = await repoDownload(source, entry.author, entry.id);
+  try {
+    const r = await installAssetPack(lib, file);
+    setAssetsMark('installed', r.manifest.id, { source, author: entry.author, id: entry.id, version: entry.version });
+    return r;
+  } finally {
+    discardDownload(file);
+  }
 });
 ipcMain.handle('repo:removeBestiary', (_event, key: string) => {
   const mark = repoInfo().bestiaries.installed[key];

@@ -268,6 +268,16 @@ describe('repository service', () => {
     expect((await call('/api/v1/unpublish', { id: 'dnd5e-srd-test01' })).status).toBe(200);
   });
 
+  it('packs of map assets: kept as their kind, listed only to apps that ask for them (0.111)', async () => {
+    const r = await publish(80, me, { id: 'ForestPack01', title: 'Deep forest', system: 'assets', kind: 'assets' });
+    expect(r.body).toMatchObject({ kind: 'assets', system: 'assets', id: 'ForestPack01' });
+    const ids = async (q: string) => ((await (await fetch(base + '/api/v1/catalog' + q)).json()) as RepoCatalog).entries.map((e) => e.id);
+    expect(await ids('?kinds=adventure,system,bestiary,supplement,content')).not.toContain('ForestPack01');
+    expect(await ids('?kinds=adventure,system,bestiary,supplement,content,assets')).toContain('ForestPack01');
+    expect((await catalog()).features).toContain('assets');
+    expect((await call('/api/v1/unpublish', { id: 'ForestPack01' })).status).toBe(200);
+  });
+
   it('uploads never committed are swept away with their files, but not before they expire', async () => {
     const t = await call<PublishTicket>('/api/v1/publish', { ...meta, id: 'abandoned-one', size: 10 });
     bucket.upload(t.body.pack, 10);

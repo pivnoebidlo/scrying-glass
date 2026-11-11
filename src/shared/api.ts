@@ -163,6 +163,9 @@ export interface Api {
   exportAssetPack(folder: string, meta: { title: string; author?: string; license?: string }): Promise<AssetPackManifest | null>;
   installAssetPack(): Promise<(InstalledAssetPack & { replaced: boolean }) | null>;
   removeAssetPack(folder: string): Promise<boolean>;
+  // …and in the Community: a folder published as its pack; a pack downloaded and installed.
+  repoPublishAssets(p: { source: string; folder: string; title: string; description: string; lang: string; author?: string; license?: string; cover?: string }): Promise<RepoEntry | null>;
+  repoInstallAssets(source: string, entry: RepoEntry): Promise<(InstalledAssetPack & { replaced: boolean }) | null>;
   onMapAssetsChanged(cb: () => void): void;
 
   // Справочник (shared/compendium.ts): Markdown-записи в папках справочника хранилища и в библиотеке

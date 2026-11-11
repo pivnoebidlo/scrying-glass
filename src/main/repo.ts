@@ -29,6 +29,7 @@ export interface RepoSettings {
   systems?: RepoInfo['systems'];
   bestiaries?: RepoInfo['bestiaries'];
   content?: RepoInfo['content'];
+  assets?: RepoInfo['assets'];
   key?: { x: string; d: string; enc: boolean };
   // The key was saved to a file (or loaded from one, or the GM says it is kept): no reminder.
   keySaved?: boolean;
@@ -84,7 +85,17 @@ export function repoInfo(): RepoInfo {
     systems: { published: s.systems?.published ?? {}, installed: s.systems?.installed ?? {} },
     bestiaries: { published: s.bestiaries?.published ?? {}, installed: s.bestiaries?.installed ?? {} },
     content: { published: s.content?.published ?? {}, installed: s.content?.installed ?? {} },
+    assets: { published: s.assets?.published ?? {}, installed: s.assets?.installed ?? {} },
   };
+}
+
+// Remember (or forget — null) a pack of map assets published from here or downloaded (by pack id).
+export function setAssetsMark(which: 'published' | 'installed', id: string, mark: (SystemMark & { author?: string }) | null) {
+  const s = deps!.get();
+  const c = { published: { ...(s.assets?.published ?? {}) }, installed: { ...(s.assets?.installed ?? {}) } };
+  if (mark) (c[which] as Record<string, unknown>)[id] = mark;
+  else delete c[which][id];
+  deps!.save({ ...s, assets: c });
 }
 
 // Remember (or forget — null) content of a system published from here or downloaded (by content id).
@@ -292,7 +303,7 @@ export const adminBlocked = (source: string) => adminCall<BlockedEntry[]>(source
 export const adminUnblock = (source: string, author: string, id: string) => adminCall(source, '/api/v1/admin/unblock', adminToken(source), { author, id });
 
 export async function catalog(source: string): Promise<RepoCatalog> {
-  const res = await request(`${base(source)}/api/v1/catalog?kinds=adventure,system,bestiary,supplement,content`);
+  const res = await request(`${base(source)}/api/v1/catalog?kinds=adventure,system,bestiary,supplement,content,assets`);
   if (!res.ok) throw await errorOf(res);
   return (await res.json()) as RepoCatalog;
 }

@@ -1,8 +1,9 @@
 <!-- Packs of assets: the packs installed, the GM's own folders that can go as a pack («.sgassets»), a pack to install.
      A pack is a folder of <library>/assets/ (main/assetpacks.ts); the palette shows it as any folder. -->
 <script lang="ts">
-  import { Download, PackagePlus, Trash2 } from '@lucide/svelte';
-  import { t } from '../../../renderer/lib/i18n.svelte';
+  import { CloudUpload, Download, PackagePlus, Trash2 } from '@lucide/svelte';
+  import { locale, t } from '../../../renderer/lib/i18n.svelte';
+  import { loadCatalogs, publishAssets, repo, sourceName, sourcesOn } from '../../repo/ui/repo.svelte';
   import type { AssetPackManifest } from '../../../shared/mapassets';
   import { assets } from './assets.svelte';
 
@@ -19,8 +20,15 @@
     return [...counts.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([folder, count]) => ({ folder, count, pack: packs.get(folder) ?? null }));
   });
 
-  // The pack being saved: its folder and words.
-  let saving = $state<{ folder: string; title: string; author: string; license: string } | null>(null);
+  // The pack being saved: its folder and words; for the Community — a description and where.
+  let saving = $state<{ folder: string; title: string; author: string; license: string; description: string; source: string } | null>(null);
+  // The repositories that take packs of assets (service 0.10.0 and later).
+  const targets = $derived(repo.info ? sourcesOn().filter((s) => s.kind === 'repo' && repo.catalogs[s.id]?.catalog?.features?.includes('assets')) : []);
+  $effect(() => {
+    if (saving && !saving.source && targets[0]) saving.source = targets[0].id;
+  });
+  // Published from here: the version in the Community.
+  const publishedOf = (id: string) => repo.info?.assets.published[id];
   let busy = $state(false);
   let said = $state<string | null>(null);
   let error = $state<string | null>(null);
@@ -31,7 +39,21 @@
   };
   function save(folder: string, pack: AssetPackManifest | null) {
     said = error = null;
-    saving = { folder, title: pack?.title ?? folder, author: pack?.author ?? '', license: pack?.license ?? '' };
+    saving = { folder, title: pack?.title ?? folder, author: pack?.author ?? '', license: pack?.license ?? '', description: '', source: '' };
+    void loadCatalogs();
+  }
+  async function share() {
+    if (!saving || !saving.title.trim() || !saving.source) return;
+    busy = true;
+    error = null;
+    const s = $state.snapshot(saving);
+    const ok = await publishAssets({ source: s.source, folder: s.folder, title: s.title, description: s.description, lang: locale.lang, author: s.author, license: s.license });
+    busy = false;
+    if (ok) {
+      said = t('mapedit.pack.shared', { title: s.title });
+      saving = null;
+      await assets.load(true);
+    } else error = repo.notice || t('mapedit.pack.err.other');
   }
   async function write() {
     if (!saving || !saving.title.trim()) return;
@@ -80,11 +102,19 @@
         <label>{t('mapedit.pack.name')} <input bind:value={saving.title} maxlength="120" required /></label>
         <label>{t('mapedit.pack.author')} <input bind:value={saving.author} maxlength="120" placeholder={t('mapedit.pack.authorPh')} /></label>
         <label>{t('mapedit.pack.license')} <textarea bind:value={saving.license} rows="3" maxlength="2000" placeholder={t('mapedit.pack.licensePh')}></textarea></label>
+        <label>{t('mapedit.pack.description')} <textarea bind:value={saving.description} rows="3" maxlength="4000" placeholder={t('mapedit.pack.descriptionPh')}></textarea></label>
+        {#if targets.length > 1}
+          <label>{t('mapedit.pack.where')}
+            <select bind:value={saving.source}>{#each targets as s (s.id)}<option value={s.id}>{sourceName(s)}</option>{/each}</select>
+          </label>
+        {/if}
         <p class="faint small">{t('mapedit.pack.rights')}</p>
         <div class="row">
           <button class="btn primary" type="submit" disabled={busy || !saving.title.trim()}><Download size={14} /> {t('mapedit.pack.saveFile')}</button>
+          <button class="btn" type="button" disabled={busy || !saving.title.trim() || !targets.length || !!repo.busy} title={targets.length ? '' : t('mapedit.pack.noTargets')} onclick={() => void share()}><CloudUpload size={14} /> {t('mapedit.pack.publish')}</button>
           <button class="btn" type="button" onclick={() => (saving = null)}>{t('mapedit.cancel')}</button>
         </div>
+        {#if !targets.length}<p class="faint small">{t('mapedit.pack.noTargets')}</p>{/if}
       </form>
     {:else}
       <ul class="list">
@@ -93,7 +123,7 @@
             <div class="what">
               <strong>{f.pack?.title ?? f.folder}</strong>
               <span class="faint small">
-                {f.pack ? t('mapedit.pack.release', { release: f.pack.release }) + ' · ' : ''}{t('mapedit.pack.count', { count: f.count })}{f.pack?.author ? ` · ${f.pack.author}` : ''}
+                {f.pack ? t('mapedit.pack.release', { release: f.pack.release }) + ' · ' : ''}{t('mapedit.pack.count', { count: f.count })}{f.pack?.author ? ` · ${f.pack.author}` : ''}{f.pack && publishedOf(f.pack.id) ? ` · ${t('mapedit.pack.inCommunity', { version: publishedOf(f.pack.id)!.version })}` : ''}
               </span>
               {#if f.pack?.license}<span class="faint small license" title={f.pack.license}>{f.pack.license}</span>{/if}
             </div>
@@ -184,6 +214,7 @@
     font-size: 13px;
   }
   .save input,
+  .save select,
   .save textarea {
     width: 100%;
     font: inherit;

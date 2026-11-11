@@ -527,7 +527,8 @@ with its size. Full backups take the assets only together with pictures and musi
 A folder of assets can go to another GM as one file: the box button under «My assets» opens «Packs of assets» — «Save as a
 pack…» writes the folder into a «.sgassets» file with its name, author and license, «Install a pack…» puts such a file into
 the library as a folder of its own. A newer release of the same pack replaces the old one (that goes to the library's
-trash). Share only pictures you may share.
+trash). The same window publishes a pack in the Community (a repository with service 0.10.0 or later), and the Community's
+«Map assets» installs and updates packs. Share only pictures you may share.
 
 **Wilderness encounter** (D&D, Tools → Wilderness encounter): forest, field, shore, swamp or a town quarter, the party's level and size
 and the difficulty → a scene (ambush, roadblock, lair ahead, pursuit, surrounded, chance meeting) with what the foes want,

@@ -27,7 +27,8 @@ export interface RepoEntry {
   system: string;
   // What it is: a system pack (shared/syspack.ts), a bestiary (cards, the file of «export cards»), a supplement (an
   // .sgpack of creatures and compendium entries to use in adventures), a system's content (.sgcontent: built-in
-  // creatures and compendium books, shared/content.ts); none — an adventure (.sgpack). `system` of a bestiary — the
+  // creatures and compendium books, shared/content.ts), a pack of map assets (.sgassets, shared/mapassets.ts: `system`
+  // 'assets', the entry id — the pack's id; service 0.10.0, feature 'assets'); none — an adventure (.sgpack). `system` of a bestiary — the
   // system of its cards; of content — the family it is for.
   kind?: EntryKind;
   // What a supplement is about: bestiary, spells, items, rules, collection (shared/adventures.ts SUPPLEMENT_KINDS).
@@ -51,7 +52,7 @@ export interface RepoEntry {
 
 export interface RepoCatalog {
   api: number;
-  // What the service knows beyond adventures: 'systems', 'bestiaries', 'supplements', 'content', 'needs' (entries
+  // What the service knows beyond adventures: 'systems', 'bestiaries', 'supplements', 'content', 'needs', 'assets' (entries
   // keep what they need). The catalog lists
   // other kinds only when asked: ?kinds=adventure,system,bestiary,supplement,content (`all` — adventures and systems, as 0.59 asks: an older
   // app would take an unknown kind for an adventure).
@@ -91,8 +92,8 @@ export interface Need {
 }
 export const MAX_NEEDS = 16;
 
-export type EntryKind = 'system' | 'bestiary' | 'supplement' | 'content';
-export const ENTRY_KINDS: EntryKind[] = ['system', 'bestiary', 'supplement', 'content'];
+export type EntryKind = 'system' | 'bestiary' | 'supplement' | 'content' | 'assets';
+export const ENTRY_KINDS: EntryKind[] = ['system', 'bestiary', 'supplement', 'content', 'assets'];
 const SUBKIND_RE = /^[a-z]{1,20}$/;
 
 export interface PublishTicket {
@@ -203,6 +204,8 @@ export interface RepoInfo {
   bestiaries: { published: Record<string, BestiaryMark>; installed: Record<string, BestiaryMark & { author: string }> };
   // Content of systems (shared/content.ts) published from here and downloaded, by content id.
   content: { published: Record<string, SystemMark>; installed: Record<string, SystemMark & { author: string }> };
+  // Packs of map assets published from here and downloaded, by pack id.
+  assets: { published: Record<string, SystemMark>; installed: Record<string, SystemMark & { author: string }> };
 }
 export interface BestiaryMark extends SystemMark {
   title: string;

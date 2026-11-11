@@ -73,6 +73,8 @@ const api: Api = {
   exportAssetPack: (folder, meta) => ipcRenderer.invoke('mapassets:exportPack', { folder, meta }),
   installAssetPack: () => ipcRenderer.invoke('mapassets:installPack'),
   removeAssetPack: (folder) => ipcRenderer.invoke('mapassets:removePack', folder),
+  repoPublishAssets: (p) => ipcRenderer.invoke('repo:publishAssets', p),
+  repoInstallAssets: (source, entry) => ipcRenderer.invoke('repo:installAssets', { source, entry }),
   onMapAssetsChanged: (cb) => { ipcRenderer.on('mapassets:changed', () => cb()); },
 
   readEntry: (path) => ipcRenderer.invoke('compendium:read', path),
