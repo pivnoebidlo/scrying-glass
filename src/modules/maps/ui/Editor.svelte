@@ -192,10 +192,10 @@
       fogAlpha: 0.6,
       fogBlur: 0,
       grid: gridPreview ? { ...data.grid, ...gridPreview } : data.grid,
-      // Roofs not lifted: the GM sees a little through them, and more so while lifting them.
+      // Roofs and storeys not lifted: in their section as the players see them; elsewhere the GM sees a little through.
       covers: (data.covers ?? []).flatMap((cv) => {
         const pic = cv.lifted ? null : coverPicture(vaultUrl(cv.image), draw);
-        return pic ? [{ img: pic, area: cv.area, alpha: ui.tab === 'covers' ? 0.6 : 0.85 }] : [];
+        return pic ? [{ img: pic, area: cv.area, alpha: ui.tab === 'covers' ? 1 : 0.8 }] : [];
       }),
       underFog: (c) =>
         drawTokens(c, tv ? tokens.map((t) => (t.id === tv.id ? { ...t, x: tv.x, y: tv.y } : t)) : tokens, i, xf, {
@@ -371,11 +371,15 @@
       dispatch('maps', 'addPin', { path, pin: { id, x: m.x, y: m.y, title: '', note: '', color: ui.pinColor, icon: ui.pinIcon, shown: ui.pinShown } });
       ui.pin = id;
       focusTitle = true;
-    } else if (e.button === 0 && !spaceDown && ui.tool === 'cover') {
-      // The topmost roof under the pointer goes up or down.
+    } else if ((e.button === 0 || e.button === 2) && !spaceDown && ui.tool === 'cover') {
+      // A click lifts the topmost roof or storey under the pointer that is still down; with none left there, or with the
+      // right button, the lowest lifted one goes back.
       const m = toMap(p);
-      const cv = [...(data.covers ?? [])].reverse().find((c) => inCover(c.area, m.x, m.y));
-      if (cv) dispatch('maps', 'liftCover', { path, id: cv.id, lifted: !cv.lifted });
+      const here = (data.covers ?? []).filter((c) => inCover(c.area, m.x, m.y));
+      const up = e.button === 0 ? here.findLast((c) => !c.lifted) : undefined;
+      const back = here.find((c) => c.lifted);
+      if (up) dispatch('maps', 'liftCover', { path, id: up.id, lifted: true });
+      else if (back) dispatch('maps', 'liftCover', { path, id: back.id, lifted: false });
     } else if (e.button === 1 || spaceDown || ui.tool === 'pan') {
       drag = { kind: 'pan', sx: p.x, sy: p.y, ox: xf.ox, oy: xf.oy };
     } else if (ui.tool === 'reveal' || ui.tool === 'hide') {
@@ -846,6 +850,7 @@
         onpointercancel={up}
         onpointerleave={leave}
         onwheel={wheel}
+        oncontextmenu={(e) => ui.tool === 'cover' && e.preventDefault()}
       ></canvas>
       {#if !img}<div class="loading faint">{t('maps.loading')}</div>{/if}
       {#if ui.tab === 'tokens' && ui.tokenList}

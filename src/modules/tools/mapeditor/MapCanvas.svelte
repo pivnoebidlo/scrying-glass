@@ -3,8 +3,8 @@
      the right button takes away. -->
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
-  import { drawLayout } from '../mapgen/draw';
-  import { EDGE_KINDS, type Layout } from '../mapgen/layout';
+  import { drawStoreys } from '../mapgen/draw';
+  import { EDGE_KINDS, NOTHING, type Layout } from '../mapgen/layout';
   import {
     addBuilding, addHouse, addRoom, misfit, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, MAX_STRETCH, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower, wipe, edgeAt, edgePath, nearestSide, setEdges, toggleEdgeDoor,
   } from './edit';
@@ -19,7 +19,8 @@
   let rect = $state<{ a: { x: number; y: number }; b: { x: number; y: number } } | null>(null);
   const c = $derived(editor.cell);
   const brush = $derived(brushesFor(layout.style).find((b) => b.id === editor.brush) ?? brushesFor(layout.style)[0]!);
-  const erase = $derived(brushesFor(layout.style).find((b) => b.id === 'erase')!.cell!);
+  // A storey's eraser leaves nothing there: the storey below shows.
+  const erase = $derived(editor.level ? NOTHING : brushesFor(layout.style).find((b) => b.id === 'erase')!.cell!);
   // A wall or a fence to draw along the sides of cells.
   const thinKind = $derived(editor.thin && editor.mode === 'brush' && brush.cell && EDGE_KINDS.includes(brush.cell) ? brush.cell : null);
   // The pointer in cells, not rounded: for the corners and sides of cells.
@@ -32,7 +33,8 @@
     base.height = layout.h * c;
     // Again when a picture of the GM's has loaded.
     void assets.rev;
-    drawLayout(base.getContext('2d')!, layout, c, editor.numbers ? { labels: (i) => String(i + 1) } : {});
+    // On a storey the map and the storeys under it show dimmed.
+    drawStoreys(base.getContext('2d')!, editor.root ?? layout, editor.level, c, editor.numbers ? { labels: (i) => String(i + 1) } : {});
   });
 
   // The overlay: cheap, on every move of the mouse.
@@ -356,7 +358,7 @@
       editor.change(fn(l, p.x, p.y));
       return;
     }
-    stroke = { last: e.shiftKey && lastPainted ? lastPainted : p, started: false, ch: brush.cell!, wipe: brush.id === 'erase' };
+    stroke = { last: e.shiftKey && lastPainted ? lastPainted : p, started: false, ch: brush.id === 'erase' ? erase : brush.cell!, wipe: brush.id === 'erase' };
     paintTo(p);
   }
 

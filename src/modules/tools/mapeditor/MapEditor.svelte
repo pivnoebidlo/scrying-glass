@@ -9,7 +9,7 @@
   import { EDGE_KINDS, genreOf, GENRES, isOpenAir, LIGHTS, tonesIn, type Genre, type Light } from '../mapgen/layout';
   import { landmarkPins } from '../mapgen/landmarks';
   import { layoutToMaps } from '../mapgen/toMaps';
-  import { brushesFor, MAX_SIDE, MIN_SIDE, removeProps, resize, rotateProp, setAssetVariant, setGenre, setLight, setTone, STRETCH, tintProp, type BrushId } from './edit';
+  import { addLevel, brushesFor, MAX_LEVELS, MAX_SIDE, MIN_SIDE, removeLevel, removeProps, resize, rotateProp, setAssetVariant, setGenre, setLight, setTone, STRETCH, tintProp, type BrushId } from './edit';
   import { TINTS, tintOf } from '../mapgen/draw-props';
   import MapCanvas from './MapCanvas.svelte';
   import NewMapDialog from './NewMapDialog.svelte';
@@ -45,6 +45,8 @@
   });
 
   const layout = $derived(editor.layout);
+  // The whole draft: its size, world, ground, hour and storeys.
+  const root = $derived(editor.root);
   const brushes = $derived(layout ? brushesFor(layout.style) : []);
   // A brush of another kind of map (a road in a cave) gives way to the first of this one.
   $effect(() => {
@@ -368,20 +370,34 @@
     if (on) editor.picked = [];
   }
   async function toMaps() {
-    if (!editor.layout) return;
+    if (!editor.root) return;
     await editor.flush();
-    const l = $state.snapshot(editor.layout);
-    await assets.loadFor(l);
+    const l = $state.snapshot(editor.root);
+    for (const v of [l, ...(l.levels ?? [])]) await assets.loadFor(v);
     const open = isOpenAir(l.style);
     const room = (i: number) => ({ title: t(open ? 'mapgen.place' : 'mapgen.room', { n: i + 1 }), note: '', color: open ? ('green' as const) : ('gold' as const) });
     failed = !(await layoutToMaps(l, editor.title, l.rooms.map((_, i) => room(i)), { pins: await landmarkPins(l) }));
+  }
+  // Storeys: one more on top, or the one being edited away.
+  function addStorey() {
+    if (!editor.root) return;
+    editor.changeRoot(addLevel(editor.root));
+    editor.level = editor.root.levels?.length ?? 0;
+    editor.picked = [];
+  }
+  function removeStorey() {
+    if (!editor.root || !editor.level || !confirm(t('mapedit.level.removeQ', { n: editor.level + 1 }))) return;
+    const n = editor.level;
+    editor.level = n - 1;
+    editor.changeRoot(removeLevel(editor.root, n));
+    editor.picked = [];
   }
   function remove() {
     if (confirm(t('mapedit.deleteQ', { name: editor.title }))) void editor.remove();
   }
   function applySize() {
-    if (!sizing || !editor.layout) return;
-    editor.change(resize(editor.layout, sizing.w, sizing.h));
+    if (!sizing || !editor.root) return;
+    editor.changeRoot(resize(editor.root, sizing.w, sizing.h));
     sizing = null;
   }
 
@@ -400,7 +416,7 @@
         ? t('mapedit.hint.place')
         : t('mapedit.hint.select'),
   );
-  const genre = $derived(layout ? genreOf(layout) : 'fantasy');
+  const genre = $derived(root ? genreOf(root) : 'fantasy');
   // The palette of the map's world.
   const groups = $derived(GROUPS.filter((g) => !g.genres || g.genres.includes(genre)));
   const tones = $derived(layout ? tonesIn(layout.style, genre) : []);
@@ -505,22 +521,30 @@
       <button class="btn size" class:on={editor.thin && canThin} disabled={!canThin} title={keyHint(t('mapedit.thinHint'), 'mapeditThin')} onclick={() => (editor.thin = !editor.thin)}>{t('mapedit.thin')}</button>
       <span class="sep"></span>
       <label class="check">{t('mapedit.world')}
-        <select value={genre} onchange={(e) => editor.layout && editor.change(setGenre(editor.layout, e.currentTarget.value as Genre))}>
+        <select value={genre} onchange={(e) => editor.root && editor.changeRoot(setGenre(editor.root, e.currentTarget.value as Genre))}>
           {#each GENRES as g (g)}<option value={g}>{t(`mapedit.genre.${g}` as never)}</option>{/each}
         </select>
       </label>
       <label class="check">{t('mapedit.ground')}
-        <select value={layout.tone ?? ''} onchange={(e) => editor.layout && editor.change(setTone(editor.layout, e.currentTarget.value || null))}>
+        <select value={root?.tone ?? ''} onchange={(e) => editor.root && editor.changeRoot(setTone(editor.root, e.currentTarget.value || null))}>
           <option value="">{t('mapedit.tone.usual')}</option>
           {#each tones as tn (tn)}<option value={tn}>{t(`mapedit.tone.${tn}` as never)}</option>{/each}
         </select>
       </label>
       <label class="check">{t('mapedit.light')}
-        <select value={layout.light ?? ''} onchange={(e) => editor.layout && editor.change(setLight(editor.layout, (e.currentTarget.value || null) as Light | null))}>
+        <select value={root?.light ?? ''} onchange={(e) => editor.root && editor.changeRoot(setLight(editor.root, (e.currentTarget.value || null) as Light | null))}>
           <option value="">{t('mapedit.light.day')}</option>
           {#each LIGHTS as h (h)}<option value={h}>{t(`mapedit.light.${h}` as never)}</option>{/each}
         </select>
       </label>
+      <span class="sep"></span>
+      <label class="check" title={t('mapedit.levelHint')}>{t('mapedit.level')}
+        <select value={editor.level} onchange={(e) => ((editor.level = Number(e.currentTarget.value)), (editor.picked = []))}>
+          {#each [0, ...(root?.levels ?? []).map((_, i) => i + 1)] as n (n)}<option value={n}>{t('mapedit.level.n', { n: n + 1 })}</option>{/each}
+        </select>
+      </label>
+      <button class="icon-btn" title={t('mapedit.level.add')} disabled={(root?.levels?.length ?? 0) >= MAX_LEVELS} onclick={addStorey}><Plus size={14} /></button>
+      {#if editor.level > 0}<button class="icon-btn" title={t('mapedit.level.remove')} onclick={removeStorey}><Trash2 size={14} /></button>{/if}
       <span class="sep"></span>
       {/if}
       <label class="check"><input type="checkbox" bind:checked={editor.grid} /> {t('mapedit.grid')}</label>

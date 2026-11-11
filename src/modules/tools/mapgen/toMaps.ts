@@ -6,7 +6,8 @@ import { dispatch, store } from '../../../renderer/lib/store.svelte';
 import { roleFolderHere } from '../../../shared/adventures';
 import type { MapPin, MapToken } from '../../maps/types';
 import { ui as mapsUi } from '../../maps/ui/ui.svelte';
-import { layoutPng, roofLayer } from './draw';
+import { layoutPng, roofLayer, storeyLayers, storeyOf } from './draw';
+import { t } from '../../../renderer/lib/i18n.svelte';
 import type { MapCover } from '../../maps/types';
 import { cellCentre, roomCentre, roomReveal, type Cell, type Landmark, type Layout } from './layout';
 
@@ -38,13 +39,24 @@ export async function layoutToMaps(l: Layout, title: string, rooms: RoomPin[], e
   const { tree } = store.state.vault;
   const folder = tree ? roleFolderHere(tree, store.state.adventures, 'maps') : null;
   if (!folder) return false;
-  // Roofs go as covers of their own: the GM lifts them in the Maps while the players watch.
+  // Roofs and storeys go as covers of their own, from the bottom up: the GM lifts them in the Maps while the players watch.
   const roofs = await roofLayer(l);
+  const storeys = await storeyLayers(l);
   const path = await window.api.addMapImage(folder.path, title, await layoutPng(l, roofs ? { roofs: false } : {}));
   if (!path) return false;
   const name = path.slice(path.lastIndexOf('/') + 1).replace(/\.png$/i, '');
-  const image = roofs ? await window.api.addMapImage(folder.path, name, roofs.png, true) : null;
-  const covers: MapCover[] = roofs && image ? roofs.areas.map((area) => ({ id: crypto.randomUUID(), image, area, lifted: false })) : [];
+  const covers: MapCover[] = [];
+  // «Name.cover.png» — the map's roofs; «Name.storey2.cover.png», «Name.storey2-roof.cover.png» — a storey and its roofs.
+  const layer = async (png: Uint8Array, areas: number[][], suffix: string, title: string) => {
+    const image = await window.api.addMapImage(folder.path, name + suffix, png, true);
+    if (image) for (const area of areas) covers.push({ id: crypto.randomUUID(), image, area, title, lifted: false });
+  };
+  if (roofs) await layer(roofs.png, roofs.areas, '', t('mapedit.level.roof'));
+  for (const s of storeys) {
+    await layer(s.png, s.areas, `.storey${s.n + 1}`, t('mapedit.level.cover', { n: s.n + 1 }));
+    const up = await roofLayer(storeyOf(l, s.n));
+    if (up) await layer(up.png, up.areas, `.storey${s.n + 1}-roof`, t('mapedit.level.roof'));
+  }
   await dispatch('maps', 'generated', {
     path,
     cells: l.w,

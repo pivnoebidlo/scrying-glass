@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   misfit,
   addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setGenre, setLight, setTone, swapKind, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower, wipe,
-  edgePath, nearestSide, setEdges, toggleEdgeDoor,
+  edgePath, nearestSide, setEdges, toggleEdgeDoor, addLevel, removeLevel, withLevel, levelOf, MAX_LEVELS,
 } from '../src/modules/tools/mapeditor/edit';
 import { generateLayout, LAYOUT_STYLES, seededRandom } from '../src/modules/tools/mapgen/layout';
 
@@ -343,5 +343,33 @@ describe('the map editor', () => {
     expect(wipe(w, [{ x: 3, y: 2 }], '.').edges).toHaveLength(5);
     expect(resize(w, 6, 6).edges).toHaveLength(6);
     expect(setEdges(w, edgePath({ x: 0, y: 2 }, { x: 6, y: 2 }), null).edges).toBeUndefined();
+  });
+
+  it('storeys over the map: empty at first, painted like the map, kept, resized and taken away', () => {
+    const map = addBuilding(blankLayout('meadow', 10, 8, 1), { x: 1, y: 1, w: 5, h: 4 });
+    let l = addLevel(map);
+    expect(l.levels).toHaveLength(1);
+    expect(levelOf(l, 1).cells.every((r) => r === '_'.repeat(10))).toBe(true);
+    // Nothing to stand on where the storey has no floor.
+    expect(misfit(levelOf(l, 1), { kind: 'chest', x: 2, y: 2, w: 1, h: 1 })).toBe('air');
+    const up = addBuilding(levelOf(l, 1), { x: 1, y: 1, w: 4, h: 3 });
+    l = withLevel(l, 1, up);
+    expect(levelOf(l, 1).cells[2]!.slice(0, 6)).toBe('_BFFB_');
+    expect(placeProp(levelOf(l, 1), 'chest', 2, 2).index).toBe(0);
+    // The map under it is as it was; a change of the map keeps the storeys.
+    expect(l.cells).toEqual(map.cells);
+    expect(withLevel(l, 0, paint(l, [{ x: 8, y: 7 }], '~')).levels).toHaveLength(1);
+    // The eraser of a storey leaves nothing.
+    expect(wipe(levelOf(l, 1), [{ x: 2, y: 2 }], '_').cells[2]![2]).toBe('_');
+    // Indoors a room on a storey gets rock round it.
+    const cave = withLevel(addLevel(blankLayout('building', 10, 8, 1)), 1, addRoom(levelOf(addLevel(blankLayout('building', 10, 8, 1)), 1), { x: 2, y: 2, w: 3, h: 2 }));
+    expect(levelOf(cave, 1).cells.slice(1, 5).map((r) => r.slice(1, 6))).toEqual(['#####', '#...#', '#...#', '#####']);
+    // A draft keeps them; a bigger map pads them with nothing.
+    expect(parseDraft(draftOf(l))!.layout.levels![0]!.cells).toEqual(levelOf(l, 1).cells);
+    expect(resize(l, 12, 8).levels![0]!.cells[0]).toBe('_'.repeat(12));
+    expect(removeLevel(l, 1).levels).toBeUndefined();
+    let many = map;
+    for (let i = 0; i < MAX_LEVELS + 2; i++) many = addLevel(many);
+    expect(many.levels).toHaveLength(MAX_LEVELS);
   });
 });

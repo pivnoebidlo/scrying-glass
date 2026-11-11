@@ -393,9 +393,10 @@ number and a pin), doors and pillars indoors; grass, roads, squares, sand, water
 houses, wells, the town wall and its towers in a town (a house stands in a forest or a swamp too). Outdoors a building can
 also be put up of its parts: «Building» drags a rectangle of walls round a plank floor (a room built onto another shares
 its wall), «Wall» and «Floor» go cell by cell, «Door» cuts a door into a wall, and «Roof» puts a roof over the whole
-building or takes it off (two houses that share a wall have a roof each; a door between them makes them one). Roofs go to the Maps
-as a layer of their own: in the map's «Roofs» section a click on a house lifts its roof for the players during the game, or puts it
-back; lava, ice, mud and
+building or takes it off (two houses that share a wall have a roof each; a door between them makes them one). A house can have storeys: «Storey» in the
+top bar adds one on top, and it is painted like the map, the storeys under it dimmed. Roofs and storeys go to the Maps as layers
+of their own: in the map's «Roofs & storeys» section a click lifts the top one for the players during the game (the roof, then the
+upper floor, then the one below), the right button puts it back; lava, ice, mud and
 pits on any map; outdoors also cobbles, a stone road, a ploughed field, the sea (with a sandy shore), mountains, firs,
 palms and dead trees. The ground takes a colour: spring, autumn, snow (with snow on the trees, the stones and the roofs), dry
 steppe or ash outdoors; the time of day — dawn, dusk or night, when fires, torches, braziers, lamps, crystals, lava and

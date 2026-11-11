@@ -6,7 +6,7 @@ import { roleFolderHere, visibleIn } from '../../../shared/adventures';
 import { roleNames } from '../../../shared/vault';
 import type { Facing, PropKind } from '../mapgen/furnish';
 import type { Layout } from '../mapgen/layout';
-import { draftOf, MAP_DRAFT_SUFFIX, type BrushId } from './edit';
+import { draftOf, levelOf, MAP_DRAFT_SUFFIX, withLevel, type BrushId } from './edit';
 import type { MapAsset } from '../../../shared/mapassets';
 
 const UNDO = 100;
@@ -19,7 +19,14 @@ const clampCell = (c: number) => Math.min(CELL_MAX, Math.max(CELL_MIN, c));
 class Editor {
   drafts = $state<string[]>([]);
   path = $state<string | null>(null);
-  layout = $state.raw<Layout | null>(null);
+  // The whole draft: the map and its storeys.
+  root = $state.raw<Layout | null>(null);
+  // The storey being edited: 0 — the map itself, 1 — the first storey over it.
+  level = $state(0);
+  // What the tools edit: the storey (the map at 0).
+  get layout(): Layout | null {
+    return this.root && levelOf(this.root, Math.min(this.level, this.root.levels?.length ?? 0));
+  }
   // 'brush' paints cells, 'place' puts the chosen thing down, 'select' picks, moves and turns things.
   mode = $state<'brush' | 'place' | 'select'>('brush');
   brush = $state<BrushId>('floor');
@@ -80,7 +87,8 @@ class Editor {
     const d = await window.api.readMapDraft(path);
     if (!d) return;
     this.path = path;
-    this.layout = d.layout;
+    this.root = d.layout;
+    this.level = 0;
     this.past = [];
     this.future = [];
     this.undos = this.redos = 0;
@@ -121,7 +129,8 @@ class Editor {
     this.timer = null;
     await window.api.deleteMapDraft(this.path);
     this.path = null;
-    this.layout = null;
+    this.root = null;
+    this.level = 0;
     await this.refresh();
   }
 
@@ -172,24 +181,35 @@ class Editor {
     box.scrollTop = (box.scrollHeight - box.clientHeight) / 2;
   }
 
-  // A change: the layout before goes to undo (one per stroke: `merge` — the same stroke goes on).
+  // A change of the storey being edited: the draft before goes to undo (one per stroke: `merge` — the same stroke goes on).
   change(next: Layout, merge = false) {
-    if (!this.layout || next === this.layout) return;
+    if (!this.root || next === this.layout) return;
+    this.changeRoot(withLevel(this.root, Math.min(this.level, this.root.levels?.length ?? 0), next), merge);
+  }
+  // A change of the whole draft (its size, world, storeys).
+  changeRoot(next: Layout, merge = false) {
+    if (!this.root || next === this.root) return;
     if (!merge) {
-      this.past.push(this.layout);
+      this.past.push(this.root);
       if (this.past.length > UNDO) this.past.shift();
       this.future = [];
     }
-    this.layout = next;
+    this.root = next;
+    this.settle();
     this.undos = this.past.length;
     this.redos = 0;
     this.saveSoon();
   }
+  // No storey past the top one.
+  private settle() {
+    this.level = Math.min(this.level, this.root?.levels?.length ?? 0);
+  }
   undo() {
     const prev = this.past.pop();
-    if (!prev || !this.layout) return;
-    this.future.push(this.layout);
-    this.layout = prev;
+    if (!prev || !this.root) return;
+    this.future.push(this.root);
+    this.root = prev;
+    this.settle();
     this.selected = -1;
     this.undos = this.past.length;
     this.redos = this.future.length;
@@ -197,9 +217,10 @@ class Editor {
   }
   redo() {
     const next = this.future.pop();
-    if (!next || !this.layout) return;
-    this.past.push(this.layout);
-    this.layout = next;
+    if (!next || !this.root) return;
+    this.past.push(this.root);
+    this.root = next;
+    this.settle();
     this.selected = -1;
     this.undos = this.past.length;
     this.redos = this.future.length;
@@ -213,7 +234,7 @@ class Editor {
   async flush() {
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
-    if (this.path && this.layout) await window.api.writeMapDraft(this.path, draftOf(this.layout));
+    if (this.path && this.root) await window.api.writeMapDraft(this.path, draftOf(this.root));
   }
 }
 

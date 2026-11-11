@@ -157,10 +157,20 @@ export default defineModule({
       const res = ctx.controlWindow ? await ctx.dialog.showMessageBox(ctx.controlWindow, opts) : await ctx.dialog.showMessageBox(opts);
       if (res.response !== 0) return s;
       const root = ctx.vault.root!;
-      // A map made in the map editor takes its roofs along («Name.cover.png»).
+      // A map made in the map editor takes its roofs and storeys along («Name.cover.png», «Name.storey2.cover.png»…).
       const coverOf = (rel: string) => {
-        const c = rel.replace(/\.png$/i, COVER_SUFFIX);
-        return c !== rel && ctx.vault.resolve(c) && fs.existsSync(ctx.vault.resolve(c)!) ? [c] : [];
+        if (!/\.png$/i.test(rel)) return [];
+        const base = path.posix.basename(rel).replace(/\.png$/i, '');
+        const dir = rel.includes('/') ? rel.slice(0, rel.lastIndexOf('/')) : '';
+        const abs = ctx.vault.resolve(dir || '.');
+        let names: string[] = [];
+        try {
+          names = abs ? fs.readdirSync(abs) : [];
+        } catch {
+          /* no folder — no covers */
+        }
+        const mine = (n: string) => n.toLowerCase().endsWith(COVER_SUFFIX) && (n.slice(0, -COVER_SUFFIX.length) === base || /^storey\d+(-roof)?$/.test(n.slice(base.length + 1, -COVER_SUFFIX.length))) && n.startsWith(base + '.');
+        return names.filter(mine).map((n) => (dir ? `${dir}/${n}` : n));
       };
       for (const f of files) discard(root, [f.rel, ...coverOf(f.rel)], { title: path.basename(f.abs), kind: fs.statSync(f.abs).isDirectory() ? 'folder' : 'file' });
       return ctx.vault.rescan();

@@ -59,7 +59,13 @@ export interface Layout {
   genre?: Genre;
   // Thin walls and fences along the sides of cells (LayoutEdge); none before 0.110.
   edges?: LayoutEdge[];
+  // Storeys over the map (0.110), from the first one up: each a layout of the same size and kind with NOTHING where it has
+  // no floor of its own (the storey below shows there); things, doors, walls and roofs of its own. The time of day, the
+  // ground's colour and the world are the map's. A storey has no storeys.
+  levels?: Layout[];
 }
+// A cell of a storey with nothing in it.
+export const NOTHING = '_';
 // Worlds of maps: the palette shows the things and grounds of the map's world and those of any world.
 export const GENRES = ['fantasy', 'scifi', 'gothic', 'steampunk', 'western', 'noir', 'modern', 'wasteland'] as const;
 export type Genre = (typeof GENRES)[number];

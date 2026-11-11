@@ -1,7 +1,7 @@
 // Draws a layout on a canvas, by the app, so that no assets are needed: dark rock with hatching round the walls and a
 // pale floor; outdoors grass, water, paths, trees and boulders. The picture holds nothing secret: it goes to the players; room numbers are the preview's only.
 import { drawProps } from './draw-props';
-import { buildingAt, isBuilt, isFence, isFloor, isOpenAir, isWall, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutEdge, type LayoutRoom, type Light, type WildStyle } from './layout';
+import { buildingAt, isBuilt, isFence, isFloor, isOpenAir, isWall, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutEdge, type LayoutRoom, type Light, type WildStyle, NOTHING } from './layout';
 import type { PropKind } from './furnish';
 
 export const CELL = 40;
@@ -1955,44 +1955,118 @@ export function layoutPng(l: Layout, over: Overlay = {}): Promise<Uint8Array> {
   return pngOf(canvas);
 }
 
+// The time of day over a picture with clear parts: they stay clear.
+function hourOver(canvas: HTMLCanvasElement, l: Layout) {
+  if (!l.light) return;
+  const shape = document.createElement('canvas');
+  shape.width = canvas.width;
+  shape.height = canvas.height;
+  shape.getContext('2d')!.drawImage(canvas, 0, 0);
+  const ctx = canvas.getContext('2d')!;
+  drawHour(ctx, l, CELL);
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.drawImage(shape, 0, 0);
+  ctx.restore();
+}
+
+// Cells as rectangles in shares of the map, a run of a row each.
+function areaOf(l: Pick<Layout, 'w' | 'h'>, cells: { x: number; y: number }[]): number[] {
+  const rows = new Map<number, number[]>();
+  for (const p of cells) rows.set(p.y, [...(rows.get(p.y) ?? []), p.x]);
+  const out: number[] = [];
+  for (const [y, xs] of rows) {
+    xs.sort((a, b) => a - b);
+    for (let i = 0; i < xs.length; ) {
+      let j = i;
+      while (j + 1 < xs.length && xs[j + 1] === xs[j]! + 1) j++;
+      out.push(xs[i]! / l.w, y / l.h, (xs[j]! - xs[i]! + 1) / l.w, 1 / l.h);
+      i = j + 1;
+    }
+  }
+  return out;
+}
+
 // The roofs alone, clear around them, at the map's time of day: a picture for the Maps' covers, and the part of the map
-// each roof covers ([x, y, w, h, …] in shares of the map, a row of cells a rectangle). None — no roofs.
+// each roof covers ([x, y, w, h, …] in shares of the map). The roof only: the building's own shadow is on the map
+// already (drawBuilt). None — no roofs.
 export async function roofLayer(l: Layout): Promise<{ png: Uint8Array; areas: number[][] } | null> {
   if (!isOpenAir(l.style) || !l.roofs?.length) return null;
   const canvas = document.createElement('canvas');
   canvas.width = l.w * CELL;
   canvas.height = l.h * CELL;
-  const ctx = canvas.getContext('2d')!;
-  drawRoofs(ctx, l, CELL, l.tone === 'winter');
-  if (l.light) {
-    // The hour tints the clear parts too: keep only what the roofs were.
-    const shape = document.createElement('canvas');
-    shape.width = canvas.width;
-    shape.height = canvas.height;
-    shape.getContext('2d')!.drawImage(canvas, 0, 0);
-    drawHour(ctx, l, CELL);
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-in';
-    ctx.drawImage(shape, 0, 0);
-    ctx.restore();
-  }
+  drawRoofs(canvas.getContext('2d')!, l, CELL, l.tone === 'winter');
+  hourOver(canvas, l);
   const areas = l.roofs.flatMap((mark) => {
     const cells = buildingAt(l, mark.x, mark.y);
-    if (!cells.length) return [];
-    const rows = new Map<number, number[]>();
-    for (const p of cells) rows.set(p.y, [...(rows.get(p.y) ?? []), p.x]);
-    const out: number[] = [];
-    for (const [y, xs] of rows) {
-      xs.sort((a, b) => a - b);
-      for (let i = 0; i < xs.length; ) {
-        let j = i;
-        while (j + 1 < xs.length && xs[j + 1] === xs[j]! + 1) j++;
-        // The roof only: the building's own shadow is on the map already (drawBuilt).
-        out.push(xs[i]! / l.w, y / l.h, (xs[j]! - xs[i]! + 1) / l.w, 1 / l.h);
-        i = j + 1;
-      }
-    }
-    return [out];
+    return cells.length ? [areaOf(l, cells)] : [];
   });
   return { png: await pngOf(canvas), areas };
+}
+
+// Storey `n` of the map as the map sees it: the map's ground colour, world and hour.
+export function storeyOf(root: Layout, n: number): Layout {
+  const v: Layout = { ...root.levels![n - 1]! };
+  for (const k of ['tone', 'genre', 'light'] as const) {
+    if (root[k]) (v as unknown as Record<string, unknown>)[k] = root[k];
+    else delete v[k];
+  }
+  return v;
+}
+
+// A storey alone: clear where it has nothing (the storey below shows there). Without the hour unless `hour`.
+function storeyCanvas(root: Layout, n: number, c: number, over: Overlay = {}, hour = false): HTMLCanvasElement {
+  const v = storeyOf(root, n);
+  const canvas = document.createElement('canvas');
+  canvas.width = v.w * c;
+  canvas.height = v.h * c;
+  const ctx = canvas.getContext('2d')!;
+  const plain = { ...v };
+  delete plain.light;
+  drawLayout(ctx, plain, c, over);
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  for (let y = 0; y < v.h; y++) for (let x = 0; x < v.w; x++) if (v.cells[y]![x] === NOTHING) ctx.rect(x * c, y * c, c, c);
+  ctx.fill();
+  ctx.restore();
+  if (hour) hourOver(canvas, v);
+  return canvas;
+}
+
+// The editor's picture of storey `n`: the map and the storeys under it, dimmed, then this one.
+export function drawStoreys(ctx: CanvasRenderingContext2D, root: Layout, n: number, c: number, over: Overlay = {}) {
+  if (!n || !root.levels?.[n - 1]) return drawLayout(ctx, root, c, over);
+  drawLayout(ctx, root, c, { roofs: false });
+  for (let k = 1; k < n; k++) ctx.drawImage(storeyCanvas(root, k, c, { roofs: false }), 0, 0);
+  ctx.fillStyle = 'rgba(18, 14, 10, 0.55)';
+  ctx.fillRect(0, 0, root.w * c, root.h * c);
+  ctx.drawImage(storeyCanvas(root, n, c, over), 0, 0);
+}
+
+// The storeys for the Maps' covers, from the first one up: each a picture without its roofs (they come after it) and its
+// parts — every piece of floor standing apart (a house's upper floor and the next house's) is lifted on its own.
+export async function storeyLayers(root: Layout): Promise<{ n: number; png: Uint8Array; areas: number[][] }[]> {
+  const out: { n: number; png: Uint8Array; areas: number[][] }[] = [];
+  for (let n = 1; n <= (root.levels?.length ?? 0); n++) {
+    const v = storeyOf(root, n);
+    const seen = new Set<string>();
+    const areas: number[][] = [];
+    for (let y = 0; y < v.h; y++)
+      for (let x = 0; x < v.w; x++) {
+        if (v.cells[y]![x] === NOTHING || seen.has(`${x},${y}`)) continue;
+        const part = [{ x, y }];
+        seen.add(`${x},${y}`);
+        for (let i = 0; i < part.length; i++)
+          for (let dy = -1; dy <= 1; dy++)
+            for (let dx = -1; dx <= 1; dx++) {
+              const q = { x: part[i]!.x + dx, y: part[i]!.y + dy };
+              const ch = v.cells[q.y]?.[q.x];
+              if (ch && ch !== NOTHING && !seen.has(`${q.x},${q.y}`)) (seen.add(`${q.x},${q.y}`), part.push(q));
+            }
+        areas.push(areaOf(v, part));
+      }
+    if (areas.length) out.push({ n, png: await pngOf(storeyCanvas(root, n, CELL, { roofs: false }, true)), areas });
+  }
+  return out;
 }

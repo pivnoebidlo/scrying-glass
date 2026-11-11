@@ -1,7 +1,7 @@
 // The map editor's data and moves: a draft is a layout of the map generator (mapgen/layout.ts), kept in a file
 // «Name.map.json» in an adventure's maps folder. Pure functions — every move returns a new layout; the picture is
 // drawn from it the same way as a generated one.
-import { EDGE_KINDS, edgeInMap, edgeKey, GENRES, LAYOUT_STYLES, LIGHTS, buildingAt, isBuilt, isFloor, isWall, WALLS, isWild, tonesFor, walkable, type Genre, type Layout, type Light, type LayoutEdge, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
+import { EDGE_KINDS, edgeInMap, edgeKey, GENRES, NOTHING, LAYOUT_STYLES, LIGHTS, buildingAt, isBuilt, isFloor, isWall, WALLS, isWild, tonesFor, walkable, type Genre, type Layout, type Light, type LayoutEdge, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
 import { PROP_KINDS, type Facing, type Prop, type PropKind } from '../mapgen/furnish';
 import { MAX_ASSET_SIDE, safeAssetPath } from '../../../shared/mapassets';
 
@@ -16,7 +16,9 @@ export interface MapDraft {
 
 export const MIN_SIDE = 6;
 export const MAX_SIDE = 120;
-const CELLS = /^[.#,PST~RH=WLIMXFBCKVOANJQstcdmkrwpgzyhfleibn]*$/;
+const CELLS = /^[.#,PST~RH=WLIMXFBCKVOANJQstcdmkrwpgzyhfleibn_]*$/;
+// The most storeys over a map.
+export const MAX_LEVELS = 8;
 const side = (n: unknown) => typeof n === 'number' && Number.isInteger(n) && n >= MIN_SIDE && n <= MAX_SIDE;
 const int = (n: unknown) => typeof n === 'number' && Number.isInteger(n);
 
@@ -62,6 +64,13 @@ export function parseDraft(x: unknown): MapDraft | null {
           .map((g) => ({ x: g.x, y: g.y, along: g.along })),
       }
     : undefined;
+  // Storeys: drafts of the same size and kind, with no storeys of their own.
+  const levels = (Array.isArray(l['levels']) && !(x as { level?: true }).level ? l['levels'] : [])
+    .slice(0, MAX_LEVELS)
+    .flatMap((v) => {
+      const d = parseDraft({ scryingGlass: 'map', level: true, layout: { ...(v as object), w: W, h: H, style } });
+      return d ? [d.layout] : [];
+    });
   const seen = new Set<string>();
   const edges = (Array.isArray(l['edges']) ? l['edges'] : [])
     .filter((e): e is LayoutEdge => !!e && int(e.x) && int(e.y) && (e.side === 'top' || e.side === 'left') && typeof e.kind === 'string' && e.kind.length === 1 && EDGE_KINDS.includes(e.kind) && edgeInMap({ w: W, h: H }, e))
@@ -89,6 +98,7 @@ export function parseDraft(x: unknown): MapDraft | null {
       ...(LIGHTS.includes(l['light'] as Light) ? { light: l['light'] as Light } : {}),
       ...(GENRES.includes(l['genre'] as Genre) && l['genre'] !== 'fantasy' ? { genre: l['genre'] as Genre } : {}),
       ...(edges.length ? { edges } : {}),
+      ...(levels.length ? { levels } : {}),
     },
   };
 }
@@ -307,7 +317,13 @@ export function addRoom(l: Layout, r: LayoutRoom): Layout {
   // Outdoors a room is a clearing; a room of a building put up there keeps its floor and walls.
   const keep = (x: number, y: number) => isOutdoor(l.style) && (walkable(at(l, x, y)) || isBuilt(at(l, x, y)) || at(l, x, y) === 'H');
   for (let y = a.y; y < a.y + a.h; y++) for (let x = a.x; x < a.x + a.w; x++) if (!keep(x, y)) cells.push({ x, y });
-  const painted = paint(l, cells, '.');
+  let painted = paint(l, cells, '.');
+  // On a storey indoors: rock round the room where the storey had nothing, so it has walls.
+  if (!isOutdoor(l.style)) {
+    const ring: { x: number; y: number }[] = [];
+    for (let y = a.y - 1; y <= a.y + a.h; y++) for (let x = a.x - 1; x <= a.x + a.w; x++) if (at(painted, x, y) === NOTHING) ring.push({ x, y });
+    if (ring.length) painted = paint(painted, ring, '#');
+  }
   return { ...painted, rooms: [...painted.rooms.filter((o) => !(o.x === a.x && o.y === a.y && o.w === a.w && o.h === a.h)), a] };
 }
 
@@ -545,7 +561,7 @@ export const propAt = (l: Layout, x: number, y: number): number => {
 };
 
 // Why a thing does not fit where it is (null — it does): past the edge, in a doorway, or on ground nothing stands on.
-export type Misfit = 'edge' | 'door' | 'rock' | 'water' | 'wall' | 'house' | 'ground';
+export type Misfit = 'edge' | 'door' | 'rock' | 'water' | 'wall' | 'house' | 'ground' | 'air';
 export function misfit(l: Layout, p: Pick<Prop, 'kind' | 'x' | 'y' | 'w' | 'h'>): Misfit | null {
   const anywhere = p.kind === 'rug' || FREE.has(p.kind);
   for (let y = p.y; y < p.y + p.h; y++)
@@ -555,7 +571,7 @@ export function misfit(l: Layout, p: Pick<Prop, 'kind' | 'x' | 'y' | 'w' | 'h'>)
       // A picture of the GM's own goes anywhere (a bridge on water, a beam over a wall).
       if (anywhere) continue;
       const c = at(l, x, y);
-      if (!standable(c)) return c === '#' ? 'rock' : c === '~' || c === 'O' ? 'water' : isWall(c) || c === 'W' ? 'wall' : c === 'H' ? 'house' : 'ground';
+      if (!standable(c)) return c === NOTHING ? 'air' : c === '#' ? 'rock' : c === '~' || c === 'O' ? 'water' : isWall(c) || c === 'W' ? 'wall' : c === 'H' ? 'house' : 'ground';
       if (l.doors.some((d) => d.x === x && d.y === y)) return 'door';
     }
   return null;
@@ -654,10 +670,9 @@ export function moveProp(l: Layout, i: number, x: number, y: number): Layout {
 }
 
 // The map larger or smaller: from the top-left corner; new cells are the style's ground.
-export function resize(l: Layout, w: number, h: number): Layout {
+export function resize(l: Layout, w: number, h: number, g = groundOf(l.style)): Layout {
   const W = Math.min(MAX_SIDE, Math.max(MIN_SIDE, Math.round(w)));
   const H = Math.min(MAX_SIDE, Math.max(MIN_SIDE, Math.round(h)));
-  const g = groundOf(l.style);
   const cells = Array.from({ length: H }, (_, y) => (l.cells[y] ?? '').slice(0, W).padEnd(W, g));
   const keep = <T extends { x: number; y: number; w?: number; h?: number }>(a: T) => a.x + (a.w ?? 1) <= W && a.y + (a.h ?? 1) <= H;
   const houses = (l.houses ?? []).map((a, i) => ({ a, i })).filter(({ a }) => keep(a));
@@ -677,8 +692,40 @@ export function resize(l: Layout, w: number, h: number): Layout {
     wall: l.wall && { towers: l.wall.towers.filter(keep), gates: l.wall.gates.filter((g2) => g2.x < W && g2.y < H) },
     roofs: l.roofs?.filter(keep),
     ...(l.edges ? { edges: l.edges.filter((e) => edgeInMap({ w: W, h: H }, e)) } : {}),
+    ...(l.levels ? { levels: l.levels.map((v) => resize(v, W, H, NOTHING)) } : {}),
   });
 }
+
+// ---- Storeys ----
+// A storey with nothing on it yet, over the map `l`.
+export const blankLevel = (l: Layout, n: number): Layout => ({
+  style: l.style,
+  seed: (l.seed + Math.imul(n + 1, 7919)) >>> 0,
+  w: l.w,
+  h: l.h,
+  cells: Array.from({ length: l.h }, () => NOTHING.repeat(l.w)),
+  rooms: [],
+  doors: [],
+  pillars: [],
+  props: [],
+});
+// One storey more, on top.
+export function addLevel(l: Layout): Layout {
+  const levels = l.levels ?? [];
+  return levels.length >= MAX_LEVELS ? l : { ...l, levels: [...levels, blankLevel(l, levels.length + 1)] };
+}
+// Storey `n` (1 — the first over the map) gone, those over it go down one.
+export function removeLevel(l: Layout, n: number): Layout {
+  const levels = (l.levels ?? []).filter((_, i) => i !== n - 1);
+  const out: Layout = { ...l, levels };
+  if (!levels.length) delete out.levels;
+  return out;
+}
+// The map with storey `n` (0 — the map itself) changed.
+export const withLevel = (l: Layout, n: number, next: Layout): Layout =>
+  n === 0 ? { ...next, ...(l.levels ? { levels: l.levels } : {}) } : { ...l, levels: (l.levels ?? []).map((v, i) => (i === n - 1 ? next : v)) };
+// Storey `n` of the map (0 — the map).
+export const levelOf = (l: Layout, n: number): Layout => (n === 0 ? l : (l.levels?.[n - 1] ?? l));
 
 // The world of the map (fantasy is no field at all: old maps are fantasy).
 export function setGenre(l: Layout, genre: Genre): Layout {
