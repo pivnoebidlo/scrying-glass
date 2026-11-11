@@ -4,9 +4,9 @@
 <script lang="ts">
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { drawLayout } from '../mapgen/draw';
-  import type { Layout } from '../mapgen/layout';
+  import { EDGE_KINDS, type Layout } from '../mapgen/layout';
   import {
-    addBuilding, addHouse, addRoom, misfit, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, MAX_STRETCH, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower, wipe,
+    addBuilding, addHouse, addRoom, misfit, placeAsset, brushCells, brushesFor, footprint, lineCells, moveProps, normRect, paint, placeProp, propAt, propsIn, MAX_STRETCH, removeProp, STRETCH, stretchProp, swapKind, toggleDoor, togglePillar, toggleRoof, toggleTower, wipe, edgeAt, edgePath, nearestSide, setEdges, toggleEdgeDoor,
   } from './edit';
   import { editor } from './store.svelte';
   import { assets } from './assets.svelte';
@@ -20,6 +20,10 @@
   const c = $derived(editor.cell);
   const brush = $derived(brushesFor(layout.style).find((b) => b.id === editor.brush) ?? brushesFor(layout.style)[0]!);
   const erase = $derived(brushesFor(layout.style).find((b) => b.id === 'erase')!.cell!);
+  // A wall or a fence to draw along the sides of cells.
+  const thinKind = $derived(editor.thin && editor.mode === 'brush' && brush.cell && EDGE_KINDS.includes(brush.cell) ? brush.cell : null);
+  // The pointer in cells, not rounded: for the corners and sides of cells.
+  let point = $state<{ x: number; y: number } | null>(null);
 
   // The picture: again whenever the layout or the scale changes.
   $effect(() => {
@@ -102,6 +106,33 @@
         }
       }
     }
+    // Thin walls: the corner a wall would go from; with a door — the side it would go in.
+    if (point && editor.mode === 'brush' && !band && !rect) {
+      const side = brush.id === 'door' ? nearestSide(layout, point.x, point.y) : null;
+      if (side && edgeAt(layout, side)) {
+        ctx.save();
+        ctx.strokeStyle = '#a78bfa';
+        ctx.lineWidth = Math.max(3, c / 6);
+        ctx.beginPath();
+        ctx.moveTo(side.x * c, side.y * c);
+        ctx.lineTo((side.x + (side.side === 'top' ? 1 : 0)) * c, (side.y + (side.side === 'left' ? 1 : 0)) * c);
+        ctx.stroke();
+        ctx.restore();
+        return;
+      }
+      if (thinKind) {
+        ctx.save();
+        ctx.fillStyle = '#a78bfa';
+        ctx.strokeStyle = '#1e1e1e';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(Math.round(point.x) * c, Math.round(point.y) * c, Math.max(4, c / 7), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+        return;
+      }
+    }
     if (band) {
       const r = normRect(band.a, band.b);
       box(r.x, r.y, r.w, r.h, '#f2c14e', true);
@@ -128,6 +159,25 @@
     const why = misfit(l, p);
     if (why) editor.tell(t(`mapedit.misfit.${why}` as never));
   };
+
+  const pointAt = (e: PointerEvent) => {
+    const r = over!.getBoundingClientRect();
+    return { x: ((e.clientX - r.left) / r.width) * layout.w, y: ((e.clientY - r.top) / r.height) * layout.h };
+  };
+  // A thin wall being drawn from corner to corner (`kind` null — taken away), and the last corner for Shift.
+  let edgeStroke: { last: { x: number; y: number }; started: boolean; kind: string | null } | null = null;
+  let lastCorner: { x: number; y: number } | null = null;
+  function edgeTo(to: { x: number; y: number }) {
+    if (!edgeStroke || !editor.layout) return;
+    const next = setEdges(editor.layout, edgePath(edgeStroke.last, to), edgeStroke.kind);
+    if (next !== editor.layout) {
+      editor.change(next, edgeStroke.started);
+      edgeStroke.started = true;
+    }
+    edgeStroke.last = to;
+    lastCorner = to;
+  }
+  const cornerOf = (p: { x: number; y: number }) => ({ x: Math.max(0, Math.min(layout.w, Math.round(p.x))), y: Math.max(0, Math.min(layout.h, Math.round(p.y))) });
 
   const cellAt = (e: PointerEvent) => {
     const r = over!.getBoundingClientRect();
@@ -219,6 +269,13 @@
     // The right button takes away: with things in hand the topmost thing first; with a brush, or where there is no
     // thing, everything under it (the eraser).
     if (e.button === 2) {
+      // Drawing thin walls: the right button takes them away along the way it goes.
+      if (thinKind) {
+        const k = cornerOf(pointAt(e));
+        edgeStroke = { last: k, started: false, kind: null };
+        edgeTo(k);
+        return;
+      }
       if (editor.mode !== 'brush') {
         const i = propAt(l, p.x, p.y);
         if (i >= 0) {
@@ -279,6 +336,21 @@
       rect = { a: p, b: p };
       return;
     }
+    // A door goes into a thin wall when the pointer is at one.
+    if (brush.id === 'door') {
+      const f = pointAt(e);
+      const side = nearestSide(l, f.x, f.y);
+      if (side && edgeAt(l, side)) {
+        editor.change(toggleEdgeDoor(l, side));
+        return;
+      }
+    }
+    if (thinKind) {
+      const k = cornerOf(pointAt(e));
+      edgeStroke = { last: e.shiftKey && lastCorner ? lastCorner : k, started: false, kind: thinKind };
+      edgeTo(k);
+      return;
+    }
     if (brush.toggle) {
       const fn = brush.id === 'door' ? toggleDoor : brush.id === 'tower' ? toggleTower : brush.id === 'roof' ? toggleRoof : togglePillar;
       editor.change(fn(l, p.x, p.y));
@@ -304,6 +376,15 @@
     }
     const p = cellAt(e);
     if (!hover || hover.x !== p.x || hover.y !== p.y) hover = p;
+    const f = pointAt(e);
+    if (editor.mode === 'brush' && (thinKind || brush.id === 'door')) point = f;
+    else if (point) point = null;
+    if (edgeStroke) {
+      // Only near a corner: a hand that wavers off the line does not step aside.
+      const k = cornerOf(f);
+      if (Math.abs(f.x - k.x) < 0.35 && Math.abs(f.y - k.y) < 0.35 && (k.x !== edgeStroke.last.x || k.y !== edgeStroke.last.y)) edgeTo(k);
+      return;
+    }
     over!.style.cursor = cursorOf(pull ?? (editor.mode !== 'brush' ? onCorner(e) : null));
     if (stroke) paintTo(p);
     else if (rect) rect = { a: rect.a, b: p };
@@ -348,6 +429,7 @@
       editor.change(brush.id === 'house' ? addHouse(editor.layout, r) : brush.id === 'build' ? addBuilding(editor.layout, r) : addRoom(editor.layout, r));
     }
     stroke = null;
+    edgeStroke = null;
     rect = null;
     drag = null;
     pull = null;
@@ -378,7 +460,7 @@
     onpointermove={move}
     onpointerup={up}
     onpointercancel={up}
-    onpointerleave={() => (hover = null)}
+    onpointerleave={() => ((hover = null), (point = null))}
     oncontextmenu={(e) => e.preventDefault()}
     ondblclick={dblclick}
   ></canvas>

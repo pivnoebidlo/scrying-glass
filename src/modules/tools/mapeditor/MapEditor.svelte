@@ -6,7 +6,7 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import type { PropKind } from '../mapgen/furnish';
-  import { genreOf, GENRES, isOpenAir, LIGHTS, tonesIn, type Genre, type Light } from '../mapgen/layout';
+  import { EDGE_KINDS, genreOf, GENRES, isOpenAir, LIGHTS, tonesIn, type Genre, type Light } from '../mapgen/layout';
   import { landmarkPins } from '../mapgen/landmarks';
   import { layoutToMaps } from '../mapgen/toMaps';
   import { brushesFor, MAX_SIDE, MIN_SIDE, removeProps, resize, rotateProp, setAssetVariant, setGenre, setLight, setTone, STRETCH, tintProp, type BrushId } from './edit';
@@ -339,6 +339,8 @@
     }
     editor.change(next);
   }
+  // Walls and fences can go along the sides of cells.
+  const canThin = $derived(editor.mode === 'brush' && EDGE_KINDS.includes(brushes.find((b) => b.id === editor.brush)?.cell ?? '-'));
   const pickBrush = (id: BrushId) => ((editor.mode = 'brush'), (editor.brush = id), (editor.selected = -1));
   const erasing = $derived(editor.mode === 'brush' && editor.brush === 'erase');
   // Another thing — a random colour again (a red rug does not make every chest red).
@@ -388,6 +390,10 @@
       ? t('mapedit.hint.view', mod)
       : erasing
       ? t('mapedit.hint.erase')
+      : editor.thin && canThin
+      ? t('mapedit.hint.thin')
+      : editor.mode === 'brush' && editor.brush === 'door'
+      ? t('mapedit.hint.door')
       : editor.mode === 'brush'
       ? t(`mapedit.hint.${(brushes.find((b) => b.id === editor.brush)?.rect ? 'rect' : brushes.find((b) => b.id === editor.brush)?.toggle ? 'toggle' : 'paint')}` as never, mod)
       : editor.mode === 'place'
@@ -424,6 +430,9 @@
       editor.mode = 'brush';
       if (editor.brush === 'erase') editor.brush = brushes[0]!.id;
       editor.selected = -1;
+    } else if (matches(e, 'mapeditThin')) {
+      setViewing(false);
+      editor.thin = !editor.thin;
     } else if (matches(e, 'mapeditErase')) {
       setViewing(false);
       pickBrush('erase');
@@ -492,7 +501,8 @@
       <span class="sep"></span>
       {#if !editor.viewing}
       <span class="faint small">{t('mapedit.thickness')}</span>
-      {#each [1, 2, 3] as n (n)}<button class="btn size" class:on={editor.size === n} onclick={() => (editor.size = n)}>{n}</button>{/each}
+      {#each [1, 2, 3] as n (n)}<button class="btn size" class:on={editor.size === n && !(editor.thin && canThin)} onclick={() => ((editor.size = n), (editor.thin = false))}>{n}</button>{/each}
+      <button class="btn size" class:on={editor.thin && canThin} disabled={!canThin} title={keyHint(t('mapedit.thinHint'), 'mapeditThin')} onclick={() => (editor.thin = !editor.thin)}>{t('mapedit.thin')}</button>
       <span class="sep"></span>
       <label class="check">{t('mapedit.world')}
         <select value={genre} onchange={(e) => editor.layout && editor.change(setGenre(editor.layout, e.currentTarget.value as Genre))}>

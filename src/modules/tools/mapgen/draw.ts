@@ -1,7 +1,7 @@
 // Draws a layout on a canvas, by the app, so that no assets are needed: dark rock with hatching round the walls and a
 // pale floor; outdoors grass, water, paths, trees and boulders. The picture holds nothing secret: it goes to the players; room numbers are the preview's only.
 import { drawProps } from './draw-props';
-import { buildingAt, isBuilt, isFence, isFloor, isOpenAir, isWall, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutRoom, type Light, type WildStyle } from './layout';
+import { buildingAt, isBuilt, isFence, isFloor, isOpenAir, isWall, isWild, seededRandom as noise, type Cell, type Layout, type LandmarkKind, type LayoutEdge, type LayoutRoom, type Light, type WildStyle } from './layout';
 import type { PropKind } from './furnish';
 
 export const CELL = 40;
@@ -1574,6 +1574,158 @@ function drawBuilt(ctx: CanvasRenderingContext2D, l: Layout, c: number, outdoors
 }
 
 // Roofs over the buildings put up outdoors (Layout.roofs): over the things inside them too.
+// Thin walls and fences along the sides of cells (Layout.edges): over the ground, under the things.
+const EDGE_FILL: Record<string, readonly string[]> = { B: TIMBER, k: ['#857f74', '#7d776d', '#8b857a'], r: ['#9a4a34', '#a3523a', '#8f442f'] };
+function drawEdges(ctx: CanvasRenderingContext2D, l: Layout, c: number) {
+  const edges = l.edges;
+  if (!edges?.length) return;
+  const t = c * 0.2;
+  // The band of a side, `half` either way of the line and as far past its ends (so corners close up).
+  const band = (e: LayoutEdge, half: number): [number, number, number, number] =>
+    e.side === 'top' ? [e.x * c - half, e.y * c - half, c + half * 2, half * 2] : [e.x * c - half, e.y * c - half, half * 2, c + half * 2];
+  // Along a side: the point at `k` (0 — its start, 1 — its end) and the way it runs.
+  const point = (e: LayoutEdge, k: number): [number, number] => (e.side === 'top' ? [(e.x + k) * c, e.y * c] : [e.x * c, (e.y + k) * c]);
+  const arms: Arm[] = [[-1, 0], [1, 0]];
+  const upright: Arm[] = [[0, -1], [0, 1]];
+  const solid = edges.filter((e) => 'Bkr#'.includes(e.kind));
+  const walls = solid.filter((e) => !e.door);
+  ctx.save();
+  ctx.lineCap = 'butt';
+  // Shadows first, all of them.
+  ctx.fillStyle = 'rgba(20, 16, 10, 0.3)';
+  for (const e of walls) {
+    const [x, y, w, h] = band(e, t / 2);
+    ctx.fillRect(x + c * 0.05, y + c * 0.07, w, h);
+  }
+  const virtual = (e: LayoutEdge): [number, number] => (e.side === 'top' ? [e.x * c, e.y * c - c / 2] : [e.x * c - c / 2, e.y * c]);
+  for (const e of edges) if (!e.door && FENCE_LINES.includes(e.kind)) drawFence(ctx, e.kind, e.side === 'top' ? arms : upright, ...virtual(e), c, () => 0.5, true);
+  // Solid walls: the outline as a wider band under them all, so where they meet it does not show.
+  const lw = Math.max(1.5, c / 14);
+  ctx.fillStyle = WALL;
+  for (const e of walls) ctx.fillRect(...band(e, t / 2 + lw / 2));
+  for (const e of walls) {
+    const r = cellNoise(l, e.x, e.y, e.side === 'top' ? 31 : 37);
+    const fills = EDGE_FILL[e.kind] ?? (l.genre === 'scifi' ? ['#4a5058', '#454b53'] : ['#3a332b', '#352f27']);
+    ctx.fillStyle = fills[Math.floor(r() * fills.length)]!;
+    const [x, y, w, h] = band(e, t / 2);
+    ctx.fillRect(x, y, w, h);
+    // Seams: across, a block or a brick apart; along, down the middle of timber.
+    const n = e.kind === 'k' ? 3 : e.kind === 'r' ? 4 : 0;
+    ctx.strokeStyle = e.kind === 'r' ? 'rgba(225, 210, 190, 0.55)' : 'rgba(25, 16, 8, 0.45)';
+    ctx.lineWidth = Math.max(1, c / 30);
+    ctx.beginPath();
+    for (let k = 1; k < n; k++) {
+      const [px, py] = point(e, k / n);
+      if (e.side === 'top') (ctx.moveTo(px, py - t / 2), ctx.lineTo(px, py + t / 2));
+      else (ctx.moveTo(px - t / 2, py), ctx.lineTo(px + t / 2, py));
+    }
+    if (e.kind === 'B' || e.kind === 'r') {
+      const [ax, ay] = point(e, 0);
+      const [bx, by] = point(e, 1);
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(bx, by);
+    }
+    ctx.stroke();
+  }
+  // Fences of lines; the palisade and the hedge, log by log and bush by bush.
+  for (const e of edges) if (!e.door && FENCE_LINES.includes(e.kind)) drawFence(ctx, e.kind, e.side === 'top' ? arms : upright, ...virtual(e), c, cellNoise(l, e.x, e.y, e.side === 'top' ? 41 : 43));
+  const log = (px: number, py: number, k: number) => {
+    ctx.fillStyle = 'rgba(20, 16, 10, 0.35)';
+    ctx.beginPath();
+    ctx.arc(px + c * 0.06, py + c * 0.08, c * 0.17, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = TIMBER[k % TIMBER.length]!;
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1, c / 20);
+    ctx.beginPath();
+    ctx.arc(px, py, c * 0.16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#c9a46a';
+    ctx.beginPath();
+    ctx.arc(px, py, c * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  const bush = (px: number, py: number, k: number) => {
+    ctx.fillStyle = 'rgba(15, 25, 12, 0.3)';
+    ctx.beginPath();
+    ctx.arc(px + c * 0.06, py + c * 0.08, c * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = k % 2 ? '#3f6a35' : '#477539';
+    ctx.beginPath();
+    ctx.arc(px, py, c * 0.22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255, 255, 220, 0.12)';
+    ctx.beginPath();
+    ctx.arc(px - c * 0.05, py - c * 0.06, c * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  for (const e of edges) {
+    if (e.door || (e.kind !== 'p' && e.kind !== 'y')) continue;
+    const [k1, k2] = e.kind === 'p' ? [1 / 3, 2 / 3] : [1 / 4, 3 / 4];
+    for (const [k, n] of [[k1, 0], [k2, 1]] as const) (e.kind === 'p' ? log : bush)(...point(e, k), e.x + e.y + n);
+  }
+  // The corners: a post, a log, a bush or a stone where sides of a fence meet or end. `bend` — not straight through.
+  const corners = new Map<string, { x: number; y: number; kind: string; ways: Set<string> }>();
+  for (const e of edges)
+    if (!'Bkr#'.includes(e.kind))
+      for (const k of [0, 1]) {
+        const [px, py] = point(e, k);
+        const at = corners.get(`${px},${py}`) ?? { x: px, y: py, kind: e.kind, ways: new Set<string>() };
+        at.ways.add(e.side === 'top' ? (k ? 'w' : 'e') : k ? 'n' : 's');
+        corners.set(`${px},${py}`, at);
+      }
+  const post = (px: number, py: number, size: number, fill: string) => {
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1, c / 28);
+    ctx.fillRect(px - size / 2, py - size / 2, size, size);
+    ctx.strokeRect(px - size / 2, py - size / 2, size, size);
+  };
+  const disc = (px: number, py: number, rr: number, fill: string) => {
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.arc(px, py, rr, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  for (const { x, y, kind, ways } of corners.values()) {
+    const bend = !(ways.size === 2 && ((ways.has('w') && ways.has('e')) || (ways.has('n') && ways.has('s'))));
+    if ((kind === 'l' || kind === 'e') && !bend) continue;
+    if (kind === 'p') log(x, y, Math.round(x + y));
+    else if (kind === 'y') bush(x, y, Math.round(x + y));
+    else if (kind === 'f') post(x, y, c * 0.14, '#7a5a3a');
+    else if (kind === 'i') post(x, y, c * 0.2, '#8a857a');
+    else if (kind === 'b') post(x, y, c * 0.13, '#6b5038');
+    else if (kind === 'l') (disc(x, y, c * 0.12, '#4a3522'), disc(x, y, c * 0.09, '#8a6a40'), disc(x, y, c * 0.06, '#3e2c1a'));
+    else if (kind === 'e') {
+      disc(x, y, c * 0.22, '#4e4a44');
+      for (const [dx, dy, fill] of [[-0.08, -0.07, '#8f8a80'], [0.08, -0.06, '#a7a296'], [-0.06, 0.08, '#9d978b'], [0.07, 0.08, '#7f7a71']] as const) disc(x + dx * c, y + dy * c, c * 0.085, fill);
+    }
+    else if (kind === 'n') {
+      disc(x, y, c * 0.07, '#9aa0a6');
+      ctx.strokeStyle = WALL;
+      ctx.lineWidth = Math.max(1, c / 28);
+      ctx.stroke();
+    }
+  }
+  // Doors and gates: a leaf in the gap between the ends of the wall.
+  for (const e of edges) {
+    if (!e.door) continue;
+    const thin = 'Bkr#'.includes(e.kind) ? c * 0.12 : c * 0.08;
+    const [ax, ay] = point(e, 0.1);
+    const w = e.side === 'top' ? c * 0.8 : thin;
+    const h = e.side === 'top' ? thin : c * 0.8;
+    const x = e.side === 'top' ? ax : ax - thin / 2;
+    const y = e.side === 'top' ? ay - thin / 2 : ay;
+    ctx.fillStyle = e.kind === 'i' || e.kind === 'n' || e.kind === 'b' ? '#3a3a42' : '#7a5230';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = WALL;
+    ctx.lineWidth = Math.max(1, c / 20);
+    ctx.strokeRect(x, y, w, h);
+  }
+  ctx.restore();
+}
+
 function drawRoofs(ctx: CanvasRenderingContext2D, l: Layout, c: number, snow: boolean) {
   for (const mark of l.roofs ?? []) {
     const cells = buildingAt(l, mark.x, mark.y);
@@ -1736,6 +1888,7 @@ export function drawLayout(ctx: CanvasRenderingContext2D, l: Layout, c: number, 
   if (isWild(l.style)) drawWild(ctx, l, c, l.style);
   else if (l.style === 'town') drawTown(ctx, l, c);
   else drawIndoor(ctx, l, c);
+  drawEdges(ctx, l, c);
   drawProps(ctx, l, c);
   if (isOpenAir(l.style)) drawRoofs(ctx, l, c, l.tone === 'winter');
   drawHour(ctx, l, c);

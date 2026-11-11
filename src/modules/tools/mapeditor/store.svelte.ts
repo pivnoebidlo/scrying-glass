@@ -24,6 +24,8 @@ class Editor {
   mode = $state<'brush' | 'place' | 'select'>('brush');
   brush = $state<BrushId>('floor');
   size = $state(1);
+  // Walls and fences along the sides of cells, not in them (Layout.edges).
+  thin = $state(false);
   prop = $state<PropKind | null>(null);
   face = $state<Facing>(0);
   // The colour of things put down (null — a random one).

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   misfit,
   addBuilding, addHouse, addRoom, blankLayout, brushCells, brushesFor, draftOf, lineCells, moveProp, paint, parseDraft, placeProp, propAt, moveProps, propsIn, removeProp, removeProps, resize, rotateProp, setGenre, setLight, setTone, swapKind, stretchProp, tintProp, toggleDoor, togglePillar, toggleRoof, toggleTower, wipe,
+  edgePath, nearestSide, setEdges, toggleEdgeDoor,
 } from '../src/modules/tools/mapeditor/edit';
 import { generateLayout, LAYOUT_STYLES, seededRandom } from '../src/modules/tools/mapgen/layout';
 
@@ -300,5 +301,36 @@ describe('the map editor', () => {
     const l = blankLayout('meadow', 8, 8, 1);
     expect(parseDraft(draftOf({ ...l, cells: ['fleibn..', ...l.cells.slice(1)] }))).not.toBeNull();
     for (const id of ['picket', 'wattle', 'drystone', 'railing', 'barbed', 'chainlink'] as const) expect(brushesFor('forest').some((b) => b.id === id)).toBe(true);
+  });
+
+  it('thin walls go along the sides of cells, take doors, and go with the eraser', () => {
+    const l = blankLayout('meadow', 6, 6, 1);
+    // From corner to corner, a step at a time along the longer way: an L of three sides.
+    expect(edgePath({ x: 1, y: 1 }, { x: 3, y: 2 })).toEqual([
+      { x: 1, y: 1, side: 'top' },
+      { x: 2, y: 1, side: 'top' },
+      { x: 3, y: 1, side: 'left' },
+    ]);
+    let w = setEdges(l, edgePath({ x: 0, y: 2 }, { x: 6, y: 2 }), 'k');
+    expect(w.edges).toHaveLength(6);
+    // The map's own edge is a side too; past it — none.
+    expect(setEdges(l, [{ x: 6, y: 0, side: 'top' }], 'k')).toBe(l);
+    // The same again changes nothing; another kind replaces it.
+    expect(setEdges(w, [{ x: 0, y: 2, side: 'top' }], 'k')).toBe(w);
+    expect(setEdges(w, [{ x: 0, y: 2, side: 'top' }], 'p').edges!.find((e) => e.x === 0)!.kind).toBe('p');
+    // Near a side, not in the middle of a cell.
+    expect(nearestSide(w, 2.5, 2.1)).toEqual({ x: 2, y: 2, side: 'top' });
+    expect(nearestSide(w, 2.5, 2.5)).toBeNull();
+    w = toggleEdgeDoor(w, { x: 2, y: 2, side: 'top' });
+    expect(w.edges!.find((e) => e.x === 2)!.door).toBe(true);
+    // A door stays when the wall is painted over with another kind.
+    expect(setEdges(w, [{ x: 2, y: 2, side: 'top' }], 'B').edges!.find((e) => e.x === 2)).toEqual({ x: 2, y: 2, side: 'top', kind: 'B', door: true });
+    // Kept in a draft; nonsense from a file is not.
+    const back = parseDraft(draftOf({ ...w, edges: [...w.edges!, { x: 9, y: 9, side: 'top', kind: 'k' }, { x: 1, y: 1, side: 'top', kind: 'Z' }] }))!;
+    expect(back.layout.edges).toHaveLength(6);
+    // The eraser takes the sides of its cells; a smaller map, the sides past its edge.
+    expect(wipe(w, [{ x: 3, y: 2 }], '.').edges).toHaveLength(5);
+    expect(resize(w, 6, 6).edges).toHaveLength(6);
+    expect(setEdges(w, edgePath({ x: 0, y: 2 }, { x: 6, y: 2 }), null).edges).toBeUndefined();
   });
 });

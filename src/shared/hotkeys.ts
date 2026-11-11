@@ -64,6 +64,7 @@ export const HOTKEYS: HotkeyDef[] = [
   { id: 'mapeditSelect', group: 'mapedit', combo: 'V' },
   { id: 'mapeditBrush', group: 'mapedit', combo: 'B' },
   { id: 'mapeditErase', group: 'mapedit', combo: 'E' },
+  { id: 'mapeditThin', group: 'mapedit', combo: 'T' },
   { id: 'mapeditRotate', group: 'mapedit', combo: 'R' },
   { id: 'mapeditDelete', group: 'mapedit', combo: 'Delete' },
   { id: 'mapeditTakeAway', group: 'mapedit', combo: 'RightClick' },

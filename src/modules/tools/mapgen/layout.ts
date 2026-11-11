@@ -57,6 +57,8 @@ export interface Layout {
   light?: Light;
   // The world the map is of (GENRES): what the palette offers; none — fantasy.
   genre?: Genre;
+  // Thin walls and fences along the sides of cells (LayoutEdge); none before 0.110.
+  edges?: LayoutEdge[];
 }
 // Worlds of maps: the palette shows the things and grounds of the map's world and those of any world.
 export const GENRES = ['fantasy', 'scifi', 'gothic', 'steampunk', 'western', 'noir', 'modern', 'wasteland'] as const;
@@ -192,6 +194,20 @@ export const WALLS = 'Bkrpgzyfleibn';
 // Walls you see through — fences: no solid fill, no outline, a shadow of their own; drawn along the way they run.
 export const FENCES = 'pzyfleibn';
 export const isFence = (c: string | undefined) => !!c && FENCES.includes(c);
+// Thin walls (0.110): along the side of a cell, not in it. 'top' — the top side of cell (x, y), from x to x + 1 at y
+// (y goes up to h); 'left' — its left side (x goes up to w). `kind` — a wall or fence letter of EDGE_KINDS ('#' — the
+// rock or bulkhead of an indoor map), `door` — a door in it.
+export interface LayoutEdge {
+  x: number;
+  y: number;
+  side: 'top' | 'left';
+  kind: string;
+  door?: true;
+}
+export const EDGE_KINDS = '#Bkrpyfleibn';
+export const edgeKey = (e: { x: number; y: number; side: 'top' | 'left' }) => `${e.side}:${e.x},${e.y}`;
+export const edgeInMap = (l: Pick<Layout, 'w' | 'h'>, e: { x: number; y: number; side: 'top' | 'left' }) =>
+  e.x >= 0 && e.y >= 0 && (e.side === 'top' ? e.x < l.w && e.y <= l.h : e.x <= l.w && e.y < l.h);
 export const isFloor = (c: string | undefined) => !!c && FLOORS.includes(c);
 export const isWall = (c: string | undefined) => !!c && WALLS.includes(c);
 export const walkable = (c: string | undefined) =>

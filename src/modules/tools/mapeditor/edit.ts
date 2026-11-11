@@ -1,7 +1,7 @@
 // The map editor's data and moves: a draft is a layout of the map generator (mapgen/layout.ts), kept in a file
 // «Name.map.json» in an adventure's maps folder. Pure functions — every move returns a new layout; the picture is
 // drawn from it the same way as a generated one.
-import { GENRES, LAYOUT_STYLES, LIGHTS, buildingAt, isBuilt, isFloor, isWall, WALLS, isWild, tonesFor, walkable, type Genre, type Layout, type Light, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
+import { EDGE_KINDS, edgeInMap, edgeKey, GENRES, LAYOUT_STYLES, LIGHTS, buildingAt, isBuilt, isFloor, isWall, WALLS, isWild, tonesFor, walkable, type Genre, type Layout, type Light, type LayoutEdge, type LayoutRoom, type LayoutStyle } from '../mapgen/layout';
 import { PROP_KINDS, type Facing, type Prop, type PropKind } from '../mapgen/furnish';
 import { MAX_ASSET_SIDE, safeAssetPath } from '../../../shared/mapassets';
 
@@ -62,6 +62,12 @@ export function parseDraft(x: unknown): MapDraft | null {
           .map((g) => ({ x: g.x, y: g.y, along: g.along })),
       }
     : undefined;
+  const seen = new Set<string>();
+  const edges = (Array.isArray(l['edges']) ? l['edges'] : [])
+    .filter((e): e is LayoutEdge => !!e && int(e.x) && int(e.y) && (e.side === 'top' || e.side === 'left') && typeof e.kind === 'string' && e.kind.length === 1 && EDGE_KINDS.includes(e.kind) && edgeInMap({ w: W, h: H }, e))
+    .filter((e) => !seen.has(edgeKey(e)) && !!seen.add(edgeKey(e)))
+    .slice(0, 20000)
+    .map((e) => ({ x: e.x, y: e.y, side: e.side, kind: e.kind, ...(e.door === true ? { door: true as const } : {}) }));
   return {
     scryingGlass: 'map',
     version: 1,
@@ -82,6 +88,7 @@ export function parseDraft(x: unknown): MapDraft | null {
       ...(points(l['roofs'], 2000).length ? { roofs: points(l['roofs'], 2000) } : {}),
       ...(LIGHTS.includes(l['light'] as Light) ? { light: l['light'] as Light } : {}),
       ...(GENRES.includes(l['genre'] as Genre) && l['genre'] !== 'fantasy' ? { genre: l['genre'] as Genre } : {}),
+      ...(edges.length ? { edges } : {}),
     },
   };
 }
@@ -255,8 +262,12 @@ export function wipe(l: Layout, cells: { x: number; y: number }[], ground: strin
   const doors = l.doors.filter((d) => !on(d));
   const pillars = l.pillars.filter((p) => !on(p));
   const towers = l.wall?.towers.filter((t) => !on(t));
-  const gone = props.length !== (l.props ?? []).length || doors.length !== l.doors.length || pillars.length !== l.pillars.length || towers?.length !== l.wall?.towers.length;
-  const cleared: Layout = gone ? { ...l, props, doors, pillars, ...(l.wall ? { wall: { ...l.wall, towers: towers! } } : {}) } : l;
+  // Thin walls round the cells too.
+  const edges = l.edges?.filter((e) => !on(e) && !on(e.side === 'top' ? { x: e.x, y: e.y - 1 } : { x: e.x - 1, y: e.y }));
+  const gone =
+    props.length !== (l.props ?? []).length || doors.length !== l.doors.length || pillars.length !== l.pillars.length || towers?.length !== l.wall?.towers.length || edges?.length !== l.edges?.length;
+  const cleared: Layout = gone ? { ...l, props, doors, pillars, ...(l.wall ? { wall: { ...l.wall, towers: towers! } } : {}), ...(l.edges ? { edges: edges! } : {}) } : l;
+  if (cleared.edges && !cleared.edges.length) delete cleared.edges;
   const painted = paint(cleared, cells, ground);
   return painted === cleared && gone ? tidy(cleared) : painted;
 }
@@ -377,6 +388,69 @@ export function toggleTower(l: Layout, x: number, y: number): Layout {
   const towers = l.wall?.towers ?? [];
   if (towers.some((t) => t.x === x && t.y === y)) return { ...l, wall: { gates: l.wall?.gates ?? [], towers: towers.filter((t) => t.x !== x || t.y !== y) } };
   return at(l, x, y) === 'W' ? { ...l, wall: { gates: l.wall?.gates ?? [], towers: [...towers, { x, y }] } } : l;
+}
+
+// ---- Thin walls ----
+type Corner = { x: number; y: number };
+type Side = Pick<LayoutEdge, 'x' | 'y' | 'side'>;
+// The sides of cells from corner a to corner b, a step at a time along the way that is longer still.
+export function edgePath(a: Corner, b: Corner): Side[] {
+  const out: Side[] = [];
+  let { x, y } = a;
+  while (x !== b.x || y !== b.y) {
+    const dx = b.x - x;
+    const dy = b.y - y;
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      const nx = x + Math.sign(dx);
+      out.push({ x: Math.min(x, nx), y, side: 'top' });
+      x = nx;
+    } else {
+      const ny = y + Math.sign(dy);
+      out.push({ x, y: Math.min(y, ny), side: 'left' });
+      y = ny;
+    }
+  }
+  return out;
+}
+
+// Thin walls of a kind along the sides (a door in one stays); `kind` null — they go.
+export function setEdges(l: Layout, sides: Side[], kind: string | null): Layout {
+  const map = new Map((l.edges ?? []).map((e) => [edgeKey(e), e]));
+  let changed = false;
+  for (const s of sides) {
+    if (!edgeInMap(l, s)) continue;
+    const k = edgeKey(s);
+    const was = map.get(k);
+    if (kind === null) {
+      if (was) (map.delete(k), (changed = true));
+    } else if (!was || was.kind !== kind) {
+      map.set(k, { x: s.x, y: s.y, side: s.side, kind, ...(was?.door ? { door: true as const } : {}) });
+      changed = true;
+    }
+  }
+  if (!changed) return l;
+  const out: Layout = { ...l, edges: [...map.values()] };
+  if (!out.edges!.length) delete out.edges;
+  return out;
+}
+
+// The side of a cell nearest to a point (in cells), if the point is no further than `reach` from it.
+export function nearestSide(l: Pick<Layout, 'w' | 'h'>, px: number, py: number, reach = 0.3): Side | null {
+  const options: [Side, number][] = [
+    [{ x: Math.floor(px), y: Math.round(py), side: 'top' }, Math.abs(py - Math.round(py))],
+    [{ x: Math.round(px), y: Math.floor(py), side: 'left' }, Math.abs(px - Math.round(px))],
+  ];
+  const best = options.filter(([s]) => edgeInMap(l, s)).sort((a, b) => a[1] - b[1])[0];
+  return best && best[1] <= reach ? best[0] : null;
+}
+
+export const edgeAt = (l: Layout, s: Side) => l.edges?.find((e) => edgeKey(e) === edgeKey(s));
+
+// A door in a thin wall, or the wall again.
+export function toggleEdgeDoor(l: Layout, s: Side): Layout {
+  const k = edgeKey(s);
+  if (!edgeAt(l, s)) return l;
+  return { ...l, edges: l.edges!.map((e) => (edgeKey(e) !== k ? e : e.door ? { x: e.x, y: e.y, side: e.side, kind: e.kind } : { ...e, door: true as const })) };
 }
 
 // ---- Things ----
@@ -591,6 +665,7 @@ export function resize(l: Layout, w: number, h: number): Layout {
     landmarks,
     wall: l.wall && { towers: l.wall.towers.filter(keep), gates: l.wall.gates.filter((g2) => g2.x < W && g2.y < H) },
     roofs: l.roofs?.filter(keep),
+    ...(l.edges ? { edges: l.edges.filter((e) => edgeInMap({ w: W, h: H }, e)) } : {}),
   });
 }
 

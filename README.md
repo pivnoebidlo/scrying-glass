@@ -406,6 +406,8 @@ why (a blank «building» map is all rock until a floor is painted); R turns it,
 rectangle or Shift+click and move, turn and go together. A rug, a table, a puddle and others stretch by any side or corner; things stand on trees and boulders too (a nest on a
 fir); a
 rug, a bed, a tent and others take the colour you choose. Thickness 1–3, Shift+click draws a straight line, ⌘+Z undoes.
+Walls and fences can also go along the sides of cells — «Edge» next to the thickness (T): drag along the grid lines for a thin
+wall between two cells, the right button takes it away, the Door brush puts a door or a gate into it.
 The eraser (E) takes everything under it — things, doors, walls and the ground; the right button takes away the thing
 under the cursor, and where there is none it erases too. Every key of the editor is in Settings → Hotkeys. The wheel or two fingers scroll the map, a pinch or ⌘+wheel zooms around the cursor, and the
 map can go past its edges; 0 shows the whole map, 1 — 100 %, + and − zoom. «View» (H) drags the map about with the
