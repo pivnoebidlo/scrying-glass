@@ -3,6 +3,7 @@
 // a restaurant; a morgue; a military base; a campsite.
 import type { Prop } from './furnish';
 import { circle, CLOTH, glow, lines, rect, shape, tone, WOOD, type Ctx } from './prop-paint';
+import { drawSets25 } from './draw-sets25';
 
 const IRON = '#55585e';
 const HULL = '#d6d6cf';
@@ -231,5 +232,7 @@ export function drawSets24(ctx: Ctx, p: Prop, w: number, h: number, c: number) {
       for (const [x, y] of [[-0.08, -0.06], [0.1, 0.06]] as const) shape(ctx, '#a0582e', () => ctx.ellipse(x * c, y * c, c * 0.1, c * 0.04, 0.3, 0, Math.PI * 2), thin);
       shape(ctx, tone(CLOTH, 0.1), rect(ctx, -c * 0.03, c * 0.26, c * 0.06, c * 0.18), 0);
       break;
+    default:
+      drawSets25(ctx, p, w, h, c);
   }
 }

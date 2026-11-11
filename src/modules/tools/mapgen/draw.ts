@@ -55,6 +55,8 @@ const GRASS_TONES: Record<string, Look> = {
   moon: { grass: '#a3a29d', tuft: '#8c8b86', tree: ['#6e6d69', '#7d7c77', '#5f5e5a'] },
   // A smoky industrial town: soot-darkened ground, sickly trees.
   soot: { grass: '#6a6258', tuft: '#57504a', tree: ['#4a5238', '#3f4630', '#545c40'] },
+  // The open range: red-brown dust, sage brush.
+  prairie: { grass: '#c49a6a', tuft: '#a8805a', tree: ['#7a8a5a', '#6a7a4a', '#8a9a6a'] },
 };
 const FLOOR_TONES: Record<string, string[]> = {
   wood: ['#a87a4a', '#9c6f42', '#b08352'],
@@ -1490,6 +1492,7 @@ const LIGHT_OF: Partial<Record<PropKind, { r: number; rgb?: string }>> = {
   ticketbooth: { r: 2 }, ferriswheel: { r: 3, rgb: '255, 200, 140' },
   moonthrone: { r: 2, rgb: '200, 220, 255' }, silvertree: { r: 3.5, rgb: '200, 230, 255' }, elvenlamp: { r: 2.5, rgb: '200, 230, 255' }, drownedchest: { r: 1.4 }, cultaltar: { r: 2.5 }, bloodcircle: { r: 2.5, rgb: '200, 40, 50' }, cultrobes: { r: 1 }, terraformer: { r: 4, rgb: '120, 220, 255' }, hiddenbar: { r: 2.5 }, readingtable: { r: 2 }, treadmill: { r: 1, rgb: '95, 211, 201' },
   gaslamp: { r: 3.5, rgb: '255, 210, 130' }, dynamo: { r: 1.6, rgb: '160, 200, 255' }, cryocell: { r: 2, rgb: '150, 210, 255' }, diningtable: { r: 1.6 }, chefstove: { r: 1.4, rgb: '120, 170, 255' }, grill: { r: 2 }, camper: { r: 1.2 },
+  ticketkiosk: { r: 1.6, rgb: '255, 210, 130' }, steamhammer: { r: 2.5 }, furnace: { r: 4.5 }, saloonbar: { r: 2 }, faro: { r: 1.6 }, sheriffdesk: { r: 1.4 },
 };
 // `power`: how much of the darkness the light takes away (windows less than a fire).
 export function lightsOf(l: Layout): { x: number; y: number; r: number; rgb: string; power: number }[] {

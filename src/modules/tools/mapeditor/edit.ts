@@ -152,7 +152,8 @@ const FREE = new Set<PropKind>(['asset', ...WALL_DECOR, 'bridge', 'pier', 'buoy'
   'feathers', 'tightrope', 'viewport', 'blackboard', 'canopy', 'quarantine', 'cyberlimbs', 'departures', 'cinemascreen', 'teleportcircle',
   'trollbridge', 'tollsign', 'potrack', 'paddedwall', 'scaffold', 'towercrane', 'gantrycrane', 'coaster', 'ferriswheel',
   'spikedgate', 'slotdoor', 'anchorchain', 'barnacles', 'sunkenhull',
-  'pneumatictubes', 'gearwall', 'morguedrawers', 'ornithopter', 'smokestack']);
+  'pneumatictubes', 'gearwall', 'morguedrawers', 'ornithopter', 'smokestack',
+  'saloondoors', 'wantedboard', 'bankvault', 'pressuregauges', 'gunrack', 'mooringtower']);
 // …and on a tree's crown or a boulder (a nest, a lookout, a raven), over them on the picture.
 export const standable = (c: string | undefined) => walkable(c) || (!!c && 'TRNJQA'.includes(c));
 
@@ -397,6 +398,7 @@ const LONG: Partial<Record<PropKind, [number, number]>> = {
   container: [1, 3], gantrycrane: [4, 3], ferriswheel: [4, 4], coaster: [5, 1], bumpercars: [4, 3],
   silvertree: [3, 3], elvenfountain: [3, 3], wargpen: [3, 2], spikedgate: [2, 1], sunkenhull: [4, 5], anchorchain: [3, 1], yetibed: [3, 2], mammothtusk: [3, 1], frozencarcass: [3, 2], cultaltar: [2, 1], bloodcircle: [3, 3], sacrificeslab: [1, 2], terraformer: [4, 4], atmoplant: [3, 2], soilbeds: [3, 3], hiddenbar: [3, 2], pokertable: [2, 2], treadmill: [1, 2], weightbench: [1, 2], boxingring: [4, 4], readingtable: [3, 1], cardcatalog: [2, 1], printpress: [3, 2], newsdesk: [2, 1],
   diffengine: [3, 2], pneumatictubes: [3, 1], gearwall: [2, 1], dynamo: [2, 1], steamcar: [2, 3], steamtram: [1, 4], ornithopter: [3, 3], smokestack: [2, 2], gryphonnest: [3, 3], cryocell: [1, 2], prisonbunk: [1, 2], drillrig: [2, 2], icecore: [3, 1], diningtable: [2, 2], winerack: [2, 1], chefstove: [3, 1], morguedrawers: [3, 1], autopsy: [1, 2], sandbags: [3, 1], battletank: [3, 4], radar: [2, 2], bunker: [3, 3], domtent: [2, 2], sleepingbag: [1, 2], camper: [2, 4],
+  mooringtower: [3, 3], passengerdeck: [4, 2], steamhammer: [2, 2], conveyor: [4, 1], furnace: [2, 2], pressuregauges: [2, 1], coalpile: [2, 2], saloondoors: [2, 1], saloonbar: [4, 1], faro: [2, 2], wantedboard: [2, 1], bankcounter: [4, 1], bankvault: [2, 2], jailcell: [2, 2], sheriffdesk: [2, 1], gunrack: [2, 1], locomotive: [1, 4], railcar: [1, 3], watertower: [2, 2], stationplatform: [4, 2], coveredwagon: [1, 3], hitchpost: [2, 1], windpump: [2, 2],
 };
 // Things that stretch over several cells: a long table, a big puddle, a carpet runner, a wide stair.
 export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', 'rack', 'puddle', 'stall', 'altar', 'bed', 'log', 'rubble', 'flowers', 'reeds', 'stairs', 'bones', 'coins', 'mushrooms', 'roundtable', 'fountain', 'tent', 'wardrobe',
@@ -421,7 +423,8 @@ export const STRETCH: readonly PropKind[] = ['rug', 'table', 'bench', 'shelf', '
   'trollbridge', 'tiltrail', 'lancerack', 'roastspit', 'kitchentable', 'potrack', 'mandrake', 'herbspiral', 'gardenarch', 'paddedwall', 'scaffold',
   'trafficcones', 'rebar', 'container', 'gantrycrane', 'coaster', 'bumpercars', 'mecharm',
   'skullpile', 'barnacles', 'icechunks', 'cultrobes', 'anchorchain', 'wargpen', 'spikedgate', 'yetibed', 'bloodcircle', 'soilbeds', 'hiddenbar', 'boxingring', 'readingtable', 'cardcatalog', 'dumbbells', 'newspapers', 'moonshine', 'atmoplant',
-  'pneumatictubes', 'gearwall', 'diffengine', 'steamtram', 'prisonbunk', 'icecore', 'winerack', 'chefstove', 'morguedrawers', 'sandbags', 'bunker', 'leechjars'];
+  'pneumatictubes', 'gearwall', 'diffengine', 'steamtram', 'prisonbunk', 'icecore', 'winerack', 'chefstove', 'morguedrawers', 'sandbags', 'bunker', 'leechjars',
+  'passengerdeck', 'conveyor', 'pressuregauges', 'coalpile', 'saloonbar', 'wantedboard', 'bankcounter', 'jailcell', 'gunrack', 'locomotive', 'railcar', 'stationplatform', 'hitchpost', 'moneybags', 'tumbleweed'];
 export const MAX_STRETCH = 12;
 export function footprint(kind: PropKind, face: Facing): { w: number; h: number } {
   const [w, h] = LONG[kind] ?? [1, 1];

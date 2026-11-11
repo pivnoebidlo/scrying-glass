@@ -72,6 +72,10 @@ export const PROP_KINDS = [
   'diffengine', 'pneumatictubes', 'brassdiver', 'gearwall', 'dynamo', 'gaslamp', 'pennyfarthing', 'steamcar', 'steamtram', 'ornithopter', 'smokestack',
   // draw-sets24.ts: a gryphon's eyrie; a plague doctor; a prison ship; an ice station; a restaurant; a morgue; a military base; a campsite.
   'gryphonnest', 'gryphonfeathers', 'plaguemask', 'leechjars', 'bloodletting', 'cryocell', 'prisonbunk', 'drillrig', 'weathermast', 'icecore', 'diningtable', 'winerack', 'chefstove', 'morguedrawers', 'autopsy', 'sandbags', 'battletank', 'radar', 'bunker', 'domtent', 'sleepingbag', 'camper', 'grill',
+  // draw-sets25.ts: steampunk: an airship station; a steam factory.
+  'mooringtower', 'passengerdeck', 'luggagecart', 'ticketkiosk', 'steamhammer', 'conveyor', 'furnace', 'pressuregauges', 'coalpile',
+  // draw-sets26.ts: the Wild West: a saloon; a bank; a sheriff's office; a railway station; the open range.
+  'saloondoors', 'saloonbar', 'spittoon', 'faro', 'wantedboard', 'bankcounter', 'moneybags', 'bankvault', 'jailcell', 'sheriffdesk', 'gunrack', 'locomotive', 'railcar', 'watertower', 'stationplatform', 'coveredwagon', 'hitchpost', 'tumbleweed', 'cattleskull', 'windpump',
 ] as const;
 export type PropKind = (typeof PROP_KINDS)[number];
 
