@@ -214,23 +214,46 @@ export const walkable = (c: string | undefined) =>
   c === '.' || c === ',' || c === 'P' || c === 'S' || c === '=' || c === 'I' || c === 'M' || c === 'C' || c === 'K' || c === 'V' || isFloor(c);
 // A building put up of floors and walls.
 export const isBuilt = (c: string | undefined) => isFloor(c) || isWall(c);
-// The cells of the building a cell belongs to (its walls and floor joined side by side); none — not a building.
+// The cells of the building a cell belongs to: its floor, joined side by side and through doors (not through a thin wall),
+// and the walls round that floor (since 0.110 — two buildings that share a wall are two, each with its roof); a wall cell
+// goes with the floor beside it. None — not a building.
 export function buildingAt(l: Layout, x: number, y: number): { x: number; y: number }[] {
-  if (!isBuilt(l.cells[y]?.[x])) return [];
-  const seen = new Set([`${x},${y}`]);
-  const out = [{ x, y }];
-  for (let i = 0; i < out.length; i++) {
-    const p = out[i]!;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
-      const q = { x: p.x + dx, y: p.y + dy };
-      const k = `${q.x},${q.y}`;
-      if (!seen.has(k) && isBuilt(l.cells[q.y]?.[q.x])) {
-        seen.add(k);
-        out.push(q);
+  const at = (px: number, py: number) => l.cells[py]?.[px];
+  if (!isBuilt(at(x, y))) return [];
+  const key = (p: { x: number; y: number }) => `${p.x},${p.y}`;
+  const flood = (start: { x: number; y: number }, ok: (p: { x: number; y: number }, from: { x: number; y: number }) => boolean) => {
+    const seen = new Set([key(start)]);
+    const out = [start];
+    for (let i = 0; i < out.length; i++) {
+      const p = out[i]!;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        const q = { x: p.x + dx, y: p.y + dy };
+        if (!seen.has(key(q)) && ok(q, p)) {
+          seen.add(key(q));
+          out.push(q);
+        }
       }
     }
-  }
-  return out;
+    return out;
+  };
+  // A wall cell goes with the floor beside it; walls with no floor at all — with the walls they touch.
+  const ROUND = [[0, -1], [1, 0], [0, 1], [-1, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]] as const;
+  const start = isFloor(at(x, y)) ? { x, y } : ROUND.map(([dx, dy]) => ({ x: x + dx, y: y + dy })).find((p) => isFloor(at(p.x, p.y)));
+  if (!start) return flood({ x, y }, (q) => isBuilt(at(q.x, q.y)));
+  // A thin wall without a door parts two floors.
+  const thin = new Set((l.edges ?? []).filter((e) => !e.door).map(edgeKey));
+  const parted = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    a.y === b.y ? thin.has(edgeKey({ x: Math.max(a.x, b.x), y: a.y, side: 'left' })) : thin.has(edgeKey({ x: a.x, y: Math.max(a.y, b.y), side: 'top' }));
+  const floor = flood(start, (q, p) => isFloor(at(q.x, q.y)) && !parted(p, q));
+  const mine = new Set(floor.map(key));
+  const walls: { x: number; y: number }[] = [];
+  for (const p of floor)
+    for (const [dx, dy] of ROUND) {
+      const q = { x: p.x + dx, y: p.y + dy };
+      const ch = at(q.x, q.y);
+      if (!mine.has(key(q)) && isWall(ch) && !isFence(ch)) (mine.add(key(q)), walls.push(q));
+    }
+  return [...floor, ...walls];
 }
 
 interface Margins {

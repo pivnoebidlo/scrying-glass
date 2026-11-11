@@ -205,15 +205,24 @@ export function tidy(l: Layout): Layout {
 
 // The roofs that still stand on a building, one to each.
 function roofsOf(l: Layout): Layout['roofs'] {
+  // Floor is a building's own; walls between two are shared.
   const taken = new Set<string>();
   const out: { x: number; y: number }[] = [];
   for (const r of l.roofs ?? []) {
-    const cells = buildingAt(l, r.x, r.y);
-    if (!cells.length || cells.some((p) => taken.has(`${p.x},${p.y}`))) continue;
-    for (const p of cells) taken.add(`${p.x},${p.y}`);
+    const floor = buildingAt(l, r.x, r.y).filter((p) => !isWall(at(l, p.x, p.y)));
+    if (!floor.length || floor.some((p) => taken.has(`${p.x},${p.y}`))) continue;
+    for (const p of floor) taken.add(`${p.x},${p.y}`);
     out.push({ x: r.x, y: r.y });
   }
   return out.length ? out : undefined;
+}
+
+// Two buildings joined by a door are one: one roof is left of theirs.
+function reroof(l: Layout): Layout {
+  if (!l.roofs) return l;
+  const out: Layout = { ...l, roofs: roofsOf(l) };
+  if (!out.roofs) delete out.roofs;
+  return out;
 }
 
 // The walk along a castle wall: the middle of a wall three wide, or the gap of one between two walls; where the walls
@@ -331,9 +340,11 @@ export function addBuilding(l: Layout, r: LayoutRoom): Layout {
 export function toggleRoof(l: Layout, x: number, y: number): Layout {
   const cells = buildingAt(l, x, y);
   if (!cells.length) return l;
-  const mine = new Set(cells.map((p) => `${p.x},${p.y}`));
+  // The roofs of this building: those whose building has the same floor (a shared wall is not enough).
+  const floorOf = (c: { x: number; y: number }[]) => c.filter((p) => !isWall(at(l, p.x, p.y))).map((p) => `${p.x},${p.y}`);
+  const mine = new Set(floorOf(cells));
   const roofs = l.roofs ?? [];
-  const kept = roofs.filter((r) => !mine.has(`${r.x},${r.y}`));
+  const kept = roofs.filter((r) => !floorOf(buildingAt(l, r.x, r.y)).some((k) => mine.has(k)));
   const next = kept.length === roofs.length ? [...roofs, { x, y }] : kept;
   const out: Layout = { ...l, roofs: next };
   if (!next.length) delete out.roofs;
@@ -359,7 +370,7 @@ export function toggleDoor(l: Layout, x: number, y: number): Layout {
     const wall = (dx: number, dy: number) => isWall(at(l, x + dx, y + dy));
     // The door lies along the wall it is in.
     const along: 'x' | 'y' = wall(-1, 0) || wall(1, 0) ? 'y' : 'x';
-    return { ...l, cells: rows.map((row) => row.join('')), doors: [...l.doors, { x, y, along }] };
+    return reroof({ ...l, cells: rows.map((row) => row.join('')), doors: [...l.doors, { x, y, along }] });
   }
   if (was) {
     const doors = l.doors.filter((d) => d.x !== x || d.y !== y);
@@ -450,7 +461,7 @@ export const edgeAt = (l: Layout, s: Side) => l.edges?.find((e) => edgeKey(e) ==
 export function toggleEdgeDoor(l: Layout, s: Side): Layout {
   const k = edgeKey(s);
   if (!edgeAt(l, s)) return l;
-  return { ...l, edges: l.edges!.map((e) => (edgeKey(e) !== k ? e : e.door ? { x: e.x, y: e.y, side: e.side, kind: e.kind } : { ...e, door: true as const })) };
+  return reroof({ ...l, edges: l.edges!.map((e) => (edgeKey(e) !== k ? e : e.door ? { x: e.x, y: e.y, side: e.side, kind: e.kind } : { ...e, door: true as const })) });
 }
 
 // ---- Things ----

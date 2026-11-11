@@ -155,11 +155,22 @@ describe('the map editor', () => {
     const back = toggleDoor(withDoor, 4, 2);
     expect(back.cells[2]![4]).toBe('B');
     expect(back.doors).toEqual([]);
-    // One roof for the whole building, on and off; it goes when the building does.
+    // A roof over the building, on and off (a click on its wall too); it goes when the building does.
     const roofed = toggleRoof(withDoor, 3, 3);
     expect(roofed.roofs).toEqual([{ x: 3, y: 3 }]);
-    expect(toggleRoof(roofed, 8, 4).roofs).toBeUndefined();
+    expect(toggleRoof(roofed, 2, 2).roofs).toBeUndefined();
     expect(toggleRoof(roofed, 0, 0)).toBe(roofed);
+    // The room next door shares a wall but no door: a building of its own with its own roof…
+    const both = toggleRoof(roofed, 8, 4);
+    expect(both.roofs).toEqual([{ x: 3, y: 3 }, { x: 8, y: 4 }]);
+    expect(toggleRoof(both, 8, 4).roofs).toEqual([{ x: 3, y: 3 }]);
+    // …and a door in the wall between makes them one: one roof is left.
+    expect(toggleDoor(both, 6, 3).roofs).toEqual([{ x: 3, y: 3 }]);
+    // A thin wall without a door parts one floor in two.
+    const halves = setEdges(addBuilding(blankLayout('meadow', 12, 10, 1), { x: 2, y: 2, w: 6, h: 4 }), edgePath({ x: 4, y: 3 }, { x: 4, y: 5 }), 'B');
+    expect(toggleRoof(toggleRoof(halves, 3, 3), 5, 3).roofs).toHaveLength(2);
+    expect(toggleRoof(toggleRoof(toggleEdgeDoor(halves, { x: 4, y: 3, side: 'left' }), 3, 3), 5, 3).roofs).toBeUndefined();
+    expect(toggleEdgeDoor(toggleRoof(toggleRoof(halves, 3, 3), 5, 3), { x: 4, y: 3, side: 'left' }).roofs).toEqual([{ x: 3, y: 3 }]);
     const cleared: { x: number; y: number }[] = [];
     for (let y = 2; y < 6; y++) for (let x = 2; x < 10; x++) cleared.push({ x, y });
     expect(paint(roofed, cleared, '.').roofs).toBeUndefined();
