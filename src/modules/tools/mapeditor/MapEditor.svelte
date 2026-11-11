@@ -2,7 +2,7 @@
      of the map generator, so a generated map is edited the same way («Edit» in the generator). -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ArrowDownToLine, ArrowUpToLine, ChevronDown, ChevronRight, Eraser, Eye, FolderOpen, RefreshCw, Map as MapIcon, MousePointer2, Pencil, Plus, Redo2, RotateCw, Search, Trash2, Undo2, X, ZoomIn, ZoomOut } from '@lucide/svelte';
+  import { ArrowDownToLine, ArrowUpToLine, Package, ChevronDown, ChevronRight, Eraser, Eye, FolderOpen, RefreshCw, Map as MapIcon, MousePointer2, Pencil, Plus, Redo2, RotateCw, Search, Trash2, Undo2, X, ZoomIn, ZoomOut } from '@lucide/svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { store } from '../../../renderer/lib/store.svelte';
   import type { PropKind } from '../mapgen/furnish';
@@ -13,6 +13,7 @@
   import { TINTS, tintOf } from '../mapgen/draw-props';
   import MapCanvas from './MapCanvas.svelte';
   import NewMapDialog from './NewMapDialog.svelte';
+  import AssetPacks from './AssetPacks.svelte';
   import PropIcon from './PropIcon.svelte';
   import { CELL_BASE, editor } from './store.svelte';
   import { assets, assetSrc } from './assets.svelte';
@@ -281,6 +282,8 @@
     requestAnimationFrame(() => editor.fit());
   });
 
+  // The window of packs of assets.
+  let packing = $state(false);
   // The GM's own pictures: groups by folder, folded until opened (there may be thousands); the search finds them too.
   const OPEN = 'sg.mapedit.assetsOpen';
   let opened = $state<string[]>(
@@ -639,6 +642,7 @@
             <span>{t('mapedit.assets')}</span>
             <span class="count">{assets.things.length}</span>
             <span class="spacer"></span>
+            <button class="icon-btn" title={t('mapedit.pack.title')} onclick={() => (packing = true)}><Package size={13} /></button>
             <button class="icon-btn" title={t('mapedit.assetsRefresh')} onclick={() => void assets.load(true)}><RefreshCw size={12} /></button>
             <button class="icon-btn" title={t('mapedit.assetsFolderHint')} onclick={() => void window.api.revealMapAssets()}><FolderOpen size={13} /></button>
           </div>
@@ -698,6 +702,7 @@
 </div>
 
 {#if creating}<NewMapDialog onclose={() => (creating = false)} />{/if}
+{#if packing}<AssetPacks onclose={() => (packing = false)} />{/if}
 
 <style>
   .editor {

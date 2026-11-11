@@ -52,6 +52,8 @@ import { CARD_HANDOUT } from '../modules/handouts/types';
 import { setTableCards } from '../modules/initiative/table';
 import { createDraft, listDrafts, readDraft, renameDraft, writeDraft } from './mapdrafts';
 import { assetsDir, forgetMapAssets, listMapAssets, onMapAssetsChanged } from './mapassets';
+import { exportAssetPack, installAssetPack, installedPacks, removeAssetPack } from './assetpacks';
+import { ASSET_PACK_EXT, packFolder } from '../shared/mapassets';
 import { isMapDraft, type MapDraft } from '../modules/tools/mapeditor/edit';
 import { isAboutLink } from '../shared/about';
 import { announce, initSchedule, pressed, readSchedule, saveGames, updateAnnouncement } from './schedule';
@@ -576,7 +578,31 @@ ipcMain.handle('sketches:create', async (_event, { folder, title, sketch }: { fo
 ipcMain.handle('mapdrafts:list', () => listDrafts(resolveInVault, vaultTree));
 ipcMain.handle('mapassets:list', (_e, fresh: boolean) => {
   if (fresh) forgetMapAssets();
-  return listMapAssets(libraryPath());
+  const lib = libraryPath();
+  return { ...listMapAssets(lib), packs: lib ? installedPacks(lib) : [] };
+});
+// Packs of assets (main/assetpacks.ts).
+ipcMain.handle('mapassets:exportPack', async (_e, { folder, meta }: { folder: string; meta: { title: string; author?: string; license?: string } }) => {
+  const lib = libraryPath();
+  if (!lib) return null;
+  const win = getControlWindow();
+  const opts = { defaultPath: `${packFolder(meta.title)}${ASSET_PACK_EXT}`, filters: [{ name: t('core.assetPackFilter'), extensions: [ASSET_PACK_EXT.slice(1)] }] };
+  const res = win ? await dialog.showSaveDialog(win, opts) : await dialog.showSaveDialog(opts);
+  if (res.canceled || !res.filePath) return null;
+  return exportAssetPack(lib, folder, meta, res.filePath);
+});
+ipcMain.handle('mapassets:installPack', async () => {
+  const lib = libraryPath();
+  if (!lib) return null;
+  const win = getControlWindow();
+  const opts = { properties: ['openFile' as const], filters: [{ name: t('core.assetPackFilter'), extensions: [ASSET_PACK_EXT.slice(1)] }] };
+  const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts);
+  if (res.canceled || !res.filePaths[0]) return null;
+  return installAssetPack(lib, res.filePaths[0]);
+});
+ipcMain.handle('mapassets:removePack', (_e, folder: string) => {
+  const lib = libraryPath();
+  return !!lib && removeAssetPack(lib, folder);
 });
 ipcMain.handle('mapassets:reveal', async () => {
   const lib = libraryPath();

@@ -70,6 +70,9 @@ const api: Api = {
   deleteMapDraft: (path) => ipcRenderer.invoke('mapdrafts:delete', path),
   listMapAssets: (fresh) => ipcRenderer.invoke('mapassets:list', !!fresh),
   revealMapAssets: () => ipcRenderer.invoke('mapassets:reveal'),
+  exportAssetPack: (folder, meta) => ipcRenderer.invoke('mapassets:exportPack', { folder, meta }),
+  installAssetPack: () => ipcRenderer.invoke('mapassets:installPack'),
+  removeAssetPack: (folder) => ipcRenderer.invoke('mapassets:removePack', folder),
   onMapAssetsChanged: (cb) => { ipcRenderer.on('mapassets:changed', () => cb()); },
 
   readEntry: (path) => ipcRenderer.invoke('compendium:read', path),

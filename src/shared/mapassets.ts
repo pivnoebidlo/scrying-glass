@@ -73,3 +73,54 @@ export function assetThings(list: readonly MapAsset[]): AssetThing[] {
   for (const t of out) t.variants.sort((a, b) => a.variant.localeCompare(b.variant, undefined, { numeric: true }));
   return out.sort((a, b) => a.group.localeCompare(b.group) || a.title.localeCompare(b.title, undefined, { numeric: true }));
 }
+
+// ---- Packs of assets (0.111) ----
+// A folder of assets one GM gives another: «Name.sgassets», a ZIP of assets.json (the manifest below) and pictures/… —
+// the pictures with their folders, as they lie in the pack's folder. Installed as a folder of <library>/assets/ with
+// its manifest beside the pictures (PACK_MARK: a dot file, the index leaves it out): the palette shows it as any folder.
+export const ASSET_PACK_EXT = '.sgassets';
+export const ASSET_PACK_MANIFEST = 'assets.json';
+export const PACK_MARK = '.sgassets.json';
+export const PACK_PICTURES = 'pictures/';
+
+export interface AssetPackManifest {
+  scryingGlass: 'assets';
+  version: 1;
+  // The same pack in every copy: a newer release of it replaces the old one.
+  id: string;
+  title: string;
+  release: number;
+  author?: string;
+  // Where the pictures come from and what one may do with them.
+  license?: string;
+  count?: number;
+}
+
+const PACK_ID = /^[A-Za-z0-9][A-Za-z0-9-]{3,40}$/;
+const text = (v: unknown, max: number) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : undefined);
+
+// A manifest from someone else's file: only what is known, or null.
+export function validAssetPack(x: unknown): AssetPackManifest | null {
+  if (!x || typeof x !== 'object') return null;
+  const o = x as Record<string, unknown>;
+  if (o['scryingGlass'] !== 'assets' || o['version'] !== 1 || typeof o['id'] !== 'string' || !PACK_ID.test(o['id'])) return null;
+  const title = text(o['title'], 120);
+  if (!title) return null;
+  const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.round(v) : undefined);
+  const author = text(o['author'], 120);
+  const license = text(o['license'], 2000);
+  const count = num(o['count']);
+  return { scryingGlass: 'assets', version: 1, id: o['id'], title, release: Math.max(1, num(o['release']) ?? 1), ...(author ? { author } : {}), ...(license ? { license } : {}), ...(count !== undefined ? { count } : {}) };
+}
+
+// A picture of a pack's ZIP: pictures/<path>, a picture, no way up.
+export const packPicture = (name: string) => name.startsWith(PACK_PICTURES) && safeAssetPath(name.slice(PACK_PICTURES.length));
+
+// The folder a pack goes to: its title made safe for a file name.
+export const packFolder = (title: string) => title.replace(/[/\\:*?"<>|.]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Pack';
+
+// An installed pack: its folder in assets/ and its manifest.
+export interface InstalledAssetPack {
+  folder: string;
+  manifest: AssetPackManifest;
+}

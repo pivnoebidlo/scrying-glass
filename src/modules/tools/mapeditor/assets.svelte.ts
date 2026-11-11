@@ -2,7 +2,7 @@
 // once each. The palette shows thumbnails (sg-asset://l/…?w=); the map draws full pictures, loaded with CORS so that
 // the canvas can still be saved as a PNG («To Maps»).
 import { assetUrl, LIBRARY } from '../../../shared/vault';
-import { ASSET_DIR, assetThings, type AssetThing, type MapAsset } from '../../../shared/mapassets';
+import { ASSET_DIR, assetThings, type AssetThing, type InstalledAssetPack, type MapAsset } from '../../../shared/mapassets';
 import { setAssetPictures } from '../mapgen/draw-props';
 import type { Layout } from '../mapgen/layout';
 
@@ -10,6 +10,8 @@ export const assetSrc = (path: string) => assetUrl(`${LIBRARY}${ASSET_DIR}/${pat
 
 class Assets {
   list = $state.raw<MapAsset[]>([]);
+  // The folders of assets/ that are packs.
+  packs = $state.raw<InstalledAssetPack[]>([]);
   cut = $state(false);
   ready = $state(false);
   // Grows when a picture has loaded: the map draws again.
@@ -28,6 +30,7 @@ class Assets {
     }
     const r = await window.api.listMapAssets(fresh);
     this.list = r.list;
+    this.packs = r.packs;
     this.cut = r.cut;
     this.ready = true;
     if (fresh) {

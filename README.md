@@ -524,6 +524,10 @@ variant and its size in cells (none — one cell); variants of one thing are one
 variant or a random one each time. Thousands of pictures are fine: the groups stay folded until opened, the search finds
 a thing by name, and a map loads only the pictures it uses. A picture goes anywhere — on water, over a wall — and turns
 with its size. Full backups take the assets only together with pictures and music.
+A folder of assets can go to another GM as one file: the box button under «My assets» opens «Packs of assets» — «Save as a
+pack…» writes the folder into a «.sgassets» file with its name, author and license, «Install a pack…» puts such a file into
+the library as a folder of its own. A newer release of the same pack replaces the old one (that goes to the library's
+trash). Share only pictures you may share.
 
 **Wilderness encounter** (D&D, Tools → Wilderness encounter): forest, field, shore, swamp or a town quarter, the party's level and size
 and the difficulty → a scene (ambush, roadblock, lair ahead, pursuit, surrounded, chance meeting) with what the foes want,

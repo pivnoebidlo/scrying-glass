@@ -1,6 +1,6 @@
 // API, который preload открывает окнам как window.api.
 import type { MapDraft } from '../modules/tools/mapeditor/edit';
-import type { MapAsset } from './mapassets';
+import type { AssetPackManifest, InstalledAssetPack, MapAsset } from './mapassets';
 import type { GeneratorFile } from './generators';
 import type { BlockedEntry, Need, RepoCatalog, RepoEntry, RepoInfo, RepoProgress, ReportedEntry, ReportReason } from './repo';
 import type { BuiltinSounds } from './sounds';
@@ -156,8 +156,13 @@ export interface Api {
   renameMapDraft(path: string, title: string): Promise<string | null>;
   deleteMapDraft(path: string): Promise<boolean>;
   // The GM's own pictures for the map editor: the index of <library>/assets/ (main/mapassets.ts).
-  listMapAssets(fresh?: boolean): Promise<{ list: MapAsset[]; cut: boolean }>;
+  listMapAssets(fresh?: boolean): Promise<{ list: MapAsset[]; cut: boolean; packs: InstalledAssetPack[] }>;
   revealMapAssets(): Promise<void>;
+  // Packs of assets (main/assetpacks.ts): a folder of assets/ saved as a «.sgassets» file (null — not saved), such a
+  // file installed (null — none chosen), a pack's folder to the trash. Errors — «assetpack:<code>».
+  exportAssetPack(folder: string, meta: { title: string; author?: string; license?: string }): Promise<AssetPackManifest | null>;
+  installAssetPack(): Promise<(InstalledAssetPack & { replaced: boolean }) | null>;
+  removeAssetPack(folder: string): Promise<boolean>;
   onMapAssetsChanged(cb: () => void): void;
 
   // Справочник (shared/compendium.ts): Markdown-записи в папках справочника хранилища и в библиотеке
