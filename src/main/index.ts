@@ -1513,6 +1513,7 @@ ipcMain.handle('repo:unpublish', async (_event, { source, id }: { source: string
   for (const [pack, m] of Object.entries(repoInfo().systems.published)) if (m.id === id && m.source === source) setSystemMark('published', pack, null);
   const b = repoInfo().bestiaries.published[id];
   if (b && b.source === source) setBestiaryMark('published', id, null);
+  for (const [pack, m] of Object.entries(repoInfo().assets.published)) if (m.id === id && m.source === source) setAssetsMark('published', pack, null);
 });
 // Publish (or update) a system pack of the GM's own: the pack's file as it is in the library.
 ipcMain.handle('repo:publishSystem', async (_event, p: { source: string; pack: string; title: string; description: string; lang: string; cover?: string }) => {
