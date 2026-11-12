@@ -3,7 +3,7 @@
   import PasteButton from '../../../renderer/lib/PasteButton.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
-  import { Pause, Play, Shuffle, Trash2, Volume2, Wind, X } from '@lucide/svelte';
+  import { Pause, Play, Shuffle, Swords, Trash2, Volume2, Wind, X } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import Slider from '../../../renderer/lib/Slider.svelte';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -24,6 +24,9 @@
     return f ? allFiles(f, 'audio') : [];
   });
   const nowPlaying = $derived(ms.queue[ms.index]);
+  // Fight music of the open adventure ('' — the whole vault).
+  const here = $derived(app.adventures.current ?? '');
+  const isBattle = $derived(!!current && ms.battle[here] === current.path);
 
   function playTrack(path: string) {
     if (path === nowPlaying && ms.playlist === current?.path) dispatch('music', 'playPause');
@@ -48,6 +51,15 @@
         <Play size={14} /> {t('music.play')}
       </button>
       <button class="btn" onclick={shufflePlay}><Shuffle size={14} /> {t('music.shufflePlay')}</button>
+      <button
+        class="btn"
+        class:on={isBattle}
+        aria-pressed={isBattle}
+        title={t('music.battleHint')}
+        onclick={() => dispatch('music', 'setBattle', { adventure: here, path: isBattle ? null : current.path })}
+      >
+        <Swords size={14} /> {t('music.battleBtn')}
+      </button>
       <PasteButton {app} role="music" />
     </header>
 
@@ -114,6 +126,10 @@
 </div>
 
 <style>
+  .btn.on {
+    border-color: var(--warning);
+    color: var(--warning);
+  }
   .trash:hover {
     color: var(--danger);
   }

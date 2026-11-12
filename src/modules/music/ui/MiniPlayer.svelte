@@ -9,7 +9,7 @@
   import type { Repeat as RepeatMode } from '../types';
   import { formatTime, live, playback, seek } from './playback.svelte';
   import { playlists, playlistTitle } from './playlists';
-  import { Disc3, FolderOpen, Star } from '@lucide/svelte';
+  import { Disc3, FolderOpen, Star, Swords } from '@lucide/svelte';
   import { trayOwner } from '../../scenes/tray';
   import TrayChips from '../../scenes/ui/TrayChips.svelte';
   import { allFiles, fileKind, folderRole } from '../../../shared/vault';
@@ -54,6 +54,9 @@
   }
 
   const track = $derived(ms.queue[ms.index]);
+  // Fight music: what is set for this adventure, and what comes back after the fight.
+  const battle = $derived(ms.battle[app.adventures.current ?? '']);
+  const backTo = $derived(ms.beforeFight?.queue.length ? playlistTitle(app.vault.tree, app.vault.name, ms.beforeFight.playlist) : null);
   const NEXT_REPEAT: Record<RepeatMode, RepeatMode> = { all: 'one', one: 'off', off: 'all' };
   const repeatTitle = (r: RepeatMode) => t(`music.repeat.${r}`);
 </script>
@@ -83,6 +86,21 @@
     {/if}
   {/snippet}
 </TrayChips>
+
+{#if ms.beforeFight}
+  <div class="fight">
+    <Swords size={13} />
+    <span class="what">{t('music.fightNow')}</span>
+    <button class="btn small" title={backTo ? t('music.fightBackTo', { name: backTo }) : t('music.fightBackSilence')} onclick={() => dispatch('music', 'fightBack')}>
+      {t('music.fightBack')}
+    </button>
+  </div>
+{:else if battle}
+  <div class="fight faint" title={t('music.battleHint')}>
+    <Swords size={13} />
+    <span class="what">{t('music.battleIdle', { name: playlistTitle(app.vault.tree, app.vault.name, battle) })}</span>
+  </div>
+{/if}
 
 {#if track}
   <div class="now">
@@ -126,6 +144,23 @@
 {/if}
 
 <style>
+  .fight {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 12px;
+  }
+  .fight:not(.faint) {
+    color: var(--warning);
+  }
+  .fight .what {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .title-row {
     display: flex;
     align-items: center;

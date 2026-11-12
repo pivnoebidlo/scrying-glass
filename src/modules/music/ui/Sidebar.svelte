@@ -3,7 +3,7 @@
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import { t } from '../../../renderer/lib/i18n.svelte';
   import RoleFolderNames from '../../../renderer/lib/RoleFolderNames.svelte';
-  import { ListMusic, Play } from '@lucide/svelte';
+  import { ListMusic, Play, Swords } from '@lucide/svelte';
   import type { ModuleProps } from '../../../renderer/lib/contrib';
   import { openTab } from '../../../renderer/lib/nav';
   import { dispatch } from '../../../renderer/lib/store.svelte';
@@ -15,10 +15,18 @@
   // A row's menu (a right click): its actions.
   let rowMenu = $state<{ x: number; y: number; items: MenuItem[] } | null>(null);
   const rowMenuAt = (e: MouseEvent, items: MenuItem[]) => (rowMenu = { ...menuAt(e), items });
+  // Fight music of the open adventure ('' — the whole vault).
+  const here = $derived(app.adventures.current ?? '');
+  const battle = $derived(ms.battle[here]);
   const playlistMenu = (e: MouseEvent, path: string) =>
     rowMenuAt(e, [
       { label: t('music.play'), icon: Play, action: () => void dispatch('music', 'playFolder', { folder: path }) },
       { label: t('music.openList'), icon: ListMusic, action: () => ((ui.selected = path), openTab('music')) },
+      {
+        label: battle === path ? t('music.battleOff') : t('music.battleOn'),
+        icon: Swords,
+        action: () => void dispatch('music', 'setBattle', { adventure: here, path: battle === path ? null : path }),
+      },
     ]);
 </script>
 
@@ -28,6 +36,7 @@
       <button class="main" data-nav title={p.path} onclick={() => { ui.selected = p.path; openTab('music'); }}>
         <ListMusic size={14} />
         <span class="name">{p.title}</span>
+        {#if battle === p.path}<span class="battle" title={t('music.battleMark', { where: here || app.vault.name })}><Swords size={12} /></span>{/if}
         <span class="count">{p.count}</span>
       </button>
       <button class="icon-btn play" title={t('music.play')} onclick={() => dispatch('music', 'playFolder', { folder: p.path })}>
@@ -84,6 +93,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .battle {
+    display: grid;
+    color: var(--warning);
   }
   .count {
     color: var(--text-faint);

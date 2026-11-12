@@ -12,12 +12,18 @@
   let { ms }: ModuleProps<'music'> = $props();
 
   const FADE_MS = 400;
+  // Into a fight and out of it: slower, the music turns rather than cuts.
+  const FIGHT_MS = 2000;
   const decks = [new Audio(), new Audio()];
   let active = 0;
   let currentSeq = -1;
   let lastPlaying = false;
   let endSent = -1;
   let errors = 0;
+  // Where a track stopped when another took its place: a track coming back after a fight goes on from there.
+  const positions = new Map<string, number>();
+  let currentPath: string | undefined;
+  let wasFight = false;
 
   const volume = $derived(live.volume ?? ms.volume);
   const deck = () => decks[active]!;
@@ -29,8 +35,13 @@
     lastPlaying = ms.playing;
     endSent = -1;
     const old = deck();
+    if (currentPath && old.src) positions.set(currentPath, old.currentTime);
+    currentPath = path;
+    const fight = !!ms.beforeFight;
+    const turn = fight !== wasFight || seq === ms.resume;
+    wasFight = fight;
     if (!path) {
-      fade(old, () => 0, FADE_MS, () => old.pause());
+      fade(old, () => 0, turn ? FIGHT_MS : FADE_MS, () => old.pause());
       return;
     }
     active = 1 - active;
@@ -39,7 +50,13 @@
     next.volume = 0;
     playback.time = 0;
     playback.duration = 0;
-    const ms_ = Math.max(ms.crossfade * 1000, 50);
+    const at = seq === ms.resume ? positions.get(path) : undefined;
+    if (at) {
+      const go = () => (next.currentTime = at);
+      if (next.readyState >= 1) go();
+      else next.addEventListener('loadedmetadata', go, { once: true });
+    }
+    const ms_ = turn ? Math.max(ms.crossfade * 1000, FIGHT_MS) : Math.max(ms.crossfade * 1000, 50);
     if (ms.playing) {
       next.play().catch(() => {});
       fade(next, () => volume, ms_);

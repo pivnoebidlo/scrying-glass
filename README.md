@@ -935,6 +935,11 @@ The sound comes from the GM's computer and keeps playing even if the player scre
 after launch. The output device (for example, speakers instead of headphones) is chosen in the Music settings and
 remembered on this computer.
 
+**Fight music.** Mark a playlist "For fights" (the button above its tracks, or "Play in fights" in its menu) — one for
+each adventure. When a fight begins in the initiative tracker (round 1), the music turns to it by itself; when the fight
+is over, what played before comes back, from where it stopped (paused, if it was paused). Music you put on yourself
+during the fight stays. "Back" in the Music block of the right panel brings the earlier music back before the fight ends.
+
 Hotkeys (⌘ on macOS, Ctrl on Windows and Linux): ⌘P — pause, ⌘→ / ⌘← — next / previous track, ⌘↑ / ⌘↓ — volume,
 ⌘⇧A — ambience, ⌘B — black out the player screen, ⌘1…⌘9 — scenes, ⌘K — search. Every shortcut of the app is listed
 in ⌘, → Hotkeys (with a search); the common ones — settings, search, black out, music — can be changed there: click the

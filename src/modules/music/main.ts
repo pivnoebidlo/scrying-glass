@@ -1,8 +1,10 @@
 // Музыка (очередь из папки) и атмосфера (зацикленные звуки поверх музыки).
 import { defineModule, type ModuleContext } from '../../shared/module';
-import { allFiles, findFolder } from '../../shared/vault';
+import { allFiles, fileKind, findFolder } from '../../shared/vault';
 import { isBuiltinSound } from '../../shared/sounds';
 import type { AmbientLoop, MusicState, Repeat } from './types';
+
+type Round = { initiative?: { round: number }; adventures?: { current: string | null } };
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
@@ -38,9 +40,12 @@ function prune(s: MusicState, ctx: ModuleContext): MusicState {
   const queue = s.queue.filter((p) => exists.has(p));
   // Встроенные звуки (sound:…) — вне хранилища, их не проверяем.
   const ambience = s.ambience.filter((a) => exists.has(a.path) || isBuiltinSound(a.path));
-  if (queue.length === s.queue.length && ambience.length === s.ambience.length) return s;
+  // Fight music whose folder or track is gone.
+  const battle = Object.fromEntries(Object.entries(s.battle).filter(([, p]) => exists.has(p) || !!findFolder(tree, p)));
+  const battleSame = Object.keys(battle).length === Object.keys(s.battle).length;
+  if (queue.length === s.queue.length && ambience.length === s.ambience.length && battleSame) return s;
   const kept = current ? queue.indexOf(current) : -1;
-  const next = { ...s, queue, ambience };
+  const next = { ...s, queue, ambience, battle: battleSame ? s.battle : battle };
   if (kept >= 0) return { ...next, index: kept };
   // Текущий трек удалили: играем то, что встало на его место.
   if (!queue.length) return { ...next, index: 0, playing: false, playlist: null };
@@ -63,6 +68,39 @@ function setShuffle(s: MusicState, shuffle: boolean, ctx: ModuleContext): MusicS
   return { ...s, shuffle, queue, index };
 }
 
+// The tracks of a folder (with the folders inside) or one track.
+function tracksOf(path: string, shuffle: boolean, ctx: ModuleContext): string[] {
+  const tree = ctx.vault.tree;
+  if (!tree) return [];
+  if (fileKind(path) === 'audio') return allFiles(tree, 'audio').some((f) => f.path === path) ? [path] : [];
+  const f = findFolder(tree, path);
+  const queue = f ? allFiles(f, 'audio').map((x) => x.path) : [];
+  return shuffle ? shuffled(queue) : queue;
+}
+
+// A fight began: its music, if the adventure has one; what played is kept to come back to.
+export function fightBegins(s: MusicState, adventure: string, ctx: ModuleContext): MusicState {
+  const path = s.battle[adventure];
+  if (!path || s.beforeFight) return s;
+  // The GM put it on already.
+  if (s.playlist === path && s.playing) return s;
+  const queue = tracksOf(path, s.shuffle, ctx);
+  if (!queue.length) return s;
+  const beforeFight = { playlist: s.playlist, queue: s.queue, index: s.index, playing: s.playing };
+  return start({ ...s, beforeFight, playlist: path, queue }, 0);
+}
+
+// The fight is over: what played before comes back — from where it stopped, paused if it was paused.
+export function fightEnds(s: MusicState): MusicState {
+  const b = s.beforeFight;
+  if (!b) return s;
+  if (!b.queue.length) return { ...s, beforeFight: null, playlist: null, queue: [], index: 0, playing: false, seq: s.seq + 1 };
+  return { ...s, ...b, beforeFight: null, seq: s.seq + 1, resume: s.seq + 1 };
+}
+
+// The GM chose music themselves during a fight: theirs stays, nothing comes back after it.
+const chosen = (s: MusicState): MusicState => (s.beforeFight ? { ...s, beforeFight: null } : s);
+
 const initialState: MusicState = {
   playlist: null,
   queue: [],
@@ -73,6 +111,9 @@ const initialState: MusicState = {
   repeat: 'all',
   shuffle: false,
   crossfade: 3,
+  battle: {},
+  beforeFight: null,
+  resume: -1,
   ambience: [],
   ambiencePlaying: false,
   ambienceVolume: 0.8,
@@ -84,8 +125,18 @@ export default defineModule({
   initialState,
 
   // После запуска ничего не играет само: музыка включается, когда мастер нажмёт «играть».
-  init: (s, ctx) => prune({ ...s, playing: false, ambiencePlaying: false }, ctx),
+  // Older saves have no fight music.
+  init: (s, ctx) => prune({ ...s, battle: s.battle ?? {}, beforeFight: null, resume: -1, playing: false, ambiencePlaying: false }, ctx),
   onTreeChange: prune,
+
+  // A fight begins with its first round in the initiative tracker and ends when the rounds are reset.
+  afterAction(s, before, after, ctx) {
+    const a = (before as Round).initiative?.round ?? 0;
+    const b = (after as Round).initiative?.round ?? 0;
+    if (a === 0 && b > 0) return fightBegins(s, (after as Round).adventures?.current ?? '', ctx);
+    if (a > 0 && b === 0) return fightEnds(s);
+    return s;
+  },
 
   actions: {
     // Играть папку (со вложенными), начиная с трека start, если он задан.
@@ -100,13 +151,13 @@ export default defineModule({
         if (first && queue.includes(first)) queue = [first, ...queue.filter((p) => p !== first)];
       }
       const index = first ? Math.max(0, queue.indexOf(first)) : 0;
-      return start({ ...s, playlist: folder, queue }, index);
+      return start({ ...chosen(s), playlist: folder, queue }, index);
     },
 
     // Один трек отдельно от папки (из подборки правой панели): очередь — только он, с повтором — по кругу.
     // playlist тогда — путь самого трека.
     playTrack(s, { path }: { path: string }) {
-      return start({ ...s, playlist: path, queue: [path] }, 0);
+      return start({ ...chosen(s), playlist: path, queue: [path] }, 0);
     },
 
     jump(s, { index }: { index: number }) {
@@ -123,7 +174,20 @@ export default defineModule({
 
     // Убрать из проигрывателя: очереди нет, ничего не играет (например, остался трек из другой сцены).
     clear(s) {
-      return { ...s, playlist: null, queue: [], index: 0, playing: false };
+      return { ...chosen(s), playlist: null, queue: [], index: 0, playing: false };
+    },
+
+    // The music of a fight in an adventure ('' — the whole vault); null — none.
+    setBattle(s, { adventure, path }: { adventure: string; path: string | null }) {
+      const battle = { ...s.battle };
+      if (path) battle[adventure] = path;
+      else delete battle[adventure];
+      return { ...s, battle };
+    },
+
+    // Back to what played before the fight now, without waiting for its end.
+    fightBack(s) {
+      return fightEnds(s);
     },
 
     next(s) {

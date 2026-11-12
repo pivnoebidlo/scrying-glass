@@ -1,5 +1,13 @@
 export type Repeat = 'all' | 'one' | 'off';
 
+// What played before a fight, to come back to after it.
+export interface BeforeFight {
+  playlist: string | null;
+  queue: string[];
+  index: number;
+  playing: boolean;
+}
+
 export interface AmbientLoop {
   path: string;
   volume: number; // 0..1
@@ -20,6 +28,14 @@ export interface MusicState {
   shuffle: boolean;
   // Длительность перехода между треками, секунды. 0 — без перехода.
   crossfade: number;
+
+  // Music of a fight by adventure ('' — the whole vault): a folder or one track. It plays from the first round of a
+  // fight in the initiative tracker to its end; then what played before comes back, from where it was.
+  battle: Record<string, string>;
+  // What played before the fight; null — no fight music is on now (or the GM chose other music during the fight).
+  beforeFight: BeforeFight | null;
+  // The seq of the track that goes on from where it stopped (the window remembers where); -1 — none.
+  resume: number;
 
   ambience: AmbientLoop[];
   ambiencePlaying: boolean;
