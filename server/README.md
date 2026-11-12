@@ -81,6 +81,8 @@ shows complaints, the buttons to take any entry down and the blocked ones to unb
 | `S3_BUCKET`, `S3_PREFIX` | the bucket and the prefix of the repository's keys |
 | `S3_ACCESS_KEY`, `S3_SECRET_KEY` | the S3 key |
 | `ADMIN_TOKEN` | the admin's token (empty — no admin calls) |
+| `TELEGRAM_BOT_TOKEN` | a bot token; set both to get a Telegram message on every new publish |
+| `TELEGRAM_CHAT_ID` | the chat to send new-pack notifications to |
 | `MAX_PACK_MB`, `MAX_PER_AUTHOR`, `RATE_PER_MINUTE` | limits |
 | `TRUST_PROXY` | `false` — don't read `X-Forwarded-For` |
 | `PORT` | 8080 |

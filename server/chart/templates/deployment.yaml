@@ -43,6 +43,8 @@ spec:
               value: {{ .Values.limits.maxPerAuthor | quote }}
             - name: RATE_PER_MINUTE
               value: {{ .Values.limits.ratePerMinute | quote }}
+            - name: TELEGRAM_CHAT_ID
+              value: {{ .Values.telegram.chatId | quote }}
           envFrom:
             - secretRef:
                 name: {{ include "sgrepo.secret" . }}

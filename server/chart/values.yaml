@@ -24,6 +24,12 @@ secret:
   accessKey: ""
   secretKey: ""
   adminToken: ""
+  # Telegram bot token for new-pack notifications (empty — no notifications).
+  telegramBotToken: ""
+
+# Telegram notification on new publishes: set chatId and secret.telegramBotToken.
+telegram:
+  chatId: ""
 
 limits:
   # The largest adventure, MB.
