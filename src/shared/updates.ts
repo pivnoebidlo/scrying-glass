@@ -16,6 +16,8 @@ export interface UpdateInfo {
   latest: string | null;
   url: string;
   newer: boolean;
+  // true when the app can download and install this update itself (zip on macOS, exe on Windows, AppImage on Linux).
+  canInstall: boolean;
 }
 
 // «v0.29.0» -> [0, 29, 0]; anything after the numbers («-beta») is ignored.

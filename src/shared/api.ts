@@ -208,6 +208,11 @@ export interface Api {
   appVersion(): Promise<string>;
   openRelease(url: string): Promise<void>;
   onUpdateAvailable(cb: (info: UpdateInfo) => void): void;
+  downloadUpdate(): Promise<void>;
+  installUpdate(): Promise<void>;
+  onUpdateProgress(cb: (pct: number) => void): void;
+  onUpdateReady(cb: () => void): void;
+  onUpdateError(cb: () => void): void;
   // Telegram (main/telegram.ts): status and chats, token, a chat on/off and its label; sending — text (Telegram HTML),
   // a picture of the vault or library, a capture of a part of this window (in CSS pixels). Result: sent, errors.
   telegramStatus(): Promise<TgStatus>;

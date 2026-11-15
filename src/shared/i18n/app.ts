@@ -397,6 +397,9 @@ export const en = {
   'updates.upToDate': "You have the latest version.",
   'updates.failed': "Could not reach GitHub.",
   'updates.newer': "Version {version} is out.",
+  'updates.downloading': "Downloading {version}… {pct}%",
+  'updates.restart': "Restart to install",
+  'updates.downloadFailed': "Download failed.",
 };
 
 export const ru: Messages<typeof en> = {
@@ -795,4 +798,7 @@ export const ru: Messages<typeof en> = {
   'updates.upToDate': "У вас последняя версия.",
   'updates.failed': "Не удалось связаться с GitHub.",
   'updates.newer': "Вышла версия {version}.",
+  'updates.downloading': "Загружаю {version}… {pct}%",
+  'updates.restart': "Перезапустить и установить",
+  'updates.downloadFailed': "Не удалось загрузить обновление.",
 };

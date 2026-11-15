@@ -46,7 +46,7 @@ import { COVER_SUFFIX, IMAGE_EXT } from '../shared/vault';
 import { builtinSounds, resolveSound } from './sounds';
 import { resolvePdfjs } from './pdfjs';
 import { importNameLists, listNameLists, namesDir } from './names';
-import { checkForUpdates } from './updates';
+import { checkForUpdates, downloadUpdate, installUpdate } from './updates';
 import { buildMenu } from './menu';
 import { CARD_HANDOUT } from '../modules/handouts/types';
 import { setTableCards } from '../modules/initiative/table';
@@ -2185,6 +2185,30 @@ ipcMain.handle('updates:setSettings', (_event, next: Partial<UpdateSettings>) =>
 });
 ipcMain.handle('updates:check', () => checkForUpdates());
 ipcMain.handle('updates:open', (_event, url: string) => (isReleaseUrl(url) ? shell.openExternal(url) : undefined));
+
+// In-app download and install: download streams the asset to a temp file; progress and ready/error events go to the
+// control window. Install runs the platform-specific update script and quits the app.
+let _updateDownloading = false;
+let _updatePath: string | null = null;
+
+ipcMain.handle('updates:download', async () => {
+  if (_updateDownloading) return;
+  _updateDownloading = true;
+  const ctrl = () => getControlWindow()?.webContents;
+  try {
+    _updatePath = await downloadUpdate((pct) => ctrl()?.send('updates:progress', pct));
+    _updateDownloading = false;
+    ctrl()?.send('updates:ready');
+  } catch {
+    _updateDownloading = false;
+    _updatePath = null;
+    ctrl()?.send('updates:error');
+  }
+});
+
+ipcMain.handle('updates:install', async () => {
+  if (_updatePath) await installUpdate(_updatePath);
+});
 // The About section's links (only its own addresses).
 ipcMain.handle('app:openLink', (_event, url: string) => (isAboutLink(url) ? shell.openExternal(url) : undefined));
 ipcMain.handle('app:version', () => app.getVersion());

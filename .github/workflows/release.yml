@@ -43,6 +43,7 @@ jobs:
           name: ${{ runner.os }}
           path: |
             dist/*.dmg
+            dist/*.zip
             dist/*.exe
             dist/*.deb
             dist/*.rpm
