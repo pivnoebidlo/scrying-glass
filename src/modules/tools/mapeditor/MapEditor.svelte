@@ -191,6 +191,31 @@
     { id: 'cave', kinds: ['stalagmite', 'mushrooms', 'puddle', 'campfire', 'bedroll', 'nest'] },
     { id: 'wild', kinds: ['log', 'stump', 'bush', 'flowers', 'reeds', 'fern', 'deadtree', 'menhir', 'cairn', 'totem'] },
   ];
+  // Recently used brushes / props / assets: the window remembers up to 8.
+  type RecentItem = { type: 'brush'; id: BrushId } | { type: 'prop'; kind: PropKind } | { type: 'asset'; base: string };
+  const RECENT = 'sg.mapedit.recent';
+  const MAX_RECENT = 8;
+  let recent = $state<RecentItem[]>(
+    (() => {
+      try {
+        const v = JSON.parse(localStorage.getItem(RECENT) ?? '[]');
+        return Array.isArray(v) ? (v as RecentItem[]).filter((x) => typeof x?.type === 'string').slice(0, MAX_RECENT) : [];
+      } catch {
+        return [];
+      }
+    })(),
+  );
+  const recentKey = (r: RecentItem) => (r.type === 'brush' ? `b:${r.id}` : r.type === 'prop' ? `p:${r.kind}` : `a:${r.base}`);
+  function addRecent(item: RecentItem) {
+    const key = recentKey(item);
+    recent = [item, ...recent.filter((r) => recentKey(r) !== key)].slice(0, MAX_RECENT);
+    try {
+      localStorage.setItem(RECENT, JSON.stringify(recent));
+    } catch {
+      /* the window forgets */
+    }
+  }
+
   // Folded groups and the search of things: the window remembers the folds.
   const FOLDS = 'sg.mapedit.folded';
   let folded = $state<string[]>(
@@ -212,6 +237,7 @@
     }
   }
   let query = $state('');
+  let searchInput = $state<HTMLInputElement | null>(null);
   // The brushes, by what they make: the ground, and what is built on it.
   const FLOOR_IDS: BrushId[] = ['floor', 'planks', 'flagstone', 'tiles', 'carpet', 'earth', 'marble'];
   const WALL_IDS: BrushId[] = ['wall', 'timber', 'stonewall', 'brick', 'door', 'pillar', 'build'];
@@ -320,6 +346,7 @@
     editor.prop = 'asset';
     editor.asset = th.variants[0]!;
     editor.selected = -1;
+    addRecent({ type: 'asset', base: th.base });
   };
   // The variants of the picture being put down or of the one picked.
   const pickedAsset = $derived(editor.mode === 'select' ? layout?.props?.[editor.selected] : undefined);
@@ -346,7 +373,12 @@
   }
   // Walls and fences can go along the sides of cells.
   const canThin = $derived(editor.mode === 'brush' && EDGE_KINDS.includes(brushes.find((b) => b.id === editor.brush)?.cell ?? '-'));
-  const pickBrush = (id: BrushId) => ((editor.mode = 'brush'), (editor.brush = id), (editor.selected = -1));
+  const pickBrush = (id: BrushId) => {
+    editor.mode = 'brush';
+    editor.brush = id;
+    editor.selected = -1;
+    if (id !== 'erase') addRecent({ type: 'brush', id });
+  };
   const erasing = $derived(editor.mode === 'brush' && editor.brush === 'erase');
   // Another thing — a random colour again (a red rug does not make every chest red).
   const pickProp = (k: PropKind) => {
@@ -354,6 +386,7 @@
     editor.mode = 'place';
     editor.prop = k;
     editor.selected = -1;
+    addRecent({ type: 'prop', kind: k });
   };
   function rotate() {
     if (!editor.layout) return;
@@ -463,6 +496,19 @@
     } else if (matches(e, 'mapeditErase')) {
       setViewing(false);
       pickBrush('erase');
+    } else if (!mod && e.key === '/') {
+      // Focus the palette search.
+      e.preventDefault();
+      searchInput?.focus();
+      searchInput?.select();
+    } else if (!mod && !e.shiftKey && (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'ArrowUp' || e.code === 'ArrowDown')) {
+      // Pan the map with arrow keys (3 cells per step).
+      e.preventDefault();
+      const step = 3 * editor.cell;
+      editor.viewport?.scrollBy({
+        left: e.code === 'ArrowRight' ? step : e.code === 'ArrowLeft' ? -step : 0,
+        top: e.code === 'ArrowDown' ? step : e.code === 'ArrowUp' ? -step : 0,
+      });
     } else if (editor.viewing) return;
     else if (mod && e.code === 'KeyA' && editor.mode === 'select') {
       e.preventDefault();
@@ -612,7 +658,7 @@
         {/if}
         <label class="search">
           <Search size={13} />
-          <input type="search" placeholder={t('mapedit.searchThings')} bind:value={query} />
+          <input type="search" placeholder={t('mapedit.searchThings')} bind:value={query} bind:this={searchInput} />
           {#if query}<button class="icon-btn clear" aria-label={t('mapedit.cancel')} onclick={() => (query = '')}><X size={12} /></button>{/if}
         </label>
         </div>
@@ -669,6 +715,40 @@
           {/if}
           {#if !found.length && !foundBrushes.length && !foundAssets.length}<p class="faint small">{t('mapedit.nothingFound')}</p>{/if}
         {:else}
+          {#if recent.length}
+            <button class="group fold" aria-expanded={!folded.includes('recent')} onclick={() => fold('recent')}>
+              {#if folded.includes('recent')}<ChevronRight size={13} />{:else}<ChevronDown size={13} />{/if}
+              {t('mapedit.recent')}
+            </button>
+            {#if !folded.includes('recent')}
+              <div class="grid">
+                {#each recent as r (recentKey(r))}
+                  {#if r.type === 'brush'}
+                    {@const b = brushes.find((x) => x.id === r.id)}
+                    {#if b}
+                      <button class="thing" class:on={editor.mode === 'brush' && editor.brush === r.id} title={t(`mapedit.brush.${r.id}` as never)} onclick={() => pickBrush(r.id)}>
+                        <span class="swatch {r.id}" style:background={SWATCH[r.id]}></span>
+                        <span>{t(`mapedit.brush.${r.id}` as never)}</span>
+                      </button>
+                    {/if}
+                  {:else if r.type === 'prop'}
+                    <button class="thing" class:on={editor.mode === 'place' && editor.prop === r.kind} title={t(`mapedit.prop.${r.kind}` as never)} onclick={() => pickProp(r.kind)}>
+                      <PropIcon kind={r.kind} />
+                      <span>{t(`mapedit.prop.${r.kind}` as never)}</span>
+                    </button>
+                  {:else if r.type === 'asset'}
+                    {@const th = assets.byBase.get(r.base)}
+                    {#if th}
+                      <button class="thing" class:on={editor.mode === 'place' && editor.prop === 'asset' && editor.asset?.base === r.base} title={th.title} onclick={() => pickAsset(th)}>
+                        <img class="pic" src={thumb(assetSrc(th.variants[0]!.path), 40, true)} alt="" loading="lazy" draggable="false" />
+                        <span>{th.title}</span>
+                      </button>
+                    {/if}
+                  {/if}
+                {/each}
+              </div>
+            {/if}
+          {/if}
           {#each brushGroups as g (g.id)}
             <button class="group fold" aria-expanded={!folded.includes(g.id)} onclick={() => fold(g.id)}>
               {#if folded.includes(g.id)}<ChevronRight size={13} />{:else}<ChevronDown size={13} />{/if}
