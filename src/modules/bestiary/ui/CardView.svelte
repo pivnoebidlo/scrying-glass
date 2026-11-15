@@ -4,7 +4,8 @@
   import { t } from '../../../renderer/lib/i18n.svelte';
   import { thumb } from '../../../shared/vault';
   import { untrack } from 'svelte';
-  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, MoreHorizontal, Pencil, RefreshCw, RotateCcw, Send, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import { ArrowRightLeft, ClipboardPaste, Copy, FolderOpen, HardDrive, ImagePlus, Monitor, MoreHorizontal, Pencil, QrCode, RefreshCw, RotateCcw, Send, Star, Swords, Trash2, Upload, X } from '@lucide/svelte';
+  import { players } from '../../players/ui/players.svelte';
   import { sendToTelegram, tgReady } from '../../telegram/ui/tg.svelte';
   import ContextMenu, { menuAt, type MenuItem } from '../../../renderer/lib/ContextMenu.svelte';
   import ImagePicker from '../../../renderer/lib/FilePicker.svelte';
@@ -80,6 +81,8 @@
   // The buttons the card's system adds, and its paper sheet for Telegram.
   const actions = $derived(summary ? (systemUi(summary.system)?.cardActions?.(summary, card) ?? []) : []);
   const paper = $derived(summary && card ? paperOf(card) : undefined);
+  // The PlayerRow for this character, if the server is running and this card is in the party.
+  const playerRow = $derived(summary?.kind === 'character' ? players.status.party.find((r) => sameRef(r.ref, summary.ref)) : undefined);
   // «D&D 5e (2024) · Встроенный SRD · SRD 5.2.1 (Wizards of the Coast)»
   const info = $derived.by(() => {
     if (!card || !summary) return '';
@@ -188,6 +191,9 @@
             <button class="btn" title={a.title} onclick={() => runAction(a.run)}><Icon size={13} /> {a.label}</button>
           {/each}
           <button class="icon-btn" class:on={sheetShown} title={sheetShown ? t('best.removeFromScreen') : t('best.sheetToPlayers')} onclick={() => dispatch('handouts', 'toggleCard', { path: cardHandout(cref) })}><Monitor size={14} /></button>
+          {#if playerRow}
+            <button class="icon-btn" class:on={players.qr !== null} title={t('pl.showQr')} onclick={() => void players.show(playerRow)}><QrCode size={14} /></button>
+          {/if}
           {#if tgReady() && paper}
             <button class="icon-btn" title={t('best.sendSheet')} onclick={() => sendToTelegram({ kind: 'card', ref: cref, title: summary.name })}><Send size={14} /></button>
           {/if}

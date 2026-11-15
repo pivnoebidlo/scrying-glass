@@ -110,6 +110,14 @@
   });
 
   const live = $derived(view?.live ?? null);
+
+  // Haptic feedback when it becomes this player's turn.
+  let prevTurn = false;
+  $effect(() => {
+    const turn = live?.turn ?? false;
+    if (turn && !prevTurn && 'vibrate' in navigator) navigator.vibrate(200);
+    prevTurn = turn;
+  });
 </script>
 
 <main>

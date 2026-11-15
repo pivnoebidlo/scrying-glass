@@ -1,9 +1,12 @@
 // Персонажи (портреты) в окне управления.
-import { User, Users } from '@lucide/svelte';
+import { QrCode, User, Users } from '@lucide/svelte';
 import { t } from '../../renderer/lib/i18n.svelte';
 import { defineControl } from '../../renderer/lib/contrib';
 import { inTray } from '../scenes/tray';
 import { dispatch } from '../../renderer/lib/store.svelte';
+import { refKey, sameRef } from '../../shared/cards';
+import { bestiary } from '../bestiary/ui/cards.svelte';
+import { players } from '../players/ui/players.svelte';
 import View from './ui/View.svelte';
 import Sidebar from './ui/Sidebar.svelte';
 import OnScreen from './ui/OnScreen.svelte';
@@ -35,6 +38,30 @@ export default defineControl({
       icon: User,
       active: (app, path) => app.portraits.onScreen.includes(path),
       toggle: (_app, path) => dispatch('portraits', 'toggle', { path }),
+    },
+    {
+      id: 'player-qr',
+      get title() {
+        return t('pl.showQr');
+      },
+      badge: () => '',
+      icon: QrCode,
+      visible(_app, path) {
+        const card = bestiary.cardFor(path);
+        if (!card || card.kind !== 'character') return false;
+        return players.status.party.some((r) => sameRef(r.ref, card.ref));
+      },
+      active(_app, path) {
+        const card = bestiary.cardFor(path);
+        if (!card) return false;
+        return players.qr === refKey(card.ref);
+      },
+      toggle(_app, path) {
+        const card = bestiary.cardFor(path);
+        if (!card) return;
+        const row = players.status.party.find((r) => sameRef(r.ref, card.ref));
+        if (row) void players.show(row);
+      },
     },
   ],
 });
